@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -29,7 +30,9 @@ public final class JBMacMessages extends MacMessages {
                                    @NotNull String noText,
                                    @NotNull String cancelText,
                                    @Nullable Window window,
-                                   @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                   @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                                   @Nullable Icon icon,
+                                   @Nullable String helpId) {
     if (window == null) {
       window = getForemostWindow();
     }
@@ -37,13 +40,13 @@ public final class JBMacMessages extends MacMessages {
     String defaultButtonCleaned = yesText.replace(BundleBase.MNEMONIC_STRING, "");
     String otherButtonCleaned = cancelText.replace(BundleBase.MNEMONIC_STRING, "");
     String alternateButtonCleaned = noText.replace(BundleBase.MNEMONIC_STRING, "");
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, icon,
                                                  new String [] {
                                                    defaultButtonCleaned,
                                                    otherButtonCleaned,
                                                    alternateButtonCleaned
                                                  },
-                                                 doNotAskOption, yesText, noText);
+                                                 doNotAskOption, yesText, noText, helpId);
 
     String resultString = sheetMessage.getResult();
     int result = resultString.equals(defaultButtonCleaned) ? Messages.YES : resultString.equals(alternateButtonCleaned) ? Messages.NO : Messages.CANCEL;
@@ -56,22 +59,22 @@ public final class JBMacMessages extends MacMessages {
   @Override
   public int showMessageDialog(@NotNull String title,
                                String message,
-                               String @NotNull [] buttons,
-                               boolean errorStyle,
+                               @NlsContexts.Button String @NotNull [] buttons,
                                @Nullable Window window,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                               @Nullable Icon icon,
+                               @Nullable String helpId) {
+
     if (window == null) {
       window = getForemostWindow();
     }
 
-    Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
-
     final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[defaultOptionIndex] : null;
     final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[focusedOptionIndex] : null;
 
-    final SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, defaultOptionTitle, focusedButtonTitle);
+    final SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, defaultOptionTitle, focusedButtonTitle, null);
     String result = sheetMessage.getResult();
     for (int i = 0; i < buttons.length; i++) {
       if (result.equals(buttons[i])) {
@@ -87,7 +90,7 @@ public final class JBMacMessages extends MacMessages {
   @Override
   public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window) {
     new SheetMessage(window == null ? getForemostWindow() : window, title, message,
-                     UIUtil.getInformationIcon(), new String[]{okText}, null, okText, okText);
+                     UIUtil.getInformationIcon(), new String[]{okText}, null, okText, okText, null);
   }
 
   static @NotNull Window getForemostWindow() {
@@ -159,9 +162,11 @@ public final class JBMacMessages extends MacMessages {
                                  @NotNull String yesText,
                                  @NotNull String noText,
                                  @Nullable Window window,
-                                 @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
-    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String[]{yesText, noText}, doNotAskDialogOption, yesText, noText);
+                                 @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                 @Nullable Icon icon,
+                                 @Nullable String helpId) {
+    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, icon,
+                                                 new String[]{yesText, noText}, doNotAskDialogOption, yesText, noText, helpId);
     boolean result = sheetMessage.getResult().equals(yesText);
     if (doNotAskDialogOption != null && (result || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {
       doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result ? Messages.YES : Messages.NO);
@@ -171,6 +176,6 @@ public final class JBMacMessages extends MacMessages {
 
   @Override
   public void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window) {
-    new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getErrorIcon(), new String [] {okButton}, null, null, okButton);
+    new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getErrorIcon(), new String [] {okButton}, null, null, okButton, null);
   }
 }

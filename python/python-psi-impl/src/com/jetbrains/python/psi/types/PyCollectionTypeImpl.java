@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   @NotNull private final List<PyType> myElementTypes;
 

@@ -1,9 +1,23 @@
 <html>
 <body>
-Reports <b>break</b> statements with unnecessary
-labels.
+Reports <code>break</code> statements with unnecessary labels. Such labels do not change the control flow but make the code more complicated to follow.
+<p><b>Example:</b></p>
+<pre>
+  label:
+  for(int i = 0; i &lt; 10; i++) {
+    if (shouldBreak()) break label;
+    //doSmth
+  }
+</pre>
+<p>After the quickfix is applied the result looks like:</p>
+<pre>
+  label:
+  for(int i = 0; i &lt; 10; i++) {
+    if (shouldBreak()) break;
+    //doSmth
+  }
+</pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

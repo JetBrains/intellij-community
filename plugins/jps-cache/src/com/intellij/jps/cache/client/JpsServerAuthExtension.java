@@ -1,10 +1,8 @@
 package com.intellij.jps.cache.client;
 
 import com.intellij.jps.cache.JpsCacheBundle;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.ATTENTION;
 
 /**
  * Extension point which provides authentication data for requests to the JPS cache server
@@ -62,12 +60,10 @@ public interface JpsServerAuthExtension {
       if (userData == null) {
         project.putUserData(NOTIFICATION_SHOWN_KEY, Boolean.TRUE);
         ApplicationManager.getApplication().invokeLater(() -> {
-          String message =
-            JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
-          Notification notification = STICKY_NOTIFICATION_GROUP.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), message,
-            NotificationType.WARNING,
-            NotificationListener.URL_OPENING_LISTENER);
-          Notifications.Bus.notify(notification, project);
+          ATTENTION
+            .createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin"), NotificationType.WARNING)
+            .setListener(NotificationListener.URL_OPENING_LISTENER)
+            .notify(project);
         });
       }
       LOG.warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.");

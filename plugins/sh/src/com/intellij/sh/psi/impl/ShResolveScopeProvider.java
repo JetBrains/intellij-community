@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ShResolveScopeProvider extends ResolveScopeProvider {
   @Override
-  public @Nullable GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
+  public @Nullable GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     if (file.getFileType() instanceof ShFileType) {
       return GlobalSearchScope.fileScope(project, file);
     }

@@ -68,7 +68,7 @@ public interface AsyncFileListener {
    */
   @Contract(pure = true)
   @Nullable
-  ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events);
+  ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events);
 
   interface ChangeApplier {
     /**

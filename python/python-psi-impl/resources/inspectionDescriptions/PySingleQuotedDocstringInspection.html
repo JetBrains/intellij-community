@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection highlights docstrings not using triple double-quoted string format.
+<p>Reports docstrings that do not adhere to the triple double-quoted string format.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def calc(self, balance=0):
+    'param: balance'
+    self.balance = balance
+</pre>
+<p>When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+def calc(self, balance=0):
+    """param: balance"""
+    self.balance = balance
+</pre>
 </body>
 </html>

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,13 @@ public final class WorkspaceFileType implements InternalFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.idea.workspace");
+    return IdeBundle.message("filetype.idea.workspace.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return IdeBundle.message("filetype.idea.workspace.display.name");
   }
 
   @Override

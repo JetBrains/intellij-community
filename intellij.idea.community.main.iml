@@ -136,7 +136,6 @@
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.packageSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
@@ -146,5 +145,8 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ml.models.local" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.gradle.dsl.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.gradle.dsl.kotlin.impl" scope="RUNTIME" />
   </component>
 </module>

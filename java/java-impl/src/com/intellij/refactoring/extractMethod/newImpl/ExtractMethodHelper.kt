@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
@@ -23,7 +22,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
-import java.util.LinkedHashSet
 
 object ExtractMethodHelper {
 
@@ -97,13 +95,6 @@ object ExtractMethodHelper {
   private fun findVariableReferences(element: PsiElement): Sequence<PsiVariable> {
     val references = PsiTreeUtil.findChildrenOfAnyType(element, PsiReferenceExpression::class.java)
     return references.asSequence().mapNotNull { reference -> (reference.resolve() as? PsiVariable) }
-  }
-
-  fun <T: PsiElement> findInCopy(firstInSource: PsiElement, firstInCopy: PsiElement, element: T): T {
-    val sourceStartOffset: Int = firstInSource.textRange.startOffset
-    val copyStartOffset: Int = firstInCopy.textRange.startOffset
-    val range = element.textRange.shiftRight(copyStartOffset - sourceStartOffset)
-    return CodeInsightUtil.findElementInRange(firstInCopy.containingFile, range.startOffset, range.endOffset, element.javaClass)
   }
 
   fun hasConflictResolve(name: String?, scopeToIgnore: List<PsiElement>): Boolean {

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,19 +150,20 @@ final class SliceUtil {
       }
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
-      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue((PsiMethodCallExpression)expression);
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(call);
       if (returnedValue != null) {
         if (!builder.process(returnedValue, processor)) {
           return false;
         }
       }
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+      PsiMethod method = call.resolveMethod();
       Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;
         if (target.equals(Flow.RETURN_METHOD_TARGET)) {
-          PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+          PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (qualifier != null) {
             builder = builder.updateNesting(anno);
             String source = anno.source();
@@ -173,7 +173,26 @@ final class SliceUtil {
           }
         }
       }
-      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, builder);
+      if (method != null) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        boolean hasFlownParameter = false;
+        for (int i = 0; i < parameters.length; i++) {
+          Flow paramAnno = isParamFlowAnnotated(method, i);
+          if (paramAnno != null && !parameters[i].isVarArgs()) {
+            if (!builder.hasNesting() && !paramAnno.sourceIsContainer()) continue;
+            PsiExpression[] args = call.getArgumentList().getExpressions();
+            if (args.length > i) {
+              JavaSliceBuilder argBuilder = builder.updateNesting(paramAnno);
+              if (!argBuilder.process(args[i], processor)) {
+                return false;
+              }
+              hasFlownParameter = true;
+            }
+          }
+        }
+        if (hasFlownParameter) return true;
+      }
+      return processMethodReturnValue(call, processor, builder);
     }
     if (expression instanceof PsiConditionalExpression) {
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
@@ -192,7 +211,7 @@ final class SliceUtil {
       }
     }
     DfType filterDfType = builder.getFilter().getDfType();
-    if (filterDfType != DfTypes.TOP && expression instanceof PsiExpression) {
+    if (filterDfType != DfType.TOP && expression instanceof PsiExpression) {
       AnalysisStartingPoint analysis = AnalysisStartingPoint.propagateThroughExpression(expression, filterDfType);
       if (analysis != null) {
         return builder.withFilter(filter -> filter.withType(analysis.myDfType)).process(analysis.myAnchor, processor);

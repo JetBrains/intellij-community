@@ -66,9 +66,7 @@ class JavaPluginLayout {
         "intellij.java.uast",
         "intellij.java.structuralSearch",
         "intellij.java.typeMigration",
-/* Android Studio: exclude intellij.java.featuresTrainer
         "intellij.java.featuresTrainer",
-Android Studio: exclude intellij.java.featuresTrainer */
         "intellij.java.ml.models.local"
       ].each {
         withModule(it, "java-impl.jar", "java_resources_en.jar")

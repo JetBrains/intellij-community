@@ -87,7 +87,6 @@ class JpsProjectLoadingListenerTest {
   }
 
   private fun prepareProject(): LoadedProjectData {
-    Assume.assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage

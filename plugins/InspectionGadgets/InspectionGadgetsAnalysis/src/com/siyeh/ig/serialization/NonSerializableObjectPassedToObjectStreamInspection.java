@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableObjectPassedToObjectStreamInspection
-  extends BaseInspection {
+public class NonSerializableObjectPassedToObjectStreamInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -38,12 +37,10 @@ public class NonSerializableObjectPassedToObjectStreamInspection
     return new NonSerializableObjectPassedToObjectStreamVisitor();
   }
 
-  private static class NonSerializableObjectPassedToObjectStreamVisitor
-    extends BaseInspectionVisitor {
+  private static class NonSerializableObjectPassedToObjectStreamVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression methodCallExpression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
       super.visitMethodCallExpression(methodCallExpression);
 
       if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
@@ -51,8 +48,7 @@ public class NonSerializableObjectPassedToObjectStreamInspection
                                                 CommonClassNames.JAVA_LANG_OBJECT)) {
         return;
       }
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
@@ -63,6 +59,10 @@ public class NonSerializableObjectPassedToObjectStreamInspection
         return;
       }
       if (SerializationUtils.isProbablySerializable(argumentType)) {
+        return;
+      }
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(argumentType.getCanonicalText())) {
+        // to prevent false positives.
         return;
       }
       registerError(argument);

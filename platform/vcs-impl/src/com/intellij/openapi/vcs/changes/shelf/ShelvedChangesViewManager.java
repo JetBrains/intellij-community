@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -317,7 +317,7 @@ public class ShelvedChangesViewManager implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myContent == null) return;
-    myPanel.openEditorPreview();
+    myPanel.openEditorPreview(false);
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -444,7 +444,7 @@ public class ShelvedChangesViewManager implements Disposable {
             navigatables.add(navigatable);
           }
         }
-        return navigatables.toArray(new Navigatable[0]);
+        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       return super.getData(dataId);
     }
@@ -635,8 +635,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
-    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
+  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, DataProvider, Disposable {
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -704,12 +703,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
-      isEditorDiffPreview.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          setDiffPreview();
-        }
-      }, this);
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
@@ -718,7 +712,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }, this);
       myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
-      DataManager.registerDataProvider(myRootPanel, myTree);
+      DataManager.registerDataProvider(myRootPanel, this);
 
       PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     }
@@ -730,7 +724,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void toolWindowMappingChanged() {
       addToolbar(isCommitToolWindowShown(myProject));
-      setDiffPreview();
     }
 
     private void addToolbar(boolean isHorizontal) {
@@ -749,7 +742,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview(boolean force) {
-      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = EditorTabDiffPreviewManager.getInstance(myProject).isEditorDiffPreviewAvailable();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
         if (!isEditorPreview && isSplitterPreview()) return;
@@ -769,7 +762,9 @@ public class ShelvedChangesViewManager implements Disposable {
         @Override
         protected String getCurrentName() {
           ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
-          return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : VcsBundle.message("shelved.version.name");
+          return myCurrentShelvedElement != null
+                 ? VcsBundle.message("shelve.editor.diff.preview.title", myCurrentShelvedElement.getPresentableName())
+                 : VcsBundle.message("shelved.version.name");
         }
 
         @Override
@@ -808,7 +803,7 @@ public class ShelvedChangesViewManager implements Disposable {
       PreviewDiffSplitterComponent previewSplitter =
         new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
       previewSplitter.setFirstComponent(myTreeScrollPane);
-      previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN, false);
 
       myTree.addSelectionListener(() -> previewSplitter.updatePreview(false), changeProcessor);
 
@@ -832,11 +827,11 @@ public class ShelvedChangesViewManager implements Disposable {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
 
-    private void openEditorPreview() {
+    private void openEditorPreview(boolean focusEditor) {
       if (isSplitterPreview()) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(false);
+      ((EditorTabPreview)myDiffPreview).openPreview(focusEditor);
     }
 
     @Nullable
@@ -855,6 +850,14 @@ public class ShelvedChangesViewManager implements Disposable {
       return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
     }
 
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
+        return myDiffPreview instanceof EditorTabPreview ? myDiffPreview : null;
+      }
+      return myTree.getData(dataId);
+    }
+
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -864,7 +867,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myDiffPreview.setPreviewVisible(state);
+        myDiffPreview.setPreviewVisible(state, false);
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 
@@ -1069,12 +1072,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+      String listName = myList.DESCRIPTION;
+      if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
       if (myList.isRecycled() || myList.isDeleted()) {
-        renderer.appendTextWithIssueLinks(myList.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         renderer.setIcon(myList.isMarkedToDelete() || myList.isDeleted() ? DisabledToDeleteIcon : AppliedPatchIcon);
       }
       else {
-        renderer.appendTextWithIssueLinks(myList.DESCRIPTION, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         renderer.setIcon(PatchIcon);
       }
       appendCount(renderer);

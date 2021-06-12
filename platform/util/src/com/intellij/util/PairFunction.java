@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 /**
- * Please use {@link java.util.function.BiFunction}
+ * Deprecated. Please use {@link java.util.function.BiFunction} instead
  * @author max
  */
 @FunctionalInterface

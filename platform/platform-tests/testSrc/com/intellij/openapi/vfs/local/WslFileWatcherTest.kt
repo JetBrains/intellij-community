@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.io.IoTestUtil.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -73,7 +74,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
-    tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
+    tempDir = createWslTempDir(wsl, getTestName(false))
     fs = LocalFileSystem.getInstance()
     vfsTempDir = refresh(tempDir.toFile())
 

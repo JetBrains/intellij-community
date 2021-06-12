@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -11,10 +11,8 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer
-import java.util.*
 
 @State(name = "ExternalCompilerConfiguration", storages = [(Storage("compiler.xml"))], externalStorageOnly = true)
 @Service
@@ -45,7 +43,7 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
   }
 
   override fun loadState(state: Element) {
-    val result = THashMap<String, String>()
+    val result = HashMap<String, String>()
     readByteTargetLevel(state, result)
     loadedState = result
   }

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
@@ -316,9 +315,8 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @TestOnly
-  public void waitForAllEventsProcessedInTestMode() {
+  public void waitForExternalFilesEventsProcessedInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
     myExternalFilesProcessor.waitForEventsProcessedInTestMode();
   }
 

@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,11 +26,13 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class RedundantInstanceofFix implements LocalQuickFix {
+public class RedundantInstanceofFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  public RedundantInstanceofFix(@Nullable PsiElement element) {
+    super(element);
+  }
+
   @Override
   @NotNull
   public String getFamilyName() {
@@ -38,8 +40,16 @@ public class RedundantInstanceofFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
+  public @NotNull String getText() {
+    return getFamilyName();
+  }
+
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    PsiElement psiElement = startElement;
     CommentTracker ct = new CommentTracker();
     if (psiElement instanceof PsiMethodReferenceExpression) {
       String replacement = CommonClassNames.JAVA_UTIL_OBJECTS + "::nonNull";

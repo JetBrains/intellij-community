@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -13,6 +13,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class JDOMUtilTest {
@@ -118,9 +119,9 @@ internal class JDOMUtilTest {
 
   @Test
   fun testBillionLaughs() {
-    assertThatThrownBy {
-      JDOMUtil.loadDocument(File(PlatformTestUtil.getPlatformTestDataPath() + File.separator + "tools" + File.separator + "BillionLaughs.xml"))
-    }.hasMessageContaining("""The entity "lol9" was referenced, but not declared.""")
+    val loaded = JDOMUtil.load(
+      Path.of(PlatformTestUtil.getPlatformTestDataPath() + File.separator + "tools" + File.separator + "BillionLaughs.xml"))
+    assertThat(JDOMUtil.write(loaded)).isEqualTo("<lolz />")
   }
 
   private fun checkIfBad(str: String) {

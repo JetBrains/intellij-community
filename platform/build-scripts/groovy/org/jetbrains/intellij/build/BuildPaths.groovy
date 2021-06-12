@@ -61,9 +61,4 @@ abstract class BuildPaths {
    * Path to a directory containing JDK (currently Java 8) which is used to compile the project
    */
   String jdkHome
-
-  /**
-   * Path to a directory containing Kotlin plugin with compiler which is used to compile the project
-   */
-  String kotlinHome
 }

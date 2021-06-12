@@ -1,7 +1,17 @@
 <html>
 <body>
-Reports nested <b>switch</b> statements/expressions. Nested <b>switch</b>-es
-may result in extremely confusing code.
+Reports nested <code>switch</code> statements/expressions. Nested <code>switch</code> statements
+may result in extremely confusing code. These statements may be extracted to a separate method.
+<p>Example:</p>
+<pre>
+  int res = switch (i) {
+            case 0 -> 0;
+            default -> switch (i) {
+                case 100 -> 0;
+                default -> i;
+            };
+        };
+</pre>
 <!-- tooltip end -->
 <p>
 

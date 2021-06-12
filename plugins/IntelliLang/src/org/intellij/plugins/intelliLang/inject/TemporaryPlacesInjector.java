@@ -28,7 +28,7 @@ public final class TemporaryPlacesInjector implements LanguageInjectionContribut
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
     if (language == null) return null;
 
-    return new SimpleInjection(language.getID(),
+    return new SimpleInjection(language,
                                injectedLanguage.getPrefix(),
                                injectedLanguage.getSuffix(),
                                registry.getLanguageInjectionSupport().getId());

@@ -63,8 +63,8 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
         Insets margin = ObjectUtils.notNull(getMargin(), JBUI.emptyInsets());
         Insets ipad = getComponent().getIpad();
         Dimension size = getSize();
-        int left = insets.left + margin.left - ipad.left;
-        int top = insets.top + margin.top - ipad.top;
+        int left = insets.left + margin.left - ipad.left - 1;
+        int top = insets.top + margin.top - ipad.top + 1;
         int right = size.width - (insets.right + margin.right - ipad.right);
         return new Rectangle(left, top, right - left, getRowHeight());
       }

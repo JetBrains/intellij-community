@@ -42,7 +42,7 @@ public class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbA
       AnAction[] children = getChildren(e);
       for (AnAction child : children) {
         if (child instanceof OpenInNewTabAction) {
-          ActionUtil.performActionDumbAwareWithCallbacks(child, e, e.getDataContext());
+          ActionUtil.performActionDumbAwareWithCallbacks(child, e);
           return;
         }
       }

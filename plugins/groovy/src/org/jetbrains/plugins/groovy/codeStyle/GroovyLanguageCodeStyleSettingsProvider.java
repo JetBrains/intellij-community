@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -172,6 +174,12 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",
                                 GroovyBundle.message("code.style.option.use.flying.geese.braces"),
                                 getInstance().WRAPPING_BRACES);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class,
+                                "WRAP_CHAIN_CALLS_AFTER_DOT",
+                                GroovyBundle.message("code.style.option.wrap.after.dot"),
+                                getInstance().WRAPPING_CALL_CHAIN);
+
       consumer
         .showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP",
                           GroovyBundle.message("code.style.option.align.when.multiple"),
@@ -426,19 +434,19 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   private enum LabelIndentStyle {
-    ABSOLUTE(GroovyBundle.message("settings.code.style.absolute")),
-    RELATIVE(GroovyBundle.message("settings.code.style.indent.statements.after.label")),
-    RELATIVE_REVERSED(GroovyBundle.message("settings.code.style.indent.labels"));
+    ABSOLUTE(GroovyBundle.messagePointer("settings.code.style.absolute")),
+    RELATIVE(GroovyBundle.messagePointer("settings.code.style.indent.statements.after.label")),
+    RELATIVE_REVERSED(GroovyBundle.messagePointer("settings.code.style.indent.labels"));
 
-    private final String description;
+    private final Supplier<String> description;
 
-    LabelIndentStyle(String description) {
+    LabelIndentStyle(Supplier<@NotNull @Nls String> description) {
       this.description = description;
     }
 
     @Override
     public String toString() {
-      return description;
+      return description.get();
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.FakeConfigurationFactory;
 import com.intellij.execution.impl.FakeRunConfiguration;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -34,7 +35,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
   public void testBasicExistingConfigurations() {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "qq<caret>q");
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext());
+    ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
     Assert.assertNull(context.findExisting());
 
     Disposable disposable = Disposer.newDisposable();
@@ -46,7 +47,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
         addConfiguration(config);
       }
 
-      context = ConfigurationContext.getFromContext(createDataContext());
+      context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
       RunnerAndConfigurationSettings existing = context.findExisting();
       Assert.assertNotNull(existing);
       Assert.assertTrue(existing.getConfiguration() instanceof FakeRunConfiguration);
@@ -55,7 +56,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
       Disposer.dispose(disposable);
     }
 
-    context = ConfigurationContext.getFromContext(createDataContext());
+    context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
     Assert.assertNull(context.findExisting());
   }
 
@@ -74,13 +75,13 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     }
 
     FakeRunConfigurationProducer.SORTING = SortingMode.NAME_ASC;
-    ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext());
+    ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings existing = context.findExisting();
     Assert.assertNotNull(existing);
     Assert.assertTrue(existing.getConfiguration().getName().startsWith("hello_"));
 
     FakeRunConfigurationProducer.SORTING = SortingMode.NAME_DESC;
-    context = ConfigurationContext.getFromContext(createDataContext());
+    context = ConfigurationContext.getFromContext(createDataContext(), ActionPlaces.UNKNOWN);
     existing = context.findExisting();
     Assert.assertNotNull(existing);
     Assert.assertTrue(existing.getConfiguration().getName().startsWith("world_"));
@@ -161,7 +162,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     addConfiguration(configuration);
     
     DataContext context = createDataContext();
-    assertNull(ConfigurationContext.getFromContext(context).findExisting());
+    assertNull(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN).findExisting());
     TestActionEvent event = new TestActionEvent(context);
     new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event);
     assertFalse(event.getPresentation().isEnabledAndVisible());
@@ -199,7 +200,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     DataContext dataContext = createDataContext();
     List<ConfigurationFromContext> list = PreferredProducerFind.getConfigurationsFromContext(
       dataContext.getData(Location.DATA_KEY),
-      ConfigurationContext.getFromContext(dataContext),
+      ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN),
       false
     );
     return ContainerUtil.map(list, ConfigurationFromContext::getConfigurationSettings);

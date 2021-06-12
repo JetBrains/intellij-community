@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -111,7 +110,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
-      if (myComponent instanceof ExtendableTextComponent && ComponentWithBrowseButton.isUseInlineBrowserButton()) {
+      if (myComponent instanceof ExtendableTextComponent) {
         ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
           getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListener));
         new DumbAwareAction() {

@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
+import java.util.function.BiPredicate
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -59,6 +61,11 @@ abstract class ProductProperties {
   boolean toolsJarRequired = false
 
   boolean isAntRequired = false
+
+  /**
+   * Whether to use splash for application start-up.
+   */
+  boolean useSplash = false
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
@@ -167,9 +174,14 @@ abstract class ProductProperties {
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
   /**
-   * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
+   * If {@code true} a zip archive containing sources of modules included into the product will be produced.
    */
   boolean buildSourcesArchive = false
+
+  /**
+   * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
+   */
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.

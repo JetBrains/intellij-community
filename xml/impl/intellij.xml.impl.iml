@@ -16,10 +16,9 @@
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module-library">
       <library name="XmlBeans" type="repository">
-        <properties maven-id="org.apache.xmlbeans:xmlbeans:2.6.0" />
+        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:4.0.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/2.6.0/xmlbeans-2.6.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/stax/stax-api/1.0.1/stax-api-1.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/4.0.0/xmlbeans-4.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

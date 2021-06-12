@@ -1,8 +1,10 @@
 <html>
 <body>
-Reports any calls to <b>java.lang.Math</b> or
-<b>java.lang.StrictMath</b> methods which can be determined
-to be simple compile-time constants.
+Reports any calls to <code>java.lang.Math</code> or <code>java.lang.StrictMath</code> methods which can be determined to be simple compile-time constants.
+<p><b>Example:</b> <code>double v = Math.sin(0.0);</code></p>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<code>double v = 0.0;</code>
+
 <!-- tooltip end -->
 <p>
 

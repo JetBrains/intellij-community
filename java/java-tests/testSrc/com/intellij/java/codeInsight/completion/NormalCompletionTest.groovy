@@ -2378,4 +2378,69 @@ class Abc {
                           "  }\n" +
                           "}")
   }
+
+  void testAfterTry() {
+    myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['catch', 'finally']
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNullable() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('?')
+    myFixture.checkResult("import org.jetbrains.annotations.Nullable;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @Nullable String\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNotNull() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('!')
+    myFixture.checkResult("import org.jetbrains.annotations.NotNull;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @NotNull String\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testSuperClassFieldShadowsParameter() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  static class X {\n" +
+                                           "    int variable;\n" +
+                                           "  }\n" +
+                                           "  \n" +
+                                           "  void test(long variable) {\n" +
+                                           "    new X() {\n" +
+                                           "      double myDouble = vari<caret>\n" +
+                                           "    };\n" +
+                                           "  }\n" +
+                                           "}")
+    def lookupElements = myFixture.completeBasic()
+    assert lookupElements == null
+    myFixture.checkResult("class Test {\n" +
+                          "  static class X {\n" +
+                          "    int variable;\n" +
+                          "  }\n" +
+                          "  \n" +
+                          "  void test(long variable) {\n" +
+                          "    new X() {\n" +
+                          "      double myDouble = variable\n" +
+                          "    };\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testVariableNameByTypeName() {
+    myFixture.configureByText("Test.java", "class DemoEntity {} class Test {DemoEntity <caret>}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ["demoEntity", "demo", "entity"]
+  }
 }

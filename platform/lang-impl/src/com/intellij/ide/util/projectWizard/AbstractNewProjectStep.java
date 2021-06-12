@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -53,6 +54,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME = new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
+  private static final Key<Boolean> CREATED_KEY = new Key<>("abstract.new.project.step.created");
+
   private final Customization<T> myCustomization;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
@@ -225,6 +228,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
         if (service != null) {
           service.setTrustedState(ThreeState.YES);
         }
+
+        project.putUserData(CREATED_KEY, true);
         return true;
       });
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
@@ -244,5 +249,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     }
 
     FUCounterUsageLogger.getInstance().logEvent(project, "new.project.wizard", "project.generated", data);
+  }
+
+  public static boolean created(@NotNull Project project) {
+    return Boolean.TRUE.equals(project.getUserData(CREATED_KEY));
   }
 }

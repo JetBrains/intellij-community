@@ -1,10 +1,27 @@
 <html>
 <body>
-Reports <b>switch</b> statements with too many <b>case</b> labels.
+Reports <code>switch</code> statements/expressions with too many <code>case</code> labels.
+Such a long switch statement may be confusing and should probably be refactored.
+Sometimes it is not a problem (for example, domain is very complicated and has enums with a lot of constants).
+<p>Example:</p>
+<pre>
+    switch (x) {
+        case 1 -> {}
+        case 2 -> {}
+        case 3 -> {}
+        case 4 -> {}
+        case 5 -> {}
+        case 6 -> {}
+        case 7 -> {}
+        case 8 -> {}
+        case 9 -> {}
+        case 10 -> {}
+        case 11,12,13 -> {}
+        default -> {}
+    }
+</pre>
 <!-- tooltip end -->
+<p>Use the field below to specify the maximum number of <code>case</code> labels expected.
 <p>
-Use the field below to specify the maximum number of <b>case</b> labels expected.
-<p>
-
 </body>
 </html>

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -63,6 +64,12 @@ private class BackgroundRearrangeCheckinHandler(commitPanel: CheckinProjectPanel
     RearrangeBeforeCheckinHandler(project, commitPanel).beforeCheckinConfigurationPanel
 
   override fun isEnabled(): Boolean = settings.REARRANGE_BEFORE_PROJECT_COMMIT
+
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    indicator.text = VcsBundle.message("progress.text.rearranging.code")
+
+    return super.runCheck(indicator)
+  }
 
   override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
     RearrangeCodeProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), COMMAND_NAME, null, true)

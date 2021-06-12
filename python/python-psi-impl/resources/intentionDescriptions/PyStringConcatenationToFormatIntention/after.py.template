@@ -1,1 +1,1 @@
-"a%sc" % (b)
+"a{0}c".format(b)

@@ -62,6 +62,10 @@ final class Component {
   public Component copy() {
     return new Component(value, ids.clone());
   }
+
+  public boolean isSuperStateOf(Component other) {
+    return other.value == value && Arrays.asList(other.ids).containsAll(Arrays.asList(ids));
+  }
 }
 
 final class Equation {

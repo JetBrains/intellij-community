@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -88,22 +89,32 @@ public class MismatchedCollectionQueryUpdateInspection
   @Override
   public JComponent createOptionsPanel() {
     final ListTable queryNamesTable = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
-    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(queryNamesTable);
+    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(
+      queryNamesTable,
+      InspectionGadgetsBundle.message("query.label"),
+      true);
 
     final ListTable updateNamesTable = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
-    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(updateNamesTable);
+    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(
+      updateNamesTable,
+      InspectionGadgetsBundle.message("update.label"),
+      true);
 
     String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
     final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
     final JPanel ignoredClassesPanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage, CommonClassNames.JAVA_UTIL_COLLECTION,
-                                                   CommonClassNames.JAVA_UTIL_MAP);
+      UiUtils.createAddRemoveTreeClassChooserPanel(
+        ignoreClassesMessage,
+        InspectionGadgetsBundle.message("ignored.class.label"),
+        ignoredClassesTable,
+        true,
+        CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_MAP);
 
     final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     namesPanel.add(queryNamesPanel);
     namesPanel.add(updateNamesPanel);
 
-    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, JBUI.scale(8)));
     panel.add(namesPanel);
     panel.add(ignoredClassesPanel);
     return panel;
@@ -540,7 +551,7 @@ public class MismatchedCollectionQueryUpdateInspection
       if (!CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
-      return ignoredClasses.stream().noneMatch(className -> InheritanceUtil.isInheritor(type, className));
+      return !ContainerUtil.exists(ignoredClasses, className -> InheritanceUtil.isInheritor(type, className));
     }
 
     private boolean updatedViaInitializer(PsiVariable variable) {

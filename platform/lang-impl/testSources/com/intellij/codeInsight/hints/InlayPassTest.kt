@@ -54,6 +54,40 @@ class InlayPassTest : BasePlatformTestCase() {
     assertEquals(2, extractContent(inlays, 1))
   }
 
+  fun testInlaysRespectHorizontalConstraints() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), true)
+      it.addInlineElement(2, true, TestRootPresentation(2), false)
+      it.addInlineElement(3, false, TestRootPresentation(3), false)
+    })).collectAndApply()
+    var inlays = inlineElements
+    assertEquals(2, inlays.size)
+    assertTrue(inlays[0].isRelatedToPrecedingText)
+    assertFalse(inlays[1].isRelatedToPrecedingText)
+    inlays = afterLineEndElements
+    assertEquals(1, inlays.size)
+  }
+
+  fun testInlaysAtSameOffsetWithMatchingRelatesToPrecedingText() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), false)
+      it.addInlineElement(1, true, TestRootPresentation(2), false)
+    })).collectAndApply()
+    val inlays = inlineElements
+    assertEquals(1, inlays.size)
+    assertTrue(inlays[0].isRelatedToPrecedingText)
+  }
+
+  fun testInlaysAtSameOffsetWithDifferentRelatesToPrecedingTextDefaultToFalse() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), false)
+      it.addInlineElement(1, false, TestRootPresentation(2), false)
+    })).collectAndApply()
+    val inlays = inlineElements
+    assertEquals(1, inlays.size)
+    assertFalse(inlays[0].isRelatedToPrecedingText)
+  }
+
   fun testPresentationUpdated() {
     createPass(listOf(
       createOneOffCollector {
@@ -160,6 +194,9 @@ class InlayPassTest : BasePlatformTestCase() {
 
   private val inlineElements: List<Inlay<*>>
     get() = inlayModel.getInlineElementsInRange(0, myFixture.file.textRange.endOffset)
+
+  private val afterLineEndElements: List<Inlay<*>>
+    get() = inlayModel.getAfterLineEndElementsInRange(0, myFixture.file.textRange.endOffset)
 
   private val allHintsCount: Int
     get() = inlineElements.size + blockElements.size

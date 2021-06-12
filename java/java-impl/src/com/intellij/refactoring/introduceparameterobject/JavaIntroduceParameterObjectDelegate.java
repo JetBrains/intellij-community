@@ -184,34 +184,51 @@ public class JavaIntroduceParameterObjectDelegate
     final PsiParameter parameter = params[parameterInfo.getOldIndex()];
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(parameter);
     assert detector != null;
-    final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
-    final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
-    final ReadWriteAccessDetector.Access[] accessor = new ReadWriteAccessDetector.Access[]{null};
+    
+    final List<PsiReferenceExpression> readUsages = new ArrayList<>();
+    final List<PsiReferenceExpression> readWriteUsages = new ArrayList<>();
+    final List<PsiReferenceExpression> writeUsages = new ArrayList<>();
+    
     ReferencesSearch.search(parameter, localSearchScope).forEach(reference -> {
          final PsiElement refElement = reference.getElement();
          if (refElement instanceof PsiReferenceExpression) {
            final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
-           final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(refElement);
-           if (access == ReadWriteAccessDetector.Access.Read) {
-             usages.add(new ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter));
-             if (accessor[0] == null) {
-               accessor[0] = ReadWriteAccessDetector.Access.Read;
-             }
-           }
-           else {
-             if (access == ReadWriteAccessDetector.Access.ReadWrite) {
-               usages.add(new ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter));
-             }
-             else {
-               usages.add(new ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter));
-             }
-             accessor[0] = ReadWriteAccessDetector.Access.Write;
+           switch (detector.getExpressionAccess(refElement)) {
+             case Read:
+               readUsages.add(paramUsage);
+               break;
+             case ReadWrite:
+                 readWriteUsages.add(paramUsage);
+                 break;
+             case Write:
+                 writeUsages.add(paramUsage);
+                 break;
            }
          }
          return true;
        }
     );
-    return accessor[0];
+
+    ReadWriteAccessDetector.Access access =
+      readWriteUsages.isEmpty() && writeUsages.isEmpty() ? ReadWriteAccessDetector.Access.Read : ReadWriteAccessDetector.Access.Write;
+
+    if (access == ReadWriteAccessDetector.Access.Read && readUsages.isEmpty()) {
+      return null;
+    }
+
+    final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
+    final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod, access);
+    
+    readUsages.stream()
+      .map(paramUsage -> new ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter)).forEach(usages::add);
+    readWriteUsages.stream()
+      .map(paramUsage -> new ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter))
+      .forEach(usages::add);
+    writeUsages.stream()
+      .map(paramUsage -> new ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter))
+      .forEach(usages::add);
+
+    return access;
   }
 
   @Override

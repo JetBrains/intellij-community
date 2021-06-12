@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
-
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
@@ -179,7 +179,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         get() = metrics.font
 
       init {
-        val font = UIUtil.getFontWithFallback(familyName, Font.PLAIN, size)
+        val font = StartupUiUtil.getFontWithFallback(familyName, Font.PLAIN, size)
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
         // We assume this will be a better approximation to a real line height for a given font
@@ -197,10 +197,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val editorContext = FontInfo.getFontRenderContext(editor.contentComponent)
         return FontRenderContext(editorContext.transform,
                                  AntialiasingType.getKeyForCurrentScope(false),
-                                 if (editor is EditorImpl)
-                                   editor.myFractionalMetricsHintValue
-                                 else
-                                   RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+                                 UISettings.editorFractionalMetricsHint)
       }
     }
 

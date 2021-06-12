@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -27,45 +27,44 @@ import javax.swing.*;
 
 final class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
-  @Nullable
-  public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof PsiDirectory) {
-      final PsiDirectory psiDirectory = (PsiDirectory)element;
-      final VirtualFile vFile = psiDirectory.getVirtualFile();
-      final Project project = psiDirectory.getProject();
-
-      SourceFolder sourceFolder;
-      Icon symbolIcon;
-      if (vFile.getParent() == null && vFile.getFileSystem() instanceof ArchiveFileSystem) {
-        symbolIcon = PlatformIcons.JAR_ICON;
-      }
-      else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {
-        Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
-        symbolIcon = module == null || module.isDisposed() ? PlatformIcons.CONTENT_ROOT_ICON_CLOSED : ModuleType.get(module).getIcon();
-      }
-      else if (ProjectRootsUtil.findUnloadedModuleByContentRoot(vFile, project) != null) {
-        symbolIcon = AllIcons.Modules.UnloadedModule;
-      }
-      else if ((sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project)) != null) {
-        symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
-      }
-      else if (JrtFileSystem.isModuleRoot(vFile)) {
-        symbolIcon = AllIcons.Nodes.Module;
-      }
-      else if (isValidPackage(psiDirectory)) {
-        symbolIcon = IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.PACKAGE_ICON);
-      }
-      else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
-        symbolIcon = AllIcons.Modules.ExcludeRoot;
-      }
-      else {
-        symbolIcon = PlatformIcons.FOLDER_ICON;
-      }
-
-      return IconManager.getInstance().createLayeredIcon(element, symbolIcon, 0);
+  public @Nullable Icon getIcon(@NotNull PsiElement element, int flags) {
+    if (!(element instanceof PsiDirectory)) {
+      return null;
     }
 
-    return null;
+    final PsiDirectory psiDirectory = (PsiDirectory)element;
+    final VirtualFile vFile = psiDirectory.getVirtualFile();
+    final Project project = psiDirectory.getProject();
+
+    SourceFolder sourceFolder;
+    Icon symbolIcon;
+    if (vFile.getParent() == null && vFile.getFileSystem() instanceof ArchiveFileSystem) {
+      symbolIcon = PlatformIcons.JAR_ICON;
+    }
+    else if (ProjectRootsUtil.isModuleContentRoot(vFile, project)) {
+      Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
+      symbolIcon = module == null || module.isDisposed() ? PlatformIcons.CONTENT_ROOT_ICON_CLOSED : ModuleType.get(module).getIcon();
+    }
+    else if (ProjectRootsUtil.findUnloadedModuleByContentRoot(vFile, project) != null) {
+      symbolIcon = AllIcons.Modules.UnloadedModule;
+    }
+    else if ((sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project)) != null) {
+      symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
+    }
+    else if (JrtFileSystem.isModuleRoot(vFile)) {
+      symbolIcon = AllIcons.Nodes.Module;
+    }
+    else if (isValidPackage(psiDirectory)) {
+      IconManager iconManager = IconManager.getInstance();
+      symbolIcon = iconManager.createLayeredIcon(element, iconManager.tooltipOnlyIfComposite(PlatformIcons.PACKAGE_ICON), 0);
+    }
+    else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
+      symbolIcon = AllIcons.Modules.ExcludeRoot;
+    }
+    else {
+      symbolIcon = PlatformIcons.FOLDER_ICON;
+    }
+    return IconManager.getInstance().createLayeredIcon(element, symbolIcon, 0);
   }
 
   /**

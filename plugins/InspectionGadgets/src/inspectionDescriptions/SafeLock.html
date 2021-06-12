@@ -1,10 +1,17 @@
 <html>
 <body>
-Reports any <b>java.util.concurrent.locks.Lock</b> resource which is not acquired in front of a
-<b>try</b> block and unlocked in the corresponding <b>finally</b> block. Such resources may
+Reports any <code>java.util.concurrent.locks.Lock</code> resource which is not acquired in front of a
+<code>try</code> block or not unlocked in the corresponding <code>finally</code> block. Such resources may
 be inadvertently leaked if an exception is thrown before the resource is closed.
-<!-- tooltip end -->
-<p>
-
+<p>Example:</p>
+<pre>
+  lock.lock(); // will be reported since finally block is missing
+  try {
+    doSmthWithLock();
+  } catch (IOException e) {
+    throw new UncheckedIOException(e);
+  }
+  lock.unlock();
+</pre>
 </body>
 </html>

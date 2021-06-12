@@ -40,7 +40,6 @@ public class PatchSpec {
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
-  private boolean myRenameRootDirectory;
 
   private static final long DEFAULT_LARGE_FILE_CUTOFF = 50000000L;
 
@@ -217,14 +216,5 @@ public class PatchSpec {
 
   public long getLargeFileCutoff() {
     return myLargeFileCutoff;
-  }
-
-  public boolean isRenameRootDirectory() {
-    return myRenameRootDirectory;
-  }
-
-  public PatchSpec setRenameRootDirectory(boolean renameRootDirectory) {
-    myRenameRootDirectory = renameRootDirectory;
-    return this;
   }
 }

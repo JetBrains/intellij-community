@@ -98,6 +98,8 @@ object MergeConflictResolveUtil {
     }
   }
 
+  internal fun hasActiveMergeWindow(file: VirtualFile) = file.getUserData(ACTIVE_MERGE_WINDOW) != null
+
   private fun focusActiveMergeWindow(file: VirtualFile?): Boolean {
     val wrapper = file?.getUserData(ACTIVE_MERGE_WINDOW) ?: return false
     UIUtil.toFront(wrapper.window)

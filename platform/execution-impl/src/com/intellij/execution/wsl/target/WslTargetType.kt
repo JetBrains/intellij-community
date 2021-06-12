@@ -5,6 +5,7 @@ import com.intellij.execution.target.*
 import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
 import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep
 import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
+import com.intellij.execution.wsl.ui.WslPathBrowser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.diagnostic.logger
@@ -43,8 +44,8 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     return listOf(WslTargetIntrospectionStep(model), WslTargetLanguageStep(model))
   }
 
-  override fun createEnvironmentFactory(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentFactory {
-    return WslTargetEnvironmentFactory(config)
+  override fun createEnvironmentRequest(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
+    return WslTargetEnvironmentRequest(config)
   }
 
   override fun createConfigurable(project: Project,

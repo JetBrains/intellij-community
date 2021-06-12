@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +17,7 @@ public class SliceToolwindowSettings implements PersistentStateComponent<SliceTo
   private boolean isAutoScroll;
 
   public static SliceToolwindowSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SliceToolwindowSettings.class);
+    return project.getService(SliceToolwindowSettings.class);
   }
   public boolean isPreview() {
     return isPreview;

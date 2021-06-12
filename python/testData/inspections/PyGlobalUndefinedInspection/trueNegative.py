@@ -3,6 +3,6 @@ bar = 1
 
 def foo():
     global bar
-    print bar
+    print(bar)
 
 foo()

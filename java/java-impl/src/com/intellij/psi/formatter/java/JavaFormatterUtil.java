@@ -3,7 +3,9 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -67,5 +69,40 @@ public final class JavaFormatterUtil {
       default:
         return WrapType.CHOP_DOWN_IF_LONG;
     }
+  }
+
+  /**
+   * Check if the node is a start of call chunk.The call chunk is either {@code .call()} or {@code call().}. The dot is added to the end
+   * if there's a line break after it and "keep line breaks" is on.
+   *
+   * @param settings The current settings
+   * @param node The node to check.
+   * @return True for call chunk start.
+   */
+  static boolean isStartOfCallChunk(@NotNull CommonCodeStyleSettings settings, @NotNull ASTNode node) {
+    if (node.getElementType() == JavaTokenType.DOT) {
+      if (settings.KEEP_LINE_BREAKS) {
+        ASTNode next = node.getTreeNext();
+        if (next != null && next.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST && next.getTextLength() == 0) {
+          next = next.getTreeNext();
+        }
+        return !(next != null && next.getPsi() instanceof PsiWhiteSpace && next.textContains('\n'));
+      }
+      return true;
+    }
+    else if (node.getElementType() == JavaTokenType.IDENTIFIER) {
+      if (settings.KEEP_LINE_BREAKS) {
+        ASTNode prev = node.getTreePrev();
+        if (prev instanceof PsiWhiteSpace && prev.textContains('\n')) {
+          prev = prev.getTreePrev();
+          if (prev != null && prev.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST && prev.getTextLength() == 0) {
+            prev = prev.getTreePrev();
+          }
+          return prev != null && prev.getElementType() == JavaTokenType.DOT;
+        }
+      }
+      return false;
+    }
+    return false;
   }
 }

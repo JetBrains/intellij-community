@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -54,6 +54,12 @@ public final class MavenServerManager implements Disposable {
   private final Map<String, MavenServerConnector> myMultimoduleDirToConnectorMap = new HashMap<>();
   private File eventListenerJar;
 
+  @ApiStatus.Internal
+  public void unregisterConnector(MavenServerConnector serverConnector) {
+    synchronized (myMultimoduleDirToConnectorMap) {
+      myMultimoduleDirToConnectorMap.values().remove(serverConnector);
+    }
+  }
 
   public Collection<MavenServerConnector> getAllConnectors() {
     Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -220,7 +226,7 @@ public final class MavenServerManager implements Disposable {
 
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
-    String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
+    String jdkForImporterName = settings.importingSettings.getJdkForImporter();
     try {
       return MavenUtil.getJdk(project, jdkForImporterName);
     }

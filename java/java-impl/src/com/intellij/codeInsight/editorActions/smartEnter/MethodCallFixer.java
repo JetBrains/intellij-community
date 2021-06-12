@@ -15,18 +15,20 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodCallFixer implements Fixer {
   @Override
@@ -41,40 +43,40 @@ public class MethodCallFixer implements Fixer {
     int caret = editor.getCaretModel().getOffset();
     if (argList != null && !hasRParenth(argList)) {
       PsiCallExpression innermostCall = PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret - 1, PsiCallExpression.class, false);
+
+      while (innermostCall != null && innermostCall != psiElement && hasRParenth(innermostCall.getArgumentList())
+        && innermostCall.resolveMethodGenerics().isValidResult()) {
+        innermostCall = PsiTreeUtil.getParentOfType(innermostCall, PsiCallExpression.class);
+      }
       if (innermostCall == null) return;
 
       argList = innermostCall.getArgumentList();
       if (argList == null) return;
 
-      int endOffset = -1;
-      PsiElement child = argList.getFirstChild();
-      while (child != null) {
-        if (child instanceof PsiErrorElement) {
-          final PsiErrorElement errorElement = (PsiErrorElement)child;
-          if (errorElement.getErrorDescription().contains("')'")) {
-            endOffset = errorElement.getTextRange().getStartOffset();
-            break;
-          }
-        }
-        child = child.getNextSibling();
-      }
+      int endOffset = getMissingParenthesisOffset(argList);
 
+      TextRange argListRange = argList.getTextRange();
       if (endOffset == -1) {
-        endOffset = argList.getTextRange().getEndOffset();
+        endOffset = argListRange.getEndOffset();
       }
 
       PsiExpression[] args = argList.getExpressions();
       if (args.length > 0 &&
           startLine(editor, argList) != startLine(editor, args[0]) &&
           caret < args[0].getTextRange().getStartOffset()) {
-        endOffset = argList.getTextRange().getStartOffset() + 1;
+        endOffset = argListRange.getStartOffset() + 1;
       }
 
-      if (!DumbService.isDumb(argList.getProject())) {
-        int caretArg = ContainerUtil.indexOf(Arrays.asList(args), arg -> arg.getTextRange().containsOffset(caret));
-        Integer argCount = getMinimalParameterCount(innermostCall);
-        if (argCount != null && argCount > 0 && argCount < args.length) {
-          endOffset = Math.min(endOffset, args[Math.max(argCount - 1, caretArg)].getTextRange().getEndOffset());
+      if (args.length > 0 && !DumbService.isDumb(argList.getProject())) {
+        int caretArg = getCaretArgIndex(caret, argListRange, args);
+
+        LongRangeSet innerCounts = getPossibleParameterCounts(innermostCall).meet(LongRangeSet.range(caretArg, args.length));
+        if (!innerCounts.isEmpty()) {
+          innerCounts = tryFilterByOuterCall(innermostCall, args, innerCounts);
+          int minArg = (int)innerCounts.min();
+          if (minArg > 0) {
+            endOffset = Math.min(endOffset, args[minArg - 1].getTextRange().getEndOffset());
+          }
         }
       }
 
@@ -83,21 +85,72 @@ public class MethodCallFixer implements Fixer {
     }
   }
 
+  private static int getCaretArgIndex(int caret, TextRange argListRange, PsiExpression[] args) {
+    int caretArg = 0;
+    while (caretArg < args.length) {
+      if (args[caretArg].getStartOffsetInParent() + argListRange.getStartOffset() > caret) {
+        break;
+      }
+      caretArg++;
+    }
+    return caretArg;
+  }
+
+  private static int getMissingParenthesisOffset(PsiExpressionList argList) {
+    PsiElement child = argList.getFirstChild();
+    while (child != null) {
+      if (child instanceof PsiErrorElement) {
+        final PsiErrorElement errorElement = (PsiErrorElement)child;
+        if (errorElement.getErrorDescription().contains("')'")) {
+          return errorElement.getTextRange().getStartOffset();
+        }
+      }
+      child = child.getNextSibling();
+    }
+    return -1;
+  }
+
   private static boolean hasRParenth(PsiExpressionList args) {
+    if (args == null) return false;
     PsiElement parenth = args.getLastChild();
     return parenth != null && ")".equals(parenth.getText());
   }
 
-  @Nullable
-  private static Integer getMinimalParameterCount(PsiCallExpression call) {
-    int paramCount = Integer.MAX_VALUE;
-    for (CandidateInfo candidate : PsiResolveHelper.SERVICE.getInstance(call.getProject()).getReferencedMethodCandidates(call, false)) {
-      PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod && !((PsiMethod)element).isVarArgs()) {
-        paramCount = Math.min(paramCount, ((PsiMethod)element).getParameterList().getParametersCount());
+  private static @NotNull LongRangeSet tryFilterByOuterCall(@NotNull PsiCallExpression innermostCall,
+                                                            @NotNull PsiExpression @NotNull [] args,
+                                                            @NotNull LongRangeSet innerCounts) {
+    PsiExpressionList outerArgList = ObjectUtils.tryCast(innermostCall.getParent(), PsiExpressionList.class);
+    if (outerArgList != null) {
+      PsiExpression[] outerArgs = outerArgList.getExpressions();
+      if (innermostCall == ArrayUtil.getLastElement(outerArgs)) {
+        PsiCallExpression outerCall = ObjectUtils.tryCast(outerArgList.getParent(), PsiCallExpression.class);
+        if (outerCall != null) {
+          LongRangeSet outerCounts = getPossibleParameterCounts(outerCall);
+          if (!outerCounts.isEmpty()) {
+            LongRangeSet allowedByOuter =
+              LongRangeSet.point(args.length).minus(
+                outerCounts.minus(LongRangeSet.point(outerArgs.length), LongRangeType.INT32), LongRangeType.INT32);
+            LongRangeSet innerCountsFiltered = innerCounts.meet(allowedByOuter);
+            if (!innerCountsFiltered.isEmpty()) {
+              return innerCountsFiltered;
+            }
+          }
+        }
       }
     }
-    return paramCount == Integer.MAX_VALUE ? null : paramCount;
+    return innerCounts;
+  }
+
+  private static @NotNull LongRangeSet getPossibleParameterCounts(@NotNull PsiCallExpression call) {
+    LongRangeSet counts = LongRangeSet.empty();
+    for (CandidateInfo candidate : PsiResolveHelper.SERVICE.getInstance(call.getProject()).getReferencedMethodCandidates(call, false)) {
+      PsiMethod element = ObjectUtils.tryCast(candidate.getElement(), PsiMethod.class);
+      if (element != null) {
+        int count = element.getParameterList().getParametersCount();
+        counts = counts.join(element.isVarArgs() ? LongRangeSet.range(count - 1, Integer.MAX_VALUE) : LongRangeSet.point(count));
+      }
+    }
+    return counts;
   }
 
   private static int startLine(Editor editor, PsiElement psiElement) {

@@ -19,7 +19,6 @@ public interface MarkdownHtmlPanel extends Disposable {
   interface ScrollListener extends EventListener {
     void onScroll(int offset);
   }
-
   @SuppressWarnings("unused")
   void addScrollListener(ScrollListener listener);
 

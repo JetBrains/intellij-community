@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -54,6 +54,8 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+  static final DataKey<ProblemsViewPanel> SELECTED = DataKey.create("ProblemsView/SelectedPanel");
+
   protected final ClientId myClientId = ClientId.getCurrent();
 
   private final Project myProject;
@@ -123,6 +125,18 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
       updatePreview();
     }
   };
+  private final Option myGroupByToolId = new Option() {
+    @Override
+    public boolean isSelected() {
+      return myState.getGroupByToolId();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      myState.setGroupByToolId(selected);
+      myTreeModel.structureChanged(null);
+    }
+  };
   @SuppressWarnings("unused")
   private final Option mySortFoldersFirst = new Option() {
     @Override
@@ -181,6 +195,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.Toolbar");
     myToolbar = ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
+    myToolbar.setTargetComponent(myTree);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
     UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
 
@@ -201,6 +216,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
+    if (SELECTED.is(dataId)) return this;
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
     if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
@@ -210,6 +226,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     }
     Node node = getSelectedNode();
     if (node != null) {
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) return node;
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -379,6 +396,10 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   @Nullable Option getShowPreview() {
     return myShowPreview;
+  }
+
+  @Nullable Option getGroupByToolId() {
+    return this instanceof HighlightingPanel ? myGroupByToolId : null;
   }
 
   @Nullable Option getSortFoldersFirst() {

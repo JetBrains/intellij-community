@@ -24,7 +24,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
       val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-        ActionUtil.performActionDumbAware(action, event)
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
       }
     }
 

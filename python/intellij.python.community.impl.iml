@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/pluginResources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/setup-test-environment/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

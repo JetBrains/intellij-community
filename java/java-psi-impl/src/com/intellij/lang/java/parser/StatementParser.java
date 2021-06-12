@@ -265,47 +265,9 @@ public class StatementParser {
   }
 
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
-    if (!(tokenType == JavaTokenType.IDENTIFIER &&
-        PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14))) {
-      return false;
-    }
-    IElementType next = builder.lookAhead(1);
-    if (YIELD_EXPR_INDICATOR_TOKENS.contains(next)) return false;
-    // yield () -> 10; is valid
-    // yield(); is not
-    if (isSemiAfterBalancedParensNext(builder)) return false;
-    return !JavaTokenType.PLUSPLUS.equals(next) && !JavaTokenType.MINUSMINUS.equals(next) ||
-           !JavaTokenType.SEMICOLON.equals(builder.lookAhead(2));
-  }
-
-  private static boolean isSemiAfterBalancedParensNext(@NotNull PsiBuilder builder) {
-    PsiBuilder.Marker maybeYieldCall = builder.mark();
-    boolean result = isSemiAfterBalancedParensNextInternal(builder);
-    maybeYieldCall.rollbackTo();
-    return result;
-  }
-
-  private static boolean isSemiAfterBalancedParensNextInternal(@NotNull PsiBuilder builder) {
-    builder.advanceLexer(); // skip yield ref
-    if (!expect(builder, JavaTokenType.LPARENTH)) return false;
-    int unbalancedLpars = 1;
-    while (true) {
-      final IElementType token = builder.getTokenType();
-      if (token == null) return false;
-      if (token == JavaTokenType.RPARENTH) {
-        unbalancedLpars--;
-      }
-      if (token == JavaTokenType.LPARENTH) {
-        unbalancedLpars++;
-      }
-      if (unbalancedLpars == 0) {
-        break;
-      }
-      builder.advanceLexer();
-    }
-    builder.advanceLexer();
-    return builder.getTokenType() == JavaTokenType.SEMICOLON;
+    return tokenType == JavaTokenType.IDENTIFIER &&
+           PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+           getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14);
   }
 
   private static void skipQualifiedName(PsiBuilder builder) {

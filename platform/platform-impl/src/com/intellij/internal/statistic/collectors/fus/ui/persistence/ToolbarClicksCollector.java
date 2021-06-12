@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class ToolbarClicksCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("toolbar", 58);
+  private static final EventLogGroup GROUP = new EventLogGroup("toolbar", 60);
   private static final VarargEventId CLICKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, "clicked");
 
   @Override

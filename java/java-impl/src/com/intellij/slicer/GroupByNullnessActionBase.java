@@ -19,9 +19,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class GroupByNullnessActionBase extends AnAction {
+public abstract class GroupByNullnessActionBase extends AnAction implements UpdateInBackground {
   protected final SliceTreeBuilder myTreeBuilder;
 
   protected GroupByNullnessActionBase(@NotNull SliceTreeBuilder treeBuilder) {

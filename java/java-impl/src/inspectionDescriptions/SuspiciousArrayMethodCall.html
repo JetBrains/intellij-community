@@ -1,7 +1,13 @@
 <html>
 <body>
-Reports when a non-generic-array manipulation method like <code>Arrays.fill()</code> is called with mismatched argument types.
-Such a call will not do anything useful and is likely a mistake.
+Reports when a non-generic-array manipulation method like <code>Arrays.fill()</code> is called with mismatched argument types. Such a call
+will not do anything useful and is likely a mistake.
+<p>Example:</p>
+<pre>
+  int foo(String[] strings) {
+    return Arrays.binarySearch(strings, 1);
+  }
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>

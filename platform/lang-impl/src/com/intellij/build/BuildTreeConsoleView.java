@@ -818,7 +818,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       List<Navigatable> navigatable = each.getNavigatables();
       navigatables.addAll(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   private ExecutionNode[] getSelectedNodes() {
@@ -932,8 +932,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       consoleComponent.setFocusable(true);
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
       myConsoleToolbarActionGroup = new DefaultActionGroup();
+      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
       myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
-      showTextConsoleToolbarActions();
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
         TreePath path = e.getPath();

@@ -1,7 +1,28 @@
 <html>
 <body>
 Reports copy constructors that don't copy all fields in the class.
-Fields with the modifier <b>transient</b> are considered unnecessary to copy.
+Fields with the <code>transient</code> modifier are considered unnecessary to copy. 
+Same goes for <code>final</code> fields with initializers.
+<p>Example:</p>
+<pre>
+  class Point {
+
+    private int x;
+    private int y;
+
+    Point(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    Point(Point other) {
+    }
+  }
+</pre>
+<p>
+In this example inspection will report that fields <code>x</code> and <code>y</code>
+are not initialized in <code>Point</code> copy constructor.
+<!-- tooltip end -->
 <p><small>New in 2018.1</small>
 </body>
 </html>

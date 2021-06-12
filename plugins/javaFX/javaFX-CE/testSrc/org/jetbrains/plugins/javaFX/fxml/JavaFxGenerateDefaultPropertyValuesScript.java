@@ -137,7 +137,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     final Map<String, Map<String, String>> declaredProperties = new TreeMap<>();
     final Map<String, Map<String, Set<String>>> overriddenProperties = new TreeMap<>();
     final Map<String, String> superClasses = new TreeMap<>();
-    try (final ZipInputStream zip = new ZipInputStream(new FileInputStream(new File(BINARIES_PATH)))) {
+    try (final ZipInputStream zip = new ZipInputStream(new FileInputStream(BINARIES_PATH))) {
       for (ZipEntry ze = zip.getNextEntry(); ze != null; ze = zip.getNextEntry()) {
         final String entryName = ze.getName();
         if (!ze.isDirectory() && entryName.endsWith(".class") && entryName.startsWith("javafx")) {
@@ -487,7 +487,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     Pattern propertyDecl = Pattern.compile("^.*Property\\S*\\s+(\\w+)\\s*=\\s*(.+)[;{].*$");
 
     Map<String, String> props = new TreeMap<>();
-    try (final ZipInputStream zip = new ZipInputStream(new FileInputStream(new File(SOURCE_PATH)))) {
+    try (final ZipInputStream zip = new ZipInputStream(new FileInputStream(SOURCE_PATH))) {
       byte[] buffer = new byte[1 << 16];
       for (ZipEntry ze = zip.getNextEntry(); ze != null; ze = zip.getNextEntry()) {
         final String eName = ze.getName();

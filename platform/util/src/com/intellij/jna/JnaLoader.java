@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.system.CpuArch;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public final class JnaLoader {
         ourJnaLoaded = Boolean.TRUE;
       }
       catch (Throwable t) {
-        logger.warn("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
+        logger.warn("Unable to load JNA library (OS: " + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION + ")", t);
       }
     }
   }
@@ -42,5 +42,7 @@ public final class JnaLoader {
    * @see Native#register
    * @see Native#load
    */
-  public static final boolean supportsDirectMapping = !(SystemInfo.isMac && CpuArch.isArm64());
+  public static boolean isSupportsDirectMapping() {
+    return !(SystemInfoRt.isMac && CpuArch.isArm64());
+  }
 }

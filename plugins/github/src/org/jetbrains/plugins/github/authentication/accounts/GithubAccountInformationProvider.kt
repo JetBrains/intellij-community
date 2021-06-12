@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.google.common.cache.CacheBuilder
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -15,11 +17,24 @@ import java.util.concurrent.TimeUnit
  * Loads the account information or provides it from cache
  * TODO: more abstraction
  */
-class GithubAccountInformationProvider {
+class GithubAccountInformationProvider : Disposable {
 
   private val informationCache = CacheBuilder.newBuilder()
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GithubAccount, GithubAuthenticatedUser>()
+
+  init {
+    service<GHAccountManager>().addListener(this, object : AccountsListener<GithubAccount> {
+      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+        val cache = getInstance().informationCache
+        for (account in (old - new)) {
+          cache.invalidate(account)
+        }
+      }
+
+      override fun onAccountCredentialsChanged(account: GithubAccount) = getInstance().informationCache.invalidate(account)
+    })
+  }
 
   @RequiresBackgroundThread
   @Throws(IOException::class)
@@ -34,9 +49,7 @@ class GithubAccountInformationProvider {
     }
   }
 
-  class AccountTokenListener : AccountTokenChangedListener {
-    override fun tokenChanged(account: GithubAccount) {
-      getInstance().informationCache.invalidate(account)
-    }
+  override fun dispose() {
+    informationCache.invalidateAll()
   }
 }

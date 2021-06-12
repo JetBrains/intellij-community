@@ -28,7 +28,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NonNls;
@@ -162,7 +162,12 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }
 
     // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ActionManager.getInstance());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ActionManager.getInstance();
+      if (SystemInfoRt.isMac) {
+        TouchbarSupport.initialize();
+      }
+    });
 
     return () -> {
       if (ourInstance != null) {
@@ -183,7 +188,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       IdeMenuBar.installAppMenuIfNeeded(jFrame);
       ourInstance = frame;
       if (SystemInfoRt.isMac) {
-        ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
+        ourTouchbar = TouchbarSupport.showDialogButtons(frame.getComponent());
       }
     };
   }

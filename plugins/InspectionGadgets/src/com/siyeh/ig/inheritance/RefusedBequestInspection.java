@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Bas Leijdekkers
@@ -41,16 +39,13 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), this, "onlyReportWhenAnnotated");
-    final MultipleCheckboxOptionsPanel checkBoxPanel = new MultipleCheckboxOptionsPanel(this);
-    checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
-    checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
 
-    panel.add(checkBox1, BorderLayout.NORTH);
-    panel.add(annotationsListControl, BorderLayout.CENTER);
-    panel.add(checkBoxPanel, BorderLayout.SOUTH);
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), "onlyReportWhenAnnotated");
+    panel.add(annotationsListControl, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
 
     return panel;
   }
@@ -205,7 +200,7 @@ public class RefusedBequestInspection extends BaseInspection {
 
     private boolean isTrivial(PsiMethod method) {
       final PsiElement element = method.getNavigationElement();
-      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, true);
+      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, s -> s instanceof PsiThrowStatement);
     }
 
     private boolean isJUnitSetUpOrTearDown(PsiMethod method) {

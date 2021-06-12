@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -27,7 +28,7 @@ import static org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets.LIST_MARK
 import static org.intellij.plugins.markdown.structureView.MarkdownStructureColors.MARKDOWN_HEADER;
 import static org.intellij.plugins.markdown.structureView.MarkdownStructureColors.MARKDOWN_HEADER_BOLD;
 
-public class MarkdownHeaderImpl extends MarkdownStubBasedPsiElementBase<MarkdownStubElement> {
+public class MarkdownHeaderImpl extends MarkdownStubBasedPsiElementBase<MarkdownStubElement> implements PsiExternalReferenceHost {
   public MarkdownHeaderImpl(@NotNull ASTNode node) {
     super(node);
   }

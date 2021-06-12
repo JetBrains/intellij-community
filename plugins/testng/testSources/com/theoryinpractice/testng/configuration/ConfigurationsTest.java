@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
@@ -162,7 +163,7 @@ public class ConfigurationsTest {
     dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(psiClass));
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
 
-    final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext));
+    final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN));
     assert fromContext != null;
     final RunnerAndConfigurationSettings config = fromContext.getConfigurationSettings();
     final RunConfiguration runConfiguration = config.getConfiguration();

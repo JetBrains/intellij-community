@@ -49,7 +49,8 @@ final class RunDashboardActionUtils {
       if (item instanceof RunDashboardServiceViewContributor || item instanceof GroupingNode) {
         List<Object> itemSubPath = new ArrayList<>(valueSubPath);
         itemSubPath.add(item);
-        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getChildrenSafe(e, itemSubPath);
+        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
+          .getChildrenSafe(e, itemSubPath, RunDashboardServiceViewContributor.class);
         if (!getLeaves(project, e, children, itemSubPath, result)) {
           return false;
         }

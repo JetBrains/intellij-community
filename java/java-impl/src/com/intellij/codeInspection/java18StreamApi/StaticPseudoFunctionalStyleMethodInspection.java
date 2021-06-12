@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.util.ui.UI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +42,14 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return myOptions.createPanel();
+    final var panel = new InspectionOptionsPanel();
+    panel.addGrowing(UI.PanelFactory
+                       .panel(myOptions.createPanel())
+                       .withLabel(JavaBundle.message("inspection.static.pseudo.functional.style.table.label"))
+                       .moveLabelOnTop()
+                       .resizeY(true)
+                       .createPanel());
+    return panel;
   }
 
   @NotNull

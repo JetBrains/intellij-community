@@ -1,5 +1,13 @@
 <html>
 <body>
-This inspection warns about Cython variables being referenced before declaration.
+<p>Reports Cython variables being referenced before declaration.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+cdef int c_x
+
+print(c_x, c_y)  # Variable 'c_y' is used before its declaration
+
+cdef int c_y = 0
+</pre>
 </body>
 </html>

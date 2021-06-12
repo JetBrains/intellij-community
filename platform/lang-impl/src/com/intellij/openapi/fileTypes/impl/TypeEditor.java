@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-class TypeEditor<T extends UserFileType<T>> extends DialogWrapper {
-  private final T myFileType;
-  private final SettingsEditor<T> myEditor;
+class TypeEditor extends DialogWrapper {
+  private final UserFileType<?> myFileType;
+  private final SettingsEditor<UserFileType<?>> myEditor;
 
-  TypeEditor(@NotNull Component parent, @NotNull T fileType, @NotNull @NlsContexts.DialogTitle String title) {
+  TypeEditor(@NotNull Component parent, @NotNull UserFileType<?> fileType, @NotNull @NlsContexts.DialogTitle String title) {
     super(parent, false);
     myFileType = fileType;
-    myEditor = fileType.getEditor();
+    myEditor = (SettingsEditor<UserFileType<?>>)fileType.getEditor();
     setTitle(title);
     init();
     Disposer.register(myDisposable, myEditor);

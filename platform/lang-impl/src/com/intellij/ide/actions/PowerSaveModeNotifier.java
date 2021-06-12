@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -38,17 +38,16 @@ public final class PowerSaveModeNotifier implements StartupActivity.DumbAware {
     Notification notification = POWER_SAVE_MODE.createNotification(
       IdeBundle.message("power.save.mode.on.notification.title"),
       IdeBundle.message("power.save.mode.on.notification.content"),
-      NotificationType.WARNING, null
-    );
+      NotificationType.WARNING);
 
-    notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
+    notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true);
         notification.expire();
       }
     });
-    notification.addAction(new NotificationAction(IdeBundle.messagePointer("power.save.mode.disable.action.title")) {
+    notification.addAction(new NotificationAction(IdeBundle.message("power.save.mode.disable.action.title")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         PowerSaveMode.setEnabled(false);

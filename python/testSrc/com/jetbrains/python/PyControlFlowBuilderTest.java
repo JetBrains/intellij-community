@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -11,8 +12,14 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.Nullable;
 
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   @Override
   public String getTestDataPath() {
@@ -20,7 +27,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private void doTest() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final ControlFlow flow = ControlFlowCache.getControlFlow((PyFile)myFile);
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -172,7 +179,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testQualifiedSelfReference() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
@@ -181,7 +188,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testSelf() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
@@ -190,7 +197,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testTryBreak() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final ControlFlow flow = ControlFlowCache.getControlFlow((PyFunction)((PyFile)myFile).getStatements().get(0));
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -312,7 +319,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private void doTestFirstStatement() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)((PyFile)myFile).getStatements().get(0));

@@ -215,19 +215,16 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     final PsiType type = initializerExpression.getType();
 
-    if (type != null && PsiUtil.isConstantExpression(initializerExpression)) {
-      if (type instanceof PsiPrimitiveType ||
-          PsiType.getJavaLangString(initializerExpression.getManager(), initializerExpression.getResolveScope()).equals(type)) {
-        return super.getParentClass(initializerExpression);
-      }
+    if (PsiUtil.isConstantExpression(initializerExpression) &&
+        (type instanceof PsiPrimitiveType || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+      return super.getParentClass(initializerExpression);
     }
 
     PsiElement parent = initializerExpression.getUserData(ElementToWorkOn.PARENT);
     if (parent == null) parent = initializerExpression;
     PsiClass aClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
     while (aClass != null) {
-      if (aClass.hasModifierProperty(PsiModifier.STATIC)) return aClass;
-      if (aClass.getParent() instanceof PsiJavaFile) return aClass;
+      if (LocalToFieldHandler.mayContainConstants(aClass)) return aClass;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
     return null;

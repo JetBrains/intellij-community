@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -54,7 +54,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static final Key<Boolean> DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST = Key.create("DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST");
 
   static boolean shouldCheckConsistency() {
-    return IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()
+    return IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()
            && !Boolean.TRUE.equals(TestModeFlags.get(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST));
   }
 
@@ -84,7 +84,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   static final class MyAsyncFileListener implements AsyncFileListener {
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       return ((VirtualFilePointerManagerImpl)getInstance()).prepareChange(events);
     }
   }
@@ -604,21 +604,21 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   synchronized void assertConsistency() {
-    if (IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
+    if (IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()) {
       myLocalRoot.checkConsistency();
       myTempRoot.checkConsistency();
     }
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     if (myCollectedEvents == null) {
       myCollectedEvents = collectEvents(events);
     }
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     after(events.size());
   }
 

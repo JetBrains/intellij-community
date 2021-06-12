@@ -91,8 +91,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   @Test
   public void testArtifactsReferenceImport() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .addPostfix(
           "idea.project.settings {",
           "  ideArtifacts {",
@@ -124,8 +124,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   @Test
   public void testModuleReferenceImport() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .addPostfix(
           "idea.project.settings {",
           "  ideArtifacts {",

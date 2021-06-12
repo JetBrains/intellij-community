@@ -1,31 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Represents an ID of a plugin. A full descriptor of the plugin may be obtained via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
+ * Represents an ID of a plugin. A full descriptor of the plugin may be obtained
+ * via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
  */
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = CollectionFactory.createSmallMemoryFootprintMap();
+  private static final ConcurrentHashMap<String, PluginId> registeredIds = new ConcurrentHashMap<>();
 
-  public static synchronized @NotNull PluginId getId(@NotNull @NonNls String idString) {
-    return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
+  public static @NotNull PluginId getId(@NotNull String idString) {
+    return registeredIds.computeIfAbsent(idString, PluginId::new);
   }
 
-  public static synchronized @Nullable PluginId findId(@NonNls String @NotNull ... idStrings) {
+  public static synchronized @Nullable PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
-      PluginId pluginId = ourRegisteredIds.get(idString);
+      PluginId pluginId = registeredIds.get(idString);
       if (pluginId != null) {
         return pluginId;
       }
@@ -33,36 +33,42 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
-  /**
-   * @deprecated Use {@link #getRegisteredIdList}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static synchronized @NotNull Map<String, PluginId> getRegisteredIds() {
-    return CollectionFactory.createSmallMemoryFootprintMap(ourRegisteredIds);
+  @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableSet()")
+  public static @NotNull Set<PluginId> getRegisteredIds() {
+    return Collections.unmodifiableSet(new HashSet<>(registeredIds.values()));
   }
 
-  public static synchronized @NotNull Collection<PluginId> getRegisteredIdList() {
-    return new ArrayList<>(ourRegisteredIds.values());
+  private final @NotNull String idString;
+
+  private PluginId(@NotNull String idString) {
+    this.idString = idString;
   }
 
-  private final String myIdString;
-
-  private PluginId(@NotNull @NonNls String idString) {
-    myIdString = idString;
+  public @NotNull String getIdString() {
+    return idString;
   }
 
-  public @NotNull @NonNls String getIdString() {
-    return myIdString;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PluginId)) return false;
+
+    PluginId pluginId = (PluginId)o;
+    return idString.equals(pluginId.idString);
+  }
+
+  @Override
+  public int hashCode() {
+    return idString.hashCode();
   }
 
   @Override
   public int compareTo(@NotNull PluginId o) {
-    return myIdString.compareTo(o.myIdString);
+    return idString.compareTo(o.idString);
   }
 
   @Override
   public String toString() {
-    return getIdString();
+    return idString;
   }
 }

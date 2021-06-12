@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +39,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
-    updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
+    updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
   }
 
   @Override

@@ -105,4 +105,10 @@ public final class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.METADATA);
   public static final TextAttributesKey ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES", DefaultLanguageHighlighterColors.METADATA);
+  
+  //visibility
+  public static final TextAttributesKey PUBLIC_REFERENCE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PUBLIC_REFERENCE", (TextAttributesKey)null);
+  public static final TextAttributesKey PROTECTED_REFERENCE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PROTECTED_REFERENCE", (TextAttributesKey)null);
+  public static final TextAttributesKey PACKAGE_PRIVATE_REFERENCE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PACKAGE_PRIVATE_REFERENCE", (TextAttributesKey)null);
+  public static final TextAttributesKey PRIVATE_REFERENCE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("PRIVATE_REFERENCE", (TextAttributesKey)null);
 }

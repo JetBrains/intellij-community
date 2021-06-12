@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,12 +11,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
-import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,62 +36,63 @@ public final class InspectionsResultUtil {
   private static final String ROOT = "root";
   public static final String AGGREGATE = "_aggregate";
 
-  public static void describeInspections(@NonNls Path outputPath, @Nullable String name, @NotNull InspectionProfile profile) throws IOException {
+  public static void describeInspections(@NonNls Path outputPath, @Nullable String name, @NotNull InspectionProfile profile)
+    throws IOException, XMLStreamException {
     Map<Pair<String, String>, Set<InspectionToolWrapper<?, ?>>> map = new HashMap<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : profile.getInspectionTools(null)) {
       String groupName = toolWrapper.getGroupDisplayName();
       String[] path = toolWrapper.getGroupPath();
       String groupPath = path.length == 0 ? "" : String.join("/", JBIterable.of(path).take(path.length - 1));
       Set<InspectionToolWrapper<?, ?>> groupInspections = map.computeIfAbsent(
-        Pair.create(groupName, groupPath), __ -> new HashSet<>());
+        new Pair<>(groupName, groupPath), __ -> new HashSet<>());
       groupInspections.add(toolWrapper);
     }
 
     try (Writer fw = new OutputStreamWriter(Files.newOutputStream(outputPath), StandardCharsets.UTF_8)) {
-      @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
-      xmlWriter.startNode(INSPECTIONS_NODE);
+      XMLStreamWriter xmlWriter = XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(fw);
+      xmlWriter.writeStartElement(INSPECTIONS_NODE);
       if (name != null) {
-        xmlWriter.addAttribute(PROFILE, name);
+        xmlWriter.writeAttribute(PROFILE, name);
       }
       List<String> inspectionsWithoutDescriptions = new ArrayList<>(1);
       for (Map.Entry<Pair<String, String>, Set<InspectionToolWrapper<?, ?>>> entry : map.entrySet()) {
-        xmlWriter.startNode("group");
+        xmlWriter.writeStartElement("group");
         String groupName = entry.getKey().getFirst();
         String groupPath = entry.getKey().getSecond();
-        xmlWriter.addAttribute("name", groupName);
-        xmlWriter.addAttribute("path", groupPath);
+        xmlWriter.writeAttribute("name", groupName);
+        xmlWriter.writeAttribute("path", groupPath);
         for (InspectionToolWrapper<?, ?> toolWrapper : entry.getValue()) {
-          xmlWriter.startNode("inspection");
+          xmlWriter.writeStartElement("inspection");
           final String shortName = toolWrapper.getShortName();
-          xmlWriter.addAttribute("shortName", shortName);
-          xmlWriter.addAttribute("defaultSeverity", toolWrapper.getDefaultLevel().getSeverity().getName());
-          xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
-          xmlWriter.addAttribute("enabled", Boolean.toString(isToolEnabled(profile, shortName)));
+          xmlWriter.writeAttribute("shortName", shortName);
+          xmlWriter.writeAttribute("defaultSeverity", toolWrapper.getDefaultLevel().getSeverity().getName());
+          xmlWriter.writeAttribute("displayName", toolWrapper.getDisplayName());
+          xmlWriter.writeAttribute("enabled", Boolean.toString(isToolEnabled(profile, shortName)));
           String language = toolWrapper.getLanguage();
           if (language != null) {
-            xmlWriter.addAttribute("language", language);
+            xmlWriter.writeAttribute("language", language);
           }
           InspectionEP extension = toolWrapper.getExtension();
           if (extension != null) {
             PluginDescriptor plugin = extension.getPluginDescriptor();
             String pluginId = plugin.getPluginId().getIdString();
-            xmlWriter.addAttribute("pluginId", pluginId);
-            xmlWriter.addAttribute("pluginVersion", plugin.getVersion());
+            xmlWriter.writeAttribute("pluginId", pluginId);
+            xmlWriter.writeAttribute("pluginVersion", plugin.getVersion());
           }
-          xmlWriter.addAttribute("isGlobalTool", String.valueOf(toolWrapper instanceof GlobalInspectionToolWrapper));
+          xmlWriter.writeAttribute("isGlobalTool", String.valueOf(toolWrapper instanceof GlobalInspectionToolWrapper));
 
           final String description = toolWrapper.loadDescription();
           if (description != null) {
-            xmlWriter.setValue(description);
+            xmlWriter.writeCharacters(description);
           }
           else {
             inspectionsWithoutDescriptions.add(shortName);
           }
-          xmlWriter.endNode();
+          xmlWriter.writeEndElement();
         }
-        xmlWriter.endNode();
+        xmlWriter.writeEndElement();
       }
-      xmlWriter.endNode();
+      xmlWriter.writeEndElement();
 
       if (!inspectionsWithoutDescriptions.isEmpty()) {
         LOG.error("Descriptions are missed for tools: " + StringUtil.join(inspectionsWithoutDescriptions, ", "));
@@ -124,7 +127,7 @@ public final class InspectionsResultUtil {
   public static void writeInspectionResult(@NotNull Project project, @NotNull String shortName,
                                            @NotNull Collection<? extends InspectionToolWrapper<?, ?>> wrappers,
                                            @NotNull Path outputDirectory,
-                                           @NotNull Function<? super InspectionToolWrapper, ? extends InspectionToolResultExporter> f) throws IOException {
+                                           @NotNull Function<? super InspectionToolWrapper<?, ?>, ? extends InspectionToolResultExporter> f) throws IOException {
     //dummy entry points tool
     if (wrappers.isEmpty()) return;
     try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName,

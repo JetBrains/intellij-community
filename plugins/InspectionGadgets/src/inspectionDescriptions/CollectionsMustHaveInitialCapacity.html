@@ -1,8 +1,15 @@
 <html>
 <body>
-Reports any attempt to instantiate a new <b>Collection</b> object without specifying
+Reports any attempt to instantiate a new <code>Collection</code> object without specifying
 an initial capacity. If no initial capacity is specified, a default capacity is used, which will rarely be optimal. Failing
 to specify initial capacities for collections may result in performance issues, if space needs to be reallocated and
 memory copied when capacity is exceeded. This inspection checks allocations of the classes which are listed in inspection settings.
+<p>Example</p>
+<pre>
+  new HashMap&lt;String, String&gt;();
+</pre>
+<!-- tooltip end -->
+<p>Use the list below to specify collection classes that should be checked.</p>
+<p>Use the checkbox below to ignore field initializers.</p>
 </body>
 </html>

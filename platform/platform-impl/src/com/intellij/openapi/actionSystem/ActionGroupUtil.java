@@ -28,13 +28,8 @@ public final class ActionGroupUtil {
   public static JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
                                                                 @NotNull AnActionEvent e) {
     UpdateSession updater = Utils.getOrCreateUpdateSession(e);
-    return JBIterable.from(updater.children(actionGroup))
+    return JBIterable.from(updater.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
   }
 
-  @Deprecated
-  public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
-                                                  @NotNull AnActionEvent e) {
-    return Utils.getOrCreateUpdateSession(e).presentation(action).isVisible();
-  }
 }

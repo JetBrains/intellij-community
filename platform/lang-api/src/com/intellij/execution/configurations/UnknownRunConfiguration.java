@@ -8,8 +8,8 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
+import com.intellij.ide.plugins.advertiser.FeaturePluginData;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -32,8 +32,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   private static final AtomicInteger myUniqueName = new AtomicInteger(1);
   private boolean myDoNotStore;
@@ -74,7 +73,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -128,13 +127,14 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
                                               "You should instead use the Gradle run configuration for your unit tests. " +
                                               "You can find your existing configurations at &lt;my-app&gt;/.idea/workspace.xml. " +
                                               "<a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
-      PluginFeatureService.FeaturePluginData plugin =
-        PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, typeId);
+      FeaturePluginData plugin = PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID,
+                                                                                        typeId);
       if (plugin != null) {
         RuntimeConfigurationError err = new RuntimeConfigurationError(
           LangBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
         err.setQuickFix(() -> {
-          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, PluginId.getId(plugin.getPluginId()));
+          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null,
+                                                                                         plugin.getPluginData().getPluginIdString());
         });
         throw err;
       }

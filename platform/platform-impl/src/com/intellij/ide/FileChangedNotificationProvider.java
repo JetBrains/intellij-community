@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -55,7 +54,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
           return;
         }
@@ -95,8 +94,8 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
       if (fs instanceof LocalFileSystem) {
         FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
         if (attributes == null || file.getTimeStamp() != attributes.lastModified || file.getLength() != attributes.length) {
-          LogUtil.debug(LOG, "%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes);
-          return createPanel(file, project);
+          if (LOG.isDebugEnabled()) LOG.debug(String.format("%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes));
+          return createPanel(file, fileEditor, project);
         }
       }
     }
@@ -105,8 +104,8 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull Project project) {
-    EditorNotificationPanel panel = new EditorNotificationPanel();
+  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(IdeBundle.message("file.changed.externally.message"));
     panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {
       if (!project.isDisposed()) {

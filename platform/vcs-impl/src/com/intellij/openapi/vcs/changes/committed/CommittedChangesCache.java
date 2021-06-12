@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -41,9 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-/**
- * @author yole
- */
+
 @Service
 @State(
   name = "CommittedChangesCache",
@@ -66,8 +64,8 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
 
-  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
-                                                                                    CommittedChangesListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>(CommittedChangesListener.class, Topic.BroadcastDirection.NONE);
 
   public static CommittedChangesCache getInstance(Project project) {
     return project.getService(CommittedChangesCache.class);

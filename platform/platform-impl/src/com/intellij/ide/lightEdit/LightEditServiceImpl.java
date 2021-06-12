@@ -2,9 +2,12 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.actions.NextTabAction;
+import com.intellij.ide.actions.PreviousTabAction;
 import com.intellij.ide.lightEdit.project.LightEditProjectManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -512,5 +515,15 @@ public final class LightEditServiceImpl implements LightEditService,
         }
       }
     }
+  }
+
+  @Override
+  public boolean isTabNavigationAvailable(@NotNull AnAction navigationAction) {
+    return getEditPanel().getTabs().isTabNavigationAvailable(navigationAction);
+  }
+
+  @Override
+  public void navigateToTab(@NotNull AnAction navigationAction) {
+    getEditPanel().getTabs().navigateToTab(navigationAction);
   }
 }

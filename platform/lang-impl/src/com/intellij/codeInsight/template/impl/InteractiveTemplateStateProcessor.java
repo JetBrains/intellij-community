@@ -7,8 +7,10 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -19,16 +21,24 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
+import com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class InteractiveTemplateStateProcessor implements TemplateStateProcessor {
+  @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
+
   private boolean myLookupShown;
 
   @Override
@@ -52,12 +64,42 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
   @Override
   public TextRange insertNewLineIndentMarker(PsiFile file, Document document, int offset) {
-    return CodeStyleManagerImpl.insertNewLineIndentMarker(file, document, offset);
+    return doInsertNewLineIndentMarker(file, document, offset);
   }
 
+  /**
+   * Allows to check if given offset points to white space element within the given PSI file and return that white space
+   * element in the case of positive answer.
+   *
+   * @param file    target file
+   * @param offset  offset that might point to white space element within the given PSI file
+   * @return        target white space element for the given offset within the given file (if any); {@code null} otherwise
+   */
   @Override
   public PsiElement findWhiteSpaceNode(PsiFile file, int offset) {
-    return CodeStyleManagerImpl.findWhiteSpaceNode(file, offset);
+    return doFindWhiteSpaceNode(file, offset).first;
+  }
+
+  @NotNull
+  private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+    ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
+    if (!(astNode instanceof FileElement)) {
+      return new Pair<>(null, null);
+    }
+    PsiElement elementAt = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);
+    final CharTable charTable = ((FileElement)astNode).getCharTable();
+    if (elementAt == null) {
+      elementAt = CoreCodeStyleUtil.findElementInTreeWithFormatterEnabled(file, offset);
+    }
+
+    if( elementAt == null) {
+      return new Pair<>(null, charTable);
+    }
+    ASTNode node = elementAt.getNode();
+    if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
+      return new Pair<>(null, charTable);
+    }
+    return Pair.create(elementAt, charTable);
   }
 
   @Override
@@ -162,6 +204,86 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
           !hasSelection && offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
     }
     return false;
+  }
+
+  /**
+   * Formatter trims line that contains white spaces symbols only, however, there is a possible case that we want
+   * to preserve them for particular line
+   * (e.g. for live template that defines line with whitespaces that contains $END$ marker: templateText   $END$).
+   * <p/>
+   * Current approach is to do the following:
+   * <pre>
+   * <ol>
+   *   <li>Insert dummy text at the end of the blank line which white space symbols should be preserved;</li>
+   *   <li>Perform formatting;</li>
+   *   <li>Remove dummy text;</li>
+   * </ol>
+   * </pre>
+   * <p/>
+   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link #createMarker(PsiFile, int)})
+   * if necessary.
+   * <p/>
+   * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
+   * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
+   * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
+   * are updated correspondingly after current method call and whole white space region is reformatted.
+   *
+   * @param file        target PSI file
+   * @param document    target document
+   * @param offset      offset that defines end boundary of the target line text fragment (start boundary is the first line's symbol)
+   * @return            text range that points to the newly inserted dummy text if any; {@code null} otherwise
+   * @throws IncorrectOperationException  if given file is read-only
+   */
+  @Nullable
+  private static TextRange doInsertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
+    CharSequence text = document.getImmutableCharSequence();
+    if (offset <= 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
+      return null;
+    }
+
+    if (!isWhiteSpaceSymbol(text.charAt(offset - 1))) {
+      return null; // no whitespaces before offset
+    }
+
+    int end = offset;
+    for (; end < text.length(); end++) {
+      if (text.charAt(end) == '\n') {
+        break; // line is empty till the end
+      }
+      if (!isWhiteSpaceSymbol(text.charAt(end))) {
+        return null;
+      }
+    }
+
+    String marker = createMarker(file, offset);
+    document.insertString(offset, marker);
+    return new TextRange(offset, offset + marker.length());
+  }
+
+  private static boolean isWhiteSpaceSymbol(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
+  }
+
+  private static @NotNull String createMarker(@NotNull PsiFile file, int offset) {
+    Project project = file.getProject();
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset);
+    Language language = injectedElement != null ? injectedElement.getLanguage() : PsiUtilCore.getLanguageAtOffset(file, offset);
+
+    CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
+    NewLineIndentMarkerProvider markerProvider = NewLineIndentMarkerProvider.EP.forLanguage(language);
+    String marker = markerProvider == null ? null : markerProvider.createMarker(file, offset);
+    if (marker != null) {
+      return marker;
+    }
+
+    PsiComment comment = null;
+    try {
+      comment = PsiParserFacade.SERVICE.getInstance(project).createLineOrBlockCommentFromText(language, "");
+    }
+    catch (Throwable ignored) {
+    }
+    String text = comment != null ? comment.getText() : null;
+    return text != null ? text : DUMMY_IDENTIFIER;
   }
 
   private static final class MyBasicUndoableAction extends BasicUndoableAction implements Disposable {

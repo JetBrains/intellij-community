@@ -16,8 +16,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.OpenReviewButton
-import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
+import com.intellij.collaboration.ui.codereview.OpenReviewButton
+import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle

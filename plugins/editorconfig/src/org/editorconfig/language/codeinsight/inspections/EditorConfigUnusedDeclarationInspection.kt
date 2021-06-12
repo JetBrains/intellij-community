@@ -21,6 +21,7 @@ class EditorConfigUnusedDeclarationInspection : LocalInspectionTool() {
       val references = EditorConfigIdentifierUtil.findReferences(element.section, descriptor.id, element.text)
       if (references.isNotEmpty()) return
 
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.declaration.unused.message"]
       holder.registerProblem(
         element,

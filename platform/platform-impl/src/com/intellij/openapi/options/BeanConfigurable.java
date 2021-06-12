@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * See {@link ConfigurableBuilder} for {@link UiDslConfigurable} alternative.
@@ -57,7 +58,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @NonNls
-    protected String getterName() {
+    private String getterName() {
       if (myValueClass.equals(boolean.class)) {
         return "is" + StringUtil.capitalize(myFieldName);
       }
@@ -106,10 +107,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class BeanMethodAccessor<T> extends BeanPropertyAccessor {
-    private final Getter<? extends T> myGetter;
+    private final Supplier<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
-    private BeanMethodAccessor(Getter<? extends T> getter, Setter<? super T> setter) {
+    private BeanMethodAccessor(Supplier<? extends T> getter, Setter<? super T> setter) {
       myGetter = getter;
       mySetter = setter;
     }

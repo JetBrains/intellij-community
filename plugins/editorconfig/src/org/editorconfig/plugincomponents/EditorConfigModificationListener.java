@@ -19,7 +19,7 @@ import java.util.List;
 
 final class EditorConfigModificationListener implements BulkFileListener {
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }

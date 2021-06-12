@@ -43,8 +43,8 @@ public final class ImageValue {
   @Override
   public int hashCode() {
     int result = Arrays.hashCode(data);
-    result = 31 * result + (width != +0.0f ? Float.floatToIntBits(width) : 0);
-    result = 31 * result + (height != +0.0f ? Float.floatToIntBits(height) : 0);
+    result = 31 * result + (width != 0.0f ? Float.floatToIntBits(width) : 0);
+    result = 31 * result + (height != 0.0f ? Float.floatToIntBits(height) : 0);
     result = 31 * result + actualWidth;
     result = 31 * result + actualHeight;
     return result;

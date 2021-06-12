@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
@@ -122,15 +121,6 @@ public final class GitConfigUtil {
       // ignore exception
     }
     return StringUtil.isEmpty(encoding) ? getCommitEncoding(project, root) : encoding;
-  }
-
-  /**
-   * Get encoding that GIT uses for file names.
-   */
-  @NotNull
-  public static String getFileNameEncoding() {
-    // TODO the best guess is that the default encoding is used.
-    return Charset.defaultCharset().name();
   }
 
   public static void setValue(@NotNull Project project,

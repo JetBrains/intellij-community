@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
@@ -71,6 +70,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,8 +88,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
   protected final Alarm myAlarm;
   private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
   private boolean myKeepPopupOnMouseMove;
-  protected WeakReference<Editor> myCurrentEditor;
-  protected WeakReference<AbstractPopup> myPopupReference;
+  protected Reference<Editor> myCurrentEditor;
+  protected Reference<AbstractPopup> myPopupReference;
   protected Context myContext;
   protected ProgressIndicator myCurrentProgress;
   private CancellablePromise<Context> myPreparationTask;
@@ -197,15 +197,18 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   protected void scheduleProcessing(@NotNull Editor editor,
-                                  @NotNull Context context,
-                                  boolean updateExistingPopup,
-                                  boolean forceShowing,
-                                  boolean requestFocus) {
+                                    @NotNull Context context,
+                                    boolean updateExistingPopup,
+                                    boolean forceShowing,
+                                    boolean requestFocus) {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     myCurrentProgress = progress;
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        Info info = context.calcInfo(editor);
+        // errors are stored in the top level editor markup model, not the injected one
+        Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+
+        Info info = context.calcInfo(topLevelEditor);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (progress != myCurrentProgress) {
             return;
@@ -213,13 +216,13 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
           myCurrentProgress = null;
           if (info == null ||
-              !editor.getContentComponent().isShowing() ||
-              (!forceShowing && isPopupDisabled(editor))) {
+              !topLevelEditor.getContentComponent().isShowing() ||
+              (!forceShowing && isPopupDisabled(topLevelEditor))) {
             return;
           }
 
           PopupBridge popupBridge = new PopupBridge();
-          JComponent component = info.createComponent(editor, popupBridge, requestFocus);
+          JComponent component = info.createComponent(topLevelEditor, popupBridge, requestFocus);
           if (component == null) {
             closeHint();
           }
@@ -229,9 +232,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
             }
             else {
               AbstractPopup hint = createHint(component, popupBridge, requestFocus);
-              showHintInEditor(hint, editor, context);
+              showHintInEditor(hint, topLevelEditor, context);
               myPopupReference = new WeakReference<>(hint);
-              myCurrentEditor = new WeakReference<>(editor);
+              myCurrentEditor = new WeakReference<>(topLevelEditor);
             }
             myContext = context;
           }
@@ -933,13 +936,13 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
   private static class MyActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (action instanceof HintManagerImpl.ActionToIgnore) {
         return;
       }
       AbstractPopup currentHint = getInstance().getCurrentHint();
       if (currentHint != null) {
-        Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        Component contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
         JBPopup contextPopup = PopupUtil.getPopupContainerFor(contextComponent);
         if (contextPopup == currentHint) {
           return;

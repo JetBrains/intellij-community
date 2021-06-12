@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateBraceMatcher implements BraceMatcher {
 
@@ -20,7 +22,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     if (iterator.getStart() == iterator.getEnd()) return false;
     IElementType tokenType = iterator.getTokenType();
-    String currentSelector = tokenType != null ? tokenType.toString() : null;
+    TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
     return TextMateEditorUtils.getHighlightingPairForLeftChar(fileText.charAt(iterator.getStart()), currentSelector) != null;
   }
 
@@ -30,7 +32,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
     if (end == 0 || end == iterator.getStart()) return false;
 
     IElementType tokenType = iterator.getTokenType();
-    String currentSelector = tokenType != null ? tokenType.toString() : null;
+    TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
     return TextMateEditorUtils.getHighlightingPairForRightChar(fileText.charAt(end - 1), currentSelector) != null;
   }
 

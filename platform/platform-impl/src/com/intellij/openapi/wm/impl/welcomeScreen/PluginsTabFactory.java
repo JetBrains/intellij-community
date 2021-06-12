@@ -70,10 +70,8 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
     @Override
     protected JComponent buildComponent() {
       PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-      BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
-        .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
-      configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
-      pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
+      JComponent panel = createPluginsPanel(configurable);
+      panel.addAncestorListener(new AncestorListenerAdapter() {
         @Override
         public void ancestorRemoved(AncestorEvent event) {
           if (!configurable.isModified()) {
@@ -89,7 +87,16 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
           }
         }
       });
-      return pluginsPanel;
+
+      return panel;
     }
+  }
+
+  @NotNull
+  public static JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
+    BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
+      .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+    configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
+    return pluginsPanel;
   }
 }

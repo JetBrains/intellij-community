@@ -15,13 +15,8 @@
  */
 package org.jetbrains.jps.cmdline;
 
-import java.lang.reflect.Method;
-
-/**
- * @author Eugene Zhuravlev
- */
+@SuppressWarnings("ALL")
 class ProfilingHelper {
-
   private final Class<?> myControllerClass;
   private final Object myController;
 
@@ -32,13 +27,10 @@ class ProfilingHelper {
 
   public void startProfiling() {
     try {
-      final Method startMethod = myControllerClass.getDeclaredMethod("startCPUSampling", String.class);
-      if (startMethod != null) {
-        startMethod.invoke(myController, new Object[] {null});
-      }
-      else {
-        System.err.println("Cannot find method 'startCPUProfiling' in class " + myControllerClass.getName());
-      }
+      myControllerClass.getDeclaredMethod("startCPUSampling", String.class).invoke(myController, new Object[] {null});
+    }
+    catch (NoSuchMethodException e) {
+      System.err.println("Cannot find method 'startCPUProfiling' in class " + myControllerClass.getName());
     }
     catch (Throwable e) {
       e.printStackTrace();
@@ -47,21 +39,17 @@ class ProfilingHelper {
 
   public void stopProfiling() {
     try {
-      final Method captureMethod = myControllerClass.getDeclaredMethod("captureSnapshot", long.class);
-      if (captureMethod != null) {
-        final String path = (String)captureMethod.invoke(myController, 0L/*ProfilingModes.SNAPSHOT_WITHOUT_HEAP*/);
-        System.err.println("CPU Snapshot captured: " + path);
-        final Method stopMethod = myControllerClass.getDeclaredMethod("stopCPUProfiling");
-        if (stopMethod != null) {
-          stopMethod.invoke(myController);
-        }
-        else {
-          System.err.println("Cannot find method 'stopCPUProfiling' in class " + myControllerClass.getName());
-        }
+      final String path = (String)myControllerClass.getDeclaredMethod("captureSnapshot", long.class).invoke(myController, 0L/*ProfilingModes.SNAPSHOT_WITHOUT_HEAP*/);
+      System.err.println("CPU Snapshot captured: " + path);
+      try {
+        myControllerClass.getDeclaredMethod("stopCPUProfiling").invoke(myController);
       }
-      else {
-        System.err.println("Cannot find method 'captureSnapshot' in class " + myControllerClass.getName());
+      catch (NoSuchMethodException e) {
+        System.err.println("Cannot find method 'stopCPUProfiling' in class " + myControllerClass.getName());
       }
+    }
+    catch (NoSuchMethodException e) {
+      System.err.println("Cannot find method 'captureSnapshot' in class " + myControllerClass.getName());
     }
     catch (Throwable e) {
       e.printStackTrace();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.ide.BrowserUtil;
@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
@@ -80,7 +79,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
                                                   @NotNull String source) {
     showSingletonNotification(project, message,
                               PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.pycharm.pro.has.support.for.it"),
-                              NotificationType.INFORMATION,
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
                                   BrowserUtil.browse(
@@ -103,21 +101,22 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   private static void showSingletonNotification(@NotNull Project project,
                                                 @NotNull @NotificationTitle String title,
                                                 @NotNull @NotificationContent String htmlContent,
-                                                @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
     getSettings(project).shown = true;
-    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, type, (notification, event) -> {
-      try {
-        listener.hyperlinkUpdate(notification, event);
-      }
-      finally {
-        notification.expire();
-      }
-    }).notify(project);
+    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
+        try {
+          listener.hyperlinkUpdate(notification, event);
+        }
+        finally {
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 
   @NotNull
   private static PyCharmProfessionalAdvertiserSettings getSettings(@NotNull Project project) {
-    return ServiceManager.getService(project, PyCharmProfessionalAdvertiserSettings.class);
+    return project.getService(PyCharmProfessionalAdvertiserSettings.class);
   }
 }

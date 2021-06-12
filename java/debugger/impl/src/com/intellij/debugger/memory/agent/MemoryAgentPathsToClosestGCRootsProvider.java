@@ -46,7 +46,7 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
   private ReferringObjectsInfo getPathsToGcRoots(@NotNull EvaluationContextImpl evaluationContext,
                                                  @NotNull ObjectReference value) throws EvaluateException {
     MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext.getDebugProcess());
-    if (!memoryAgent.capabilities().canFindPathsToClosestGcRoots()) {
+    if (!memoryAgent.getCapabilities().canFindPathsToClosestGcRoots()) {
       throw new UnsupportedOperationException();
     }
 

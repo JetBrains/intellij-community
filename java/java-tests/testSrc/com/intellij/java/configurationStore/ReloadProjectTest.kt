@@ -18,8 +18,15 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.storage.DummyParentEntitySource
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -120,7 +127,14 @@ class ReloadProjectTest {
       copyFilesAndReload(project, "facet-in-module-with-custom-storage/update")
       val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
       assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
-    }
+
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
+      assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
+      val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()
+      assertThat(moduleOptionsEntity.externalSystem).isEqualTo("GRADLE")
+      assertThat(moduleOptionsEntity.externalSystemModuleVersion).isEqualTo("42.0")
+     }
   }
 
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {

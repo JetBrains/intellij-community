@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
@@ -18,18 +18,16 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -375,7 +373,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+    public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
       try {
         JavaParameters parameters = getJavaParameters();
 
@@ -395,7 +393,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         mavenConfig.setVersionString(mavenVersion);
         config.addLanguageRuntime(mavenConfig);
 
-        return new WslTargetEnvironmentFactory(config);
+        return new WslTargetEnvironmentRequest(config);
       }
       catch (ExecutionException e) {
         // ignore
@@ -405,7 +403,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
-      if (getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory) {
+      if (getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
         JavaParameters parameters = myConfiguration.createJavaParameters(getEnvironment().getProject());
         JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
           myConfiguration,
@@ -426,7 +424,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
       ConsoleView consoleView = super.createConsole(executor);
-      BuildViewManager viewManager = ServiceManager.getService(getEnvironment().getProject(), BuildViewManager.class);
+      BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
       StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
@@ -546,16 +544,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                            @Nullable TargetEnvironmentConfiguration configuration)
+    protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
       throws ExecutionException {
       if (request instanceof LocalTargetEnvironmentRequest) {
-        return super.createTargetedCommandLine(request, configuration);
+        return super.createTargetedCommandLine(request);
       }
-      if (configuration == null) {
+      if (request.getConfiguration() == null) {
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
-      return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request, configuration)
+      return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request)
         .setupCommandLine(myConfiguration.mySettings)
         .getCommandLine();
     }

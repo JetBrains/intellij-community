@@ -5,19 +5,22 @@ import com.google.common.io.Files
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.project.stateStore
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -34,6 +37,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 /**
  * Provides rootsChanged events if roots validity was changed.
@@ -41,15 +45,23 @@ import java.nio.file.Paths
 @ApiStatus.Internal
 internal class RootsChangeWatcher(val project: Project) {
   private val moduleManager = ModuleManager.getInstance(project)
+  private val projectFilePaths = CollectionFactory.createFilePathSet()
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   private val virtualFileUrlWatcher = VirtualFileUrlWatcher.getInstance(project)
 
   init {
+    val store: IProjectStore = project.stateStore
+    val projectFilePath = store.projectFilePath
+    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+      projectFilePaths.add(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(projectFilePath.toString())))
+      projectFilePaths.add(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(store.workspacePath.toString())))
+    }
+
     VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
       @Volatile
-      var result: ProjectRootManagerImpl.RootsChangeType? = null
-      val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
-      val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
+      private var result: ProjectRootManagerImpl.RootsChangeType? = null
+      private val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
+      private val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
       override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
         result = null
@@ -131,7 +143,7 @@ internal class RootsChangeWatcher(val project: Project) {
         val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
         calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
         virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
-        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) }) return
+        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) } && virtualFileUrl.url !in projectFilePaths) return
         result = calculateRootsChangeType(result, currentRootsChangeType)
       }
 
@@ -148,12 +160,8 @@ internal class RootsChangeWatcher(val project: Project) {
           val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
           if (beforeRootsChanged)
             projectRootManager.rootsChanged.beforeRootsChanged()
-          else {
-            if (log.isTraceEnabled) {
-              log.trace("Roots changed: changed urls = $changedUrlsList, changed module store paths = $changedModuleStorePaths")
-            }
+          else
             projectRootManager.rootsChanged.rootsChanged(result!!)
-          }
         }
       }
 
@@ -210,8 +218,6 @@ internal class RootsChangeWatcher(val project: Project) {
   }
 
   companion object {
-    private val log = logger<RootsChangeWatcher>()
-
     @JvmStatic
     fun getInstance(project: Project): RootsChangeWatcher = project.getComponent(RootsChangeWatcher::class.java)
   }

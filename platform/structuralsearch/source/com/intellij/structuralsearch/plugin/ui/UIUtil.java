@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -218,20 +218,21 @@ public final class UIUtil {
   }
 
   @NotNull
-  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect,
-                                        PatternContext patternContext, @NotNull String text, @NotNull StructuralSearchProfile profile) {
-    final String contextId = (patternContext == null) ? null : patternContext.getId();
-    PsiFile codeFragment = profile.createCodeFragment(project, text, contextId);
-    if (codeFragment == null) {
-      codeFragment = createFileFragment(project, fileType, dialect, text);
-    }
+  public static Document createDocument(@NotNull Project project, @Nullable LanguageFileType fileType, Language dialect,
+                                        PatternContext patternContext, @NotNull String text, @Nullable StructuralSearchProfile profile) {
+    if (fileType != null && profile != null) {
+      final String contextId = (patternContext == null) ? null : patternContext.getId();
+      PsiFile codeFragment = profile.createCodeFragment(project, text, contextId);
+      if (codeFragment == null) {
+        codeFragment = createFileFragment(project, fileType, dialect, text);
+      }
 
-    if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
-      assert doc != null : "code fragment element should be physical";
-      return doc;
+      if (codeFragment != null) {
+        final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+        assert doc != null : "code fragment element should be physical";
+        return doc;
+      }
     }
-
     return EditorFactory.getInstance().createDocument(text);
   }
 

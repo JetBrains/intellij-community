@@ -1,7 +1,25 @@
 <html>
-<body>Reports the copying of array contents to a collection where each element
-is added individually using a for loop. Such constructs may be replaced by a call to
-<b>Collection.addAll(Arrays.asList())</b> or <b>Collections.addAll()</b>.
+<body>
+Reports copying array content into collection in a loop instead of using
+<code>Collection.addAll(Arrays.asList())</code> or <code>Collections.addAll()</code> methods.
+Replacing loops make your code shorter and potentially faster depending on the collection implementation
+<p>
+Note that only loops that don't have any additional statements inside are reported.
+<p>Example:</p>
+<pre>
+  void addAll(List&lt;String&gt; list, String[] arr) {
+    for (int i = 0; i &lt; arr.length; i++) {
+      String s = arr[i];
+      list.add(s);
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void addAll(List&lt;String&gt; list, String[] arr) {
+    Collections.addAll(list, arr);
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

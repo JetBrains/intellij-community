@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class QuestionableNameInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
-    return UiUtils.createAddRemovePanel(table);
+    return UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("questionable.name.list.label"), true);
   }
 
   @Override

@@ -1,0 +1,7 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/test.kt",
+  "newName": "BarNew",
+  "withRuntime": "true",
+  "libraries": ["JUnit@lib/dev/jmock-junit4-2.5.1.jar"]
+}

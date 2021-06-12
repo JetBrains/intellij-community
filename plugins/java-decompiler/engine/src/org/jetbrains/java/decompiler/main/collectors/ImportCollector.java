@@ -39,8 +39,10 @@ public class ImportCollector {
 
     Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
     LinkedList<String> queue = new LinkedList<>();
+    Set<StructClass> processedClasses = new HashSet<>();
     StructClass currentClass = root.classStruct;
     while (currentClass != null) {
+      processedClasses.add(currentClass);
       if (currentClass.superClass != null) {
         queue.add(currentClass.superClass.getString());
       }
@@ -63,10 +65,17 @@ public class ImportCollector {
       }
 
       // .. and traverse through parent.
-      currentClass = !queue.isEmpty() ? classes.get(queue.removeFirst()) : null;
-      while (currentClass == null && !queue.isEmpty()) {
-        currentClass = classes.get(queue.removeFirst());
-      }
+      do {
+        currentClass = queue.isEmpty() ? null : classes.get(queue.removeFirst());
+
+        if (currentClass != null && processedClasses.contains(currentClass)) {
+          // Class already processed, skipping.
+
+          // This may be sign of circularity in the class hierarchy but in most cases this mean that same interface
+          // are listed as implemented several times in the class hierarchy.
+          currentClass = null;
+        }
+      } while (currentClass == null && !queue.isEmpty());
     }
   }
 

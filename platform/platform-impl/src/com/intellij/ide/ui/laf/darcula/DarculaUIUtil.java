@@ -89,12 +89,7 @@ public final class DarculaUIUtil {
       String outline = ObjectUtils.tryCast(component.getClientProperty("JComponent.outline"), String.class);
 
       if (outline != null) {
-        if (outline.equals("error")) {
-          return Outline.error;
-        }
-        else if (outline.equals("warning")) {
-          return Outline.warning;
-        }
+        return Outline.valueOf(outline);
       }
     }
 

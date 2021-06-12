@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -16,7 +15,7 @@ public abstract class PsiFileFactory {
   public static final Key<PsiFile> ORIGINAL_FILE = Key.create("ORIGINAL_FILE");
 
   public static PsiFileFactory getInstance(Project project) {
-    return ServiceManager.getService(project, PsiFileFactory.class);
+    return project.getService(PsiFileFactory.class);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testframework.autotest.AbstractAutoTestManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerTopics;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 )
 public class JavaAutoRunManager extends AbstractAutoTestManager implements Disposable {
   public static @NotNull JavaAutoRunManager getInstance(Project project) {
-    return ServiceManager.getService(project, JavaAutoRunManager.class);
+    return project.getService(JavaAutoRunManager.class);
   }
 
   public JavaAutoRunManager(@NotNull Project project) {
@@ -75,7 +74,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
           @Override
           public void finished(ProjectTaskManager.@NotNull Result result) {
             if (result.anyTaskMatches((task, state) -> task instanceof ModuleBuildTask)) {
-              if (result.getContext().getGeneratedFilesRoots().isEmpty() && 
+              if (result.getContext().getGeneratedFilesRoots().isEmpty() &&
                   result.getContext().getDirtyOutputPaths().isEmpty()) return;
               myHasErrors = result.hasErrors() || result.isAborted();
               if (!result.hasErrors() && !result.isAborted()) {

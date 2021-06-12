@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -78,7 +79,7 @@ public class RenameTo extends LazySuggestions implements SpellCheckerQuickFix {
     final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
     try {
       editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
-      DataContext dataContext = builder.setParent(((EditorEx)editor).getDataContext()).build();
+      DataContext dataContext = builder.setParent(EditorUtil.getEditorDataContext(editor)).build();
       AnAction action = new RenameElementAction();
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
       action.actionPerformed(event);

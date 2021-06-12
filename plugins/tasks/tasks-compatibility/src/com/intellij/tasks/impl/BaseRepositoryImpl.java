@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
@@ -145,7 +146,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
-    if (!password.equals(getPassword())) {
+    if (!Comparing.equal(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();
     }

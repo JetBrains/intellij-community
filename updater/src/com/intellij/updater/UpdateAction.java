@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class UpdateAction extends BaseUpdateAction {
   public UpdateAction(Patch patch, String path, long checksum) {
@@ -39,7 +41,7 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
+    LOG.info("Update action. File: " + toFile.getAbsolutePath());
 
     File source = mandatoryBackup() ? getSource(Objects.requireNonNull(backupDir)) : toFile;
     if (!isMove()) {

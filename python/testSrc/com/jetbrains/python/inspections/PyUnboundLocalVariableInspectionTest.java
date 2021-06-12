@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,7 +43,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-1408
   public void testUnboundExceptAs() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
+    doTest();
   }
 
   // PY-1434
@@ -84,7 +83,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-3603
   public void testUnboundNonLocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
+    doTest();
   }
 
   // PY-3671
@@ -254,7 +253,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   }
 
   public void testForwardReferenceInAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> doTest());
+    doTest();
   }
 
   // PY-23003
@@ -274,11 +273,8 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-31834
   public void testTargetIsTypeHintNotDefinition() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("a: int\n" +
-                         "print(<warning descr=\"Name 'a' can be undefined\">a</warning>)")
-    );
+    doTestByText("a: int\n" +
+                 "print(<warning descr=\"Name 'a' can be undefined\">a</warning>)");
   }
 
   // PY-31834
@@ -292,35 +288,32 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-33886
   public void testAssignmentExpressions() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestByText(
-        "def foo():\n" +
-        "    if any((comment := line).startswith('#') for line in lines):\n" +
-        "        print(\"First comment:\", comment)\n" +
-        "    else:\n" +
-        "        print(\"There are no comments\")\n" +
-        "\n" +
-        "    if all((nonblank := line).strip() == '' for line in lines):\n" +
-        "        print(\"All lines are blank\")\n" +
-        "    else:\n" +
-        "        print(\"First non-blank line:\", nonblank)\n" +
-        "\n" +
-        "\n" +
-        "def bar():\n" +
-        "    [(comment := line).startswith('#') for line in lines]\n" +
-        "    print(<warning descr=\"Local variable 'comment' might be referenced before assignment\">comment</warning>)\n" +
-        "\n" +
-        "\n" +
-        "def baz():\n" +
-        "    while (line := input()) and any((first_digit := c).isdigit() for c in line):\n" +
-        "        print(line, first_digit)\n" +
-        "\n" +
-        "\n" +
-        "def more():\n" +
-        "    if (x := True) or (y := 'spam'):\n" +
-        "        print(<warning descr=\"Local variable 'y' might be referenced before assignment\">y</warning>)\n"
-      )
+    doTestByText(
+      "def foo():\n" +
+      "    if any((comment := line).startswith('#') for line in lines):\n" +
+      "        print(\"First comment:\", comment)\n" +
+      "    else:\n" +
+      "        print(\"There are no comments\")\n" +
+      "\n" +
+      "    if all((nonblank := line).strip() == '' for line in lines):\n" +
+      "        print(\"All lines are blank\")\n" +
+      "    else:\n" +
+      "        print(\"First non-blank line:\", nonblank)\n" +
+      "\n" +
+      "\n" +
+      "def bar():\n" +
+      "    [(comment := line).startswith('#') for line in lines]\n" +
+      "    print(<warning descr=\"Local variable 'comment' might be referenced before assignment\">comment</warning>)\n" +
+      "\n" +
+      "\n" +
+      "def baz():\n" +
+      "    while (line := input()) and any((first_digit := c).isdigit() for c in line):\n" +
+      "        print(line, first_digit)\n" +
+      "\n" +
+      "\n" +
+      "def more():\n" +
+      "    if (x := True) or (y := 'spam'):\n" +
+      "        print(<warning descr=\"Local variable 'y' might be referenced before assignment\">y</warning>)\n"
     );
   }
 
@@ -346,7 +339,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-4537
   public void testAfterDeletionNonLocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
   }
 
   // PY-4537

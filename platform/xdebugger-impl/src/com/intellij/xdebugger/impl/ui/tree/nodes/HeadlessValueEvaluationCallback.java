@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -83,7 +84,7 @@ public class HeadlessValueEvaluationCallback implements XFullValueEvaluator.XFul
       return;
     }
 
-    new Task.Backgroundable(myNode.getTree().getProject(), XDebuggerBundle.message("load.value.task.text")) {
+    new Task.Backgroundable(myNode.getTree().getProject(), XDebuggerBundle.message("load.value.task.text"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -93,11 +94,6 @@ public class HeadlessValueEvaluationCallback implements XFullValueEvaluator.XFul
           indicator.setFraction(((i++) % 100) * 0.01);
           mySemaphore.waitFor(300);
         }
-      }
-
-      @Override
-      public boolean shouldStartInBackground() {
-        return false;
       }
 
       @Override

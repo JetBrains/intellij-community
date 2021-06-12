@@ -31,9 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public interface PyPsiFindUsagesHandlerFactory {
   default boolean canFindUsages(@NotNull PsiElement element) {
     return element instanceof PyClass ||

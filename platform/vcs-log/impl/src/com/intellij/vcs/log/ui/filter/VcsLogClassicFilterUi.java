@@ -206,7 +206,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText, @NotNull Computable<? extends JComponent> componentCreator) {
+    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
+                                 @NotNull Computable<? extends JComponent> componentCreator) {
       super(dynamicText);
       myComponentCreator = componentCreator;
     }
@@ -382,8 +383,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Nullable
     private static VcsLogRangeFilter createRangeFilter(@NotNull List<String> values) {
-      if (values.isEmpty()) return null;
-      return VcsLogFilterObject.fromRange(ContainerUtil.map(values, value -> {
+      List<VcsLogRangeFilter.RefRange> ranges = ContainerUtil.mapNotNull(values, value -> {
         String TWO_DOTS = "..";
         int twoDots = value.indexOf(TWO_DOTS);
         if (twoDots <= 0) {
@@ -391,7 +391,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           return null;
         }
         return new VcsLogRangeFilter.RefRange(value.substring(0, twoDots), value.substring(twoDots + TWO_DOTS.length()));
-      }));
+      });
+      if (ranges.isEmpty()) return null;
+      return VcsLogFilterObject.fromRange(ranges);
     }
 
     @Nullable

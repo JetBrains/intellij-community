@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.LanguageASTFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ParsingTestCase;
@@ -17,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
@@ -36,6 +35,7 @@ public class PythonParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Registry.markAsLoaded();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
@@ -509,7 +509,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringWithSimpleFragment() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringGluedWithLiteralStringNodes() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -553,7 +553,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringFragmentIncompleteTypeConversionBeforeColon() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringFragmentIncompleteTypeConversionBeforeClosingBrace() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -669,15 +669,15 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringTerminatedByLineBreakInLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInNestedLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInNestedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }

@@ -1,32 +1,41 @@
 <html>
 <body>
-Reports <b>AutoCloseable</b> instances which are not used in a try-with-resources statement, also known as
+Reports <code>AutoCloseable</code> instances which are not used in a try-with-resources statement, also known as
 <i>Automatic Resource Management</i>.
-This means that the open resource before/in <b>try</b>, close in <b>finally</b> style which was used before
+This means that the open resource before/in <code>try</code>, close in <code>finally</code> style which was used before
 try-with-resources was available is also reported.
 This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7 and higher.
+<p>Example: </p>
+<pre>
+  private static void foo() throws IOException {
+    InputStream profile = Thread.currentThread().getContextClassLoader().getResourceAsStream("/someFile");
+    System.out.println(profile.read());
+  }
+</pre>
+<!-- tooltip end -->
 <p>
-Use the first table below to specify which AutoCloseable subclasses should be ignored by this inspection.
-Specify AutoCloseable subclasses here which do not need to be closed.
+Use the first table below to specify which <code>AutoCloseable</code> subclasses should be ignored by this inspection.
+Specify <code>AutoCloseable</code> subclasses here which do not need to be closed.
 <p>
-  <b>Note</b>: This inspection will still warn on streams returned from the java.nio.file.Files methods lines(), walk(), list() and find(),
-  even when java.util.stream.Stream is specified to be ignored in this table.
+  <b>Note</b>: This inspection will still warn on streams returned from the <code>java.nio.file.Files</code> methods <code>lines()</code>,
+  <code>walk()</code>, <code>list()</code> and <code>find()</code>,
+  even when <code>java.util.stream.Stream</code> is specified to be ignored in this table.
   These streams contain an associated I/O resource that needs to be closed.
 </p>
 <p>
-Use the second table below to specify which methods returning AutoCloseable will be ignored when called.
+Use the second table below to specify which methods returning <code>AutoCloseable</code> will be ignored when called.
 <p>
-Use the first checkbox below to ignore an AutoCloseable if it the result of a method call.
+Use the first checkbox below to ignore an <code>AutoCloseable</code> if it the result of a method call.
 When enabled, the results of factory methods will also be ignored.
 <p>
-Use the second checkbox below to specify that the inspection should not warn if an AutoCloseable instance is passed
+Use the second checkbox below to specify that the inspection should not warn if an <code>AutoCloseable</code> instance is passed
 as a method call argument.
 If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <b>finally</b> block with <i>close</i> in the name and an AutoCloseable argument will not be ignored.
+Method calls inside a <code>finally</code> block with <code>close</code> in the name and an <code>AutoCloseable</code> argument will not be ignored.
 <p>
 Use the third checkbox below to ignore method references to constructors of resource classes.
 <p>
-Use the fourth checkbox below to ignore methods that return resource and has a name that starts from 'get'.
+Use the fourth checkbox below to ignore methods that return resource and has a name that starts with 'get'.
   This may be useful because most of the getters do not transmit the ownership of resource and use sites are not responsible for closing resource.
 <p>
 </body>

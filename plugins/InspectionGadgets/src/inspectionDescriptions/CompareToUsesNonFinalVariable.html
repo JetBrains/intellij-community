@@ -1,9 +1,33 @@
 <html>
 <body>
-Reports any implementations of <b>compareTo()</b> which access
-non-<b>final</b> variables. Such access may result in <b>compareTo()</b>
+Reports access to a non-<code>final</code> field inside <code>compareTo()</code> implementation. Such access may result in <code>compareTo()</code>
 returning different results at different points in an object's lifecycle, which may in turn cause problems when
-using the standard Collections classes.
+using the standard Collections classes, for example <code>java.util.TreeSet</code>.
+<p>The fix to make the field <code>final</code> is available only when there is no write access to the field, otherwise no fix is provided.</p>
+<p>Example:</p>
+<pre><code>class Foo implements Comparable&lt;Foo&gt;{
+  private int index;
+  Foo(int idx) {
+    index = idx;
+  }
+  @Override
+  public int compareTo(Foo foo) {
+    return Integer.compare(this.index, foo.index);
+  }
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>class Foo implements Comparable&lt;Foo&gt;{
+  private final int index;
+  Foo(int idx) {
+    index = idx;
+  }
+  @Override
+  public int compareTo(Foo foo) {
+    return Integer.compare(this.index, foo.index);
+  }
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
 

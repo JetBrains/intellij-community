@@ -258,7 +258,7 @@ public class JUnitConfigurationModel {
       case RepeatCount.UNTIL_FAILURE:
         return JUnitBundle.message("junit.configuration.repeat.mode.until.failure");
       case RepeatCount.UNLIMITED:
-        return JUnitBundle.message("junit.configuration.repeat.mode.unlimited");
+        return JUnitBundle.message("junit.configuration.repeat.mode.until.stopped");
     }
 
     throw new IllegalArgumentException(value);

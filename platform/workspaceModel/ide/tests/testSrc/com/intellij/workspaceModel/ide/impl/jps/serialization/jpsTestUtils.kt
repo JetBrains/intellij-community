@@ -13,13 +13,17 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -106,7 +110,8 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 internal fun createProjectSerializers(projectDir: File, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializersImpl {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
+  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader,
+                                                           externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {
@@ -165,7 +170,8 @@ internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlMana
     return JpsProjectConfigLocation.FileBased(iprFile, virtualFileManager.getParentVirtualUrl(iprFile)!!)
   }
   else {
-    return JpsProjectConfigLocation.DirectoryBased(file.toVirtualFileUrl(virtualFileManager))
+    val projectDir = file.toVirtualFileUrl(virtualFileManager)
+    return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
   }
 }
 

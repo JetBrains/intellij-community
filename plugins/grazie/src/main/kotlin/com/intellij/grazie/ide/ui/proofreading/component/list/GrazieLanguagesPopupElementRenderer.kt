@@ -21,6 +21,7 @@ class GrazieLanguagesPopupElementRenderer(list: ListPopupImpl) : PopupListElemen
   override fun createItemComponent(): JComponent {
     createLabel()
     createSizeLabel()
+    myIconBar = createIconBar()
 
     val panel = panel(BorderLayout()) {
       add(myTextLabel, BorderLayout.CENTER)

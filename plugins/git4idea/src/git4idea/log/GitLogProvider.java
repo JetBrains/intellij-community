@@ -2,7 +2,6 @@
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -81,7 +80,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     myProject = project;
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myRefSorter = new GitRefManager(myProject, myRepositoryManager);
-    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
     myVcs = GitVcs.getInstance(project);
   }
 

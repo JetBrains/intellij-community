@@ -9,6 +9,8 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor
 import com.intellij.util.indexing.memory.InMemoryForwardIndex
 import com.intellij.util.indexing.memory.InMemoryIndexStorage
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 
 class InMemoryStorageLayoutProvider : FileBasedIndexLayoutProvider {
   override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {

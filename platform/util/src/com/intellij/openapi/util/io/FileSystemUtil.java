@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -59,7 +59,7 @@ public final class FileSystemUtil {
           return check(new IdeaWin32MediatorImpl());
         }
         else if ((SystemInfo.isLinux || SystemInfo.isMac && CpuArch.isIntel64() || SystemInfo.isSolaris || SystemInfo.isFreeBSD) &&
-                 JnaLoader.isLoaded() && JnaLoader.supportsDirectMapping) {
+                 JnaLoader.isLoaded() && JnaLoader.isSupportsDirectMapping()) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -277,7 +277,7 @@ public final class FileSystemUtil {
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     JnaUnixMediatorImpl() {
-      assert JnaLoader.supportsDirectMapping : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
+      assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
 
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;

@@ -17,12 +17,14 @@ package org.jetbrains.idea.maven.plugins.groovy
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
 
+  @Test
   void testCompletion() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -77,6 +79,7 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
   }
 
+  @Test
   void testCompletion2() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -116,6 +119,7 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
   }
 
+  @Test
   void testCompletion3() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -155,6 +159,7 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
   }
 
+  @Test
   void testInjectionVariables() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -194,6 +199,7 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
     assert element.getDeclaredType().getPresentableText() == "MavenProject"
   }
 
+  @Test
   void testHighlighting() {
     myFixture.configureByText("pom.xml", """<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"

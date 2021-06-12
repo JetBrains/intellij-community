@@ -64,7 +64,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     scopeFragment.addSettingsEditorListener(editor -> {
 
       boolean disableModuleClasspath = testKind.disableModuleClasspath(scopeFragment.getSelectedVariant() == TestSearchScope.WHOLE_PROJECT);
-      moduleClasspath.setSelected(!disableModuleClasspath);
+      moduleClasspath.setSelected(!disableModuleClasspath && moduleClasspath.isInitiallyVisible(mySettings));
       if (disableModuleClasspath) {
         moduleClasspath.component().setSelectedModule(null);
       }
@@ -77,7 +77,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getRepeatMode(),
                                         (configuration, mode) -> configuration.setRepeatMode(mode),
                                         configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
-    repeat.setVariantNameProvider(s -> JUnitBundle.message("repeat." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
+    repeat.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.repeat.mode." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
     fragments.add(repeat);
 
     LabeledComponent<JTextField> countField =
@@ -112,18 +112,24 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getForkMode(),
                                         (configuration, s) -> configuration.setForkMode(s),
                                         configuration -> !FORK_NONE.equals(configuration.getForkMode()));
-    forkMode.setVariantNameProvider(s -> JUnitBundle.message("fork.mode." + s.toLowerCase(Locale.ENGLISH)));
+    forkMode.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.fork.mode." + s.toLowerCase(Locale.ENGLISH)));
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(
       editor -> {
         int selectedType = testKind.getTestKind();
-        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant(),
+                                                                       repeat.getSelectedVariant()));
         scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
                                    selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                    selectedType == JUnitConfigurationModel.TAGS ||
                                    selectedType == JUnitConfigurationModel.CATEGORY);
       });
     fragments.add(new TargetPathFragment<>());
+  }
+
+  @Override
+  public boolean isInplaceValidationSupported() {
+    return true;
   }
 }

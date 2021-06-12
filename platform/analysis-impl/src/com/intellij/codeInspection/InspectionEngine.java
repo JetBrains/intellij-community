@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -279,16 +278,16 @@ public final class InspectionEngine {
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
-    Set<String> dialectIds = new SmartHashSet<>();
-    Set<Language> processedLanguages = new SmartHashSet<>();
+    Set<String> dialectIds = new HashSet<>();
+    Set<Language> processedLanguages = new HashSet();
     addDialects(inside, processedLanguages, dialectIds);
     addDialects(outside, processedLanguages, dialectIds);
     return dialectIds;
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
-    Set<String> dialectIds = new SmartHashSet<>();
-    Set<Language> processedLanguages = new SmartHashSet<>();
+    Set<String> dialectIds = new HashSet<>();
+    Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);
     return dialectIds;
   }

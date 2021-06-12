@@ -88,7 +88,7 @@ class IntelliJProjectConfiguration {
     @JvmStatic
     fun loadIntelliJProject(projectHome: String): JpsProject {
       val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
-      return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo))
+      return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
     }
 
     @JvmStatic

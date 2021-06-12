@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -289,8 +289,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ProcessHandler startProcess(@NotNull PythonScriptTargetedCommandLineBuilder builder)
     throws ExecutionException {
-    TargetEnvironmentFactory targetEnvironmentFactory = createTargetEnvironmentFactory();
-    TargetEnvironmentRequest targetEnvironmentRequest = targetEnvironmentFactory.createRequest();
+    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest();
 
     Sdk sdk = getSdk();
     if (sdk != null) {
@@ -309,8 +308,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
-    TargetEnvironment targetEnvironment = targetEnvironmentFactory
-      .prepareRemoteEnvironment(targetEnvironmentRequest, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
+    TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
@@ -940,19 +938,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private TargetEnvironmentFactory createTargetEnvironmentFactory() {
-    TargetEnvironmentFactory environmentFactory;
+  private TargetEnvironmentRequest createTargetEnvironmentRequest() {
     Sdk sdk = getSdk();
     if (sdk == null) {
       throw new IllegalStateException("SDK is not defined for Run Configuration");
     }
     else {
-      environmentFactory = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentFactory(sdk);
-      if (environmentFactory == null) {
+      TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
+      if (environmentRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
+      return environmentRequest;
     }
-    return environmentFactory;
   }
 
   /**

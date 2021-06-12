@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -242,8 +241,8 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
     }
     catch (AssertionError e) {
-      System.err.println("ThreadDump: " + ThreadDumper.dumpThreadsToString());
-      System.err.println("Process List: " + LogUtil.getProcessList());
+      System.err.println("ThreadDump:\n" + ThreadDumper.dumpThreadsToString());
+      System.err.println("Process List:\n" + ProcessHandle.allProcesses().map(h -> h.pid() + ": " + h.info()).collect(Collectors.joining("\n")));
       throw e;
     }
   }

@@ -16,6 +16,6 @@ public class MarkdownSplitEditorProvider extends SplitTextEditorProvider {
     if (!(firstEditor instanceof TextEditor) || !(secondEditor instanceof MarkdownPreviewFileEditor)) {
       throw new IllegalArgumentException("Main editor should be TextEditor");
     }
-    return new MarkdownSplitEditor(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
+    return new MarkdownEditorWithPreview(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
   }
 }

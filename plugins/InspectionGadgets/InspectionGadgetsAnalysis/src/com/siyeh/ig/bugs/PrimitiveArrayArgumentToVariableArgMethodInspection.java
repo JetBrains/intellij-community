@@ -54,7 +54,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 

@@ -37,6 +37,13 @@ public final class JavacMain {
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  private static final boolean JAVA_RUNTIME_PRE_9 =
+    JAVA_RUNTIME_VERSION.startsWith("1.8.") ||
+    JAVA_RUNTIME_VERSION.startsWith("8.")   ||
+    JAVA_RUNTIME_VERSION.startsWith("1.7.") ||
+    JAVA_RUNTIME_VERSION.startsWith("7.")   ||
+    JAVA_RUNTIME_VERSION.startsWith("1.6.") ||
+    JAVA_RUNTIME_VERSION.startsWith("6.");
 
   public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
   public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
@@ -66,7 +73,7 @@ public final class JavacMain {
     }
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
-    final boolean javacBefore9 = isJavacBefore9(compilingTool);
+    final boolean javacBefore9 = usingJavac && JAVA_RUNTIME_PRE_9; // since java 9 internal API's used by the optimizedFileManager have changed
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
@@ -494,15 +501,6 @@ public final class JavacMain {
   private static boolean hasLocation(StandardJavaFileManager fileManager, String locationId) {
     final JavaFileManager.Location location = StandardLocation.locationFor(locationId);
     return location != null && fileManager.hasLocation(location);
-  }
-
-  // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
-  // do not delegate to corresponding methods of FileManager's base implementation
-  // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-
-  private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {
-    // since java 9 internal API's used by the optimizedFileManager have changed
-    return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }
 
   private static boolean isAnnotationProcessingEnabled(final Iterable<String> options) {

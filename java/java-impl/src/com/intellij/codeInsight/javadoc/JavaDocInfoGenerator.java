@@ -1430,7 +1430,7 @@ public class JavaDocInfoGenerator {
     Object value = null;
     if (valueField != null) {
       PsiExpression initializer = valueField.getInitializer();
-      value = JavaConstantExpressionEvaluator.computeConstantExpression(initializer, false);
+      value = DumbService.isDumb(myProject) ? null : JavaConstantExpressionEvaluator.computeConstantExpression(initializer, false);
     }
 
     if (value != null) {
@@ -1447,9 +1447,7 @@ public class JavaDocInfoGenerator {
   protected String createLinkText(PsiElement[] tagElements) {
     int predictOffset = tagElements.length > 0 ? tagElements[0].getTextOffset() + tagElements[0].getText().length() : 0;
     StringBuilder buffer = new StringBuilder();
-    for (int j = 0; j < tagElements.length; j++) {
-      PsiElement tagElement = tagElements[j];
-
+    for (PsiElement tagElement : tagElements) {
       if (tagElement.getTextOffset() > predictOffset) buffer.append(' ');
       predictOffset = tagElement.getTextOffset() + tagElement.getText().length();
 
@@ -1567,7 +1565,7 @@ public class JavaDocInfoGenerator {
     generateParametersSection(buffer, JavaBundle.message("javadoc.type.parameters"), collectedTags);
   }
 
-  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<? extends ParamInfo> collectedTags) {
+  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       startHeaderSection(buffer, titleMessage)
             .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<p>"))
@@ -1835,7 +1833,7 @@ public class JavaDocInfoGenerator {
     LOG.assertTrue(refText != null, "refText appears to be null.");
     PsiElement target = null;
     try {
-      target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
+      target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context, false);
     }
     catch (IndexNotReadyException e) {
       LOG.debug(e);

@@ -51,8 +51,7 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
   public boolean showHint(@NotNull HintInfo info) {
     if (info instanceof HintInfo.MethodInfo) {
       HintInfo.MethodInfo methodInfo = (HintInfo.MethodInfo)info;
-      return myMatchers.stream()
-        .noneMatch((e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
+      return !ContainerUtil.exists(myMatchers, (e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
     }
     return false;
   }

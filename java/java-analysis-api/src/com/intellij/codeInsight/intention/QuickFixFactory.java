@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -13,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,11 @@ public abstract class QuickFixFactory {
                                                                                     @NotNull PsiType toReturn,
                                                                                     boolean fixWholeHierarchy,
                                                                                     boolean suggestSuperTypes);
+
+  @NotNull
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement createAnnotationMethodReturnFix(@NotNull PsiMethod method,
+                                                                                              @NotNull PsiType toReturn,
+                                                                                              boolean fromDefaultValue);
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass);
@@ -168,6 +174,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable);
 
   @NotNull
+  public abstract IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element);
+
+  @NotNull
   public abstract IntentionAction createConvertToStringLiteralAction();
 
   /**
@@ -243,6 +252,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
+  public abstract @NotNull LocalQuickFix createRenameFix();
+
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
 
@@ -267,6 +278,9 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method);
+
+  @NotNull
+  public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text);
 
   @NotNull
   public abstract IntentionAction createDeleteMethodBodyFix(@NotNull PsiMethod method);
@@ -341,6 +355,11 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field);
 
+  /**
+   * @deprecated use {@link #createDeleteFix(PsiElement)} on {@link PsiReferenceParameterList} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public abstract IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable);
 
@@ -355,6 +374,9 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter);
+
+  @NotNull
+  public abstract IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter);
 
   @NotNull
   public abstract IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
@@ -493,7 +515,25 @@ public abstract class QuickFixFactory {
    * @param subclassRef reference in permits list of a parent class
    */
   public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
-                                                                            @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
+                                                                              @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
+
+  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates);
+
+  public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
+
+  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
+                                                                          @NotNull PsiType enclosingClassType);
+
+  public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
+
+  @Nullable
+  public abstract IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
+
+  public abstract @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression);
+
+  public abstract @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression);
+
+  public abstract @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression);
 }

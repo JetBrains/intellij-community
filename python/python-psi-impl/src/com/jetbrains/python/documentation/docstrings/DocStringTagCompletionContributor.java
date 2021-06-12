@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author yole
- */
+
 public class DocStringTagCompletionContributor extends CompletionContributor {
   public static final PsiElementPattern.Capture<PyStringLiteralExpression> DOCSTRING_PATTERN = psiElement(PyStringLiteralExpression.class)
     .withParent(psiElement(PyExpressionStatement.class).inside(PyDocStringOwner.class));

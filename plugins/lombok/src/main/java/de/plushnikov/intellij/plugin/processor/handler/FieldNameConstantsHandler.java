@@ -77,10 +77,10 @@ public final class FieldNameConstantsHandler {
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL);
 
-    lazyClassBuilder.withMethodSupplier(()-> {
+    lazyClassBuilder.withMethodSupplier((thisPsiClass)-> {
       //add enum methods like here:  ClassInnerStuffCache.calcMethods
       final PsiManager psiManager = containingClass.getManager();
-      final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(lazyClassBuilder);
+      final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(thisPsiClass);
 //    "public static " + myClass.getName() + "[] values() { }"
       final LombokLightMethodBuilder valuesEnumMethod = new LombokLightMethodBuilder(psiManager, "values")
         .withModifier(PsiModifier.PUBLIC)

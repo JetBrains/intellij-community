@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +31,7 @@ import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
   @NonNls protected static final String INDEX = "index";
   @NotNull private final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
@@ -147,7 +149,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   private final class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     private MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
-                             @NotNull IndexStorage<Integer,T> storage,
+                             @NotNull IndexStorage<Integer, T> storage,
                              @Nullable ForwardIndex forwardIndex,
                              @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor);
@@ -165,9 +167,12 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
+    private @NotNull final String myName;
+
     MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
       super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      myName = name;
     }
 
     protected boolean isEmpty() throws IOException {
@@ -182,6 +187,12 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     @Override
     protected void checkCanceled() {
       ProgressManager.checkCanceled();
+    }
+
+    @Override
+    public void clear() throws StorageException {
+      LOG.warn("Clearing '" + myName + "' map index storage", new RuntimeException());
+      super.clear();
     }
   }
 

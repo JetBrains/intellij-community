@@ -17,6 +17,8 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory;
@@ -29,11 +31,20 @@ public class JavaRenameRefactoringImpl extends RenameRefactoringImpl implements 
   private static final AutomaticInheritorRenamerFactory ourInheritorRenamerFactory = new AutomaticInheritorRenamerFactory();
 
   public JavaRenameRefactoringImpl(Project project,
-                               PsiElement element,
-                               String newName,
-                               boolean toSearchInComments,
-                               boolean toSearchInNonJavaFiles) {
-    super(project, element, newName, toSearchInComments, toSearchInNonJavaFiles);
+                                 PsiElement element,
+                                 String newName,
+                                 boolean toSearchInComments,
+                                 boolean toSearchInNonJavaFiles) {
+    this(project, element, newName, GlobalSearchScope.projectScope(project), toSearchInComments, toSearchInNonJavaFiles);
+  }
+
+  public JavaRenameRefactoringImpl(Project project,
+                                   PsiElement element,
+                                   String newName,
+                                   SearchScope scope,
+                                   boolean toSearchInComments,
+                                   boolean toSearchInNonJavaFiles) {
+    super(project, element, newName, scope, toSearchInComments, toSearchInNonJavaFiles);
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Path
@@ -12,6 +13,11 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+
+@ApiStatus.Internal
+fun reportErrorAndAttachStorage(message: String, storage: WorkspaceEntityStorage) {
+  (storage.makeSureItsStore() as WorkspaceEntityStorageImpl).reportConsistencyIssue(message, IllegalStateException(), null, null, null, storage)
+}
 
 internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())

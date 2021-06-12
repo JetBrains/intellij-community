@@ -1,19 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.injection.general;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SimpleInjection implements Injection {
 
-  private final String injectedId;
+  private final Language language;
   private final String prefix;
   private final String suffix;
   private final String supportId;
 
-  public SimpleInjection(@NotNull String injectedId, @NotNull String prefix, @NotNull String suffix, @Nullable String supportId) {
-    this.injectedId = injectedId;
+  public SimpleInjection(@NotNull Language language, @NotNull String prefix, @NotNull String suffix, @Nullable String supportId) {
+    this.language = language;
     this.prefix = prefix;
     this.suffix = suffix;
     this.supportId = supportId;
@@ -21,7 +22,12 @@ public class SimpleInjection implements Injection {
 
   @Override
   public @NotNull @NlsSafe String getInjectedLanguageId() {
-    return injectedId;
+    return language.getID();
+  }
+
+  @Override
+  public Language getInjectedLanguage() {
+    return language;
   }
 
   @Override

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.StringTokenizer;
 
+import java.util.Locale;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -14,7 +15,6 @@ import java.util.prefs.Preferences;
  * @author Eugene Zhuravlev
  */
 public final class Prefs {
-
   public static void put(String key, String value) {
     Preferences.userRoot().remove(key); // remove from old location
     getPreferences(key).put(getNodeKey(key), value);
@@ -94,17 +94,18 @@ public final class Prefs {
   }
 
   private static String getNodeKey(String key) {
-    final int dotIndex = key.lastIndexOf('.');
-    return StringUtil.toLowerCase((dotIndex >= 0 ? key.substring(dotIndex + 1) : key));
+    int dotIndex = key.lastIndexOf('.');
+    return (dotIndex >= 0 ? key.substring(dotIndex + 1) : key).toLowerCase(Locale.ENGLISH);
   }
 
   private static Preferences getPreferences(String key) {
     Preferences prefs = Preferences.userRoot();
     final int dotIndex = key.lastIndexOf('.');
     if (dotIndex > 0) {
-      final StringTokenizer tokenizer = new StringTokenizer(key.substring(0, dotIndex), ".", false);
+      StringTokenizer tokenizer = new StringTokenizer(key.substring(0, dotIndex), ".", false);
       while (tokenizer.hasMoreElements()) {
-        prefs = prefs.node(StringUtil.toLowerCase(tokenizer.nextElement()));
+        String str = tokenizer.nextToken();
+        prefs = prefs.node(str == null ? null : str.toLowerCase(Locale.ENGLISH));
       }
     }
     return prefs;
@@ -122,10 +123,10 @@ public final class Prefs {
     // rewrite from old location into the new one
     final Preferences prefs = Preferences.userRoot();
     final T val = getter.get(prefs, key, def);
-    if (!Comparing.equal(val, def)) {
+    // first use Objects.equals to avoid loading Comparing class
+    if (!Objects.equals(val, def) && !Comparing.equal(val, def)) {
       setter.set(getPreferences(key), getNodeKey(key), val);
       prefs.remove(key);
     }
   }
-
 }

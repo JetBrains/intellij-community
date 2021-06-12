@@ -5,12 +5,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import org.junit.Test
 import java.io.File
 
-class MavenImportingConnectorsTest : MavenImportingTestCase() {
+class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
   protected lateinit var myAnotherProjectRoot: VirtualFile
 
   @Throws(Exception::class)
@@ -21,6 +22,7 @@ class MavenImportingConnectorsTest : MavenImportingTestCase() {
     myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)!!
   }
 
+  @Test
   fun testShouldNotCreateNewConnectorForNewProject() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
@@ -56,7 +58,7 @@ class MavenImportingConnectorsTest : MavenImportingTestCase() {
     )
   }
 
-  fun testShouldCreateNewConnectorForNewProjectIfJvmConfigPresents() {
+  @Test fun testShouldCreateNewConnectorForNewProjectIfJvmConfigPresents() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
                      "<version>1</version>" +
@@ -94,7 +96,7 @@ class MavenImportingConnectorsTest : MavenImportingTestCase() {
     )
   }
 
-  fun testShouldNotCreateNewConnectorForNewProjectIfJvmConfigPresentsAndRegistrySet() {
+  @Test fun testShouldNotCreateNewConnectorForNewProjectIfJvmConfigPresentsAndRegistrySet() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project1</artifactId>" +
                      "<version>1</version>" +
@@ -138,6 +140,34 @@ class MavenImportingConnectorsTest : MavenImportingTestCase() {
       Registry.get("maven.server.per.idea.project").setValue(value)
     }
 
+  }
+
+
+  @Test fun testShouldNotCreateNewConnectorsIfProjectRootIsInSiblingDir() {
+    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+                     "<artifactId>project1</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+                     "<modules>" +
+                     "<module>../m1</module>" +
+                     " </modules>")
+    createModulePom("m1", "<parent>\n" +
+                          "    <groupId>test</groupId>\n" +
+                          "    <artifactId>project1</artifactId>\n" +
+                          "    <version>1</version>\n" +
+                          "    <relativePath>../parent/pom.xml</relativePath>\n" +
+                          "  </parent>")
+    importProject()
+    assertModules("project1", "m1")
+
+    assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+
+    assertUnorderedElementsAreEqual(
+      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+        FileUtil.getRelativePath(myDir, File(it))
+      }.map { it?.replace("\\", "/") },
+      listOf("project/parent", "project/m1")
+    )
   }
 
 

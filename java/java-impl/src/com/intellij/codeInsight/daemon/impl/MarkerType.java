@@ -232,7 +232,7 @@ public class MarkerType {
       return !isAbstract || aClass == null ? null : getFunctionalImplementationTooltip(aClass);
     }
 
-    Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
+    Comparator<PsiMethod> comparator = new MethodCellRenderer.MethodCellRenderingInfo(false).getComparator();
     Arrays.sort(overridings, comparator);
 
     return getImplementationTooltip(isAbstract ? "Is implemented in" : "Is overridden in", overridings);
@@ -302,7 +302,7 @@ public class MarkerType {
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
     if (subclasses.length == 0) return getFunctionalImplementationTooltip(aClass);
 
-    Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
+    Comparator<PsiClass> comparator = PsiClassListCellRenderer.INFO.getComparator();
     Arrays.sort(subclasses, comparator);
 
     return getImplementationTooltip(aClass.isInterface() ? "Is implemented by" : "Is subclassed by", subclasses);

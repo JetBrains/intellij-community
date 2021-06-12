@@ -18,4 +18,12 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface UpdateInBackground {
+  default boolean isUpdateInBackground() {
+    return true;
+  }
+
+  @ApiStatus.Experimental
+  interface Recursive extends UpdateInBackground {
+
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -46,7 +46,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -70,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
@@ -131,13 +131,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  public static class ContentPredicate implements NotNullFunction<Project, Boolean> {
+  final static class ContentPredicate implements Predicate<Project> {
     @NotNull
     @Override
-    public Boolean fun(Project project) {
-      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
-      if (CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab()) return false;
-      return true;
+    public boolean test(Project project) {
+      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+             !CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab();
     }
   }
 
@@ -298,7 +297,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public void openEditorPreview() {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.openEditorPreview();
+    myToolWindowPanel.openEditorPreview(false);
   }
 
   public void closeEditorPreview() {
@@ -312,7 +311,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
-    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -386,19 +384,14 @@ public class ChangesViewManager implements ChangesViewEx,
       myMainPanel = simplePanel(myContentPanel);
 
       setDiffPreview();
-      isEditorDiffPreview.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          setDiffPreview();
-        }
-      }, this);
+
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           if (!isSplitterPreview()) setDiffPreview(true);
         }
       }, this);
-      busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> setDiffPreview());
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
@@ -426,6 +419,13 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myChangeProcessor != null) myChangeProcessor.fireDiffSettingsChanged();
       });
 
+      busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
+      busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myView.repaint();
+        });
+      });
+
       scheduleRefresh();
       myDiffPreview.updatePreview(false);
     }
@@ -447,7 +447,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreview(boolean force) {
       if (myDisposed) return;
 
-      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = EditorTabDiffPreviewManager.getInstance(myProject).isEditorDiffPreviewAvailable();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
         if (!isEditorPreview && isSplitterPreview()) return;
@@ -468,7 +468,10 @@ public class ChangesViewManager implements ChangesViewEx,
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
         protected String getCurrentName() {
-          return changeProcessor.getCurrentChangeName();
+          String changeName = changeProcessor.getCurrentChangeName();
+          return changeName != null
+                 ? VcsBundle.message("commit.editor.diff.preview.title", changeName)
+                 : VcsBundle.message("commit.editor.diff.preview.empty.title");
         }
 
         @Override
@@ -519,7 +522,7 @@ public class ChangesViewManager implements ChangesViewEx,
       PreviewDiffSplitterComponent previewSplitter =
         new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
       previewSplitter.setFirstComponent(myContentPanel);
-      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN, false);
 
       myView.addSelectionListener(() -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
@@ -528,6 +531,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       myMainPanel.addToCenter(previewSplitter);
       Disposer.register(changeProcessor, () -> {
+        if (Disposer.isDisposed(this)) return;
         myMainPanel.remove(previewSplitter);
         myMainPanel.addToCenter(myContentPanel);
 
@@ -546,11 +550,11 @@ public class ChangesViewManager implements ChangesViewEx,
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
 
-    private void openEditorPreview() {
+    private void openEditorPreview(boolean focusEditor) {
       if (isSplitterPreview()) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(false);
+      ((EditorTabPreview)myDiffPreview).openPreview(focusEditor);
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
@@ -635,6 +639,9 @@ public class ChangesViewManager implements ChangesViewEx,
     public Object getData(@NotNull String dataId) {
       Object data = super.getData(dataId);
       if (data != null) return data;
+      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
+        return (myDiffPreview instanceof EditorTabPreview) ? myDiffPreview : null;
+      }
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
     }
@@ -719,8 +726,10 @@ public class ChangesViewManager implements ChangesViewEx,
         List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
+        boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
+                                              !ChangeListManager.getInstance(myProject).areChangeListsEnabled();
         TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-          .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
+          .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider())
           .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
           .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
           .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
@@ -729,7 +738,7 @@ public class ChangesViewManager implements ChangesViewEx,
           .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
           .setUnversioned(unversionedFiles);
         if (myChangesViewManager.myState.myShowIgnored) {
-          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
+          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths());
         }
 
         invokeLaterIfNeeded(() -> {
@@ -814,7 +823,12 @@ public class ChangesViewManager implements ChangesViewEx,
       }
 
       @Override
-      public void changeListUpdateDone() {
+      public void unchangedFileStatusChanged() {
+        scheduleRefresh();
+      }
+
+      @Override
+      public void changedFileStatusChanged() {
         setBusy(false);
         scheduleRefresh();
 
@@ -857,7 +871,7 @@ public class ChangesViewManager implements ChangesViewEx,
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-        myDiffPreview.setPreviewVisible(state);
+        myDiffPreview.setPreviewVisible(state, false);
         setCommitSplitOrientation();
       }
 
@@ -878,9 +892,7 @@ public class ChangesViewManager implements ChangesViewEx,
       super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        ChangesViewToolWindowPanel panel = ((ChangesViewManager)getInstance(myProject)).initToolWindowPanel();
-        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
-                                                     ChangesTreeDnDSupport.getDropRootNode(panel.myView, event),
+        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, null,
                                                      !ChangesTreeDnDSupport.isCopyAction(event));
       }
     }

@@ -1,5 +1,7 @@
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 # Usage: . "$(git rev-parse --show-toplevel)/build/protobuf/getprotoc.sh"
-PROTOC_VERSION=${PROTOC_VERSION:-3.13.0}
+PROTOC_VERSION=${PROTOC_VERSION:-3.15.8}
 
 PROTOC_BIN_DIR="${PROTOC_BIN_DIR:-$(git rev-parse --show-toplevel)/build/protobuf/bin}"
 PROTOC_CACHE_DIR="${PROTOC_CACHE_DIR:-$(dirname "$PROTOC_BIN_DIR")/cache}"

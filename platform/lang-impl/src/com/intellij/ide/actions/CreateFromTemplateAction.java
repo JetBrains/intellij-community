@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
+public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements UpdateInBackground, WriteActionAware {
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
   public CreateFromTemplateAction(@NlsActions.ActionText String text,

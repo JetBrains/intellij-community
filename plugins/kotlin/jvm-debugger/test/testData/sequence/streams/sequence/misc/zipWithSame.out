@@ -1,0 +1,26 @@
+LineBreakpoint created at ZipWithSame.kt:5
+Run Java
+Connected to the target VM
+ZipWithSame.kt:5
+sequenceOf(1, 2)
+.zip(sequenceOf(3, 2))
+.sumBy({ it.second })
+zip
+    before: 1
+    after: 2
+sumBy
+    before: 2
+    after: nothing
+mappings for zip
+  direct:
+    1 -> 2
+  reverse:
+    1 <- 2
+mappings for sumBy
+  direct:
+    2 -> nothing
+  reverse:
+    empty
+Disconnected from the target VM
+
+Process finished with exit code 0

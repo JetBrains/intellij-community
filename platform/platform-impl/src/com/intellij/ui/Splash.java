@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Activity;
@@ -25,10 +25,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Base64;
 import java.util.Objects;
@@ -269,11 +270,19 @@ public final class Splash extends Window {
        d.update(path.getBytes(StandardCharsets.UTF_8));
        // path for EAP and release builds is the same, but content maybe different
        d.update((byte)(appInfo.isEAP() ? 1 : 0));
+
+       String pathToSplash = path.startsWith("/") ? path.substring(1) : path;
+       URL resource = Splash.class.getClassLoader().getResource(pathToSplash);
+       if (resource != null) {
+         long fileSize = Files.size(Paths.get(resource.toURI()));
+         ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE).putLong(fileSize);
+         d.update(buffer);
+       }
        var encodedDigest = Base64.getUrlEncoder().encodeToString(d.digest());
        int dotIndex = path.lastIndexOf('.');
        return Paths.get(PathManager.getSystemPath(), "splashSlides", encodedDigest + '.' + scale + '.' + (dotIndex < 0 ? "" : path.substring(dotIndex)));
      }
-     catch (NoSuchAlgorithmException e) {
+     catch (Exception e) {
        return null;
      }
    }

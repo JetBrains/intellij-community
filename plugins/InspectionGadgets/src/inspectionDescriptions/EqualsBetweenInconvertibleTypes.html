@@ -1,10 +1,12 @@
 <html>
 <body>
-Reports calls to <b>.equals()</b> where the target and argument are
+Reports calls to <code>equals()</code> where the target and argument are
 of incompatible types. While such a call might theoretically be useful, most likely it represents
 a bug.
+<p>Example:</p>
+<pre>
+  new HashSet&lt;String&gt;().equals(new TreeSet&lt;Integer&gt;());
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

@@ -91,7 +91,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     val fragmentEditor = FileEditorManagerEx.getInstanceEx(project).openTextEditor(
       OpenFileDescriptor(project, injectedFile.virtualFile, unEscapedOffset), true
     )
-    return EditorTestFixture(project, fragmentEditor, injectedFile.virtualFile)
+    return EditorTestFixture(project, fragmentEditor!!, injectedFile.virtualFile)
   }
 
   val topLevelFile: PsiFile

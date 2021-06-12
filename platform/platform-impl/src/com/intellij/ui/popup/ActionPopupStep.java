@@ -4,11 +4,11 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>,
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
+  private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
+
   private final List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle String myTitle;
   private final Supplier<? extends DataContext> myContext;
@@ -46,13 +48,16 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myItems = items;
     myTitle = title;
     myContext = context;
-    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
+    myActionPlace = ActionPlaces.getPopupPlace(actionPlace);
     myEnableMnemonics = enableMnemonics;
     myPresentationFactory = presentationFactory;
     myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
     myPreselectActionCondition = preselectActionCondition;
     myAutoSelectionEnabled = autoSelection;
     myShowDisabledActions = showDisabledActions;
+    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
+      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+    }
   }
 
   private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
@@ -108,6 +113,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                     boolean honorActionMnemonics,
                                                                     @Nullable String actionPlace,
                                                                     @Nullable PresentationFactory presentationFactory) {
+    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
+      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+      actionPlace = ActionPlaces.getPopupPlace(actionPlace);
+    }
     ActionStepBuilder builder = new ActionStepBuilder(
       dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
     builder.buildGroup(actionGroup);
@@ -238,7 +247,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
   }
 

@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-class UnknownPackagingElementTypeException extends Exception {
+public class UnknownPackagingElementTypeException extends Exception {
   private final String myTypeId;
 
-  UnknownPackagingElementTypeException(String typeId) {
+  public UnknownPackagingElementTypeException(String typeId) {
     myTypeId = typeId;
   }
 

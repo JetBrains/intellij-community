@@ -36,9 +36,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 

@@ -6,11 +6,12 @@
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
     </action>
 
     <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
       <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
 
     <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
@@ -23,10 +24,11 @@
     <fileType name="JSON" extensions="json;har" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
     <fileType name="JSON-lines" extensions="jsonl;jsonlines;ndjson;ldjson"
-              implementationClass="com.intellij.json.JsonLinesFileType" fieldName="INSTANCE"/>
+              implementationClass="com.intellij.json.jsonLines.JsonLinesFileType" fieldName="INSTANCE" language="JSON Lines"/>
     <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
+    <lang.parserDefinition language="JSON Lines" implementationClass="com.intellij.json.jsonLines.JsonLinesParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <outerLanguageRangePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher"/>
@@ -120,7 +122,7 @@
                                 id="JsonSchemaDocumentationProvider"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
-    <statistics.counterUsagesCollector groupId="json.schema" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>

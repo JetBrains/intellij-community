@@ -84,6 +84,9 @@
       <separator/>
       <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
       <separator/>
+      <action id="ProblemsView.GroupByToolId"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
       <action id="ProblemsView.SortFoldersFirst"
               icon="AllIcons.ObjectBrowser.SortByType"
               class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
@@ -99,19 +102,14 @@
       <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ProblemsView.SeverityFilters"/>
         <separator/>
+        <reference ref="ProblemsView.GroupByToolId"/>
         <reference ref="ProblemsView.SortFoldersFirst"/>
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.ExpandAll"
-              icon="AllIcons.Actions.Expandall"
-              use-shortcut-of="ExpandAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeExpandAllAction"/>
-      <action id="ProblemsView.CollapseAll"
-              icon="AllIcons.Actions.Collapseall"
-              use-shortcut-of="CollapseAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeCollapseAllAction"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"

@@ -1,27 +1,22 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.text.SemVer
-import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Version
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageUpdateQuickFix
-import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.version.looksLikeStableVersion
+import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 
-abstract class PackageUpdateInspection : LocalInspectionTool() {
+internal abstract class PackageUpdateInspection : LocalInspectionTool() {
 
-    abstract fun shouldCheckFile(file: PsiFile): Boolean
-
-    abstract fun getVersionElement(file: PsiFile, dependency: StandardV2Package): PsiElement?
+    abstract fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement?
 
     final override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (!shouldCheckFile(file)) {
@@ -29,33 +24,40 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
         }
 
         val project = file.project
-        val model = project.getUserData(PackageSearchToolWindowFactory.ToolWindowModelKey) ?: return null
-        val module = ProjectModuleProvider.obtainAllProjectModulesFor(project).toList().find {
-            it.buildFile == file.virtualFile
-        } ?: return null
+        val dataModel = project.dataService().dataModelProperty.value
+
+        if (dataModel.packageModels.isEmpty()) return null
+
+        val module = ModuleUtil.findModuleForFile(file)
+        val availableUpdates = dataModel.packagesToUpdate.updatesByModule[module] ?: return null
+
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
+        for (packageUpdateInfo in availableUpdates) {
+            val currentVersion = packageUpdateInfo.usageInfo.version
+            val scope = packageUpdateInfo.usageInfo.scope
+            val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
+            val versionElement = getVersionPsiElement(file, unifiedDependency) ?: continue
 
-        model.preparePackageOperationTargetsFor(listOf(module), null).forEach { target ->
-            val dependency = target.packageSearchDependency.remoteInfo ?: return@forEach
-            val highestVersion = (dependency.versions?.map(StandardV2Version::version) ?: emptyList())
-                .filter { it.isNotBlank() && !looksLikeGradleVariable(it) && (looksLikeStableVersion(it)) }
-                .distinct()
-                .sortedWith(Comparator { o1, o2 -> VersionComparatorUtil.compare(o2, o1) }).firstOrNull() ?: return@forEach
-
-            val semVerHighest = SemVer.parseFromText(highestVersion)
-            val semVerTarget = SemVer.parseFromText(target.version)
-            if (semVerHighest != null && semVerTarget != null && semVerHighest > semVerTarget) {
-                val versionElement = getVersionElement(file, dependency) ?: return@forEach
-                problemsHolder.registerProblem(
-                    versionElement,
-                    PackageSearchBundle.message("packagesearch.inspection.update.description", highestVersion),
-                    PackageUpdateQuickFix(versionElement, target, dependency, highestVersion)
+            problemsHolder.registerProblem(
+                versionElement,
+                PackageSearchBundle.message("packagesearch.inspection.upgrade.description", packageUpdateInfo.targetVersion),
+                PackageSearchDependencyUpdateQuickFix(
+                    element = versionElement,
+                    packageModel = packageUpdateInfo.packageModel,
+                    unifiedDependency = unifiedDependency,
+                    projectModule = packageUpdateInfo.usageInfo.projectModule,
+                    targetVersion = packageUpdateInfo.targetVersion
                 )
-            }
+            )
         }
 
         return problemsHolder.resultsArray
     }
 
-    override fun getDefaultLevel() = HighlightDisplayLevel.WARNING!!
+    private fun shouldCheckFile(file: PsiFile): Boolean =
+        ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
+            ?.hasSupportFor(file.project, file)
+            ?: false
+
+    override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }

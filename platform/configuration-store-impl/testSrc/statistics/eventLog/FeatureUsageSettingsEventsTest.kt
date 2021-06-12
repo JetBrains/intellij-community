@@ -1,4 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
@@ -675,9 +676,7 @@ class FeatureUsageSettingsEventsTest {
       state = s
     }
 
-    override fun getState(): ComponentState? {
-      return state
-    }
+    override fun getState() = state
   }
 
   @Suppress("unused")
@@ -803,9 +802,7 @@ class FeatureUsageSettingsEventsTest {
       state = s
     }
 
-    override fun getState(): ComponentState? {
-      return state
-    }
+    override fun getState() = state
 
     class PresentableNameGetter : State.NameGetter() {
       override fun get(): String {

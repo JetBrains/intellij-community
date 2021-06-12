@@ -1,9 +1,11 @@
 <html>
 <body>
-Reports <b>int</b> literal expressions
-which are immediately cast to <b>long</b>. Such
-literal expressions can be replaced with the equivalent <b>long</b>
-literal.
+Reports <code>int</code> literal expressions which are immediately cast to <code>long</code>. 
+Such literal expressions can be replaced with the equivalent <code>long</code> literals.
+<p><b>Example:</b> <code>Long l = (long)42;</code></p>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<code>Long l = 42L;</code>
+
 <!-- tooltip end -->
 <p>
 </body>

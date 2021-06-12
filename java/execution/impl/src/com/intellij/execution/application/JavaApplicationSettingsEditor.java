@@ -3,8 +3,11 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -17,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
@@ -25,6 +29,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
     super(configuration);
+  }
+
+  @Override
+  public boolean isInplaceValidationSupported() {
+    return true;
   }
 
   @Override
@@ -70,6 +79,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       Editor editor = field.getEditor();
       return editor == null ? field : editor.getContentComponent();
     });
+    mainClassFragment.setValidation((configuration) ->
+      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass()))));
     return mainClassFragment;
   }
 

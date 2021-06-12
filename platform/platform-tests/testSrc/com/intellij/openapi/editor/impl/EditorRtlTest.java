@@ -410,7 +410,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     moveCaretToPreviousWordWithSelection();
     checkResult("<selection>LL </selection>RR RR LL");
     moveCaretToPreviousWordWithSelection();
-    checkResult("<selection></selection>LL RR RR LL");
+    checkResult("<caret>LL RR RR LL");
   }
   
   public void testHomeEnd() {
@@ -521,7 +521,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     right();
     checkResult("RLR<caret>");
   }
-  
+
   public void testTabInsideRtlText() {
     prepareText("<caret>R\tRR");
     right();
@@ -577,5 +577,12 @@ public class EditorRtlTest extends AbstractRtlTest {
 
   public void testIndentIsTreatedSeparately() {
     checkBidiRunBoundaries(" |R", "txt");
+  }
+
+  public void testCaretMovementAroundTab() {
+    prepareText("R<caret>R\t");
+    left();
+    checkResult("RR<caret>\t");
+    assertVisualCaretLocation(0, true);
   }
 }

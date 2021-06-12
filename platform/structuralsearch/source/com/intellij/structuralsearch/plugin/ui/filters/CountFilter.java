@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -60,9 +59,8 @@ public class CountFilter extends FilterAction {
     if (myTable.getMatchVariable() == null) {
       return false;
     }
-    final StructuralSearchProfile profile = myTable.getProfile();
-    myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
-    myMaxUnlimited = profile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);
+    myMinZero = isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, target);
+    myMaxUnlimited = isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, target);
     return myMinZero || myMaxUnlimited;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.RunManager;
@@ -150,7 +150,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
     data.METHOD_NAME = "test";
     data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
-    checkConfigurationException("Test method 'test' doesn't exist", configuration);
+    checkConfigurationException("Class 'NotATest2' is not a test", configuration);
     rename(psiClass.findMethodsByName("test", false)[0], "test2");
     assertEquals("NotATest2", data.getMainClassName());
     assertEquals("test2", data.getMethodName());

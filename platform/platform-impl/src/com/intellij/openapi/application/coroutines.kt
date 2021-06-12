@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.progress.JobProgress
+import com.intellij.openapi.progress.Progress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -24,9 +26,9 @@ import kotlin.coroutines.resume
  *
  * Since the [action] might me executed several times, it must be idempotent.
  * The function returns when given [action] was completed fully.
- * [CoroutineContext] passed to the action must be used to check for cancellation inside the [action].
+ * [Progress] passed to the action must be used to check for cancellation inside the [action].
  */
-suspend fun <T> readAction(action: (ctx: CoroutineContext) -> T): T {
+suspend fun <T> readAction(action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.unconstrained(), action)
 }
 
@@ -34,7 +36,7 @@ suspend fun <T> readAction(action: (ctx: CoroutineContext) -> T): T {
  * Suspends until it's possible to obtain the read lock in smart mode and then runs the [action] holding the lock.
  * @see readAction
  */
-suspend fun <T> smartReadAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
+suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
 }
 
@@ -43,7 +45,7 @@ suspend fun <T> smartReadAction(project: Project, action: (ctx: CoroutineContext
  * and then runs the [action] holding the lock.
  * @see readAction
  */
-suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (ctx: CoroutineContext) -> T): T {
+suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
   val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
   check(!application.isDispatchThread) {
     "Must not call from EDT"
@@ -53,14 +55,14 @@ suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (ctx
     check(unsatisfiedConstraint == null) {
       "Cannot suspend until constraints are satisfied while holding read lock: $unsatisfiedConstraint"
     }
-    return action(coroutineContext)
+    return action(JobProgress(coroutineContext.job))
   }
   return supervisorScope {
     readLoop(application, constraints, action)
   }
 }
 
-private suspend fun <T> readLoop(application: ApplicationEx, constraints: ReadConstraints, action: (ctx: CoroutineContext) -> T): T {
+private suspend fun <T> readLoop(application: ApplicationEx, constraints: ReadConstraints, action: (progress: Progress) -> T): T {
   while (true) {
     coroutineContext.ensureActive()
     if (application.isWriteActionPending || application.isWriteActionInProgress) {
@@ -80,11 +82,10 @@ private suspend fun <T> readLoop(application: ApplicationEx, constraints: ReadCo
 
 private suspend fun <T> tryReadAction(application: ApplicationEx,
                                       constraints: ReadConstraints,
-                                      action: (ctx: CoroutineContext) -> T): ReadResult<T> {
+                                      action: (progress: Progress) -> T): ReadResult<T> {
   val loopContext = coroutineContext
   return withContext(CoroutineName("read action")) {
-    val readCtx: CoroutineContext = this@withContext.coroutineContext
-    val readJob: Job = requireNotNull(readCtx[Job])
+    val readJob: Job = this@withContext.coroutineContext.job
     val cancellation = {
       readJob.cancel()
     }
@@ -94,7 +95,7 @@ private suspend fun <T> tryReadAction(application: ApplicationEx,
       application.tryRunReadAction {
         val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
         result = if (unsatisfiedConstraint == null) {
-          ReadResult.Successful(action(readCtx))
+          ReadResult.Successful(action(JobProgress(readJob)))
         }
         else {
           ReadResult.UnsatisfiedConstraint(waitForConstraint(loopContext, unsatisfiedConstraint))

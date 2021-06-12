@@ -3,10 +3,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +32,14 @@ final class InlayModelWindow implements InlayModel {
     return null;
   }
 
+  @Override
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     @NotNull InlayProperties properties,
+                                                                                     @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
@@ -46,11 +51,27 @@ final class InlayModelWindow implements InlayModel {
     return null;
   }
 
+  @Override
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                                    @NotNull InlayProperties properties,
+                                                                                    @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                  boolean relatesToPrecedingText,
                                                                                  @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
+  @Override
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                           @NotNull InlayProperties properties,
+                                                                                           @NotNull T renderer) {
     logUnsupported();
     return null;
   }

@@ -30,33 +30,33 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.bufferedReader
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
 
   companion object {
     @JvmStatic
-    fun getInstance(): IndexDiagnosticDumper = service<IndexDiagnosticDumper>()
+    fun getInstance(): IndexDiagnosticDumper = service()
 
     val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
     private const val fileNamePrefix = "diagnostic-"
 
     @JvmStatic
-    private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
-      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+    private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
 
     @JvmStatic
-    private val indexingDiagnosticsLimitOfFiles: Int get() =
-      SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+    private val indexingDiagnosticsLimitOfFiles: Int
+      get() =
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
 
     @JvmStatic
-    val shouldDumpPathsOfIndexedFiles: Boolean get() =
-      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+    val shouldDumpPathsOfIndexedFiles: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
 
     @JvmStatic
     @TestOnly
@@ -64,7 +64,7 @@ class IndexDiagnosticDumper : Disposable {
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
-    private val jacksonMapper: ObjectMapper by lazy {
+    val jacksonMapper: ObjectMapper by lazy {
       jacksonObjectMapper().registerKotlinModule()
     }
 
@@ -121,7 +121,8 @@ class IndexDiagnosticDumper : Disposable {
     for (listener in listeners) {
       try {
         listener.block()
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         if (e is ControlFlowException) {
           // Make all listeners run first.
           continue

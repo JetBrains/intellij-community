@@ -71,7 +71,7 @@ class <weak_warning descr="Class initializer is complex: data flow results could
       if (obj == Constants.C2) i = 3;
       if (obj == Constants.C3) i = 4;
       if (obj == Constants.C4) i = 5;
-      if (obj == Constants.C5) i = 6;
+      if (<warning descr="Condition 'obj == Constants.C5' is always 'false'">obj == Constants.C5</warning>) i = 6;
       if (obj == Constants.C6) i = 7;
       if (obj == Constants.C7) i = 8;
       if (obj == Constants.C8) i = 9;

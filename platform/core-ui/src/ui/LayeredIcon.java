@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
@@ -35,6 +36,10 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   private int myWidth;
   private int myHeight;
+
+  public static final Icon ADD_WITH_DROPDOWN = new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown);
+  public static final Icon EDIT_WITH_DROPDOWN = new LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown);
+  public static final Icon GEAR_WITH_DROPDOWN = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
 
   {
     getScaleContext().addUpdateListener(this::updateSize);

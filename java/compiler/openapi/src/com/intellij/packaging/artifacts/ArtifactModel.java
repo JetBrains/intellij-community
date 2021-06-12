@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.artifacts;
 
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +23,11 @@ import java.util.Collection;
 import java.util.List;
 
 public interface ArtifactModel {
+  @RequiresReadLock
   Artifact @NotNull [] getArtifacts();
 
   @Nullable
+  @RequiresReadLock
   Artifact findArtifact(@NotNull String name);
 
   @NotNull
@@ -34,7 +37,9 @@ public interface ArtifactModel {
   Artifact getOriginalArtifact(@NotNull Artifact artifact);
 
   @NotNull
+  @RequiresReadLock
   Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type);
 
+  @RequiresReadLock
   List<? extends Artifact> getAllArtifactsIncludingInvalid();
 }

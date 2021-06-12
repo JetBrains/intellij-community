@@ -220,6 +220,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * <p/>
    * This method does not access AST if underlying PSI is stub based.
    */
+  @NotNull
   List<PyTargetExpression> getInstanceAttributes();
 
   @Nullable

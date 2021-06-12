@@ -1,11 +1,25 @@
 <html>
 <body>
-Reports JUnit 4.0 <b>@BeforeClass</b> or <b>@AfterClass</b> methods
-which are not declared
-<b>public</b> and <b>static</b>, do not return <b>void</b>, or take arguments.
+Reports JUnit 4.0 <code>@BeforeClass</code> or <code>@AfterClass</code> methods
+which are not declared <code>public</code> and <code>static</code>,
+do not return <code>void</code>, or take arguments.
 Such methods are easy to create inadvertently, but will not be executed by JUnit tests runners.
+<p>Example:</p>
+<pre>
+  public class MainTest {
+    @BeforeClass
+    String beforeClass(int i) {
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  class MainTest {
+    @BeforeClass
+    public static void beforeClass() {
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

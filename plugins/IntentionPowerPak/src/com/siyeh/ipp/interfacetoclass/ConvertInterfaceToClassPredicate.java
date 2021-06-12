@@ -15,39 +15,22 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiClass)) {
-      return false;
-    }
-    final PsiClass aClass = (PsiClass)parent;
-    if (!aClass.isInterface() || aClass.isAnnotationType()) {
-      return false;
-    }
+    final PsiClass aClass = ObjectUtils.tryCast(element.getParent(), PsiClass.class);
+    if (aClass == null) return false;
     final PsiElement leftBrace = aClass.getLBrace();
     final int offsetInParent = element.getStartOffsetInParent();
-    if (leftBrace == null ||
-        offsetInParent >= leftBrace.getStartOffsetInParent()) {
+    if (leftBrace == null || offsetInParent >= leftBrace.getStartOffsetInParent()) {
       return false;
     }
-    final SearchScope useScope = aClass.getUseScope();
-    for (PsiClass inheritor :
-      ClassInheritorsSearch.search(aClass, useScope, true)) {
-      if (inheritor.isInterface()) {
-        return false;
-      }
-    }
-    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
+    return ConvertInterfaceToClassIntention.canConvertToClass(aClass);
   }
 }

@@ -154,12 +154,8 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
   private val saveAlarm = pooledThreadSingleAlarm(delay = 0) {
     val currentThread = Thread.currentThread()
-    ShutDownTracker.getInstance().registerStopperThread(currentThread)
-    try {
+    ShutDownTracker.getInstance().executeWithStopperThread(currentThread) {
       (currentProviderIfComputed as? KeePassCredentialStore)?.save(createMasterKeyEncryptionSpec())
-    }
-    finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
     }
   }
 

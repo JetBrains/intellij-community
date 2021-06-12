@@ -18,14 +18,14 @@ package org.jetbrains.java.generate.inspection;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.RegExFormatter;
 import com.intellij.codeInspection.ui.RegExInputVerifier;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +58,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     public boolean excludeEnum; // must be public for JDOMSerialization
     /** User options for excluded abstract classes */
     public boolean excludeAbstract; // must be public for JDOMSerialization
+    public boolean excludeRecords = true;
 
     public boolean excludeTestCode;
 
@@ -92,6 +93,9 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
                 if (excludeEnum && clazz.isEnum()) {
                     return;
+                }
+                if (excludeRecords && clazz.isRecord()) {
+                  return;
                 }
                 if (excludeAbstract && clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
                     return;
@@ -166,56 +170,36 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
      */
     @Override
     public JComponent createOptionsPanel() {
-        final InspectionOptionsPanel panel = new InspectionOptionsPanel();
+      final JFormattedTextField excludeClassNamesField = new JFormattedTextField(new RegExFormatter());
+      excludeClassNamesField.setValue(excludeClassNamesPattern);
+      excludeClassNamesField.setColumns(25);
+      excludeClassNamesField.setInputVerifier(new RegExInputVerifier());
+      excludeClassNamesField.setFocusLostBehavior(JFormattedTextField.COMMIT);
+      excludeClassNamesField.setMinimumSize(excludeClassNamesField.getPreferredSize());
+      UIUtil.fixFormattedField(excludeClassNamesField);
+      Document document = excludeClassNamesField.getDocument();
+      document.addDocumentListener(new DocumentAdapter() {
 
-        final JFormattedTextField excludeClassNamesField = new JFormattedTextField(new RegExFormatter());
-        excludeClassNamesField.setValue(excludeClassNamesPattern);
-        excludeClassNamesField.setColumns(25);
-        excludeClassNamesField.setInputVerifier(new RegExInputVerifier());
-        excludeClassNamesField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-        excludeClassNamesField.setMinimumSize(excludeClassNamesField.getPreferredSize());
-        UIUtil.fixFormattedField(excludeClassNamesField);
-        Document document = excludeClassNamesField.getDocument();
-        document.addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          try {
+            excludeClassNamesField.commitEdit();
+            excludeClassNamesPattern = (Pattern)excludeClassNamesField.getValue();
+            excludeClassNames = excludeClassNamesPattern.pattern();
+          } catch (final Exception ignore) {}
+        }
+      });
 
-            @Override
-            protected void textChanged(@NotNull DocumentEvent e) {
-                try {
-                    excludeClassNamesField.commitEdit();
-                    excludeClassNamesPattern = (Pattern)excludeClassNamesField.getValue();
-                    excludeClassNames = excludeClassNamesPattern.pattern();
-                } catch (final Exception ignore) {}
-            }
-        });
-
-        panel.addRow(new JLabel(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.exclude.classes.reg.exp.option")), excludeClassNamesField);
-
-        final CheckBox excludeExceptionCheckBox = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.exception.classes.option"), this, "excludeException");
-
-        panel.add(excludeExceptionCheckBox);
-
-        final CheckBox excludeDeprecatedCheckBox = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.deprecated.classes.option"), this, "excludeDeprecated");
-        panel.add(excludeDeprecatedCheckBox);
-
-        final CheckBox excludeEnumCheckBox = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.enum.classes.option"), this, "excludeEnum");
-        panel.add(excludeEnumCheckBox);
-
-        final CheckBox excludeAbstractCheckBox = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.abstract.classes.option"), this, "excludeAbstract");
-        panel.add(excludeAbstractCheckBox);
-
-        final CheckBox excludeInTestCodeCheckBox = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.test.classes.option"), this, "excludeTestCode");
-        panel.add(excludeInTestCodeCheckBox);
-
-        final CheckBox excludeInnerClasses = new CheckBox(
-          JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.inner.classes.option"), this, "excludeInnerClasses");
-        panel.add(excludeInnerClasses);
-
-        return panel;
+      final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+      optionsPanel.addRow(new JLabel(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.exclude.classes.reg.exp.option")), excludeClassNamesField);
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.exception.classes.option"), "excludeException");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.deprecated.classes.option"), "excludeDeprecated");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.enum.classes.option"), "excludeEnum");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.records.option"), "excludeRecords");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.abstract.classes.option"), "excludeAbstract");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.test.classes.option"), "excludeTestCode");
+      optionsPanel.addCheckbox(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.inner.classes.option"), "excludeInnerClasses");
+      return optionsPanel;
     }
 
     @Override
@@ -226,4 +210,9 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         }
         catch (PatternSyntaxException ignored) { }
     }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    DefaultJDOMExternalizer.write(this, node, field -> !"excludeRecords".equals(field.getName()) || !excludeRecords);
+  }
 }

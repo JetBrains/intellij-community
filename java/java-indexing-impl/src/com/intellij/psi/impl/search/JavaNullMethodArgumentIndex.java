@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -12,7 +12,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +19,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.psi.JavaTokenType.*;
@@ -44,7 +44,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
         return Collections.emptyMap();
       }
 
-      Map<MethodCallData, Void> result = new THashMap<>();
+      Map<MethodCallData, Void> result = new HashMap<>();
 
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
       for (int i = 0; i < tokens.getTokenCount(); i++) {

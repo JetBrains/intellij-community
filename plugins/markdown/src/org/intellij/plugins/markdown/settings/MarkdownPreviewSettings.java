@@ -1,12 +1,12 @@
 package org.intellij.plugins.markdown.settings;
 
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider;
-import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 
 public final class MarkdownPreviewSettings {
@@ -14,7 +14,7 @@ public final class MarkdownPreviewSettings {
 
   @Attribute("DefaultSplitLayout")
   @NotNull
-  private SplitFileEditor.SplitEditorLayout mySplitEditorLayout = SplitFileEditor.SplitEditorLayout.SPLIT;
+  private TextEditorWithPreview.Layout mySplitEditorLayout = TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW;
 
   @Tag("HtmlPanelProviderInfo")
   @Property(surroundWithTag = false)
@@ -31,7 +31,7 @@ public final class MarkdownPreviewSettings {
   public MarkdownPreviewSettings() {
   }
 
-  public MarkdownPreviewSettings(@NotNull SplitFileEditor.SplitEditorLayout splitEditorLayout,
+  public MarkdownPreviewSettings(@NotNull TextEditorWithPreview.Layout splitEditorLayout,
                                  @NotNull MarkdownHtmlPanelProvider.ProviderInfo htmlPanelProviderInfo,
                                  boolean isAutoScrollPreview,
                                  boolean isVerticalSplit) {
@@ -42,7 +42,7 @@ public final class MarkdownPreviewSettings {
   }
 
   @NotNull
-  public SplitFileEditor.SplitEditorLayout getSplitEditorLayout() {
+  public TextEditorWithPreview.Layout getSplitEditorLayout() {
     return mySplitEditorLayout;
   }
 

@@ -39,4 +39,6 @@ public class StringEqualsEmptyStringFixTest extends IGQuickFixesTestCase {
   }
   public void testNullCheckAlreadyPresent() { doTest(); }
   public void testTernary() { doTest(); }
+  public void testNullCheckNegation() { doTest(); }
+  public void testTernaryNegation() { doTest(); }
 }

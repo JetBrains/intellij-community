@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -125,9 +126,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         for (int i = statementStart; i < statementEnd; i++) {
           exclude.add(i);
         }
-        return Arrays.stream(defs)
-          .map(def -> flow.getEndOffset(def))
-          .noneMatch(offset -> ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, offset + 1, statement, arrayVar, exclude));
+        return !ContainerUtil.exists(defs, def ->
+          ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, flow.getEndOffset(def) + 1, statement, arrayVar, exclude));
       }
 
       @Nullable

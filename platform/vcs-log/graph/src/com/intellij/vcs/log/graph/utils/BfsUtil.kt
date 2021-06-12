@@ -18,15 +18,16 @@ package com.intellij.vcs.log.graph.utils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import java.util.*
 
-class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags) {
+open class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags, private val down: Boolean = true) {
   constructor(start: Int, graph: LiteLinearGraph) : this(start, graph, BitSetFlags(graph.nodesCount()))
 
-  private val queue = ContainerUtil.newLinkedList(start)
+  protected open val queue: Queue<Int> = ContainerUtil.newLinkedList(start)
 
-  fun isFinished() = queue.isEmpty()
+  open fun isFinished() = queue.isEmpty()
 
-  fun currentNodes(): List<Int> = queue
+  fun currentNodes(): Queue<Int> = queue
 
   fun step(consumer: (Int) -> Boolean = { true }): List<Int> {
     while (!queue.isEmpty()) {
@@ -34,7 +35,12 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
       if (!visited.get(node)) {
         visited.set(node, true)
         if (!consumer(node)) return emptyList()
-        val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).sorted()
+        val next = if (down) {
+          graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).sorted()
+        }
+        else {
+          graph.getNodes(node, LiteLinearGraph.NodeFilter.UP).sortedDescending()
+        }
         queue.addAll(next)
         return next
       }
@@ -46,5 +52,24 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
     while (!isFinished()) {
       step(consumer)
     }
+  }
+}
+
+open class BfsSearch<T>(start: Int, graph: LiteLinearGraph, visited: Flags, down: Boolean = true,
+                        private val limit: Int = graph.nodesCount()) : BfsWalk(start, graph, visited, down) {
+  var result: T? = null
+    private set
+  var count = 0
+
+  override fun isFinished(): Boolean = result != null || queue.isEmpty() || count > limit
+
+  fun find(consumer: (Int) -> T?): T? {
+    count = 0
+    walk { node ->
+      result = consumer(node) ?: return@walk true
+      count++
+      return@walk false
+    }
+    return result
   }
 }

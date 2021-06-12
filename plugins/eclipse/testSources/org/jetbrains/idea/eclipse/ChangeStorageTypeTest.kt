@@ -40,7 +40,6 @@ class ChangeStorageTypeTest {
 
   @Test
   fun `switch to classpath storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val commonRoot = eclipseTestDataRoot / "common" / "testModuleWithClasspathStorage"
     val defaultRoot = eclipseTestDataRoot / "storageType" / "default"
     loadEditSaveAndCheck(listOf(commonRoot, defaultRoot), tempDirectory, false, listOf("test" to "test/test"),

@@ -3,7 +3,6 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina
@@ -89,7 +89,7 @@ public final class TestClientRunner {
     }
 
     if (result.isTimeout()) {
-      String processList = LogUtil.getProcessList();
+      String processList = ProcessHandle.allProcesses().map(h -> h.pid() + ": " + h.info()).collect(Collectors.joining("\n"));
       handler.destroyProcess();
       throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + processList);
     }

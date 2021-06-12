@@ -156,12 +156,12 @@ public final class PyConsoleUtil {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           AnAction replace = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
-          ActionUtil.performActionDumbAware(replace, e);
+          ActionUtil.performActionDumbAwareWithCallbacks(replace, e);
           return;
         }
         AnAction completionAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
         if (completionAction != null) {
-          ActionUtil.performActionDumbAware(completionAction, e);
+          ActionUtil.performActionDumbAwareWithCallbacks(completionAction, e);
         }
       }
 

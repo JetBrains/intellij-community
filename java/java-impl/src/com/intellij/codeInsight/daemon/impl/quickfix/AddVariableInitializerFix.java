@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -29,7 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement 
+  implements IntentionActionWithFixAllOption {
   private static final Logger LOG = Logger.getInstance(AddReturnFix.class);
 
   public AddVariableInitializerFix(@NotNull PsiVariable variable) {
@@ -132,10 +134,5 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
       }
     }
     return result.toArray(LookupElement.EMPTY_ARRAY);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

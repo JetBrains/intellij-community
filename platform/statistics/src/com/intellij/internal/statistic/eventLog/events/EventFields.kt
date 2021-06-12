@@ -183,12 +183,12 @@ object EventFields {
 
   //will be replaced with ObjectEventField in the future
   @JvmField
-  val PluginInfo = object : PrimitiveEventField<PluginInfo>() {
+  val PluginInfo = object : PrimitiveEventField<PluginInfo?>() {
     override val name = "plugin_type"
     override val validationRule: List<String>
       get() = listOf("plugin_info")
 
-    override fun addData(fuData: FeatureUsageData, value: PluginInfo) {
+    override fun addData(fuData: FeatureUsageData, value: PluginInfo?) {
       fuData.addPluginInfo(value)
     }
   }

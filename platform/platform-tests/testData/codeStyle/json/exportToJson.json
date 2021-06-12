@@ -3,6 +3,7 @@
   "version": "1.0",
   "codeStyle": {
     "all": {
+      "continuation_indent_size": 8,
       "formatter_off_tag": "@formatter:off",
       "formatter_on_tag": "@formatter:on",
       "formatter_tags_accept_regexp": false,
@@ -112,7 +113,7 @@
       "space_inside_empty_tag": false,
       "tab_width": 4,
       "text_wrap": "normal",
-      "uniform_ident": false,
+      "uniform_indent": false,
       "visual_guides": []
     }
   }

@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +39,7 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
   }
 
   public static BuildProcessCustomPluginsConfiguration getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, BuildProcessCustomPluginsConfiguration.class);
+    return project.getService(BuildProcessCustomPluginsConfiguration.class);
   }
 
   public List<String> getProjectLibraries() {

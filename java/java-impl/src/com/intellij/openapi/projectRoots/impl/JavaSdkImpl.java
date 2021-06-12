@@ -79,7 +79,7 @@ public final class JavaSdkImpl extends JavaSdk {
     Disposable parentDisposable = ExtensionPointUtil.createExtensionDisposable(this, EP_NAME);
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent || event instanceof VFileDeleteEvent) {
             updateCache(event, PathUtil.getFileName(event.getPath()));
@@ -409,11 +409,6 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private @Nullable JavaVersion getJavaVersion(@Nullable String versionString) {
     return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
-  }
-
-  @Override
-  public @Nullable JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JavaSdkVersion.fromVersionString(versionString);
   }
 
   @Override

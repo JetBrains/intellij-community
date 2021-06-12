@@ -138,4 +138,12 @@ public class FilteringTableModel<T> extends AbstractTableModel {
     }
     return myData.get(rowIndex).get(columnIndex);
   }
+
+  public TableModel getOriginalModel() {
+    return myOriginalModel;
+  }
+
+  public int getOriginalIndex(int idx) {
+    return idx < 0 ? idx : idx >= myIndex.size() ? idx : myIndex.get(idx);
+  }
 }

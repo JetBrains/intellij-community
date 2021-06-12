@@ -179,7 +179,7 @@ public final class KeymapUtil {
     return SystemInfo.isMac && !isSimplifiedMacShortcuts();
   }
 
-  private static boolean isSimplifiedMacShortcuts() {
+  public static boolean isSimplifiedMacShortcuts() {
     return SystemInfo.isMac && Registry.is("ide.macos.disable.native.shortcut.symbols", false);
   }
 

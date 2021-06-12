@@ -1,8 +1,12 @@
 <html>
 <body>
-Reports non-<b>static</b> non-<b>final</b>
+Reports non-<code>static</code> non-<code>final</code>
 fields whose names are all upper-case. Such fields may cause confusion by breaking a common naming convention, and
 are often the result of developer error.
+<p><b>Example:</b> <pre><code>
+  public static int THE_ANSWER = 42; //a warning here: final modifier is missing
+</code></pre>
+<p>Quick-fix to rename the field is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
 

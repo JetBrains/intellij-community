@@ -12,13 +12,13 @@ public class SyntaxMatchUtilsTest {
   public void testReplaceGroupWithMatchData() {
     StringWithId string = new StringWithId("first-second");
     MatchData data = regex("([A-z]+)-([A-z]+)").match(string, null);
-    assertEquals("first+second+first", SyntaxMatchUtils.replaceGroupsWithMatchData("\\1+\\2+\\1", string, data));
+    assertEquals("first+second+first", SyntaxMatchUtils.replaceGroupsWithMatchData("\\1+\\2+\\1", string, data, '\\'));
   }
 
   @Test
   public void testReplaceWithDollarSign() {
     StringWithId string = new StringWithId("first-$");
     MatchData data = regex("([A-z]+)-([A-z$]+)").match(string, null);
-    assertEquals("first+\\$+first", SyntaxMatchUtils.replaceGroupsWithMatchData("\\1+\\2+\\1", string, data));
+    assertEquals("first+\\$+first", SyntaxMatchUtils.replaceGroupsWithMatchData("$1+$2+$1", string, data, '$'));
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -157,7 +158,8 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {
-    LicensingFacade instance = LicensingFacade.getInstance();
-    return productCodeOrPluginId != null && instance != null && instance.isEA2Product(productCodeOrPluginId);
+    return productCodeOrPluginId != null &&
+      LicensingFacade.getInstance() != null &&
+      ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
   }
 }

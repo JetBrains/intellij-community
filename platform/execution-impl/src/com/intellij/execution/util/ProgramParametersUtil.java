@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public final class ProgramParametersUtil {
@@ -19,7 +20,13 @@ public final class ProgramParametersUtil {
 
   public static void checkWorkingDirectoryExist(CommonProgramRunConfigurationParameters configuration, Project project, Module module)
     throws RuntimeConfigurationWarning {
-    new ProgramParametersConfigurator().checkWorkingDirectoryExist(configuration, project, module);
+    ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
+    configurator.setValidation(true);
+    try {
+      configurator.checkWorkingDirectoryExist(configuration, project, module);
+    }
+    catch (IncorrectOperationException ignore) {
+    }
   }
 
   public static String expandPath(String path, Module module, Project project) {

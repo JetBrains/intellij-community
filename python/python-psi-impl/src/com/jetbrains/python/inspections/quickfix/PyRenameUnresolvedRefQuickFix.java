@@ -21,15 +21,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
@@ -37,7 +34,6 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -82,13 +78,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
       }
     }
 
-    Editor editor = getEditor(project, element.getContainingFile(), parentScope.getTextRange().getStartOffset());
-    if (editor != null) {
-      Template template = builder.buildInlineTemplate();
-      TemplateManager.getInstance(project).startTemplate(editor, template);
-    } else {
-      builder.runNonInteractively(true);
-    }
+    PythonTemplateRunner.runInlineTemplate(project, element, builder, parentScope.getTextRange().getStartOffset());
   }
 
   public static boolean isValidReference(final PsiReference reference) {
@@ -118,12 +108,6 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     parentScope.accept(visitor);
     return result;
-  }
-
-  @Nullable
-  private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file, int offset) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null ? PythonUiService.getInstance().openTextEditor(project, virtualFile, offset) : null;
   }
 
   private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -177,7 +177,7 @@ public final class EventLog {
         }
       }, isLongLine(actions) ? "<br>" : "&nbsp;&nbsp;&nbsp;") + "</p>";
       //noinspection UnresolvedPluginConfigReference
-      Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
+      Notification n = new Notification("", ".", NotificationType.INFORMATION).setListener(new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();
@@ -506,6 +506,7 @@ public final class EventLog {
         appService.myModel.setStatusMessage(null, 0);
       }
       StatusBar.Info.set("", null, LOG_REQUESTOR);
+      myProjectModel.projectDispose(appService == null ? null : appService.myModel);
     }
 
     void initDefaultContent() {
@@ -645,7 +646,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
         EventLogConsole console = Objects.requireNonNull(getProjectService(project).getConsole(myNotification));
@@ -668,7 +669,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       hideBalloon(myNotification);
 
       for (Notification notification : getLogModel(project).getNotifications()) {

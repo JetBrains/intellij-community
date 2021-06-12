@@ -12,13 +12,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.jps.model.java.compiler.CompilerOptions
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
@@ -69,7 +67,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                           modifiableModelsProvider: IdeModifiableModelsProvider) {
     val config = getConfig(mavenProject) ?: return
 
-    var compilers = modifiableModelsProvider.getUserData<MutableSet<String>>(COMPILERS)
+    var compilers = modifiableModelsProvider.getUserData(COMPILERS)
     if (compilers == null) {
       compilers = mutableSetOf()
       modifiableModelsProvider.putUserData(COMPILERS, compilers)
@@ -89,14 +87,16 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     val compilers = modifiableModelsProvider.getUserData(COMPILERS)
     val defaultCompilerId = if (compilers != null && compilers.size == 1) compilers.first() else JAVAC_ID
 
-    val mavenConfiguration: Lazy<Element?> = lazy { getConfig(mavenProject) }
-    val compilerId = if (mavenProject.packaging != "pom") mavenConfiguration.value?.let { getCompilerId(it) } else null
+    val mavenConfiguration: Lazy<MavenCompilerConfiguration> = lazy {
+      MavenCompilerConfiguration(mavenProject.properties[MAVEN_COMPILER_PARAMETERS]?.toString(), getConfig(mavenProject))
+    }
+    val compilerId = if (mavenProject.packaging != "pom") mavenConfiguration.value.pluginConfiguration?.let { getCompilerId(it) } else null
 
     val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
     for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
-      if (mavenConfiguration.value != null && compilerId == compilerExtension.mavenCompilerId) {
-        importCompilerConfiguration(module, mavenConfiguration.value!!, compilerExtension, mavenProject)
+      if (!mavenConfiguration.value.isEmpty() && compilerId == compilerExtension.mavenCompilerId) {
+        importCompilerConfiguration(module, mavenConfiguration.value, compilerExtension, mavenProject)
       }
       else {
         // cleanup obsolete options
@@ -119,7 +119,9 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
             LOG.error(backendCompiler.toString() + " is not registered.")
           }
         }
-
+        if (compilerId == null && !mavenConfiguration.value.isEmpty()) {
+          importCompilerConfiguration(module, mavenConfiguration.value, compilerExtension, mavenProject)
+        }
         modifiableModelsProvider.putUserData(DEFAULT_COMPILER_IS_SET, true)
       }
     }
@@ -133,14 +135,13 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
   }
 
   private fun importCompilerConfiguration(module: Module,
-                                          compilerMavenConfiguration: Element,
+                                          mavenCompilerConfiguration: MavenCompilerConfiguration,
                                           extension: MavenCompilerExtension,
                                           mavenProject: MavenProject) {
     val compilerOptions = extension.getCompiler(module.project)?.options
-    val compilerArgs = collectCompilerArgs(compilerMavenConfiguration);
-    extension.configureOptions(compilerOptions, module, mavenProject, compilerArgs);
+    val compilerArgs = collectCompilerArgs(mavenCompilerConfiguration)
+    extension.configureOptions(compilerOptions, module, mavenProject, compilerArgs)
   }
-
 
 
   companion object {
@@ -148,6 +149,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
     private val DEFAULT_COMPILER_IS_RESOLVED = Key.create<Boolean>("default.compiler.resolved")
     private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
     private const val JAVAC_ID = "javac"
+    private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
 
     private fun getCompilerId(config: Element): String {
       val compilerId = config.getChildTextTrim("compilerId")
@@ -181,17 +183,22 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       return getResolvedText(it.textTrim)
     }
 
-    private fun collectCompilerArgs(compilerMavenConfiguration: Element): List<String> {
-
-
+    private fun collectCompilerArgs(mavenCompilerConfiguration: MavenCompilerConfiguration): List<String> {
       val options = mutableListOf<String>()
-      val parameters = compilerMavenConfiguration.getChild("parameters")
+
+      val pluginConfiguration = mavenCompilerConfiguration.pluginConfiguration
+      val parameters = pluginConfiguration?.getChild("parameters")
 
       if (parameters?.textTrim?.toBoolean() == true) {
         options += "-parameters"
       }
+      else if (parameters == null && mavenCompilerConfiguration.propertyCompilerParameters?.toBoolean() == true) {
+        options += "-parameters"
+      }
 
-      val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
+      if (pluginConfiguration == null) return options;
+
+      val compilerArguments = pluginConfiguration.getChild("compilerArguments")
       if (compilerArguments != null) {
         val unresolvedArgs = mutableSetOf<String>()
         val effectiveArguments = compilerArguments.children.map {
@@ -214,9 +221,9 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
         }
       }
 
-      addIfNotNull(options, getResolvedText(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
+      addIfNotNull(options, getResolvedText(pluginConfiguration.getChildTextTrim("compilerArgument")))
 
-      val compilerArgs = compilerMavenConfiguration.getChild("compilerArgs")
+      val compilerArgs = pluginConfiguration.getChild("compilerArgs")
       if (compilerArgs != null) {
         for (arg in compilerArgs.getChildren("arg")) {
           addIfNotNull(options, getResolvedText(arg))
@@ -228,4 +235,8 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       return options;
     }
   }
+}
+
+private data class MavenCompilerConfiguration(val propertyCompilerParameters: String?, val pluginConfiguration: Element?) {
+  fun isEmpty(): Boolean = propertyCompilerParameters == null && pluginConfiguration == null
 }

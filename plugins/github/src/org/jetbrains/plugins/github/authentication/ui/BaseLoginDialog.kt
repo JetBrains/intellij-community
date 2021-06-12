@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -11,10 +15,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.completionOnEdt
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -65,7 +65,7 @@ internal abstract class BaseLoginDialog(
         close(OK_EXIT_CODE, true)
       }
       .errorOnEdt(modalityState) {
-        if (!GithubAsyncUtil.isCancellation(it)) startTrackingValidation()
+        if (!CompletableFutureUtil.isCancellation(it)) startTrackingValidation()
       }
   }
 

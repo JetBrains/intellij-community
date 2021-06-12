@@ -2,8 +2,15 @@
 <body>
 Reports classes which have multiple loggers declared.
 Ensuring that every class has a single dedicated logger is an important step in providing a unified logging
-implementation for an application. Interfaces,
-enumerations, annotations, inner classes, and abstract classes are not reported by this inspection.
+implementation for an application.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> Critical {
+    <b>protected static final</b> Logger LOG = Logger.getLogger(Critical.class);
+
+    <b>protected static final</b> Logger myLogger = Logger.getLogger(getClass());
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the table below to specify Logger class names.

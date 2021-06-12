@@ -23,7 +23,7 @@ public final class Diff {
     return buildChanges(splitLines(before), splitLines(after));
   }
 
-  private static String @NotNull [] splitLines(@NotNull CharSequence s) {
+  public static String @NotNull [] splitLines(@NotNull CharSequence s) {
     return s.length() == 0 ? new String[]{""} : LineTokenizer.tokenize(s, false, false);
   }
 

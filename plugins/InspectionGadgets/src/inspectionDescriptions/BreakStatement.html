@@ -1,8 +1,17 @@
 <html>
 <body>
-Reports <b>break</b> statements,
-other than at the end of a <b>switch</b> statement branch.
-<b>break</b> statements complicate refactoring, and can be confusing.
+Reports <code>break</code> statements,
+other than at the end of a <code>switch</code> statement branch.
+<code>break</code> statements complicate refactoring and can be confusing.
+<p>Example:</p>
+<pre>
+void foo(List&lt;String&gt; strs) {
+  for (String str : strs) {
+    if (str.contains("stop")) break;
+    handleStr(str);
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
 

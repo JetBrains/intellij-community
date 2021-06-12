@@ -1,24 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
-import org.jetbrains.plugins.github.util.completionOnEdt
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -34,7 +32,6 @@ internal class GithubLoginPanel(
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GHCredentialsUi
-  private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var oauthUi = GHOAuthCredentialsUi(executorFactory, isAccountUnique)
 
@@ -44,14 +41,13 @@ internal class GithubLoginPanel(
   var footer: LayoutBuilder.() -> Unit
     get() = tokenUi.footer
     set(value) {
-      passwordUi.footer = value
       tokenUi.footer = value
       oauthUi.footer = value
       applyUi(currentUi)
     }
 
   init {
-    applyUi(passwordUi)
+    applyUi(tokenUi)
   }
 
   private fun applyUi(ui: GHCredentialsUi) {
@@ -59,19 +55,6 @@ internal class GithubLoginPanel(
     setContent(currentUi.getPanel())
     currentUi.getPreferredFocusableComponent()?.requestFocus()
     tokenAcquisitionError = null
-  }
-
-  @Nls
-  private fun switchUiText(): String {
-    return if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-  }
-
-  private fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
-
-  fun createSwitchUiLink() = ActionLink(switchUiText()) {
-    applyUi(nextUi())
-    val link = it.source as ActionLink
-    link.text = switchUiText()
   }
 
   fun getPreferredFocusableComponent(): JComponent? =
@@ -124,11 +107,9 @@ internal class GithubLoginPanel(
   }
 
   fun setLogin(login: String?, editable: Boolean) {
-    passwordUi.setLogin(login.orEmpty(), editable)
     tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
   fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
 
   fun setError(exception: Throwable?) {
@@ -136,6 +117,5 @@ internal class GithubLoginPanel(
   }
 
   fun setOAuthUi() = applyUi(oauthUi)
-  fun setPasswordUi() = applyUi(passwordUi)
   fun setTokenUi() = applyUi(tokenUi)
 }

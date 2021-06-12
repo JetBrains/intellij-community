@@ -60,8 +60,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
-  private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
-  private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
+  private boolean myShowWelcomeScreen = true;
+  private int myConfirmOpenNewProject = PlatformUtils.isPyCharmDs() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
 
@@ -250,13 +250,14 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myShowWelcomeScreen = show;
   }
 
-  @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
+  @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW, OPEN_PROJECT_SAME_WINDOW_ATTACH})
   @interface OpenNewProjectOption {}
   /**
    * @return
    * <ul>
    * <li>{@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} if new project should be opened in new window
    * <li>{@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} if new project should be opened in same window
+   * <li>{@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW_ATTACH} if new project should be attached
    * <li>{@link GeneralSettings#OPEN_PROJECT_ASK} if a confirmation dialog should be shown
    * </ul>
    */

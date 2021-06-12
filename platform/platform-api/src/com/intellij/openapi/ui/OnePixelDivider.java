@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
@@ -95,7 +96,7 @@ public class OnePixelDivider extends Divider {
   }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
     private boolean skipEventProcessing() {
-      if (isShowing()) {
+      if (isOneOfComponentsShowing()) {
         return false;
       }
       setDragging(false);
@@ -192,6 +193,18 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  private boolean isOneOfComponentsShowing() {
+    if (isShowing()) return true;
+
+    if (mySplitter instanceof JBSplitter) {
+      JComponent first = ((JBSplitter)mySplitter).getFirstComponent();
+      JComponent second = ((JBSplitter)mySplitter).getSecondComponent();
+      if (first != null && first.isShowing()) return true;
+      if (second != null && second.isShowing()) return true;
+    }
+    return false;
+  }
+
   @Nullable
   private MouseEvent getTargetEvent(MouseEvent e) {
     Component eventComponent = e.getComponent();
@@ -225,22 +238,16 @@ public class OnePixelDivider extends Divider {
     if (MouseEvent.MOUSE_DRAGGED == e.getID() && myDragging) {
       myPoint = SwingUtilities.convertPoint(this, e.getPoint(), mySplitter.asComponent());
       float proportion;
-      final float firstMinProportion = mySplitter.getMinProportion(true);
-      final float secondMinProportion = mySplitter.getMinProportion(false);
-      if (isVertical()) {
-        if (getHeight() > 0) {
-          float ratio = (float)myPoint.y / (float)mySplitter.asComponent().getHeight();
-          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
-          mySplitter.setProportion(proportion);
-        }
-      }
-      else {
-        if (getWidth() > 0) {
-          float ratio = (float)myPoint.x / (float)mySplitter.asComponent().getWidth();
-          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
-          mySplitter.setProportion(proportion);
-        }
-      }
+      float firstMinProportion = mySplitter.getMinProportion(true);
+      float secondMinProportion = mySplitter.getMinProportion(false);
+      Component comp = mySplitter.asComponent();
+      float thickness = isVertical() ? comp.getHeight() : comp.getWidth();
+      if (thickness == 0) thickness = 1f;
+      float position = isVertical() ? myPoint.y : myPoint.x;
+      float ratio = position / thickness;
+      proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
+      mySplitter.setProportion(proportion);
+
       e.consume();
     }
   }

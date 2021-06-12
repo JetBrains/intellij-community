@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -69,7 +69,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
@@ -81,7 +81,10 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -138,6 +141,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -307,7 +311,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
-  public final Object myFractionalMetricsHintValue = calcFractionalMetricsHint();
+  /**
+   * @deprecated use UISettings#getEditorFractionalMetricsHint instead
+   */
+  @Deprecated
+  public Object myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
 
   final EditorView myView;
 
@@ -529,6 +537,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
+    putUserData(INITIALIZED, Boolean.TRUE);
   }
 
   public void applyFocusMode() {
@@ -982,6 +991,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myFocusModeModel != null) {
       myFocusModeModel.clearFocusMode();
     }
+
+    myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
   }
 
   /**
@@ -1957,7 +1968,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel.repaint();
 
     if (SystemInfo.isMac) {
-      TouchBarsManager.onUpdateEditorHeader(this, header);
+      TouchbarSupport.onUpdateEditorHeader(this);
     }
   }
 
@@ -2360,19 +2371,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   @Override
   public DataContext getDataContext() {
-    return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
-  }
-
-  @NotNull
-  private DataContext getProjectAwareDataContext(@NotNull final DataContext original) {
-    if (CommonDataKeys.PROJECT.getData(original) == myProject) return original;
-
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      return original.getData(dataId);
-    };
+    return EditorUtil.getEditorDataContext(this);
   }
 
   private boolean isInsideGutterWhitespaceArea(@NotNull MouseEvent e) {
@@ -2724,13 +2723,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  @NotNull
-  static Object calcFractionalMetricsHint() {
-    return Registry.is("editor.text.fractional.metrics")
-           ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
-           : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
-  }
-
   private static class RepaintCursorCommand implements Runnable {
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
@@ -2865,12 +2857,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setOneLineMode(boolean isOneLineMode) {
+    if (isOneLineMode == myIsOneLineMode) return;
     myIsOneLineMode = isOneLineMode;
     getScrollPane().setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     JBScrollPane pane = ObjectUtils.tryCast(getScrollPane(), JBScrollPane.class);
     JComponent component = pane == null ? null : pane.getStatusComponent();
     if (component != null) component.setVisible(!isOneLineMode());
     reinitSettings();
+    myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, !isOneLineMode, isOneLineMode);
   }
 
   public static final class CaretRectangle {
@@ -4076,10 +4070,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        mySelectionModel.selectLineAtCaret();
-        setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-        mySavedSelectionStart = mySelectionModel.getSelectionStart();
-        mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+        // Move the caret to the end of the selection, that is, the beginning of the next line.
+        // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
+        selectLineAtCaret(true);
         return isNavigation;
       }
 
@@ -4118,18 +4111,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
                   break;
 
-                case 3:
-                  if (HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
+              case 3:
+                  if (eventArea == EditorMouseEventArea.EDITING_AREA &&
+                      HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
                     // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
                     // is assumed to select 'hump' while the later points to the whole word.
                     selectWordAtCaret(false);
                     break;
                   }
                 case 4:
-                  mySelectionModel.selectLineAtCaret();
-                  setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-                  mySavedSelectionStart = mySelectionModel.getSelectionStart();
-                  mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                  // Triple and quadruple clicks on the line number resets selection to the single line,
+                  // except that in this case we keep the caret at the beginning of this line, not the next line.
+                  selectLineAtCaret(false);
                   mySelectionModel.setUnknownDirection(true);
                   break;
               }
@@ -4201,11 +4194,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
-    mySelectionModel.selectWordAtCaret(honorCamelCase);
+    Caret caret = getCaretModel().getCurrentCaret();
+    caret.selectWordAtCaret(honorCamelCase);
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
-    mySavedSelectionStart = mySelectionModel.getSelectionStart();
-    mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-    getCaretModel().moveToOffset(mySavedSelectionEnd);
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    caret.moveToOffset(mySavedSelectionEnd);
+  }
+
+  private void selectLineAtCaret(boolean moveToEnd) {
+    Caret caret = getCaretModel().getCurrentCaret();
+    caret.selectLineAtCaret();
+    setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    if (moveToEnd) {
+      caret.moveToOffset(mySavedSelectionEnd);
+    }
   }
 
   /**

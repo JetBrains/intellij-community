@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -18,20 +18,20 @@ class GroovyPointlessBooleanInspectionTest extends GroovyLatestTest implements H
 
   @Test
   void 'simple unary'() {
-    doTest($/<warning descr="!false can be simplified to 'true'">!false</warning>/$, 'true')
-    doTest($/<warning descr="!true can be simplified to 'false'">!true</warning>/$, 'false')
+    doTest($/<warning descr="Redundant boolean operations">!false</warning>/$, 'true')
+    doTest($/<warning descr="Redundant boolean operations">!true</warning>/$, 'false')
   }
 
   @Test
   void 'double-negation unary'() {
-    doTest($/<warning descr="!!false can be simplified to 'false'">!!false</warning>/$, 'false')
-    doTest($/<warning descr="!!true can be simplified to 'true'">!!true</warning>/$, 'true')
+    doTest($/<warning descr="Redundant boolean operations">!!false</warning>/$, 'false')
+    doTest($/<warning descr="Redundant boolean operations">!!true</warning>/$, 'true')
   }
 
   @Test
   void 'triple-negation unary'() {
-    doTest($/!<caret><warning descr="!!false can be simplified to 'false'">!!false</warning>/$, '!false')
-    doTest($/!<caret><warning descr="!!true can be simplified to 'true'">!!true</warning>/$, '!true')
+    doTest($/!<caret><warning descr="Redundant boolean operations">!!false</warning>/$, '!false')
+    doTest($/!<caret><warning descr="Redundant boolean operations">!!true</warning>/$, '!true')
   }
 
   private void doTest(String before, String after) {

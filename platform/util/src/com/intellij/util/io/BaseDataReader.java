@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,17 +39,26 @@ public abstract class BaseDataReader {
   }
 
   protected void start(@NotNull @NonNls String presentableName) {
-    if (StringUtil.isEmptyOrSpaces(presentableName)) {
+    if (StringUtilRt.isEmptyOrSpaces(presentableName)) {
       LOG.warn(new Throwable("Must provide not-empty presentable name"));
     }
     if (myFinishedFuture == null) {
       myFinishedFuture = executeOnPooledThread(() -> {
-        if (StringUtil.isEmptyOrSpaces(presentableName)) {
+        if (StringUtilRt.isEmptyOrSpaces(presentableName)) {
           doRun();
         }
         else {
           ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, this::doRun);
         }
+      });
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void startWithoutChangingThreadName() {
+    if (myFinishedFuture == null) {
+      myFinishedFuture = executeOnPooledThread(() -> {
+        doRun();
       });
     }
   }
@@ -84,8 +93,7 @@ public abstract class BaseDataReader {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  protected abstract Future<?> executeOnPooledThread(@NotNull Runnable runnable);
+  protected abstract @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable);
 
   /**
    * <h2>Blocking</h2>
@@ -109,7 +117,7 @@ public abstract class BaseDataReader {
    * <li>Sleep for a while</li>
    * <li>Repeat</li>
    * </ol>
-   * This "busy-wait" antipattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
+   * This "busy-wait" anti-pattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
    * user process and used by {@link #NON_BLOCKING} (aka non-blocking) policy. Drawback is that process may finish (when {@link Process#waitFor()} returns)
    * leaving some data unread.
    * It is implemented in {@link #readAvailableNonBlocking()}}
@@ -173,7 +181,9 @@ public abstract class BaseDataReader {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
     }
     catch (Exception e) {
       LOG.error(e);

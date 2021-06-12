@@ -782,14 +782,6 @@
       "description": "Button background to highlight chosen search option"
     },
     {
-      "key": "SearchResults.Ordinal.File.Foreground",
-      "description": "Filename foreground in 'Find in Path' (the first file row) and line number (all rows)"
-    },
-    {
-      "key": "SearchResults.Repeated.File.Foreground",
-      "description": "Filename foreground in 'Find in Path' (all file rows except the first one)"
-    },
-    {
       "key": "SearchMatch.startBackground"
     },
     {
@@ -954,7 +946,7 @@
     },
     {
       "key": "ToolTip.Actions.background",
-      "description": "Actions in editor tooltips for inspection errors. Registry key \"ide.tooltip.show.with.actions\" should be on."
+      "description": "Actions in editor tooltips for inspection errors."
     },
     {
       "key": "ToolTip.Actions.infoForeground",
@@ -1212,6 +1204,11 @@
       "key": "StateWidget.activeBackground",
       "description": "Background of the state widget when at least one of the registered processes is active",
       "since": "2021.1"
+    },
+    {
+      "key": "DragAndDrop.borderColor",
+      "description": "Drop position highlighting (line/rectangle) for drag-n-drop in trees and lists",
+      "since": "2021.2"
     }
   ]
 }

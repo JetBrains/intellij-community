@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
 
-import static com.intellij.util.hosting.GitHostingUrlUtil.removeProtocolPrefix;
+import static com.intellij.collaboration.hosting.GitHostingUrlUtil.removeProtocolPrefix;
 
 /**
  * @author Aleksey Pivovarov

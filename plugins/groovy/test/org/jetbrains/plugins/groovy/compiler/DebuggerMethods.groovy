@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.debugger.DebuggerManagerEx
@@ -161,7 +161,7 @@ trait DebuggerMethods extends CompilerMethods {
 
   def <T> T managed(Closure<T> cl) {
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
-    def command = new ManagedCommand<T>(ctx, cl)
+    ManagedCommand command = new ManagedCommand<T>(ctx, cl)
     debugProcess.managerThread.invoke(command)
     def finished = command.semaphore.waitFor(ourTimeout)
     assert finished: 'Too long debugger action'

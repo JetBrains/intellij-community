@@ -125,6 +125,8 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       element = element.getParent();
     }
     if (!isTestClass(psiClass)) return false;
+    String classQualifiedName = psiClass.getQualifiedName();
+    if (classQualifiedName == null) return false;
 
     PsiElement psiElement = psiClass;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
@@ -150,7 +152,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                  "generated name:" + configuration.getName() +
                  "; valid: " + psiClass.isValid() +
                  "; physical: " + psiClass.isPhysical() +
-                 "; className: " + psiClass.getQualifiedName() +
+                 "; className: " + classQualifiedName +
                  "; file: " + containingFile +
                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
                  "; original module: " + originalModule);

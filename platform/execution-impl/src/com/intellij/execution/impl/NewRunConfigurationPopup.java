@@ -228,11 +228,6 @@ public final class NewRunConfigurationPopup {
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, structure
     ) {
       @Override
-      public boolean isRootVisible() {
-        return false;
-      }
-
-      @Override
       public boolean isSelectable(Object node, Object userData) {
         if (!(userData instanceof NodeDescriptor)) return false;
         if (getStructure().getChildElements(userData).length > 0) return false;

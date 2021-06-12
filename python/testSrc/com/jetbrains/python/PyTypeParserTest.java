@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.types.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyTypeParserTest extends PyTestCase {
   public void testClassType() {
     myFixture.configureByFile("typeParser/typeParser.py");
@@ -94,15 +79,9 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   public void testStringType() {
-    // Python 2
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "string");
-    assertNotNull(type);
-    assertInstanceOf(type, PyUnionType.class);
-    final PyUnionType unionType = (PyUnionType)type;
-    final ArrayList<PyType> types = new ArrayList<>(unionType.getMembers());
-    assertClassType(types.get(0), "str");
-    assertClassType(types.get(1), "unicode");
+    assertClassType(type, "str");
   }
 
   public void testBooleanType() {
@@ -184,13 +163,15 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   public void testBoundedGeneric() {
-    myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
-    assertNotNull(type);
-    assertInstanceOf(type, PyGenericType.class);
-    final PyGenericType genericType = (PyGenericType)type;
-    final PyType bound = genericType.getBound();
-    assertInstanceOf(bound, PyUnionType.class);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.configureByFile("typeParser/typeParser.py");
+      final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
+      assertNotNull(type);
+      assertInstanceOf(type, PyGenericType.class);
+      final PyGenericType genericType = (PyGenericType)type;
+      final PyType bound = genericType.getBound();
+      assertInstanceOf(bound, PyUnionType.class);
+    });
   }
 
   public void testBracketSingleParam() {
@@ -222,14 +203,14 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionOrOperator() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | unicode");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | bytes");
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(3, members.size());
     final List<PyType> list = new ArrayList<>(members);
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
-    assertClassType(list.get(2), "unicode");
+    assertClassType(list.get(2), "bytes");
   }
 
   public void testCallableType() {

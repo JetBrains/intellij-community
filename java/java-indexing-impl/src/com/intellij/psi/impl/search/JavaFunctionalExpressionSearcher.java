@@ -42,6 +42,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ThreeState;
@@ -63,7 +64,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     Session session = ReadAction.compute(() -> new Session(p, consumer));
     session.processResults();
-    if (session.filesLookedInside.size() > 0 && LOG.isDebugEnabled()) {
+    if (!session.filesLookedInside.isEmpty() && LOG.isDebugEnabled()) {
       LOG.debug(session.toString());
     }
   }
@@ -71,13 +72,13 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   @NotNull
   private static List<SamDescriptor> calcDescriptors(@NotNull Session session) {
     List<SamDescriptor> descriptors = new ArrayList<>();
+    Project project = PsiUtilCore.getProjectInReadAction(session.elementToSearch);
 
-    ReadAction.run(() -> {
+    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       PsiClass aClass = session.elementToSearch;
       if (!aClass.isValid() || !aClass.isInterface()) {
         return;
       }
-      Project project = aClass.getProject();
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
         return;
       }
@@ -461,7 +462,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;
       elementToSearch = parameters.getElementToSearch();
-      project = elementToSearch.getProject();
+      project = parameters.getProject();
       psiManager = PsiManager.getInstance(project);
       scope = parameters.getEffectiveSearchScope();
     }
@@ -473,10 +474,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     public void processResults() {
       List<SamDescriptor> descriptors = calcDescriptors(this);
 
-      if (scope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
-                                                                                   (GlobalSearchScope)scope,
-                                                                                   project,
-                                                                                   consumer)) {
+      if (scope instanceof GlobalSearchScope &&
+          !performSearchUsingCompilerIndices(descriptors, (GlobalSearchScope)scope, project, consumer)) {
         return;
       }
 
@@ -489,7 +488,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
     }
 
-    public String getStatistics() {
+    @Override
+    public String toString() {
       return "filesConsidered=" + filesConsidered +
              ", contextsConsidered=" + contextsConsidered +
              ", sureExprsAfterLightCheck=" + sureExprsAfterLightCheck +

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -113,7 +113,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     assert containingClass != null;
     Collection<PsiMethod> result = new HashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
-      PsiMethod found = ReadAction.compute(() -> findOverridingMethod(inheritor, method, containingClass));
+      PsiMethod found = ReadAction.nonBlocking(() -> findOverridingMethod(inheritor, method, containingClass)).executeSynchronously();
       if (found != null) {
         synchronized (result) {
           result.add(found);

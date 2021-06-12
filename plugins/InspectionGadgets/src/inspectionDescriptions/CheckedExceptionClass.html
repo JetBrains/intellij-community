@@ -1,8 +1,12 @@
 <html>
 <body>
-Reports checked exception classes (i.e. subclasses of <b>Exception</b> which are
-not also subclasses of <b>RuntimeException</b>). Certain coding standards require that all user-defined exception
+Reports checked exception classes (i.e. subclasses of <code>java.lang.Exception</code> which are
+not also subclasses of <code>java.lang.RuntimeException</code>). Certain coding standards require that all user-defined exception
 classes be unchecked.
+<p><b>Example:</b></p>
+<pre>
+  class IllegalMoveException extends Exception {}
+</pre>
 <!-- tooltip end -->
 <p>
 

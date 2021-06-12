@@ -20,11 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -429,18 +427,18 @@ public final class VcsFileUtil {
    * </p>
    *
    * @param path a path to unescape
-   * @param encoding to use while converting char octets
    * @return unescaped path ready to be searched in the VFS or file system.
    * @throws IllegalArgumentException if the path is invalid
    */
   @NotNull
-  public static String unescapeGitPath(@NotNull String path, @Nullable String encoding) throws IllegalArgumentException {
+  public static String unescapeGitPath(@NotNull String path) throws IllegalArgumentException {
     final String QUOTE = "\"";
     if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
       path = path.substring(1, path.length() - 1);
     }
+    if (path.indexOf('\\') == -1) return path;
 
-    encoding = encoding != null ? encoding : Charset.defaultCharset().name();
+    Charset encoding = Charset.defaultCharset();
 
     final int l = path.length();
     StringBuilder rc = new StringBuilder(l);
@@ -518,12 +516,7 @@ public final class VcsFileUtil {
               i--;
               assert n == b.length;
               // add them to string
-              try {
-                rc.append(new String(b, encoding));
-              }
-              catch (UnsupportedEncodingException e1) {
-                throw new IllegalArgumentException("The file name encoding is unsupported: " + encoding);
-              }
+              rc.append(new String(b, encoding));
             }
             else {
               throw new IllegalArgumentException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
@@ -535,11 +528,6 @@ public final class VcsFileUtil {
       }
     }
     return rc.toString();
-  }
-
-  @NotNull
-  public static String unescapeGitPath(@NotNull String path) {
-    return unescapeGitPath(path, null);
   }
 
   public static final Hash.Strategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new FilePathCaseSensitiveStrategy();

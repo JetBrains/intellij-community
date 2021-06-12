@@ -2,26 +2,23 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
-  private Runnable myVisibleRunnable;
+public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
 
-  public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
-                                           @NotNull EventHandler eventHandler,
-                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
-    super(layout, eventHandler, function);
+  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
+  private @Nullable Runnable myVisibleRunnable;
+
+  public PluginsGroupComponentWithProgress(@NotNull EventHandler eventHandler) {
+    super(eventHandler);
     myIcon.setOpaque(false);
     myIcon.setPaintPassiveIcon(false);
     add(myIcon);

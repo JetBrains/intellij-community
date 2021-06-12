@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +17,7 @@ public class SpeedSearchComparator {
   private MinusculeMatcher myMinusculeMatcher;
   private final boolean myShouldMatchFromTheBeginning;
   private final boolean myShouldMatchCamelCase;
+  private final String myHardSeparators;
 
   public SpeedSearchComparator() {
     this(true);
@@ -27,8 +28,13 @@ public class SpeedSearchComparator {
   }
 
   public SpeedSearchComparator(boolean shouldMatchFromTheBeginning, boolean shouldMatchCamelCase) {
+    this(shouldMatchFromTheBeginning, shouldMatchCamelCase, "");
+  }
+
+  public SpeedSearchComparator(boolean shouldMatchFromTheBeginning, boolean shouldMatchCamelCase, @NotNull String hardSeparators) {
     myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
     myShouldMatchCamelCase = shouldMatchCamelCase;
+    myHardSeparators = hardSeparators;
   }
 
   public int matchingDegree(String pattern, String text) {
@@ -55,8 +61,8 @@ public class SpeedSearchComparator {
   }
 
   @NotNull
-  protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern).build();
+  private MinusculeMatcher createMatcher(@NotNull String pattern) {
+    return NameUtil.buildMatcher(pattern).withSeparators(myHardSeparators).build();
   }
 
   public String getRecentSearchText() {

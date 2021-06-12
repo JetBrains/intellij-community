@@ -26,8 +26,16 @@ public class ExceptionInfoCache {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
 
-  public ExceptionInfoCache(GlobalSearchScope searchScope) {
-    myProject = Objects.requireNonNull(searchScope.getProject());
+  /**
+   * @deprecated use {@link #ExceptionInfoCache(Project, GlobalSearchScope)}
+   */
+  @Deprecated
+  public ExceptionInfoCache(@NotNull GlobalSearchScope searchScope) {
+    this(Objects.requireNonNull(searchScope.getProject()), searchScope);
+  }
+
+  public ExceptionInfoCache(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    myProject = project;
     mySearchScope = searchScope;
   }
 
@@ -59,7 +67,7 @@ public class ExceptionInfoCache {
 
   @NotNull ClassResolveInfo resolveClass(String className) {
     ClassResolveInfo cached = myCache.get(className);
-    if (cached != null) {
+    if (cached != null && cached.isValid()) {
       return cached;
     }
 
@@ -105,6 +113,11 @@ public class ExceptionInfoCache {
         myExceptionClasses = exceptionClasses;
       }
       return myExceptionClasses;
+    }
+    
+    boolean isValid() {
+      return ContainerUtil.and(myClasses.values(), PsiElement::isValid) && 
+             (myExceptionClasses == null || ContainerUtil.and(myExceptionClasses, PsiElement::isValid));
     }
 
     @NotNull

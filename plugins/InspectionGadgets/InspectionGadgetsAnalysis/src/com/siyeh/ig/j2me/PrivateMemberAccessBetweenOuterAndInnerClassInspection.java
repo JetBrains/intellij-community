@@ -167,7 +167,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     if (FileTypeUtils.isInServerPageFile(file)) {
       // disable for jsp files IDEADEV-12957
       return false;

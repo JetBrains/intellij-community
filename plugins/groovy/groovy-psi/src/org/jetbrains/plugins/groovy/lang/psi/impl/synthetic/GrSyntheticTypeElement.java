@@ -121,4 +121,9 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
       }
     }
   }
+
+  @Override
+  public boolean acceptsAnnotations() {
+    return false;
+  }
 }

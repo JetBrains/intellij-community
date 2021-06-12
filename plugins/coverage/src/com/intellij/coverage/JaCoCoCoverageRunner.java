@@ -29,7 +29,6 @@ import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.MultiSourceFileLocator;
 import org.jacoco.report.html.HTMLFormatter;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +184,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
   }
 
   @Override
@@ -195,9 +194,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters javaParameters,
                                      boolean collectLineInfo,
                                      boolean isSampling,
-                                     String sourceMapPath) {
-    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
-
+                                     String sourceMapPath,
+                                     @Nullable Project project) {
     String path;
     try {
       path = AgentJar.extractToTempLocation().getAbsolutePath();

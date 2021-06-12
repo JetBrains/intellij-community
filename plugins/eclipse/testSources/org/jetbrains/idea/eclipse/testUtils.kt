@@ -128,7 +128,5 @@ private fun forceSave(project: Project) {
     it.moduleFile!!.delete(project)
     it.stateStore.clearCaches()
   }
-  if (WorkspaceModel.isEnabled) {
-    JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
-  }
+  JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
 }

@@ -182,7 +182,7 @@ class ExtractedClassBuilder {
     }
     int counter = 1;
     while (true) {
-      name = name + counter;
+      name += counter;
       if (!existsFieldWithName(name)) {
         backPointerName = name;
         return;

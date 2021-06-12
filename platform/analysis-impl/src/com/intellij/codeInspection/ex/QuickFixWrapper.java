@@ -123,9 +123,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
     LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
     if (result == null) return null;
-    PsiElement start = PsiTreeUtil.findSameElementInCopy(myDescriptor.getStartElement(), target);
-    PsiElement end = PsiTreeUtil.findSameElementInCopy(myDescriptor.getEndElement(), target);
-    PsiElement psi = PsiTreeUtil.findSameElementInCopy(myDescriptor.getPsiElement(), target);
+    PsiElement start;
+    PsiElement end;
+    PsiElement psi;
+    try {
+      start = PsiTreeUtil.findSameElementInCopy(myDescriptor.getStartElement(), target);
+      end = PsiTreeUtil.findSameElementInCopy(myDescriptor.getEndElement(), target);
+      psi = PsiTreeUtil.findSameElementInCopy(myDescriptor.getPsiElement(), target);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Failed to obtain element copy for preview; quick-fix: " + myFix.getClass(), e);
+    }
     ProblemDescriptor descriptor = new ProblemDescriptor() {
       //@formatter:off
       @Override public PsiElement getPsiElement() { return psi;}

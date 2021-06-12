@@ -3,8 +3,8 @@ class Test18 {
     String str;
 
     static class A {
+        private final Test18 anObject;
         boolean flag;
-        private Test18 anObject;
 
         public A(Test18 anObject, boolean flag) {
             this.flag = flag;

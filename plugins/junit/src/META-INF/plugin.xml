@@ -39,9 +39,9 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.UniqueIdConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
-    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="before junit4"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" order="after junit4"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
@@ -97,6 +97,8 @@
 
     <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
                             order="before commonJavaCustomizer"/>
+
+    <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
   </extensions>
 
   <extensionPoints>

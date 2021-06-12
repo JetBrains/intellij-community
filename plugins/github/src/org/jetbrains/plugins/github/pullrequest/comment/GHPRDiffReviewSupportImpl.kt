@@ -8,6 +8,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.PatchReader
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -29,7 +30,8 @@ import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import java.util.function.Function
 import kotlin.properties.Delegates.observable
 
-class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataProvider,
+class GHPRDiffReviewSupportImpl(private val project: Project,
+                                private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val diffData: GHPRChangeDiffData,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val currentUser: GHUser)
@@ -71,7 +73,8 @@ class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataPr
     loadReviewThreads(viewer)
 
     val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
-    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(reviewDataProvider,
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project,
+                                                                      reviewDataProvider,
                                                                       createCommentParametersHelper,
                                                                       avatarIconsProvider, currentUser)
     val cumulative = diffData is GHPRChangeDiffData.Cumulative

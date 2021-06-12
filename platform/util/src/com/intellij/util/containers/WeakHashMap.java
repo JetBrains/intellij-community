@@ -59,7 +59,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
       if (!(o instanceof Key)) return false;
       T t = get();
       T u = ((Key<T>)o).get();
-      return keyEqual(t,u,myStrategy);
+      return keysEqual(t, u, myStrategy);
     }
 
     @Override

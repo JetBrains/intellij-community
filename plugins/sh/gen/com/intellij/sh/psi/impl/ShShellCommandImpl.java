@@ -29,6 +29,12 @@ public class ShShellCommandImpl extends ShCommandImpl implements ShShellCommand 
 
   @Override
   @Nullable
+  public ShArithmeticExpansion getArithmeticExpansion() {
+    return findChildByClass(ShArithmeticExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public ShBlock getBlock() {
     return findChildByClass(ShBlock.class);
   }

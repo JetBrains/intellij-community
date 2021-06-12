@@ -62,8 +62,8 @@ you if you've contributed to other projects on GitHub.  For the
 mechanics, see [Mypy's git and GitHub workflow help page](https://github.com/python/mypy/wiki/Using-Git-And-GitHub),
 or [GitHub's own documentation](https://help.github.com/articles/using-pull-requests/).
 
-Anyone interested in type stubs may review your code.  One of the core
-developers will merge your pull request when they think it's ready.
+Anyone interested in type stubs may review your code.  One of the
+maintainers will merge your pull request when they think it's ready.
 For every pull request, we aim to promptly either merge it or say why
 it's not yet ready; if you go a few days without a reply, please feel
 free to ping the thread by adding a new comment.
@@ -77,7 +77,7 @@ you are changing.
 Also, do not squash your commits after you have submitted a pull request, as this
 erases context during review. We will squash commits when the pull request is merged.
 
-At present the core developers are (alphabetically):
+At present the maintainers are (alphabetically):
 * David Fisher (@ddfisher)
 * Łukasz Langa (@ambv)
 * Jukka Lehtosalo (@JukkaL)
@@ -88,10 +88,11 @@ At present the core developers are (alphabetically):
 * Guido van Rossum (@gvanrossum)
 * Shantanu (@hauntsaninja)
 * Rune Tynan (@CraftSpider)
+* Aku Viljanen (@Akuli)
 * Jelle Zijlstra (@JelleZijlstra)
 
 NOTE: the process for preparing and submitting changes also applies to
-core developers.  This ensures high quality contributions and keeps
+maintainers.  This ensures high quality contributions and keeps
 everybody on the same page.  Avoid direct pushes to the repository.
 
 
@@ -306,12 +307,14 @@ There are separate directories for `stdlib` (standard library) and `stubs`
 (all other stubs). For standard library stubs Python version support is
 given in `VERSIONS` file. Each line in this file is a module or package name
 followed by `: `, followed by the oldest *supported* Python version where
-the module is available. For third party packages, the Python version support
-(2 and/or 3 only, no finer grained version is supported) is indicated in the
-corresponding `METADATA.toml` file as `python2 = (True|False)` (defaults to
-`False`) and `python3 = (True|False)` (defaults to `True`).
+the module is available.
 
-It is preferred to use a single stub for every module. You can use checks
+Third-party stubs only support Python 3 by default. You can optionally supply
+Python 2 stubs for a package by placing them into a `@python2` subdirectory
+for the corresponding distribution. Some older stubs also indicate Python 2
+support by setting `python2 = True` in the corresponding `METADATA.toml` file.
+
+You can use checks
 like `if sys.version_info >= (3, 8):` to denote new functionality introduced
 in a given Python version or solve type differences.  When doing so, only use
 one-tuples or two-tuples.  This is because:
@@ -336,12 +339,8 @@ harmless.  This is a strictly better compromise than using the latter
 two forms, which would generate false positive errors for correct use
 under Python 3.7.4.
 
-If it is not possible to generate combined stubs for all Python versions
-in a single file, you can split Python 2 and Python 3 stubs and place Python 2
-stubs into `@python2` subdirectory for corresponding distribution. Note that
-you don't need `@python2` in most cases, if your package supports Python 2,
-just put the stubs at root of the distribution directory, and put
-`python2 = True` in `METADATA.toml`.
+When your stub contains if statements for different Python versions,
+always put the code for the most recent Python version first.
 
 Note: in its current implementation, typeshed cannot contain stubs for
 multiple versions of the same third-party library.  Prefer to generate
@@ -383,13 +382,13 @@ addressed.  We indicate this by editing the subject to add a ``[WIP]``
 prefix.  (This should be removed before committing the issue once
 unblocked!)
 
-### Core developer guidelines
+### Maintainer guidelines
 
-Core developers should follow these rules when processing pull requests:
+Maintainers should follow these rules when processing pull requests:
 
 * Always wait for tests to pass before merging PRs.
 * Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
-* Delete branches for merged PRs (by core devs pushing to the main repo).
+* Delete branches for merged PRs (by maintainers pushing to the main repo).
 * Make sure commit messages to master are meaningful. For example, remove irrelevant
   intermediate commit messages.
 * If stubs for a new library are submitted, notify the library's maintainers.

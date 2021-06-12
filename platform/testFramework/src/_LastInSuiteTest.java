@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -23,6 +23,7 @@ import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
@@ -62,7 +63,6 @@ public class _LastInSuiteTest extends TestCase {
     return buildConf == null ? name : name + "[" + buildConf + "]";
   }
 
-  @SuppressWarnings("CallToSystemGC")
   public void testDynamicExtensions() {
     boolean testDynamicExtensions = SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
     Assume.assumeTrue("intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test", !EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions);
@@ -97,7 +97,9 @@ public class _LastInSuiteTest extends TestCase {
     }
 
     GCUtil.tryGcSoftlyReachableObjects();
+    //noinspection CallToSystemGC
     System.gc();
+    //noinspection CallToSystemGC
     System.gc();
     String heapDump = TestApplicationManagerKt.publishHeapDump("dynamicExtension");
 
@@ -162,7 +164,7 @@ public class _LastInSuiteTest extends TestCase {
 
       List<WeakReference<Object>> list = new ArrayList<>();
       ep.processWithPluginDescriptor(false, (object, pluginDescriptor) -> {
-        if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
+        if (!PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())) {
           list.add(new WeakReference<>(object));
         }
       });
@@ -174,7 +176,7 @@ public class _LastInSuiteTest extends TestCase {
     if (Boolean.getBoolean("idea.test.guimode")) {
       Application application = ApplicationManager.getApplication();
       application.invokeAndWait(() -> {
-        IdeEventQueue.getInstance().flushQueue();
+        UIUtil.dispatchAllInvocationEvents();
         application.exit(true, true, false);
       });
       ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
@@ -182,6 +184,19 @@ public class _LastInSuiteTest extends TestCase {
     }
 
     TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
+  }
+
+  // should be run as late as possible to give Languages chance to instantiate as many of them as possible
+  public void testLanguagesHaveDifferentDisplayNames() throws ClassNotFoundException {
+    Collection<Language> languages = Language.getRegisteredLanguages();
+    Map<String, Language> displayNames = new HashMap<>();
+    for (Language language : languages) {
+      System.out.println(language);
+      Language prev = displayNames.put(language.getDisplayName(), language);
+      if (prev != null) {
+        fail(prev + " ("+prev.getClass()+") and " + language +" ("+language.getClass()+") both have identical display name: "+language.getDisplayName());
+      }
+    }
   }
 
   public void testStatistics() {

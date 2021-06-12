@@ -1041,17 +1041,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     public String getParentName() {
       return myParentName;
     }
-
-    @Override
-    public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
-      return super.getAttributes(key);
-    }
-
-    @Nullable
-    @Override
-    public Color getColor(ColorKey key) {
-      return super.getColor(key);
-    }
   }
 
   public void setParent(@NotNull EditorColorsScheme newParent) {

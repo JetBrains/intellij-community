@@ -1,7 +1,33 @@
 <html>
 <body>
-Reports <code>switch</code> statements which can be replaced with an enhanced <code>switch</code> statement or expression.
-
+Reports <code>switch</code> statements which can be automatically replaced with an enhanced <code>switch</code> statement or expression.
+<p>Example:</p>
+<pre>
+  double getPrice(String fruit) {
+    // Switch statement can be replaced with enhanced 'switch'
+    switch (fruit) {
+      case "Apple":
+        return 1.0;
+      case "Orange":
+        return 1.5;
+      case "Mango":
+        return 2.0;
+      default:
+        throw new IllegalArgumentException();
+    }
+  }
+</pre>
+<p>After the quick-fix is applied, the code will look like this:</p>
+<pre>
+  double getPrice(String fruit) {
+    return switch (fruit) {
+      case "Apple" -> 1.0;
+      case "Orange" -> 1.5;
+      case "Mango" -> 2.0;
+      default -> throw new IllegalArgumentException();
+    };
+  }
+</pre>
 <!-- tooltip end -->
 <p>This inspection only applies to language level 14 or higher</p>
 <p><small>New in 2019.1</small></p>

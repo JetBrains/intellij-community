@@ -58,7 +58,7 @@ public final class FilePathInterner extends WeakInterner<CharSequence> {
     }
 
     @Override
-    public CharSequence subSequence(int start, int end) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       return toString().substring(start, end);
     }
 

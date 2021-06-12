@@ -111,7 +111,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
+    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+  }
+
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
   }
 
   protected void tryDispose() {
@@ -205,15 +209,19 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher.stop();
     myLock.writeLock().lock();
     try {
+      myDisposed = true;
       doDispose();
     }
     catch (StorageException e) {
       LOG.error(e);
     }
     finally {
-      myDisposed = true;
       myLock.writeLock().unlock();
     }
+  }
+
+  protected boolean isDisposed() {
+    return myDisposed;
   }
 
   protected void doDispose() throws StorageException {
@@ -235,7 +243,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
     myLock.readLock().lock();
     try {
-      if (myDisposed) {
+      if (isDisposed()) {
         return new ValueContainerImpl<>();
       }
       IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
@@ -304,7 +312,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
     if (myValueSerializationChecker != null) {
-      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data, content);
+      myValueSerializationChecker.checkValueSerialization(data, content);
     }
     checkCanceled();
     return new InputData<>(data);

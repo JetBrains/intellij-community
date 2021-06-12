@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -24,7 +25,8 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.List;
 import java.util.Objects;
 
-public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
+  implements HighPriorityAction, IntentionActionWithFixAllOption {
   @SafeFieldForPreview
   private final PsiType myType;
   private final @IntentionName String myName;

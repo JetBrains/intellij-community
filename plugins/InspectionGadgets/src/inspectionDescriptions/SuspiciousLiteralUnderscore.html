@@ -1,6 +1,8 @@
 <html>
 <body>
 Reports number literals that use underscores where the groups are not three digits each.
+Such literals are very probable contain a typo e.g., if developer inserted too many or too fewer zeros as intended.
+<p><b>Example:</b> <code>int j = 1_000_0000;</code></p>
 <!-- tooltip end -->
 <p>
 <small>New in 15</small>

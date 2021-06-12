@@ -1,0 +1,4 @@
+
+fun b(): Int {
+    return 42
+}

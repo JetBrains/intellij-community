@@ -12,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
   public UsageType getUsageType(final @NotNull PsiElement element) {

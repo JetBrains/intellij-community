@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.CantRunException;
@@ -23,7 +23,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
   private final Map<UploadRoot, UploadableVolume> myUploadVolumes = new HashMap<>();
   private final Map<DownloadRoot, DownloadableVolume> myDownloadVolumes = new HashMap<>();
   private final Map<TargetPortBinding, Integer> myTargetPortBindings = new HashMap<>();
-  private final Map<LocalPortBinding, HostPort> myLocalPortBindings = new HashMap<>();
+  private final Map<LocalPortBinding, ResolvedPortBinding> myLocalPortBindings = new HashMap<>();
 
   public LocalTargetEnvironment(@NotNull TargetEnvironmentRequest request) {
     super(request);
@@ -76,8 +76,13 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       if (localPortBinding.getTarget() != null && !localPortBinding.getTarget().equals(theOnlyPort)) {
         throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
       }
-      myLocalPortBindings.put(localPortBinding, new HostPort("localhost", theOnlyPort));
+      myLocalPortBindings.put(localPortBinding, getResolvedPortBinding(theOnlyPort));
     }
+  }
+
+  private static @NotNull ResolvedPortBinding getResolvedPortBinding(int port) {
+    HostPort hostPort = new HostPort("localhost", port);
+    return new ResolvedPortBinding(hostPort, hostPort);
   }
 
   @NotNull
@@ -100,7 +105,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
   @NotNull
   @Override
-  public Map<LocalPortBinding, HostPort> getLocalPortBindings() {
+  public Map<LocalPortBinding, ResolvedPortBinding> getLocalPortBindings() {
     return Collections.unmodifiableMap(myLocalPortBindings);
   }
 
@@ -192,7 +197,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
     @Override
     public void upload(@NotNull String relativePath,
-                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) throws IOException {
+                       @NotNull TargetProgressIndicator targetProgressIndicator) throws IOException {
       if (myReal) {
         File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
         FileUtil.copyFileOrDir(myLocalRoot.resolve(relativePath).toFile().getCanonicalFile(), targetFile);

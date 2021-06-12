@@ -3,16 +3,24 @@
 Reports implicit conversion between numeric types.
 Implicit numeric conversion is not a problem in itself, but if unexpected may be a source
 of difficult to trace bugs.
+<p><b>Example:</b><pre><code>
+  double m(int i) {
+    return i * 10;
+  }
+</code></pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre><code>
+  double m(int i) {
+    return (double) (i * 10);
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below if you wish this inspection to ignore implicit conversion which
-can not result in loss of data (e.g.
-<b>int</b>-><b>long</b>).
+can not result in loss of data (e.g.<code>int</code>-&gt;<code>long</code>).
 <p>Use the second checkbox to indicate that this inspection should ignore conversion from
-and to <b>char</b>. Conversion from floating point to <b>char</b> and vice versa will still be reported.
-<p>Use the third checkbox to let this inspection ignore conversion from literals and
-compile time constants.
-<p>
+and to <code>char</code>. Conversion from floating point to <code>char</code> and vice versa will still be reported.
+<p>Use the third checkbox to let this inspection ignore conversion from literals and compile time constants.
 
 </body>
 </html>

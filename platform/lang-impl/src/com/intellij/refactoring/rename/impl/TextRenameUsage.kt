@@ -8,10 +8,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
 
 internal class TextRenameUsage(
   private val psiUsage: PsiUsage,
-  override val fileUpdater: FileUpdater
+  override val fileUpdater: FileUpdater,
+  val context: ReplaceTextTargetContext,
 ) : PsiRenameUsage, ModifiableRenameUsage {
 
   override val declaration: Boolean get() = psiUsage.declaration
@@ -20,16 +22,11 @@ internal class TextRenameUsage(
 
   override val range: TextRange get() = psiUsage.range
 
-  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(psiUsage, fileUpdater)
-
-  private class TextUsagePointer(psiUsage: PsiUsage, private val fileUpdater: FileUpdater) : Pointer<TextRenameUsage> {
-
-    private val myTextUsagePointer: Pointer<out PsiUsage> = psiUsage.createPointer()
-
-    override fun dereference(): TextRenameUsage? {
-      return myTextUsagePointer.dereference()?.let {
-        TextRenameUsage(it, fileUpdater)
-      }
+  override fun createPointer(): Pointer<out TextRenameUsage> {
+    val fileUpdater = fileUpdater // don't capture `this`
+    val context = context
+    return Pointer.delegatingPointer(psiUsage.createPointer(), listOf(TextRenameUsage::class.java, fileUpdater, context)) {
+      TextRenameUsage(it, fileUpdater, context)
     }
   }
 }

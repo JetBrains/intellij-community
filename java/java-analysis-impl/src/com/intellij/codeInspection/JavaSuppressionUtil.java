@@ -80,7 +80,7 @@ public final class JavaSuppressionUtil {
   }
 
   @NotNull
-  private static Collection<String> getInspectionIdsSuppressedInAnnotation(PsiAnnotation annotation) {
+  public static Collection<String> getInspectionIdsSuppressedInAnnotation(PsiAnnotation annotation) {
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length == 0) {
       return Collections.emptyList();

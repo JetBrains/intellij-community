@@ -3,6 +3,16 @@
 Reports any uses of concrete JDBC driver classes. Use of such classes will
 bind your project to a specific database and driver, defeating the purpose of JDBC and
 resulting in loss of portability.
+<p>Example: </p>
+<pre>
+  import java.sql.Driver;
+
+  abstract class Sample implements Driver {
+    public void foo() {
+        Sample sample;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

@@ -309,4 +309,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   public void highlightOptions(@NotNull String searchString) {
     ensureCurrentPanel().highlightOptions(searchString);
   }
+
+  public void setSchemesPanelVisible(boolean isVisible) {
+    mySchemesPanel.setVisible(isVisible);
+  }
 }

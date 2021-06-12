@@ -6,9 +6,4 @@ import org.jetbrains.annotations.ApiStatus;
 
 /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2793652">8.1. Block Scalar Styles</a> */
 public interface YAMLBlockScalar extends YAMLScalar {
-  /** It is temporary solution. Please Do not use it in production! */
-  @ApiStatus.Internal
-  Key<Boolean> FORCE_KEEP_CHOMPING = new Key<>("Force keep chomping indicator");
-
-  boolean hasExplicitIndent();
 }

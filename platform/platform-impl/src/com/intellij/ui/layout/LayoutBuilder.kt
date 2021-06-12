@@ -76,8 +76,5 @@ fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFi
 }
 
 fun Row.attachSubRowsEnabled(component: AbstractButton) {
-  subRowsEnabled = component.isSelected
-  component.addChangeListener {
-    subRowsEnabled = component.isSelected
-  }
+  enableSubRowsIf(component.selected)
 }

@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyFunctionBuilder {
   private final String myName;
   private final List<String> myParameters = new ArrayList<>();

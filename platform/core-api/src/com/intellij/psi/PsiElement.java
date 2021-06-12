@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -445,7 +446,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
    */
   @Experimental
-  default @NotNull Iterable<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+  default @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
     return Collections.emptyList();
   }
 
@@ -467,7 +468,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.model.psi.PsiSymbolReferenceService#getReferences(PsiElement)
    */
   @Experimental
-  default @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+  default @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     return Collections.emptyList();
   }
 

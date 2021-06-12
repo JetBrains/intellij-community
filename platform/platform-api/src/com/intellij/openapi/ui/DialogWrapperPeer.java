@@ -108,7 +108,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see JDialog#isResizable
    */
-  public abstract void isResizable();
+  public abstract boolean isResizable();
 
   /**
    * @see JDialog#setResizable

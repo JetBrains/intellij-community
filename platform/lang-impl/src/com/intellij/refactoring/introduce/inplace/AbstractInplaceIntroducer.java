@@ -9,10 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -35,6 +32,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -268,6 +266,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
+  private RangeMarker mySelectedRange = null;
   private boolean myShouldSelect = true;
   @Override
   protected boolean shouldSelectAll() {
@@ -280,6 +279,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       if (templateState != null) {
         myEditor.putUserData(INTRODUCE_RESTART, true);
         try {
+          SelectionModel selectionModel = myEditor.getSelectionModel();
+          if (selectionModel.hasSelection()) {
+            mySelectedRange = myEditor.getDocument().createRangeMarker(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+            mySelectedRange.setGreedyToRight(true);
+            mySelectedRange.setGreedyToLeft(true);
+          }
+          else {
+            mySelectedRange = null;
+          }
           final TextRange range = templateState.getCurrentVariableRange();
           if (range != null) {
             final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
@@ -296,6 +304,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             startInplaceIntroduceTemplate();
           }
           finally {
+            if (mySelectedRange != null) {
+              mySelectedRange.dispose();
+              mySelectedRange = null;
+            }
             myShouldSelect = true;
           }
         }
@@ -311,7 +323,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   protected void restoreSelection() {
     if (!shouldSelectAll()) {
-      myEditor.getSelectionModel().removeSelection();
+      if (mySelectedRange != null) {
+        VariableInplaceRenamer.restoreSelection(myEditor, new TextRange(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset()));
+      }
+      else {
+        myEditor.getSelectionModel().removeSelection();
+      }
     }
   }
 

@@ -81,8 +81,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     startRefreshActivity();
-    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.title.doing.file.refresh.0", session), HeavyProcessLatch.Type.Syncing)) {
-      executeRefreshSession(session);
+    try {
+      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, IdeBundle.message("progress.title.doing.file.refresh.0", session), ()-> executeRefreshSession(session));
     }
     finally {
       finishRefreshActivity();

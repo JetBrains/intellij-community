@@ -1,8 +1,14 @@
 <html>
 <body>
 <span>
-This intention replaces <code>import foo</code> with <code>from foo import ...</code>
-and drop qualifiers at references to names from <code>foo</code>.
+Replaces <code>import module_name</code> with
+    <code>from module_name import</code>
+and drop qualifiers at references to names from <code>module_name</code>.
+</span>
+<br/>
+<span>
+    Using <code>from module_name import</code> ensures better control over which
+    items of a <code>module_name</code> can be accessed.
 </span>
 </body>
 </html>

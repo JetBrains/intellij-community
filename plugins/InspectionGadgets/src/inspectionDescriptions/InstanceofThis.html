@@ -16,7 +16,7 @@ class Super {
   }
 }
   
-class Sub {}  
+class Sub extends Super {}
 </pre>
 To fix the problem, the method overriding should be used:
 <pre>
@@ -26,7 +26,7 @@ class Super {
   }
 }
   
-class Sub {
+class Sub extends Super {
   @Override
   void process() {
     doSomething();

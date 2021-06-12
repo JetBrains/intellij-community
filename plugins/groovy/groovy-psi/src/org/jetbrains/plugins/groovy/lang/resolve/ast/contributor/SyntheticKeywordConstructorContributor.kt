@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast.contributor
 
 import com.intellij.psi.PsiAnnotation
@@ -20,24 +20,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
 import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
 
-class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
+class SyntheticKeywordConstructorContributor : AbstractGeneratedConstructorContributor() {
 
-  override fun processMembers(closure: GrClosableBlock, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return
+  override fun failFastCheck(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true
     val nameHint = ResolveUtil.getNameHint(processor)
-    if (nameHint != null && nameHint != SUPER) return
+    if (nameHint != null && nameHint != SUPER) return true
+    return false
+  }
 
-    if (closure != place.parentOfType<GrClosableBlock>()) return
-    val anno = closure.parentOfType<PsiAnnotation>()?.takeIf { it.qualifiedName in constructorGeneratingAnnotations } ?: return
-    if (GrAnnotationUtil.inferClosureAttribute(anno, TupleConstructorAttributes.PRE) != closure) return
-
-
-    val syntheticMethods = createSyntheticConstructors(closure)
-
-    for (method in syntheticMethods) {
-      if (!processor.execute(method, state)) {
-        return
-      }
+  override fun generateSyntheticElements(annotation: PsiAnnotation, closure: GrClosableBlock, mode: String): Iterable<PsiElement> {
+    return if (mode == TupleConstructorAttributes.PRE) {
+      createSyntheticConstructors(closure)
+    } else {
+      emptyList()
     }
   }
 

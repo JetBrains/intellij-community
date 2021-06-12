@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.findInProject;
 
@@ -9,7 +9,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -22,7 +21,7 @@ public class FindInProjectManager {
   private volatile boolean myIsFindInProgress;
 
   public static FindInProjectManager getInstance(Project project) {
-    return ServiceManager.getService(project, FindInProjectManager.class);
+    return project.getService(FindInProjectManager.class);
   }
 
   public FindInProjectManager(Project project) {

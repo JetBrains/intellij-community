@@ -346,9 +346,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     rightActionGroup.add(myTreeView.createToggleAutoscrollAction());
 
     myLeftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, leftActionGroup, false);
+    myLeftToolbar.setTargetComponent(this);
     JPanel toolbarPanel = new JPanel(new GridLayout(1, 2, 2, 0));
     toolbarPanel.add(myLeftToolbar.getComponent());
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, rightActionGroup, false);
+    myRightToolbar.setTargetComponent(this);
     toolbarPanel.add(myRightToolbar.getComponent());
 
     return toolbarPanel;

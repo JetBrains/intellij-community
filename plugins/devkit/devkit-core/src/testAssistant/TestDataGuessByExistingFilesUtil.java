@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.application.Application;
@@ -112,29 +111,11 @@ public final class TestDataGuessByExistingFilesUtil {
 
     TestFramework framework = TestFrameworks.detectFramework(psiClass);
 
-    if (framework == null || isUtilityMethod(method, psiClass, framework)) {
+    if (framework == null || !framework.isTestMethod(method)) {
       return null;
     }
 
     return getTestName(method.getName());
-  }
-
-  private static boolean isUtilityMethod(@NotNull PsiMethod method, @NotNull PsiClass psiClass, @NotNull TestFramework framework) {
-    if (method == framework.findSetUpMethod(psiClass) || method == framework.findTearDownMethod(psiClass)) {
-      return true;
-    }
-
-    // JUnit3
-    if (framework.getClass().getName().contains("JUnit3")) {
-      return !method.getName().startsWith("test");
-    }
-
-    // JUnit4
-    if (framework.getClass().getName().contains("JUnit4")) {
-      return !AnnotationUtil.isAnnotated(method, "org.junit.Test", 0);
-    }
-
-    return false;
   }
 
   @NotNull

@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -35,37 +36,42 @@ public final class InheritanceUtil {
 
   private InheritanceUtil() {}
 
-  public static boolean existsMutualSubclass(PsiClass class1, final PsiClass class2, final boolean avoidExpensiveProcessing) {
+  public static ThreeState existsMutualSubclass(PsiClass class1, final PsiClass class2, final boolean avoidExpensiveProcessing) {
     if (class1 instanceof PsiTypeParameter) {
       final PsiClass[] superClasses = class1.getSupers();
+      ThreeState result = ThreeState.YES;
       for (PsiClass superClass : superClasses) {
-        if (!existsMutualSubclass(superClass, class2, avoidExpensiveProcessing)) {
-          return false;
+        ThreeState state = existsMutualSubclass(superClass, class2, avoidExpensiveProcessing);
+        if (state != ThreeState.YES) {
+          result = state;
+          if (result == ThreeState.NO) {
+            return result;
+          }
         }
       }
-      return true;
+      return result;
     }
     if (class2 instanceof PsiTypeParameter) {
       return existsMutualSubclass(class2, class1, avoidExpensiveProcessing);
     }
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(class1.getQualifiedName())) {
-      return true;
+      return ThreeState.YES;
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2.getQualifiedName())) {
-      return true;
+      return ThreeState.YES;
     }
     if (class1.isInheritor(class2, true) || class2.isInheritor(class1, true) || Objects.equals(class1, class2)) {
-      return true;
+      return ThreeState.YES;
     }
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
     String class1Name = class1.getName();
     String class2Name = class2.getName();
     if (class1Name == null || class2Name == null) {
       // One of classes is anonymous? No subclass is possible
-      return false;
+      return ThreeState.NO;
     }
-    if (class1.hasModifierProperty(PsiModifier.FINAL) || class2.hasModifierProperty(PsiModifier.FINAL)) return false;
+    if (class1.hasModifierProperty(PsiModifier.FINAL) || class2.hasModifierProperty(PsiModifier.FINAL)) return ThreeState.NO;
     if (LambdaUtil.isFunctionalClass(class1) || class1Name.length() < class2Name.length() ||
         (isJavaClass(class2) && !isJavaClass(class1))) {
       // Assume that it could be faster to search inheritors from non-functional interface or from class with a longer simple name
@@ -79,22 +85,27 @@ public final class InheritanceUtil {
     return class1 instanceof PsiClassImpl || class1 instanceof ClsClassImpl;
   }
 
-  public static boolean doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
+  private static ThreeState doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
-    final boolean[] result = new boolean[1];
-    search.forEach(new Processor<>() {
+    var processor = new Processor<PsiClass>() {
+      ThreeState result = ThreeState.NO;
       final AtomicInteger count = new AtomicInteger(0);
 
       @Override
       public boolean process(PsiClass inheritor) {
-        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || avoidExpensiveProcessing && count.incrementAndGet() > 20) {
-          result[0] = true;
+        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true)) {
+          result = ThreeState.YES;
+          return false;
+        }
+        if (avoidExpensiveProcessing && count.incrementAndGet() > 20) {
+          result = ThreeState.UNSURE;
           return false;
         }
         return true;
       }
-    });
-    return result[0];
+    };
+    search.forEach(processor);
+    return processor.result;
   }
 
   public static boolean hasImplementation(@NotNull PsiClass aClass) {

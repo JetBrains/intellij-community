@@ -10,8 +10,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringStateChanges(refactoringSupport)
-{
+  SuggestedRefactoringStateChanges(refactoringSupport) {
   override fun createInitialState(declaration: PsiElement): SuggestedRefactoringState? {
     val state = super.createInitialState(declaration) ?: return null
     if (declaration is PsiMember && isDuplicate(declaration, state.oldSignature)) return null

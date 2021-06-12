@@ -692,4 +692,18 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCollectionToArray() { doTest(); }
   public void testStringToCharArray() { doTest(); }
   public void testFinalStaticFields() { doTest(); }
+  public void testReassignInConstructor() { doTest(); }
+  public void testCollectionViewsSize() { doTest(); }
+  public void testFlushedNullableOnUnknownCall() { doTest(); }
+  public void testBoxedDivisionComparison() { doTest(); }
+  public void testUnknownComparedToNullable() { doTest(); }
+  public void testCastInCatch() { doTest(); }
+  public void testInitArrayInConstructor() { doTest(); }
+  public void testGetterNullityAfterCheck() { doTest(); }
+  public void testInferenceNullityMismatch() { doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
+  public void testFieldInInstanceInitializer() { doTest(); }
+  public void testNullableCallWithPrecalculatedValueAndSpecialField() { doTest(); }
+  public void testJoinConstantAndSubtype() { doTest(); }
+  public void testDereferenceInThrowMessage() { doTest(); }
+  public void testArrayInitializerElementRewritten() { doTest(); }
 }

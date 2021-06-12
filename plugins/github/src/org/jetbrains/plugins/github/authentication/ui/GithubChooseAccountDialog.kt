@@ -22,7 +22,7 @@ import javax.swing.JList
 import javax.swing.JTextArea
 import javax.swing.ListSelectionModel
 
-class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
+class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) descriptionText: String?,
                                 showHosts: Boolean, allowDefault: Boolean,

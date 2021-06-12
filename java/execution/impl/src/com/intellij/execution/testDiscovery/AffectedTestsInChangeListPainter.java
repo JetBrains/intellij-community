@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
-public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
+final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
   private final Project myProject;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
@@ -46,11 +46,6 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
 
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
-        scheduleUpdate();
-      }
-
-      @Override
-      public void unchangedFileStatusChanged() {
         scheduleUpdate();
       }
     };

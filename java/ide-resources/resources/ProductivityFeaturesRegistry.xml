@@ -264,6 +264,12 @@
     <feature
       id="move.element.left.right"
       tip-file="ChangeSignatureAfterMovingParameters.html"/>
+    <feature id="editing.convert.line.separators"
+             tip-file="LineEndings.html">
+      <event-detector type="action" id="ConvertToMacLineSeparators"/>
+      <event-detector type="action" id="ConvertToWindowsLineSeparators"/>
+      <event-detector type="action" id="ConvertToUnixLineSeparators"/>
+    </feature>
   </group>
 
   <group id="codeassists">
@@ -512,5 +518,21 @@
       first-show="6"
       successive-show="10"
       min-usage-count="1"/>
+  </group>
+
+  <group id="debugger">
+    <feature id="debugger.breakpoint.edit"
+             tip-file="BreakpointSpeedmenu.html">
+      <event-detector type="action" id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
+    </feature>
+    <feature id="debugger.evaluate.expression"/>
+  </group>
+
+  <group id="intentions">
+    <feature id="intentions.check.regexp"
+             tip-file="CheckRegExp.html"
+             show-in-guide="false">
+      <event-detector type="intention" id="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
+    </feature>
   </group>
 </component>

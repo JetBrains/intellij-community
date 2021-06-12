@@ -240,6 +240,6 @@ org.jetbrains.plugins.groovy.codeInspection.naming.GroovyStaticMethodNamingConve
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyStaticVariableNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.threading.GroovyDoubleCheckedLockingInspection
 org.jetbrains.plugins.groovy.codeInspection.threading.GroovyWhileLoopSpinsOnFieldInspection
-org.jetbrains.plugins.ruby.rails.inspections.rails3.Rails3DeprecatedInspection
+org.jetbrains.plugins.ruby.rails.inspections.rails3.RubyDeprecatedSymbolInspection
 org.jetbrains.plugins.ruby.ruby.inspections.resolve.RubyResolveInspection
 org.jetbrains.w3validators.css.W3CssValidatorInspection

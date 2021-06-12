@@ -197,7 +197,7 @@ public final class PsiTestUtil {
   }
 
   public static void checkFileStructure(@NotNull PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   private static void compareFromAllRoots(@NotNull PsiFile file, @NotNull Function<? super PsiFile, String> fun) {

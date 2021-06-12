@@ -2,15 +2,14 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.zip.ImmutableZipFile
+import com.intellij.util.lang.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.ForkJoinTask
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
@@ -24,11 +23,11 @@ class ZipTest {
   fun `interrupt thread`() {
     val (list, archiveFile) = createLargeArchive(128)
     val zipFile = ImmutableZipFile.load(archiveFile)
-    val executor = Executors.newWorkStealingPool(4)
+    val tasks = mutableListOf<ForkJoinTask<*>>()
     // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
     ConfigurationProvider.CONFIGURATION_PROVIDER
     for (i in 0..100) {
-      executor.execute {
+      tasks.add(ForkJoinTask.adapt(Runnable {
         val ioThread = runInThread {
           while (!Thread.currentThread().isInterrupted()) {
             for (name in list) {
@@ -42,10 +41,9 @@ class ZipTest {
         ioThread.interrupt()
         Thread.sleep(10)
         ioThread.join()
-      }
+      }))
     }
-    executor.shutdown()
-    executor.awaitTermination(4, TimeUnit.MINUTES)
+    ForkJoinTask.invokeAll(tasks)
   }
 
   @Test

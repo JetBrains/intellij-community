@@ -4,7 +4,19 @@ Reports type cast expressions where
 the cast type is an interface, and the cast expression has a class type which neither
 implements the cast interface, nor has any visible subclasses which implement or extend the cast interface.
 While it is possible that this was intended, such a construct is most likely an error, and will
-result in a <b>java.lang.ClassCastException</b> at runtime.
+result in a <code>java.lang.ClassCastException</code> at runtime.
+<p>Example: </p>
+<pre>
+  interface A {}
+  interface Z {}
+  static class C {}
+
+  void x(C c) {
+    if (c instanceof Z) {
+      A a = ((A)c); // cast to incompatible interface 'A'
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

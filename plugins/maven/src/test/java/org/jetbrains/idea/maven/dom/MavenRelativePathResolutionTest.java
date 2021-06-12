@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
+import org.junit.Test;
 
 import java.io.File;
 
@@ -21,6 +22,7 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
                   "<version>1</version>");
   }
 
+  @Test
   public void testParentRelativePathOutsideProjectRoot() throws Exception {
 
     File file = myIndicesFixture.getRepositoryHelper().getTestData("local1/org/example/1.0/example-1.0.pom");
@@ -50,6 +52,7 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
   }
 
 
+  @Test 
   public void testParentRelativePathOutsideProjectRootWithDir() throws Exception {
     File file = myIndicesFixture.getRepositoryHelper().getTestData("local1/org/example/1.0/pom.xml");
 

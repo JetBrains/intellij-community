@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.Hash;
@@ -163,7 +164,7 @@ public final class PathInterner {
       CharSequence string = (CharSequence)encodedString;
       Object newEncodedString;
       if (asBytes) {
-        byte[] bytes = new byte[length()];
+        byte[] bytes = ArrayUtil.newByteArray(length());
         for (int i = 0; i < bytes.length; i++) {
           bytes[i] = (byte)string.charAt(i + start);
         }

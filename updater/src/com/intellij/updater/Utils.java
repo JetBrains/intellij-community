@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.updater.Runner.LOG;
+
 public class Utils {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
@@ -45,7 +47,7 @@ public class Utils {
       }
 
       myTempDir = Files.createTempDirectory(dir, "idea.updater.files.").toFile();
-      Runner.logger().info("created a working directory: " + myTempDir);
+      LOG.info("created a working directory: " + myTempDir);
     }
 
     File myTempFile;
@@ -60,7 +62,7 @@ public class Utils {
   public synchronized static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger().info("deleted a working directory: " + myTempDir.getPath());
+    LOG.info("deleted a working directory: " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -89,11 +91,11 @@ public class Utils {
     for (int i = 0; i < 10; i++) {
       try {
         Files.delete(path);
-        Runner.logger().info("deleted: " + path);
+        LOG.info("deleted: " + path);
         return;
       }
       catch (NoSuchFileException e) {
-        Runner.logger().info("already deleted: " + path);
+        LOG.info("already deleted: " + path);
         return;
       }
       catch (AccessDeniedException e) {
@@ -126,7 +128,7 @@ public class Utils {
   }
 
   public static void setExecutable(File file, boolean executable) throws IOException {
-    Runner.logger().info("Setting executable permissions for: " + file);
+    LOG.info("Setting executable permissions for: " + file);
     if (!file.setExecutable(executable, false)) {
       throw new IOException("Cannot set executable permissions for: " + file);
     }
@@ -147,7 +149,8 @@ public class Utils {
   }
 
   public static void copy(File from, File to, boolean overwrite) throws IOException {
-    Runner.logger().info(from + (overwrite ? " over " : " into ") + to);
+    String message = from + (overwrite ? " over " : " into ") + to;
+    LOG.info(message);
 
     Path src = from.toPath(), dst = to.toPath();
     BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
@@ -166,14 +169,14 @@ public class Utils {
   }
 
   public static void copyDirectory(Path from, Path to) throws IOException {
-    Runner.logger().info(from + " into " + to);
+    LOG.info(from + " into " + to);
 
     Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (dir != from || !Files.exists(to)) {
           Path copy = to.resolve(from.relativize(dir));
-          Runner.logger().info("  " + dir + " into " + copy);
+          LOG.info("  " + dir + " into " + copy);
           Files.createDirectory(copy);
         }
         return FileVisitResult.CONTINUE;
@@ -182,7 +185,7 @@ public class Utils {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path copy = to.resolve(from.relativize(file));
-        Runner.logger().info("  " + file + " into " + copy);
+        LOG.info("  " + file + " into " + copy);
         if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
           Files.createSymbolicLink(copy, Files.readSymbolicLink(file));
         }
@@ -258,7 +261,7 @@ public class Utils {
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
     if (entry == null) throw new FileNotFoundException("Entry " + entryPath + " not found");
-    Runner.logger().info("entryPath: " + entryPath);
+    LOG.info("entryPath: " + entryPath);
     return entry;
   }
 

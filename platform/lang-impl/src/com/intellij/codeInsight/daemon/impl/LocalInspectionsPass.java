@@ -115,7 +115,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     try {
-      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) return;
+      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) {
+        return;
+      }
       inspect(getInspectionTools(myProfileWrapper), InspectionManager.getInstance(myProject), true, progress);
     }
     finally {
@@ -140,7 +142,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       final String shortName = toolWrapper.getShortName();
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+        ProblemHighlightType highlightType = descriptor.getHighlightType();
+        if (highlightType == ProblemHighlightType.INFORMATION) {
           if (ourToolsWithInformationProblems.add(shortName)) {
             String message = "Tool #" + shortName + " registers INFORMATION level problem in batch mode on " + getFile() + ". " +
                              "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
@@ -154,6 +157,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               LOG.error(message);
             }
           }
+          continue;
+        }
+        else if (highlightType == ProblemHighlightType.POSSIBLE_PROBLEM) {
           continue;
         }
         addDescriptors(toolWrapper, descriptor, context);
@@ -581,9 +587,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
-    final String plainMessage = message.startsWith("<html>") 
+    final String plainMessage = message.startsWith("<html>")
                                 ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
-                                  .replaceAll("&nbsp;", " ") 
+                                  .replaceAll("&nbsp;", " ")
                                 : message;
 
     @NlsSafe String tooltip = null;

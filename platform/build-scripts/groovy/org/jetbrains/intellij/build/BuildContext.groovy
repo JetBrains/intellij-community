@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -44,11 +45,11 @@ abstract class BuildContext implements CompilationContext {
   List<String> bootClassPathJarNames
 
   /**
-   * Add file to be copied into application resources.
+   * Add file to be copied into application.
    */
-  abstract void addResourceFile(@NotNull Path file)
+  abstract void addDistFile(@NotNull Pair<Path, String> file)
 
-  abstract @NotNull Collection<Path> getResourceFiles();
+  abstract @NotNull Collection<Pair<Path, String>> getDistFiles();
 
   abstract boolean includeBreakGenLibraries()
 

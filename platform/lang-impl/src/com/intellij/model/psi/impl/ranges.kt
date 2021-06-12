@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.openapi.util.TextRange
@@ -10,7 +10,7 @@ import java.util.function.Function
  * @return collection of items with the same minimal range
  * @throws RangeOverlapException if some range overlaps another range
  */
-internal fun <X> chooseByRange(items: List<X>, offset: Int, itemRange: (X) -> TextRange): Collection<X> {
+internal fun <X> chooseByRange(items: Collection<X>, offset: Int, itemRange: (X) -> TextRange): Collection<X> {
   if (items.size < 2) {
     return items
   }
@@ -59,8 +59,8 @@ private class RangeOverlapException(
   range2: TextRange
 ) : IllegalArgumentException("Overlapping ranges: $range1 and $range2")
 
-private fun <T> buildDiagnostic(items: List<T>, itemRange: (T) -> TextRange): String {
-  return items.joinToString(separator = "\n") { item ->
-    "${itemRange(item)} : ${(item as? Any)?.javaClass} : ${item}"
+private fun <T> buildDiagnostic(items: Collection<T>, itemRange: (T) -> TextRange): String {
+  return items.joinToString(separator = "") { item ->
+    "\n${itemRange(item)} : $item"
   }
 }

@@ -1,25 +1,38 @@
 <html>
 <body>
-Reports methods with a <b>boolean</b> return type, which are only used in a negated context.
-Due to performance reasons some methods might not be reported during in-editor highlighting.
-<p>
-For example:
-<code><pre>
-<b>class</b> C {
-  <b>boolean</b> inverted() {
-    <b>return</b> <b>true</b>;
-  }
-
-  <b>void</b> f() {
-    <b>if</b> (!inverted()) {
-      <b>return</b>;
+Reports methods with a <code>boolean</code> return type that are used only in a negated context.
+<p>The quick-fix makes it possible to rename and invert the method.
+  Due to performance reasons, some methods might not be highlighted in the editor.</p>
+<p>Example:</p>
+<pre><code>
+  class C {
+    boolean alwaysTrue() {
+      return true;
     }
-  }
-  <b>boolean</b> member = !inverted();
-}  
-</pre></code>
-<!-- tooltip end -->
-<p>
 
+    void f() {
+      if (!alwaysTrue()) {
+        return;
+      }
+    }
+    boolean member = !alwaysTrue();
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class C {
+    boolean alwaysFalse() {
+      return false;
+    }
+
+    void f() {
+      if (alwaysFalse()) {
+        return;
+      }
+    }
+    boolean member = alwaysFalse();
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

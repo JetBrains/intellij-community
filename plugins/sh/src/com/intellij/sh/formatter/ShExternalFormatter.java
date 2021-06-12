@@ -1,31 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.service.AsyncDocumentFormattingService;
+import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.ExternalFormatProcessor;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
@@ -39,90 +33,86 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
-// todo: rewrite with the future API, see IDEA-203568
-public class ShExternalFormatter implements ExternalFormatProcessor {
+public class ShExternalFormatter extends AsyncDocumentFormattingService {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
   @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
+  private static final Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
+
   @Override
-  public boolean activeForFile(@NotNull PsiFile file) {
+  public boolean canFormat(@NotNull PsiFile file) {
     return file instanceof ShFile;
   }
 
-  @Nullable
   @Override
-  public TextRange format(@NotNull PsiFile source,
-                          @NotNull TextRange range,
-                          boolean canChangeWhiteSpacesOnly,
-                          boolean keepLineBreaks,
-                          boolean enableBulkUpdate) {
-    doFormat(source.getProject(), source.getVirtualFile());
-    return range;
+  public @NotNull Set<Feature> getFeatures() {
+    return FEATURES;
   }
 
-  @Nullable
   @Override
-  public String indent(@NotNull PsiFile source, int lineStartOffset) {
-    return null;
+  protected @NotNull String getNotificationGroupId() {
+    return NOTIFICATION_GROUP_ID;
   }
 
-  private void doFormat(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file == null || !file.exists()) return;
+  @Override
+  protected @NotNull String getName() {
+    return message("sh.shell.script");
+  }
 
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-
-    if (!(psiFile instanceof ShFile)) return;
-
-    CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
-
-    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+  @Override
+  protected @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
+    FormattingContext formattingContext = request.getContext();
+    Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return;
-
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.install.question"),
-                                                   NotificationType.INFORMATION);
-      notification.addAction(
-        NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.install.question"),
+                                                     NotificationType.INFORMATION);
+        notification.addAction(
+          NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
+            notification.expire();
+            ShShfmtFormatterUtil.download(formattingContext.getProject(),
+                                          () -> Notifications.Bus
+                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                                                     message("sh.fmt.success.install"),
+                                                                     NotificationType.INFORMATION)),
+                                          () -> Notifications.Bus
+                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                                                     message("sh.fmt.cannot.download"),
+                                                                     NotificationType.ERROR)));
+          }));
+        notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
           notification.expire();
-          ShShfmtFormatterUtil.download(project,
-                                        () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
-                                                                   message("sh.fmt.success.install"),
-                                                                   NotificationType.INFORMATION)),
-                                        () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
-                                                                   message("sh.fmt.cannot.download"),
-                                                                   NotificationType.ERROR)));
+          ShSettings.setShfmtPath(ShSettings.I_DO_MIND_SUPPLIER.get());
         }));
-      notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
-        notification.expire();
-        ShSettings.setShfmtPath(ShSettings.I_DO_MIND_SUPPLIER.get());
-      }));
-      Notifications.Bus.notify(notification, project);
-      return;
+        Notifications.Bus.notify(notification, project);
+      }
+      return null;
     }
     ShShfmtFormatterUtil.checkShfmtForUpdate(project);
+    String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
+
+    VirtualFile file = formattingContext.getVirtualFile();
+    if (file == null || !file.exists()) return null;
+
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
     String filePath = file.getPath();
     String realPath = FileUtil.toSystemDependentName(filePath);
-    if (!new File(realPath).exists()) return;
-
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
-
-    long before = document.getModificationStamp();
-    documentManager.saveDocument(document);
+    if (!new File(realPath).exists()) return null;
 
     @NonNls
     List<String> params = new SmartList<>();
-    params.add("-ln=" + ShShebangParserUtil.getInterpreter((ShFile)psiFile, KNOWN_SHELLS, "bash"));
+    params.add("-ln=" + interpreter);
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);
@@ -151,47 +141,40 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         .withParameters(params);
 
       OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
-      handler.addProcessListener(new CapturingProcessAdapter() {
+      return new FormattingTask() {
         @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          int exitCode = event.getExitCode();
-          if (exitCode == 0) {
-            String text = getOutput().getStdout();
-            ApplicationManager.getApplication().invokeLater(() -> {
-              long after = document.getModificationStamp();
-              if (after > before) {
-                // todo: document has already been changed
-                return;
+        public void run() {
+          handler.addProcessListener(new CapturingProcessAdapter() {
+            @Override
+            public void processTerminated(@NotNull ProcessEvent event) {
+              int exitCode = event.getExitCode();
+              if (exitCode == 0) {
+                request.onTextReady(getOutput().getStdout());
               }
-              CommandProcessor.getInstance().executeCommand(project, () -> {
-                WriteAction.run(() -> {
-                  document.setText(text);
-                  FileDocumentManager.getInstance().saveDocument(document);
-                });
-                UndoUtil.setForceUndoFlag(file, false);
-              }, message("sh.fmt.reformat.code.with", getId()), null, document);
-            });
-          }
-          else {
-            showFailedNotification(getOutput().getStderr());
-          }
+              else {
+                request.onError(message("sh.shell.script"), getOutput().getStderr());
+              }
+            }
+          });
+          handler.startNotify();
         }
-      });
-      ApplicationManager.getApplication().executeOnPooledThread(handler::startNotify);
+
+        @Override
+        public boolean cancel() {
+          handler.destroyProcess();
+          return true;
+        }
+
+        @Override
+        public boolean isRunUnderProgress() {
+          return true;
+        }
+      };
     }
     catch (ExecutionException e) {
-      showFailedNotification(e.getMessage());
+      request.onError(message("sh.shell.script"), e.getMessage());
+      return null;
     }
   }
 
-  private static void showFailedNotification(String stderr) {
-    // todo: add notification
-    LOG.debug(stderr);
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return "shfmt";
-  }
 }

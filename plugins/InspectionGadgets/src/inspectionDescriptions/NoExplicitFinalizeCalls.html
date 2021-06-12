@@ -1,11 +1,17 @@
 <html>
 <body>
-Reports any call of <b>Object.finalize()</b>. Calling
-<b>Object.finalize()</b> explicitly is a very bad idea, as it can result in objects being placed in an
-inconsistent state. Calls to <b>super.finalize()</b> from within implementations of <b>finalize()</b>
+Reports calls to <code>Object.finalize()</code>. Calling
+<code>Object.finalize()</code> explicitly is a bad idea, as it can result in objects being placed in an
+inconsistent state.
+This method is automatically called by the garbage collector on an object when it determines that there are no more references to the object.
+Calls to <code>super.finalize()</code> from within implementations of <code>finalize()</code>
 are benign, and are not reported by this inspection.
+<p>Example:
+<pre>
+  MyObject m = new MyObject();
+  m.finalize();
+  System.gc()
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

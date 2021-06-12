@@ -79,23 +79,24 @@ public class CleanupWorker extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    if (myProject.isDisposed()) return;
+    assert getProject() != null;
+    if (getProject().isDisposed()) return;
 
     getApplication().invokeLater(() -> getApplication().runWriteAction(() -> {
-      if (!myProject.isDisposed()) {
+      if (!getProject().isDisposed()) {
         LocalFileSystem.getInstance().refreshFiles(myRoots, false, true, null);
       }
     }));
-    markFilesDirty(myProject, myRoots);
+    markFilesDirty(getProject(), myRoots);
 
     if (!myExceptions.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(
+      AbstractVcsHelper.getInstance(getProject()).showErrors(
         myExceptions.stream()
           .map(pair -> new VcsException(
             message("action.Subversion.cleanup.error.message", toSystemDependentName(pair.second.getPath()),
                     pair.first == null ? "" : pair.first.getMessage())))
           .collect(toList()),
-        myTitle);
+        getTitle());
     }
   }
 }

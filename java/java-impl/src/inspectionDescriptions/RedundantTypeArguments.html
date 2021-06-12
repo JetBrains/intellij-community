@@ -1,13 +1,17 @@
 <html>
 <body>
-
 Reports all calls to parametrized methods where explicit argument types
-can be omitted, since they will be unambiguously inferred by compiler. <br>
-Such usages make code excessive and thus less readable. <br> <br>
-For example if you have a call to parametrized method like:
- <pre>
-&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#000080">this</font></b>.&lt;String&gt;addItem(<font color="#008000">""</font>);
+can be omitted, since they will be unambiguously inferred by compiler.
+<p>
+  Use of redundant type arguments makes code excessive and thus less readable.
+</p>
+<p>Example:</p>
+<pre>
+  List&lt;String&gt; list = Arrays.&lt;String&gt;asList("Hello", "World");
 </pre>
-- the usage of <b><font color="#000080">&lt;String&gt;</font></b> will be highlighted. <br> <br>
+<p>A quick-fix is provided to remove redundant type arguments:</p>
+<pre>
+  List&lt;String&gt; list = Arrays.asList("Hello", "World");
+</pre>
 </body>
 </html>

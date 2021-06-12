@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.gson.Gson;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,7 +19,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
-import kotlin.Pair;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +72,7 @@ public final class ClasspathBootstrap {
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
     cp.add(getResourcePath(JavacReferenceCollector.class));  // jps-javac-extension library
 
-    cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
+    cp.addAll(ClassPathUtil.getUtilClassPath()); // intellij.platform.util
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourcePath(aClass));
@@ -91,10 +91,6 @@ public final class ClasspathBootstrap {
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getResourcePath(JavaProjectBuilder.class));  // QDox lightweight java parser
     cp.add(getResourcePath(Gson.class));  // gson
-
-    cp.add(getResourcePath(Pair.class)); // kotlin-stdlib
-    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
-    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
 
     cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
 
@@ -122,7 +118,7 @@ public final class ClasspathBootstrap {
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
 
     // util
-    for (String path : PathManager.getUtilClassPath()) {
+    for (String path : ClassPathUtil.getUtilClassPath()) {
       cp.add(new File(path));
     }
 

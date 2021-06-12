@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,6 +6,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import java.util.*
 import java.util.stream.Stream
+import kotlin.collections.ArrayDeque
+import kotlin.collections.HashSet
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -17,7 +19,7 @@ fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
 fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   val list = get(key)
   if (list == null) {
-    put(key, SmartList<V>(value))
+    put(key, SmartList(value))
   }
   else {
     list.add(value)
@@ -25,6 +27,10 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 }
 
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
+
+@Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
+val <T> List<T>.tail: List<T>
+  get() = tail()
 
 /**
  * @return all the elements of a non-empty list except the first one
@@ -87,11 +93,7 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
 }
 
 inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  return asSequence().forEachLoggingErrors(logger, operation)
-}
-
-inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  forEach {
+  asSequence().forEach {
     try {
       operation(it)
     }
@@ -99,6 +101,7 @@ inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -
       logger.error(e)
     }
   }
+  return
 }
 
 inline fun <T, R : Any> Collection<T>.mapNotNullLoggingErrors(logger: Logger, operation: (T) -> R?): List<R> {
@@ -146,6 +149,10 @@ fun <T> MutableList<T>.addIfNotNull(e: T?) {
   e?.let { add(it) }
 }
 
+fun <T> MutableList<T>.addAllIfNotNull(vararg elements: T?) {
+  elements.forEach { e -> e?.let { add(it) } }
+}
+
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
   return when (val size = size) {
     1 -> SmartList(transform(this[0]))
@@ -178,14 +185,14 @@ inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
       Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(HashSet(size), transform)
+    else -> mapTo(java.util.HashSet(size), transform)
   }
 }
 
 inline fun <T, R : Any> Collection<T>.mapSmartNotNull(transform: (T) -> R?): List<R> {
   val size = size
   return if (size == 1) {
-    transform(first())?.let { SmartList<R>(it) } ?: SmartList<R>()
+    transform(first())?.let { SmartList(it) } ?: SmartList()
   }
   else {
     mapNotNullTo(ArrayList(size), transform)
@@ -214,7 +221,7 @@ inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): Muta
   return filterTo(if (size <= 1) SmartList() else ArrayList(), predicate)
 }
 
-inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
+inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap(E::class.java)
 
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
@@ -274,3 +281,37 @@ fun <T> Optional<T>.orNull(): T? = orElse(null)
 fun <T> Iterable<T>?.asJBIterable(): JBIterable<T> = JBIterable.from(this)
 
 fun <T> Array<T>?.asJBIterable(): JBIterable<T> = if (this == null) JBIterable.empty() else JBIterable.of(*this)
+
+/**
+ * Modify the elements of the array without creating a new array
+ *
+ * @return the array itself
+ */
+fun <T> Array<T>.mapInPlace(transform: (T) -> T): Array<T> {
+  for (i in this.indices) {
+    this[i] = transform(this[i])
+  }
+  return this
+}
+
+/**
+ * @return sequence of distinct nodes in breadth-first order
+ */
+fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> = sequence {
+  val initialIterator = initialSequence.iterator()
+  if (!initialIterator.hasNext()) {
+    return@sequence
+  }
+  val visited = HashSet<Node>()
+  val sequences = ArrayDeque<Sequence<Node>>()
+  sequences.addLast(initialIterator.asSequence())
+  while (sequences.isNotEmpty()) {
+    val currentSequence = sequences.removeFirst()
+    for (node in currentSequence) {
+      if (visited.add(node)) {
+        yield(node)
+        sequences.addLast(children(node))
+      }
+    }
+  }
+}

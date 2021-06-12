@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction;
@@ -11,9 +11,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
     super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());

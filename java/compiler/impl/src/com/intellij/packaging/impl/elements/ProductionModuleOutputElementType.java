@@ -34,12 +34,6 @@ public final class ProductionModuleOutputElementType extends ModuleOutputElement
     return AllIcons.Nodes.Module;
   }
 
-  @NotNull
-  @Override
-  public String getElementText(@NotNull String moduleName) {
-    return JavaCompilerBundle.message("node.text.0.compile.output", moduleName);
-  }
-
   @Override
   public boolean isSuitableModule(@NotNull ModulesProvider modulesProvider, @NotNull Module module) {
     return modulesProvider.getRootModel(module).getSourceRootUrls(false).length > 0;

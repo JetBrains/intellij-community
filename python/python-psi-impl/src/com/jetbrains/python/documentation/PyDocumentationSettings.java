@@ -21,9 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class PyDocumentationSettings
   extends PyDefaultProjectAwareService<PyDocumentationSettings.ServiceState,
           PyDocumentationSettings,

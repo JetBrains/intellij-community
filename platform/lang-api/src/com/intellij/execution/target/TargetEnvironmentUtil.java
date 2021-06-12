@@ -24,7 +24,7 @@ public class TargetEnvironmentUtil {
   public static boolean reuploadRootFile(@NotNull File file,
                                          @Nullable TargetEnvironmentRequest request,
                                          @NotNull TargetEnvironment remoteEnvironment,
-                                         @Nullable TargetEnvironmentAwareRunProfileState.TargetProgressIndicator indicator,
+                                         @Nullable TargetProgressIndicator indicator,
                                          @Nullable Runnable afterUploadCallback) {
     if (request == null || request instanceof LocalTargetEnvironmentRequest) {
       return false;
@@ -33,7 +33,7 @@ public class TargetEnvironmentUtil {
       Path parentPath = file.toPath().getParent();
       for (TargetEnvironment.UploadRoot uploadRoot : request.getUploadVolumes()) {
         if (parentPath.equals(uploadRoot.getLocalRootPath())) {
-          TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator = Objects.requireNonNull(indicator);
+          TargetProgressIndicator targetProgressIndicator = Objects.requireNonNull(indicator);
           try {
             remoteEnvironment.getUploadVolumes().get(uploadRoot).upload(file.getName(), targetProgressIndicator);
           }

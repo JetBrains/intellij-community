@@ -118,6 +118,12 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       else if (element instanceof PsiReference) {
         name = ((PsiReference)element).getCanonicalText();
       }
+      else if (element instanceof PsiExpression) {
+        PsiType type = ((PsiExpression)element).getType();
+        if (type != null) {
+          name = type.getPresentableText();
+        }
+      }
       prev = usage;
       usage = (JavaSliceUsage)usage.getParent();
     }

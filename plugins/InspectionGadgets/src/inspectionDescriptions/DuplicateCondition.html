@@ -1,26 +1,25 @@
 <html>
 <body>
 Reports duplicate conditions in &amp;&amp; and || expressions
-and branches of an if statement.
-While sometimes intended, in most cases this is an oversight.
-
+and branches of if statements.
+While sometimes these duplicate conditions are intended, in most cases they are used due to oversight.
+<p>Example:</p>
+<pre><code>
+  boolean result = digit1 != digit2 || digit1 != digit2;
+</code></pre>
+<!-- tooltip end -->
 <p>
-  To ignore conditions that may produce side effects, use the <b>Ignore conditions with side effects</b> checkbox.
-Clearing this checkbox may lead to false-positives, for example, when the same method returns different values on subsequent invocations.
+  To ignore conditions that may produce side effects, use the <b>Ignore conditions with side effects</b> option.
+Disabling this option may lead to false-positives, for example, when the same method returns different values on subsequent invocations.
 </p>
+<p>Example:</p>
+<pre><code>
+  if (iterator.next() != null || iterator.next() != null)
+    System.out.println("Got it");
+  }
+</code></pre>
+<p>Due to possible side effects of <code>iterator.next()</code> (on the example), the warning will only be
+  triggered if the <b>Ignore conditions with side effects</b> option is disabled.</p>
 
-<p>
-<b>Examples:</b><br>
-<ul>
-  <li>
-    <code>boolean result = digit1 != digit2 || digit1 != digit2;</code>
-  </li>
-  <li>
-    <code>if (iterator.next() != null || iterator.next() != null)</code><br>
-    &nbsp&nbsp<code>System.out.println("Got it");</code><br>
-    <code>}</code><br>
-    <code>// Due to possible side effects of iterator.next(), the warning will only be issued if the Ignore conditions with side effects option is disabled.</code><br>
-  </li>
-</ul>
 </body>
 </html>

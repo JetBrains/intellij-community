@@ -19,7 +19,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
@@ -44,7 +43,7 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
     if (fileType == null) return super.select(e, editorText, cursorOffset, editor);
     final int textLength = editorText.length();
     final TextRange totalRange = e.getTextRange();
-    final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(totalRange.getStartOffset());
+    final HighlighterIterator iterator = editor.getHighlighter().createIterator(totalRange.getStartOffset());
     final BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 
     final ArrayList<TextRange> result = new ArrayList<>();

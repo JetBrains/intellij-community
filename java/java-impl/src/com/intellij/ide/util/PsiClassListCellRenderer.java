@@ -15,20 +15,45 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClass> {
+public class PsiClassListCellRenderer extends DelegatingPsiElementCellRenderer<PsiClass> {
+  public static final PsiElementCellRenderingInfo<PsiClass> INFO = new PsiElementCellRenderingInfo<>() {
+    @Override
+    public int getIconFlags() {
+      return 0;
+    }
 
-  @Override
-  public String getElementText(PsiClass element) {
-    return ClassPresentationUtil.getNameForClass(element, false);
+    @Override
+    public String getElementText(PsiClass element) {
+      return ClassPresentationUtil.getNameForClass(element, false);
+    }
+
+    @Override
+    public String getContainerText(PsiClass element, String name) {
+      return getContainerTextStatic(element);
+    }
+  };
+
+  public PsiClassListCellRenderer() {
+    super(INFO);
   }
 
+  // For binary compatibility
   @Override
-  protected String getContainerText(PsiClass element, final String name) {
-    return getContainerTextStatic(element);
+  public String getElementText(PsiClass element) {
+    return super.getElementText(element);
+  }
+
+  // For binary compatibility
+  @Override
+  protected String getContainerText(PsiClass element, String name) {
+    return super.getContainerText(element, name);
   }
 
   @Nullable
@@ -40,10 +65,5 @@ public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClas
       return "(" + packageName + ")";
     }
     return null;
-  }
-
-  @Override
-  protected int getIconFlags() {
-    return 0;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationGroup;
@@ -14,9 +14,9 @@ import java.util.*;
 @Deprecated
 public final class NotificationParentGroup {
   private static final ExtensionPointName<NotificationParentGroupBean> EP_NAME =
-    ExtensionPointName.create("com.intellij.notification.parentGroup");
+    new ExtensionPointName<>("com.intellij.notification.parentGroup");
   private static final ExtensionPointName<NotificationGroupBean> EP_CHILD_NAME =
-    ExtensionPointName.create("com.intellij.notification.group");
+    new ExtensionPointName<>("com.intellij.notification.group");
 
   private static Map<String, NotificationParentGroupBean> myParents;
   private static Map<NotificationParentGroupBean, List<NotificationParentGroupBean>> myChildren;
@@ -49,7 +49,7 @@ public final class NotificationParentGroup {
       myGroupToParent = new HashMap<>();
       myReplaceTitles = new HashMap<>();
       myShortTitles = new HashMap<>();
-      for (NotificationGroupBean bean : EP_CHILD_NAME.getExtensions()) {
+      for (NotificationGroupBean bean : EP_CHILD_NAME.getExtensionList()) {
         NotificationParentGroupBean parent = myParents.get(bean.parentId);
         if (parent != null) {
           myGroupToParent.put(bean.groupId, parent);

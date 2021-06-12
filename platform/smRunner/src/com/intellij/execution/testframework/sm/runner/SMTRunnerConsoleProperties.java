@@ -104,12 +104,6 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Nullable
   @Override
   public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
-    return getErrorNavigatable(location.getProject(), stacktrace);
-  }
-
-  @Nullable
-  @Override
-  public Navigatable getErrorNavigatable(@NotNull final Project project, final @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
       return null;
     }
@@ -135,6 +129,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
         }
 
         // otherwise
+        Project project = location.getProject();
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {

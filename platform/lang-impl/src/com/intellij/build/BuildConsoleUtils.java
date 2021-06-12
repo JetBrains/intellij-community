@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -77,11 +77,8 @@ public final class BuildConsoleUtils {
       }
     };
 
-    Notification notification = new Notification(group,
-                                                 buildIssue.getTitle(),
-                                                 buildIssue.getDescription(),
-                                                 NotificationType.WARNING,
-                                                 listener);
+    Notification notification = new Notification(group, buildIssue.getTitle(), buildIssue.getDescription(), NotificationType.WARNING)
+      .setListener(listener);
     print(consoleView, notification, buildIssue.getDescription());
   }
 
@@ -103,7 +100,7 @@ public final class BuildConsoleUtils {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
           consoleView.printHyperlink(linkText, new HyperlinkInfo() {
             @Override
-            public void navigate(Project project) {
+            public void navigate(@NotNull Project project) {
               if (notification != null && notification.getListener() != null) {
                 notification.getListener().hyperlinkUpdate(
                   notification, IJSwingUtilities.createHyperlinkEvent(href, consoleView.getComponent()));

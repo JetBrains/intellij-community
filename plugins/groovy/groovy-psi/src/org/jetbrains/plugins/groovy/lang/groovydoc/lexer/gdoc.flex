@@ -21,9 +21,8 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTy
 %state AFTER_ASTERISKS
 %state COMMENT_DATA
 %xstate AFTER_BRACE
+%state AFTER_PLAIN_TAG_NAME
 %state AFTER_TAG_NAME
-%state AFTER_PARAM_NAME
-%xstate AFTER_TAG_SPACE
 %state TAG_VALUE
 %state TAG_VALUE_IN_ANGLES
 %state TAG_VALUE_IN_PAREN
@@ -36,6 +35,7 @@ WS = {WS_CHARS}+
 DIGIT = [0-9]
 ALPHA = [:jletter:]
 IDENTIFIER = {ALPHA} ({ALPHA} | {DIGIT} | [":.-"])*
+TAG_WITH_VALUE = "param" | "link" | "linkplain" | "see" | "value" | "throws" | "attr"
 VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 %%
 
@@ -63,22 +63,20 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 }
 
 <TOP_LEVEL, AFTER_ASTERISKS, AFTER_BRACE> {
-  "@param"                      { yybegin(AFTER_PARAM_NAME); return mGDOC_TAG_NAME; } 
-  "@"{IDENTIFIER}               { yybegin(AFTER_TAG_NAME); return mGDOC_TAG_NAME; }
+  "@"{TAG_WITH_VALUE}           { yybegin(AFTER_TAG_NAME); return mGDOC_TAG_NAME; }
+  "@"{IDENTIFIER}               { yybegin(AFTER_PLAIN_TAG_NAME); return mGDOC_TAG_NAME; }
 }
 
 <AFTER_BRACE> [^]               { yypushback(1); yybegin(COMMENT_DATA); }
 
-<AFTER_PARAM_NAME> {WS_NL}      { yybegin(TAG_VALUE); return TokenType.WHITE_SPACE;}
-
 <AFTER_TAG_NAME> {
-  {WS_NL}                       { yybegin(AFTER_TAG_SPACE); return TokenType.WHITE_SPACE; }
-  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }                                                              
+  {WS_NL}                       { yybegin(TAG_VALUE); return TokenType.WHITE_SPACE;}
+  [^]                           { yypushback(1); yybegin(COMMENT_DATA); }
 }
 
-<AFTER_TAG_SPACE> {
-  [\"{]                         { yypushback(1); yybegin(COMMENT_DATA); }
-  [^]                           { yypushback(1); yybegin(TAG_VALUE); }
+<AFTER_PLAIN_TAG_NAME> {
+  {WS_NL}                       { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
+  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }
 }
 
 <TAG_VALUE> {

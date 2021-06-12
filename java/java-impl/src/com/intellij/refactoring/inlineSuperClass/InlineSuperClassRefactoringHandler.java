@@ -30,8 +30,6 @@ import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler {
 
   @Override
@@ -43,12 +41,16 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
-    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search((PsiClass)element).findAll();
-    return inheritors.size() > 0;
+    return true;
   }
 
   @Override
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
+    if (DirectClassInheritorsSearch.search((PsiClass)element).findFirst() == null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.super.no.inheritors.warning.message"),
+                                          JavaRefactoringBundle.message("inline.super.class"), null);
+      return;
+    }
     PsiClass superClass = (PsiClass) element;
     if (!superClass.getManager().isInProject(superClass)) {
       CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.super.non.project.class.warning.message"),

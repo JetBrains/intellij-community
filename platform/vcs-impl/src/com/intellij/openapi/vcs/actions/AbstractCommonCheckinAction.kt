@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
@@ -36,7 +37,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
 
     if (project == null ||
         !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
-        !ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+        CommitModeManager.getInstance(project).getCurrentCommitMode().disableDefaultCommitAction()) {
       presentation.isEnabledAndVisible = false
     }
     else if (!approximatelyHasRoots(vcsContext)) {

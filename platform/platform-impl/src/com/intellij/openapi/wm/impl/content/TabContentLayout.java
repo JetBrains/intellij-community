@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
@@ -212,7 +212,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     myUi.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     myLastLayout = data;
     if (toolbarUpdateNeeded) {
-      ActionToolbarImpl.updateAllToolbarsImmediately();
+      ActivityTracker.getInstance().inc();
     }
   }
 

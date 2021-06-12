@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -76,7 +77,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     }
     dataContext.put(Location.DATA_KEY, MethodLocation.elementInClass(testMethod, psiClass));
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
 
@@ -101,7 +102,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     }
     dataContext.put(Location.DATA_KEY, new PsiMemberParameterizedLocation(myProject, testMethod, psiClass, "param"));
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
-import com.intellij.util.NotNullFunction
+import java.util.function.Predicate
 import java.util.function.Supplier
 
 private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
@@ -29,25 +29,25 @@ private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *
       }
     }
 
-class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
+internal class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
   private var panel: ProjectCommittedChangesPanel? = null
 
-  override fun initTabContent(content: Content) =
+  override fun initTabContent(content: Content) {
     createCommittedChangesPanel().let {
       panel = it
       content.component = it
       content.setDisposer(Disposable { panel = null })
 
-      with(project.messageBus.connect(it)) {
-        subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
-        subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
-        subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
-          runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
-        })
-      }
+      val busConnection = project.messageBus.connect(it)
+      busConnection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
+      busConnection.subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
+      busConnection.subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
+        runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
+      })
 
       it.refreshChanges()
     }
+  }
 
   private fun createCommittedChangesPanel(): ProjectCommittedChangesPanel =
     ProjectCommittedChangesPanel(project, project.getCommittedChangesProvider()!!)
@@ -80,17 +80,19 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
     }
   }
 
-  class VisibilityPredicate : NotNullFunction<Project, Boolean> {
-    override fun `fun`(project: Project): Boolean =
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+  internal class VisibilityPredicate : Predicate<Project> {
+    override fun test(project: Project): Boolean {
+      return ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+    }
   }
 
-  class DisplayNameSupplier : Supplier<String> {
+  internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = VcsBundle.message("committed.changes.tab")
   }
 
   companion object {
-    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean =
-      vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
+    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
+      return vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
+    }
   }
 }

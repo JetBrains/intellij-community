@@ -2,6 +2,8 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
@@ -19,6 +21,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -27,6 +30,7 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -45,10 +49,11 @@ import java.util.*;
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
+  private String filterText;
 
   public RevisionsList(SelectionListener l) {
     table = new JBTable();
-    table.setModel(new MyModel(Collections.emptyList(), Collections.emptyMap()));
+    setModel(new MyModel(Collections.emptyList(), Collections.emptyMap()));
 
     table.setTableHeader(null);
     table.setShowGrid(false);
@@ -77,32 +82,31 @@ public final class RevisionsList {
   }
 
   private void addSelectionListener(SelectionListener listener) {
-    final SelectionListener l = listener;
-
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      private int mySelectedRow1 = 0;
-      private int mySelectedRow2 = 0;
-      private final SelectionListener mySelectionListener = l;
+      private final SelectionListener mySelectionListener = listener;
 
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
 
         ListSelectionModel sm = table.getSelectionModel();
-        mySelectedRow1 = sm.getMinSelectionIndex();
-        mySelectedRow2 = sm.getMaxSelectionIndex();
+        int selectedRow1 = sm.getMinSelectionIndex();
+        int selectedRow2 = sm.getMaxSelectionIndex();
 
-        mySelectionListener.revisionsSelected(mySelectedRow1, mySelectedRow2);
+        FilteringTableModel<?> model = getFilteringModel();
+        int origRow1 = model.getOriginalIndex(selectedRow1);
+        int origRow2 = model.getOriginalIndex(selectedRow2);
+        mySelectionListener.revisionsSelected(origRow1, origRow2);
       }
     });
   }
 
   public void updateData(HistoryDialogModel model) {
     Set<Long> sel = new HashSet<>();
-    MyModel m = (MyModel)table.getModel();
+    TableModel tm = table.getModel();
     for (int i : table.getSelectedRows()) {
-      if (i >= m.getRowCount()) continue;
-      sel.add(m.getValueAt(i, 0).revision.getChangeSetId());
+      if (i >= tm.getRowCount()) continue;
+      sel.add(((RevisionItem)tm.getValueAt(i, 0)).revision.getChangeSetId());
     }
 
     List<RevisionItem> newRevs = model.getRevisions();
@@ -124,10 +128,11 @@ public final class RevisionsList {
       }
     }
 
-    table.setModel(new MyModel(newRevs, periods));
+    setModel(new MyModel(newRevs, periods));
 
-    for (int i = 0; i < newRevs.size(); i++) {
-      RevisionItem r = newRevs.get(i);
+    FilteringTableModel<?> fm = getFilteringModel();
+    for (int i = 0; i < fm.getRowCount(); i++) {
+      RevisionItem r = (RevisionItem)fm.getValueAt(i, 0);
       if (sel.contains(r.revision.getChangeSetId())) {
         table.getSelectionModel().addSelectionInterval(i, i);
       }
@@ -135,6 +140,67 @@ public final class RevisionsList {
     if (table.getSelectionModel().isSelectionEmpty()) {
       table.getSelectionModel().addSelectionInterval(0, 0);
     }
+  }
+
+  private void setModel(MyModel newModel) {
+    FilteringTableModel<RevisionItem> fModel = new FilteringTableModel<>(newModel, RevisionItem.class);
+    table.setModel(fModel);
+    fModel.setFilter(this::filterRevision);
+  }
+
+  private boolean filterRevision(RevisionItem r) {
+    if (filterText == null) return true;
+    Entry entry = r.revision.findEntry();
+    if (entry == null) return false;
+    String text = entry.getContent().getString(entry, new IdeaGateway());
+    return text != null && text.contains(filterText);
+  }
+
+  public void setFilterText(@Nullable String filter) {
+    filterText = filter;
+    List<Object> sel = storeSelection();
+    getFilteringModel().refilter();
+    restoreSelection(sel);
+  }
+
+  private void restoreSelection(List<Object> sel) {
+    ListSelectionModel sm = table.getSelectionModel();
+    sm.clearSelection();
+    for (Object o : sel) {
+      int idx = -1;
+      for (int i = 0, e = table.getModel().getRowCount(); i < e; ++i) {
+        if (table.getModel().getValueAt(i, 0) == o) {
+          idx = i;
+          break;
+        }
+      }
+      sm.addSelectionInterval(idx, idx);
+    }
+    if (sm.isSelectionEmpty()) sm.setSelectionInterval(0, 0);
+    sm.setValueIsAdjusting(false);
+  }
+
+  @NotNull
+  private List<Object> storeSelection() {
+    ListSelectionModel sm = table.getSelectionModel();
+    sm.setValueIsAdjusting(true);
+    List<Object> sel = new ArrayList<>();
+    for (int index : sm.getSelectedIndices()) {
+      sel.add(table.getModel().getValueAt(index, 0));
+    }
+    return sel;
+  }
+
+  private FilteringTableModel<?> getFilteringModel() {
+    return (FilteringTableModel<?>)table.getModel();
+  }
+
+  public String getFilterText() {
+    return filterText;
+  }
+
+  private static MyModel getMyModel(JTable table) {
+    return ((MyModel)((FilteringTableModel<?>)table.getModel()).getOriginalModel());
   }
 
   public interface SelectionListener {
@@ -302,7 +368,7 @@ public final class RevisionsList {
       RevisionItem r = (RevisionItem)value;
       LabelsAndColor labelsAndColor = getLabelsAndColor(r);
 
-      final Period p = ((MyModel)table.getModel()).getPeriod(r);
+      final Period p = getMyModel(table).getPeriod(r);
       if (p == null) {
         myPeriodLabel.setVisible(false);
       }

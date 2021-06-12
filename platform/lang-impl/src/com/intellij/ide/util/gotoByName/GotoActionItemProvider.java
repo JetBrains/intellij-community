@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
@@ -13,7 +12,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,22 +20,15 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 
@@ -52,7 +46,6 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
  * @author peter
  */
 public final class GotoActionItemProvider implements ChooseByNameWeightedItemProvider {
-
   private static final int BONUS_FOR_SPACE_IN_PATTERN = 100;
   private static final int SETTINGS_PENALTY = 100;
 
@@ -108,22 +101,26 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     });
   }
 
-  public boolean filterElements(@NotNull String pattern, @NotNull Processor<? super MatchedValue> consumer) {
-    if (!processAbbreviations(pattern, consumer)) return false;
-    if (!processActions(pattern, consumer)) return false;
-    if (!processTopHits(pattern, consumer)) return false;
-    if (!processIntentions(pattern, consumer)) return false;
-    if (!processOptions(pattern, consumer)) return false;
+  public boolean filterElements(@NotNull String pattern, @NotNull Predicate<? super MatchedValue> consumer) {
+    myModel.buildGroupMappings();
 
-    return true;
+    return processAbbreviations(pattern, consumer) &&
+           processActions(pattern, consumer) &&
+           processTopHits(pattern, consumer) &&
+           processIntentions(pattern, consumer) &&
+           processOptions(pattern, consumer);
   }
 
-  private boolean processAbbreviations(@NotNull String pattern, Processor<? super MatchedValue> consumer) {
+  private boolean processAbbreviations(@NotNull String pattern, Predicate<? super MatchedValue> consumer) {
     MinusculeMatcher matcher = buildWeightMatcher(pattern);
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
-    JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
-      .filterMap(myActionManager::getAction)
-      .transform(action -> {
+    Stream<? extends MatchedValue> wrappers = actionIds.stream()
+      .map(actionId -> {
+        AnAction action = myActionManager.getAction(actionId);
+        if (action == null) {
+          return null;
+        }
+
         ActionWrapper wrapper = wrapAnAction(action);
         int degree = matcher.matchingDegree(pattern);
         return new MatchedValue(wrapper, pattern, degree) {
@@ -133,21 +130,22 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
             return pattern;
           }
         };
-      });
+      })
+      .filter(Objects::nonNull);
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer) {
+  private boolean processTopHits(String pattern, Predicate<? super MatchedValue> consumer) {
     Project project = myModel.getProject();
-    final CollectConsumer<Object> collector = new CollectConsumer<>();
+    CollectConsumer<Object> collector = new CollectConsumer<>();
     String commandAccelerator = SearchTopHitProvider.getTopHitAccelerator();
-    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensionList()) {
       //noinspection deprecation
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) {
         continue;
       }
 
-      if (provider instanceof OptionsSearchTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
+      if (provider instanceof OptionsSearchTopHitProvider && !pattern.startsWith(commandAccelerator)) {
         String prefix = commandAccelerator + ((OptionsSearchTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
@@ -156,13 +154,14 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       }
       provider.consumeTopHits(pattern, collector, project);
     }
+
     Collection<Object> result = collector.getResult();
-    JBIterable<?> wrappers = JBIterable.from(result)
-      .transform(object -> object instanceof AnAction ? wrapAnAction((AnAction)object) : object);
+    Stream<?> wrappers = result.stream()
+      .map(object -> object instanceof AnAction ? wrapAnAction((AnAction)object) : object);
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processOptions(String pattern, Processor<? super MatchedValue> consumer) {
+  private boolean processOptions(String pattern, Predicate<? super MatchedValue> consumer) {
     Map<@NonNls String, @NlsContexts.ConfigurableName String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
@@ -212,93 +211,43 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         }
       }
       for (OptionDescription description : optionDescriptions) {
-        for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
+        for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensionList()) {
           AnAction action = converter.provide(description);
-          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, myModel));
+          if (action != null) {
+            options.add(new ActionWrapper(action, null, MatchMode.NAME, myModel));
+          }
         }
         options.add(description);
       }
     }
-    return processItems(pattern, JBIterable.from(options), consumer);
+    return processItems(pattern, options.stream(), consumer);
   }
 
-  private boolean processActions(String pattern, Processor<? super MatchedValue> consumer) {
+  private boolean processActions(String pattern, Predicate<? super MatchedValue> consumer) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-    JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
+    Stream<AnAction> actions = ids.stream().map(myActionManager::getAction).filter(Objects::nonNull);
     Matcher matcher = buildMatcher(pattern);
 
     QuickActionProvider provider = myModel.getDataContext().getData(QuickActionProvider.KEY);
     if (provider != null) {
-      actions = actions.append(provider.getActions(true));
+      actions = Stream.concat(actions, provider.getActions(true).stream());
     }
 
-    Set<AnAction> seenActions = new HashSet<>();
-    JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
-      seenActions.add(action);
-      if (action instanceof ActionGroup && !((ActionGroup)action).isSearchable()) return null;
-      MatchMode mode = myModel.actionMatches(pattern, matcher, action);
-      if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
-    });
-    if (Registry.is("actionSystem.gotoAction.all.toolwindows")) {
-      List<ActionWrapper> toolWindowActions = collectToolWindowQuickActionProviders(pattern, matcher, seenActions);
-      actionWrappers = actionWrappers.append(toolWindowActions);
-    }
-    return processItems(pattern, actionWrappers, consumer);
-  }
-
-  @NotNull
-  private List<ActionWrapper> collectToolWindowQuickActionProviders(String pattern, Matcher matcher, Set<AnAction> seenActions) {
-    List<ActionWrapper> result = new ArrayList<>();
-    Project project = myModel.getProject();
-    if (project != null) {
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-      String[] toolWindowIds = toolWindowManager.getToolWindowIds();
-      for (String toolWindowId : toolWindowIds) {
-        ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-        if (toolWindow != null) {
-          if (!toolWindow.isVisible()) continue;
-          ContentManager contentManager = toolWindow.getContentManagerIfCreated();
-          if (contentManager != null) {
-            Content content = contentManager.getSelectedContent();
-            if (content != null) {
-              DataContext dataContext = DataManager.getInstance().getDataContext(content.getComponent());
-              QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
-              if (provider != null) {
-                List<AnAction> providerActions = provider.getActions(true);
-                String title = toolWindow.getTitle();
-                if (StringUtil.isEmpty(title)) title = toolWindow.getStripeTitle();
-                appendActionsFromProvider(pattern, matcher, result, seenActions, providerActions, dataContext, title);
-              }
-            }
-          }
+    Stream<ActionWrapper> actionWrappers = actions
+      .distinct()
+      .map(action -> {
+        if (action instanceof ActionGroup && !((ActionGroup)action).isSearchable()) {
+          return null;
         }
-      }
-    }
-    return result;
-  }
 
-  private void appendActionsFromProvider(String pattern,
-                                         Matcher matcher,
-                                         List<ActionWrapper> result,
-                                         Set<AnAction> seenActions,
-                                         List<AnAction> providerActions,
-                                         DataContext dataContext,
-                                         @NlsContexts.TabTitle @Nullable String title) {
-    for (AnAction action : providerActions) {
-      if (seenActions.contains(action)) continue;
-      seenActions.add(action);
-      if (action instanceof ActionGroup) {
-        AnAction[] children = ((ActionGroup)action).getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext));
-        appendActionsFromProvider(pattern, matcher, result, seenActions, Arrays.asList(children), dataContext, title);
-      }
-      else {
         MatchMode mode = myModel.actionMatches(pattern, matcher, action);
-        if (mode != MatchMode.NONE) {
-          result.add(new ActionWrapper(action, GroupMapping.createFromText(title, true), mode, myModel));
+        if (mode == MatchMode.NONE) {
+          return null;
         }
-      }
-    }
+        return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
+      })
+      .filter(Objects::nonNull);
+    return processItems(pattern, actionWrappers, consumer);
   }
 
   public void clearIntentions() {
@@ -310,16 +259,19 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private boolean processIntentions(String pattern, Processor<? super MatchedValue> consumer) {
+  private boolean processIntentions(String pattern, Predicate<? super MatchedValue> consumer) {
     Matcher matcher = buildMatcher(pattern);
     Map<@ActionText String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
-    JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
-      .filterMap(intentionText -> {
+    Stream<ActionWrapper> intentions = intentionMap.keySet().stream()
+      .map(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
-        if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
+        if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) {
+          return null;
+        }
         GroupMapping groupMapping = GroupMapping.createFromText(intentionText, false);
         return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
-      });
+      })
+      .filter(Objects::nonNull);
     return processItems(pattern, intentions, consumer);
   }
 
@@ -330,33 +282,39 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   private static final Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
 
-  private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
+  private static boolean processItems(String pattern, @NotNull Stream<?> items, Predicate<? super MatchedValue> consumer) {
     MinusculeMatcher matcher = buildWeightMatcher(pattern);
-    List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> {
-      if (o instanceof MatchedValue) return (MatchedValue)o;
+    List<MatchedValue> matched = items.map(o -> {
+      if (o instanceof MatchedValue) {
+        return (MatchedValue)o;
+      }
 
       Integer weight = calcElementWeight(o, pattern, matcher);
-      return weight != null ? new MatchedValue(o, pattern, weight) : new MatchedValue(o, pattern);
-    }));
+      return weight == null ? new MatchedValue(o, pattern) : new MatchedValue(o, pattern, weight);
+    }).collect(Collectors.toList());
+
     try {
       matched.sort((o1, o2) -> o1.compareWeights(o2));
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);
     }
-    return ContainerUtil.process(matched, consumer);
+
+    for (MatchedValue t : matched) {
+      if (!consumer.test(t)) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  @Nullable
-  private static Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
+  private static @Nullable Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
     Integer degree = calculateDegree(matcher, getActionText(element));
     if (degree == null) return null;
 
-    if (Experiments.getInstance().isFeatureEnabled("i18n.match.actions")) {
-      if (degree == 0) {
-        degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
-        if (degree == null) return null;
-      }
+    if (degree == 0) {
+      degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
+      if (degree == null) return null;
     }
 
     if (pattern.trim().contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN;

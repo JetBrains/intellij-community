@@ -54,7 +54,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
@@ -189,7 +190,7 @@ public final class EditorWindow {
     FileEditorManagerImpl editorManager = getManager();
     FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
-      if (editors.isEmpty()) return;
+      if (!isDisposed() && editors.isEmpty()) return;
       try {
         EditorWithProviderComposite editor = findFileComposite(file);
 
@@ -369,7 +370,7 @@ public final class EditorWindow {
   }
 
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
-    int index = findEditorIndex(findFileComposite(file));
+    int index = findFileEditorIndex(file);
     if (index != -1) {
       Color color = EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file, this);
       setBackgroundColorAt(index, color);
@@ -519,7 +520,7 @@ public final class EditorWindow {
 
   public void setEditor(@Nullable EditorWithProviderComposite editor, boolean selectEditor, boolean focusEditor) {
     if (editor != null) {
-      var isPreviewMode = shouldReservePreview(selectEditor, focusEditor);
+      var isPreviewMode = shouldReservePreview(editor.getFile(), selectEditor, focusEditor);
       int index = findEditorIndex(editor);
       if (index != -1) {
         if (selectEditor) {
@@ -1075,6 +1076,11 @@ public final class EditorWindow {
     }
   }
 
+  private int findFileEditorIndex(@NotNull VirtualFile file) {
+    EditorWithProviderComposite composite = findFileComposite(file);
+    return composite == null ? -1 : findEditorIndex(composite);
+  }
+
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return;
@@ -1084,7 +1090,7 @@ public final class EditorWindow {
   }
 
   void updateFileName(@NotNull VirtualFile file) {
-    int index = findEditorIndex(findFileComposite(file));
+    int index = findFileEditorIndex(file);
     if (index != -1) {
       setTitleAt(index, SlowOperations.allowSlowOperations(
         () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this)
@@ -1095,30 +1101,26 @@ public final class EditorWindow {
     }
   }
 
-  /**
-   * @return baseIcon augmented with pin/modification status
-   */
+  @Nullable
   private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
     UISettings settings = UISettings.getInstance();
-    if (!settings.getMarkModifiedTabsWithAsterisk()) {
-      return baseIcon;
+    boolean showAsterisk = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified();
+    boolean showFileIconInTabs = UISettings.getInstance().getShowFileIconInTabs();
+    if (!showAsterisk) {
+      return showFileIconInTabs ? baseIcon : null;
     }
 
-    Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-    Icon modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : EmptyIcon.create(7, 7);
-    DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
-    result.setIcon(baseIcon, 0);
-    result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    Icon modifiedIcon = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+    LayeredIcon result = new LayeredIcon(2);
+    if (showFileIconInTabs) {
+      result.setIcon(baseIcon, 0);
+      result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    } else {
+      result.setIcon(EmptyIcon.create(modifiedIcon.getIconWidth(), baseIcon.getIconHeight()), 0);
+      result.setIcon(modifiedIcon, 1, 0, 0);
+
+    }
     return JBUIScale.scaleIcon(result);
-  }
-
-  private static class DecoratedTabIcon extends LayeredIcon {
-    final Icon fileIcon;
-
-    DecoratedTabIcon(int layerCount, Icon fileIcon) {
-      super(layerCount);
-      this.fileIcon = fileIcon;
-    }
   }
 
   public void unsplit(boolean setCurrent) {
@@ -1225,7 +1227,7 @@ public final class EditorWindow {
     return -1;
   }
 
-  int findEditorIndex(EditorComposite editorToFind) {
+  int findEditorIndex(@NotNull EditorComposite editorToFind) {
     for (int i = 0; i != getTabCount(); ++i) {
       EditorWithProviderComposite editor = getEditorAt(i);
       if (editor.equals(editorToFind)) {
@@ -1401,10 +1403,17 @@ public final class EditorWindow {
     return true;
   }
 
-  private boolean shouldReservePreview(boolean selectEditor, boolean focusEditor) {
+  private boolean shouldReservePreview(@NotNull VirtualFile file,
+                                       boolean selectEditor,
+                                       boolean focusEditor) {
     if (!selectEditor || !UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
       return false;
     }
+
+    if (file instanceof NotSuitableForPreviewTab) {
+      return false;
+    }
+
     if (!focusEditor) {
       Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
       Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {

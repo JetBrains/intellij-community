@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
@@ -14,19 +15,14 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -42,9 +38,6 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -59,6 +52,7 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,17 +60,17 @@ import java.util.regex.Pattern;
 public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  @Nullable private final Project myProject;
-  @Nullable private final WeakReference<Editor> myEditor;
+  private final @Nullable Project myProject;
+  private final @Nullable WeakReference<Editor> myEditor;
   private final DataContext myDataContext;
+  private volatile UpdateSession myUpdateSession;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
 
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-
-  private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
+  private final Map<AnAction, GroupMapping> myActionGroups = new ConcurrentHashMap<>();
 
   private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
     NotNullLazyValue.volatileLazy(() -> {
@@ -93,30 +87,32 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return map;
     });
 
-  private final ModalityState myModality;
-
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
-    this(project, component, editor, ModalityState.defaultModalityState());
-  }
-
-  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myModality = modalityState;
     myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
-    buildActions();
+    myUpdateSession = newUpdateSession();
   }
 
-  private void buildActions() {
-    ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
-    assert mainMenu != null && keymapOthers != null;
-    collectActions(myActionGroups, mainMenu, Collections.emptyList(), false);
+  @NotNull
+  private UpdateSession newUpdateSession() {
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
+    return Utils.getOrCreateUpdateSession(event);
+  }
 
-    Map<AnAction, GroupMapping> keymapActionGroups = new HashMap<>();
-    collectActions(keymapActionGroups, keymapOthers, Collections.emptyList(), true);
-    // Let menu groups have priority over keymap (and do not introduce ambiguity)
-    keymapActionGroups.forEach(myActionGroups::putIfAbsent);
+  void buildGroupMappings() {
+    if (!myActionGroups.isEmpty()) return;
+    ActionGroup mainMenu = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
+    ActionGroup keymapOthers = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup"));
+
+    Map<AnAction, GroupMapping> mainGroups = new HashMap<>();
+    collectActions(mainGroups, mainMenu, Collections.emptyList(), false);
+
+    Map<AnAction, GroupMapping> otherGroups = new HashMap<>();
+    collectActions(otherGroups, keymapOthers, Collections.emptyList(), true);
+
+    myActionGroups.putAll(mainGroups);
+    otherGroups.forEach(myActionGroups::putIfAbsent);
   }
 
   @NotNull
@@ -141,7 +137,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return IdeBundle.message("prompt.gotoaction.enter.action");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getCheckBoxName() {
     return IdeBundle.message("checkbox.disabled.included");
@@ -170,14 +166,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @ApiStatus.Internal
-  public void rebuildActions() {
+  public void clearCaches() {
     myActionGroups.clear();
-    buildActions();
-  }
-
-  @ApiStatus.Internal
-  public void clearActions() {
-    myActionGroups.clear();
+    myUpdateSession = newUpdateSession();
   }
 
   public static class MatchedValue {
@@ -292,15 +283,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public ListCellRenderer<?> getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
   }
 
-  String getActionId(@NotNull AnAction anAction) {
-    return myActionManager.getId(anAction);
-  }
-
-  private int compareActions(@Nullable AnAction first, @Nullable AnAction second) {
+  private int compareActions(@NotNull AnAction first, @NotNull AnAction second) {
     return myOrderStrategy.compare(first, second);
   }
 
@@ -328,15 +315,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
     return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
-  }
-
-  @NotNull
-  public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
-    Presentation presentation = new Presentation();
-    presentation.copyFrom(anAction.getTemplatePresentation());
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, presentation, dataContext);
-    ActionUtil.performDumbAwareUpdate(false, anAction, event, false);
-    return event;
   }
 
   /**
@@ -379,17 +357,26 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myConfigurablesNames.getValue();
   }
 
-  private void collectActions(@NotNull Map<AnAction, GroupMapping> actionGroups,
+  private void collectActions(@NotNull Map<? super AnAction, GroupMapping> actionGroups,
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
-    DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context);
-    AnAction[] actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
+    if (actionGroups.containsKey(group)) return;
 
-    boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
-    if (!hasMeaningfulChildren) {
-      GroupMapping mapping = actionGroups.computeIfAbsent(group, (key) -> new GroupMapping(showNonPopupGroups));
+    List<? extends AnAction> actions = ReadAction.nonBlocking(() -> {
+      try {
+        return myUpdateSession.children(group);
+      }
+      catch (PluginException e) {
+        LOG.error(e);
+        return Collections.<AnAction>emptyList();
+      }
+    })
+      .executeSynchronously();
+
+    boolean hasRegisteredChild = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
+    if (!hasRegisteredChild) {
+      GroupMapping mapping = actionGroups.computeIfAbsent(group, __ -> new GroupMapping(showNonPopupGroups));
       mapping.addPath(path);
     }
 
@@ -400,7 +387,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         collectActions(actionGroups, (ActionGroup)action, newPath, showNonPopupGroups);
       }
       else {
-        GroupMapping mapping = actionGroups.computeIfAbsent(action, (key) -> new GroupMapping(showNonPopupGroups));
+        GroupMapping mapping = actionGroups.computeIfAbsent(action, __ -> new GroupMapping(showNonPopupGroups));
         mapping.addPath(newPath);
       }
     }
@@ -489,25 +476,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @NotNull
+  private UpdateSession getUpdateSession() {
+    return myUpdateSession;
+  }
+
+  @NotNull
   public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
     TreeSet<Object> objects = new TreeSet<>(this);
     objects.addAll(elements);
     return objects;
-  }
-
-  private void updateOnEdt(Runnable update) {
-    Semaphore semaphore = new Semaphore(1);
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      try {
-        update.run();
-      }
-      finally {
-        semaphore.up();
-      }
-    }, myModality, __ -> indicator != null && indicator.isCanceled());
-
-    ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
   }
 
   public enum MatchMode {
@@ -570,12 +547,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return path != null ? getPathName(path) : null;
     }
 
-    private void updateBeforeShow(@NotNull DataContext context) {
+    private void updateBeforeShow(@NotNull UpdateSession session) {
       if (myBestNameComputed) return;
       myBestNameComputed = true;
 
       for (List<ActionGroup> path : myPaths) {
-        String name = getActualPathName(path, context);
+        String name = getActualPathName(path, session);
         if (name != null) {
           myBestGroupName = name;
           return;
@@ -600,10 +577,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @Nls
     @Nullable
-    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
+    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull UpdateSession session) {
       String name = "";
       for (ActionGroup group : path) {
-        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
+        Presentation presentation = session.presentation(group);
         if (!presentation.isVisible()) return null;
         name = appendGroupName(name, group, presentation);
       }
@@ -648,7 +625,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
-                         GotoActionModel model) {
+                         @NotNull GotoActionModel model) {
       myAction = action;
       myMode = mode;
       myGroupMapping = groupMapping;
@@ -705,25 +682,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @NotNull
     public Presentation getPresentation() {
-      if (myPresentation != null) return myPresentation;
-      Runnable r = () -> {
-        DataContext dataContext = myModel.getDataContext();
-        myPresentation = updateActionBeforeShow(myAction, dataContext).getPresentation();
-        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(dataContext);
-      };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        try {
-          r.run();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+      if (myPresentation != null) {
+        return myPresentation;
       }
-      else {
-        myModel.updateOnEdt(r);
-      }
-
-      return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
+      myPresentation = ReadAction.nonBlocking(() -> {
+        if (myGroupMapping != null) {
+          myGroupMapping.updateBeforeShow(myModel.getUpdateSession());
+        }
+        return myModel.getUpdateSession().presentation(myAction);
+      })
+        .executeSynchronously();
+      return myPresentation;
     }
 
     public boolean hasPresentation() {
@@ -912,7 +881,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @ActionText
     private static String cutName(@ActionText String name,
                                   @NlsSafe String shortcutText,
-                                  JList list,
+                                  JList<?> list,
                                   JPanel panel,
                                   SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
@@ -944,7 +913,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return name.trim() + "...";
     }
 
-    private static int calcFreeSpace(JList list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
+    private static int calcFreeSpace(JList<?> list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
       BorderLayout layout = (BorderLayout)panel.getLayout();
       Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
       Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);

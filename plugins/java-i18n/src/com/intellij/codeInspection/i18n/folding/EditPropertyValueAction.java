@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -8,7 +8,6 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -95,7 +94,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   public static boolean isEnabled(@NotNull Editor editor) {
-    if (isFeatureDisabled() || !(editor instanceof EditorImpl) || editor.getProject() == null) {
+    if (!(editor instanceof EditorImpl) || editor.getProject() == null) {
       return false;
     }
     FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(editor.getCaretModel().getOffset());
@@ -110,7 +109,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   public static void doEdit(@NotNull Editor editor) {
-    if (isFeatureDisabled() || !(editor instanceof EditorImpl) || editor.getProject() == null) {
+    if (!(editor instanceof EditorImpl) || editor.getProject() == null) {
       return;
     }
     FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(editor.getCaretModel().getOffset());
@@ -305,13 +304,8 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   public static void registerFoldedElement(@NotNull PsiElement element, @NotNull Document document) {
-    if (isFeatureDisabled()) return;
     element.putUserData(EDITABLE_PROPERTY_VALUE, Boolean.TRUE);
     EditPropertyValueTooltipManager.initializeForDocument(document);
-  }
-
-  private static boolean isFeatureDisabled() {
-    return !Experiments.getInstance().isFeatureEnabled("property.value.inplace.editing");
   }
 
   private static final class MyEnterAction extends AnAction {
@@ -413,7 +407,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
     private static class Handler extends EditorWriteActionHandler {
       @Override
-      public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, caret, dataContext);
       }
     }

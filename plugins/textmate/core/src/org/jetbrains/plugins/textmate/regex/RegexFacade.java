@@ -19,6 +19,7 @@ public final class RegexFacade {
 
   @NotNull
   private final Regex myRegex;
+  private final boolean hasGMatch;
 
   private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();
 
@@ -32,20 +33,30 @@ public final class RegexFacade {
       LOGGER.info("Failed to parse textmate regex", e);
       regex = FAILED_REGEX;
     }
+    hasGMatch = regexString.contains("\\G");
     myRegex = regex;
   }
 
   public MatchData match(StringWithId string, @Nullable Runnable checkCancelledCallback) {
-    return match(string, 0, checkCancelledCallback);
+    return match(string, 0, 0, true, checkCancelledCallback);
   }
 
-  public MatchData match(@NotNull StringWithId string, int byteOffset, @Nullable Runnable checkCancelledCallback) {
+  public MatchData match(@NotNull StringWithId string,
+                         int byteOffset,
+                         int gosOffset,
+                         boolean matchBeginOfString,
+                         @Nullable Runnable checkCancelledCallback) {
+    gosOffset = gosOffset >= 0 ? gosOffset : byteOffset;
+    int options = matchBeginOfString ? Option.NONE : Option.NOTBOS;
+
     LastMatch lastResult = matchResult.get();
     Object lastId = lastResult != null ? lastResult.lastId : null;
     int lastOffset = lastResult != null ? lastResult.lastOffset : Integer.MAX_VALUE;
+    int lastGosOffset = lastResult != null ? lastResult.lastGosOffset : -1;
+    int lastOptions = lastResult != null ? lastResult.lastOptions : -1;
     MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
 
-    if (lastId == string.id && lastOffset <= byteOffset) {
+    if (lastId == string.id && lastOffset <= byteOffset && lastOptions == options && (!hasGMatch || lastGosOffset == gosOffset)) {
       if (!lastMatch.matched() || lastMatch.byteOffset().start >= byteOffset) {
         checkMatched(lastMatch, string);
         return lastMatch;
@@ -54,14 +65,13 @@ public final class RegexFacade {
     if (checkCancelledCallback != null) {
       checkCancelledCallback.run();
     }
-    lastId = string.id;
-    lastOffset = byteOffset;
+
     final Matcher matcher = myRegex.matcher(string.bytes);
-    int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
-    lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
-    checkMatched(lastMatch, string);
-    matchResult.set(new LastMatch(lastId, lastOffset, lastMatch));
-    return lastMatch;
+    final int matchIndex = matcher.search(gosOffset, byteOffset, string.bytes.length, options);
+    final MatchData matchData = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    checkMatched(matchData, string);
+    matchResult.set(new LastMatch(string.id, byteOffset, gosOffset, options, matchData));
+    return matchData;
   }
 
   private static void checkMatched(MatchData match, StringWithId string) {
@@ -86,11 +96,15 @@ public final class RegexFacade {
   private static final class LastMatch {
     private final Object lastId;
     private final int lastOffset;
+    private final int lastGosOffset;
+    private final int lastOptions;
     private final MatchData lastMatch;
 
-    private LastMatch(Object id, int offset, MatchData data) {
+    private LastMatch(Object id, int offset, int gosOffset, int options, MatchData data) {
       lastId = id;
       lastOffset = offset;
+      lastGosOffset = gosOffset;
+      lastOptions = options;
       lastMatch = data;
     }
   }

@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +12,7 @@ import java.util.function.BiConsumer;
  * An immutable map optimized for storing few entries with relatively rare updates.
  *
  * @author peter
+ * @see com.intellij.util.fmap.FMap
  */
 public final class SmartFMap<K,V> implements Map<K,V> {
   private static final SmartFMap<?, ?> EMPTY = new SmartFMap<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
@@ -35,7 +35,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
   private static Object doPlus(Object oldMap, Object key, Object value) {
     if (oldMap instanceof Map) {
       //noinspection unchecked
-      Map<Object, Object> newMap = new THashMap<>((Map<Object, Object>)oldMap);
+      Map<Object, Object> newMap = new HashMap<>((Map<Object, Object>)oldMap);
       newMap.put(key, value);
       return newMap;
     }

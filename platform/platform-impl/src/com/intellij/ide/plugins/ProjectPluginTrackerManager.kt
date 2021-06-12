@@ -5,6 +5,7 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -107,7 +108,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
           val pluginIdsToLoad = if (projects.isNotEmpty())
             emptyList()
           else
-            tracker.disabledPluginsIds.filterNot { DisabledPluginsState.isDisabled(it) }
+            tracker.disabledPluginsIds.filterNot { PluginEnabler.HEADLESS.isDisabled(it) }
           loadPlugins(pluginIdsToLoad)
 
           val pluginIdsToUnload = tracker.enabledPluginsIds
@@ -146,8 +147,6 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     val pluginIds = descriptors.map { it.pluginId }
 
-    fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled)
-
     fun startTrackingPerProject(enable: Boolean) = state.startTracking(project!!, pluginIds, enable)
 
     fun stopTrackingPerProject() = state.stopTracking(pluginIds)
@@ -166,9 +165,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         parentComponent,
       )
     }
+    PluginManagerUsageCollector.pluginsStateChanged(project, pluginIds, action)
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
-        enablePlugins(true)
+        PluginEnabler.HEADLESS.enablePlugins(descriptors)
         stopTrackingPerProject()
         loadPlugins()
       }
@@ -177,13 +177,13 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         loadPlugins()
       }
       PluginEnableDisableAction.ENABLE_FOR_PROJECT_DISABLE_GLOBALLY -> {
-        enablePlugins(false)
+        PluginEnabler.HEADLESS.disablePlugins(descriptors)
         descriptors.forEach { it.isEnabled = true }
         startTrackingPerProject(true)
         true
       }
       PluginEnableDisableAction.DISABLE_GLOBALLY -> {
-        enablePlugins(false)
+        PluginEnabler.HEADLESS.disablePlugins(descriptors)
         stopTrackingPerProject()
         unloadPlugins()
       }
@@ -213,7 +213,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
   private fun locallyDisabledAndGloballyEnabledPlugins(projects: List<Project>): Collection<PluginId> {
     return locallyDisabledPlugins(projects)
-      .filterNot { DisabledPluginsState.isDisabled(it) }
+      .filterNot { PluginEnabler.HEADLESS.isDisabled(it) }
   }
 
   private fun shouldUnload(openProjects: List<Project>) = object : (PluginId) -> Boolean {
@@ -229,7 +229,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     override fun invoke(pluginId: PluginId): Boolean {
       return !requiredPluginIds.contains(pluginId.idString) &&
              !trackers.any { it.isEnabled(pluginId) } &&
-             (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
+             (PluginEnabler.HEADLESS.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
     }
   }
 }

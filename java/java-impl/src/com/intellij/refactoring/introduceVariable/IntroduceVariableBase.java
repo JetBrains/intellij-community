@@ -101,7 +101,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     public boolean isChain() {
       return myChain;
     }
-    
+
     public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
       switch (myChoice) {
         case NO:
@@ -494,7 +494,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       else if (containingExpression != null) {
         PsiType containingExpressionType = containingExpression.getType();
         PsiType tempExprType = tempExpr.getType();
-        if (containingExpressionType != null && 
+        if (containingExpressionType != null &&
             (tempExprType == null || !TypeConversionUtil.isAssignable(containingExpressionType, tempExprType))) {
           return null;
         }
@@ -534,6 +534,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
       return JavaBundle.message("introduce.variable.change.semantics.warning");
+    }
+    if (expr instanceof PsiClassObjectAccessExpression && PsiUtil.hasErrorElementChild(expr)) {
+      return JavaRefactoringBundle.message("selected.block.should.represent.an.expression");
     }
     return null;
   }
@@ -690,7 +693,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     class IntroduceVariablePass extends Pass<JavaReplaceChoice> {
       boolean wasSucceed = true;
-      
+
       @Override
       public void pass(final JavaReplaceChoice choice) {
         if (choice == null || !SlowOperations.allowSlowOperations(() -> tryIntroduceInplace(project, editor, choice, occurrenceManager, originalType))) {
@@ -792,7 +795,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean hasWriteAccess = ContainerUtil.exists(selectedOccurrences, occ -> PsiUtil.isAccessedForWriting(occ));
     final PsiElement chosenAnchor = getAnchor(selectedOccurrences);
     final IntroduceVariableSettings settings =
-      getSettings(project, editor, expr, selectedOccurrences, typeSelectorManager, inFinalContext, 
+      getSettings(project, editor, expr, selectedOccurrences, typeSelectorManager, inFinalContext,
                   hasWriteAccess, validator, chosenAnchor, choice);
 
     if (choice.isChain()) {
@@ -1005,6 +1008,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       else if (copyVariableInitializer instanceof PsiArrayInitializerExpression) {
         new AddNewArrayExpressionFix((PsiArrayInitializerExpression)copyVariableInitializer).doFix();
+      }
+      else if (copyVariableInitializer instanceof PsiFunctionalExpression) {
+        PsiTypeCastExpression castExpression =
+          (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(copyVariableInitializer.getProject())
+            .createExpressionFromText("(" + typeElement.getText() + ")a", copyVariableInitializer);
+        Objects.requireNonNull(castExpression.getOperand()).replace(copyVariableInitializer);
+        copyVariableInitializer.replace(castExpression);
       }
     }
 
@@ -1265,7 +1275,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         } else {
           JavaReplaceChoice noChain =
             new JavaReplaceChoice(ReplaceChoice.NO, JavaRefactoringBundle.message("replace.inside.current.lambda"), false);
-          JavaReplaceChoice chain = 
+          JavaReplaceChoice chain =
             new JavaReplaceChoice(ReplaceChoice.NO, JavaRefactoringBundle.message("replace.as.separate.operation", myChainMethodName), true);
           occurrencesMap.put(noChain, Collections.singletonList(expr));
           occurrencesMap.put(chain, Collections.singletonList(expr));
@@ -1273,15 +1283,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       } else {
         occurrencesMap.put(JavaReplaceChoice.NO, Collections.singletonList(expr));
         boolean hasWrite = myHasWriteAccess && !myCantReplaceAllButWrite;
-        if (hasWrite && !myNonWrite.isEmpty()) {
+        if (hasWrite && myNonWrite.contains(expr)) {
           occurrencesMap.put(JavaReplaceChoice.NO_WRITE, myNonWrite);
         }
 
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {
           if (hasWrite) {
             JavaReplaceChoice choice = new JavaReplaceChoice(
-              ReplaceChoice.ALL, 
-              myNonWrite.isEmpty() ? JavaRefactoringBundle.message("replace.all.occurrences.changes.semantics", myOccurrences.size()) 
+              ReplaceChoice.ALL,
+              myNonWrite.isEmpty() ? JavaRefactoringBundle.message("replace.all.occurrences.changes.semantics", myOccurrences.size())
               : JavaRefactoringBundle.message("replace.all.read.and.write"), false);
             occurrencesMap.put(choice, myOccurrences);
           }

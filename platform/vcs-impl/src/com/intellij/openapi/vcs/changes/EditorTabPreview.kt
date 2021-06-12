@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.actions.SplitAction
@@ -10,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.IJSwingUtilities
@@ -119,8 +120,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean) {
-    if (isPreviewVisible) openPreview(false) else closePreview()
+  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+    if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
   private fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
@@ -134,13 +135,9 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     updatePreviewProcessor?.refresh(false)
     if (!hasContent()) return false
 
-    val editors = openPreview(project, previewFile, focusEditor)
+    escapeHandler?.let { handler -> registerEscapeHandler(previewFile, handler) }
 
-    escapeHandler?.let { handler ->
-      for (editor in editors) {
-        registerEscapeHandler(editor, handler)
-      }
-    }
+    openPreview(project, previewFile, focusEditor)
 
     return true
   }
@@ -159,8 +156,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
       return VcsEditorTabFilesManager.getInstance().openFile(project, file, focusEditor)
     }
 
-    fun registerEscapeHandler(editor: FileEditor, handler: Runnable) {
-      EditorTabPreviewEscapeAction(handler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
+    fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
+      file.putUserData(DiffVirtualFile.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
     }
   }
 }

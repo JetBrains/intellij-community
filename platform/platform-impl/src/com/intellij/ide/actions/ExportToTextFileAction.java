@@ -17,18 +17,7 @@ public class ExportToTextFileAction extends DumbAwareAction {
     if (project == null || exporterToTextFile == null) return;
     if (!exporterToTextFile.canExport()) return;
 
-    export(project, exporterToTextFile);
-  }
-
-  public static void export(Project project, ExporterToTextFile exporter) {
-    final ExportToFileUtil.ExportDialogBase dlg = new ExportToFileUtil.ExportDialogBase(project, exporter);
-
-    if (!dlg.showAndGet()) {
-      return;
-    }
-
-    ExportToFileUtil.exportTextToFile(project, dlg.getFileName(), dlg.getText());
-    exporter.exportedTo(dlg.getFileName());
+    ExportToFileUtil.chooseFileAndExport(project, exporterToTextFile);
   }
 
   protected ExporterToTextFile getExporter(DataContext dataContext) {

@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.toolwindow.eventLogToolWindowsId
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.DumbAwareAction
 
 /**
@@ -16,7 +16,7 @@ internal class OpenStatisticsEventLogAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val action = ActionManager.getInstance().getAction(ActivateToolWindowAction.getActionIdForToolWindow(eventLogToolWindowsId))
     if (action != null) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, event.dataContext)
+      performActionDumbAwareWithCallbacks(action, event)
     }
   }
 

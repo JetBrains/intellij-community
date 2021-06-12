@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.dom.MavenDomTestCase;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ import java.util.List;
  */
 public class MavenJGitBuildNumberTest extends MavenDomTestCase {
 
+  @Test
   public void testCompletion() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -40,7 +42,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                   "            </plugin>\n" +
                   "        </plugins>\n" +
                   "    </build>\n"
-       );
+    );
 
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
@@ -63,6 +65,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
     assertContain(variants, "git.commitsCount");
   }
 
+  @Test
   public void testHighlighting() {
     createModulePom("m", "<artifactId>m</artifactId>\n" +
                          "<version>1</version>\n" +
@@ -95,20 +98,21 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
     );
 
     VirtualFile pom = createModulePom("m", "<artifactId>m</artifactId>\n" +
-                         "<version>1</version>\n" +
-                         "<parent>\n" +
-                         "  <groupId>test</groupId>\n" +
-                         "  <artifactId>project</artifactId>\n" +
-                         "  <version>1</version>\n" +
-                         "</parent>\n" +
-                         "<properties>\n" +
-                         "  <aaa>${git.commitsCount}</aaa>\n" +
-                         "  <bbb>${<error>git.commitsCount__</error>}</bbb>\n" +
-                         "</properties>\n");
+                                           "<version>1</version>\n" +
+                                           "<parent>\n" +
+                                           "  <groupId>test</groupId>\n" +
+                                           "  <artifactId>project</artifactId>\n" +
+                                           "  <version>1</version>\n" +
+                                           "</parent>\n" +
+                                           "<properties>\n" +
+                                           "  <aaa>${git.commitsCount}</aaa>\n" +
+                                           "  <bbb>${<error>git.commitsCount__</error>}</bbb>\n" +
+                                           "</properties>\n");
 
     checkHighlighting(pom, true, false, true);
   }
 
+  @Test
   public void testNoPluginHighlighting() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -116,7 +120,7 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
                   "<properties>\n" +
                   "  <aaa>${git.commitsCount}</aaa>" +
                   "</properties>\n"
-       );
+    );
 
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +

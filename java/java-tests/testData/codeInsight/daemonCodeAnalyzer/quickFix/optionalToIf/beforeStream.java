@@ -1,4 +1,4 @@
-// "Fix all 'Optional can be replaced with sequence of if statements' problems in file" "true"
+// "Fix all ''Optional' can be replaced with sequence of 'if' statements' problems in file" "true"
 
 import java.util.Optional;
 import java.util.stream.Stream;

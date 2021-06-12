@@ -16,6 +16,8 @@ public final class ToolWindowAnchor {
   public static final @NotNull ToolWindowAnchor LEFT = new ToolWindowAnchor("left", "action.text.anchor.left", "action.text.anchor.left.capitalized");
   public static final @NotNull ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom", "action.text.anchor.bottom", "action.text.anchor.bottom.capitalized");
   public static final @NotNull ToolWindowAnchor RIGHT = new ToolWindowAnchor("right", "action.text.anchor.right", "action.text.anchor.right.capitalized");
+  public static final @NotNull ToolWindowAnchor NONE = new ToolWindowAnchor("none", "action.text.anchor.none", "action.text.anchor.none.capitalized");
+
   private final @NotNull String myText;
 
   private final @NotNull String bundleKey;

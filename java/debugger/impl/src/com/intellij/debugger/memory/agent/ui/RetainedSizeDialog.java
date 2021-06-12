@@ -3,6 +3,8 @@ package com.intellij.debugger.memory.agent.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -49,13 +51,16 @@ public class RetainedSizeDialog extends DialogWrapper {
     HELD_OBJECTS_BACKGROUND_COLOR = new JBColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 30),
                                                 new Color(background.getRed(), background.getGreen(), background.getBlue(), 30));
   }
+
   private final boolean myRebuildOnSessionEvents;
   private final Set<ObjectReference> myHeldObjects;
   private final HighlightableTree myTree;
   private final BorderLayoutPanel myPanel;
+  private final JProgressBar myProgressBar;
   private final NodeHighlighter myHighlighter;
   private final String myRootName;
-  private JBLabel myRetainedSizeLabel;
+  private final JBLabel myInfoLabel;
+  private final JBLabel myRetainedSizeLabel;
 
   public RetainedSizeDialog(@NotNull Project project,
                             XDebuggerEditorsProvider editorsProvider,
@@ -78,10 +83,20 @@ public class RetainedSizeDialog extends DialogWrapper {
     myHeldObjects = new HashSet<>();
     myRootName = name;
 
+    JBPanel topPanel = new JBPanel<>();
+    topPanel.setLayout(new VerticalFlowLayout());
+    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
+    myInfoLabel = new JBLabel();
+
+    topPanel.add(myRetainedSizeLabel);
+    topPanel.add(myInfoLabel);
+    myProgressBar = new JProgressBar();
+    myProgressBar.setVisible(false);
+    topPanel.add(myProgressBar);
+
     myPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
-      .addToTop(createTopPanel());
-
+      .addToTop(topPanel);
 
     if (session != null) {
       session.addSessionListener(new XDebugSessionListener() {
@@ -114,8 +129,8 @@ public class RetainedSizeDialog extends DialogWrapper {
       JavaDebuggerBundle.message(
         "action.calculate.retained.size.text",
         myRootName,
-        StringUtil.formatFileSize(shallowSize),
-        StringUtil.formatFileSize(retainedSize)
+        StringUtil.formatFileSize(retainedSize),
+        StringUtil.formatFileSize(shallowSize)
       )
     );
     myTree.repaint();
@@ -170,20 +185,36 @@ public class RetainedSizeDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private JBPanel createTopPanel() {
-    JBPanel panel = new JBPanel<>();
-    panel.setLayout(new VerticalFlowLayout());
-    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
-    panel.add(myRetainedSizeLabel);
-    panel.add(
-      new JBLabel(
-        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
-        AllIcons.General.Information,
-        SwingConstants.LEFT
-      )
-    );
-    return panel;
+  public ProgressIndicator createProgressIndicator() {
+    return new ProgressIndicatorBase() {
+      @Override
+      public void setText(String text) {
+        super.setText(text);
+        myInfoLabel.setText(text);
+      }
+
+      @Override
+      public void setFraction(double fraction) {
+        super.setFraction(fraction);
+        myProgressBar.setMinimum(0);
+        myProgressBar.setMaximum(100);
+        myProgressBar.setValue((int)(fraction * 100));
+      }
+
+      @Override
+      public void start() {
+        super.start();
+        myProgressBar.setVisible(true);
+      }
+
+      @Override
+      public void stop() {
+        super.stop();
+        myProgressBar.setVisible(false);
+        myInfoLabel.setText(JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName));
+        myInfoLabel.setIcon(AllIcons.General.Information);
+      }
+    };
   }
 
   private class NodeHighlighter implements XDebuggerTreeListener {

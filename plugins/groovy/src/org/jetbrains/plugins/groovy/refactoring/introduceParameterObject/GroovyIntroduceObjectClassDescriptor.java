@@ -39,7 +39,9 @@ public class GroovyIntroduceObjectClassDescriptor extends IntroduceParameterObje
   }
 
   @Override
-  public String getGetterName(GrParameterInfo paramInfo, @NotNull PsiElement context) {
+  public String getGetterName(GrParameterInfo paramInfo,
+                              @NotNull PsiElement context,
+                              ReadWriteAccessDetector.Access access) {
     throw new UnsupportedOperationException();
   }
 

@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.Activities
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -21,8 +22,10 @@ import org.jetbrains.annotations.ApiStatus
 internal fun registerComponents(project: ProjectImpl) {
   var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  @Suppress("UNCHECKED_CAST")
-  project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>, null)
+  project.registerComponents(plugins = PluginManagerCore.getLoadedPlugins(null),
+                             app = ApplicationManager.getApplication(),
+                             precomputedExtensionModel = null,
+                             listenerCallbacks = null)
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(
@@ -33,7 +36,7 @@ internal fun registerComponents(project: ProjectImpl) {
 }
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else StartUpMeasurer.startActivity(message())
+  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.DEFAULT)
 }
 
 internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
@@ -47,6 +50,9 @@ internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl
     }
     catch (e: ProcessCanceledException) {
       throw e
+    }
+    catch (e: PluginException) {
+      logger<ProjectImpl>().error(e)
     }
     catch (e: Throwable) {
       logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))

@@ -26,24 +26,6 @@ fun defineNestedLifetime(disposable: Disposable): LifetimeDefinition {
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 @Deprecated("Use version from `LifetimeDisposableEx`")
-internal fun doIfAlive(disposable: Disposable, action: (Lifetime) -> Unit) {
-  val disposableLifetime: Lifetime?
-  if (Disposer.isDisposed(disposable)) {
-    return
-  }
-  try {
-    disposableLifetime = defineNestedLifetime(disposable).lifetime
-  }
-  catch (t: Throwable) {
-    //do nothing, there is no other way to handle disposables
-    return
-  }
-
-  action(disposableLifetime)
-}
-
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use version from `LifetimeDisposableEx`")
 internal fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
   val d = Disposer.newDisposable(debugName)
   this.onTermination {

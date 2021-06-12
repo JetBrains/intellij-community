@@ -3,18 +3,17 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 
 class RunConfigurationFeatureCollector : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    PluginFeatureService.getInstance().collectFeatureMapping(
+    PluginFeatureService.instance.collectFeatureMapping(
       RunManager.CONFIGURATION_TYPE_FEATURE_ID,
       ConfigurationType.CONFIGURATION_TYPE_EP,
       ConfigurationType::getId,
-      ConfigurationType::getDisplayName
+      ConfigurationType::getDisplayName,
     )
   }
 }

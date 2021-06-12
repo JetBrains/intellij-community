@@ -18,6 +18,7 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,6 +36,7 @@ import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +63,9 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       PsiType type = factory.createType(containingClass, PsiSubstitutor.EMPTY);
       final String classParameterName = mySettings.getClassParameterName();
       final String fieldName = convertToFieldName(classParameterName);
-      myMember.add(factory.createField(fieldName, type));
+      PsiField field = factory.createField(fieldName, type);
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+      myMember.add(field);
     }
 
     if (mySettings.isMakeFieldParameters()) {
@@ -70,6 +74,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       for (Settings.FieldParameter fieldParameter : parameters) {
         final PsiType type = fieldParameter.type;
         final PsiField field = factory.createField(convertToFieldName(fieldParameter.name), type);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         myMember.add(field);
       }
     }
@@ -359,16 +364,27 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
   @Override
   protected MultiMap<PsiElement,String> getConflictDescriptions(final UsageInfo[] usages) {
-    final MultiMap<PsiElement, String> conflicts = super.getConflictDescriptions(usages);
+    final MultiMap<PsiElement, @Nls String> conflicts = super.getConflictDescriptions(usages);
 
-    //Check fields already exist
     if (mySettings.isMakeClassParameter()) {
-      final String fieldName = convertToFieldName(mySettings.getClassParameterName());
+      //Check fields already exist
+      final @NlsSafe String fieldName = convertToFieldName(mySettings.getClassParameterName());
       final PsiField existing = myMember.findFieldByName(fieldName, false);
       if (existing != null) {
         String message = JavaRefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
                                               RefactoringUIUtil.getDescription(myMember, false));
               conflicts.putValue(existing, message);
+      }
+
+      for (UsageInfo usage : usages) {
+        if (usage instanceof InternalUsageInfo) {
+          PsiElement element = usage.getElement();
+          PsiClassInitializer classInitializer = PsiTreeUtil.getParentOfType(element, PsiClassInitializer.class);
+          if (classInitializer != null && classInitializer.getContainingClass() == myMember) {
+            conflicts.putValue(element, JavaRefactoringBundle.message("field.0.won.t.be.initialized.already.in.class.initializer", fieldName));
+            break;
+          }
+        }
       }
     }
 

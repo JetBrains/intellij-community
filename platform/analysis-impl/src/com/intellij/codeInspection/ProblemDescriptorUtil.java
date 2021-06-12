@@ -192,6 +192,8 @@ public final class ProblemDescriptorUtil {
         return HighlightInfoType.ERROR;
       case INFORMATION:
         return HighlightInfoType.INFORMATION;
+      case POSSIBLE_PROBLEM:
+        return HighlightInfoType.POSSIBLE_PROBLEM;
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }

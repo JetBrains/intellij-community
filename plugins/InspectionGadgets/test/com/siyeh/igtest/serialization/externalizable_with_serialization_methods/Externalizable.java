@@ -24,7 +24,7 @@ class <warning descr="Externalizable class 'D' defines 'readObject()' and 'write
   }
 
   private void writeObject(java.io.ObjectOutputStream str) {
-    new <warning descr="Externalizable anonymous class extending 'D' defines 'readObject()'">D</warning>(){
+    new <warning descr="Externalizable anonymous class derived from 'D' defines 'readObject()'">D</warning>(){
       private void readObject(java.io.ObjectInputStream str){
       }
     };

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -12,6 +13,7 @@ import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
@@ -138,8 +140,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      for (c in components) {
+      for ((index, c) in components.withIndex()) {
         c.isVisible = value
+        builder.componentConstraints[c]?.hideMode = if (index == components.size - 1 && value) 2 else 3
       }
     }
 
@@ -154,6 +157,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         it.enabled = value
         it.subRowsEnabled = value
       }
+
+      components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
     }
 
   override var subRowsVisible = true
@@ -274,6 +279,33 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     finally {
       builder.hideableRowNestingLevel--
+    }
+  }
+
+  override fun nestedPanel(title: String?, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel> {
+    val nestedBuilder = createLayoutBuilder()
+    nestedBuilder.init()
+
+    val panel = DialogPanel(title, layout = null)
+    nestedBuilder.builder.build(panel, arrayOf())
+
+    builder.validateCallbacks.addAll(nestedBuilder.builder.validateCallbacks)
+    builder.componentValidateCallbacks.putAll(nestedBuilder.builder.componentValidateCallbacks)
+    mergeCallbacks(builder.customValidationRequestors, nestedBuilder.builder.customValidationRequestors)
+    mergeCallbacks(builder.applyCallbacks, nestedBuilder.builder.applyCallbacks)
+    mergeCallbacks(builder.resetCallbacks, nestedBuilder.builder.resetCallbacks)
+    mergeCallbacks(builder.isModifiedCallbacks, nestedBuilder.builder.isModifiedCallbacks)
+
+    lateinit var panelBuilder: CellBuilder<DialogPanel>
+    row {
+      panelBuilder = panel(CCFlags.growX)
+    }
+    return panelBuilder
+  }
+
+  private fun <K, V> mergeCallbacks(map: MutableMap<K, MutableList<V>>, nestedMap: Map<K, List<V>>) {
+    for ((requestor, callbacks) in nestedMap) {
+      map.getOrPut(requestor) { mutableListOf() }.addAll(callbacks)
     }
   }
 

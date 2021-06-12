@@ -1,6 +1,9 @@
 <idea-plugin implementation-detail="true">
   <vendor>JetBrains</vendor>
+  <name>Images</name>
   <id>com.intellij.platform.images</id>
+
+  <depends optional="true" config-file="images-copyright-plugin.xml">com.intellij.copyright</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter" dynamic="true"/>

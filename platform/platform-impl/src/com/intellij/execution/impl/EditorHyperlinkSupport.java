@@ -54,7 +54,7 @@ public class EditorHyperlinkSupport {
   /**
    * If your editor has a project inside, better use {@link #get(Editor)}
    */
-  public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
+  public EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project) {
     myEditor = (EditorEx)editor;
     myProject = project;
     myFilterRunner = new AsyncFilterRunner(this, myEditor);
@@ -71,7 +71,7 @@ public class EditorHyperlinkSupport {
       public void mouseReleased(@NotNull EditorMouseEvent e) {
         MouseEvent initialMouseEvent = myInitialMouseEvent;
         myInitialMouseEvent = null;
-        final MouseEvent mouseEvent = e.getMouseEvent();
+        MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
           if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
                                        !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
@@ -90,7 +90,7 @@ public class EditorHyperlinkSupport {
       @Override
       public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
-        final HyperlinkInfo info = getHyperlinkInfoByEvent(e);
+        HyperlinkInfo info = getHyperlinkInfoByEvent(e);
         myEditor.setCustomCursor(EditorHyperlinkSupport.class, info == null ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
     }
@@ -98,7 +98,7 @@ public class EditorHyperlinkSupport {
   }
 
   @NotNull
-  public static EditorHyperlinkSupport get(@NotNull final Editor editor) {
+  public static EditorHyperlinkSupport get(@NotNull Editor editor) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
       Project project = editor.getProject();
@@ -137,21 +137,21 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public Runnable getLinkNavigationRunnable(final LogicalPosition logical) {
+  public Runnable getLinkNavigationRunnable(LogicalPosition logical) {
     if (EditorUtil.inVirtualSpace(myEditor, logical)) {
       return null;
     }
 
-    final int positionOffset = myEditor.logicalPositionToOffset(logical);
-    final RangeHighlighter range = findLinkRangeAt(positionOffset);
+    int positionOffset = myEditor.logicalPositionToOffset(logical);
+    RangeHighlighter range = findLinkRangeAt(positionOffset);
     if (range != null) {
       if (range.getEndOffset() == positionOffset) return null;
-      final HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
+      HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
         return () -> {
           if (hyperlinkInfo instanceof HyperlinkInfoBase) {
-            final Point point = myEditor.logicalPositionToXY(logical);
-            final MouseEvent event = new MouseEvent(myEditor.getContentComponent(), 0, 0, 0, point.x, point.y, 1, false);
+            Point point = myEditor.logicalPositionToXY(logical);
+            MouseEvent event = new MouseEvent(myEditor.getContentComponent(), 0, 0, 0, point.x, point.y, 1, false);
             ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(event));
           }
           else {
@@ -166,33 +166,33 @@ public class EditorHyperlinkSupport {
 
   @Nullable
   public static HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
-    final HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
+    HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
     return attributes != null ? attributes.getHyperlinkInfo() : null;
   }
 
   @Nullable
-  private RangeHighlighter findLinkRangeAt(final int offset) {
+  private RangeHighlighter findLinkRangeAt(int offset) {
     //noinspection LoopStatementThatDoesntLoop
-    for (final RangeHighlighter highlighter : getHyperlinks(offset, offset, myEditor)) {
+    for (RangeHighlighter highlighter : getHyperlinks(offset, offset, myEditor)) {
         return highlighter;
     }
     return null;
   }
 
-  public @Nullable HyperlinkInfo getHyperlinkAt(final int offset) {
+  public @Nullable HyperlinkInfo getHyperlinkAt(int offset) {
     RangeHighlighter range = findLinkRangeAt(offset);
     return range == null ? null : getHyperlinkInfo(range);
   }
 
   public List<RangeHighlighter> findAllHyperlinksOnLine(int line) {
-    final int lineStart = myEditor.getDocument().getLineStartOffset(line);
-    final int lineEnd = myEditor.getDocument().getLineEndOffset(line);
+    int lineStart = myEditor.getDocument().getLineStartOffset(line);
+    int lineEnd = myEditor.getDocument().getLineEndOffset(line);
     return getHyperlinks(lineStart, lineEnd, myEditor);
   }
 
-  private static List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, final Editor editor) {
-    final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<>();
+  private static List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, Editor editor) {
+    MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+    CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<>();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
                                                         new FilteringProcessor<>(
                                                           rangeHighlighterEx -> rangeHighlighterEx.isValid() &&
@@ -206,7 +206,7 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public HyperlinkInfo getHyperlinkInfoByLineAndCol(final int line, final int col) {
+  public HyperlinkInfo getHyperlinkInfoByLineAndCol(int line, int col) {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
@@ -224,13 +224,13 @@ public class EditorHyperlinkSupport {
   }
 
   @NotNull
-  private RangeHighlighter createHyperlink(final int highlightStartOffset,
-                                           final int highlightEndOffset,
-                                           @Nullable final TextAttributes highlightAttributes,
-                                           @NotNull final HyperlinkInfo hyperlinkInfo,
+  private RangeHighlighter createHyperlink(int highlightStartOffset,
+                                           int highlightEndOffset,
+                                           @Nullable TextAttributes highlightAttributes,
+                                           @NotNull HyperlinkInfo hyperlinkInfo,
                                            @Nullable TextAttributes followedHyperlinkAttributes,
                                            int layer) {
-    final RangeHighlighter highlighter =
+    RangeHighlighter highlighter =
       myEditor.getMarkupModel().addRangeHighlighterAndChangeAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES,
                                                                        highlightStartOffset,
                                                                        highlightEndOffset,
@@ -252,8 +252,8 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public HyperlinkInfo getHyperlinkInfoByPoint(final Point p) {
-    final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
+  public HyperlinkInfo getHyperlinkInfoByPoint(Point p) {
+    LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
     if (EditorUtil.inVirtualSpace(myEditor, pos)) {
       return null;
     }
@@ -266,7 +266,7 @@ public class EditorHyperlinkSupport {
     return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
   }
 
-  public void highlightHyperlinks(@NotNull Filter customFilter, final int line1, final int endLine) {
+  public void highlightHyperlinks(@NotNull Filter customFilter, int line1, int endLine) {
     myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, line1), endLine);
   }
 
@@ -324,10 +324,10 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public static OccurenceNavigator.OccurenceInfo getNextOccurrence(final Editor editor,
-                                                                   final int delta,
-                                                                   final Consumer<? super RangeHighlighter> action) {
-    final List<RangeHighlighter> ranges = getHyperlinks(0, editor.getDocument().getTextLength(),editor);
+  public static OccurenceNavigator.OccurenceInfo getNextOccurrence(@NotNull Editor editor,
+                                                                   int delta,
+                                                                   @NotNull Consumer<? super RangeHighlighter> action) {
+    List<RangeHighlighter> ranges = getHyperlinks(0, editor.getDocument().getTextLength(),editor);
     if (ranges.isEmpty()) {
       return null;
     }
@@ -342,7 +342,7 @@ public class EditorHyperlinkSupport {
     int newIndex = i;
     while (newIndex < ranges.size()) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
-      final RangeHighlighter next = ranges.get(newIndex);
+      RangeHighlighter next = ranges.get(newIndex);
       HyperlinkInfo info = getHyperlinkInfo(next);
       assert info != null;
       if (info.includeInOccurenceNavigation()) {
@@ -350,7 +350,7 @@ public class EditorHyperlinkSupport {
         if (!inCollapsedRegion) {
           return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
             @Override
-            public void navigate(final boolean requestFocus) {
+            public void navigate(boolean requestFocus) {
               action.consume(next);
               linkFollowed(editor, ranges, next);
             }
@@ -365,7 +365,7 @@ public class EditorHyperlinkSupport {
   }
 
   // todo fix link followed here!
-  private static void linkFollowed(Editor editor, Collection<? extends RangeHighlighter> ranges, final RangeHighlighter link) {
+  private static void linkFollowed(Editor editor, Collection<? extends RangeHighlighter> ranges, RangeHighlighter link) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     for (RangeHighlighter range : ranges) {
       TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);

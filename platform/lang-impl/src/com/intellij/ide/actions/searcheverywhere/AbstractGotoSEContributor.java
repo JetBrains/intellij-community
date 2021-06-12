@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
@@ -20,7 +19,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -149,12 +148,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       .add(CommonDataKeys.PSI_ELEMENT, context)
       .add(CommonDataKeys.PSI_FILE, file)
       .build();
-  }
-
-  @Nullable
-  @Override
-  public String getAdvertisement() {
-    return DumbService.isDumb(myProject) ? IdeBundle.message("dumb.mode.results.might.be.incomplete") : null;
   }
 
   @NotNull
@@ -548,10 +541,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
             KeyEvent.getExtendedKeyCodeForChar(TOGGLE), TOGGLE);
           AnActionEvent event = AnActionEvent.createFromAnAction(
             ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, dataContext, event);
-          onProjectScopeToggled();
-          actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
+          ActionUtil.performDumbAwareWithCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
         }
       });
       return component;

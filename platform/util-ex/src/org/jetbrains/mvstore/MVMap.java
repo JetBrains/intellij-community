@@ -633,7 +633,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
                     @Override
                     public Entry<K, V> next() {
                         K k = cursor.next();
-                        return new SimpleImmutableEntry<>(k, cursor.getValue());
+                        return Map.entry(k, cursor.getValue());
                     }
                 };
             }

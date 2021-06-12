@@ -41,10 +41,7 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
@@ -122,12 +119,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       return;
     }
     ProgressManager.getInstance().run(
-      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false, new PerformInBackgroundOption() {
-        @Override
-        public boolean shouldStartInBackground() {
-          return true;
-        }
-      }) {
+      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false,
+                              PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -273,7 +266,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private boolean transform(File outputFile, TransformerHandler handler) throws IOException, SAXException {
-    try (FileWriter w = new FileWriter(outputFile, StandardCharsets.UTF_8)) {
+    try (BufferedWriter w = new BufferedWriter(new FileWriter(outputFile, StandardCharsets.UTF_8))) {
       handler.setResult(new StreamResult(w));
       TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
       return true;

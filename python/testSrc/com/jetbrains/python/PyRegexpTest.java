@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyRegexpTest extends PyTestCase {
 
   public void testUnicodePy3() {
@@ -233,7 +231,7 @@ public class PyRegexpTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return getName().endsWith("Py3") ? ourPyLatestDescriptor : super.getProjectDescriptor();
+    return getName().endsWith("Py3") ? super.getProjectDescriptor() : ourPy2Descriptor;
   }
 
   @NotNull

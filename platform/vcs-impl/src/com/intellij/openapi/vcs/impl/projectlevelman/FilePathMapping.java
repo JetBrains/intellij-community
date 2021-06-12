@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -38,14 +37,24 @@ public final class FilePathMapping<T> {
     // We do not update myPathHashSet, so hash collisions might become worse over time.
   }
 
+  public void clear() {
+    myPathMap.clear();
+    myPathHashSet.clear();
+  }
+
   @NotNull
   public Collection<T> values() {
     return myPathMap.values();
   }
 
+  public boolean containsKey(@NotNull String filePath) {
+    String path = StringUtil.trimTrailing(filePath, '/');
+    return myPathMap.containsKey(path);
+  }
+
   @Nullable
-  public T getMappingFor(@NotNull FilePath filePath) {
-    String path = filePath.getPath();
+  public T getMappingFor(@NotNull String filePath) {
+    String path = StringUtil.trimTrailing(filePath, '/');
 
     int index = 0;
     int prefixHash = 0;

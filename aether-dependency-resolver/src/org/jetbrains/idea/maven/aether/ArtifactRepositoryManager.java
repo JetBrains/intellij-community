@@ -355,18 +355,19 @@ public final class ArtifactRepositoryManager {
 
     final Version version = constraint.getVersion();
     if (version != null) {
-      final String major = version.toString().split("[.\\-_]")[0];
-      annotationsConstraint = "[" + major + ", " + version + "-an10000]";
+      final String lower = chooseLowerBoundString(version);
+      annotationsConstraint = "[" + lower + ", " + version + "-an10000]";
     }
 
     final VersionRange range = constraint.getRange();
     if (range != null) {
-      final String majorLower = range.getLowerBound().getVersion().toString().split("[.\\-_]")[0];
+      Version lowerBoundVersion = range.getLowerBound().getVersion();
 
+      String lower = chooseLowerBoundString(lowerBoundVersion);
       String upper = range.getUpperBound().isInclusive()
                      ? range.getUpperBound().toString() + "-an10000]"
                      : range.getUpperBound().toString() + ")";
-      annotationsConstraint = "[" + majorLower + ", " + upper;
+      annotationsConstraint = "[" + lower + ", " + upper;
     }
 
     try {
@@ -376,6 +377,20 @@ public final class ArtifactRepositoryManager {
     }
 
     return Collections.singleton(constraint);
+  }
+
+  private static String chooseLowerBoundString(Version lowerBoundVersion) {
+    String lowerBoundString = lowerBoundVersion.toString();
+    String candidate = lowerBoundString.split("[.\\-_]")[0];
+    try {
+      Version candidateVersion = ourVersioning.parseVersion(candidate);
+      if (lowerBoundVersion.compareTo(candidateVersion) < 0) {
+       return lowerBoundString;
+      }
+    } catch (InvalidVersionSpecificationException e) {
+      LOG.info("Failed to parse major part of lower bound of version " + lowerBoundVersion, e);
+    }
+    return candidate;
   }
 
   @NotNull

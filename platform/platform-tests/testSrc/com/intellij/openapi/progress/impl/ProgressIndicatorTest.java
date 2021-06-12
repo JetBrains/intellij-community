@@ -14,6 +14,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
@@ -907,6 +908,16 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     indicator.popState(); // should not cause NPE
   }
 
+  public void testPushStateMustStoreIndeterminateFlag() {
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+    indicator.setIndeterminate(true);
+    indicator.pushState();
+    indicator.setIndeterminate(false);
+    assertFalse(indicator.isIndeterminate());
+    indicator.popState();
+    assertTrue(indicator.isIndeterminate());
+  }
+
   public void testRelayUiToDelegateIndicatorMustBeReusable() {
     ProgressIndicatorEx ui = new ProgressIndicatorBase();
     RelayUiToDelegateIndicator relay = new RelayUiToDelegateIndicator(ui);
@@ -1044,5 +1055,65 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     });
     assertEquals("result", result.getMessage());
+  }
+
+  public void testInvalidStateActionsMustLeadToExceptions() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    ProgressIndicator indicator = new ProgressIndicatorBase(false);
+    indicator.start();
+    assertThrows(Exception.class, () -> indicator.start());
+    indicator.cancel();
+    indicator.stop();
+    assertThrows(Exception.class, () -> indicator.start());
+
+    assertThrows(Exception.class, () -> new ProgressIndicatorBase().stop());
+  }
+
+  public void testComplexCheckCanceledHookDoesntInterfereWithReadLockAcquire() throws Exception {
+    AtomicBoolean futureEntered = new AtomicBoolean();
+    AtomicBoolean futureExited = new AtomicBoolean();
+    AtomicBoolean readActionCompleted = new AtomicBoolean();
+    CoreProgressManager.CheckCanceledHook hook = __ -> {
+      doReadAction(); // in case this hook gets called during read action, it will eventually SOE
+      return false;
+    };
+    ((ProgressManagerImpl)ProgressManager.getInstance()).addCheckCanceledHook(hook);
+    Disposer.register(getTestRootDisposable(), ()->((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(hook));
+
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    ProgressIndicator indicator = new ProgressIndicatorBase(false);
+    indicator.start();
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    AtomicReference<Future<?>> future = new AtomicReference<>();
+    doReadAction();
+
+    WriteAction.run(() -> {
+      future.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+         ProgressManager.getInstance().runProcess(() -> {
+           futureEntered.set(true);
+           doReadAction();
+           readActionCompleted.set(true);
+           futureExited.set(true);
+         }, indicator);
+      }));
+      while (!futureEntered.get()) {
+        // wait until hook is called and finish write action
+      }
+      TimeoutUtil.sleep(10_000); // ensure to be inside read action by now
+    });
+    while (!futureExited.get()) {
+
+    }
+    future.get().get();
+    assertTrue(readActionCompleted.get());
+  }
+
+  // extracted to separate method to avoid re-compilation on hot path taking unpredictable time, blowing timeouts
+  private static void doReadAction() {
+    ReadAction.run(() -> {
+      //`
+    });
   }
 }

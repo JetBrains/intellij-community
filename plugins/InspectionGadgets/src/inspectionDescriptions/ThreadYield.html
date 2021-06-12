@@ -1,10 +1,22 @@
 <html>
 <body>
 Reports any calls to <b>Thread.yield()</b>.
-<b>Thread.yield()</b> has no useful guaranteed semantics,
-and is often used by inexperienced programmers to mask race conditions.
+The behavior of <code>yield()</code> is non-deterministic and platform dependent, and it is rarely appropriate to use this method.
+Its use should be combined with detailed profiling and benchmarking to ensure that it actually has the desired effect.
 <!-- tooltip end -->
-<p>
+<p>Example:</p>
+<pre><code>
+  <b>public static void</b> main(String[] args) {
+    Runnable r = () -> {
+      <b>for</b> (<b>int</b> i = 0; i &lt; 10; i++) {
+        System.out.println(i);
+        Thread.yield();
+      }
+    };
+    <b>new</b> Thread(r).start();
+    <b>new</b> Thread(r).start();
+  }
+</code></pre>
 
 </body>
 </html>

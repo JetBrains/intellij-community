@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -8,7 +9,6 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Consumer
 
 @CompileStatic
@@ -35,14 +35,12 @@ final class SVGPreBuilder {
   }
 
   private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
-    String dbFile = "$buildContext.paths.temp/icons.db"
-
-    List<String> args = [dbFile, requestFile.toString()] + buildContext.applicationInfo.svgProductIcons
+    Path dbFile = buildContext.paths.tempDir.resolve("icons.db")
     BuildHelper.runJava(buildContext,
-                       "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
-                       args,
-                       List.of("-Xmx1024m"),
-                       svgToolClasspath)
-    buildContext.addResourceFile(Paths.get(dbFile))
+                        "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
+                        [dbFile.toString(), requestFile.toString()] + buildContext.applicationInfo.svgProductIcons,
+                        List.of("-Xmx1024m"),
+                        svgToolClasspath)
+    buildContext.addDistFile(new Pair<Path, String>(dbFile, "bin"))
   }
 }

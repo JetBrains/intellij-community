@@ -6,11 +6,11 @@ class Temp35 {
   }; }
 
   public interface Workable { void work(); }
-  <error descr="Duplicate class: 'Workable'">public interface Workable</error> { void work(); }
+  public interface <error descr="Duplicate class: 'Workable'">Workable</error> { void work(); }
 
   public static void main(String[] args) {
     abstract class Local { abstract void work(); }
-    <error descr="Duplicate class: 'Local'">abstract class Local</error> { abstract void work(); }
+    abstract class <error descr="Duplicate class: 'Local'">Local</error> { abstract void work(); }
     new Local() {
       @Override public void work() { }
     };

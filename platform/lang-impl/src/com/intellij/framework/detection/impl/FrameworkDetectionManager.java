@@ -211,7 +211,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
         NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
-          .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION, null)
+          .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION)
           .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,7 +32,6 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,24 +44,13 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
         ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weighty = 1.0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.CENTER;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(annotationsListControl, constraints);
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "public.method.not.in.interface.option"), this, "onlyWarnIfContainingClassImplementsAnInterface");
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(checkBox, constraints);
+
+    panel.add(annotationsListControl, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("public.method.not.in.interface.option"), "onlyWarnIfContainingClassImplementsAnInterface");
+
     return panel;
   }
 

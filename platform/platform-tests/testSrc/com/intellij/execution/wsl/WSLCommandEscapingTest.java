@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -10,13 +9,13 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWslPresence;
@@ -154,7 +153,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     List<String> command = new ArrayList<>(echoParams.size() + 1);
     command.add(echoExecutableLinuxPath);
     command.addAll(echoParams);
-    assertWslCommandOutput(expectedOut, (String)null, Collections.emptyMap(), command);
+    assertWslCommandOutput(expectedOut, null, Collections.emptyMap(), command);
   }
 
   @Test
@@ -239,15 +238,11 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertEnvOutput(Map<String, String> envs) throws ExecutionException {
-    List<String> command = new ArrayList<>();
-    command.add("printenv");
-    command.addAll(envs.keySet());
+    List<String> command = ContainerUtil.concat(List.of("printenv"), List.copyOf(envs.keySet()));
     String expectedOut = String.join("\n", envs.values()) + "\n";
-    assertWslCommandOutput(expectedOut, (String)null, envs, command);
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true);
-    assertWslCommandOutput(expectedOut, options, envs, command);
-    options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setPassEnvVarsUsingInterop(true);
-    assertWslCommandOutput(expectedOut, options, envs, command);
+    assertWslCommandOutput(expectedOut, null, envs, command);
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true));
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(true).setPassEnvVarsUsingInterop(true));
   }
 
   @Test
@@ -271,28 +266,35 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertWslCommandOutput(String expectedOut, String remoteWorkingDirectory, Map<String, String> envs, List<String> command) throws ExecutionException {
-    String bashParameters = command.stream().map(c -> c.isEmpty() ? "''" : CommandLineUtil.posixQuote(c)).collect(Collectors.joining(" "));
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(false).setRemoteWorkingDirectory(remoteWorkingDirectory);
-    assertWslCommandOutput(expectedOut, options, envs, Arrays.asList("bash", "-c", bashParameters));
-    options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setRemoteWorkingDirectory(remoteWorkingDirectory);
-    assertWslCommandOutput(expectedOut, options, envs, Arrays.asList("bash", "-c", bashParameters));
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
+      .setRemoteWorkingDirectory(remoteWorkingDirectory));
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    options = new WSLCommandLineOptions().setLaunchWithWslExe(false).setRemoteWorkingDirectory(remoteWorkingDirectory);
-    assertWslCommandOutput(expectedOut, options, envs, command);
-    options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setRemoteWorkingDirectory(remoteWorkingDirectory);
-    assertWslCommandOutput(expectedOut, options, envs, command);
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+      .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    if (command.stream().noneMatch(String::isEmpty) && remoteWorkingDirectory == null) {
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+      .setExecuteCommandInLoginShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
+
+    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+      .setExecuteCommandInInteractiveShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
+
+    if (!ContainerUtil.exists(command, String::isEmpty) && remoteWorkingDirectory == null) {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
-      options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
-      assertWslCommandOutput(expectedOut, options, envs, command);
+      assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setExecuteCommandInShell(false));
     }
   }
 
-  private void assertWslCommandOutput(String expectedOut, WSLCommandLineOptions options, Map<String, String> envs, List<String> command) throws ExecutionException {
-    GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine(command).withEnvironment(envs), null, options);
-    ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
-
+  private void assertWslCommandOutput(String expectedOut, Map<String, String> envs, List<String> command, WSLCommandLineOptions options) throws ExecutionException {
+    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(envs);
+    ProcessOutput output;
+    if (options.isExecuteCommandInShell()) {
+      output = wsl.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000);
+    }
+    else {
+      wsl.patchCommandLine(commandLine, null, options);
+      output = new CapturingProcessHandler(commandLine).runProcess(10_000);
+    }
     String expected = stringify(false, "", 0, expectedOut);
     String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout());
     assertEquals(expected, actual);

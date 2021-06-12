@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -25,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class TestCaseWithConstructorInspectionTest extends LightJavaInspectionTestCase {
 
   public void testJUnit4TestCaseWithConstructor() { doTest(); }
+  public void testParameterizedTest() { doTest(); }
   public void testTestCaseWithConstructorInspection1() { doTest(); }
   public void testTestCaseWithConstructorInspection2() { doTest(); }
   public void testTestCaseWithConstructorInspection3() { doTest(); }
@@ -42,6 +29,34 @@ public class TestCaseWithConstructorInspectionTest extends LightJavaInspectionTe
       "public @interface Test {\n" +
       "    java.lang.Class<? extends java.lang.Throwable> expected() default org.junit.Test.None.class;" +
       "}",
+
+      "package org.junit.runner;" +
+      "public abstract class Runner {}",
+
+      "package org.junit.runner;\n" +
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "@Retention(RetentionPolicy.RUNTIME)\n" +
+      "@Target(ElementType.TYPE)\n" +
+      "public @interface RunWith {\n" +
+      "    Class<? extends Runner> value();\n" +
+      "}\n",
+
+      "package org.junit.runners;\n" +
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "import org.junit.runner.Runner;\n" +
+      "public class Parameterized extends Runner {\n" +
+      "    @Retention(RetentionPolicy.RUNTIME)\n" +
+      "    @Target(ElementType.METHOD)\n" +
+      "    public static @interface Parameters {\n" +
+      "    }" +
+      "}",
+
       "package junit.framework;" +
       "public abstract class TestCase {}"};
   }

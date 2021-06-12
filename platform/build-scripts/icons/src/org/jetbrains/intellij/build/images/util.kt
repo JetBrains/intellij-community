@@ -44,7 +44,13 @@ internal fun isImage(file: Path) = ImageExtension.fromName(file.fileName.toStrin
 internal fun isImage(file: File) = ImageExtension.fromName(file.name) != null
 
 internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimension? {
-  val image = loadImage(file, failOnMalformedImage)
+  val image = try {
+    loadImage(file, failOnMalformedImage)
+  }
+  catch (e: Exception) {
+    if (failOnMalformedImage) throw e
+    null
+  }
   if (image == null) {
     if (failOnMalformedImage) error("Can't load $file")
     println("WARNING: can't load $file")
@@ -59,7 +65,7 @@ internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimen
 private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
-    Files.newBufferedReader(file).use {
+    Files.newInputStream(file).use {
       try {
         return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
       }
@@ -76,7 +82,6 @@ private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage?
   }
   catch (e: Exception) {
     if (failOnMalformedImage) throw e
-    e.printStackTrace(System.out)
     return null
   }
 }

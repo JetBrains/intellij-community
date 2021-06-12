@@ -91,7 +91,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         boolean dirChanged = false;
         Set<VirtualFile> toRemove = new HashSet<>();
         for (VFileEvent event : events) {
@@ -503,5 +503,9 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   public boolean processProblemFiles(@NotNull Processor<? super VirtualFile> processor) {
     return ContainerUtil.process(myProblems.keySet(), processor);
+  }
+
+  public static WolfTheProblemSolver createInstance(Project project){
+    return new WolfTheProblemSolverImpl(project);
   }
 }

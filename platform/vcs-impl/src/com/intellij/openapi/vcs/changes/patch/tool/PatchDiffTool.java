@@ -69,7 +69,7 @@ final class PatchDiffTool implements FrameDiffTool {
       myEditor = DiffUtil.createEditor(document, myProject, true, true);
       myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
 
-      Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP), myEditor.getComponent());
+      Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP.get()), myEditor.getComponent());
       String panelTitle = request.getPanelTitle();
       if (panelTitle != null) {
         editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH);

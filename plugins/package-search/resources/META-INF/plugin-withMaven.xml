@@ -3,9 +3,9 @@
         <localInspection
                 bundle="messages.packageSearchBundle"
                 enabledByDefault="true"
-                groupKey="packagesearch.inspection.update.group"
+                groupKey="packagesearch.inspection.upgrade.group"
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenPackageUpdateInspection"
-                key="packagesearch.inspection.update.key.maven"
+                key="packagesearch.inspection.upgrade.key.maven"
                 hasStaticDescription="true"
                 language="XML"
                 level="WARNING"/>
@@ -14,6 +14,9 @@
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider"/>
         <packagesearch.projectModuleProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenModuleChangesSignalProvider"/>
 
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.ui.MavenConfigurableContributor"/>

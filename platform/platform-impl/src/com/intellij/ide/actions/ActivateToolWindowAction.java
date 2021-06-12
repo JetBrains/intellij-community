@@ -48,6 +48,13 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
   }
 
+  public static void unregister(@NotNull String id) {
+    String actionId = getActionIdForToolWindow(id);
+    if (ActionManager.getInstance().getAction(actionId) != null) {
+      ActionManager.getInstance().unregisterAction(actionId);
+    }
+  }
+
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
     AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {

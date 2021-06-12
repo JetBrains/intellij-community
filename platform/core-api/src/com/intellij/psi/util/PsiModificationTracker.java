@@ -54,7 +54,6 @@ public interface PsiModificationTracker extends ModificationTracker {
    * This key can be passed as a dependency in a {@link CachedValueProvider}.
    * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that doesn't happen inside a Java code block.
    * This can include changes on Java class or file level, or changes in non-Java files, e.g. XML. Rarely needed.
-   * @see #getOutOfCodeBlockModificationCount()
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
@@ -64,7 +63,6 @@ public interface PsiModificationTracker extends ModificationTracker {
   /**
    * This key can be passed as a dependency in a {@link CachedValueProvider}.
    * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that can affect Java structure and resolve.
-   * @see #getJavaStructureModificationCount()
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
@@ -84,33 +82,6 @@ public interface PsiModificationTracker extends ModificationTracker {
    */
   @Override
   long getModificationCount();
-
-  /**
-   * @return Same as {@link #getModificationCount()}.
-   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  long getOutOfCodeBlockModificationCount();
-
-  /**
-   * @return an object returning {@link #getModificationCount()}
-   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @NotNull
-  ModificationTracker getOutOfCodeBlockModificationTracker();
-
-  /**
-   * Tracks structural Java modifications, i.e. the ones on class/method/field/file level. Modifications inside method bodies are not tracked.
-   * Useful to work with resolve caches that only depend on Java structure, and not the method code.
-   * @return current counter value. Increased whenever any physical PSI in Java structure is changed.
-   * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  long getJavaStructureModificationCount();
 
   /**
    * @return an object returning {@link #getModificationCount()}

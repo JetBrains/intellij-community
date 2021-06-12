@@ -91,6 +91,7 @@ class TarFile(Iterable[TarInfo]):
     pax_headers: Optional[Mapping[str, str]]
     debug: Optional[int]
     errorlevel: Optional[int]
+    offset: int  # undocumented
     if sys.version_info < (3,):
         posix: bool
     def __init__(

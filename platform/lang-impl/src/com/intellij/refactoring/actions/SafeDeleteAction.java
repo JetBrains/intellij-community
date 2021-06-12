@@ -62,6 +62,7 @@ public class SafeDeleteAction extends BaseRefactoringAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
+    if (!file.isValid()) return false;
     PsiElement targetElement = element;
     if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
       PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);

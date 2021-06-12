@@ -16,9 +16,9 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -29,39 +29,33 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-class WrapReturnValueHandler implements RefactoringActionHandler {
-    @Override
-    public void invoke(@NotNull Project project,
-                       Editor editor,
-                       PsiFile file,
-                       DataContext dataContext){
+class WrapReturnValueHandler implements RefactoringActionHandler, ContextAwareActionHandler {
+  @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext){
         final ScrollingModel scrollingModel = editor.getScrollingModel();
         scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-        final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-        PsiMethod selectedMethod = null;
-        if(element instanceof PsiMethod){
-            selectedMethod = (PsiMethod) element;
-        } else{
-            final CaretModel caretModel = editor.getCaretModel();
-            final int position = caretModel.getOffset();
-            PsiElement selectedElement = file.findElementAt(position);
-            while(selectedElement != null){
-                if(selectedElement instanceof PsiMethod){
-                    selectedMethod = (PsiMethod) selectedElement;
-                    break;
-                }
-                selectedElement = selectedElement.getParent();
-            }
-        }
+        PsiMethod selectedMethod = getSelectedMethod(editor, file);
         if(selectedMethod == null){
           CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-              "the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), getRefactoringNameText(), this.getHelpID());
+              "the.caret.should.be.positioned.within.a.method.declaration.to.be.refactored"), getRefactoringNameText(), this.getHelpID());
           return;
         }
-      invoke(project, selectedMethod, editor);
+        invoke(project, selectedMethod, editor);
+    }
+
+    @Override
+    public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+        return getSelectedMethod(editor, file) != null;
+    }
+
+    private static PsiMethod getSelectedMethod(Editor editor, PsiFile file) {
+        final int caret = editor.getCaretModel().getOffset();
+        final PsiElement elementAt = file.findElementAt(caret);
+        return RefactoringActionContextUtil.getJavaMethodHeader(elementAt);
     }
 
     protected String getRefactoringName(){
@@ -105,7 +99,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
 
     if(method instanceof PsiCompiledElement){
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-          "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), getRefactoringNameText(), this.getHelpID());
+        "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), getRefactoringNameText(), this.getHelpID());
       return;
     }
 

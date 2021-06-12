@@ -1,10 +1,25 @@
 <html>
 <body>
-Reports lambda parameters named identically to fields of the surrounding classes or their superclasses.
+<p>
+  Reports lambda parameters named identically to fields of the surrounding classes or their superclasses.
+</p>
+<p>
+  Use the quick-fix to rename the concerned lambda parameter.
+</p>
+<p>Example:</p>
+<pre><code>
+  public class MyClass {
+    public Object foo;
+
+    void sort(List&lt;Integer&gt; list) {
+      list.sort((foo, bar) -> foo - bar);
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore fields that are not actually visible from the lambda expression.
-For example <b>private</b> fields in a super class.
+  Use the checkbox below to ignore fields that are not actually visible from the lambda expression.
+  For example private fields in a super class.
 <p>
 </body>
 </html>

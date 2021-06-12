@@ -2,7 +2,6 @@
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
-import com.intellij.ide.IdeEventQueue
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
@@ -85,7 +84,7 @@ internal class CredentialStoreTest {
       store.set(attributes, c1)
       assertThat(store.get(attributes)).isEqualTo(c1)
       store.set(attributes, null)
-      PlatformTestUtil.dispatchNextEventIfAny(IdeEventQueue.getInstance())
+      PlatformTestUtil.dispatchNextEventIfAny()
       assertThat(store.get(attributes)).isNull()
     }
   }
@@ -113,7 +112,7 @@ internal class CredentialStoreTest {
       store.set(attributes, c1)
       assertThat(store.get(attributes)).isEqualTo(c1)
       store.set(attributes, c2)
-      PlatformTestUtil.dispatchNextEventIfAny(IdeEventQueue.getInstance())
+      PlatformTestUtil.dispatchNextEventIfAny()
       assertThat(store.get(attributes)).isEqualTo(c2)
     }
   }

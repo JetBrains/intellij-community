@@ -7,6 +7,15 @@ prone to bugs, if code changes result in values that were thought to be overwrit
 being live. It is good practices to keep variable lifetimes as short as possible, and not
 reuse local variables for the sake of brevity.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+    void x() {
+        String s = "one";
+        System.out.println("s = " + s);
+        s = "two"; //reuse of local variable 's'
+        System.out.println("s = " + s);
+    }
+</pre>
 <p>
 
 </body>

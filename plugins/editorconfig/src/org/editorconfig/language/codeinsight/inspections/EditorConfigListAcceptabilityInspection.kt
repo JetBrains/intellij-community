@@ -14,6 +14,7 @@ class EditorConfigListAcceptabilityInspection : LocalInspectionTool() {
     override fun visitOptionValueList(list: EditorConfigOptionValueList) {
       if (list.getDescriptor(false) != null) return
       list.describableParent?.getDescriptor(false) ?: return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.value.list.acceptability.message"]
       holder.registerProblem(list, message, EditorConfigRemoveUnexpectedValuesQuickFix(), EditorConfigRemoveOptionQuickFix())
     }

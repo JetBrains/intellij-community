@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.features.history.FilePredictionHistory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -16,7 +15,7 @@ class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
     private val LOG: Logger = Logger.getInstance(FilePredictionHandler::class.java)
 
-    fun getInstance(project: Project): FilePredictionHandler? = ServiceManager.getService(project, FilePredictionHandler::class.java)
+    fun getInstance(project: Project): FilePredictionHandler? = project.getService(FilePredictionHandler::class.java)
   }
 
   private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("NextFilePrediction")

@@ -1,27 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import com.sun.jna.win32.StdCallLibrary
-import org.jetbrains.annotations.NonNls
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
-
 enum class PowerStatus {
   UNKNOWN, AC, BATTERY;
 
   companion object {
-    val LOG = Logger.getInstance(PowerStatus::class.java)
-    @JvmStatic fun getPowerStatus(): PowerStatus =
+    internal val LOG = logger<PowerStatus>()
+
+    @JvmStatic
+    fun getPowerStatus(): PowerStatus =
       try { service.status() }
       catch (t: Throwable) {
         LOG.warn(t)
@@ -164,13 +164,13 @@ private class MacPowerService : PowerService {
   private val kIOPSBatteryPowerValue = CFSTR("Battery Power")
   private val kCFCompareEqualTo = 0L
 
-  private fun CFSTR(@NonNls str: String) = ioKit.CFStringCreateWithCharacters(null, str.toCharArray(), str.length.toLong())
+  @Suppress("SpellCheckingInspection")
+  private fun CFSTR(str: String) = ioKit.CFStringCreateWithCharacters(null, str.toCharArray(), str.length.toLong())
 
   private fun isTrue(p: Pointer?) = p !== null && ioKit.CFBooleanGetValue(p).toInt() != 0
 
   private fun strEquals(p: Pointer?, str: Pointer) = p !== null && ioKit.CFStringCompare(p, str, 0L) == kCFCompareEqualTo
 
-  @NonNls
   private fun str(str: Pointer?): String =
     if (str === null) "<null>"
     else {
@@ -230,8 +230,7 @@ private class LinuxPowerService : PowerService {
     if (!classDirectory.isDirectory) throw IOException("not a directory: ${classDirectory}")
   }
 
-  @NonNls
-  private fun read(device: File, @NonNls key: String) =
+  private fun read(device: File, key: String): String =
     try { BufferedReader(FileReader(File(device, key))).use { it.readLine() } }
     catch (e: IOException) { "-" }
 }

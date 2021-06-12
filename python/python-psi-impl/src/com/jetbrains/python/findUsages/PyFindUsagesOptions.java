@@ -2,7 +2,10 @@
 package com.jetbrains.python.findUsages;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +24,7 @@ public class PyFindUsagesOptions extends FindUsagesOptions implements Persistent
   }
 
   public static PyFindUsagesOptions getInstance(Project project) {
-    return ServiceManager.getService(project, PyFindUsagesOptions.class);
+    return project.getService(PyFindUsagesOptions.class);
   }
 
 

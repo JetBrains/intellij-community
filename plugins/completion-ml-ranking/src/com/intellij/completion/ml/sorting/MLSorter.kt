@@ -11,6 +11,7 @@ import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.util.queryLength
 import com.intellij.completion.ml.util.RelevanceUtil
 import com.intellij.completion.ml.common.PrefixMatchingUtil
+import com.intellij.completion.ml.features.RankingFeaturesOverrides
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.openapi.util.Pair
@@ -19,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
+import com.intellij.lang.Language
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -146,7 +148,7 @@ class MLSorter : CompletionFinalSorter() {
 
     val tracker = ModelTimeTracker()
     for ((i, element) in items.withIndex()) {
-      val (relevance, additional) = calculatedElementFeatures[i]
+      val (relevance, additional) = overrideElementFeaturesIfNeeded(calculatedElementFeatures[i], lookupStorage.language)
 
       val score = tracker.measure {
         val position = positionsBefore.getValue(element)
@@ -160,6 +162,21 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     tracker.finished(lookupStorage.performanceTracker)
+  }
+
+  private fun overrideElementFeaturesIfNeeded(elementFeatures: ElementFeatures, language: Language): ElementFeatures {
+    for (it in RankingFeaturesOverrides.forLanguage(language)) {
+      val overrides = it.getMlElementFeaturesOverrides(elementFeatures.additional)
+      elementFeatures.additional.putAll(overrides)
+      if (overrides.isNotEmpty())
+        LOG.debug("The next ML features was overridden: [${overrides.map { it.key }.joinToString()}]")
+
+      val relevanceOverrides = it.getDefaultWeigherFeaturesOverrides(elementFeatures.relevance)
+      elementFeatures.relevance.putAll(relevanceOverrides)
+      if (relevanceOverrides.isNotEmpty())
+        LOG.debug("The next default weigher features was overridden: [${relevanceOverrides.map { it.key }.joinToString()}]")
+    }
+    return elementFeatures
   }
 
   private fun sortByMlScores(items: List<LookupElement>,

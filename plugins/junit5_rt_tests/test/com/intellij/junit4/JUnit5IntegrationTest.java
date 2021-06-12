@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -79,7 +80,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
       dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
       dataContext.put(CommonDataKeys.PROJECT, myProject);
-      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext);
+      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
       assertNotNull(fromContext);
 
       RunConfiguration configuration = fromContext.getConfiguration().getConfiguration();

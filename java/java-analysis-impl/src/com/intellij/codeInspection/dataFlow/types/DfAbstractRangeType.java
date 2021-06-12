@@ -40,4 +40,7 @@ abstract class DfAbstractRangeType implements DfIntegralType {
            ((DfAbstractRangeType)obj).myRange.equals(myRange) &&
            Objects.equals(((DfAbstractRangeType)obj).myWideRange, myWideRange);
   }
+
+  @Override
+  abstract public @NotNull String toString();
 }

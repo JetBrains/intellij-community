@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
@@ -31,9 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author yole
- */
+
 public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   private static void checkInitPyDir(PsiElement elt, String dirname) {
@@ -291,7 +289,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testModulePackageConflict() {  // PY-6011
-    assertResolvesTo(PyFunction.class, "foo");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   public void testRelativePackageStarImport() {   // PY-7204
@@ -349,12 +347,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PsiDirectory.class, "p1"));
+    assertResolvesTo(PsiDirectory.class, "p1");
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFunction.class, "foo"));
+    assertResolvesTo(PyFunction.class, "foo");
   }
 
   // PY-7775
@@ -393,7 +391,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFile.class, "m1.py"));
+    assertResolvesTo(PyFile.class, "m1.py");
   }
 
   public void testKeywordArgument() {
@@ -549,14 +547,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-19989
   public void testAmbiguousImplicitRelativeImport() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON27,
-      () -> {
-        prepareTestDirectory();
-        assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
-        assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
-      }
-    );
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
   }
 
   // PY-21088

@@ -26,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PySuperMethodsSearch.SearchParameters> {
   public static final PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
 

@@ -2,12 +2,14 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.lang.ant.segments.Extractor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +20,10 @@ public final class AntProcessHandler extends KillableColoredProcessHandler {
   private final Extractor myOut;
   private final Extractor myErr;
 
-  private AntProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    super(commandLine);
+  private AntProcessHandler(@NotNull TargetedCommandLine commandLine,
+                            @NotNull TargetEnvironment targetEnvironment,
+                            @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+    super(targetEnvironment.createProcess(commandLine, progressIndicator), commandLine.getCommandPresentation(targetEnvironment));
 
     myOut = new Extractor(getProcess().getInputStream(), commandLine.getCharset());
     myErr = new Extractor(getProcess().getErrorStream(), commandLine.getCharset());
@@ -55,8 +59,10 @@ public final class AntProcessHandler extends KillableColoredProcessHandler {
   }
 
   @NotNull
-  public static AntProcessHandler runCommandLine(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    final AntProcessHandler processHandler = new AntProcessHandler(commandLine);
+  public static AntProcessHandler runCommandLine(@NotNull TargetedCommandLine commandLine,
+                                                 @NotNull TargetEnvironment environment,
+                                                 @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+    final AntProcessHandler processHandler = new AntProcessHandler(commandLine, environment, progressIndicator);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }

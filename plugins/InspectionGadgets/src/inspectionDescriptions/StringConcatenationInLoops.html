@@ -1,7 +1,24 @@
 <html>
 <body>
-Reports String concatenation in loops. As every String concatenation copies the whole String, usually it is preferable to replace
-it with explicit calls to <b>StringBuilder.append()</b> or <b>StringBuffer.append()</b>.
+Reports string concatenation in loops, and suggests using <code>StringBuilder</code> instead. As every String concatenation copies the whole
+string, usually it is preferable to replace it with explicit calls to <code>StringBuilder.append()</code> or
+<code>StringBuffer.append()</code>.
+<p>Example:</p>
+<pre>
+  String str = "";
+  for(int i=0; i&lt;10; i++) {
+    str += i;
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  String str = "";
+  StringBuilder strBuilder = new StringBuilder(str);
+  for(int i = 0; i&lt;10; i++) {
+    strBuilder.append(i);
+  }
+  str = strBuilder.toString();
+</pre>
 <!-- tooltip end -->
 <p>
   Sometimes quick-fix actions are available which allow you to convert <code>String</code> variable to <code>StringBuilder</code> or

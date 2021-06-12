@@ -62,6 +62,8 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       private void checkCompact(PsiMethod ctor) {
         PsiCodeBlock body = ctor.getBody();
         if (body == null) return;
+        PsiIdentifier ctorNameIdentifier = ctor.getNameIdentifier();
+        if (ctorNameIdentifier == null) return;
         PsiStatement[] statements = body.getStatements();
         if (statements.length > 0) {
           PsiParameter[] parameters = ctor.getParameterList().getParameters();
@@ -78,7 +80,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         }
         if (ctor.getModifierList().getAnnotations().length == 0 &&
             ctor.getDocComment() == null) {
-          holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
+          holder.registerProblem(ctorNameIdentifier,
                                  JavaBundle.message("inspection.redundant.record.constructor.compact.message"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveRedundantCtorSimplifier());
         }

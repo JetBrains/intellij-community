@@ -149,19 +149,18 @@ public class Iterators {
 
   public static <T> Iterator<T> asIterator(final T elem) {
     return new BaseIterator<T>() {
-      T _elem = elem;
+      private boolean available = true;
 
       @Override
       public boolean hasNext() {
-        return _elem != null;
+        return available;
       }
 
       @Override
       public T next() {
-        T element = _elem;
-        if (element != null) {
-          _elem = null;
-          return element;
+        if (available) {
+          available = false;
+          return elem;
         }
         throw new NoSuchElementException();
       }

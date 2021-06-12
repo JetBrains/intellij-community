@@ -122,7 +122,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           markSkip(repository);
         }
         else {
-          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
+          fatalError(getCommonErrorTitle(), result);
           fatalErrorHappened = true;
         }
       }

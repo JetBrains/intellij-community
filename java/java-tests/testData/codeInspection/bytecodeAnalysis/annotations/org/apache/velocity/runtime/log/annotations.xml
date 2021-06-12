@@ -203,6 +203,7 @@
     </item>
     <item name='org.apache.velocity.runtime.log.RuntimeLoggerLog boolean getShowStackTraces()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -233,6 +234,7 @@
     </item>
     <item name='org.apache.velocity.runtime.log.RuntimeLoggerLog org.apache.velocity.runtime.log.LogChute getLogChute()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

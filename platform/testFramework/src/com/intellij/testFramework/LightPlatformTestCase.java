@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -12,7 +12,11 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -87,11 +91,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.testFramework.RunAll.runAll;
 
-/**
- * @author yole
- */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
   private static Module ourModule;
@@ -325,6 +325,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
       }
+      ActionUtil.performActionDumbAwareWithCallbacks(
+        new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
 
       // startup activities
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
@@ -357,7 +359,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> {
         if (ApplicationManager.getApplication() != null) {
           CodeStyle.dropTemporarySettings(project);
@@ -382,7 +384,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkEditorsReleased(),
       () -> super.tearDown(),
       () -> WriteAction.runAndWait(() -> {
-        if (project != null && LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+        if (project != null) {
           ProjectJdkTableImpl jdkTable = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
           for (Sdk jdk : jdkTable.getAllJdks()) {
             jdkTable.removeTestJdk(jdk);
@@ -461,7 +463,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void checkEditorsReleased() {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used

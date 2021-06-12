@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -177,7 +178,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   @TestOnly
   // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
     EdtInvocationManager.dispatchAllInvocationEvents();
@@ -243,7 +244,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit, updates "outChangedRange"
+  // returns runnable to execute under write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,
@@ -305,7 +306,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       diffLog.doActualPsiChange(file);
 
       assertAfterCommit(document, file, oldFileNode);
-      assert task.cachedViewProvider != null; // just to make an impression the field is used
+      ObjectUtils.reachabilityFence(task.cachedViewProvider); // just to make an impression the field is used
       return true;
     };
   }

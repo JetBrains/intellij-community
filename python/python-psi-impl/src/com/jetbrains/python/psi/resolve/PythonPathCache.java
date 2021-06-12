@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author yole
- */
+
 public abstract class PythonPathCache {
   private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = new ConcurrentHashMap<>();
   private final Map<String, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<>();

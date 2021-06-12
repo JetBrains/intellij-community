@@ -1,12 +1,17 @@
 <html>
 <body>
 Reports any equality or inequality comparisons to
-<b>Double.NaN</b> or <b>Float.NaN</b>.
-Equality comparison to these values is always false. Instead, use the
-<b>Double.isNaN()</b> of <b>Float.isNaN()</b>
-methods instead.
+<code>Double.NaN</code> or <code>Float.NaN</code>.
+This comparison can never be meaningful, as NaN is not equal to anything, including itself.
+Use the <code>Double.isNaN()</code> or <code>Float.isNaN()</code> methods instead.
+<p>Example:</p>
+<pre>
+  if (x == Double.NaN) {...}
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  if (Double.isNaN(x)) {...}
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

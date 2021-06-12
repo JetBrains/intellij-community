@@ -131,10 +131,12 @@ SHELL_SCRIPT
       SIMPLE_COMMAND_ELEMENT
         PsiElement($)('$')
         ARITHMETIC_EXPANSION
-          PsiElement((()('((')
+          PsiElement(()('(')
+          PsiElement(()('(')
           LITERAL_EXPRESSION
             PsiElement(word)('\\nmy\\nVar')
-          PsiElement()))('))')
+          PsiElement())(')')
+          PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

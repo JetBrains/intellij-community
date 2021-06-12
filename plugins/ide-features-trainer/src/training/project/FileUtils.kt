@@ -10,7 +10,7 @@ import java.io.*
 import java.net.URL
 import java.util.jar.JarFile
 
-object FileUtils {
+internal object FileUtils {
   private val LOG = Logger.getInstance(FileUtils::class.java)
 
   @Throws(IOException::class)
@@ -114,7 +114,7 @@ object FileUtils {
     return false
   }
 
-  fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
+  private fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
 
   private fun splitJarPath(path: String): Pair<String, String> {
     val lastIndexOf = path.lastIndexOf(".jar!/")

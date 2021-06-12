@@ -81,8 +81,7 @@ public class MyLookupExpression extends Expression {
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(context.getEditor());
-    final TextResult insertedValue = templateState != null ? templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME) : null;
+    final TextResult insertedValue = context.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
     if (insertedValue != null) {
       if (!insertedValue.getText().isEmpty()) return insertedValue;
     }

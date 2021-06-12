@@ -10,10 +10,4 @@ public interface ShArithmeticExpansion extends ShCompositeElement {
   @Nullable
   ShExpression getExpression();
 
-  @NotNull
-  PsiElement getLeftDoubleParen();
-
-  @Nullable
-  PsiElement getRightDoubleParen();
-
 }

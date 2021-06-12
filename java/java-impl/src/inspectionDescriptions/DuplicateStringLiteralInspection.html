@@ -1,14 +1,15 @@
 <html>
 <body>
 Reports all string literals which are replicated unchanged throughout the project.
-<br> For example:
-<code><pre>
-class C1 { String CONST1=<b><font color="#000080">"duplicate string"</font></b>; }
-class C2 { String CONST2=<b><font color="#000080">"duplicate string"</font></b>; }
+<p>Example:</p>
+<pre>
+  class C1 { String CONST1 = "duplicate string"; }
+  class C2 { String CONST2 = "duplicate string"; }
 </pre>
-</code>
-
-The '<b>Ignore @PropertyKey expressions</b>' option allows you to ignore
-strings passed as arguments to methods annotated with <b>org.jetbrains.annotations.PropertyKey</b> annotation.
+<!-- tooltip end -->
+<p>Use the field below to set the minimal string length required to detect duplicates.</p>
+<p>
+  Use the checkbox below to ignore strings passed as arguments to methods annotated with <code>org.jetbrains.annotations.PropertyKey</code>.
+</p>
 </body>
 </html>

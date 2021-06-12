@@ -280,14 +280,9 @@ public final class ScratchFileActions {
 
     @NotNull
     protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
-      return new Function<>() {
-        final ScratchFileService fileService = ScratchFileService.getInstance();
-
-        @Override
-        public Language fun(VirtualFile file) {
-          Language lang = fileService.getScratchesMapping().getMapping(file);
-          return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
-        }
+      return file -> {
+        Language lang = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
+        return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
       };
     }
 

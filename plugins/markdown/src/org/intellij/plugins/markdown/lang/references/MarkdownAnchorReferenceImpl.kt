@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.lang.references
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.Processor
@@ -13,7 +12,7 @@ import org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
 
 class MarkdownAnchorReferenceImpl internal constructor(private val myAnchor: String,
-                                                       private val myFileReference: FileReference?,
+                                                       private val myFileReference: PsiReference?,
                                                        private val myPsiElement: PsiElement,
                                                        private val myOffset: Int) : MarkdownAnchorReference, PsiPolyVariantReferenceBase<PsiElement>(
   myPsiElement), EmptyResolveMessageProvider {

@@ -93,7 +93,7 @@ public class WelcomeScreenActionsUtil {
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
     DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context);
-    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 
   static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {

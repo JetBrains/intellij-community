@@ -21,6 +21,8 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     val enabledRules = setOf("COMMA_WHICH")
   }
 
+  protected open val additionalEnabledRules: Set<String> = emptySet()
+
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
@@ -36,7 +38,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         )
         state.copy(
           enabledLanguages = enabledLanguages,
-          userEnabledRules = enabledRules,
+          userEnabledRules = enabledRules + additionalEnabledRules,
           checkingContext = checkingContext
         )
       }

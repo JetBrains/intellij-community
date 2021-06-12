@@ -2,251 +2,230 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker.mergePluginsFromRepositories
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.EditorNotifications
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
-import java.io.IOException
-import kotlin.collections.set
 
 open class PluginAdvertiserService {
-  @Throws(IOException::class)
-  fun run(project: Project) {
-    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
-    val extensions = PluginsAdvertiser.loadExtensions()
-    if (extensions != null && unknownFeatures.isEmpty())
-      return
 
-    val features = MultiMap<PluginId?, UnknownFeature>()
-    val disabledPlugins = HashMap<PluginsAdvertiser.Plugin, IdeaPluginDescriptor>()
-    val customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null)
+  companion object {
+    @JvmStatic
+    val instance
+      get() = service<PluginAdvertiserService>()
+  }
 
-    if (project.isDisposed) {
-      return
-    }
+  fun run(
+    project: Project,
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+  ) {
+    val features = MultiMap.createSet<PluginId, UnknownFeature>()
+    val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
-    if (extensions == null) {
-      PluginsAdvertiser.loadAllExtensions(ContainerUtil.map2Set(customPlugins) { pluginDescriptor -> pluginDescriptor.pluginId.idString })
-      if (project.isDisposed) {
-        return
-      }
-
-      EditorNotifications.getInstance(project).updateAllNotifications()
-    }
-
-    val ids = mutableMapOf<PluginId, PluginsAdvertiser.Plugin>()
+    val ids = mutableMapOf<PluginId, PluginData>()
+    val dependencies = PluginFeatureCacheService.instance.dependencies
     unknownFeatures.forEach { feature ->
       ProgressManager.checkCanceled()
-      val installedPlugin = PluginFeatureService.getInstance().getPluginForFeature(
-        feature.featureType,
-        feature.implementationName
-      )
-      if (installedPlugin != null) {
-        val id = PluginId.getId(installedPlugin.pluginId)
-        ids[id] = PluginsAdvertiser.Plugin(installedPlugin.pluginId, installedPlugin.pluginName, installedPlugin.bundled)
-        features.putValue(id, feature)
+      val featureType = feature.featureType
+      val implementationName = feature.implementationName
+      val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
+
+      val installedPluginData = featurePluginData?.pluginData
+
+      fun putFeature(data: PluginData) {
+        val id = data.pluginId
+        ids[id] = data
+        features.putValue(id, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
+      }
+
+      if (installedPluginData != null) {
+        putFeature(installedPluginData)
+      }
+      else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
+        dependencies[implementationName].forEach { putFeature(it) }
       }
       else {
-        val pluginId = PluginsAdvertiser.retrieve(feature)
-        if (!pluginId.isEmpty()) {
-          for (plugin in pluginId) {
-            val id = PluginId.getId(plugin.myPluginId)
-            ids[id] = plugin
-            features.putValue(id, feature)
-          }
-        }
+        MarketplaceRequests.Instance
+          .getFeatures(featureType, implementationName)
+          .mapNotNull { it.toPluginData() }
+          .forEach { putFeature(it) }
       }
     }
 
     //include disabled plugins
-    ids.forEach { (pluginId, plugin) ->
-      if (PluginManagerCore.isDisabled(pluginId)) {
-        val pluginDescriptor = PluginManagerCore.getPlugin(pluginId) ?: return@forEach
-        disabledPlugins[plugin] = pluginDescriptor
+    ids.filter { (pluginId, _) ->
+      PluginManagerCore.isDisabled(pluginId)
+    }.mapNotNull { (pluginId, plugin) ->
+      PluginManagerCore.getPlugin(pluginId)?.let {
+        plugin to it
       }
+    }.forEach { (plugin, pluginDescriptor) ->
+      disabledPlugins[plugin] = pluginDescriptor
     }
 
-    val bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values)
-    val plugins = mutableSetOf<PluginDownloader>()
-
-    if (ids.isNotEmpty()) {
-      val marketplacePlugins =
-        MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ContainerUtil.map(ids.keys) { pluginId -> pluginId.idString })
-
-      val compatibleUpdates = mergePluginsFromRepositories(marketplacePlugins, customPlugins, true)
-      compatibleUpdates.forEach { loadedPlugin ->
-        val existingPlugin = PluginManagerCore.getPlugin(loadedPlugin.pluginId)
-        if (existingPlugin != null &&
-            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, existingPlugin) <= 0
-        ) {
-          return@forEach
-        }
-
+    val bundledPlugin = getBundledPluginToInstall(ids.values)
+    val plugins = if (ids.isEmpty())
+      emptyList()
+    else
+      RepositoryHelper.mergePluginsFromRepositories(
+        MarketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys),
+        customPlugins,
+        true,
+      ).filterNot { loadedPlugin ->
         val pluginId = loadedPlugin.pluginId
-        if (ids.containsKey(pluginId) &&
-            !PluginManagerCore.isDisabled(pluginId) &&
-            !PluginManagerCore.isBrokenPlugin(loadedPlugin)
-        ) {
-          plugins.add(PluginDownloader.createDownloader(loadedPlugin))
+        val compareVersions = PluginManagerCore.getPlugin(pluginId)?.let {
+          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, it) <= 0
+        } ?: false
+
+        compareVersions
+        || !ids.containsKey(pluginId)
+        || PluginManagerCore.isDisabled(pluginId)
+        || PluginManagerCore.isBrokenPlugin(loadedPlugin)
+      }.map { PluginDownloader.createDownloader(it) }
+
+    invokeLater(ModalityState.NON_MODAL) {
+      if (project.isDisposed)
+        return@invokeLater
+
+      val (notificationMessage, notificationActions) = if (plugins.isNotEmpty() ||
+                                                           disabledPlugins.isNotEmpty()) {
+        val action = if (disabledPlugins.isNotEmpty()) {
+          val disabledDescriptors = disabledPlugins.values
+          val title = if (disabledPlugins.size == 1)
+            IdeBundle.message(
+              "plugins.advertiser.action.enable.plugin",
+              disabledDescriptors.single().name
+            )
+          else
+            IdeBundle.message("plugins.advertiser.action.enable.plugins")
+
+          NotificationAction.createSimpleExpiring(title) {
+            FUSEventSource.NOTIFICATION.logEnablePlugins(
+              disabledDescriptors.map { it.pluginId.idString },
+              project,
+            )
+
+            PluginBooleanOptionDescriptor.togglePluginState(true, disabledDescriptors.toSet())
+          }
         }
+        else
+          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
+            FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
+            PluginsAdvertiserDialog(project, plugins, customPlugins).show()
+          }
+
+        getAddressedMessagePresentation(
+          plugins,
+          disabledPlugins.values,
+          features,
+        ) to listOf(action, createIgnoreUnknownFeaturesNotification(project, plugins, disabledPlugins.values, unknownFeatures))
       }
+      else if (bundledPlugin.isNotEmpty()
+               && !isIgnoreUltimate) {
+        IdeBundle.message(
+          "plugins.advertiser.ultimate.features.detected",
+          bundledPlugin.joinToString()
+        ) to listOf(
+          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate")) {
+            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project)
+          },
+          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
+            FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
+          },
+        )
+      }
+      else {
+        return@invokeLater
+      }
+
+      notificationGroup.createNotification(notificationMessage, NotificationType.INFORMATION)
+        .addActions(notificationActions as Collection<AnAction>)
+        .notify(project)
     }
+  }
 
-    ApplicationManager.getApplication().invokeLater({
-                                                      if (project.isDisposed)
-                                                        return@invokeLater
+  private fun createIgnoreUnknownFeaturesNotification(project: Project,
+                                                      plugins: Collection<PluginDownloader>,
+                                                      disabledPlugins: Collection<IdeaPluginDescriptor>,
+                                                      unknownFeatures: Collection<UnknownFeature>): NotificationAction {
+    val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
+              disabledPlugins.map { it.pluginId }
 
-                                                      val notificationActions = mutableListOf<NotificationAction>()
-                                                      var message: String? = null
+    val message = IdeBundle.message("plugins.advertiser.action.ignore.unknown.features", ids.size)
 
-                                                      if (plugins.isNotEmpty() || disabledPlugins.isNotEmpty()) {
-                                                        message = getAddressedMessagePresentation(plugins, disabledPlugins, features)
-                                                        if (disabledPlugins.isNotEmpty()) {
-                                                          val title: String
-                                                          title = if (disabledPlugins.size == 1) {
-                                                            val descriptor = disabledPlugins.values.iterator().next()
-                                                            IdeBundle.message("plugins.advertiser.action.enable.plugin", descriptor.name)
-                                                          }
-                                                          else {
-                                                            IdeBundle.message("plugins.advertiser.action.enable.plugins")
-                                                          }
-                                                          notificationActions.add(
-                                                            NotificationAction.createSimpleExpiring(
-                                                              title
-                                                            ) {
-                                                              val disabledPluginIds =
-                                                                ContainerUtil.map(
-                                                                  disabledPlugins.values
-                                                                ) { plugin: IdeaPluginDescriptor -> plugin.pluginId }
-                                                              val data = FeatureUsageData()
-                                                                .addData("source", "notification")
-                                                                .addData(
-                                                                  "plugins", ContainerUtil.map(
-                                                                  disabledPluginIds
-                                                                ) { id: PluginId -> id.idString }
-                                                                )
-                                                              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                          "enable.plugins", data)
-                                                              PluginsAdvertiser.enablePlugins(project, disabledPluginIds)
-                                                            }
-                                                          )
-                                                        }
-                                                        else {
-                                                          notificationActions.add(
-                                                            NotificationAction.createSimpleExpiring(
-                                                              IdeBundle.message("plugins.advertiser.action.configure.plugins")
-                                                            ) {
-                                                              val data = FeatureUsageData().addData("source", "notification")
-                                                              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                          "configure.plugins", data)
-                                                              PluginsAdvertiserDialog(project, plugins.toTypedArray(), customPlugins).show()
-                                                            }
-                                                          )
-                                                        }
-                                                        notificationActions.add(
-                                                          NotificationAction.createSimpleExpiring(
-                                                            IdeBundle.message("plugins.advertiser.action.ignore.unknown.features")
-                                                          ) {
-                                                            val data = FeatureUsageData().addData("source", "notification")
-                                                            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                        "ignore.unknown.features", data)
-                                                            val featuresCollector = UnknownFeaturesCollector.getInstance(project)
-                                                            for (feature in unknownFeatures) {
-                                                              featuresCollector.ignoreFeature(feature)
-                                                            }
-                                                          }
-                                                        )
-                                                      }
-                                                      else if (bundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(
-                                                          PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
-                                                        message =
-                                                          IdeBundle.message("plugins.advertiser.ultimate.features.detected",
-                                                                            StringUtil.join(bundledPlugin, ", "))
+    return NotificationAction.createSimpleExpiring(message) {
+      FUSEventSource.NOTIFICATION.logIgnoreUnknownFeatures(project)
 
-                                                        notificationActions.add(
-                                                          NotificationAction.createSimpleExpiring(
-                                                            IdeBundle.message("plugins.advertiser.action.try.ultimate")
-                                                          ) {
-                                                            val data = FeatureUsageData().addData("source", "notification")
-                                                            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                        "open.download.page", data)
-                                                            PluginsAdvertiser.openDownloadPage()
-                                                          }
-                                                        )
-                                                        notificationActions.add(
-                                                          NotificationAction.createSimpleExpiring(
-                                                            IdeBundle.message("plugins.advertiser.action.ignore.ultimate")
-                                                          ) {
-                                                            val data = FeatureUsageData().addData("source", "notification")
-                                                            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                        "ignore.ultimate", data)
-                                                            PropertiesComponent.getInstance().setValue(
-                                                              PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true")
-                                                          }
-                                                        )
-                                                      }
-
-                                                      val notificationMessage = message ?: return@invokeLater
-                                                      val notification = PluginsAdvertiser.getNotificationGroup()
-                                                        .createNotification("", notificationMessage, NotificationType.INFORMATION, null)
-
-                                                      notificationActions.forEach { action -> notification.addAction(action) }
-                                                      notification.notify(project)
-
-                                                    }, ModalityState.NON_MODAL)
+      val collector = UnknownFeaturesCollector.getInstance(project)
+      unknownFeatures.forEach { collector.ignoreFeature(it) }
+    }
   }
 
   open fun getAddressedMessagePresentation(
-    plugins: Set<PluginDownloader>,
-    disabledPlugins: Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor?>,
-    features: MultiMap<PluginId?, UnknownFeature>
+    plugins: Collection<PluginDownloader>,
+    disabledPlugins: Collection<IdeaPluginDescriptor>,
+    features: MultiMap<PluginId, UnknownFeature>,
   ): @NotificationContent String {
+    val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
+              disabledPlugins.map { it.pluginId }
 
-    val ids: MutableSet<PluginId> = LinkedHashSet()
-    plugins.forEach { plugin -> ids.add(plugin.id) }
-    disabledPlugins.keys.forEach { plugin -> ids.add(PluginId.getId(plugin.myPluginId)) }
+    val addressedFeatures = collectFeaturesByName(ids, features)
 
-    val addressedFeatures = MultiMap.createSet<String, String>()
-    ids.forEach { id ->
-      features[id].forEach { feature ->
-        addressedFeatures.putValue(feature.featureDisplayName, feature.implementationDisplayName)
-      }
-    }
-
-    val addressedFeaturesNumber = addressedFeatures.size()
     val pluginsNumber = ids.size
     val repoPluginsNumber = plugins.size
 
-    return if (addressedFeaturesNumber == 1) {
-      val feature = addressedFeatures.entrySet().iterator().next()
-      val name = feature.key
-      val text = StringUtil.join(feature.value, ", ")
-      IdeBundle.message("plugins.advertiser.missing.feature", pluginsNumber, name, text, repoPluginsNumber)
+    val entries = addressedFeatures.entrySet()
+    return if (entries.size == 1) {
+      val feature = entries.single()
+      IdeBundle.message(
+        "plugins.advertiser.missing.feature",
+        pluginsNumber,
+        feature.key,
+        feature.value.joinToString(),
+        repoPluginsNumber,
+      )
     }
     else {
-      val text = StringUtil.join(
-        addressedFeatures.entrySet(),
-        { entry -> entry.key + ": " + StringUtil.join(entry.value, ", ") }, "; "
+      IdeBundle.message(
+        "plugins.advertiser.missing.features",
+        pluginsNumber,
+        entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
+        repoPluginsNumber,
       )
-      IdeBundle.message("plugins.advertiser.missing.features", pluginsNumber, text, repoPluginsNumber)
+    }
+  }
+
+  protected fun collectFeaturesByName(ids: Set<PluginId>,
+                                      features: MultiMap<PluginId, UnknownFeature>): MultiMap<String, String> {
+    val result = MultiMap.createSet<String, String>()
+    ids
+      .flatMap { features[it] }
+      .forEach { result.putValue(it.featureDisplayName, it.implementationDisplayName) }
+    return result
+  }
+
+  fun rescanDependencies(project: Project) {
+    val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project)
+    if (dependencyUnknownFeatures.isNotEmpty()) {
+      instance.run(
+        project,
+        loadPluginsFromCustomRepositories(),
+        dependencyUnknownFeatures,
+      )
     }
   }
 }

@@ -1,10 +1,17 @@
 <html>
 <body>
-Reports <b>Externalizable</b> classes which define <b>readObject()</b>
-or <b>writeObject()</b> methods. These methods are not called for serialization of
-<b>Externalizable</b> objects.
+Reports <code>Externalizable</code> classes which define <code>readObject()</code>
+or <code>writeObject()</code> methods. These methods are not called for serialization of
+<code>Externalizable</code> objects.
+<p>Example:</p>
+<pre><code>
+  <b>abstract class</b> Crucial <b>implements</b> Externalizable {
+      <b>int</b> value;
+      <b>private void</b> readObject(ObjectInputStream in) {
+        value = in.readInt();
+      }
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

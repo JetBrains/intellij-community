@@ -14,8 +14,11 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.roots.ui.configuration.SdkLookup.Companion.newLookupBuilder
+import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
+import com.intellij.openapi.roots.ui.configuration.SdkLookupDownloadDecision
+import com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -64,11 +67,11 @@ class UnknownAlternativeSdkResolver(private val project: Project) {
         SdkLookup.getInstance().lookupBlocking(lookup as SdkLookupParameters)
 
         val fix = theFix.get()
-        if (theSdk.get() == null && fix != null && UnknownSdkTracker.getInstance(myProject).isAutoFixAction(fix)) {
+        if (theSdk.get() == null && fix != null && UnknownSdkTracker.getInstance(project).isAutoFixAction(fix)) {
           theFix.set(null)
           invokeAndWaitIfNeeded {
             if (project.isDisposed) return@invokeAndWaitIfNeeded
-            val sdk = UnknownSdkTracker.getInstance(myProject).applyAutoFixAndNotify(fix, indicator)
+            val sdk = UnknownSdkTracker.getInstance(project).applyAutoFixAndNotify(fix, indicator)
             theSdk.set(sdk)
           }
         }

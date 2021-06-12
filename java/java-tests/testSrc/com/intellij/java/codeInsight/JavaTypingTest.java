@@ -152,6 +152,8 @@ public class JavaTypingTest extends BasePlatformTestCase {
 
   public void testEqualAfterBitwiseOp() { doTest('='); }
 
+  public void testDotOnNewLine() { doTest('.'); }
+
   public void testEqualAfterBitwiseOp2() {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFixture.getFile());

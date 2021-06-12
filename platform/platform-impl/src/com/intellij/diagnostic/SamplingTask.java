@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import java.lang.management.*;
+import com.sun.management.OperatingSystemMXBean;
+
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 public class SamplingTask {
   private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-  private final static OperatingSystemMXBean OS_MX_BEAN = ManagementFactory.getOperatingSystemMXBean();
   private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
 
   private final int myDumpInterval;
@@ -24,14 +28,14 @@ public class SamplingTask {
   private long myCurrentTime;
   private final long myGcStartTime;
   private long myGcCurrentTime;
-  private final double myOsAverageLoad;
+  private final double myProcessCpuLoad;
 
   public SamplingTask(int intervalMs, int maxDurationMs) {
     myDumpInterval = intervalMs;
     myMaxDumps = maxDurationMs / intervalMs;
     myCurrentTime = myStartTime = System.nanoTime();
     myGcCurrentTime = myGcStartTime = currentGcTime();
-    myOsAverageLoad = OS_MX_BEAN.getSystemLoadAverage();
+    myProcessCpuLoad = ((OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean()).getProcessCpuLoad();
     ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
     myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
   }
@@ -76,8 +80,8 @@ public class SamplingTask {
     return myGcCurrentTime - myGcStartTime;
   }
 
-  public double getOsAverageLoad() {
-    return myOsAverageLoad;
+  public double getProcessCpuLoad() {
+    return myProcessCpuLoad;
   }
 
   public boolean isValid(long dumpingDuration) {

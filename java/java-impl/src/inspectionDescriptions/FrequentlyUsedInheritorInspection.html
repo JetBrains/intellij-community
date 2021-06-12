@@ -1,8 +1,24 @@
 <html>
 <body>
-The inspection finds commonly used class/interface that could be extended/implemented instead of extending too broad interface or class.
+Reports when a more specific commonly used class or interface could be extended or implemented, instead of the current one.
+The super class needs to be located inside the project source files and
+the project needs to use the IntelliJ IDEA build system for this inspection to work.
+<p>Example:
+<pre>
+  class MyInheritor implements A {} // B suggested on the A reference
+
+  interface A {}
+
+  abstract class B implements A {}
+
+  abstract class C1 extends B {}
+  abstract class C2 extends B {}
+  abstract class C3 extends B {}
+  abstract class C4 extends B {}
+  abstract class C5 extends B {}
+</pre>
 <!-- tooltip end -->
-The inspection works only if a project is built using IntelliJ IDEA build system and a super class is located inside project source files.
+<p>By default this inspection does not highlight in the editor, but only provides a quick fix.
 <p><small>New in 2017.2</small>
 </body>
 </html>

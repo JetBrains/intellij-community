@@ -1,10 +1,19 @@
 <html>
 <body>
 Reports any calls to
-<b>String.replaceAll()</b> or <b>String.split()</b> where the first argument is a single regex meta character argument.
+<code>String.replaceAll()</code> or <code>String.split()</code> where the first argument is a single regex meta character argument.
 The regex meta characters are one of ".$|()[{^?*+\", and these have a special meaning in regular expressions.
-For example calling <b>"ab.cd".replaceAll(".", "-")</b> produces <b>"-----"</b>, because the dot matches any character.
-Most likely the escaped variant <b>"\\."</b> was intended instead.
+For example calling <code>"ab.cd".replaceAll(".", "-")</code> produces <code>"-----"</code>, because the dot matches any character.
+Most likely the escaped variant <code>"\\."</code> was intended instead.
+
+<p>Example:</p>
+<pre>
+  s.replaceAll(".", "-");
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  s.replaceAll("\\.", "-");
+</pre>
 <!-- tooltip end -->
 <p>
 

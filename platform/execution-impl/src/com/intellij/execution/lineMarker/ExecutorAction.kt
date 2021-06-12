@@ -16,10 +16,13 @@ import org.jetbrains.annotations.NonNls
 @Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
                                          val executor: Executor,
-                                         val order: Int) : ActionGroup(), ActionWithDelegate<AnAction> {
+                                         val order: Int) :
+  ActionGroup(), ActionWithDelegate<AnAction>, UpdateInBackground {
   init {
     copyFrom(origin)
   }
+
+  override fun isUpdateInBackground() = (origin as? UpdateInBackground)?.isUpdateInBackground == true
 
   companion object {
     @JvmStatic

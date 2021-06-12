@@ -16,7 +16,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
     return new FutureTask<>(() -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
+      CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
       try {
         for (Runnable runnable : runnables) {
           runnable.run();
@@ -96,7 +96,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         ShowAutoImportPass.fixAllImportsSilently(file, hints);
       }
       finally {
-        CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
+        CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
       }
     }, true);
   }

@@ -1,58 +1,79 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.advertiser.FeaturePluginData
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XMap
 
-@Service
-@State(name = "PluginFeatureService", storages = [Storage("pluginAdvertiser.xml")])
-class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State> {
-  private val featureMappingsCollected = mutableSetOf<String>()
+@Service(Service.Level.APP)
+@State(
+  name = "PluginFeatureService",
+  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)],
+)
+class PluginFeatureService : SimplePersistentStateComponent<PluginFeatureService.State>(State()) {
+  @Tag("features")
+  class FeaturePluginsList : BaseState() {
 
-  class FeaturePluginData(
-    @Attribute("displayName") val displayName: String = "",
-    @Attribute("pluginName") val pluginName: String = "",
-    @Attribute("pluginId") val pluginId: String = "",
-    @Attribute("bundled") val bundled: Boolean = false
-  )
+    @get:XMap
+    val featureMap by linkedMap<String, FeaturePluginData>()
 
-  class FeaturePluginsList {
-    var featureMap = mutableMapOf<String, FeaturePluginData>()
+    operator fun set(implementationName: String, pluginData: FeaturePluginData) {
+      if (featureMap.put(implementationName, pluginData) != pluginData) {
+        incrementModificationCount()
+      }
+    }
+
+    operator fun get(implementationName: String): FeaturePluginData? = featureMap[implementationName]
   }
 
-  class State {
-    var features = mutableMapOf<String, FeaturePluginsList>()
+  @Tag("pluginFeatures")
+  class State : BaseState() {
+
+    @get:XMap
+    val features by linkedMap<String, FeaturePluginsList>()
+
+    operator fun set(featureType: String, pluginsList: FeaturePluginsList) {
+      if (features.put(featureType, pluginsList) != pluginsList) {
+        incrementModificationCount()
+      }
+    }
+
+    operator fun get(featureType: String): FeaturePluginsList {
+      return features.getOrPut(featureType) {
+        incrementModificationCount()
+        FeaturePluginsList()
+      }
+    }
   }
 
   companion object {
     @JvmStatic
-    fun getInstance(): PluginFeatureService = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
+    val instance: PluginFeatureService
+      get() = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
   }
 
-  private var state = State()
-
-  override fun getState(): State = state
-
-  override fun loadState(state: State) {
-    this.state = state
-  }
-
-  fun <T> collectFeatureMapping(featureType: String, ep: ExtensionPointName<T>, idMapping: (T) -> String, displayNameMapping: (T) -> String) {
-    if (!featureMappingsCollected.add(featureType)) return
-
-    val pluginsList = state.features.getOrPut(featureType) { FeaturePluginsList() }
-    ep.processWithPluginDescriptor { ext, pluginDescriptor ->
-      val id = idMapping(ext)
-      val displayName = displayNameMapping(ext)
-      pluginsList.featureMap[id] = FeaturePluginData(
-        displayName, pluginDescriptor.name, pluginDescriptor.pluginId.idString, pluginDescriptor.isBundled)
+  fun <T> collectFeatureMapping(
+    featureType: String,
+    ep: ExtensionPointName<T>,
+    idMapping: (T) -> String,
+    displayNameMapping: (T) -> String,
+  ) {
+    val pluginsList = state[featureType]
+    ep.processWithPluginDescriptor { ext, descriptor ->
+      pluginsList[idMapping(ext)] = FeaturePluginData(
+        displayNameMapping(ext),
+        PluginData(descriptor),
+      )
     }
   }
 
   fun getPluginForFeature(featureType: String, implementationName: String): FeaturePluginData? {
-    val pluginList = state.features[featureType] ?: return null
-    return pluginList.featureMap[implementationName] ?: return null
+    return state[featureType].let { pluginsList ->
+      pluginsList[implementationName]
+    }
   }
 }

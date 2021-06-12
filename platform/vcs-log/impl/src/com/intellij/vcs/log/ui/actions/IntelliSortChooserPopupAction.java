@@ -51,14 +51,14 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
       else {
         popup.showInCenterOf(component);
       }
-    } else {
+    }
+    else {
       popup.showInFocusCenter();
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {

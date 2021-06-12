@@ -58,7 +58,8 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
                                      final SimpleJavaParameters parameters,
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
-                                     String sourceMapPath) {
+                                     String sourceMapPath,
+                                     final Project project) {
     appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
   }
 

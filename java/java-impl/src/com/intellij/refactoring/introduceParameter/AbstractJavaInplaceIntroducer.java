@@ -182,6 +182,16 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
       return (PsiExpression)refVariableElementParent;
     }
 
+    if (expression == null &&
+        refVariableElement instanceof PsiIdentifier &&
+        refVariableElementParent instanceof PsiJavaCodeReferenceElement &&
+        refVariableElement.getText().equals(psiVariable.getName())) {
+      // E.g. "this.x y = z;" is parsed as two expression statements
+      // but "a.x y = z;" is parsed as declaration of variable y of type a.x, 
+      // so 'a' is not a reference to the variable 'a' but a type reference
+      return (PsiExpression)refVariableElementParent.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
+    }
+
     return null;
   }
 

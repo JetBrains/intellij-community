@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -7,16 +7,12 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
-import com.intellij.util.pico.DefaultPicoContainer
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
@@ -34,7 +30,6 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -73,7 +68,8 @@ internal class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save()
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml"))
+      .isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -173,16 +169,16 @@ internal class ApplicationStoreTest {
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
-    val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-    val componentKey = A::class.java.name
-    picoContainer.registerComponent(DefaultPicoContainer.InstanceComponentAdapter(componentKey, component))
+    ApplicationManager.getApplication().registerServiceInstance(A::class.java, component)
     try {
-      assertThat(getExportableItemsFromLocalStorage(getExportableComponentsMap(false, storageManager), storageManager)).containsOnly(
-        componentPath.to(listOf(LocalExportableItem(componentPath, ""))),
-        additionalPath.to(listOf(LocalExportableItem(additionalPath, " (schemes)"))))
+      assertThat(getExportableItemsFromLocalStorage(getExportableComponentsMap(false, storageManager), storageManager))
+        .containsOnly(
+          componentPath.to(listOf(LocalExportableItem(componentPath, ""))),
+          additionalPath.to(listOf(LocalExportableItem(additionalPath, " (schemes)")))
+        )
     }
     finally {
-      picoContainer.unregisterComponent(componentKey)
+      (ApplicationManager.getApplication().picoContainer as MutablePicoContainer).unregisterComponent(A::class.java)
     }
   }
 
@@ -430,9 +426,7 @@ internal class ApplicationStoreTest {
 
   @State(name = "A", storages = [(Storage("new.xml")), (Storage(value = "old.xml", deprecated = true))])
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
-    override fun getState(): SeveralStoragesConfigured? {
-      return this
-    }
+    override fun getState() = this
 
     override fun loadState(state: SeveralStoragesConfigured) {
       XmlSerializerUtil.copyBean(state, this)

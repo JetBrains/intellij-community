@@ -296,10 +296,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (element == null) element = initializerExpression.getParent();
     PsiElement parent = element;
     while (parent != null) {
-      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass && myIsConstant)) {
+      if (parent instanceof PsiClass && (!myIsConstant || LocalToFieldHandler.mayContainConstants((PsiClass)parent))) {
         return (PsiClass)parent;
       }
-      parent = parent.getParent();
+      parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
     }
     return null;
   }

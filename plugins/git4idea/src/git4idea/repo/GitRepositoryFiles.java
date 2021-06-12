@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
 
+  private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
 
@@ -79,7 +81,10 @@ public final class GitRepositoryFiles {
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
 
-  private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+  private @Nullable @NonNls String myCustomHooksDirPath;
+
+  private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+    myRootDir = rootDir;
     myMainDir = mainDir;
     myWorktreeDir = worktreeDir;
 
@@ -111,10 +116,11 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
+  public static GitRepositoryFiles getInstance(@NotNull VirtualFile rootDir,
+                                               @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
-    return new GitRepositoryFiles(mainDir, gitDir);
+    return new GitRepositoryFiles(rootDir, mainDir, gitDir);
   }
 
   /**
@@ -221,19 +227,29 @@ public final class GitRepositoryFiles {
     return file(myMergeSquashPath);
   }
 
+  public void updateCustomPaths(@NotNull GitConfig.Core core) {
+    String hooksPath = core.getHooksPath();
+    if (hooksPath != null) {
+      myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+    }
+    else {
+      myCustomHooksDirPath = null;
+    }
+  }
+
   @NotNull
   public File getPreCommitHookFile() {
-    return file(myHooksDirPath + slash(PRE_COMMIT_HOOK));
+    return hook(PRE_COMMIT_HOOK);
   }
 
   @NotNull
   public File getPrePushHookFile() {
-    return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
+    return hook(PRE_PUSH_HOOK);
   }
 
   @NotNull
   public File getCommitMsgHookFile() {
-    return file(myHooksDirPath + slash(COMMIT_MSG_HOOK));
+    return hook(COMMIT_MSG_HOOK);
   }
 
   @NotNull
@@ -249,6 +265,11 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getStashReflogFile() {
     return file(myStashReflogPath);
+  }
+
+  @NotNull
+  private File hook(@NotNull String filePath) {
+    return file(ObjectUtils.chooseNotNull(myCustomHooksDirPath, myHooksDirPath) + slash(filePath));
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,12 +7,12 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TObjectLongHashMap;
-import gnu.trove.TObjectLongProcedure;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -79,7 +79,7 @@ public final class IndexingStamp {
    */
   private static final class Timestamps {
     private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
-    private TObjectLongHashMap<ID<?, ?>> myIndexStamps;
+    private Object2LongMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
@@ -101,8 +101,12 @@ public final class IndexingStamp {
           if (id != null && !(id instanceof StubIndexKey)) {
             long stamp = IndexVersion.getIndexCreationStamp(id);
             if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-            if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
-            if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+            if (myIndexStamps == null) {
+              myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+            }
+            if (stamp <= dominatingIndexStamp) {
+              myIndexStamps.put(id, stamp);
+            }
           }
         }
 
@@ -112,8 +116,12 @@ public final class IndexingStamp {
             if (id != null && !(id instanceof StubIndexKey)) {
               if (IndexVersion.getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
               long stamp = INDEX_DATA_OUTDATED_STAMP;
-              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
-              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+              if (myIndexStamps == null) {
+                myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+              }
+              if (stamp <= dominatingIndexStamp) {
+                myIndexStamps.put(id, stamp);
+              }
             }
           }
         }
@@ -125,78 +133,63 @@ public final class IndexingStamp {
     // Note, that FSRecords.REASONABLY_SMALL attribute storage allocation policy will give an attribute 32 bytes to each file
     // Compact format allows 22 indexed states in this state
     private void writeToStream(final DataOutputStream stream) throws IOException {
-      if (myIndexStamps != null && !myIndexStamps.isEmpty()) {
-        final long[] data = new long[2];
-        final int dominatingStampIndex = 0;
-        final int numberOfOutdatedIndex = 1;
-        myIndexStamps.forEachEntry(
-          new TObjectLongProcedure<>() {
-            @Override
-            public boolean execute(ID<?, ?> a, long b) {
-              if (b == INDEX_DATA_OUTDATED_STAMP) {
-                ++data[numberOfOutdatedIndex];
-                b = IndexVersion.getIndexCreationStamp(a);
-              }
-              data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
-
-              if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
-                FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
-              }
-
-              return true;
-            }
-          }
-        );
-        if (data[numberOfOutdatedIndex] > 0) {
-          assert data[numberOfOutdatedIndex] < ID.MAX_NUMBER_OF_INDICES;
-          DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase + data[numberOfOutdatedIndex]);
-          myIndexStamps.forEachEntry(new TObjectLongProcedure<>() {
-            @Override
-            public boolean execute(final ID<?, ?> id, final long timestamp) {
-              try {
-                if (timestamp == INDEX_DATA_OUTDATED_STAMP) {
-                  DataInputOutputUtil.writeINT(stream, id.getUniqueId());
-                }
-                return true;
-              }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
-        }
-        DataInputOutputUtil.writeTIME(stream, data[dominatingStampIndex]);
-        myIndexStamps.forEachEntry(new TObjectLongProcedure<>() {
-          @Override
-          public boolean execute(final ID<?, ?> id, final long timestamp) {
-            try {
-              if (timestamp == INDEX_DATA_OUTDATED_STAMP) return true;
-              DataInputOutputUtil.writeINT(stream, id.getUniqueId());
-              return true;
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-      }
-      else {
+      if (myIndexStamps == null || myIndexStamps.isEmpty()) {
         DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase);
+        return;
+      }
+
+      final long[] data = new long[2];
+      final int dominatingStampIndex = 0;
+      final int numberOfOutdatedIndex = 1;
+      ObjectSet<Object2LongMap.Entry<ID<?, ?>>> entries = myIndexStamps.object2LongEntrySet();
+      for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
+        long b = entry.getLongValue();
+        if (b == INDEX_DATA_OUTDATED_STAMP) {
+           ++data[numberOfOutdatedIndex];
+           b = IndexVersion.getIndexCreationStamp(entry.getKey());
+         }
+         data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
+
+         if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
+           FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
+         }
+      }
+
+      if (data[numberOfOutdatedIndex] > 0) {
+        assert data[numberOfOutdatedIndex] < ID.MAX_NUMBER_OF_INDICES;
+        DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase + data[numberOfOutdatedIndex]);
+        for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
+          if (entry.getLongValue() == INDEX_DATA_OUTDATED_STAMP) {
+            DataInputOutputUtil.writeINT(stream, entry.getKey().getUniqueId());
+          }
+        }
+      }
+
+      DataInputOutputUtil.writeTIME(stream, data[dominatingStampIndex]);
+      for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
+        if (entry.getLongValue() != INDEX_DATA_OUTDATED_STAMP) {
+          DataInputOutputUtil.writeINT(stream, entry.getKey().getUniqueId());
+        }
       }
     }
 
     private long get(ID<?, ?> id) {
-      return myIndexStamps != null ? myIndexStamps.get(id) : HAS_NO_INDEXED_DATA_STAMP;
+      return myIndexStamps != null ? myIndexStamps.getLong(id) : HAS_NO_INDEXED_DATA_STAMP;
     }
 
     private void set(ID<?, ?> id, long tmst) {
-      if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
+      if (myIndexStamps == null) {
+        myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+      }
 
-      if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
+      if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.containsKey(id)) {
         return;
       }
-      long previous = tmst == HAS_NO_INDEXED_DATA_STAMP ? myIndexStamps.remove(id) : myIndexStamps.put(id, tmst);
-      if (previous != tmst) myIsDirty = true;
+
+      long previous = tmst == HAS_NO_INDEXED_DATA_STAMP ? myIndexStamps.removeLong(id) : myIndexStamps.put(id, tmst);
+      if (previous != tmst) {
+        myIsDirty = true;
+      }
     }
 
     public boolean isDirty() {
@@ -268,12 +261,7 @@ public final class IndexingStamp {
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-        final SmartList<ID<?, ?>> retained = new SmartList<>();
-        stamp.myIndexStamps.forEach(object -> {
-          retained.add(object);
-          return true;
-        });
-        return retained;
+        return List.copyOf(stamp.myIndexStamps.keySet());
       }
     }
     catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {

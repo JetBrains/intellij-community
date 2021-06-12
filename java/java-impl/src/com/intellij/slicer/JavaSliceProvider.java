@@ -155,7 +155,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
     if (psiClass != null && psiClass.isEnum()) {
       PsiField enumConstant = psiClass.findFieldByName(filter, false);
       if (enumConstant instanceof PsiEnumConstant) {
-        return new JavaValueFilter(DfTypes.constant(enumConstant, type));
+        return new JavaValueFilter(DfTypes.referenceConstant(enumConstant, type));
       } else {
         throw new SliceFilterParseException(JavaBundle.message("slice.filter.parse.error.enum.constant.not.found", filter));
       }

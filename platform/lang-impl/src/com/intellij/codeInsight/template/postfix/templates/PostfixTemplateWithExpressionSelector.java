@@ -66,7 +66,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   }
 
   @Override
-  public final boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     return mySelector.hasExpression(context, copyDocument, newOffset);
   }
 

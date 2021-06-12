@@ -1,0 +1,2 @@
+headers = dummy.h
+compilerOpts = -Ilibs

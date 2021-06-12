@@ -31,9 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @NotNull

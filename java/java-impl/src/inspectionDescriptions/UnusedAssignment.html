@@ -1,9 +1,43 @@
 <html>
 <body>
-Points out cases where a variable value
-is never used after its assignment, i.e.: <br>
-&nbsp;- the variable never gets read after assignment OR <br>
-&nbsp;- the value is always overwritten with another assignment before the next variable read OR <br>
-&nbsp;- the variable initializer is redundant (for one of the above two reasons)
+Reports the cases where a variable is redundant as its value is never used after its assignment.<br>
+If the variable is unused, it's better to remove it to shorten the code and to avoid redundant allocations.
+<p>So the following cases are reported:</p>
+<ul>
+  <li>the variable never gets read after assignment</li>
+  <li>the value is always overwritten with another assignment before the next variable read</li>
+  <li>the variable initializer is redundant (for one of the above two reasons)</li>
+</ul>
+<!-- tooltip end -->
+<p>
+Use the first checkbox below to have this inspection report about redundant initializers:
+</p>
+<pre>
+  int getI() {
+    int i = 0; // redundant initialization
+    i = 2;
+    return i;
+  }
+</pre>
+<p>
+Use the second checkbox below to have this inspection report about the cases when <code>++i</code> expression
+may be replaced with <code>i + 1</code> one:
+</p>
+<pre>
+  int preInc(int i) {
+    int res = i;
+    return ++res;
+  }
+</pre>
+<p>
+Use the third checkbox below to have this inspection report about the cases when the result of <code>i++</code> expression
+is not used later:
+</p>
+<pre>
+  int postInc(int i) {
+    int res = i;
+    return res++;
+  }
+</pre>
 </body>
 </html>

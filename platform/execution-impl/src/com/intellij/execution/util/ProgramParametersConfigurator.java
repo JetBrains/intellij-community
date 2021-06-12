@@ -11,6 +11,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,8 @@ public class ProgramParametersConfigurator {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
+  private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");
+  private boolean myValidation;
 
   public void configureConfiguration(@NotNull SimpleProgramParameters parameters, @NotNull CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
@@ -76,10 +80,15 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  private static DataContext projectContext(Project project, Module module) {
+  public void setValidation(boolean validation) {
+    myValidation = validation;
+  }
+
+  private DataContext projectContext(Project project, Module module) {
     return dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
       if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
+      if (VALIDATION_MODE.is(dataId)) return myValidation;
       return null;
     };
   }
@@ -127,7 +136,14 @@ public class ProgramParametersConfigurator {
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
     try {
-      return macro instanceof PromptingMacro ? macro.expand(dataContext) : macro.preview();
+      if (macro instanceof PromptingMacro) {
+        Boolean mode = VALIDATION_MODE.getData(dataContext);
+        if (mode != null && mode) {
+          throw new IncorrectOperationException();
+        }
+        return macro.expand(dataContext);
+      }
+      return macro.preview();
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;

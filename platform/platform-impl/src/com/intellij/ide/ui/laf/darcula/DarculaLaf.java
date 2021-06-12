@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.DarculaMetalTheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -19,7 +19,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,44 +36,35 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
-  private static final Logger LOG = Logger.getInstance(DarculaLaf.class);
-
   private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
-  private BasicLookAndFeel base;
+  private LookAndFeel base;
+  private boolean isBaseInitialized;
 
   protected Disposable myDisposable;
-  private Alarm myMnemonicAlarm;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
 
-  protected BasicLookAndFeel createBaseLookAndFeel() {
-    try {
-      if (SystemInfo.isMac) {
-        final String name = UIManager.getSystemLookAndFeelClassName();
-        Constructor<?> constructor = Class.forName(name).getDeclaredConstructor();
-        constructor.setAccessible(true);
-        return (BasicLookAndFeel)constructor.newInstance();
-      }
-      else {
-        return new IdeaLaf();
-      }
-    }
-    catch (Exception e) {
-      log(e);
-    }
-    return null;
+  public DarculaLaf(@NotNull LookAndFeel base) {
+    this.base = base;
+    isBaseInitialized = true;
+  }
+
+  public DarculaLaf() {
   }
 
   private void callInit(String method, UIDefaults defaults) {
@@ -99,11 +90,10 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected static void log(Exception e) {
-    LOG.error(e.getMessage());
+    Logger.getInstance(DarculaLaf.class).error(e);
   }
 
-  @NotNull
-  private static Font toFont(UIDefaults defaults, Object key) {
+  private static @NotNull Font toFont(UIDefaults defaults, Object key) {
     Object value = defaults.get(key);
     if (value instanceof Font) {
       return (Font)value;
@@ -123,9 +113,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       UIDefaults defaults = base.getDefaults();
 
-      if (SystemInfo.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+      if (SystemInfoRt.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
         defaults.keySet().stream().
-          filter(key -> StringUtil.endsWith(key.toString(), ".font")).
+          filter(key -> key.toString().endsWith(".font")).
           forEach(key -> {
             Font font = toFont(defaults, key);
             Font uiFont = new FontUIResource("Dialog", font.getStyle(), font.getSize());
@@ -133,17 +123,17 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           });
       }
 
-      LafManagerImpl.initInputMapDefaults(defaults);
+      StartupUiUtil.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
       patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isLinux && JBUIScale.isUsrHiDPI()) {
+      if (SystemInfoRt.isLinux && JBUIScale.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",
           "released ENTER", "release",
@@ -195,12 +185,12 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   private void patchStyledEditorKit(UIDefaults defaults) {
     URL url = getClass().getResource(getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css"));
-    StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
+    StyleSheet styleSheet = StartupUiUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
       Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
       keyField.setAccessible(true);
-      AppContext.getAppContext().put(keyField.get(null), UIUtil.loadStyleSheet(url));
+      AppContext.getAppContext().put(keyField.get(null), StartupUiUtil.loadStyleSheet(url));
     }
     catch (Exception e) {
       log(e);
@@ -214,7 +204,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
-    String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     return getPrefix() + "_" + osSuffix;
   }
 
@@ -282,26 +272,55 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    Properties properties = new Properties();
+    if (Boolean.parseBoolean(System.getProperty("ide.load.laf.as.json", "true"))) {
+      loadDefaultsFromJson(defaults);
+    }
+    else {
+      loadDefaultsFromProperties(defaults);
+    }
+  }
+
+  protected void loadDefaultsFromJson(UIDefaults defaults) {
+    String filename = getPrefix() + ".theme.json";
+    try (InputStream stream = getClass().getResourceAsStream(filename)) {
+     assert stream != null : "Can't load " + filename;
+     UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+     theme.applyProperties(defaults);
+    }
+    catch (IOException e) {
+      log(e);
+    }
+  }
+
+  protected void loadDefaultsFromProperties(UIDefaults defaults) {
     try {
+      Map<String, String> map = new HashMap<>(300);
+      //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+      Properties properties = new Properties() {
+        @Override
+        public Object put(Object key, Object value) {
+          return map.put((String)key, (String)value);
+        }
+      };
       try (InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties")) {
         properties.load(stream);
       }
 
       String systemPrefix = getSystemPrefix();
-      if (StringUtil.isNotEmpty(systemPrefix)) {
+      if (systemPrefix != null && !systemPrefix.isEmpty()) {
         try (InputStream stream = getClass().getResourceAsStream(systemPrefix + ".properties")) {
           properties.load(stream);
         }
       }
 
-      Map<String, Object> darculaGlobalSettings = new HashMap<>();
+      Map<String, Object> darculaGlobalSettings = new HashMap<>(32);
       String prefix = getPrefix();
       prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
 
-      for (String key : properties.stringPropertyNames()) {
+      for (String key : map.keySet()) {
         if (key.startsWith(prefix)) {
-          Object value = parseValue(key, properties.getProperty(key));
+          Object value = parseValue(key, map.get(key));
           String darculaKey = key.substring(prefix.length());
           if (value == SYSTEM) {
             darculaGlobalSettings.remove(darculaKey);
@@ -312,20 +331,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         }
       }
 
+      UIDefaults multiUiDefaults = UIManager.getDefaults();
       for (Object key : defaults.keySet()) {
         if (key instanceof String && ((String)key).contains(".")) {
-          final String s = (String)key;
-          final String darculaKey = s.substring(s.lastIndexOf('.') + 1);
+          String s = (String)key;
+          String darculaKey = s.substring(s.lastIndexOf('.') + 1);
           if (darculaGlobalSettings.containsKey(darculaKey)) {
-            UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
+            // MultiUIDefaults misses correct property merging
+            multiUiDefaults.remove(key);
             defaults.put(key, darculaGlobalSettings.get(darculaKey));
           }
         }
       }
 
-      for (String key : properties.stringPropertyNames()) {
-        UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
-        defaults.put(key, parseValue(key, properties.getProperty(key)));
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        // MultiUIDefaults misses correct property merging
+        multiUiDefaults.remove(entry.getKey());
+        defaults.put(entry.getKey(), parseValue(entry.getKey(), entry.getValue()));
       }
     }
     catch (IOException e) {
@@ -336,13 +358,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   protected Object parseValue(String key, @NotNull String value) {
     if ("system".equals(value)) {
       return SYSTEM;
-    }
-
-    if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, getClass(), true, false);
-      if (icon != null) {
-        return icon;
-      }
     }
 
     return UITheme.parseValue(key, value, getClass().getClassLoader());
@@ -386,35 +401,78 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Override
   public void initialize() {
-    myDisposable = Disposer.newDisposable();
-    base = createBaseLookAndFeel();
-
-    try {
-      base.initialize();
-    }
-    catch (Exception ignore) {
-    }
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      Disposer.register(application, myDisposable);
-    }
-    myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
-    IdeEventQueue.getInstance().addDispatcher(e -> {
-      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
-        processAltKey((KeyEvent)e);
+    if (!isBaseInitialized) {
+      try {
+        if (base == null) {
+          base = createBaseLaF();
+        }
+        base.initialize();
       }
-      return false;
-    }, myDisposable);
+      catch (Throwable e) {
+        Logger.getInstance(DarculaLaf.class).error(e);
+      }
+    }
+
+    if (LoadingState.LAF_INITIALIZED.isOccurred()) {
+      ideEventQueueInitialized(IdeEventQueue.getInstance());
+    }
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private void processAltKey(KeyEvent e) {
-    myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-    myMnemonicAlarm.cancelAllRequests();
-    final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner != null) {
-      myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
+  @ApiStatus.Internal
+  public static @NotNull LookAndFeel createBaseLaF() throws Throwable {
+    if (SystemInfoRt.isMac) {
+      Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
+      return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
     }
+    else {
+      return new IdeaLaf();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void appCreated(@NotNull Disposable parent) {
+    if (myDisposable != null) {
+      Disposer.register(parent, myDisposable);
+    }
+  }
+
+  @ApiStatus.Internal
+  public final void ideEventQueueInitialized(@NotNull IdeEventQueue eventQueue) {
+    if (myDisposable == null) {
+      myDisposable = Disposer.newDisposable();
+      if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+        Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          Disposer.register(application, myDisposable);
+        }
+      }
+    }
+
+    eventQueue.addDispatcher(new IdeEventQueue.EventDispatcher() {
+      private Alarm mnemonicAlarm;
+
+      @Override
+      public boolean dispatch(@NotNull AWTEvent e) {
+        if (!(e instanceof KeyEvent) || ((KeyEvent)e).getKeyCode() != KeyEvent.VK_ALT) {
+          return false;
+        }
+
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        Alarm mnemonicAlarm = this.mnemonicAlarm;
+        if (mnemonicAlarm == null) {
+          mnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+          this.mnemonicAlarm = mnemonicAlarm;
+        }
+
+        mnemonicAlarm.cancelAllRequests();
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (focusOwner != null) {
+          mnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
+        }
+        return false;
+      }
+    }, myDisposable);
   }
 
   public static boolean isAltPressed() {
@@ -422,17 +480,21 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   private static void repaintMnemonics(@NotNull Component focusOwner, boolean pressed) {
-    if (pressed != myAltPressed) return;
+    if (pressed != myAltPressed) {
+      return;
+    }
+
     Window window = SwingUtilities.windowForComponent(focusOwner);
-    if (window != null) {
-      for (Component component : window.getComponents()) {
-        if (component instanceof JComponent) {
-          for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
-            if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
-                || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
-            ) {
-              c.repaint();
-            }
+    if (window == null) {
+      return;
+    }
+
+    for (Component component : window.getComponents()) {
+      if (component instanceof JComponent) {
+        for (JComponent c : ComponentUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
+          if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1) ||
+              (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)) {
+            c.repaint();
           }
         }
       }
@@ -442,16 +504,20 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   public void uninitialize() {
     try {
-      base.initialize();
+      isBaseInitialized = false;
+      base.uninitialize();
     }
     catch (Exception ignore) {
     }
-    Disposer.dispose(myDisposable);
-    myDisposable = null;
+
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
   }
 
   @Override
-  protected void loadSystemColors(UIDefaults defaults, String[] systemColors, boolean useNative) {
+  protected final void loadSystemColors(UIDefaults defaults, String[] systemColors, boolean useNative) {
     try {
       Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
                                                                     UIDefaults.class,
@@ -466,8 +532,10 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
-  public Icon getDisabledIcon(JComponent component, Icon icon) {
-    if (icon == null) return null;
+  public final Icon getDisabledIcon(JComponent component, Icon icon) {
+    if (icon == null) {
+      return null;
+    }
 
     ScaleContext ctx = ScaleContext.create(component);
     icon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
@@ -481,7 +549,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
-  public boolean getSupportsWindowDecorations() {
+  public final boolean getSupportsWindowDecorations() {
     return true;
   }
 }

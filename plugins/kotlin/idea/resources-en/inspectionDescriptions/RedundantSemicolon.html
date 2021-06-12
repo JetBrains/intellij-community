@@ -1,0 +1,40 @@
+<html>
+<body>
+    Reports redundant semicolons (';') which may be removed.
+<p>
+    Kotlin does not require semicolon at the end of each statement or expression line.
+    Associated 'Remove redundant semicolon' quick-fix allows to amend the code.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  val myMap = mapOf("one" to 1, "two" to 2);
+  myMap.forEach { (key, value) ->  print("$key -> $value")};
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  val myMap = mapOf("one" to 1, "two" to 2)
+  myMap.forEach { (key, value) ->  print("$key -> $value")}
+</code></pre>
+
+<p>There are two cases though where ';' is required:</p>
+<ol>
+    <li>
+        Statements placed on a single line need to be separated with semicolon:
+<pre><code>
+  map.forEach { val (key, value) = it; println("$key -> $value") }
+</code></pre>
+    </li>
+    <li>
+        'enum' class having a list of enums and also properties or functions requires ';' after the enum list:
+<pre><code>
+  enum class Mode {
+    SILENT, VERBOSE;
+
+    fun isSilent(): Boolean = this == SILENT
+  }
+</code></pre>
+    </li>
+</ol>
+</body>
+</html>

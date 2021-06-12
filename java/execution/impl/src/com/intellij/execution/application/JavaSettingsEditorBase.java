@@ -2,7 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.diagnostic.logging.LogsFragment;
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -33,13 +33,13 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 
-    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath(null, null, null);
+    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath();
     ModuleClasspathCombo classpathCombo = moduleClasspath.component();
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
 
-    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
+    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), () -> classpathCombo.getSelectedModule());
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 
@@ -65,7 +65,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(moduleClasspath);
     customizeFragments(fragments, moduleClasspath, commonParameterFragments);
 
-    fragments.add(new LogsFragment<>());
+    fragments.add(new LogsGroupFragment<>());
     return fragments;
   }
 

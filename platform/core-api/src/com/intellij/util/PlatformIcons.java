@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -70,11 +70,6 @@ public interface PlatformIcons {
   Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked;
   Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_selected;
 
-  /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
   Icon EDIT_IN_SECTION_ICON = AllIcons.Actions.Edit;
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;

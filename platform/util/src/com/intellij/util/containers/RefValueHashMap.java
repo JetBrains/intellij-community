@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.HashMap;
 import java.util.*;
+import java.util.function.Supplier;
 
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "childrenArray()")
 abstract class RefValueHashMap<K, V> implements Map<K, V> {
@@ -28,17 +26,13 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
     return new IncorrectOperationException("containsValue() makes no sense for weak/soft map because GC can clear the key any moment now");
   }
 
-  protected interface MyReference<K,T> extends Getter<T> {
+  protected interface MyReference<K,T> extends Supplier<T> {
     @NotNull
     K getKey();
   }
 
   RefValueHashMap() {
     myMap = new HashMap<>();
-  }
-
-  RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    myMap = new THashMap<>(strategy);
   }
 
   protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue);

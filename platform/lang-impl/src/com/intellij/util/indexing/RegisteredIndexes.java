@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,14 +83,12 @@ public final class RegisteredIndexes {
   }
 
   void waitUntilAllIndicesAreInitialized() {
-    try {
-      waitUntilIndicesAreInitialized();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(myAllIndicesInitializedFuture);
-    } catch (Throwable ignore) {}
+    waitUntilIndicesAreInitialized();
+    await(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+    await(myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -177,6 +175,23 @@ public final class RegisteredIndexes {
     @Override
     void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
+    }
+  }
+
+  private static void await(@NotNull Future<?> future) {
+    if (ProgressManager.getInstance().isInNonCancelableSection()) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException e) {
+        FileBasedIndexImpl.LOG.error(e);
+      }
+      catch (ExecutionException e) {
+        FileBasedIndexImpl.LOG.error(e);
+      }
+    }
+    else {
+      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
     }
   }
 }

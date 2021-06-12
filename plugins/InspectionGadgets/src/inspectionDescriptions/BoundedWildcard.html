@@ -1,31 +1,44 @@
 <html>
 <body>
 Reports generic method parameters that can use <a href="https://en.wikipedia.org/wiki/Wildcard_(Java)">bounded wildcards</a> in your API.
-To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Josh Bloch</a> in <em>Effective Java</em> third Edition:
-<blockquote>
-  <h4>Item 31: Use bounded wildcards to increase API flexibility</h4>
-  Using wildcard types in your APIs, while tricky, makes the APIs far more flexible.
-  If you write a library that will be widely used, the proper use of wildcard types should be considered mandatory.
-  Remember the basic rule: producer-extends, consumer-super (PECS).
-  Also remember that all Comparables and Comparators are consumers.
-</blockquote>
-<p>Example:
-  <pre><code>void process(Consumer&lt;Number&gt; consumer);</code></pre> should be replaced with:
-  <pre><code>void process(Consumer&lt;? super Number&gt; consumer);</code></pre>
-  This method signature is more flexible because it accepts more types, not only
-  <code>Consumer&lt;Number&gt;</code> but also <code>Consumer&lt;Object&gt;</code>.
+<p>Example:</p>
+<pre>
+  void process(Consumer&lt;Number&gt; consumer);
+</pre>
+<p>should be replaced with:</p>
+<pre>
+  void process(Consumer&lt;? super Number&gt; consumer);
+</pre>
 <p>
-  Likewise, type parameters in covariant position:
-  <pre><code>T produce(Producer&lt;T&gt; p);</code></pre> should be replaced with:
-  <pre><code>T produce(Producer&lt;? extends T&gt; p);</code></pre>
-  <!-- tooltip end -->
+  This method signature is more flexible because it accepts more types: not only
+  <code>Consumer&lt;Number&gt;</code>, but also <code>Consumer&lt;Object&gt;</code>.
+</p>
+<p>Likewise, type parameters in covariant position:</p>
+<pre>
+  T produce(Producer&lt;T&gt; p);
+</pre>
+<p>should be replaced with:</p>
+<pre>
+  T produce(Producer&lt;? extends T&gt; p);
+</pre>
+<!-- tooltip end -->
 <p>
-  Use the first checkbox to ignore <b>invariant</b> classes.
+  To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Josh Bloch</a> in <em>Effective Java</em> third Edition:
+  <blockquote>
+    <h4>Item 31: Use bounded wildcards to increase API flexibility</h4>
+    Using wildcard types in your APIs, while tricky, makes the APIs far more flexible.
+    If you write a library that will be widely used, the proper use of wildcard types should be considered mandatory.
+    Remember the basic rule: producer-extends, consumer-super (PECS).
+    Also remember that all Comparables and Comparators are consumers.
+  </blockquote>
+</p>
+<p>
+  Use the first checkbox to ignore <code>invariant</code> classes.
   Invariant classes (e.g. <code>java.util.List&lt;T&gt;</code>) are
   classes that both accept values (via its <code>List.add(T)</code> method)
   and produce values (via its <code>T List.get()</code> method). On the
-  other hand, <b>contravariant</b> classes only receive values, e.g. <code>java.util.function.Consumer&lt;T&gt;</code>
-  with the only method <code>accept(T)</code>, and <b>covariant</b> classes
+  other hand, <code>contravariant</code> classes only receive values, e.g. <code>java.util.function.Consumer&lt;T&gt;</code>
+  with the only method <code>accept(T)</code>, and <code>covariant</code> classes
   only produce values, e.g. <code>java.util.function.Supplier&lt;T&gt;</code>
   with the only method <code>T get()</code>. People
   are often OK with bounded wildcards in covariant/contravariant
@@ -34,8 +47,8 @@ To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Jos
   these invariant classes and leave them rigidly typed, e.g. <code>void
   process(List&lt;T&gt; l)</code>.
 <p>
-  Uncheck the second checkbox to ignore <b>private</b> methods, which can be considered as not a part of the public API.
+  Uncheck the second checkbox to ignore <code>private</code> methods, which can be considered as not a part of the public API.
 <p>
-  Uncheck the third checkbox to ignore instance methods and only report <b>static</b> methods.
+  Uncheck the third checkbox to ignore instance methods and only report <code>static</code> methods.
 </body>
 </html>

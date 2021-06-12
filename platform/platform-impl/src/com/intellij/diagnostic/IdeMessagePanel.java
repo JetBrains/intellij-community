@@ -21,6 +21,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -201,17 +202,19 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   }
 
   private void showErrorNotification(@NotNull Project project) {
+    if (SystemProperties.is("fatal.error.icon.disable.blinking")) return;
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
-    notification.addAction(new NotificationAction(linkText) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        openErrorsDialog(null);
-      }
-    });
+    Notification notification = new Notification("", title, NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.FatalError)
+      .addAction(new NotificationAction(linkText) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          openErrorsDialog(null);
+        }
+      });
 
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null : myFrame;

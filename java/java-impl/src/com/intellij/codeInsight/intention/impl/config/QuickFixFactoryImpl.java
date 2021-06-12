@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
@@ -45,6 +46,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +90,14 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            boolean fixWholeHierarchy,
                                                                            boolean suggestSuperTypes) {
     return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy, suggestSuperTypes);
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAnnotationMethodReturnFix(@NotNull PsiMethod method,
+                                                                                     @NotNull PsiType toReturn,
+                                                                                     boolean fromDefaultValue) {
+    return new AnnotationMethodReturnTypeFix(method, toReturn, fromDefaultValue);
   }
 
   @NotNull
@@ -259,6 +269,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element) {
+    return new NavigateToDuplicateElementFix(element);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createConvertToStringLiteralAction() {
     return new ConvertToStringLiteralAction();
   }
@@ -390,6 +406,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new RenameFileFix(newName);
   }
 
+  @Override
+  public @NotNull LocalQuickFix createRenameFix() {
+    return new RenameFix();
+  }
+
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element) {
@@ -436,6 +457,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method) {
     return new AddMethodBodyFix(method);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text) {
+    return new AddMethodBodyFix(method, text);
   }
 
   @NotNull
@@ -565,7 +592,14 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable) {
-    return new RemoveTypeArgumentsFix(variable);
+    final PsiVariable psiVariable = (PsiVariable)variable;
+    final PsiTypeElement typeElement = psiVariable.getTypeElement();
+    assert typeElement != null;
+    final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+    assert referenceElement != null;
+    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    assert parameterList != null;
+    return PriorityIntentionActionWrapper.highPriority(createDeleteFix(parameterList));
   }
 
   @NotNull
@@ -584,6 +618,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
     return new MakeVarargParameterLastFix(parameter);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter) {
+    return new MakeReceiverParameterFirstFix(parameter);
   }
 
   @NotNull
@@ -958,5 +998,57 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList) {
     return new SealClassFromPermitsListAction(classFromPermitsList);
+  }
+
+  @Override
+  public @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates) {
+    return new UnimplementInterfaceAction(className, isDuplicates);
+  }
+
+  @Override
+  public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
+    return new MoveMemberIntoClassFix(errorElement);
+  }
+
+  @Override
+  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
+                                                                 @NotNull PsiType enclosingClassType) {
+    return new VariableTypeFix(receiverParameter, enclosingClassType) {
+      @Override
+      public @NotNull String getText() {
+        return QuickFixBundle.message("fix.receiver.parameter.type.text");
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return QuickFixBundle.message("fix.receiver.parameter.type.family");
+      }
+    };
+  }
+
+  @Override
+  public @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass) {
+    return new ConvertInterfaceToClassFix(aClass);
+  }
+
+  @Override
+  @Nullable
+  public IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue) {
+    return UnwrapArrayInitializerMemberValueAction.createFix(arrayValue);
+  }
+
+  @Override
+  public @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression) {
+    return new IntroduceVariableErrorFixAction(expression);
+  }
+
+  @Override
+  public @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression) {
+    return new ConvertExpressionToReturnFix(expression);
+  }
+
+  @Override
+  public @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression) {
+    return new IterateOverIterableIntention(expression);
   }
 }

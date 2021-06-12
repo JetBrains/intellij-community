@@ -8,26 +8,44 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
 public final class StorageLockContext {
+  private static final FilePageCache ourDefaultCache = new FilePageCache();
+
   private final boolean myCheckThreadAccess;
   @NotNull
   private final ReentrantReadWriteLock myLock;
   @NotNull
-  private final StorageLock myStorageLock;
+  private final FilePageCache myFilePageCache;
   private final boolean myUseReadWriteLock;
+  private final boolean myCacheChannels;
 
-  public StorageLockContext(@NotNull StorageLock lock, boolean checkAccess, boolean useReadWriteLock) {
+  public StorageLockContext(@NotNull FilePageCache filePageCache,
+                            boolean checkAccess,
+                            boolean useReadWriteLock,
+                            boolean cacheChannels) {
     myLock = new ReentrantReadWriteLock();
-    myStorageLock = lock;
+    myFilePageCache = filePageCache;
     myCheckThreadAccess = checkAccess;
     myUseReadWriteLock = useReadWriteLock;
+    myCacheChannels = cacheChannels;
   }
 
-  public StorageLockContext(boolean checkAccess, boolean useReadWriteLock) {
-    this(PagedFileStorage.ourLock, checkAccess, useReadWriteLock);
+  public StorageLockContext(boolean checkAccess,
+                            boolean useReadWriteLock,
+                            boolean cacheChannels) {
+    this(ourDefaultCache, checkAccess, useReadWriteLock, cacheChannels);
+  }
+
+  public StorageLockContext(boolean checkAccess,
+                            boolean useReadWriteLock) {
+    this(ourDefaultCache, checkAccess, useReadWriteLock, false);
   }
 
   public StorageLockContext(boolean checkAccess) {
-    this(PagedFileStorage.ourLock, checkAccess, false);
+    this(ourDefaultCache, checkAccess, false, false);
+  }
+
+  boolean useChannelCache() {
+    return myCacheChannels;
   }
 
   public void lockRead() {
@@ -57,8 +75,8 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   @NotNull
-  StorageLock getStorageLock() {
-    return myStorageLock;
+  FilePageCache getBufferCache() {
+    return myFilePageCache;
   }
 
   @ApiStatus.Internal

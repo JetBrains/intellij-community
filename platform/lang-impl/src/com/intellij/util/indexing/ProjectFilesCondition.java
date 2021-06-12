@@ -12,9 +12,9 @@ final class ProjectFilesCondition implements Condition<VirtualFile> {
   private final VirtualFile myRestrictedTo;
   private final GlobalSearchScope myFilter;
   private int myFilesFromOtherProjects;
-  private final ProjectIndexableFilesFilter myIndexableFilesFilter;
+  private final IdFilter myIndexableFilesFilter;
 
-  ProjectFilesCondition(ProjectIndexableFilesFilter indexableFilesFilter,
+  ProjectFilesCondition(IdFilter indexableFilesFilter,
                         GlobalSearchScope filter,
                         VirtualFile restrictedTo,
                         boolean includeFilesFromOtherProjects) {

@@ -32,16 +32,4 @@ public class ShArithmeticExpansionImpl extends ShCompositeElementImpl implements
     return findChildByClass(ShExpression.class);
   }
 
-  @Override
-  @NotNull
-  public PsiElement getLeftDoubleParen() {
-    return findNotNullChildByType(LEFT_DOUBLE_PAREN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightDoubleParen() {
-    return findChildByType(RIGHT_DOUBLE_PAREN);
-  }
-
 }

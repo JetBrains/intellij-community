@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
@@ -33,7 +33,7 @@ class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
     loading = true
     eventDispatcher.multicaster.onLoadingStarted()
     updateFuture = future.handleOnEdt(this) { result, error ->
-      if (error != null && !GithubAsyncUtil.isCancellation(error)) {
+      if (error != null && !CompletableFutureUtil.isCancellation(error)) {
         this.error = error
         resultAvailable = false
       }

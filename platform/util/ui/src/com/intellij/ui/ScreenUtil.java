@@ -303,24 +303,31 @@ public final class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+    moveToFit(rectangle, container, padding, false);
+  }
+
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding, boolean crop) {
     Rectangle move = new Rectangle(rectangle);
     JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
     }
-
-
     if (move.getMinX() < container.getMinX()) {
       move.x = (int)container.getMinX();
+    }
+    if (move.getMaxX() > container.getMaxX() && crop) {
+      move.width = (int)container.getMaxX() - move.x;
     }
 
     if (move.getMaxY() > container.getMaxY()) {
       move.y = (int)container.getMaxY() - move.height;
     }
-
     if (move.getMinY() < container.getMinY()) {
       move.y = (int)container.getMinY();
+    }
+    if (move.getMaxY() > container.getMaxY() && crop) {
+      move.height = (int)container.getMaxY() - move.y;
     }
 
     JBInsets.removeFrom(move, padding);

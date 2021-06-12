@@ -34,8 +34,8 @@ public interface SymbolNavigationService {
   @NotNull NavigationTarget psiFileNavigationTarget(@NotNull PsiFile file);
 
   /**
-   * Please use {@link TargetPopupPresentation#builder}
+   * Please use {@link TargetPresentation#builder}
    */
   @ApiStatus.Internal
-  @NotNull TargetPopupPresentationBuilder presentationBuilder(@Nls @NotNull String presentableText);
+  @NotNull TargetPresentationBuilder presentationBuilder(@Nls @NotNull String presentableText);
 }

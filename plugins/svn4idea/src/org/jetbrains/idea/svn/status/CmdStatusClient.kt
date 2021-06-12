@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
@@ -21,6 +20,7 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
+import java.util.function.Supplier
 import javax.xml.bind.JAXBException
 import javax.xml.bind.annotation.*
 import javax.xml.bind.annotation.adapters.XmlAdapter
@@ -49,7 +49,7 @@ private fun parseResult(base: File,
   var hasEntries = false
 
   fun setUrlAndNotifyHandler(builder: Status.Builder) {
-    builder.infoProvider = Getter { infoProvider.convert(builder.file) }
+    builder.infoProvider = Supplier { infoProvider.convert(builder.file) }
 
     val file = builder.file
     val externalsBase = find(externalsMap.keys) { isAncestor(it, file, false) }
@@ -139,7 +139,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
 
           val status = Status.Builder(path)
           status.itemStatus = StatusType.STATUS_NORMAL
-          status.infoProvider = Getter { createInfoGetter().convert(path) }
+          status.infoProvider = Supplier { createInfoGetter().convert(path) }
           handler.consume(status.build())
         }
       }

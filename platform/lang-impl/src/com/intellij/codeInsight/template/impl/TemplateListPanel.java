@@ -575,6 +575,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           addTemplateOrGroup(button);
         }
       })
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton anActionButton) {

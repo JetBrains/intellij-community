@@ -14,7 +14,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("run.configuration.ui.interactions", 6)
+    val GROUP = EventLogGroup("run.configuration.ui.interactions", 7)
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope", // junit
@@ -29,18 +29,18 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     val modifyOption = GROUP.registerVarargEvent("modify.run.option", optionId, projectSettingsAvailableField, useProjectSettingsField, ID_FIELD, EventFields.InputEvent)
     val navigateOption = GROUP.registerVarargEvent("option.navigate", optionId, ID_FIELD, EventFields.InputEvent)
     val removeOption = GROUP.registerEvent("remove.run.option", optionId, ID_FIELD, EventFields.InputEvent)
-    val addNew = GROUP.registerEvent("add", ID_FIELD)
-    val remove = GROUP.registerEvent("remove", ID_FIELD)
+    val addNew = GROUP.registerEvent("add", ID_FIELD, EventFields.ActionPlace)
+    val remove = GROUP.registerEvent("remove", ID_FIELD, EventFields.ActionPlace)
     val hintsShown = GROUP.registerEvent("hints.shown", ID_FIELD, EventFields.Int("hint_number"), EventFields.DurationMs)
 
     @JvmStatic
-    fun logAddNew(project: Project?, config: String?) {
-      addNew.log(project, config)
+    fun logAddNew(project: Project?, config: String?, place: String?) {
+      addNew.log(project, config, place)
     }
 
     @JvmStatic
-    fun logRemove(project: Project?, config: String?) {
-      remove.log(project, config)
+    fun logRemove(project: Project?, config: String?, place: String?) {
+      remove.log(project, config, place)
     }
 
     @JvmStatic

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
+import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -44,11 +45,11 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     val tab = getTab() ?: return
 
     tab.displayName = getDisplayName()
-    tab.description = CurrentBranchComponent.getTooltip(branches)
+    tab.description = BranchPresentation.getTooltip(branches)
   }
 
   private fun getDisplayName(): @NotNull @Nls String {
-    val branchesText = CurrentBranchComponent.getText(branches)
+    val branchesText = BranchPresentation.getText(branches)
     if (branchesText.isBlank()) return VcsBundle.message("tab.title.commit")
 
     return VcsBundle.message("tab.title.commit.to.branch", branchesText)

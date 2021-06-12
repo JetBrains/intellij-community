@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -19,7 +19,6 @@ import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
-import java.awt.BorderLayout
 import javax.swing.JPanel
 
 class UnstableApiUsageInspection : LocalInspectionTool() {
@@ -73,18 +72,16 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   }
 
   override fun createOptionsPanel(): JPanel {
-    val checkboxPanel = MultipleCheckboxOptionsPanel(this)
-    checkboxPanel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"),  "myIgnoreInsideImports")
-    checkboxPanel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project"), "myIgnoreApiDeclaredInThisProject")
+    val panel = MultipleCheckboxOptionsPanel(this)
+    panel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), "myIgnoreInsideImports")
+    panel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project"), "myIgnoreApiDeclaredInThisProject")
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
-    @Suppress("DialogTitleCapitalization") val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+    val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
     )
 
-    val panel = JPanel(BorderLayout(2, 2))
-    panel.add(checkboxPanel, BorderLayout.NORTH)
-    panel.add(annotationsListControl, BorderLayout.CENTER)
+    panel.add(annotationsListControl, "growx, wrap")
     return panel
   }
 }

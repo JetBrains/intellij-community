@@ -298,29 +298,25 @@ idea.fatal.error.notification=disabled
     return propertiesFile
   }
 
-  @NotNull Path patchApplicationInfo() {
+  @NotNull String patchApplicationInfo() {
     Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    Path targetFile = Paths.get(buildContext.paths.temp).resolve(sourceFile.fileName)
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
-    // Android Studio: don't patch ApplicationInfo.xml
-    FileUtil.createParentDirs(targetFile.toFile())
-    targetFile.text = sourceFile.text
-    return targetFile
-
-    def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
-
-    def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
-    def builtinPluginsRepoUrl = ""
+    ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
+    String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
       builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
       if (builtinPluginsRepoUrl.startsWith("http:")) {
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    BuildUtils.copyAndPatchFile(sourceFile, targetFile,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
-                                "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
-    return targetFile
+
+    return BuildUtils.replaceAll(Files.readString(sourceFile), Map.<String, String>of(
+      "BUILD_NUMBER", buildContext.fullBuildNumber,
+      "BUILD_DATE", date,
+      "BUILD", buildContext.buildNumber,
+      "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
+    ), "__")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -371,7 +367,10 @@ idea.fatal.error.notification=disabled
         return file
       }
     }
-    buildContext.messages.error("Cannot find '$normalizedRelativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+
+    buildContext.messages.error(
+      "Cannot find '$normalizedRelativePath' neither in sources of '$buildContext.productProperties.applicationInfoModule'" +
+      " nor in $buildContext.productProperties.brandingResourcePaths")
     return null
   }
 
@@ -403,11 +402,11 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo)
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution(@NotNull Path patchedApplicationInfo) {
+  private DistributionJARsBuilder compileModulesForDistribution(@NotNull String patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
     List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
@@ -423,7 +422,8 @@ idea.fatal.error.notification=disabled
       buildProvidedModulesList(providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFile.toString()).collectCompatiblePluginsToPublish())
+          final PluginsCollector collector = new PluginsCollector(buildContext)
+          pluginsToPublish.addAll(collector.collectCompatiblePluginsToPublish(providedModulesFile.toString()))
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
@@ -433,7 +433,7 @@ idea.fatal.error.notification=disabled
     return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Path patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
+  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull String patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
 
@@ -449,7 +449,7 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     setupBundledMaven()
 
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
@@ -726,7 +726,8 @@ idea.fatal.error.notification=disabled
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
     if (buildContext.productProperties.scrambleMainJar) {
-      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled, "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
+      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled,
+                   "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
     }
   }
 
@@ -741,6 +742,7 @@ idea.fatal.error.notification=disabled
 
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins)
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins)
+    checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins)
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
@@ -756,7 +758,8 @@ idea.fatal.error.notification=disabled
     }
     if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty() &&
         !layout.buildAllCompatiblePlugins) {
-      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
+      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
+                                  " but no pluginModulesToPublish are specified")
     }
 
     checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules")
@@ -965,8 +968,8 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    setupBundledMaven()
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchApplicationInfo())
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
@@ -992,7 +995,7 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
 
     setupBundledMaven()
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
     def osSpecificPlugins = DistributionJARsBuilder.getOsSpecificDistDirectory(currentOs, buildContext).resolve("plugins")
     if (Files.isDirectory(osSpecificPlugins)) {
@@ -1045,15 +1048,18 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
-      copyResourceFiles(buildContext, SystemInfoRt.isMac ? targetDirectory.resolve("Resources") : targetDirectory)
+      copyDistFiles(buildContext, targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
     }
   }
 
-  static copyResourceFiles(@NotNull BuildContext buildContext, @NotNull Path newDir) {
+  static copyDistFiles(@NotNull BuildContext buildContext, @NotNull Path newDir) {
     Files.createDirectories(newDir)
-    for (Path file : buildContext.resourceFiles) {
-      Files.copy(file, newDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+    for (Pair<Path, String> item : buildContext.distFiles) {
+      Path file = item.getFirst()
+      Path dir = newDir.resolve(item.getSecond())
+      Files.createDirectories(dir)
+      Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
   }
 

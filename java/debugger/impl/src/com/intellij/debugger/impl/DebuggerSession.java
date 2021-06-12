@@ -476,11 +476,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
             XDebuggerManagerImpl.getNotificationGroup().createNotification(
-              JavaDebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
-              JavaDebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
-              NotificationType.INFORMATION,
-              new BreakpointReachedNotificationListener(suspendContext)
-            ).notify(getProject());
+                JavaDebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
+                JavaDebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
+                NotificationType.INFORMATION)
+              .setListener(new BreakpointReachedNotificationListener(suspendContext))
+              .notify(getProject());
           }
         }
         if (((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts().size() > 1) {

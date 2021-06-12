@@ -58,7 +58,7 @@ object LearningUiHighlightingManager {
 
   fun <T: Component> highlightPartOfComponent(component: T, options: HighlightingOptions = HighlightingOptions(), rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) { glassPane ->
-      RepaintHighlighting(component, glassPane, options, { rectangle(component) })
+      RepaintHighlighting(component, glassPane, options) { rectangle(component) }
     }
   }
 

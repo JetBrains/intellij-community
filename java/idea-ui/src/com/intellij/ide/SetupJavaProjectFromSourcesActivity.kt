@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -20,12 +20,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -126,15 +124,10 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
       content = formatContent(providersAndFiles, projectDirectory)
     }
 
-    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION, showFileInProjectViewListener)
+    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION).setListener(showFileInProjectViewListener)
 
     if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
-      val actionName = if (providersAndFiles.keySet().size > 1) {
-        JavaUiBundle.message("build.script.found.notification.import.all")
-      }
-      else {
-        JavaUiBundle.message("build.script.found.notification.import")
-      }
+      val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
       notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
         for ((provider, files) in providersAndFiles.asMap()) {
           for (file in files) {
@@ -226,14 +219,11 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
   }
 
   private fun notifyAboutAutomaticProjectStructure(project: Project) {
-    val message = JavaUiBundle.message("project.structure.automatically.detected.notification")
-    val notification = NOTIFICATION_GROUP.createNotification("", message, NotificationType.INFORMATION, null)
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
-      ProjectSettingsService.getInstance(project).openProjectSettings()
-    })
-    notification.notify(project)
+    NOTIFICATION_GROUP.createNotification(JavaUiBundle.message("project.structure.automatically.detected.notification"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.createSimpleExpiring(JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
+      .addAction(NotificationAction.createSimpleExpiring(JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
+        ProjectSettingsService.getInstance(project).openProjectSettings()
+      })
+      .notify(project)
   }
 }

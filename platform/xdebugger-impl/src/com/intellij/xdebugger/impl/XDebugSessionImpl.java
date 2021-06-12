@@ -13,9 +13,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -992,13 +992,15 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void reportMessage(@NotNull final String message, @NotNull final MessageType type, @Nullable final HyperlinkListener listener) {
-    NotificationListener notificationListener = listener == null ? null : (notification, event) -> {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        listener.hyperlinkUpdate(event);
-      }
-    };
-    XDebuggerManagerImpl.getNotificationGroup()
-      .createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
+    Notification notification = XDebuggerManagerImpl.getNotificationGroup().createNotification(message, type.toNotificationType());
+    if (listener != null) {
+      notification.setListener((__, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          listener.hyperlinkUpdate(event);
+        }
+      });
+    }
+    notification.notify(myProject);
   }
 
   private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

@@ -236,7 +236,7 @@ public class JdkChooserPanel extends JPanel {
       }
       String v1 = o1.getVersionString();
       String v2 = o2.getVersionString();
-      if (v1 != null & v2 != null) {
+      if (v1 != null && v2 != null) {
         try {
           return -JavaVersion.parse(v1).compareTo(JavaVersion.parse(v2));
         }

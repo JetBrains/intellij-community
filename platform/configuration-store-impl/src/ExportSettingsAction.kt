@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -179,21 +178,19 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
   val app = ApplicationManager.getApplication() as ComponentManagerImpl
 
   @Suppress("DEPRECATION")
-  app.getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
-  @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
-  processAllImplementationClasses(app.picoContainer) { aClass, pluginDescriptor ->
+  app.processAllImplementationClasses { aClass, pluginDescriptor ->
     val stateAnnotation = getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
-      return@processAllImplementationClasses true
+      return@processAllImplementationClasses
     }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses
     val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
     if (!isStorageExportable(storage, isRoamable)) {
-      return@processAllImplementationClasses true
+      return@processAllImplementationClasses
     }
 
     val presentableName = if (isComputePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
@@ -206,7 +203,6 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
       val additionalFileSpec = FileSpec(additionalExportFile, true)
       result.putValue(additionalFileSpec, ExportableItem(additionalFileSpec, "$presentableName (schemes)"))
     }
-    true
   }
 
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec

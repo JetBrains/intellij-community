@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 class ButtonToolbarImpl extends JPanel {
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;
@@ -93,7 +96,7 @@ class ButtonToolbarImpl extends JPanel {
             e.getModifiers()
           );
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
       });

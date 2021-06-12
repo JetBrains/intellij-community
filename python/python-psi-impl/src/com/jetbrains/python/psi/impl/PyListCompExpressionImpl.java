@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
 public class PyListCompExpressionImpl extends PyComprehensionElementImpl implements PyListCompExpression {
   public PyListCompExpressionImpl(ASTNode astNode) {
     super(astNode);

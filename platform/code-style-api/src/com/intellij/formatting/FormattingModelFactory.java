@@ -15,8 +15,10 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,9 +27,19 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see FormattingModelProvider 
  */
-
+@ApiStatus.Internal
 interface FormattingModelFactory {
   FormattingModel createFormattingModelForPsiFile(PsiFile file,
                                                   @NotNull Block rootBlock,
                                                   CodeStyleSettings settings);
+
+  /**
+   * Creates a formatting model with a single root block covering the given {@code PsiElement} with its child elements.
+   * The formatter will leave a content inside the block unchanged.
+   *
+   * @param element The element to create a dummy formatting model for.
+   * @return The dummy single-block formatting model covering the given element.
+   */
+  @NotNull
+  FormattingModel createDummyFormattingModel(@NotNull PsiElement element);
 }

@@ -65,16 +65,19 @@ public class PropertyCollector {
 
     int propertyAccessorCount = accessors.size();
     Class<?> currentClass = aClass;
+    // AtomicReference is a superclass of UserDataHolderBase
+    // which is a superclass of many serializable objects
+    // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
     }
-    while ((currentClass = currentClass.getSuperclass()) != null && !configuration.isAnnotatedAsTransient(currentClass) &&
-           currentClass != Object.class && currentClass != AtomicReference.class); // AtomicReference is a superclass of UserDataHolderBase
-                                                                                   // which is a superclass of many serializable objects
-                                                                                   // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
+    while ((currentClass = currentClass.getSuperclass()) != null &&
+           currentClass != Object.class &&
+           currentClass != AtomicReference.class &&
+           !configuration.isAnnotatedAsTransient(currentClass));
 
-    // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
-    // so, we must remove duplicated accessor
+    // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter,
+    // but annotation moved to var, not to getter/setter, so, we must remove duplicated accessor
     for (int j = propertyAccessorCount; j < accessors.size(); j++) {
       String name = accessors.get(j).getName();
       if (nameToAccessors.containsKey(name)) {

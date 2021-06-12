@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -171,7 +171,7 @@ final class ClassVersionChecker {
       return
     }
 
-    def rule = myRules.find { it.path.isEmpty() || path.startsWith(it.path) }
+    Rule rule = myRules.find { it.path.isEmpty() || path.startsWith(it.path) }
     myUsedRules.add(rule)
     int expected = rule.version
     if (expected > 0 && major > expected) {

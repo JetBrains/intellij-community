@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface ShShellCommand extends ShCommand {
 
   @Nullable
+  ShArithmeticExpansion getArithmeticExpansion();
+
+  @Nullable
   ShBlock getBlock();
 
 }

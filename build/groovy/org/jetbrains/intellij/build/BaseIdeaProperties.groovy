@@ -45,6 +45,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.tasks.core",
     "intellij.repository.search",
     "intellij.maven.model",
+    "intellij.packageSearch",
     "intellij.gradle",
     "intellij.gradle.java",
     "intellij.vcs.git",
@@ -65,6 +66,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
+    "intellij.markdown",
     "intellij.webp",
     /* Disabled in Android Studio
     "intellij.android.plugin",
@@ -77,7 +79,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie",
     "intellij.javaFX.community",
     "intellij.lombok"
-    "intellij.markdown"
     "intellij.maven",
     "intellij.java.guiForms.designer",
     "intellij.statsCollector",
@@ -153,14 +154,13 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         withoutProjectLibrary("layoutlib")
-
-        // Android Studio: we exclude the Markdown plugin in Studio, which has the unfortunate side effect
-        // of excluding the intellij-markdown library too. This library is used by the Kotlin plugin, so we have to
-        // include it. This workaround can be removed once the Markdown plugin is bundled in Studio.
-        withProjectLibrary("intellij-markdown")
       }
     } as Consumer<PlatformLayout>
 
+    productLayout.compatiblePluginsToIgnore = [
+      "intellij.java.plugin",
+      "kotlin.idea"
+    ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 

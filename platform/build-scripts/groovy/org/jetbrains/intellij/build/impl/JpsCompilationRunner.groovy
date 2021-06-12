@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.diagnostic.CompositeLogger
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
@@ -39,6 +38,7 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+
 @CompileStatic
 class JpsCompilationRunner {
   private static boolean ourToolsJarAdded
@@ -216,7 +216,7 @@ class JpsCompilationRunner {
   }
 
   private class AntMessageHandler implements MessageHandler {
-    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
+    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createConcurrent()
     private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
     private Map<String, Long> compilationFinishTimeForTarget = new ConcurrentHashMap<>()
     private float progress = -1.0
@@ -323,27 +323,97 @@ class JpsCompilationRunner {
     @NotNull
     @Override
     Logger getLoggerInstance(@NotNull String category) {
-      DefaultLogger antLogger = new DefaultLogger(category) {
-        @Override
-        void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
-          if (t != null) {
-            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t))
-          }
-          else {
-            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
-          }
-        }
+      Logger fileLogger = ourFileLoggerFactory != null ? ourFileLoggerFactory.getLoggerInstance(category) : null
+      return new BackedLogger(category, fileLogger)
+    }
 
-        @Override
-        void warn(@NonNls String message, @Nullable Throwable t) {
-          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
+    private static class BackedLogger extends DefaultLogger {
+      private final @Nullable Logger myFileLogger
+
+      BackedLogger(String category, @Nullable Logger fileLogger) {
+        super(category)
+        myFileLogger = fileLogger
+      }
+
+      @Override
+      void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+        if (t != null) {
+          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t))
+        }
+        else {
+          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
+        }
+        if (myFileLogger != null) {
+          myFileLogger.error(message, t, details)
         }
       }
-      if (ourFileLoggerFactory != null) {
-        return new CompositeLogger(antLogger, ourFileLoggerFactory.getLoggerInstance(category))
+
+      @Override
+      void warn(@NonNls String message, @Nullable Throwable t) {
+        ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
+        if (myFileLogger != null) {
+          myFileLogger.warn(message, t)
+        }
       }
-      return antLogger
+
+      @Override
+      void info(String message) {
+        if (myFileLogger != null) {
+          myFileLogger.info(message)
+        }
+      }
+
+      @Override
+      void info(String message, @Nullable Throwable t) {
+        if (myFileLogger != null) {
+          myFileLogger.info(message, t)
+        }
+      }
+
+      @Override
+      boolean isDebugEnabled() {
+        return myFileLogger != null && myFileLogger.isDebugEnabled()
+      }
+
+      @Override
+      void debug(String message) {
+        if (myFileLogger != null) {
+          myFileLogger.debug(message)
+        }
+      }
+
+      @Override
+      void debug(@Nullable Throwable t) {
+        if (myFileLogger != null) {
+          myFileLogger.debug(t)
+        }
+      }
+
+      @Override
+      void debug(String message, @Nullable Throwable t) {
+        if (myFileLogger != null) {
+          myFileLogger.debug(message, t)
+        }
+      }
+
+      @Override
+      boolean isTraceEnabled() {
+        return myFileLogger != null && myFileLogger.isTraceEnabled()
+      }
+
+      @Override
+      void trace(String message) {
+        if (myFileLogger != null) {
+          myFileLogger.trace(message)
+        }
+      }
+
+      @Override
+      void trace(@Nullable Throwable t) {
+        if (myFileLogger != null) {
+          myFileLogger.trace(t)
+        }
+      }
     }
   }
 }
-

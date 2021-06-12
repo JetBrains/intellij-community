@@ -1,10 +1,23 @@
 <html>
 <body>
-Reports variables which are not guaranteed to be initialized after the object is
-deserialized by the <b>readObject()</b> method.
+Reports fields which are not guaranteed to be initialized after the object is
+deserialized by the <code>readObject()</code> method.
+Inspection doesn't report transient fields.
 <p>
-Note: This inspection uses a very conservative dataflow algorithm, and may report instance variables
-as uninitialized incorrectly. Variables reported as initialized will always be initialized.
+  Note: This inspection uses a very conservative control flow algorithm, and may report fields
+  as uninitialized incorrectly.
+</p>
+<p>Example of the reported code:</p>
+<pre>
+class DataObject implements Serializable {
+  String s; // s is not initialized in readObject
+  int i;
+
+  private void readObject(ObjectInputStream stream) throws IOException {
+    i = stream.readInt();
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
 

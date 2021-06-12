@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -22,9 +23,11 @@ import com.intellij.project.stateStore
 import com.intellij.util.Alarm
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
@@ -32,6 +35,7 @@ private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   companion object {
+    @JvmStatic
     fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
 
     val EP_NAME = ExtensionPointName<VcsIgnoreChecker>("com.intellij.vcsIgnoreChecker")
@@ -49,6 +53,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
         override fun projectClosing(closedProject: Project) {
           if (project === closedProject) {
             try {
+              @Suppress("TestOnlyProblems")
               ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
             }
             catch (e: RuntimeException) {
@@ -58,6 +63,14 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
         }
       })
     }
+  }
+
+  fun awaitRefreshQueue() {
+    assert(!ApplicationManager.getApplication().isReadAccessAllowed)
+    if (ignoreRefreshQueue.isEmpty) return
+    val waiter = CountDownLatch(1)
+    ignoreRefreshQueue.queue(Update.create(waiter) { waiter.countDown() })
+    ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {

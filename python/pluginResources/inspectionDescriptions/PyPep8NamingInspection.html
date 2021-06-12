@@ -1,8 +1,23 @@
 <html>
 <body>
-This inspection checks the PEP8 naming conventions.
-<p>
-  See <a href="https://www.python.org/dev/peps/pep-0008/">PEP 8</a> for more details.
-</p>
+<p>Reports violations of the
+  <a href="https://www.python.org/dev/peps/pep-0008/">PEP8</a> naming conventions.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class mammalia(object):
+    extremities = 4
+
+    def feeds(self):
+        print("milk")
+</pre>
+<p>In this code fragment, IDE offers to rename <code>mammalia</code> to <code>Mammalia</code>.
+  When the quick-fix is applied, the code change to:</p>
+<pre style="font-family: monospace">
+class Mammalia(object):
+    extremities = 4
+
+    def feeds(self):
+        print("milk")
+</pre>
 </body>
 </html>

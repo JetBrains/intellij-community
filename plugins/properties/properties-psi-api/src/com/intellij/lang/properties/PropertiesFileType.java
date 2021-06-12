@@ -32,7 +32,7 @@ public final class PropertiesFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return PropertiesBundle.message("properties.files.file.type.description");
+    return PropertiesBundle.message("filetype.properties.description");
   }
 
   @Override

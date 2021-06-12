@@ -1,8 +1,18 @@
 <html>
 <body>
-Reports the non-short-circuit forms of boolean 'and' and 'or' ( <b>&</b>
-and <b>|</b> ). The non-short-circuit versions are occasionally useful, but
-their presence is often due to typos of the short-circuit forms ( <b>&&</b>
-and <b>||</b> ), and may lead to subtle bugs.
+Reports the non-short-circuit forms of boolean operators 'and' and 'or' ( <code>&</code>
+and <code>|</code> ). The non-short-circuit versions are occasionally useful, but
+their presence is often due to typos of the short-circuit forms ( <code>&&</code>
+and <code>||</code> ), and may lead to subtle bugs.
+
+<p>Example:</p>
+<pre>
+if (a & b) {}
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+if (a && b) {}
+</pre>
+
 </body>
 </html>

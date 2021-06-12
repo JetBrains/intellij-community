@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.configurationStore.StoreUtilKt;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -31,15 +30,15 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.junit.Test;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.module.EffectiveLanguageLevelUtil.getEffectiveLanguageLevel;
 
-public class ReimportingTest extends MavenImportingTestCase {
+public class ReimportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -63,6 +62,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     importProject();
   }
 
+  @Test
   public void testKeepingModuleGroups() {
     final Module m = getModule("project");
 
@@ -77,6 +77,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("project", "group");
   }
 
+  @Test
   public void testAddingNewModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -97,6 +98,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2", "m3");
   }
 
+  @Test
   public void testRemovingObsoleteModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -112,6 +114,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1");
   }
 
+  @Test
   public void testDoesNotRemoveObsoleteModuleIfUserSaysNo() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -127,6 +130,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
   }
 
+  @Test
   public void testDoesNotAskUserTwiceToRemoveTheSameModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -147,6 +151,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(1, counter.get());
   }
 
+  @Test
   public void testDoesNotAskToRemoveManuallyAdderModules() {
     createModule("userModule");
     assertModules("project", "m1", "m2", "userModule");
@@ -159,6 +164,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2", "userModule");
   }
 
+  @Test
   public void testRemovingAndCreatingModulesForAggregativeProjects() {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -179,6 +185,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
   }
 
+  @Test
   public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() {
     getMavenImporterSettings().setCreateModulesForAggregators(false);
     configConfirmationForYesAnswer();
@@ -202,6 +209,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
   }
 
+  @Test
   public void testReimportingWithProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -238,6 +246,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m2");
   }
 
+  @Test
   public void testChangingDependencyTypeToTestJar() {
     configConfirmationForYesAnswer();
     VirtualFile m1 = createModulePom("m1", createPomXmlWithModuleDependency("jar"));
@@ -257,9 +266,9 @@ public class ReimportingTest extends MavenImportingTestCase {
     ModuleOrderEntry dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
     assertNotNull(dep2);
     assertTrue(dep2.isProductionOnTestDependency());
-
   }
 
+  @Test
   public void testSettingTargetLevel() {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -323,6 +332,7 @@ public class ReimportingTest extends MavenImportingTestCase {
            "</dependencies>";
   }
 
+  @Test
   public void testReimportingWhenModuleHaveRootOfTheParent() {
     createProjectSubDir("m1/res");
     createProjectPom("<groupId>test</groupId>" +
@@ -352,6 +362,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(0, counter.get());
   }
 
+  @Test
   public void testMoveModuleWithSystemScopedDependency() {
     DirectoryContentSpecKt.zipFile(builder -> {
       builder.file("a.txt");
@@ -394,33 +405,32 @@ public class ReimportingTest extends MavenImportingTestCase {
            "</dependencies>";
   }
 
-  @Bombed(year = 2019, month = Calendar.APRIL, day = 1,
-    description = "need to distinguish inherited and explicitly defined properties",
-    user = "Alexander Bubenchikov")
+  @Test
   public void testParentVersionProperty() {
     if (ignore()) return;
     String parentPomTemplate =
-                    "<groupId>test</groupId>\n" +
-                    "<artifactId>project</artifactId>\n" +
-                    "<version>${my.parent.version}</version>\n" +
-                    "<modules>\n" +
-                    "  <module>m1</module>\n" +
-                    "</modules>\n" +
-                    "<properties>\n" +
-                    "  <my.parent.version>1</my.parent.version>\n" +
-                    "</properties>\n" +
-                    "<build>\n" +
-                    "  <plugins>\n" +
-                    "    <plugin>\n" +
-                    "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                    "      <version>3.1</version>\n" +
-                    "      <configuration>\n" +
-                    "        <source>%s</source>\n" +
-                    "        <target>%<s</target>\n" +
-                    "      </configuration>\n" +
-                    "    </plugin>\n" +
-                    "  </plugins>\n" +
-                    "</build>";
+      "<groupId>test</groupId>\n" +
+      "<artifactId>project</artifactId>\n" +
+      "<version>${my.parent.version}</version>\n" +
+      "<packaging>pom</packaging>\n" +
+      "<modules>\n" +
+      "  <module>m1</module>\n" +
+      "</modules>\n" +
+      "<properties>\n" +
+      "  <my.parent.version>1</my.parent.version>\n" +
+      "</properties>\n" +
+      "<build>\n" +
+      "  <plugins>\n" +
+      "    <plugin>\n" +
+      "      <artifactId>maven-compiler-plugin</artifactId>\n" +
+      "      <version>3.1</version>\n" +
+      "      <configuration>\n" +
+      "        <source>%s</source>\n" +
+      "        <target>%<s</target>\n" +
+      "      </configuration>\n" +
+      "    </plugin>\n" +
+      "  </plugins>\n" +
+      "</build>";
     createProjectPom(String.format(parentPomTemplate, "1.8"));
 
     createModulePom("m1",
@@ -450,37 +460,39 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
   }
 
+  @Test
   public void testParentVersionProperty2() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
+                     "<packaging>pom</packaging>\n" +
                      "<modules>\n" +
                      "  <module>m1</module>\n" +
                      "</modules>");
 
     String m1pomTemplate = "<parent>\n" +
-                 "  <groupId>${my.parent.groupId}</groupId>\n" +
-                 "  <artifactId>project</artifactId>\n" +
-                 "  <version>${my.parent.version}</version>\n" +
-                 "</parent>\n" +
-                 "<artifactId>m1</artifactId>\n" +
-                 "<version>${my.parent.version}</version>\n" +
-                 "<properties>\n" +
-                 "  <my.parent.version>1</my.parent.version>\n" +
-                 "  <my.parent.groupId>test</my.parent.groupId>\n" +
-                 "</properties>\n" +
-                 "<build>\n" +
-                 "  <plugins>\n" +
-                 "    <plugin>\n" +
-                 "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                 "      <version>3.1</version>\n" +
-                 "      <configuration>\n" +
-                 "        <source>%s</source>\n" +
-                 "        <target>%<s</target>\n" +
-                 "      </configuration>\n" +
-                 "    </plugin>\n" +
-                 "  </plugins>\n" +
-                 "</build>";
+                           "  <groupId>${my.parent.groupId}</groupId>\n" +
+                           "  <artifactId>project</artifactId>\n" +
+                           "  <version>${my.parent.version}</version>\n" +
+                           "</parent>\n" +
+                           "<artifactId>m1</artifactId>\n" +
+                           "<version>${my.parent.version}</version>\n" +
+                           "<properties>\n" +
+                           "  <my.parent.version>1</my.parent.version>\n" +
+                           "  <my.parent.groupId>test</my.parent.groupId>\n" +
+                           "</properties>\n" +
+                           "<build>\n" +
+                           "  <plugins>\n" +
+                           "    <plugin>\n" +
+                           "      <artifactId>maven-compiler-plugin</artifactId>\n" +
+                           "      <version>3.1</version>\n" +
+                           "      <configuration>\n" +
+                           "        <source>%s</source>\n" +
+                           "        <target>%<s</target>\n" +
+                           "      </configuration>\n" +
+                           "    </plugin>\n" +
+                           "  </plugins>\n" +
+                           "</build>";
     createModulePom("m1", String.format(m1pomTemplate, "1.8"));
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);

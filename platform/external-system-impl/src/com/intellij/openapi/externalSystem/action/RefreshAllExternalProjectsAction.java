@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -76,8 +76,7 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
       for (ProjectSystemId externalSystemId : systemIds) {
         ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
-        ImportSpecBuilder importSpec = new ImportSpecBuilder(project, externalSystemId);
-        ExternalSystemUtil.refreshProjects(importSpec.forceWhenUptodate(true));
+        ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, externalSystemId));
       }
     }
   }

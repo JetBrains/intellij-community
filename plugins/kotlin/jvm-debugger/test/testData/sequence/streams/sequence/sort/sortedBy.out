@@ -1,0 +1,27 @@
+LineBreakpoint created at SortedBy.kt:5
+Run Java
+Connected to the target VM
+SortedBy.kt:5
+arrayOf(Person("Bob", 42), Person("Alice", 27)).asSequence()
+.sortedBy({ it.age })
+.count()
+sortedBy
+    before: 1,2
+    after: nothing
+count
+    before: nothing
+    after: nothing
+mappings for sortedBy
+  direct:
+    1 -> nothing
+    2 -> nothing
+  reverse:
+    empty
+mappings for count
+  direct:
+    empty
+  reverse:
+    empty
+Disconnected from the target VM
+
+Process finished with exit code 0

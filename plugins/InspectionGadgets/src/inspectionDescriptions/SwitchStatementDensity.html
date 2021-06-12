@@ -1,10 +1,23 @@
 <html>
 <body>
-Reports <b>switch</b> statements
-with too low a ratio of switch labels to executable statements. Such <b>switch</b> statements
+Reports <code>switch</code> statements/expressions
+with too low a ratio of switch labels to executable statements. Such <code>switch</code> statements
 may be confusing, and should probably be refactored.
+
+<p>Example of the reported code:</p>
+<pre>
+    switch (i) { // one case and 5 executable statements -> 20% density
+        case 1:
+            System.out.println("1");
+            System.out.println("2");
+            System.out.println("3");
+            System.out.println("4");
+            System.out.println("5");
+            break;
+    }
+</pre>
 <!-- tooltip end -->
 <p>
-
+<p>Use the field below to specify allowed ration of the switch labels to executable statements.</p>
 </body>
 </html>

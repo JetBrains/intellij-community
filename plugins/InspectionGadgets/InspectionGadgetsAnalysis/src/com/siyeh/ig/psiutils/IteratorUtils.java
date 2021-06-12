@@ -58,11 +58,6 @@ public final class IteratorUtils {
     }
 
     @Override
-    public void visitElement(@NotNull PsiElement element) {
-      super.visitElement(element);
-    }
-
-    @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (checkScanner) {

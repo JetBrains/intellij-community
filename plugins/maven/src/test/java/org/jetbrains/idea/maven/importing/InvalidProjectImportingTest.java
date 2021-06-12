@@ -16,20 +16,21 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InvalidProjectImportingTest extends MavenImportingTestCase {
+public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestCase {
 
+  @Test
   public void testResetDependenciesWhenProjectContainsErrors() {
     //Registry.get("maven.server.debug").setValue(true);
     createProjectPom("<groupId>test</groupId>" +
@@ -81,6 +82,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:2.0");
   }
 
+  @Test
   public void testShouldNotResetDependenciesWhenProjectContainsUnrecoverableErrors() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -130,6 +132,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
   }
 
+  @Test
   public void testUnknownProblemWithEmptyFile() throws IOException {
     createProjectPom("");
     WriteAction.runAndWait(() -> myProjectPom.setBinaryContent(new byte[0]));
@@ -142,6 +145,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'pom.xml' has syntax errors");
   }
 
+  @Test
   public void testUndefinedPropertyInHeader() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>${undefined}</artifactId>" +
@@ -152,6 +156,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'artifactId' with value '${undefined}' does not match a valid id pattern.");
   }
 
+  @Test
   public void testRecursiveInterpolation() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -173,6 +178,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: group:artifact:1");
   }
 
+  @Test
   public void testUnresolvedParent() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -192,6 +198,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertTrue(problems.get(0).getDescription().contains("Could not find artifact test:parent:pom:1"));
   }
 
+  @Test
   public void testUnresolvedParentForInvalidProject() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -209,13 +216,13 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "</modules>");
 
     MavenProject root = getRootProjects().get(0);
-    List<MavenProjectProblem> problems =root.getProblems();
+    List<MavenProjectProblem> problems = root.getProblems();
     assertSize(2, problems);
     assertTrue(problems.get(0).getDescription(), problems.get(0).getDescription().contains("Could not find artifact test:parent:pom:1"));
     assertTrue(problems.get(1).getDescription(), problems.get(1).getDescription().equals("Module 'foo' not found"));
-
   }
 
+  @Test
   public void testMissingModules() throws IOException {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -255,6 +262,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
            '}';
   }
 
+  @Test
   public void testInvalidProjectModel() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -275,6 +283,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'packaging' with value 'jar' is invalid. Aggregator projects require 'pom' as packaging.");
   }
 
+  @Test
   public void testInvalidModuleModel() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -299,6 +308,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(0), "'pom.xml' has syntax errors");
   }
 
+  @Test
   public void testSeveratInvalidModulesAndWithSameName() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -332,6 +342,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project", "foo", "bar (1)", "bar (2)", "bar (3) (org.test)");
   }
 
+  @Test
   public void testInvalidProjectWithModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -350,6 +361,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project", "foo");
   }
 
+  @Test
   public void testNonPOMProjectWithModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -368,6 +380,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project", "foo");
   }
 
+  @Test
   public void testDoNotFailIfRepositoryHasEmptyLayout() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -393,6 +406,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root);
   }
 
+  @Test
   public void testDoNotFailIfDistributionRepositoryHasEmptyValues() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -411,6 +425,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root);
   }
 
+  @Test
   public void testUnresolvedDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -464,6 +479,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved dependency: 'zzz:zzz:jar:3'");
   }
 
+  @Test
   public void testUnresolvedPomTypeDependency() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -487,6 +503,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Unresolved dependency: 'xxx:yyy:pom:4.0'");
   }
 
+  @Test
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -523,6 +540,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(1));
   }
 
+  @Test
   public void testCircularDependencies() {
     if (ignore()) return;
 
@@ -582,6 +600,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(2));
   }
 
+  @Test
   public void testUnresolvedExtensionsAfterImport() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -601,6 +620,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
   }
 
+  @Test
   public void testUnresolvedExtensionsAfterResolve() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -623,6 +643,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertTrue(problems.get(0).getDescription().contains("Could not find artifact xxx:yyy:jar:1"));
   }
 
+  @Test
   public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -647,6 +668,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
+  @Test
   public void testUnresolvedBuildExtensionsInModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -709,6 +731,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertTrue(problems.get(0).getDescription(), problems.get(0).getDescription().contains("Could not find artifact yyy:yyy:jar:1"));
   }
 
+  @Test
   public void testUnresolvedPlugins() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -729,6 +752,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'");
   }
 
+  @Test
   public void testDoNotReportResolvedPlugins() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
 
@@ -751,6 +775,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
+  @Test
   public void testUnresolvedPluginsAsExtensions() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -775,9 +800,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertSize(2, problems);
     assertTrue(problems.get(0).getDescription(), problems.get(0).getDescription().contains("Could not find artifact xxx:yyy:jar:1"));
     assertTrue(problems.get(1).getDescription(), problems.get(1).getDescription().contains("Unresolved plugin: 'xxx:yyy:1'"));
-
   }
 
+  @Test
   public void testInvalidSettingsXml() throws Exception {
     updateSettingsXml("<localRepo<<");
 
@@ -790,6 +815,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'settings.xml' has syntax errors");
   }
 
+  @Test
   public void testInvalidProfilesXml() {
     createProfilesXml("<prof<<");
 
@@ -802,10 +828,11 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'profiles.xml' has syntax errors");
   }
 
+  @Test
   public void testInvalidMavenConfig() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
-          "<artifactId>project</artifactId>" +
-           "<version>1</version>");
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
     createProjectSubFile(".mvn/maven.config", "bad command line");
     importProjectWithErrors();
     assertModules("project");

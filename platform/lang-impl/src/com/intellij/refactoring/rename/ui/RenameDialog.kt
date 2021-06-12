@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.ui
 
 import com.intellij.find.FindBundle
@@ -12,6 +12,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.impl.RenameOptions
+import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.UserActivityWatcher
 import com.intellij.ui.layout.*
@@ -24,13 +25,13 @@ import javax.swing.JComponent
 internal class RenameDialog(
   private val project: Project,
   @Label private val presentableText: String,
-  initOptions: Options
+  initOptions: Options,
 ) : DialogWrapper(project) {
 
   // model
   private var myTargetName: String = initOptions.targetName
-  private var myRenameTextOccurrences: Boolean? = initOptions.renameOptions.renameTextOccurrences
-  private var myRenameCommentsStringsOccurrences: Boolean? = initOptions.renameOptions.renameCommentsStringsOccurrences
+  private var myCommentsStringsOccurrences: Boolean? = initOptions.renameOptions.textOptions.commentStringOccurrences
+  private var myTextOccurrences: Boolean? = initOptions.renameOptions.textOptions.textOccurrences
   private var myScope: SearchScope = initOptions.renameOptions.searchScope
   var preview: Boolean = false
     private set
@@ -85,7 +86,7 @@ internal class RenameDialog(
   private fun LayoutBuilder.newName() {
     row {
       val labelBuilder = label(RefactoringBundle.message("rename.dialog.new.name.label"))
-      val nameSuggestionsField = NameSuggestionsField(arrayOf(myTargetName, myTargetName), project)
+      val nameSuggestionsField = NameSuggestionsField(arrayOf(myTargetName), project)
       nameSuggestionsField.addDataChangedListener {
         myTargetName = nameSuggestionsField.enteredName
       }
@@ -95,23 +96,23 @@ internal class RenameDialog(
   }
 
   private fun LayoutBuilder.textOccurrenceCheckboxes() {
-    if (myRenameTextOccurrences == null && myRenameCommentsStringsOccurrences == null) {
+    if (myCommentsStringsOccurrences == null && myTextOccurrences == null) {
       return
     }
     row {
       cell(isFullWidth = true) {
-        myRenameTextOccurrences?.let {
-          checkBox(
-            text = RefactoringBundle.getSearchForTextOccurrencesText(),
-            getter = { it },
-            setter = { myRenameTextOccurrences = it }
-          )
-        }
-        myRenameCommentsStringsOccurrences?.let {
+        myCommentsStringsOccurrences?.let {
           checkBox(
             text = RefactoringBundle.getSearchInCommentsAndStringsText(),
             getter = { it },
-            setter = { myRenameCommentsStringsOccurrences = it }
+            setter = { myCommentsStringsOccurrences = it }
+          )
+        }
+        myTextOccurrences?.let {
+          checkBox(
+            text = RefactoringBundle.getSearchForTextOccurrencesText(),
+            getter = { it },
+            setter = { myTextOccurrences = it }
           )
         }
       }
@@ -139,8 +140,10 @@ internal class RenameDialog(
   fun result(): Options = Options(
     targetName = myTargetName,
     renameOptions = RenameOptions(
-      renameTextOccurrences = myRenameTextOccurrences,
-      renameCommentsStringsOccurrences = myRenameCommentsStringsOccurrences,
+      textOptions = TextOptions(
+        commentStringOccurrences = myCommentsStringsOccurrences,
+        textOccurrences = myTextOccurrences,
+      ),
       searchScope = myScope
     )
   )

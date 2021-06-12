@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.Applica
       editorApp(IdeBundle.message("label.appearance.caret.blinking"), "IS_CARET_BLINKING"),
       editorApp(IdeBundle.message("label.option.appearance", OptionsTopHitProvider.messageApp("checkbox.use.block.caret")), "IS_BLOCK_CURSOR"),
       editorApp(IdeBundle.message("label.appearance.show.right.margin"), "IS_RIGHT_MARGIN_SHOWN"),
-      editorCode(IdeBundle.message("label.option.appearance", OptionsTopHitProvider.messageApp("checkbox.show.method.separators")), "SHOW_METHOD_SEPARATORS"),
+      editorCode(IdeBundle.message("label.option.appearance", PlatformUtils.isDataGrip() ? OptionsTopHitProvider.messageApp("checkbox.show.method.separators.DataGrip") : OptionsTopHitProvider.messageApp("checkbox.show.method.separators")), "SHOW_METHOD_SEPARATORS"),
       editorApp(IdeBundle.message("label.option.appearance", OptionsTopHitProvider.messageApp("checkbox.show.whitespaces")), "IS_WHITESPACES_SHOWN"),
       editorApp(IdeBundle.message("label.appearance.show.leading.whitespaces"), "IS_LEADING_WHITESPACES_SHOWN"),
       editorApp(IdeBundle.message("label.appearance.show.inner.whitespaces"), "IS_INNER_WHITESPACES_SHOWN"),

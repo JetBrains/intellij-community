@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -43,6 +45,14 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
     IntroduceVariableHandler handler =
       ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();
     handler.invoke(expression.getProject(), editor, (PsiExpression)expression);
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context,
+                              @NotNull Document copyDocument, int newOffset) {
+    // Non-inplace mode would require a modal dialog, which is not allowed under postfix templates 
+    return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled() &&
+           super.isApplicable(context, copyDocument, newOffset);
   }
 
   @NotNull

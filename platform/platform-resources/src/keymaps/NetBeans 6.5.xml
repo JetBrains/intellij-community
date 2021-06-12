@@ -404,4 +404,5 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+  <action id="GoFmtProjectAction"/>
 </keymap>

@@ -17,6 +17,7 @@ class EditorConfigValueUniquenessInspection : LocalInspectionTool() {
       val listDescriptor = list.getDescriptor(false) as? EditorConfigListDescriptor ?: return
       if (listDescriptor.allowRepetitions) return
 
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.value.uniqueness.message"]
       values.groupByNotNull {
         val descriptor = it.getDescriptor(false) ?: return@groupByNotNull null

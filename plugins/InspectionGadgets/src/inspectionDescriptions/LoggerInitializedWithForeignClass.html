@@ -1,7 +1,23 @@
 <html>
 <body>
-Reports any <b>Logger</b>s which are initialized with a class literal from a different class than the <b>Logger</b>
-is contained in.
+Reports <code>Logger</code> instances which are initialized with a <code>class</code> literal from a different class than the <code>Logger</code>
+is contained in. This can easily happen when copy-pasting some contents from another class and
+may result in logging events under an unexpected category and cause filters to be applied incorrectly.
+<pre><code>
+  <b>public class</b> Paramount {
+    <b>protected static final</b> Logger LOG = Logger.getLogger(Critical.class);
+
+    // ... other fields and methods
+  }
+</code></pre>
+<p>A quick fix is provided to replace the foreign class literal with one from the surrounding class:</p>
+<pre><code>
+  <b>public class</b> Paramount {
+    <b>protected static final</b> Logger LOG = Logger.getLogger(Paramount.class);
+
+    // ... other fields and methods
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the table below to specify the logger factory classes and logger factory methods recognized by this inspection.

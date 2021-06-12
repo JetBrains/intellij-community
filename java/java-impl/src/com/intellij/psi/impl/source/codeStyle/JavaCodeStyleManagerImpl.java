@@ -45,6 +45,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
     "per", "to", "up", "upon", "via", "with"};
 
+  @NonNls private static final String[] ourCommonTypeSuffixes = {"Entity"};
+
 
   private final Project myProject;
 
@@ -403,6 +405,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String result = type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName;
     if (variableKind == VariableKind.PARAMETER && type instanceof PsiClassType && typeName.endsWith("Exception")) {
       return Arrays.asList("e", result);
+    }
+    for (String suffix : ourCommonTypeSuffixes) {
+      if (result.length() > suffix.length() && result.endsWith(suffix)) {
+        return Arrays.asList(result, result.substring(0, result.length() - suffix.length()));
+      }
     }
     return Collections.singletonList(result);
   }

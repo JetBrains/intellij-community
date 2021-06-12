@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
@@ -31,9 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private AnnotationHolderImpl myAnnotationHolder;
   private final Map<Language, List<Annotator>> myAnnotators = FactoryMap.create(l -> createAnnotators(l));

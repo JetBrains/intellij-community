@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class JavaWrapManager {
   }
 
   /**
-   * Creates {@link Wrap wrap} to be used with the children blocks of the the given block.
+   * Creates {@link Wrap wrap} to be used with the children blocks of the given block.
    *
    * @param block                   target block which sub-blocks should use wrap created by the current method
    * @param settings                code formatting settings to consider during wrap construction

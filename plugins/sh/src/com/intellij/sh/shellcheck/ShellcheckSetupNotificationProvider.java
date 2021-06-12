@@ -36,7 +36,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
     if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
-      EditorNotificationPanel panel = new EditorNotificationPanel();
+      EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
       panel.setText(message("sh.shellcheck.install.question"));
       Runnable onSuccess = () -> {
         EditorNotifications.getInstance(project).updateAllNotifications();

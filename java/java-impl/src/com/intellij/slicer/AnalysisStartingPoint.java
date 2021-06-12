@@ -3,8 +3,11 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
@@ -31,21 +34,21 @@ class AnalysisStartingPoint {
   @Nullable AnalysisStartingPoint tryMeet(@NotNull AnalysisStartingPoint next) {
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
     DfType meet = this.myDfType.meet(next.myDfType);
-    if (meet == DfTypes.BOTTOM) return null;
+    if (meet == DfType.BOTTOM) return null;
     return new AnalysisStartingPoint(meet, this.myAnchor);
   }
 
   @Nullable AnalysisStartingPoint tryJoin(@NotNull AnalysisStartingPoint next) {
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
     DfType meet = this.myDfType.join(next.myDfType);
-    if (meet == DfTypes.TOP) return null;
+    if (meet == DfType.TOP) return null;
     return new AnalysisStartingPoint(meet, this.myAnchor);
   }
 
   static @Nullable AnalysisStartingPoint create(@NotNull DfType type, @Nullable PsiExpression anchor) {
     anchor = extractAnchor(anchor);
     if (anchor == null) return null;
-    if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfTypes.BOTTOM) return null;
+    if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfType.BOTTOM) return null;
     return new AnalysisStartingPoint(type, anchor);
   }
 
@@ -127,7 +130,7 @@ class AnalysisStartingPoint {
           }
           if (type != null && anchor != null) {
             PsiType anchorType = anchor.getType();
-            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfTypes.BOTTOM) return null;
+            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfType.BOTTOM) return null;
             return new AnalysisStartingPoint(type, anchor);
           }
         }
@@ -160,12 +163,12 @@ class AnalysisStartingPoint {
     if (constant instanceof PsiClassObjectAccessExpression) {
       PsiClassObjectAccessExpression classObject = (PsiClassObjectAccessExpression)constant;
       PsiTypeElement operand = classObject.getOperand();
-      return DfTypes.constant(operand.getType(), classObject.getType());
+      return DfTypes.referenceConstant(operand.getType(), classObject.getType());
     }
     if (constant instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)constant).resolve();
       if (target instanceof PsiEnumConstant) {
-        return DfTypes.constant(target, Objects.requireNonNull(constant.getType()));
+        return DfTypes.referenceConstant(target, Objects.requireNonNull(constant.getType()));
       }
     }
     if (ExpressionUtils.isNullLiteral(constant)) {
@@ -193,7 +196,7 @@ class AnalysisStartingPoint {
       if (anchorType.equals(PsiType.BYTE) || anchorType.equals(PsiType.CHAR) || anchorType.equals(PsiType.SHORT)) {
         anchorType = PsiType.INT;
       }
-      if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfTypes.BOTTOM) {
+      if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfType.BOTTOM) {
         if (type.equals(JavaTokenType.EQEQ)) {
           return new AnalysisStartingPoint(constantType, anchor);
         }
@@ -202,7 +205,7 @@ class AnalysisStartingPoint {
         }
       }
     }
-    RelationType relationType = RelationType.fromElementType(type);
+    RelationType relationType = DfaPsiUtil.getRelationByToken(type);
     if (relationType != null) {
       LongRangeSet set = DfLongType.extractRange(constantType).fromRelation(relationType);
       if (anchor == null) return null;
@@ -214,7 +217,7 @@ class AnalysisStartingPoint {
           PsiType.SHORT.equals(anchorType) ||
           PsiType.BYTE.equals(anchorType) ||
           PsiType.CHAR.equals(anchorType)) {
-        set = set.intersect(Objects.requireNonNull(LongRangeSet.fromType(anchorType)));
+        set = set.meet(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
         return new AnalysisStartingPoint(DfTypes.intRangeClamped(set), anchor);
       }
     }
@@ -231,7 +234,7 @@ class AnalysisStartingPoint {
     }
     DfIntegralType dfType = ObjectUtils.tryCast(origType, DfIntegralType.class);
     if (dfType != null) {
-      boolean isLong = dfType instanceof DfLongType;
+      LongRangeType lrType = dfType.getLongRangeType();
       LongRangeSet origRange = dfType.getRange();
       LongRangeSet newRange = null;
       PsiExpression anchor = null;
@@ -239,10 +242,10 @@ class AnalysisStartingPoint {
         anchor = ((PsiPrefixExpression)expression).getOperand();
         IElementType type = ((PsiPrefixExpression)expression).getOperationTokenType();
         if (type.equals(JavaTokenType.MINUS)) {
-          newRange = origRange.negate(isLong);
+          newRange = origRange.negate(lrType);
         }
         else if (type.equals(JavaTokenType.TILDE)) {
-          newRange = origRange.negate(isLong).minus(LongRangeSet.point(1), isLong);
+          newRange = origRange.negate(lrType).minus(LongRangeSet.point(1), lrType);
         }
       }
       if (expression instanceof PsiBinaryExpression) {
@@ -260,27 +263,27 @@ class AnalysisStartingPoint {
         }
         if (type.equals(JavaTokenType.PLUS)) {
           if (right != null) {
-            newRange = origRange.minus(LongRangeSet.point(right), isLong);
+            newRange = origRange.minus(LongRangeSet.point(right), lrType);
             anchor = binOp.getLOperand();
           }
           else if (left != null) {
-            newRange = origRange.minus(LongRangeSet.point(left), isLong);
+            newRange = origRange.minus(LongRangeSet.point(left), lrType);
             anchor = binOp.getROperand();
           }
         }
         if (type.equals(JavaTokenType.MINUS)) {
           if (right != null) {
-            newRange = origRange.plus(LongRangeSet.point(right), isLong);
+            newRange = origRange.plus(LongRangeSet.point(right), lrType);
             anchor = binOp.getLOperand();
           }
           else if (left != null) {
-            newRange = LongRangeSet.point(left).minus(origRange, isLong);
+            newRange = LongRangeSet.point(left).minus(origRange, lrType);
             anchor = binOp.getROperand();
           }
         }
       }
       if (newRange != null && anchor != null && !(anchor instanceof PsiLiteralExpression)) {
-        analysis = new AnalysisStartingPoint(isLong ? DfTypes.longRange(newRange) : DfTypes.intRangeClamped(newRange), anchor);
+        analysis = new AnalysisStartingPoint(DfTypes.rangeClamped(newRange, lrType), anchor);
       }
     }
     return analysis;

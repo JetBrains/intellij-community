@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -36,7 +36,7 @@ public final class FileBasedIndexProjectHandler {
   private static final int ourMinFilesSizeToStartDumbMode = Registry.intValue("ide.dumb.mode.minFilesSizeToStart", 1048576);
 
   /**
-   * @deprecated Use {@see scheduleReindexingInDumbMode()} instead.
+   * @deprecated Use {@link #scheduleReindexingInDumbMode(Project)} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
@@ -114,6 +114,8 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull Project project) {
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
+
       try {
         int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
         LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
@@ -149,6 +151,7 @@ public final class FileBasedIndexProjectHandler {
       }
       finally {
         IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
   @Override
   public JComponent createOptionsPanel() {
     return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("options.title.ignored.classes"),
-                                              InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.options.chooser"));
+                                              InspectionGadgetsBundle.message("options.label.ignored.classes"),
+                                              InspectionGadgetsBundle.message("choose.class.type.to.ignore"));
   }
 
   @Nullable

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +37,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryHandler
-        implements RefactoringActionHandler {
+public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   /**
    * @deprecated Use {@link #getRefactoringName()} instead
    */
@@ -165,6 +167,12 @@ public class ReplaceConstructorWithFactoryHandler
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, method)) return;
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null;
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {

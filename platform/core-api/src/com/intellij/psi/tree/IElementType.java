@@ -114,7 +114,7 @@ public class IElementType {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
           Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
+          Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
           List<IElementType> types = max.getValue();
           LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
                     " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));

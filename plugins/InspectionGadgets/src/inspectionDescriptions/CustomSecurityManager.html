@@ -1,8 +1,13 @@
 <html>
 <body>
-Reports any user-defined subclasses of <b>java.lang.SecurityManager</b>.
+Reports any user-defined subclasses of <code>java.lang.SecurityManager</code>.
 While not necessarily representing a security hole, such classes should be thoroughly
 and professionally inspected for possible security issues.
+<p>Example:</p>
+<pre>
+  class CustomSecurityManager extends SecurityManager {
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

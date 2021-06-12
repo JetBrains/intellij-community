@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author yole
- */
+
 public class PyStdReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =

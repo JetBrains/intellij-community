@@ -235,10 +235,16 @@ public final class BackgroundTaskUtil {
 
   @CalledInAny
   public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    final ProgressIndicator threadProgress = ProgressManager.getInstance().getProgressIndicator();
-    final ProgressIndicator indicator = threadProgress == null
+    runUnderDisposeAwareIndicator(parent, task, ProgressManager.getInstance().getProgressIndicator());
+  }
+
+  @CalledInAny
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent,
+                                                   @NotNull Runnable task,
+                                                   @Nullable ProgressIndicator parentIndicator) {
+    final ProgressIndicator indicator = parentIndicator == null
                                         ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
-                                        : new SensitiveProgressWrapper(threadProgress);
+                                        : new SensitiveProgressWrapper(parentIndicator);
     Disposable disposable = () -> {
       if (indicator.isRunning()) {
         indicator.cancel();

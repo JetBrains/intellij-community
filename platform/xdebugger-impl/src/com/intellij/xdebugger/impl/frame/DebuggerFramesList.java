@@ -2,14 +2,14 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.Position;
 import java.awt.*;
 
@@ -21,15 +21,6 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   protected void doInit() {
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setCellRenderer(createListRenderer());
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-          onFrameChanged(getSelectedValue());
-        }
-      }
-    });
-
     getEmptyText().setText(XDebuggerBundle.message("debugger.frames.not.available"));
   }
 
@@ -63,18 +54,20 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return XDebuggerBundle.message("action.previous.frame.text");
   }
 
-  private static final OccurenceInfo EMPTY_OCCURENCE = OccurenceInfo.position(-1, -1);
-
   @Override
   public OccurenceInfo goNextOccurence() {
     setSelectedIndex(getSelectedIndex() + 1);
-    return EMPTY_OCCURENCE;
+    return new OccurenceInfo(getSelectedFrameNavigatable(), -1, -1);
   }
 
   @Override
   public OccurenceInfo goPreviousOccurence() {
     setSelectedIndex(getSelectedIndex() - 1);
-    return EMPTY_OCCURENCE;
+    return new OccurenceInfo(getSelectedFrameNavigatable(), -1, -1);
+  }
+
+  protected @Nullable Navigatable getSelectedFrameNavigatable() {
+    return null;
   }
 
   @Override
@@ -88,8 +81,6 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   }
 
   protected abstract ListCellRenderer createListRenderer();
-
-  protected abstract void onFrameChanged(final Object selectedValue);
 
   @Override
   public int getNextMatch(String prefix, int startIndex, Position.Bias bias) {

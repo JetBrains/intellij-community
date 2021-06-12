@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Platform
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
+import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -27,11 +32,12 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
-import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -39,6 +45,8 @@ import org.jetbrains.concurrency.collectResults
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
+import java.net.URI
+import java.net.URL
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
@@ -51,16 +59,19 @@ import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
 import kotlin.math.abs
 
-class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
-                          private val target: TargetEnvironmentConfiguration?) {
+class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
+
+  init {
+    request.onEnvironmentPrepared { environment, progressIndicator -> provideEnvironment(environment, progressIndicator) }
+  }
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
 
-  private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
+  private val languageRuntime: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
   private val uploads = mutableListOf<Upload>()
 
@@ -159,15 +170,18 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
   }
 
-  init {
-    commandLine.putUserData(JdkUtil.COMMAND_LINE_SETUP_KEY, this)
-  }
-
-  fun provideEnvironment(environment: TargetEnvironment,
-                         targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+  private fun provideEnvironment(environment: TargetEnvironment,
+                                 targetProgressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
-    for (upload in uploads) {
-      upload.volume.upload(upload.relativePath, targetProgressIndicator)
+    if (environment is TargetEnvironment.BatchUploader) {
+      environment.runBatchUpload(uploads = ContainerUtil.map(uploads) {
+        Pair(it.volume, it.relativePath)
+      }, targetProgressIndicator = targetProgressIndicator)
+    }
+    else {
+      for (upload in uploads) {
+        upload.volume.upload(upload.relativePath, targetProgressIndicator)
+      }
     }
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.
@@ -183,7 +197,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   @Throws(CantRunException::class)
   fun setupJavaExePath(javaParameters: SimpleJavaParameters) {
-    if (request is LocalTargetEnvironmentRequest || target == null) {
+    if (request is LocalTargetEnvironmentRequest || request.configuration == null) {
       val jdk = javaParameters.jdk ?: throw CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
       val type = jdk.sdkType
       if (type !is JavaSdkType) throw CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
@@ -193,7 +207,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", target.displayName))
+        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
       }
 
       val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
@@ -211,7 +225,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   @Throws(CantRunException::class)
   private fun setupEnvironment(javaParameters: SimpleJavaParameters) {
-    javaParameters.env.forEach { key: String, value: String? -> commandLine.addEnvironmentVariable(key, value) }
+    javaParameters.env.forEach { (key: String, value: String?) -> commandLine.addEnvironmentVariable(key, value) }
 
     if (request is LocalTargetEnvironmentRequest) {
       val type = if (javaParameters.isPassParentEnvs) ParentEnvironmentType.CONSOLE else ParentEnvironmentType.NONE
@@ -273,22 +287,30 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
     }
     if (!dynamicParameters) {
-      for (parameter in javaParameters.programParametersList.targetedList) {
-        val values = mutableListOf<TargetValue<String>>()
-        for (part in parameter.parts) {
-          when (part) {
-            is ParameterTargetValuePart.Const ->
-              TargetValue.fixed(part.localValue)
-            is ParameterTargetValuePart.Path ->
-              requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
-            is ParameterTargetValuePart.PromiseValue ->
-              TargetValue.create(part.localValue, part.targetValue)
-            else ->
-              throw IllegalStateException("Unexpected parameter list part " + part.javaClass)
-          }.let { values.add(it) }
-        }
-        commandLine.addParameter(TargetValue.composite(values) { it.joinToString(separator = "") })
+      for (value in mapTargetValues(javaParameters.programParametersList.targetedList)) {
+        commandLine.addParameter(value)
       }
+    }
+  }
+
+  private fun mapTargetValues(parameterValues: Collection<CompositeParameterTargetedValue>): List<TargetValue<String>> {
+    return parameterValues.map { parameter ->
+      val values = mutableListOf<TargetValue<String>>()
+      for (part in parameter.parts) {
+        when (part) {
+          is ParameterTargetValuePart.Const ->
+            TargetValue.fixed(part.localValue)
+          is ParameterTargetValuePart.Path ->
+            requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+          is ParameterTargetValuePart.PathSeparator ->
+            TargetValue.fixed(platform.pathSeparator.toString())
+          is ParameterTargetValuePart.PromiseValue ->
+            TargetValue.create(part.localValue, part.targetValue)
+          else ->
+            throw IllegalStateException("Unexpected parameter list part " + part.javaClass)
+        }.let { values.add(it) }
+      }
+      TargetValue.composite(values) { it.joinToString(separator = "") }
     }
   }
 
@@ -298,7 +320,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                                cs: Charset) {
 
     try {
-      val argFile = ArgFile(dynamicVMOptions, dynamicParameters, cs, platform)
+      val argFile = ArgFile(dynamicVMOptions, cs, platform)
       commandLine.addFileToDeleteOnTermination(argFile.file)
 
       val classPath = javaParameters.classPath
@@ -323,10 +345,17 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
       appendEncoding(javaParameters, vmParameters)
 
+      if (dynamicParameters) {
+        val targetValues = mapTargetValues(javaParameters.programParametersList.targetedList)
+        for (targetValue in targetValues) {
+          argFile.addPromisedParameter(targetValue)
+        }
+      }
+
       val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
+      argFile.scheduleWriteFileWhenReady(vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
 
@@ -446,8 +475,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
       classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
       // If kotlin agent starts it needs kotlin-stdlib in the classpath.
-      javaParameters.classPath.rootDirs.forEach {
-        it.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
+      javaParameters.classPath.rootDirs.forEach { rootDir ->
+        rootDir.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
           classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
         }
       }
@@ -534,8 +563,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       appendVmParameter(it)
     }
     val targetDependentParameters = javaParameters.targetDependentParameters
-    targetDependentParameters.asTargetParameters().forEach {
-      val value = it.apply(request)
+    targetDependentParameters.asTargetParameters().forEach { javaParameterFunction ->
+      val value = javaParameterFunction.apply(request)
       value.resolvePaths(
         uploadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
@@ -560,14 +589,16 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       return
     }
 
-    if (vmParameter.startsWith("-agentpath:")) {
-      appendVmAgentParameter(vmParameter, "-agentpath:")
-    }
-    else if (vmParameter.startsWith("-javaagent:")) {
-      appendVmAgentParameter(vmParameter, "-javaagent:")
-    }
-    else {
-      commandLine.addParameter(vmParameter)
+    when {
+      vmParameter.startsWith("-agentpath:") -> {
+        appendVmAgentParameter(vmParameter, "-agentpath:")
+      }
+      vmParameter.startsWith("-javaagent:") -> {
+        appendVmAgentParameter(vmParameter, "-javaagent:")
+      }
+      else -> {
+        commandLine.addParameter(vmParameter)
+      }
     }
   }
 
@@ -696,7 +727,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   private class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
-                                                                private val dynamicParameters: Boolean,
                                                                 private val charset: Charset,
                                                                 private val platform: Platform) {
 
@@ -716,12 +746,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       registerPromise(promisedValue)
     }
 
-    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters,
-                                   vmParameters: ParametersList,
-                                   rememberContent: () -> Unit) {
+    fun scheduleWriteFileWhenReady(vmParameters: ParametersList, rememberContent: () -> Unit) {
       myAllPromises.collectResults().onSuccess {
         try {
-          writeArgFileNow(javaParameters, vmParameters)
+          writeArgFileNow(vmParameters)
           rememberContent.invoke()
         }
         catch (e: IOException) {
@@ -737,7 +765,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
 
     @Throws(IOException::class, ExecutionException::class, TimeoutException::class)
-    private fun writeArgFileNow(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    private fun writeArgFileNow(vmParameters: ParametersList) {
       val fileArgs: MutableList<String?> = ArrayList()
       if (dynamicVMOptions) {
         fileArgs.addAll(vmParameters.list)
@@ -748,9 +776,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
       for (nextResolvedParameter in myPromisedParameters) {
         fileArgs.add(nextResolvedParameter.targetValue.blockingGet(0))
-      }
-      if (dynamicParameters) {
-        fileArgs.addAll(javaParameters.programParametersList.list)
       }
       CommandLineWrapperUtil.writeArgumentsFile(file, fileArgs, platform.lineSeparator, charset)
     }
@@ -824,10 +849,24 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
 
     @Throws(MalformedURLException::class)
-    private fun pathToUrl(path: String): String {
-      val file = File(path)
-      @Suppress("DEPRECATION") val url = if (notEscapeClassPathUrl) file.toURL() else file.toURI().toURL()
+    private fun pathToUrl(targetPath: String): String {
+      val url : URL = if (notEscapeClassPathUrl) {
+        // repeat login of `File(path).toURL()` without using system-dependent java.io.File
+        URL(URLUtil.FILE_PROTOCOL, "", slashify(targetPath))
+      }
+      else {
+        // repeat logic of `File(path).toURI().toURL()` without using system-dependent java.io.File
+        val p = slashify(targetPath)
+        URI(URLUtil.FILE_PROTOCOL, null, if (p.startsWith("//")) "//$p" else p, null).toURL()
+      }
       return url.toString()
+    }
+
+    // counterpart of java.io.File#slashify
+    private fun slashify(path: String): String {
+      return FileUtil.toSystemIndependentName(path).let {
+        if (it.startsWith("/")) it else "/$it"
+      }
     }
   }
 

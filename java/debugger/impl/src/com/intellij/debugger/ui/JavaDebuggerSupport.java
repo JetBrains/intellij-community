@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.openapi.project.ProjectCoreUtil.theOnlyOpenProject;
+
 public class JavaDebuggerSupport extends DebuggerSupport {
   private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
@@ -109,6 +111,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         return project;
       }
     }
-    return ProjectManager.getInstance().getDefaultProject();
+    Project project = theOnlyOpenProject();
+    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
   }
 }

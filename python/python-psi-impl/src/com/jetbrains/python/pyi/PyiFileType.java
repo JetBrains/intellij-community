@@ -39,7 +39,7 @@ public class PyiFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.stub");
+    return PyPsiBundle.message("filetype.python.stub.description");
   }
 
   @NotNull

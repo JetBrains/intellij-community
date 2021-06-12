@@ -14,9 +14,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class IssueLinkRenderer {
   private final SimpleColoredComponent myColoredComponent;
   private final IssueNavigationConfiguration myIssueNavigationConfiguration;

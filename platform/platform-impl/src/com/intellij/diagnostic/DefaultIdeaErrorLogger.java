@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
@@ -17,12 +17,8 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.system.CpuArch;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author kir
@@ -33,9 +29,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourLoggerBroken = false;
   private static boolean ourMappingFailedNotificationPosted = false;
 
-  @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
-  @NonNls private static final String DISABLED_VALUE = "disabled";
-  @NonNls private static final String ENABLED_VALUE = "enabled";
+  private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
+  private static final String DISABLED_VALUE = "disabled";
+  private static final String ENABLED_VALUE = "enabled";
 
   @Override
   public boolean canHandle(IdeaLoggingEvent event) {
@@ -59,15 +55,13 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       final MemoryKind kind = getOOMErrorKind(event.getThrowable());
       boolean isOOM = kind != null;
-      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
       LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
 
       return notificationEnabled ||
              showPluginError ||
              ApplicationManager.getApplication().isInternal() ||
-             isOOM ||
-             isMappingFailed;
+             isOOM;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
@@ -91,12 +85,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         return;
       }
 
-      if (kind != null && System.getProperty("testscript.filename") == null) {
+      if (kind != null) {
         ourOomOccurred = true;
-        SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
-      }
-      else if (throwable instanceof MappingFailedException) {
-        processMappingFailed(event);
+        LowMemoryNotifier.showNotification(kind, true);
       }
       else if (!ourOomOccurred) {
         MessagePool.getInstance().addIdeFatalMessage(event);
@@ -112,8 +103,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  @Nullable
-  static MemoryKind getOOMErrorKind(Throwable t) {
+  public static @Nullable MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

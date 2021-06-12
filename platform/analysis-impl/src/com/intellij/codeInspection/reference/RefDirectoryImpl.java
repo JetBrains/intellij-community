@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.reference;
 
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -37,12 +38,14 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected void initialize() {
     PsiDirectory psiElement = ObjectUtils.tryCast(getPsiElement(), PsiDirectory.class);
     LOG.assertTrue(psiElement != null);
-    final PsiDirectory parentDirectory = psiElement.getParentDirectory();
-    if (parentDirectory != null && ProjectFileIndex.getInstance(psiElement.getProject()).isInSourceContent(parentDirectory.getVirtualFile())) {
-      final WritableRefElement refElement = (WritableRefElement)getRefManager().getReference(parentDirectory);
-      if (refElement != null) {
-        refElement.add(this);
-        return;
+    if (!ProjectRootsUtil.isSourceRoot(psiElement)) {
+      final PsiDirectory parentDirectory = psiElement.getParentDirectory();
+      if (parentDirectory != null && ProjectFileIndex.getInstance(psiElement.getProject()).isInSourceContent(parentDirectory.getVirtualFile())) {
+        final WritableRefElement refElement = (WritableRefElement)getRefManager().getReference(parentDirectory);
+        if (refElement != null) {
+          refElement.add(this);
+          return;
+        }
       }
     }
     myRefModule = getRefManager().getRefModule(ModuleUtilCore.findModuleForPsiElement(psiElement));

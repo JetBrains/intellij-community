@@ -56,6 +56,11 @@ public class FavoritesViewSettings implements ViewSettings {
     save();
   }
 
+  @Override
+  public boolean isFlattenPackages() {
+    return myFlattenPackages;
+  }
+
   public void setFlattenPackages(boolean flattenPackages) {
     myFlattenPackages = flattenPackages;
     save();

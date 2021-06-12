@@ -67,8 +67,8 @@ object GradleExecutionSettingsUtil {
   }
 
   @JvmStatic
-  fun createTestFilterFrom(aClass: PsiClass, psiMethod: PsiMethod, hasSuffix: Boolean): String {
-    return createTestFilterFrom(aClass, psiMethod.name, hasSuffix)
+  fun createTestFilterFrom(psiClass: PsiClass, psiMethod: PsiMethod, hasSuffix: Boolean): String {
+    return createTestFilterFrom(psiClass, psiMethod.name, hasSuffix)
   }
 
   @JvmStatic
@@ -77,8 +77,10 @@ object GradleExecutionSettingsUtil {
   }
 
   @JvmStatic
-  fun createTestFilterFrom(location: Location<*>?, aClass: PsiClass, method: PsiMethod, hasSuffix: Boolean): String {
-    var locationName = createLocationName(aClass.getRuntimeQualifiedName(), method.name)
+  fun createTestFilterFrom(location: Location<*>?, psiClass: PsiClass?, psiMethod: PsiMethod?, hasSuffix: Boolean): String {
+    val className = psiClass?.getRuntimeQualifiedName()
+    val methodName = psiMethod?.name
+    var locationName = createLocationName(className, methodName)
     if (location is PsiMemberParameterizedLocation) {
       val wrappedParamSetName = location.paramSetName
       if (wrappedParamSetName.isNotEmpty()) {
@@ -87,7 +89,7 @@ object GradleExecutionSettingsUtil {
         locationName += "[*$paramSetName*]"
       }
     }
-    else if (aClass.isParameterized()) {
+    else if (psiClass != null && psiClass.isParameterized()) {
       locationName += "[*]"
     }
     return createTestFilterFrom(locationName, hasSuffix)

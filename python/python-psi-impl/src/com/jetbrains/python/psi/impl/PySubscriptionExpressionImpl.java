@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);

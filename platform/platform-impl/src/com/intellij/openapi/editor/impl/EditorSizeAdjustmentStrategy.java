@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.Alarm;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +27,7 @@ import java.awt.*;
  *
  * @author Denis Zhdanov
  */
-class EditorSizeAdjustmentStrategy {
+final class EditorSizeAdjustmentStrategy {
   /**
    * Amount of time (in milliseconds) to keep information about preferred size change.
    */
@@ -57,7 +44,7 @@ class EditorSizeAdjustmentStrategy {
   private static final int DEFAULT_RESERVE_COLUMNS_NUMBER = 4;
 
   private final Alarm myAlarm = new Alarm();
-  private final TLongArrayList myTimings = new TLongArrayList();
+  private final LongList myTimings = new LongArrayList();
 
   private int myReserveColumns = DEFAULT_RESERVE_COLUMNS_NUMBER;
   private boolean myInsideValidation;
@@ -102,7 +89,7 @@ class EditorSizeAdjustmentStrategy {
     scheduleSizeUpdate(editor);
     return result;
   }
-  
+
   void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
@@ -114,12 +101,12 @@ class EditorSizeAdjustmentStrategy {
     long limit = System.currentTimeMillis() - TIMING_TTL_MILLIS;
     int endIndex = 0;
     for (; endIndex < myTimings.size(); endIndex++) {
-      if (myTimings.get(endIndex) > limit) {
+      if (myTimings.getLong(endIndex) > limit) {
         break;
       }
     }
     if (endIndex > 0) {
-      myTimings.remove(0, endIndex);
+      myTimings.removeElements(0, endIndex);
     }
   }
 

@@ -25,6 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNullElse;
+
 public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final JBList<WelcomeScreenTab> tabList;
   TabbedWelcomeScreen() {
@@ -75,8 +77,8 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       tabList.setSelectedIndex(0);
       JComponent firstShownPanel = mainListModel.get(0).getAssociatedComponent();
       UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> {
-        IdeFocusManager.getGlobalInstance()
-          .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true);
+        JComponent preferred = IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel);
+        IdeFocusManager.getGlobalInstance().requestFocus(requireNonNullElse(preferred, tabList), true);
         WelcomeScreenEventCollector.logWelcomeScreenShown();
       });
     }

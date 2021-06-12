@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser.PluginSet
+import com.intellij.ide.plugins.PluginFeatureService
+import com.intellij.ide.plugins.advertiser.FeaturePluginData
+import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
+import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -275,22 +278,93 @@ internal class XmlSerializerMapTest {
     """, bean)
   }
 
-  @Suppress("SpellCheckingInspection")
   @Test
   fun `no nullize of empty data`() {
-    @Tag("exts")
-    class KnownExtensions {
-      @JvmField
-      @OptionTag
-      @XMap
-      val myExtensions: MutableMap<String, PluginSet> = HashMap()
-    }
+    val element = JDOMUtil.load("""
+        <extensions>
+          <option name="extensionsMap" />
+        </extensions>
+      """.trimIndent())
+    val result = element.deserialize(PluginFeatureMap::class.java)
+    assertThat(result.featureMap).isNotNull()
+  }
 
-    val element = JDOMUtil.load("""<exts>
-      <option name="myExtensions" />
-    </exts>""")
-    val result = element.deserialize(KnownExtensions::class.java)
-    assertThat(result.myExtensions).isNotNull()
+  @Test
+  fun `knownExtensions serialization`() {
+    val pluginData = PluginData("foo", "Foo")
+    val extensions = PluginFeatureMap(mapOf("foo" to setOf(pluginData)))
+
+    testSerializer(
+      """
+        <features>
+          <featureMap>
+            <entry key="foo">
+              <plugins>
+                <dataSet>
+                  <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
+                </dataSet>
+              </plugins>
+            </entry>
+          </featureMap>
+        </features>
+      """.trimIndent(),
+      extensions,
+    )
+  }
+
+  @Test
+  fun `PluginFeatureCacheService serialization`() {
+    val state = PluginFeatureCacheService.State()
+    state.extensions = PluginFeatureMap(mapOf())
+
+    testSerializer(
+      """
+        <State>
+          <option name="extensions">
+            <features>
+              <featureMap />
+            </features>
+          </option>
+        </State>
+      """.trimIndent(),
+      state,
+    )
+  }
+
+  @Test
+  fun `featurePluginData serialization`() {
+    val pluginData = FeaturePluginData(
+      "foo",
+      PluginData("foo", "Foo"),
+    )
+
+    testSerializer(
+      """
+        <featurePlugin displayName="foo">
+          <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
+        </featurePlugin>
+      """.trimIndent(),
+      pluginData,
+    )
+  }
+
+  @Test
+  fun `pluginFeatureService serialization`() {
+    val state = PluginFeatureService.State()
+    state["foo"] = PluginFeatureService.FeaturePluginsList()
+
+    testSerializer(
+      """
+        <pluginFeatures>
+          <features>
+            <entry key="foo">
+              <features />
+            </entry>
+          </features>
+        </pluginFeatures>
+      """.trimIndent(),
+      state,
+    )
   }
 
   @Test

@@ -99,12 +99,12 @@ max_byte: bytes
 cr_byte: bytes
 linefeed_byte: bytes
 crlf: bytes
-if sys.version_info < (3, 0):
-    cr_byte_value: bytes
-    linefeed_byte_value: bytes
-else:
+if sys.version_info >= (3, 0):
     cr_byte_value: int
     linefeed_byte_value: int
+else:
+    cr_byte_value: bytes
+    linefeed_byte_value: bytes
 
 class _SupportsAsBytes(Protocol):
     def asbytes(self) -> bytes: ...

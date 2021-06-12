@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -7,7 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 public class SearchEverywhereHeader {
@@ -52,27 +52,29 @@ public class SearchEverywhereHeader {
   private final @Nullable Project myProject;
   private final @NotNull JPanel myTabsPanel;
   private final @NotNull JPanel myToolbarPanel;
-  private ActionToolbar myToolbar;
+  private final @NotNull ActionToolbar myToolbar;
   private boolean myEverywhereAutoSet = true;
 
   public SearchEverywhereHeader(@Nullable Project project,
                                 Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
                                 @NotNull Runnable scopeChangedCallback, Function<? super String, String> shortcutSupplier,
-                                AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
+                                @Nullable AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
     myTabs = createTabs(contributors);
     mySelectedTab = myTabs.get(0);
     myTabsPanel = createTabsPanel(myTabs);
-    myToolbarPanel = createToolbarPanel(showInFindToolWindowAction);
+    myToolbar = createToolbar(showInFindToolWindowAction);
+    myToolbar.setTargetComponent(myTabsPanel);
+    myToolbarPanel = (JPanel)myToolbar.getComponent();
 
     MessageBusConnection busConnection = myProject != null
                                          ? myProject.getMessageBus().connect(ui)
                                          : ApplicationManager.getApplication().getMessageBus().connect(ui);
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
           myEverywhereAutoSet = false;
         }
@@ -99,7 +101,7 @@ public class SearchEverywhereHeader {
     myToolbar.updateActionsImmediately();
   }
 
-  private JPanel createToolbarPanel(AnAction showInFindToolWindowAction) {
+  private @NotNull ActionToolbar createToolbar(@Nullable AnAction showInFindToolWindowAction) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ActionGroup() {
       @Override
@@ -109,18 +111,16 @@ public class SearchEverywhereHeader {
       }
     });
 
-    if (myProject != null) {
+    if (showInFindToolWindowAction != null) {
       actionGroup.addAction(showInFindToolWindowAction);
     }
 
-    myToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
-    myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
-    JComponent toolbarComponent = myToolbar.getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
-    return (JPanel)toolbarComponent;
-
+    return toolbar;
   }
 
   @NotNull
@@ -338,10 +338,10 @@ public class SearchEverywhereHeader {
       @Override
       public void mousePressed(MouseEvent e) {
         switchToTab(tab);
-        FeatureUsageData data = SearchEverywhereUsageTriggerCollector
-          .createData(tab.getReportableID())
-          .addInputEvent(e);
-        SearchEverywhereUsageTriggerCollector.trigger(myProject, SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
+        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
+                                                               SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tab.getReportableID()),
+                                                               EventFields.InputEventByMouseEvent.with(e));
+
       }
     });
 

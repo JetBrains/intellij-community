@@ -1,0 +1,19 @@
+<idea-plugin package="mypackage">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <dependencies>
+    <module name="anotherModule" package="mypackage.subpackage"/>
+    <module name="<error descr="Cannot resolve module descriptor 'invalid.module.xml' in source roots of module 'invalid.module'">invalid.module</error>" package="<error descr="Invalid value: 'mypackage.subpackage'">mypackage.subpackage</error>"/>
+
+    <plugin id="anotherModule.plugin.id"/>
+    <plugin id="<error descr="Cannot resolve plugin 'invalid.plugin.id' in dependencies (Reference: Plugin Dependencies)">invalid.plugin.id</error>"/>
+  </dependencies>
+
+  <actions>
+    <action class="mypackage.MyAction"/>
+
+    <action class="<error descr="Class 'wrongpackage.MyWrongPackageAction' must be located in package 'mypackage'">wrongpackage.MyWrongPackageAction</error>"/>
+  </actions>
+</idea-plugin>

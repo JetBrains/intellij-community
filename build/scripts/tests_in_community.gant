@@ -27,8 +27,13 @@ import org.jetbrains.jps.idea.IdeaProjectLoader
  * to skip compilation and use the compiled classes from the project output.
  */
 target("default": "Run tests") {
-  String home = IdeaProjectLoader.guessHome(this)
-  String outputDir = "$home/out/tests"
-  def context = CompilationContextImpl.create(home, home, outputDir)
-  TestingTasks.create(context).runTests([], "intellij.idea.community.main", null)
+  try {
+    String home = IdeaProjectLoader.guessHome(this)
+    String outputDir = "$home/out/tests"
+    def context = CompilationContextImpl.create(home, home, outputDir)
+    TestingTasks.create(context).runTests([], "intellij.idea.community.main", null)
+  } catch (Exception e) {
+    e.printStackTrace()
+    throw e
+  }
 }

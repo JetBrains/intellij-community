@@ -315,7 +315,7 @@ public class PyTypeModelBuilder {
       else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
         result = new UnknownType(build(unionType.excludeNull(), true));
       }
-      else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
+      else if (ContainerUtil.all(unionMembers, t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
         final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
         result = new ClassObjectType(new OneOf(instanceTypes));
       }
@@ -328,9 +328,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
-    }
-    else if (type != null && type.isBuiltin() && PyNames.BUILTIN_PATH_LIKE.equals(type.getName())) {
-      result = new NamedType(PyNames.PATH_LIKE);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);

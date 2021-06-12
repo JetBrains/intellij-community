@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import org.junit.Test
+
 /**
  * @author Sergey Evdokimov
  */
 class MavenCombineChildAttributeTest extends MavenDomTestCase {
 
+  @Test
   void testCompletion() {
     createProjectPom("""
       <groupId>test</groupId>

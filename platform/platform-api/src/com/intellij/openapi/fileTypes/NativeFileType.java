@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -7,15 +7,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class NativeFileType implements INativeFileType {
   public static final NativeFileType INSTANCE = new NativeFileType();
 
@@ -30,7 +29,13 @@ public final class NativeFileType implements INativeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("native.filetype.description");
+    return IdeBundle.message("filetype.native.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return IdeBundle.message("filetype.native.display.name");
   }
 
   @Override

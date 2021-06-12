@@ -114,7 +114,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private fun createEntry(prevEntry: String): Entry = Entry(prevEntry, prevEntry.length)
 
-  override fun getCurrentIndex(): Int = currentIndex ?: entries.size-1
+  override fun getCurrentIndex(): Int = currentIndex ?: (entries.size - 1)
 
   override fun prevOnLastLine(): Boolean = true
 

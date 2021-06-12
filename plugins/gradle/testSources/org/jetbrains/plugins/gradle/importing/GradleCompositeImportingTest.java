@@ -392,27 +392,25 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                                                       "include 'core', 'ext'");
 
     createProjectSubFile("project-a/core/build.gradle",
-                         new GradleBuildScriptBuilderEx()
-                           .withKotlinPlugin("1.3.50")
-                           .addRepository(" maven { url 'https://repo.labs.intellij.net/repo1' }")
-                           .addPrefix("apply plugin: 'java-library'").generate());
+                         createBuildScriptBuilder()
+                           .withMavenCentral()
+                           .withKotlinJvmPlugin()
+                           .withJavaLibraryPlugin()
+                           .generate());
 
     createProjectSubFile("project-a/ext/build.gradle",
-                         new GradleBuildScriptBuilderEx()
-                           .withKotlinPlugin("1.3.50")
-                           .addRepository(" maven { url 'https://repo.labs.intellij.net/repo1' }")
-                           .addPrefix(
-                             "apply plugin: 'java-library'",
-                             "group = 'myGroup.projectA'",
-                             "version = '1.0-SNAPSHOT'",
-                             "dependencies {",
-                             " api project(':core')",
-                             "}"
-                         ).generate());
+                         createBuildScriptBuilder()
+                           .withMavenCentral()
+                           .withKotlinJvmPlugin()
+                           .withJavaLibraryPlugin()
+                           .addGroup("myGroup.projectA")
+                           .addVersion("1.0-SNAPSHOT")
+                           .addDependency("api project(':core')")
+                           .generate());
 
     createProjectSubFile("project-a/build.gradle", "");
 
-    importProject(new GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .addPostfix("apply plugin: 'java-library'",
                                 "group = 'myGroup'",
                                 "version = '1.0-SNAPSHOT'",
@@ -440,7 +438,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
     createProjectSubFile("project-a/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .withIdeaPlugin()
                            .withJavaPlugin()
                            .addPostfix(
@@ -470,15 +468,15 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("project-a/src/main/util/my/pack/Util.java", "package my.pack; public class Util{};");
 
     createProjectSubFile("src/main/java/my/pack/ClazzB.java", "package my.pack; public class CLazzB{};");
-    importProject(new GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withIdeaPlugin()
                     .withJavaPlugin()
-                    .addPostfix("group = 'myGroup'",
-                                "version = '1.0-SNAPSHOT'",
-                                "dependencies {",
-                                "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
-                                "}"
-                                )
+                    .addPostfix(
+                      "group = 'myGroup'",
+                      "version = '1.0-SNAPSHOT'",
+                      "dependencies {",
+                      "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
+                      "}")
                     .generate());
 
     assertModules("project-a",
@@ -493,10 +491,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   public void testProjectWithCompositePluginDependencyImported() throws Exception {
     createSettingsFile("includeBuild('plugin'); includeBuild('consumer')");
     createProjectSubFile("plugin/settings.gradle", "rootProject.name = 'test-plugin'");
-    createProjectSubFile("plugin/build.gradle", new GradleBuildScriptBuilderEx()
+    createProjectSubFile("plugin/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
-      .addPrefix("group = 'myGroup'",
-                 "version = '1.0'")
+      .addGroup("myGroup")
+      .addVersion("1.0")
       .generate());
 
     // consumer need to be complicated to display the issue
@@ -512,7 +510,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          "  }\n" +
                          "}\n"
                          + "include 'library'");
-    createProjectSubFile("consumer/build.gradle", new GradleBuildScriptBuilderEx()
+    createProjectSubFile("consumer/build.gradle", createBuildScriptBuilder()
       .addPostfix(
         "plugins {",
         " id 'test-plugin' apply false",
@@ -524,7 +522,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
       .generate());
     // sourceSets here will fail to evaluate if parent project was not evaluated successfully
     // because of missing test-plugin, caused by bad included build evaluation order.
-    createProjectSubFile("consumer/library/build.gradle", new GradleBuildScriptBuilderEx()
+    createProjectSubFile("consumer/library/build.gradle", createBuildScriptBuilder()
       .addPostfix(
         "sourceSets {",
         "  integrationTest ",
@@ -550,17 +548,17 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
     createProjectSubFile("sub-project/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .withJavaPlugin()
                            .addDependency("implementation 'my.grp:myId:1.0'")
                            .generate());
 
     createProjectSubFile("included-project/settings.gradle", "rootProject.name = 'myId'");
     createProjectSubFile("included-project/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .withJavaPlugin()
-                           .group("my.grp")
-                           .version("1.0")
+                           .addGroup("my.grp")
+                           .addVersion("1.0")
                            .generate());
 
     importProject("");
@@ -584,27 +582,27 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("pC/settings.gradle");
 
     createProjectSubFile("pA-1/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .applyPlugin("'java-library'")
                            .addDependency("implementation 'group:pC'")
                            .generate());
 
     createProjectSubFile("pA-2/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .applyPlugin("'java-library'")
                            .addDependency("implementation project(':pA-1')")
                            .addDependency("implementation 'group:pB'")
                            .generate());
 
     createProjectSubFile("pB/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
                            .applyPlugin("'java-library'")
                            .addDependency("api 'group:pC'")
                            .generate());
 
     createProjectSubFile("pC/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
                            .applyPlugin("'java-library'")
                            .generate());

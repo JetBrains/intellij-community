@@ -75,7 +75,9 @@ public class YAMLScalarConversionTest extends BasePlatformTestCase {
         final YAMLScalar newElement = manipulator.handleContentChange(scalar, text);
         assertEquals(isUnsupported + ";" + newElement.getClass() + ";" + scalar.getClass(),
                      isUnsupported, newElement.getClass() != scalar.getClass());
-        assertEquals("Failed at " + scalar.getClass() + " (became " + newElement.getClass() + "): ", text, newElement.getTextValue());
+        StringBuilder stringBuilder = new StringBuilder();
+        assertTrue(newElement.createLiteralTextEscaper().decode(ElementManipulators.getValueTextRange(newElement), stringBuilder));
+        assertEquals("Failed at " + scalar.getClass() + " (became " + newElement.getClass() + "): ", text, stringBuilder.toString());
       });
     }
   }

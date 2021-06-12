@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,13 +70,19 @@ public class SwitchEvaluator implements Evaluator {
         return true;
       }
       for (Evaluator evaluator : myEvaluators) {
-        if (value.equals(UnBoxingEvaluator.unbox(evaluator.evaluate(context), context))) {
+        if (resultsEquals(value, UnBoxingEvaluator.unbox(evaluator.evaluate(context), context))) {
           return true;
         }
       }
       return false;
     }
 
+    static boolean resultsEquals(Object val1, Object val2) {
+      if (val1 instanceof StringReference && val2 instanceof StringReference) {
+        return ((StringReference)val1).value().equals(((StringReference)val2).value());
+      }
+      return val1.equals(val2);
+    }
 
     @Override
     public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

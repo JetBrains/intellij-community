@@ -1,11 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels
 
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.ui.JBColor
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Graphics
@@ -13,13 +15,14 @@ import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import org.jetbrains.annotations.NonNls
 
-class SimpleToolWindowWithTwoToolbarsPanel(
-    val leftToolbar: JComponent,
-    val topToolbar: JComponent,
+internal class SimpleToolWindowWithTwoToolbarsPanel(
+    private val leftToolbar: JComponent,
+    private val topToolbar: JComponent,
+    override val gearActions: ActionGroup?,
+    override val titleActions: Array<AnAction>?,
     val content: JComponent
-) : JPanel(), QuickActionProvider, DataProvider {
+) : JPanel(), QuickActionProvider, DataProvider, HasToolWindowActions {
 
     private var myProvideQuickActions: Boolean = false
 
@@ -27,25 +30,28 @@ class SimpleToolWindowWithTwoToolbarsPanel(
         layout = BorderLayout(1, 1)
         myProvideQuickActions = true
         addContainerListener(object : ContainerAdapter() {
-            override fun componentAdded(e: ContainerEvent?) {
-                val child = e!!.child
+            override fun componentAdded(e: ContainerEvent) {
+                val child = e.child
                 if (child is Container) {
                     child.addContainerListener(this)
                 }
             }
 
-            override fun componentRemoved(e: ContainerEvent?) {
-                val child = e!!.child
+            override fun componentRemoved(e: ContainerEvent) {
+                val child = e.child
                 if (child is Container) {
                     child.removeContainerListener(this)
                 }
             }
         })
         add(leftToolbar, BorderLayout.WEST)
-        add(JPanel(BorderLayout()).apply {
-            add(topToolbar, BorderLayout.NORTH)
-            add(content, BorderLayout.CENTER)
-        }, BorderLayout.CENTER)
+        add(
+            JPanel(BorderLayout()).apply {
+                add(topToolbar, BorderLayout.NORTH)
+                add(content, BorderLayout.CENTER)
+            },
+            BorderLayout.CENTER
+        )
         revalidate()
         repaint()
     }
@@ -62,9 +68,7 @@ class SimpleToolWindowWithTwoToolbarsPanel(
         return actions
     }
 
-    override fun getComponent(): JComponent? {
-        return this
-    }
+    override fun getComponent(): JComponent = this
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
@@ -78,7 +82,7 @@ class SimpleToolWindowWithTwoToolbarsPanel(
         }
     }
 
-    fun extractActions(c: JComponent): List<AnAction> = UIUtil.uiTraverser(c)
+    private fun extractActions(c: JComponent): List<AnAction> = UIUtil.uiTraverser(c)
         .traverse()
         .filter(ActionToolbar::class.java)
         .flatten { toolbar -> toolbar.actions }

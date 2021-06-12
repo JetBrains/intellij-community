@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +11,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * Concurrent map with weak keys and soft values.
@@ -41,7 +41,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
-  public interface KeyReference<K, V> extends Getter<K> {
+  public interface KeyReference<K, V> extends Supplier<K> {
     @Override
     K get();
 
@@ -56,7 +56,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     int hashCode();
   }
 
-  public interface ValueReference<K, V> extends Getter<V> {
+  public interface ValueReference<K, V> extends Supplier<V> {
     @NotNull
     KeyReference<K,V> getKeyReference(); // no strong references
 
@@ -215,7 +215,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     HardKey<K,V> hardKey = createHardKey(key);
     try {
       ValueReference<K, V> valueReference = myMap.get(hardKey);
-      return com.intellij.reference.SoftReference.deref(valueReference);
+      return valueReference == null ? null : valueReference.get();
     }
     finally {
       hardKey.clear();
@@ -238,7 +238,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     HardKey<K,V> hardKey = createHardKey(key);
     try {
       ValueReference<K, V> valueReference = myMap.remove(hardKey);
-      return com.intellij.reference.SoftReference.deref(valueReference);
+      return valueReference == null ? null : valueReference.get();
     }
     finally {
       hardKey.clear();
@@ -259,8 +259,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K,V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> prevValReference = myMap.put(keyReference, valueReference);
-
-    return com.intellij.reference.SoftReference.deref(prevValReference);
+    return prevValReference == null ? null : prevValReference.get();
   }
 
   private boolean processQueues() {
@@ -293,7 +292,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   public Collection<V> values() {
     List<V> values = new ArrayList<>();
     for (ValueReference<K, V> valueReference : myMap.values()) {
-      V v = com.intellij.reference.SoftReference.deref(valueReference);
+      V v = valueReference == null ? null : valueReference.get();
       if (v != null) {
         values.add(v);
       }
@@ -314,8 +313,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     HardKey<K, V> hardKey = createHardKey(key);
     try {
       ValueReference<K, V> valueReference = myMap.get(hardKey);
-      V v = com.intellij.reference.SoftReference.deref(valueReference);
-
+      V v = valueReference == null ? null : valueReference.get();
       return value.equals(v) && myMap.remove(hardKey, valueReference);
     }
     finally {
@@ -358,6 +356,6 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K, V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
-    return com.intellij.reference.SoftReference.deref(result);
+    return result == null ? null : result.get();
   }
 }

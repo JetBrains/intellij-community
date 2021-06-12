@@ -3,8 +3,31 @@
 Reports non-constant string concatenations used as arguments to SLF4J and Log4j 2 logging methods.
 Non-constant concatenations will be evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> Vital {
+    <b>private static final</b> Logger LOG = LoggerFactory.getLogger(Vital.class);
+
+    <b>public void</b> saveTheWorld(<b>int</b> i, String s, <b>boolean</b> b) {
+      LOG.info("saveTheWorld(" + i + ", " + s + ", "  + b + ")");
+      // todo
+    }
+  }
+</code></pre>
+<p>After the quick fix is applied, the result looks like this:</p>
+<pre><code>
+  <b>public class</b> Vital {
+    <b>private static final</b> Logger LOG = LoggerFactory.getLogger(Vital.class);
+
+    <b>public void</b> saveTheWorld(<b>int</b> i, String s, <b>boolean</b> b) {
+		  LOG.info("saveTheWorld({}, {}, {})", i, s, b);
+      // todo
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the combobox below to ignore certain higher logging levels.
+Higher logging levels may be enabled even in production, and the arguments will always be evaluated.
 </body>
 </html>

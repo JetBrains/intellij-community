@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /**
@@ -49,7 +48,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
     return runBlocking(block = action)
   }
   // we are under indicator => the Job must be canceled when indicator is canceled
-  return runBlocking(CoroutineName("indicator run blocking")) {
+  return runBlocking(progressSinkElement(ProgressIndicatorSink(indicator)) + CoroutineName("indicator run blocking")) {
     val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
       while (true) {
         if (indicator.isCanceled) {
@@ -81,14 +80,14 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
  * @see runSuspendingAction
  * @see ProgressManager.runProcess
  */
-fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T = runUnderIndicator(coroutineContext, action)
-
-fun <T> runUnderIndicator(ctx: CoroutineContext, action: () -> T): T = runUnderIndicator(requireNotNull(ctx[Job]), action)
+fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T {
+  return runUnderIndicator(coroutineContext.job, coroutineContext.progressSink, action)
+}
 
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-fun <T> runUnderIndicator(job: Job, action: () -> T): T {
+internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
-  val indicator = EmptyProgressIndicator()
+  val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.

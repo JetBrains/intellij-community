@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ThreadInfo;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -65,7 +66,7 @@ public final class PerformanceWatcher implements Disposable {
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
   private FreezeCheckerTask myCurrentEDTEventChecker;
 
-  private static final boolean SHOULD_WATCH = shouldWatch();
+  private final boolean shouldWatch = shouldWatch();
   private final JitWatcher myJitWatcher = new JitWatcher();
 
   public static @NotNull PerformanceWatcher getInstance() {
@@ -73,8 +74,10 @@ public final class PerformanceWatcher implements Disposable {
     return ApplicationManager.getApplication().getService(PerformanceWatcher.class);
   }
 
-  public PerformanceWatcher() {
-    if (!shouldWatch()) return;
+  private PerformanceWatcher() {
+    if (!shouldWatch) {
+      return;
+    }
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener(new BiConsumer<>() {
@@ -98,19 +101,21 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static void reportCrashesIfAny() {
-    File systemDir = new File(PathManager.getSystemPath());
+    Path systemDir = Path.of(PathManager.getSystemPath());
     try {
-      File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
-      File pidFile = new File(systemDir, PID_FILE_NAME);
+      Path appInfoFile = systemDir.resolve(IdeaFreezeReporter.APPINFO_FILE_NAME);
+      Path pidFile = systemDir.resolve(PID_FILE_NAME);
       // TODO: check jre in app info, not the current
       // Only report if on JetBrains jre
-      if (SystemInfo.isJetBrainsJvm && appInfoFile.isFile() && pidFile.isFile()) {
-        String pid = FileUtil.loadFile(pidFile);
-        File[] crashFiles = new File(SystemProperties.getUserHome())
-          .listFiles(file -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile());
+      if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
+        String pid = Files.readString(pidFile);
+        File[] crashFiles = new File(SystemProperties.getUserHome()).listFiles(file -> {
+          return file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile();
+        });
         if (crashFiles != null) {
+          long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
           for (File file : crashFiles) {
-            if (file.lastModified() > appInfoFile.lastModified()) {
+            if (file.lastModified() > appInfoFileLastModified) {
               if (file.length() > 5 * FileUtilRt.MEGABYTE) {
                 LOG.info("Crash file " + file + " is too big to report");
                 break;
@@ -125,7 +130,7 @@ public final class PerformanceWatcher implements Disposable {
               Attachment[] attachments = new Attachment[]{attachment};
 
               // look for extended crash logs
-              File extraLog = findExtraLogFile(pid, appInfoFile.lastModified());
+              File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
               if (extraLog != null) {
                 Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
                 extraAttachment.setIncluded(true);
@@ -134,7 +139,7 @@ public final class PerformanceWatcher implements Disposable {
 
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
               IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
-              IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+              IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
               IdeaFreezeReporter.report(event);
               LifecycleUsageTriggerCollector.onCrashDetected();
               break;
@@ -142,8 +147,10 @@ public final class PerformanceWatcher implements Disposable {
           }
         }
       }
-      IdeaFreezeReporter.saveAppInfo(systemDir, true);
-      FileUtil.writeToFile(new File(systemDir, PID_FILE_NAME), OSProcessUtil.getApplicationPid());
+
+      IdeaFreezeReporter.saveAppInfo(appInfoFile, true);
+      Files.createDirectories(pidFile.getParent());
+      Files.writeString(pidFile, OSProcessUtil.getApplicationPid());
     }
     catch (IOException e) {
       LOG.info(e);
@@ -290,7 +297,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventStarted() {
     long start = System.nanoTime();
     myActiveEvents++;
-    if (SHOULD_WATCH) {
+    if (shouldWatch) {
       finishTracking();
       startTracking(start);
     }
@@ -299,7 +306,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventFinished() {
     myActiveEvents--;
     finishTracking();
-    if (SHOULD_WATCH && myActiveEvents > 0) {
+    if (shouldWatch && myActiveEvents > 0) {
       startTracking(System.nanoTime());
     }
   }
@@ -327,7 +334,9 @@ public final class PerformanceWatcher implements Disposable {
                                      boolean millis,
                                      ThreadInfo[] threadInfos,
                                      @Nullable FreezeCheckerTask task) {
-    if (!shouldWatch()) return null;
+    if (!shouldWatch()) {
+      return null;
+    }
 
     if (!pathPrefix.contains("/")) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
@@ -497,7 +506,10 @@ public final class PerformanceWatcher implements Disposable {
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         //TODO always true for some reason
         //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
-        getPublisher().uiFreezeStarted();
+        File reportDir = new File(myLogDir, myFreezeFolder);
+        reportDir.mkdirs();
+        getPublisher().uiFreezeStarted(reportDir);
+
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
           protected void dumpedThreads(ThreadInfo[] infos) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
@@ -17,7 +17,8 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class SpellCheckerSettings implements PersistentStateComponent<Element> {
+@Service(Service.Level.PROJECT)
+public final class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // For xml serialization
   private static final String SPELLCHECKER_MANAGER_SETTINGS_TAG = "SpellCheckerSettings";
 
@@ -34,7 +35,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
-  private static final String SETTINGS_TRANSFERRED = "transferred"; 
+  private static final String SETTINGS_TRANSFERRED = "transferred";
 
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
@@ -43,7 +44,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
-  private boolean mySettingsTransferred = false;
+  private boolean mySettingsTransferred;
 
   @NlsSafe
   public String getDictionaryToSave() {
@@ -72,7 +73,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
   public static @NotNull SpellCheckerSettings getInstance(Project project) {
-    return ServiceManager.getService(project, SpellCheckerSettings.class);
+    return project.getService(SpellCheckerSettings.class);
   }
 
   public List<String> getCustomDictionariesPaths() {

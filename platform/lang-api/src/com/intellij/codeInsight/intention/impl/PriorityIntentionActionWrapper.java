@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public final class PriorityIntentionActionWrapper implements IntentionAction, PriorityAction {
+public final class PriorityIntentionActionWrapper implements IntentionAction, PriorityAction, IntentionActionDelegate {
   private final IntentionAction myAction;
   private final Priority myPriority;
 
@@ -68,6 +69,11 @@ public final class PriorityIntentionActionWrapper implements IntentionAction, Pr
     return delegate == null ? null :
            delegate == myAction ? this :
            new PriorityIntentionActionWrapper(delegate, myPriority);
+  }
+
+  @Override
+  public @NotNull IntentionAction getDelegate() {
+    return myAction;
   }
 
   @NotNull

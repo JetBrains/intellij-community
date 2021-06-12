@@ -6,7 +6,8 @@ SHELL_SCRIPT
       PsiElement(=)('=')
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         LITERAL_EXPRESSION
           VARIABLE
             PsiElement(var)('$lhs')
@@ -16,4 +17,5 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           VARIABLE
             PsiElement(var)('$rhs')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

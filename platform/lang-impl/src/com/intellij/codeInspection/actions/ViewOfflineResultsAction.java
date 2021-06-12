@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -49,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -59,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -105,7 +89,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                               new PerformAnalysisInBackgroundOption(project)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        //for non project directories ensure refreshed directory 
+        //for non project directories ensure refreshed directory
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
         final VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
@@ -113,7 +97,7 @@ public class ViewOfflineResultsAction extends AnAction {
             if (inspectionFile.isDirectory()) continue;
             final String shortName = inspectionFile.getNameWithoutExtension();
             final String extension = inspectionFile.getExtension();
-            File inspectionIoFile = VfsUtilCore.virtualToIoFile(inspectionFile);
+            Path inspectionIoFile = inspectionFile.toNioPath();
             try {
               if (shortName.equals(InspectionsResultUtil.DESCRIPTIONS)) {
                 profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -161,11 +161,11 @@ public final class CachedIntentions {
     Predicate<IntentionAction> filter = action -> ContainerUtil.and(
       IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
 
-    DataContext dataContext = ((EditorEx)myEditor).getDataContext();
+    DataContext dataContext = Utils.wrapDataContext(EditorUtil.getEditorDataContext(myEditor));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
-      dataContext, ActionPlaces.INTENTION_MENU, false, null);
+      dataContext, ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     for (AnAction action : actions) {
@@ -345,7 +345,7 @@ public final class CachedIntentions {
   private int getWeight(@NotNull IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action).getPriority();
-    while (a instanceof IntentionActionDelegate) {
+    while (a instanceof IntentionActionDelegate && !(a instanceof PriorityAction)) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
     if (a instanceof PriorityAction) {
@@ -367,6 +367,8 @@ public final class CachedIntentions {
         return 3;
       case LOW:
         return -3;
+      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
+        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
       default:
         return 0;
     }

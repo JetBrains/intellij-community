@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,6 +59,9 @@ public final class HighlightNamesUtil {
                                                                 : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     if (type != null) {
       TextAttributes attributes = mergeWithScopeAttributes(methodOrClass, type, colorsScheme);
+      if (!isDeclaration) {
+        attributes = mergeWithVisibilityAttributes(methodOrClass, attributes, colorsScheme);
+      }
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
       if (attributes != null) {
         builder.textAttributes(attributes);
@@ -93,6 +97,27 @@ public final class HighlightNamesUtil {
     TextAttributes scopeAttributes = getScopeAttributes(element, colorsScheme);
     return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
+  
+  private static TextAttributes mergeWithVisibilityAttributes(PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
+    TextAttributesKey attributesKey = null;
+    if (listOwner.hasModifierProperty(PsiModifier.PUBLIC)) {
+      attributesKey = JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES;
+    }
+    else if (listOwner.hasModifierProperty(PsiModifier.PROTECTED)) {
+      attributesKey = JavaHighlightingColors.PROTECTED_REFERENCE_ATTRIBUTES;
+    }
+    else if (listOwner.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      attributesKey = JavaHighlightingColors.PACKAGE_PRIVATE_REFERENCE_ATTRIBUTES;
+    }
+    else if (listOwner.hasModifierProperty(PsiModifier.PRIVATE)) {
+      attributesKey = JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES;
+    }
+    if (attributesKey != null) {
+      TextAttributes visibilityAttributes = colorsScheme.getAttributes(attributesKey);
+      if (visibilityAttributes != null && !visibilityAttributes.isEmpty()) return TextAttributes.merge(basedAttributes, visibilityAttributes);
+    }
+    return basedAttributes;
+  }
 
   @NotNull
   static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
@@ -114,6 +139,9 @@ public final class HighlightNamesUtil {
 
     HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
     TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
+    if (aClass != null && elementToHighlight instanceof PsiJavaCodeReferenceElement) {
+      attributes = mergeWithVisibilityAttributes(aClass, attributes, colorsScheme);
+    }
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
@@ -131,6 +159,9 @@ public final class HighlightNamesUtil {
     }
     if (variable instanceof PsiField) {
       TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
+      if (elementToHighlight.getParent() instanceof PsiReferenceExpression) {
+        attributes = mergeWithVisibilityAttributes(variable, attributes, colorsScheme);
+      }
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);

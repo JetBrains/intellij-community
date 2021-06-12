@@ -95,7 +95,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private VirtualFile myFileToSelect;
   private final Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> myProjectMapping;
 
-  protected interface Value<T> extends Setter<T>, Getter<T> {
+  protected interface Value<T> extends Setter<T>, Supplier<T> {
     void commit();
   }
 
@@ -147,9 +147,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   @Override
   public JComponent createComponent() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
-    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+    myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
+    myTable = new JBTable(myModel) {
       @SuppressWarnings("unchecked")
       @Override
       public String getToolTipText(@NotNull MouseEvent event) {
@@ -382,6 +384,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myModel == null) {
+      throw new AssertionError("createComponent() was not called first");
+    }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
       if (p.second != null) {
@@ -724,10 +730,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+      protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
         return new ComboBoxButton(presentation) {
           @Override
-          protected JBPopup createPopup(Runnable onDispose) {
+          protected @NotNull JBPopup createPopup(Runnable onDispose) {
             JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
               value.set(o);
               updateText(presentation);

@@ -16,6 +16,7 @@ class EditorConfigPartialOverrideInspection : LocalInspectionTool() {
       val isPartiallyOverriding = EditorConfigOverriddenHeaderSearcher().findMatchingHeaders(header).any { it.isPartial }
       val isPartiallyOverridden = EditorConfigOverridingHeaderSearcher().findMatchingHeaders(header).any { it.isPartial }
       if (!isPartiallyOverridden && !isPartiallyOverriding) return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.header.partially.overridden.message"]
       holder.registerProblem(header, message)
     }

@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,13 +26,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.BitUtil;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
@@ -103,8 +100,16 @@ final class FileTypeDetectionService implements Disposable {
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
+          if (event instanceof VFileContentChangeEvent) {
+            VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
+            VirtualFile file = changeEvent.getFile();
+            if (changeEvent.getOldLength() == 0) {
+              // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g. Text
+              cacheAutoDetectedFileType(file, null);
+            }
+          }
           ProgressManager.checkCanceled();
           VirtualFile file = event instanceof VFileCreateEvent /* avoid expensive find child here */ || isReparseEvent(event) ? null : event.getFile();
           VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
@@ -183,7 +188,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private boolean toLog() {
-    return myFileTypeManager.toLog;
+    return myFileTypeManager.toLog();
   }
 
   private void log(String s) {
@@ -247,7 +252,7 @@ final class FileTypeDetectionService implements Disposable {
       log("F: getOrDetectFromContent("+file.getName()+"): " +
                               "getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) = "+(fileType == null ? null : fileType.getName()));
     }
-    if (fileType == null) {
+    if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
       // run autodetection
       try {
         fileType = detectFromContentAndCache(file, content);
@@ -304,7 +309,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   static boolean isDetectable(@NotNull final VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL) || file.getLength() == 0) {
+    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
       // for empty file there is still hope its type will change
       return false;
     }
@@ -349,14 +354,14 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
+  private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @Nullable("null means clear the cache") FileType fileType) {
     boolean wasAutodetectedAsText = fileType == PlainTextFileType.INSTANCE;
     boolean wasAutodetectedAsBinary = fileType == UnknownFileType.INSTANCE;
 
     int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
     flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
-    writeFlagsToCache(file, flags);
     if (file instanceof VirtualFileWithId) {
+      writeFlagsToCache(file, flags);
       int id = ((VirtualFileWithId)file).getId();
       flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, true);
       flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
@@ -366,17 +371,17 @@ final class FileTypeDetectionService implements Disposable {
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         if (toLog()) {
           log("F: cacheAutoDetectedFileType("+file.getName()+") " +
-              "cached to " + fileType.getName() +
+              "cached to " + fileType +
               " flags = "+ readableFlags(flags)+
               "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): "+file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
         }
         return;
       }
     }
-    file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, fileType.getName());
+    file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, fileType == null ? null : fileType.getName());
     if (toLog()) {
       log("F: cacheAutoDetectedFileType("+file.getName()+") " +
-          "cached to " + fileType.getName() +
+          "cached to " + fileType +
           " flags = "+ readableFlags(flags)+
           "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): "+file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
     }
@@ -419,7 +424,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @Nullable
-  private FileType getFileTypeDetectedFromContent(VirtualFile file) {
+  private FileType getFileTypeDetectedFromContent(@NotNull VirtualFile file) {
     String fileTypeName = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
     return fileTypeName == null ? null : myFileTypeManager.findFileTypeByName(fileTypeName);
   }
@@ -442,10 +447,10 @@ final class FileTypeDetectionService implements Disposable {
 
       if (toLog()) {
         log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
-                                "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
+            "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
       }
 
-      if (after == null || FileTypeManagerImpl.mightBeReplacedByDetectedFileType(after)) {
+      if (after == null) {
         try {
           after = detectFromContentAndCache(file, null);
         }
@@ -467,17 +472,9 @@ final class FileTypeDetectionService implements Disposable {
         packedFlags.set(id, flags);
       }
       if (toLog()) {
-        log("F: reDetect(" +
-                                file.getName() +
-                                ") " +
-                                "before: " +
-                                before.getName() +
-                                "; after: " +
-                                after.getName() +
-                                "; now getFileType()=" +
-                                file.getFileType().getName() +
-                                "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " +
-                                file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
+        log("F: reDetect(" + file.getName() + ") before: " + before.getName() + "; after: " + after.getName() +
+            "; now getFileType()=" + file.getFileType().getName() + "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " +
+            file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
       }
 
       if (before != after) {
@@ -509,10 +506,6 @@ final class FileTypeDetectionService implements Disposable {
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file, byte @Nullable [] content) throws IOException {
     long start = System.currentTimeMillis();
     ByteArraySequence bytes = getFirstBytes(file, content);
-    if (bytes.length() == 0) {
-      // do not cache the type for empty file because it can change as soon as something got written into it
-      return UnknownFileType.INSTANCE;
-    }
 
     FileType fileType = detectFromContent(file, bytes);
     cacheAutoDetectedFileType(file, fileType);
@@ -561,11 +554,19 @@ final class FileTypeDetectionService implements Disposable {
     return fileType;
   }
 
-  private final DiskQueryRelay<Pair<VirtualFile, Integer>, ByteArraySequence> myReadFirstBytesFromFileRelay = new DiskQueryRelay<>(pair -> {
-    VirtualFile file = pair.getFirst();
-    Integer bufferLength = pair.getSecond();
+  private static class VirtualFileWithLength {
+    private final @NotNull VirtualFile myVirtualFile;
+    private final int myLength;
+
+    private VirtualFileWithLength(@NotNull VirtualFile virtualFile, int length) {
+      myVirtualFile = virtualFile;
+      myLength = length;
+    }
+  }
+
+  private final DiskQueryRelay<VirtualFileWithLength, ByteArraySequence> myReadFirstBytesFromFileRelay = new DiskQueryRelay<>(pair -> {
     try {
-      return readFirstBytesFromFile(file, bufferLength);
+      return readFirstBytesFromFile(pair.myVirtualFile, pair.myLength);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -573,13 +574,13 @@ final class FileTypeDetectionService implements Disposable {
   });
 
   @NotNull
-  private ByteArraySequence readFirstBytesFromFile(VirtualFile file, Integer bufferLength) throws IOException {
+  private ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
       if (toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
-      int fileLength = (int)Math.min(file.getLength(), Integer.MAX_VALUE);
-      byte[] content = new byte[Math.min(fileLength, bufferLength)];
+      int fileLength = (int)Math.min(file.getLength(), bufferLength);
+      byte[] content = ArrayUtil.newByteArray(fileLength);
       int n = readSafely(inputStream, content, content.length);
       return n > 0 ? new ByteArraySequence(content, 0, n) : ByteArraySequence.EMPTY;
     }
@@ -592,7 +593,7 @@ final class FileTypeDetectionService implements Disposable {
       try {
         return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
                ? readFirstBytesFromFile(file, bufferLength)
-               : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(Pair.create(file, bufferLength));
+               : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(new VirtualFileWithLength(file, bufferLength));
       }
       catch (Exception e) {
         return ByteArraySequence.EMPTY;
@@ -606,10 +607,6 @@ final class FileTypeDetectionService implements Disposable {
   private @NotNull FileType detect(@NotNull VirtualFile file,
                                    @NotNull ByteSequence firstBytes,
                                    @NotNull List<? extends FileTypeRegistry.FileTypeDetector> detectors) {
-    if (firstBytes.length() == 0) {
-      return UnknownFileType.INSTANCE;
-    }
-
     // use PlainTextFileType because it doesn't supply its own charset detector
     // help set charset in the process to avoid double charset detection from content
     return LoadTextUtil.processTextFromBinaryPresentationOrNull(firstBytes,
@@ -639,11 +636,12 @@ final class FileTypeDetectionService implements Disposable {
           }
         }
 
-        if (detected == null && text != null) {
-          detected = myFileTypeManager.myPatternsTable.findAssociatedFileTypeByHashBang(text);
+        if (detected == null && !StringUtil.isEmpty(text)) {
+          FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.myPatternsTable.findAssociatedFileTypeByHashBang(text);
+          detected = ftd==null?null:ftd.fileType;
         }
         if (detected == null) {
-          detected = text == null ? UnknownFileType.INSTANCE : PlainTextFileType.INSTANCE;
+          detected = StringUtil.isEmpty(text) ? UnknownFileType.INSTANCE :  PlainTextFileType.INSTANCE;
           if (toLog()) {
             log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): " +
                 "no detector was able to detect. assigned " + detected.getName());

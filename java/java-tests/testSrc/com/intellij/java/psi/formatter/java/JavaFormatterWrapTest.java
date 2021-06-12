@@ -383,7 +383,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
-                 "     MyResource r2 = null) { }");
+                 "     MyResource r2 = null) {}");
 
     getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
     getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
@@ -391,7 +391,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "try (\n" +
                  "        MyResource r1 = null;\n" +
                  "        MyResource r2 = null\n" +
-                 ") { }");
+                 ") {}");
   }
 
   public void testLineLongEnoughToExceedAfterFirstWrapping() {
@@ -1055,6 +1055,23 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "        // and other sources\n" +
       "    }\n" +
       "}"
+    );
+  }
+
+  public void testIdea186208() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
+    getSettings().RIGHT_MARGIN = 60;
+
+    doClassTest(
+      "final ImmutableMap<String, String> map = ImmutableMap.of(\"content\", \"value\", \"content\", \"value\",\"content\", \"value\"," +
+      "\"content\", \"value\",\"content\", \"value\",\"content\", \"value\");",
+
+      "final ImmutableMap<String, String> map = ImmutableMap.of(\n" +
+      "        \"content\", \"value\", \"content\", \"value\",\n" +
+      "        \"content\", \"value\", \"content\", \"value\",\n" +
+      "        \"content\", \"value\", \"content\", \"value\");"
     );
   }
 }

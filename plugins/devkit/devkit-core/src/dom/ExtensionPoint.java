@@ -112,6 +112,7 @@ public interface ExtensionPoint extends DomElement {
    *
    * @see #getExtensionPointClass()
    */
+  @SuppressWarnings("unused")
   @Nullable
   String getExtensionPointClassName();
 

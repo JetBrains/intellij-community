@@ -64,7 +64,7 @@ public abstract class ProgressStripeIcon implements Icon {
                                                                                       new Color(0x838383))),
                                                                new Color(0x989a9e));
     private static final int GRADIENT = 128;
-    private static final int GRADIENT_HEIGHT = 2;
+    private static final int GRADIENT_HEIGHT = 3;
 
     private GradientIcon(@NotNull JComponent component, int shift) {
       super(component, shift);

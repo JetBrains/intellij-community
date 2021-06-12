@@ -4,7 +4,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -29,7 +30,8 @@ SHELL_SCRIPT
             PsiElement(word)('c')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       DO_BLOCK

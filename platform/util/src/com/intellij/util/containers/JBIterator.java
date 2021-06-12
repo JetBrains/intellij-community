@@ -370,7 +370,8 @@ public abstract class JBIterator<E> implements Iterator<E> {
     @Override
     Object apply(Object o) {
       JBIterator<?> it = (JBIterator<?>)o;
-      return ((advanced = nextOp != null) ? it.advance() : it.hasNext()) ? it : stop();
+      advanced = nextOp != null;
+      return (advanced ? it.advance() : it.hasNext()) ? it : stop();
     }
 
     void advance(Object o) {

@@ -6,13 +6,6 @@ import junit.framework.TestCase;
 import java.nio.charset.StandardCharsets;
 
 public class ByteArrayCharSequenceTest extends TestCase {
-  public void testCharactersBetween7FAndFF() {
-    String s = "Straße";
-    CharSequence strasse = ByteArrayCharSequence.convertToBytesIfPossible(s);
-    assertTrue(strasse.getClass().toString(), strasse instanceof ByteArrayCharSequence || strasse.getClass() == String.class);
-    assertEquals(s, strasse.toString());
-  }
-  
   public void testSubSequenceHashCode() {
     String s = "hello world";
     ByteArrayCharSequence bacs = new ByteArrayCharSequence(s.getBytes(StandardCharsets.UTF_8));

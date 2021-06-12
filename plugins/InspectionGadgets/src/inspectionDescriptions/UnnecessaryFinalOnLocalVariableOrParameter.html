@@ -1,18 +1,39 @@
 <html>
 <body>
-Reports local variables or parameters unnecessarily declared <b>final</b>.
-Some coding standards frown on variables declared <b>final</b>, for reasons of terseness.
+Reports local variables or parameters unnecessarily declared final.
+Some coding standards frown on variables declared final, for reasons of terseness.
+<p>Example:</p>
+<pre>
+  class Foo {
+    Foo(Object o) {}
+
+    void bar(final Object o) {
+      new Foo(o);
+    }
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  class Foo {
+    Foo(Object o) {}
+
+    void bar(Object o) {
+      new Foo(o);
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to enable or disable warnings on local variables
+  Use the first checkbox below to enable or disable warnings on local variables.
+</p>
 <p>
-Use the second checkbox below to enable or disable warnings on parameters (including
-parameters of <b>catch</b> blocks and enhanced <b>for</b> statements)
+  Use the second checkbox below to enable or disable warnings on parameters (including
+  parameters of <code>catch</code> blocks and enhanced <code>for</code> statements).
+</p>
 <p>
-Use the third checkbox below to only warn on <b>final</b> parameters of <b>abstract</b> or <b>interface</b>
-methods, which may be considered extra unnecessary, as such markings have no
-effect on the implementation of these methods.
-<p>
-
+  Use the third checkbox below to only report final parameters of abstract or interface
+  methods, which may be considered extra unnecessary as such markings don't
+  affect the implementation of these methods.
+</p>
 </body>
 </html>

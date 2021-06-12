@@ -32,7 +32,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +109,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     return null;
   }
 
-  private static class EmptyPackageFix implements QuickFix {
+  private static class EmptyPackageFix implements QuickFix<CommonProblemDescriptor> {
 
     private final String url;
     private final String name;

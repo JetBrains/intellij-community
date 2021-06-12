@@ -2,7 +2,10 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.codeStyle.properties.*;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -45,20 +48,11 @@ import static org.editorconfig.core.EditorConfig.OutPair;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
 
   private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
   public static final ProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
 
   private static boolean ourEnabledInTests;
-
-  static {
-    addDependency("indent_size", "continuation_indent_size");
-  }
-
-  private static void addDependency(@NotNull String name, String... dependentNames) {
-    DEPENDENCIES.put(name, Arrays.asList(dependentNames));
-  }
 
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
@@ -122,20 +116,14 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   }
 
   private static boolean applyCodeStyleSettings(@NotNull MyContext context) {
-    AbstractCodeStylePropertyMapper mapper = getPropertyMapper(context);
     Set<String> processed = new HashSet<>();
-    boolean isModified = processOptions(context, mapper, false, processed);
-    isModified = processOptions(context, mapper, true, processed) || isModified;
-    return isModified;
-  }
-
-  @NotNull
-  private static AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull MyContext context) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
-    if (provider != null) {
-      return provider.getPropertyMapper(context.getSettings());
+    boolean isModified = false;
+    for (AbstractCodeStylePropertyMapper mapper : getMappers(context)) {
+      processed.clear();
+      isModified |= processOptions(context, mapper, false, processed);
+      isModified |= processOptions(context, mapper, true, processed);
     }
-    return new GeneralCodeStylePropertyMapper(context.getSettings());
+    return isModified;
   }
 
   @Override
@@ -160,27 +148,31 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       CodeStylePropertyAccessor<?> accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
         final String val = preprocessValue(accessor, context, optionKey, option.getVal());
-        if (DEPENDENCIES.containsKey(optionKey)) {
-          for (String dependency : DEPENDENCIES.get(optionKey)) {
-            if (!processed.contains(dependency)) {
-              CodeStylePropertyAccessor<?> dependencyAccessor = findAccessor(mapper, dependency, null);
-              if (dependencyAccessor != null) {
-                isModified |= dependencyAccessor.setFromString(val);
-              }
+        for (String dependency : getDependentProperties(optionKey, langPrefix)) {
+          if (!processed.contains(dependency)) {
+            CodeStylePropertyAccessor<?> dependencyAccessor = findAccessor(mapper, dependency, null);
+            if (dependencyAccessor != null) {
+              isModified |= dependencyAccessor.setFromString(val);
             }
           }
         }
         isModified |= accessor.setFromString(val);
-        if (accessor instanceof CodeStyleFieldAccessor) {
-          Object dataObject = ((CodeStyleFieldAccessor<?,?>)accessor).getDataObject();
-          if (dataObject instanceof CommonCodeStyleSettings.IndentOptions) {
-            ((CommonCodeStyleSettings.IndentOptions)dataObject).setOverrideLanguageOptions(true);
-          }
-        }
         processed.add(intellijName);
       }
     }
     return isModified;
+  }
+
+  @NotNull
+  private static List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
+    property = StringUtil.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
+    if (langPrefix != null && property.startsWith(langPrefix)) {
+      property = StringUtil.trimStart(property, langPrefix);
+    }
+    if ("indent_size".equals(property)) {
+      return Collections.singletonList("continuation_indent_size");
+    }
+    return Collections.emptyList();
   }
 
   private static String preprocessValue(@NotNull CodeStylePropertyAccessor accessor,
@@ -205,7 +197,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       if (propertyName.startsWith(langPrefix)) {
         final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
         final EditorConfigPropertyKind propertyKind = IntellijPropertyKindMap.getPropertyKind(prefixlessName);
-        if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON) {
+        if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON ||
+            EditorConfigIntellijNameUtil.isIndentProperty(prefixlessName)) {
           return mapper.getAccessor(prefixlessName);
         }
       }
@@ -295,4 +288,52 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   public static void setEnabledInTests(boolean isEnabledInTests) {
     ourEnabledInTests = isEnabledInTests;
   }
+
+  private static Collection<AbstractCodeStylePropertyMapper> getMappers(@NotNull MyContext context) {
+    Set<AbstractCodeStylePropertyMapper> mappers = new HashSet<>();
+    for (LanguageCodeStyleSettingsProvider provider : getLanguageCodeStyleProviders(context)) {
+      mappers.add(provider.getPropertyMapper(context.getSettings()));
+    }
+    mappers.add(new GeneralCodeStylePropertyMapper(context.getSettings()));
+    return mappers;
+  }
+
+  private static Collection<LanguageCodeStyleSettingsProvider> getLanguageCodeStyleProviders(@NotNull MyContext context) {
+    Set<LanguageCodeStyleSettingsProvider> providers = new HashSet<>();
+    LanguageCodeStyleSettingsProvider mainProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
+    if (mainProvider != null) {
+      providers.add(mainProvider);
+    }
+    for (String langId : getLanguageIds(context)) {
+      if (!langId.equals("any")) {
+        LanguageCodeStyleSettingsProvider additionalProvider = LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId);
+        if (additionalProvider != null) {
+          providers.add(additionalProvider);
+        }
+      }
+      else {
+        providers.clear();
+        providers.addAll(LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList());
+        break;
+      }
+    }
+    return providers;
+  }
+
+  @NotNull
+  private static Collection<String> getLanguageIds(@NotNull MyContext context) {
+    Set<String> langIds = new HashSet<>();
+    for (OutPair option : context.getOptions()) {
+      String key = option.getKey();
+      if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
+        langIds.add("any");
+      }
+      String langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(key);
+      if (langId != null) {
+        langIds.add(langId);
+      }
+    }
+    return langIds;
+  }
+
 }

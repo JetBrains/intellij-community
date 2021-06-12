@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -9,9 +9,11 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -108,7 +110,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
-    val notification = if (pluginId == null) {
+    val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
       Notification(groupId, IdeBundle.message("notification.title.unable.to.save.settings"),
                    IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                    NotificationType.ERROR)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
@@ -23,15 +23,14 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     @JvmStatic
     fun instance(project: Project): ReaderModeSettings {
-      return ServiceManager.getService(project, ReaderModeSettings::class.java)
+      return project.getService(ReaderModeSettings::class.java)
     }
 
     fun applyReaderMode(project: Project,
                         editor: Editor?,
                         file: VirtualFile?,
                         fileIsOpenAlready: Boolean = false,
-                        forceUpdate: Boolean = false,
-                        preferGlobalSettings: Boolean = false) {
+                        forceUpdate: Boolean = false) {
       if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) return
 
       val matchMode = matchMode(project, file, editor)

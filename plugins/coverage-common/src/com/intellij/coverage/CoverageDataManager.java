@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.coverage;
 
@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,7 @@ import java.util.List;
  */
 public abstract class CoverageDataManager {
   public static CoverageDataManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CoverageDataManagerImpl.class);
+    return project.getService(CoverageDataManagerImpl.class);
   }
 
   /**
@@ -92,7 +91,7 @@ public abstract class CoverageDataManager {
 
   public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
 
-  public abstract void addSuiteListener(CoverageSuiteListener listener, Disposable parentDisposable);
+  public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void triggerPresentationUpdate();
 

@@ -107,11 +107,11 @@ static def archToDownload(String platform, String targetArch) {
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  */
 static def prefixes(Arch arch, String forcedPrefix) {
-  if (arch == Arch.x86) {
-    ['jbr-']
-  }
-  else if (forcedPrefix != null) {
+  if (forcedPrefix != null) {
     [forcedPrefix]
+  }
+  else if (arch == Arch.x86) {
+    ['jbr-']
   }
   else {
     ['jbr_dcevm-']

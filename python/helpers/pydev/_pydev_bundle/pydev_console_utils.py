@@ -13,7 +13,9 @@ from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
+from _pydevd_bundle.pydevd_tables import exec_table_command
+from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
+    PythonUnhandledException, PythonTableException
 
 try:
     import cStringIO as StringIO  # may not always be available @UnusedImport
@@ -425,7 +427,8 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
                 except:
                     traceback.print_exc()
-                    sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+                    sys.stderr.write(
+                        'Version of Python does not support debuggable Interactive Console.\n')
 
             # Important: it has to be really enabled in the main thread, so, schedule
             # it to run in the main thread.
@@ -434,6 +437,19 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
+
+    def execTableCommand(self, command, command_type):
+        try:
+            success, res = exec_table_command(command, command_type,
+                                              self.get_namespace(),
+                                              self.get_namespace())
+            if success:
+                return res
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+        if not success:
+            raise PythonTableException(str(res))
 
     def handshake(self):
         if self.connect_status_queue is not None:

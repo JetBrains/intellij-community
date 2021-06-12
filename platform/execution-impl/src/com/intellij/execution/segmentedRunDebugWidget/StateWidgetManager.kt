@@ -37,7 +37,6 @@ class StateWidgetManager(val project: Project) {
 
     @JvmStatic
     private fun fireConfigurationChanged() {
-      ActionToolbarImpl.updateAllToolbarsImmediately(true)
       ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).configurationChanged()
     }
   }

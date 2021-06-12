@@ -37,7 +37,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
   protected abstract void apply();
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (each instanceof VFileDeleteEvent) {
         deleteRecursively(each.getFile(), each);
@@ -77,7 +77,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (!isRelevant(each.getPath())) continue;
 

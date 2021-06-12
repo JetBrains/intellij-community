@@ -11,7 +11,7 @@
     <orderEntry type="module-library">
       <library name="asm-capture">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/asm-capture.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/asm-capture-9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

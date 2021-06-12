@@ -1,11 +1,12 @@
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownParagraphImpl extends MarkdownCompositePsiElementBase {
+public class MarkdownParagraphImpl extends MarkdownCompositePsiElementBase implements PsiExternalReferenceHost {
 
   public MarkdownParagraphImpl(@NotNull ASTNode node) {
     super(node);

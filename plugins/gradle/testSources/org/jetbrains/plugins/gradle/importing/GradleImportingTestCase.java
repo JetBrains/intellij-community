@@ -26,12 +26,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCaseKt;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +44,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -53,7 +52,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
@@ -67,17 +65,20 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import static org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
-import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(Parameterized.class)
 public abstract class GradleImportingTestCase extends ExternalSystemImportingTestCase {
-  public static final String BASE_GRADLE_VERSION = AbstractModelBuilderTest.BASE_GRADLE_VERSION;
+  public static final String BASE_GRADLE_VERSION = VersionMatcherRule.BASE_GRADLE_VERSION;
   protected static final String GRADLE_JDK_NAME = "Gradle JDK";
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
@@ -90,42 +91,43 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   private String myJdkHome;
 
   private final List<Sdk> removedSdks = new SmartList<>();
+  private PathAssembler.LocalDistribution myDistribution;
 
   @Override
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    myJdkHome = requireRealJdkHome();
-    super.setUp();
-    removedSdks.clear();
-    WriteAction.runAndWait(() -> {
-      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-        if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
-        removedSdks.add(sdk);
-      }
-      VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-      JavaSdk javaSdk = JavaSdk.getInstance();
-      SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
-      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
-      assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-      ProjectJdkTable.getInstance().addJdk(jdk);
-    });
     myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
+    super.setUp();
+    WriteAction.runAndWait(this::configureJDKTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
-    PathAssembler.LocalDistribution distribution = WriteAction.computeAndWait(() -> configureWrapper());
-
-    List<String> allowedRoots = new ArrayList<>();
-    collectAllowedRoots(allowedRoots, distribution);
-    if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
-    }
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
     UsefulTestCaseKt.setRegistryPropertyForTest(this, "unknown.sdk.auto", false);
-
     TestUnknownSdkResolver.INSTANCE.setUnknownSdkFixMode(TestUnknownSdkResolver.TestUnknownSdkFixMode.REAL_LOCAL_FIX);
 
     cleanScriptsCacheIfNeeded();
+  }
+
+  private void configureJDKTable() throws Exception {
+    removedSdks.clear();
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      ProjectJdkTable.getInstance().removeJdk(sdk);
+      if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
+      removedSdks.add(sdk);
+    }
+    VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
+    Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
+    assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+    ProjectJdkTable.getInstance().addJdk(jdk);
+  }
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    myJdkHome = requireRealJdkHome();
+    myDistribution = configureWrapper();
   }
 
   /**
@@ -203,8 +205,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
-    String javaHome = Environment.getVariable("JAVA_HOME");
-    if (javaHome != null) roots.add(javaHome);
   }
 
   @Override
@@ -237,6 +237,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
+    String gradleHomeEnv = System.getenv("GRADLE_USER_HOME");
+    if (gradleHomeEnv != null) roots.add(gradleHomeEnv);
+    String javaHome = Environment.getVariable("JAVA_HOME");
+    if (javaHome != null) roots.add(javaHome);
+
+    collectAllowedRoots(roots, myDistribution);
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
@@ -298,6 +304,16 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     importProject(config, null);
   }
 
+  protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
+      .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
+  }
+
+  protected @NotNull String getJUnitTestAnnotationClass() {
+    return GradleBuildScriptBuilderUtil.isSupportedJUnit5(getCurrentGradleVersion())
+           ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+  }
+
   @Override
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(super.createImportSpec());
@@ -305,16 +321,24 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     return importSpecBuilder.build();
   }
 
+  private static final String MAVEN_REPOSITORY_PATCH_PLACE = "// Place for Maven repository patch";
+
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
-    config = "allprojects {\n" +
-             "  repositories {\n" +
-             "    maven {\n" +
-             "        url 'https://repo.labs.intellij.net/repo1'\n" +
-             "    }\n" +
-             "  }" +
-             "}\n" + config;
-    return config;
+    String mavenRepositoryPatch =
+      "allprojects {\n" +
+      "    repositories {\n" +
+      "        maven {\n" +
+      "            url 'https://repo.labs.intellij.net/repo1'\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n";
+    if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
+      return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
+    }
+    else {
+      return mavenRepositoryPatch + config;
+    }
   }
 
   @NotNull

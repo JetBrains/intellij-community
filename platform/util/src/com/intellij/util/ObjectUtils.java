@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
@@ -40,10 +41,11 @@ public final class ObjectUtils {
   /**
    * They promise in http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html that
    * the object reference won't be removed by JIT and GC-ed until this call.
-   * 
+   *
    * In Java 11 compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
-  */
-  public static void reachabilityFence(@SuppressWarnings("unused") Object o) {}
+   */
+  @ReviseWhenPortedToJDK("9")
+  public static void reachabilityFence(@SuppressWarnings("unused") @NotNull Object o) {}
 
   private static final class Sentinel {
     private final String myName;
@@ -64,7 +66,7 @@ public final class ObjectUtils {
    * {@code ofInterface} must represent an interface class.
    * Useful for stubs in generic code, e.g. for storing in {@code List<T>} to represent empty special value.
    */
-  public static @NotNull <T> T sentinel(final @NotNull String name, @NotNull Class<T> ofInterface) {
+  public static @NotNull <T> T sentinel(@NotNull String name, @NotNull Class<T> ofInterface) {
     if (!ofInterface.isInterface()) {
       throw new IllegalArgumentException("Expected interface but got: " + ofInterface);
     }
@@ -111,8 +113,7 @@ public final class ObjectUtils {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
 
-  public static @Nullable <T> T coalesce(@Nullable Iterable<? extends T> o) {
-    if (o == null) return null;
+  public static @Nullable <T> T coalesce(@NotNull Iterable<? extends T> o) {
     for (T t : o) {
       if (t != null) return t;
     }
@@ -141,8 +142,10 @@ public final class ObjectUtils {
     return clazz.isInstance(obj) ? clazz.cast(obj) : null;
   }
 
-  @SuppressWarnings("unchecked")
-  public static @Nullable <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, Convertor<? super T, ? extends S> convertor) {
+  public static @Nullable <T, S> S doIfCast(@Nullable Object obj,
+                                            @NotNull Class<T> clazz,
+                                            @NotNull Convertor<? super T, ? extends S> convertor) {
+    //noinspection unchecked
     return clazz.isInstance(obj) ? convertor.convert((T)obj) : null;
   }
 
@@ -157,21 +160,22 @@ public final class ObjectUtils {
     }
   }
 
-  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
+  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, @NotNull Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
-      @SuppressWarnings("unchecked") T t = (T)obj;
+      //noinspection unchecked
+      T t = (T)obj;
       consumer.consume(t);
     }
   }
 
   @Contract("null, _ -> null")
-  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Predicate<? super T> condition) {
+  public static @Nullable <T> T nullizeByCondition(@Nullable T obj, @NotNull Predicate<? super T> condition) {
     return condition.test(obj) ? null : obj;
   }
 
   @Contract("null, _ -> null")
   public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
-    return obj != defaultValue ? obj : null;
+    return obj == defaultValue ? null : obj;
   }
 
   /**
@@ -182,7 +186,7 @@ public final class ObjectUtils {
    * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)
    * @see java.util.Collections#binarySearch(List, Object, Comparator)
    */
-  public static int binarySearch(int fromIndex, int toIndex, IntUnaryOperator indexComparator) {
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntUnaryOperator indexComparator) {
     int low = fromIndex;
     int high = toIndex - 1;
     while (low <= high) {
@@ -193,5 +197,9 @@ public final class ObjectUtils {
       else return mid;
     }
     return -(low + 1);
+  }
+
+  public static @NotNull String objectInfo(@Nullable Object o) {
+    return o != null ? o + " (" + o.getClass().getName() + ")" : "null";
   }
 }

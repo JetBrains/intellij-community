@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.ui.UISettings
@@ -21,6 +21,7 @@ internal class ProblemsViewState : BaseState() {
   var showPreview by property(false)
   var showToolbar by property(true)
 
+  var groupByToolId by property(false)
   var sortFoldersFirst by property(true)
   var sortBySeverity by property(true)
   var sortByName by property(false)

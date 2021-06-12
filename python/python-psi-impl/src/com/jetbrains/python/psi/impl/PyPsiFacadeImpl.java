@@ -42,9 +42,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
-/**
- * @author yole
- */
+
 public class PyPsiFacadeImpl extends PyPsiFacade {
   private final Project myProject;
 

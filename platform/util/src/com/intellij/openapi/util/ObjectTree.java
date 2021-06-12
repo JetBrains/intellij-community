@@ -50,8 +50,8 @@ final class ObjectTree {
     synchronized (treeLock) {
       Object wasDisposed = getDisposalInfo(parent);
       if (wasDisposed != null) {
-        return new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
-                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+        return new IncorrectOperationException("Sorry but parent: " + parent + " (" + parent.getClass()+") has already been disposed " +
+                                              "(see the cause for stacktrace) so the child: "+child+ " (" + child.getClass()+") will never be disposed",
                                               wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
       }
 

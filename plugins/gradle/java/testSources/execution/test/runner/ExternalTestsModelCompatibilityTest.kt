@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assert
@@ -13,9 +12,9 @@ import org.junit.Test
 class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   fun `test simple tests finding`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
     importProject(buildScript.generate())
     assertTestTasks(createProjectSubFile("src/test/java/package/TestCase.java", "class TestCase"),
                     listOf(":test"))
@@ -24,9 +23,9 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("2.4 <=> 4.10.3")
   fun `test intellij tests finding`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPrefix("""
         sourceSets {
           foo.java.srcDirs = ["foo-src", "foo-other-src"]
@@ -55,9 +54,9 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("4.0+")
   fun `test intellij tests finding new interface`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPrefix("""
         sourceSets {
           foo.java.srcDirs = ["foo-src", "foo-other-src"]

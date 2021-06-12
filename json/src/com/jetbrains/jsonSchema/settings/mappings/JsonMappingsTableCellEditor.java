@@ -94,7 +94,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   @NotNull
   private static FileChooserDescriptor createDescriptor(UserDefinedJsonSchemaConfiguration.Item item) {
     return item.mappingKind == JsonMappingKind.File
-                                       ? FileChooserDescriptorFactory.createSingleFileDescriptor()
+                                       ? FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                                        : FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 

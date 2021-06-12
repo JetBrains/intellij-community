@@ -46,7 +46,7 @@ public final class JobLauncherImpl extends JobLauncher {
     if (result != null) return result.booleanValue();
 
     ProgressManager pm = ProgressManager.getInstance();
-    Processor<? super T> processor = ((CoreProgressManager)pm).isPrioritizedThread(Thread.currentThread())
+    Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
     processor = FileBasedIndex.getInstance().inheritCurrentDumbAccessType(processor);

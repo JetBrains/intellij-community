@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.io.File;
@@ -40,6 +41,7 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     return false;
   }
 
+  @Test
   public void testExternalExecutor() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -61,6 +63,7 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     assertTrue(new File(getProjectPath(), "target").exists());
   }
 
+  @Test
   public void testUpdatingExcludedFoldersAfterExecution() throws Exception {
     if (!hasMavenInstallation()) return;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.amazon.ion.IonType
@@ -66,9 +66,9 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
     if (!httpConfigurable.PROXY_EXCEPTIONS.isNullOrEmpty()) {
       val hosts = StringUtil.split(httpConfigurable.PROXY_EXCEPTIONS, ",")
       if (hosts.isNotEmpty()) {
-        val nonProxyHosts = StringUtil.join(hosts, StringUtil.TRIMMER, "|")
-        extraJvmArgs.add(Pair.pair("http.nonProxyHosts", nonProxyHosts))
-        extraJvmArgs.add(Pair.pair("https.nonProxyHosts", nonProxyHosts))
+        val nonProxyHosts = hosts.joinToString(separator = "|") { it.trim() }
+        extraJvmArgs.add(Pair("http.nonProxyHosts", nonProxyHosts))
+        extraJvmArgs.add(Pair("https.nonProxyHosts", nonProxyHosts))
       }
     }
     if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.proxyLogin)) {

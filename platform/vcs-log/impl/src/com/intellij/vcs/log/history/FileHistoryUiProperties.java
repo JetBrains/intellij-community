@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -21,10 +19,11 @@ import java.util.*;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 
 @State(name = "Vcs.Log.History.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
+@Service(Service.Level.PROJECT)
+public final class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
 
-  @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   @NotNull private final VcsLogApplicationSettings myAppSettings =
     ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
   @NotNull private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
@@ -90,7 +89,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   private <T> void onApplicationSettingChange(@NotNull VcsLogUiProperty<T> property) {
     if (PREFER_COMMIT_DATE.equals(property)) {
-      myListeners.forEach(l -> l.onPropertyChanged(property));
+      myEventDispatcher.getMulticaster().onPropertyChanged(property);
     }
   }
 
@@ -126,7 +125,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
     }
-    myListeners.forEach(l -> l.onPropertyChanged(property));
+    myEventDispatcher.getMulticaster().onPropertyChanged(property);
   }
 
   @Override
@@ -154,16 +153,16 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
-    if (myListeners.isEmpty()) {
+    if (!myEventDispatcher.hasListeners()) {
       myAppSettings.addChangeListener(myApplicationSettingsListener);
     }
-    myListeners.add(listener);
+    myEventDispatcher.addListener(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
-    myListeners.remove(listener);
-    if (myListeners.isEmpty()) {
+    myEventDispatcher.removeListener(listener);
+    if (!myEventDispatcher.hasListeners()) {
       myAppSettings.removeChangeListener(myApplicationSettingsListener);
     }
   }

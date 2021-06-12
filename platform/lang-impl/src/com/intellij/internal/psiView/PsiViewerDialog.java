@@ -126,6 +126,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private final boolean myExternalDocument;
 
+  private final PsiFile myOriginalPsiFile;
+
   @NotNull
   private final JBTabs myTabs;
 
@@ -153,6 +155,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     super(project, true, IdeModalityType.MODELESS);
     myProject = project;
     myExternalDocument = selectedEditor != null;
+    myOriginalPsiFile = getOriginalPsiFile(project, selectedEditor);
     myTabs = createTabPanel(project);
     myRefs = new JBList<>(new DefaultListModel<>());
     ViewerPsiBasedTree.PsiTreeUpdater psiTreeUpdater = new ViewerPsiBasedTree.PsiTreeUpdater() {
@@ -218,6 +221,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         //                                          selectedEditor.getSelectionModel().getSelectionEnd());
       }, ModalityState.stateForComponent(myPanel));
     }
+  }
+
+  private static @Nullable PsiFile getOriginalPsiFile(@NotNull Project project, @Nullable Editor selectedEditor) {
+    return selectedEditor != null ? PsiDocumentManager.getInstance(project).getPsiFile(selectedEditor.getDocument()) : null;
   }
 
   @NotNull
@@ -635,7 +642,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         }
         StringBuilder data = new StringBuilder();
         for (PsiElement psiElement : allToParse) {
-          data.append(DebugUtil.psiToString(psiElement, !myShowWhiteSpacesBox.isSelected(), true));
+          data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
         }
         CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
       }
@@ -653,6 +660,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myLastParsedTextHashCode = text.hashCode();
     myNewDocumentHashCode = myLastParsedTextHashCode;
     PsiElement rootElement = parseText(text);
+    ObjectUtils.consumeIfNotNull(rootElement, e->e.getContainingFile().putUserData(PsiFileFactory.ORIGINAL_FILE, myOriginalPsiFile));
     focusTree();
     ViewerTreeStructure structure = getTreeStructure();
     structure.setRootPsiElement(rootElement);

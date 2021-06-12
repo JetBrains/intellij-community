@@ -975,7 +975,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (target || variableNode == null) return false;
         return isApplicableMinCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.MAXIMUM_UNLIMITED:
-        if (variableNode == null) return false;
+        if (target || variableNode == null) return false;
         return isApplicableMaxCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.REFERENCE:
         if (completePattern || variableNode == null) return false;
@@ -990,6 +990,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement parent = variableNode.getParent();
     if (parent instanceof PsiContinueStatement) return true;
     if (parent instanceof PsiBreakStatement) return true;
+    if (parent instanceof PsiPatternVariable) return true;
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiReferenceList) return true;

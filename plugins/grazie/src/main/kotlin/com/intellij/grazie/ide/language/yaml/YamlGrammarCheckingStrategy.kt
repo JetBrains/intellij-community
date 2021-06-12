@@ -11,13 +11,11 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLTokenTypes.*
 
 class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
-  private val YAML_LITERAL_TYPES = setOf(TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT)
-
   override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
   override fun getContextRootTextDomain(root: PsiElement) = when (root.node.elementType) {
     COMMENT -> TextDomain.COMMENTS
-    in YAML_LITERAL_TYPES -> TextDomain.LITERALS
+    TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT -> TextDomain.LITERALS
     else -> TextDomain.NON_TEXT
   }
 

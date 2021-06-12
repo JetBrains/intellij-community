@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -46,7 +46,7 @@ final class WatchRootsManager {
     myFileWatcher = fileWatcher;
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         synchronized (myLock) {
           if (myWatcherRequiresUpdate) {
             updateFileWatcher();
@@ -136,11 +136,10 @@ final class WatchRootsManager {
     });
   }
 
-  @NotNull
-  static CanonicalPathMap createCanonicalPathMap(@NotNull Set<String> flatWatchRoots,
-                                                 @NotNull Set<String> optimizedRecursiveWatchRoots,
-                                                 @NotNull Collection<Pair<String, String>> pathMappings,
-                                                 boolean convertToForwardSlashes) {
+  static @NotNull CanonicalPathMap createCanonicalPathMap(@NotNull Set<String> flatWatchRoots,
+                                                          @NotNull Set<String> optimizedRecursiveWatchRoots,
+                                                          @NotNull Collection<Pair<String, String>> pathMappings,
+                                                          boolean convertToForwardSlashes) {
     NavigableSet<@SystemDependent String> optimizedRecursiveWatchRootsCopy = WatchRootsUtil.createFileNavigableSet();
     List<Pair<@SystemDependent String, @SystemDependent String>> initialMappings = new ArrayList<>(pathMappings.size());
 
@@ -411,7 +410,6 @@ final class WatchRootsManager {
     }
 
     @Override
-    @NonNls
     public String toString() {
       return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
     }

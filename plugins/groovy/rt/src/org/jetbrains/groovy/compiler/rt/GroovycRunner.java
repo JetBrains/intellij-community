@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.lang.java6.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -81,11 +81,7 @@ public final class GroovycRunner {
       method.invoke(null, Boolean.valueOf(forStubs), argPath, configScript, targetBytecode, mailbox, out, err);
     }
     catch (Throwable e) {
-      //noinspection InstanceofCatchParameter
-      while (e instanceof InvocationTargetException) {
-        e = e.getCause();
-      }
-      e.printStackTrace(err);
+      ExceptionUtilRt.unwrapInvocationTargetException(e).printStackTrace(err);
       return 1;
     }
     return 0;

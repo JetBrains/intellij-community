@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -41,6 +42,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     return null;
   }
 
+  @Test
   public void testAddDependency() throws IOException {
     VirtualFile f = createProjectSubFile("src/main/java/A.java", "import org.apache.commons.io.IOUtils;\n" +
                                                                  "\n" +
@@ -69,6 +71,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*</dependency>.*"));
   }
 
+  @Test 
   public void testAddDependencyTwice() throws IOException {
     VirtualFile f = createProjectSubFile("src/main/java/A.java", "import org.apache.commons.io.IOUtils;\n" +
                                                                  "\n" +
@@ -105,6 +108,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
                  "</project>", pomText);
   }
 
+  @Test 
   public void testChangeDependencyScopeIfWasInTest() throws IOException {
     VirtualFile f = createProjectSubFile("src/main/java/A.java", "import org.apache.commons.io.IOUtils;\n" +
                                                                  "\n" +
@@ -147,6 +151,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
                             "</project>", pomText);
   }
 
+  @Test 
   public void testAddDependencyInTest() throws IOException {
     VirtualFile f = createProjectSubFile("src/test/java/A.java", "import org.apache.commons.io.IOUtils;\n" +
                                                                  "\n" +

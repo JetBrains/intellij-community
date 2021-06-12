@@ -42,7 +42,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    context.options.buildStepsToSkip.add(PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP)
     super.copyAdditionalFiles(context, targetDirectory)
     context.ant.copy(todir: "$targetDirectory/license") {
       fileset(file: "$context.paths.communityHome/LICENSE.txt")

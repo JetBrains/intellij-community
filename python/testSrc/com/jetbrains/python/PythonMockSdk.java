@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,9 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class PythonMockSdk {
 
   private PythonMockSdk() {
@@ -41,18 +39,27 @@ public final class PythonMockSdk {
   }
 
   private static @NotNull Sdk create(@NotNull String name, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + name;
+    return create(name, new PyMockSdkType(level), level, additionalRoots);
+  }
+
+  public static @NotNull Sdk create(@NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    String sdkName = "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion();
+    return create(sdkName, pathSuffix, sdkType, level, additionalRoots);
+  }
+
+  public static @NotNull Sdk create(@NotNull String name, @NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + pathSuffix;
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     roots.putValues(OrderRootType.CLASSES, createRoots(mockSdkPath, level));
     roots.putValues(OrderRootType.CLASSES, Arrays.asList(additionalRoots));
 
     MockSdk sdk = new MockSdk(
-      "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion(),
+      name,
       mockSdkPath + "/bin/python",
       toVersionString(level),
       roots,
-      new PyMockSdkType(level)
+      sdkType
     );
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone

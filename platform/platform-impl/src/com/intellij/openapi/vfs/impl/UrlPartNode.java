@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * or incorrect (e.g. when creating the pointer from the url "/x/y/Z.TXT" for the file "z.txt" on case-insensitive file system)
  * As soon as the corresponding file got created, this UrlPartNode is replaced with FilePartNode, which contains nameId and is faster and more succinct
  */
-class UrlPartNode extends FilePartNode {
+final class UrlPartNode extends FilePartNode {
   @NotNull
   private final String name;
 
@@ -22,15 +21,8 @@ class UrlPartNode extends FilePartNode {
     super(fs);
     this.name = name;
     myFileOrUrl = childUrl(parentUrl, name, fs);
-    if (SystemInfo.isUnix) {
-      if (name.isEmpty()) {
-        throw new IllegalArgumentException('\'' + name + '\'');
-      }
-    }
-    else {
-      if (StringUtil.isEmptyOrSpaces(name)) {
-        throw new IllegalArgumentException('\'' + name + '\'');
-      }
+    if (name.isEmpty()) {
+      throw new IllegalArgumentException('\'' + name + '\'');
     }
   }
 
@@ -42,7 +34,7 @@ class UrlPartNode extends FilePartNode {
 
   @Override
   boolean nameEqualTo(int nameId) {
-    return FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(getName(), fromNameId(nameId));
+    return StringUtilRt.equal(getName(), fromNameId(nameId), SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Override

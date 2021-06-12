@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.ObjectUtils;
@@ -107,8 +106,8 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   ArtifactState saveArtifact(Artifact artifact) {
     ArtifactState artifactState;
-    if (artifact instanceof InvalidArtifact) {
-      artifactState = ((InvalidArtifact)artifact).getState();
+    if (artifact instanceof InvalidArtifactImpl) {
+      artifactState = ((InvalidArtifactImpl)artifact).getState();
     }
     else {
       artifactState = new ArtifactState();
@@ -261,12 +260,12 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state,
-                                                ProjectModelExternalSource externalSource,
-                                                @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
-    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
+  private InvalidArtifactImpl createInvalidArtifact(ArtifactState state,
+                                                    ProjectModelExternalSource externalSource,
+                                                    @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
+    final InvalidArtifactImpl artifact = new InvalidArtifactImpl(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
-    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");
+    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
     return artifact;
   }
 
@@ -294,7 +293,6 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   @Override
   public void initializeComponent() {
-    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new ArtifactVirtualFileListener(myProject, this));
     updateWatchedRoots();
   }
 

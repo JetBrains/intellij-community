@@ -17,7 +17,6 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionProviderBase;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
-import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,20 +39,6 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
     myFile = terminalFile;
     terminalFile.getTerminalWidget().moveDisposable(myWidgetParentDisposable);
 
-    final TabbedSettingsProvider settings = myFile.getSettingsProvider();
-
-    myFile.getTerminalWidget().setNextProvider(new TerminalActionProviderBase() {
-      @Override
-      public List<TerminalAction> getActions() {
-        return Collections.singletonList(
-          new TerminalAction(settings.getCloseSessionActionPresentation(), input -> {
-            myFile.getTerminalWidget().close();
-            return true;
-          }).withMnemonicKey(KeyEvent.VK_S)
-        );
-      }
-    });
-
     myListener = widget -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
@@ -68,9 +53,8 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
     return myFile.getTerminalWidget();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myFile.getTerminalWidget();
   }
 

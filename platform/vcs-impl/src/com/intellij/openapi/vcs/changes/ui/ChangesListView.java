@@ -40,7 +40,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
+public class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -73,6 +73,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
     return false;
+  }
+
+  @Nullable
+  @Override
+  public HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+    return null;
   }
 
   @Override
@@ -385,8 +391,11 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       if (node instanceof ChangesBrowserChangeListNode) {
         return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
       }
-      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
-        return getRoot().getAllChangesUnder();
+      if (node == getRoot()) {
+        if (Registry.is("vcs.skip.single.default.changelist") ||
+            !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+          return getRoot().getAllChangesUnder();
+        }
       }
       node = (DefaultMutableTreeNode)node.getParent();
     }

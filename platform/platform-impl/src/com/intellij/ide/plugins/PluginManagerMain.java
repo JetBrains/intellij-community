@@ -3,10 +3,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
-import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -27,10 +25,12 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -39,10 +39,11 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public final class PluginManagerMain {
   private static final String TEXT_SUFFIX = "</body></html>";
@@ -57,84 +58,107 @@ public final class PluginManagerMain {
     int m1 = JBUIScale.scale(2);
     int m2 = JBUIScale.scale(5);
     return String.format(
-           "<html><head>" +
-           "    <style type=\"text/css\">" +
-           "        p {" +
-           "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
-           "        }" +
-           "    </style>" +
-           "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
-           fontSize, m1, m1, fontSize, m2, m2);
+      "<html><head>" +
+      "    <style type=\"text/css\">" +
+      "        p {" +
+      "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+      "        }" +
+      "    </style>" +
+      "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+      fontSize, m1, m1, fontSize, m2, m2);
   }
 
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
+  /**
+   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, Runnable)}
+   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, Consumer)}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
+  public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
+                                        @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
+                                        @Nullable Runnable onSuccess,
+                                        @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, cleanup);
+    return downloadPluginsAndCleanup(plugins,
+                                     ContainerUtil.filterIsInstance(customPlugins, PluginNode.class),
+                                     onSuccess,
+                                     pluginEnabler,
+                                     cleanup);
   }
 
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
-                                        boolean allowInstallWithoutRestart,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
-                                        @Nullable Runnable cleanup) throws IOException {
-    Function<Boolean, Void> function = cleanup == null ? null : aBoolean -> {
-      cleanup.run();
-      return null;
-    };
-    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function);
+  public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
+                                                  @NotNull Collection<PluginNode> customPlugins,
+                                                  @Nullable Runnable onSuccess,
+                                                  @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                  @Nullable Runnable cleanup) throws IOException {
+    return downloadPlugins(plugins,
+                           customPlugins,
+                           false,
+                           onSuccess,
+                           pluginEnabler,
+                           cleanup != null ? __ -> cleanup.run() : null);
   }
 
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
+  public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
+                                        @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
-                                        @Nullable Function<? super Boolean, Void> function) throws IOException {
-    boolean[] result = new boolean[1];
+                                        @Nullable Runnable onSuccess,
+                                        @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                        @Nullable Consumer<? super Boolean> function) throws IOException {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
+      boolean[] result = new boolean[1];
+      ProgressManager.getInstance().run(new Task.Backgroundable(null,
+                                                                IdeBundle.message("progress.download.plugins"),
+                                                                true,
+                                                                PluginManagerUISettings.getInstance()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, customPlugins, allowInstallWithoutRestart, pluginEnabler, onSuccess, indicator)) {
-              result[0] = true;
+            //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+            PluginInstallOperation operation = new PluginInstallOperation(plugins,
+                                                                          customPlugins,
+                                                                          pluginEnabler,
+                                                                          indicator);
+            operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
+            operation.run();
+
+            boolean success = operation.isSuccess();
+            result[0] = success;
+            if (success) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (allowInstallWithoutRestart) {
+                  for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+                    PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
+                                                                install.getPluginDescriptor());
+                  }
+                }
+                if (onSuccess != null) {
+                  onSuccess.run();
+                }
+              });
             }
           }
           finally {
             if (function != null) {
-              ApplicationManager.getApplication().invokeLater(() -> function.apply(result[0]));
+              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]));
             }
           }
         }
       });
+      return result[0];
     }
     catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw (IOException)e.getCause();
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
       }
       else {
         throw e;
       }
     }
-    return result[0];
   }
 
-  public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
-                                      @Nullable String filter,
-                                      @NotNull JEditorPane descriptionTextArea,
-                                      @NotNull PluginHeaderPanel header) {
-    if (plugin == null) {
-      setTextValue(null, filter, descriptionTextArea);
-      header.getPanel().setVisible(false);
-      return;
-    }
-
-    StringBuilder sb = new StringBuilder();
-    header.setPlugin(plugin);
+  public static @Nls String pluginInfoUpdate(@NotNull IdeaPluginDescriptor plugin) {
+    StringBuilder sb = new StringBuilder(getTextPrefix());
     String description = plugin.getDescription();
     if (!Strings.isEmptyOrSpaces(description)) {
       sb.append(description);
@@ -168,25 +192,18 @@ public final class PluginManagerMain {
       }
 
       String pluginDescriptorUrl = plugin.getUrl();
-      try {
-        List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
+      PluginInfoProvider provider = PluginInfoProvider.getInstance();
+      Set<PluginId> marketplacePlugins = provider.loadCachedPlugins();
+      if (marketplacePlugins == null ||
+          marketplacePlugins.contains(plugin.getPluginId())) {
+        if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
+          sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+        }
+
         if (marketplacePlugins == null) {
-          // There are no marketplace plugins in the cache, but we should show the title anyway.
-          setPluginHomePage(pluginDescriptorUrl, sb);
           // will get the marketplace plugins ids next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              MarketplaceRequests.getInstance().getMarketplacePlugins(null);
-            }
-            catch (IOException ignore) {}
-          });
+          provider.loadPlugins();
         }
-        else if (marketplacePlugins.contains(plugin.getPluginId().getIdString())) {
-          // Prevent the link to the marketplace from showing to external plugins
-          setPluginHomePage(pluginDescriptorUrl, sb);
-        }
-      }
-      catch (IOException ignore) {
       }
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
@@ -195,26 +212,8 @@ public final class PluginManagerMain {
       }
     }
 
-    setTextValue(sb, filter, descriptionTextArea);
-  }
-
-  private static void setPluginHomePage(String pluginDescriptorUrl, StringBuilder sb){
-    if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
-      sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
-    }
-  }
-
-  private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
-    if (text != null) {
-      text.insert(0, getTextPrefix());
-      text.append(TEXT_SUFFIX);
-      @NlsSafe String markup = SearchUtil.markup(text.toString(), filter);
-      pane.setText(markup.trim());
-      pane.setCaretPosition(0);
-    }
-    else {
-      pane.setText(getTextPrefix() + TEXT_SUFFIX);
-    }
+    @SuppressWarnings("HardCodedStringLiteral") String result = sb.append(TEXT_SUFFIX).toString();
+    return result.trim();
   }
 
   private static String composeHref(String vendorUrl) {
@@ -227,9 +226,8 @@ public final class PluginManagerMain {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JEditorPane pane = (JEditorPane)e.getSource();
         if (e instanceof HTMLFrameHyperlinkEvent) {
-          HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
           HTMLDocument doc = (HTMLDocument)pane.getDocument();
-          doc.processHTMLFrameHyperlinkEvent(evt);
+          doc.processHTMLFrameHyperlinkEvent((HTMLFrameHyperlinkEvent)e);
         }
         else {
           URL url = e.getURL();
@@ -241,40 +239,8 @@ public final class PluginManagerMain {
     }
   }
 
-  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
-    if (Strings.isEmpty(filter) ||
-        StringUtil.indexOfIgnoreCase(descriptor.getName(), filter, 0) >= 0 ||
-        isAccepted(search, filter, descriptor.getName())) {
-      return true;
-    }
-    if (isAccepted(search, filter, descriptor.getDescription())) {
-      return true;
-    }
-
-    String category = descriptor.getCategory();
-    return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
-  }
-
-  public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
-    if (Strings.isEmpty(description) || filter.length() <= 2) {
-      return false;
-    }
-
-    Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
-    if (words.contains(filter)) {
-      return true;
-    }
-
-    if (search.isEmpty()) {
-      return false;
-    }
-
-    Set<String> descriptionSet = new HashSet<>(search);
-    descriptionSet.removeAll(words);
-    return descriptionSet.isEmpty();
-  }
-
-  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull PluginEnabler pluginEnabler, @NotNull List<? extends IdeaPluginDescriptor> list) {
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (IdeaPluginDescriptor node : list) {
@@ -289,9 +255,8 @@ public final class PluginManagerMain {
 
         PluginId dependantId = dependency.getPluginId();
         if (PluginManagerCore.isModuleDependency(dependantId)) {
-          PluginId pluginIdByModule = PluginModulesHelper.getInstance().getInstalledPluginIdByModule(dependantId);
           // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
-          if (pluginIdByModule == null) continue;
+          if (PluginManagerCore.findPluginByModuleDependency(dependantId) == null) continue;
         }
         IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
         if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
@@ -362,30 +327,42 @@ public final class PluginManagerMain {
     return false;
   }
 
-  public interface PluginEnabler {
-    void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+  /**
+   * @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly.
+   */
+  @Deprecated
+  public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
 
-    void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+    @Override
+    default void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                 @NotNull PluginEnableDisableAction action) {
+      HEADLESS.setEnabledState(descriptors, action);
+    }
 
-    boolean isDisabled(@NotNull PluginId pluginId);
+    @Override
+    default boolean isDisabled(@NotNull PluginId pluginId) {
+      return HEADLESS.isDisabled(pluginId);
+    }
 
-    class HEADLESS implements PluginEnabler {
-      @Override
-      public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-        DisabledPluginsState.enablePlugins(plugins, true);
-      }
+    final class HEADLESS implements PluginEnabler {
+    }
+  }
 
-      @Override
-      public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-        for (IdeaPluginDescriptor descriptor : plugins) {
-          PluginManagerCore.disablePlugin(descriptor.getPluginId());
+  @ApiStatus.Internal
+  public static void onEvent(@NonNls String description) {
+    switch (description) {
+      case PluginManagerCore.DISABLE:
+        PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE:
+        if (PluginManagerCore.onEnable(true)) {
+          notifyPluginsUpdated(null);
         }
-      }
-
-      @Override
-      public boolean isDisabled(@NotNull PluginId pluginId) {
-        return PluginManagerCore.isDisabled(pluginId);
-      }
+      case PluginManagerCore.EDIT:
+        IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+        PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null,
+                                                         null,
+                                                         List.of());
+      default:
     }
   }
 
@@ -393,23 +370,26 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    Notification notification = UpdateChecker.getNotificationGroup().createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
-    notification.addAction(new NotificationAction(action) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
-          notification.expire();
-          ApplicationManagerEx.getApplicationEx().restart(true);
+    UpdateChecker.getNotificationGroup()
+      .createNotification(title, NotificationType.INFORMATION)
+      .setDisplayId("plugins.updated.suggest.restart")
+      .addAction(new NotificationAction(action) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+            notification.expire();
+            ApplicationManagerEx.getApplicationEx().restart(true);
+          }
         }
-      }
-    });
-    notification.notify(project);
+      })
+      .notify(project);
   }
 
   public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
     UpdateSettings updateSettings = UpdateSettings.getInstance();
 
     if (updateSettings.isThirdPartyPluginsAllowed()) {
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
@@ -422,8 +402,10 @@ public final class PluginManagerMain {
         String noText = IdeBundle.message("third.party.plugins.privacy.note.no");
         if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
           updateSettings.setThirdPartyPluginsAllowed(true);
+          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
           return true;
         } else {
+          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
           return false;
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -15,17 +15,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-/**
- * @author yole
- */
+
 public class CoreModule extends MockComponentManager implements ModuleEx {
   private final Path myPath;
   @NotNull private final Disposable myLifetime;
@@ -80,6 +79,11 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
+  public final @NotNull MessageBus getDeprecatedModuleLevelMessageBus() {
+    return getMessageBus();
+  }
+
+  @Override
   public VirtualFile getModuleFile() {
     throw new UnsupportedOperationException();
   }
@@ -99,7 +103,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull
   @Override
   public String getName() {
-    return StringUtil.trimEnd(myPath.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return Strings.trimEnd(myPath.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @Override

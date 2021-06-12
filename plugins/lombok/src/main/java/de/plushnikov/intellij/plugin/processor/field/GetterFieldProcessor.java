@@ -23,8 +23,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class GetterFieldProcessor extends AbstractFieldProcessor {
-
+public final class GetterFieldProcessor extends AbstractFieldProcessor {
   public GetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.GETTER);
   }

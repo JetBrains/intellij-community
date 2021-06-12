@@ -28,7 +28,7 @@ public final class MigrationUtil {
   public static UsageInfo[] findPackageUsages(Project project, PsiMigration migration, String qName, GlobalSearchScope searchScope) {
     PsiPackage aPackage = findOrCreatePackage(project, migration, qName);
 
-    return findRefs(aPackage, searchScope);
+    return findRefs(aPackage, searchScope).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static PsiElement bindNonJavaReference(PsiElement bindTo, PsiElement element, UsageInfo usage) {
@@ -45,12 +45,17 @@ public final class MigrationUtil {
   }
 
   public static UsageInfo[] findClassUsages(Project project, PsiMigration migration, String qName, GlobalSearchScope searchScope) {
-    PsiClass aClass = findOrCreateClass(project, migration, qName);
+    PsiClass[] classes = findOrCreateClass(project, migration, qName);
 
-    return findRefs(aClass, searchScope);
+    List<UsageInfo> usages = new ArrayList<>();
+    for (PsiClass aClass : classes) {
+
+      usages.addAll(findRefs(aClass, searchScope));
+    }
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static UsageInfo[] findRefs(final PsiElement aClass, GlobalSearchScope searchScope) {
+  private static List<UsageInfo> findRefs(final PsiElement aClass, GlobalSearchScope searchScope) {
     List<UsageInfo> results = new ArrayList<>();
     for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false)) {
       results.add(new UsageInfo(usage));
@@ -63,7 +68,7 @@ public final class MigrationUtil {
       Segment range = u.getNavigationRange();
       return range == null ? 0 : range.getStartOffset();
     }));
-    return results.toArray(UsageInfo.EMPTY_ARRAY);
+    return results;
   }
 
   static void doMigration(PsiElement elementToBind, String newQName, UsageInfo[] usages, ArrayList<? super SmartPsiElementPointer<PsiElement>> refsToShorten) {
@@ -106,11 +111,11 @@ public final class MigrationUtil {
     }
   }
 
-  static PsiClass findOrCreateClass(Project project, final PsiMigration migration, final String qName) {
-    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qName, GlobalSearchScope.allScope(project));
-    if (aClass == null) {
-      aClass = WriteAction.compute(() -> migration.createClass(qName));
+  static PsiClass[] findOrCreateClass(Project project, final PsiMigration migration, final String qName) {
+    PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(qName, GlobalSearchScope.allScope(project));
+    if (classes.length == 0) {
+      classes = WriteAction.compute(() -> new PsiClass[] {migration.createClass(qName)});
     }
-    return aClass;
+    return classes;
   }
 }

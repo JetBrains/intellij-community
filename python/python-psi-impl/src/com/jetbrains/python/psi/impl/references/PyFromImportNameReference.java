@@ -30,8 +30,6 @@ import java.util.List;
 /**
  * Reference to an imported name in a 'from ... import' statement:<br/>
  * <code>from foo import <u>name</u></code>
- *
- * @author yole
  */
 public class PyFromImportNameReference extends PyImportReference {
   private final PyFromImportStatement myStatement;

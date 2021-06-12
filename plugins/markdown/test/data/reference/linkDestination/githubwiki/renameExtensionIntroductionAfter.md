@@ -1,0 +1,1 @@
+[link](https://github.com/any_username/any_repository/wiki/renamed.md)

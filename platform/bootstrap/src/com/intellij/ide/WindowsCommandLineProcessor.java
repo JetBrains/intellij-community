@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import java.lang.reflect.InvocationTargetException;
@@ -7,8 +7,6 @@ import java.lang.reflect.Method;
 /**
  * This class is initialized in two class loaders: the bootstrap classloader and the main IDEA classloader. The bootstrap instance
  * has ourMirrorClass initialized by the Bootstrap class; it calls the main instance of itself via reflection.
- *
- * @author yole
  */
 public final class WindowsCommandLineProcessor {
   // The MainRunner class which is loaded in the main IDEA (non-bootstrap) classloader.

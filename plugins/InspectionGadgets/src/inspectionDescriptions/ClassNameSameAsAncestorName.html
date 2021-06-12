@@ -1,7 +1,14 @@
 <html>
 <body>
 Reports class being named identically to one of their
-super classes (but in different packages). Such class name may be very confusing.
+super classes (but different in fully qualified name). Such class name may be very confusing.
+<p>
+  <b>Example:</b>
+  <pre><code>
+  package util;
+  abstract class Iterable&lt;T&gt; implements java.lang.Iterable&lt;T&gt; {}
+</code></pre>
+<p>Quick-fix to rename the class is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
 

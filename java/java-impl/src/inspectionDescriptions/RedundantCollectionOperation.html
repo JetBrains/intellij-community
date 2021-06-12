@@ -1,9 +1,21 @@
 <html>
 <body>
-Reports unnecessarily complex collection operations which have simpler alternatives. E.g.
-<b>Arrays.asList(array).subList(0, 10).toArray(new String[0])</b> could be simplified to
-<b>Arrays.copyOfRange(array, 0, 10)</b> or <b>collection.containsAll(singletonList("x"))</b> could be
-simplified to <b>collection.contains("x")</b>.
+Reports unnecessarily complex collection operations which have simpler alternatives.
+<p>Example:</p>
+<pre>
+  void f(String[] array, Collection&lt;String&gt; collection) {
+    String[] strings = Arrays.asList(array).subList(0, 10).toArray(new String[0]);
+    boolean contains = collection.containsAll(Collections.singletonList("x"));
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void f(String[] array, Collection&lt;String&gt; collection) {
+    String[] strings = Arrays.copyOf(array, 10);
+    boolean contains = collection.contains("x");
+  }
+</pre>
+
 <!-- tooltip end -->
 <p><small>New in 2018.1</small></p>
 </body>

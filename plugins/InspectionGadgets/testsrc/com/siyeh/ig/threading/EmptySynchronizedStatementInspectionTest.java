@@ -25,8 +25,10 @@ import org.jetbrains.annotations.Nullable;
 public class EmptySynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doStatementTest("/*Empty 'synchronized' statement*/synchronized/**/ (new Object()) {" +
+    doStatementTest("/*Empty 'synchronized' statement*/<caret>synchronized/**/ (new Object()) {" +
                     "}");
+    checkQuickFix("Remove unnecessary 'synchronized'", "class X { void m() {\n" +
+                                                       "}}");
   }
 
   public void testNotEmpty() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -11,7 +11,6 @@ import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.BitUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ImageLoader.Dimension2DDouble;
 import com.intellij.util.SVGLoader;
@@ -98,10 +97,10 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
 
     int dotIndex = path.lastIndexOf('.');
     String name = dotIndex < 0 ? path : path.substring(0, dotIndex);
-    float scale = ImageLoader.adjustScaleFactor(BitUtil.isSet(flags, ImageLoader.ALLOW_FLOAT_SCALING), pixScale);
+    float scale = ImageLoader.adjustScaleFactor((flags & ImageLoader.ALLOW_FLOAT_SCALING) == ImageLoader.ALLOW_FLOAT_SCALING, pixScale);
 
     boolean isSvg = rasterizedCacheKey != 0;
-    boolean isDark = BitUtil.isSet(flags, ImageLoader.USE_DARK);
+    boolean isDark = (flags & ImageLoader.USE_DARK) == ImageLoader.USE_DARK;
     boolean isRetina = JBUIScale.isHiDPI(pixScale);
 
     float imageScale;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -10,7 +10,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
@@ -74,9 +74,9 @@ fun createBalloon(@Nls text: String, delay: Long): Balloon =
     .setFadeoutTime(delay)
     .createBalloon()
 
-const val trainerPluginConfigName: String = "ide-features-trainer.xml"
+internal const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 
-val featureTrainerVersion: String by lazy {
+internal val featureTrainerVersion: String by lazy {
   val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
 }
@@ -84,7 +84,7 @@ val featureTrainerVersion: String by lazy {
 val adaptToNotNativeLocalization: Boolean
   get() = Registry.`is`("ift.adapt.to.not.native.localization") || DynamicBundle.getLocale() != Locale.ENGLISH
 
-fun clearTrainingProgress() {
+internal fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
   LessonStateManager.resetPassedStatus()
   for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
@@ -94,7 +94,7 @@ fun clearTrainingProgress() {
   LearningUiManager.activeToolWindow = null
 }
 
-fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
+internal fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
   val old = LangManager.getInstance().getLangSupport()
   if (activeLangSupport != old) {
     LessonManager.instance.stopLesson()
@@ -130,7 +130,7 @@ fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
     invokeLater {
       val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.LEARN_TOOLWINDOW, dataContext)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext)
+      performActionDumbAwareWithCallbacks(action, event)
     }
   }
 }
@@ -209,3 +209,5 @@ fun Any.toNullableString(): String? {
 private fun excludeNullCheck(value: String?): String? {
   return value
 }
+
+fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")

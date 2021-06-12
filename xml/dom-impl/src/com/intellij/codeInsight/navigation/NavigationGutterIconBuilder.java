@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -204,11 +205,22 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
     NavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
+    return createLineMarkerInfo(element, renderer.isNavigateAction() ? renderer : null);
+  }
+
+  @NotNull
+  public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                    @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
+    NavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     String tooltip = renderer.getTooltipText();
-    return new RelatedItemLineMarkerInfo<>(element, element.getTextRange(), renderer.getIcon(),
-                                           tooltip == null ? null : new ConstantFunction<>(tooltip),
-                                           renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
-                                           ()->computeGotoTargets());
+    return new RelatedItemLineMarkerInfo<>(
+      element,
+      element.getTextRange(),
+      renderer.getIcon(),
+      tooltip == null ? null : new ConstantFunction<>(tooltip),
+      navigationHandler,
+      renderer.getAlignment(),
+      () -> computeGotoTargets());
   }
 
   @NotNull

@@ -27,9 +27,7 @@ import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class Parsing {
   protected ParsingContext myContext;
   protected SyntaxTreeBuilder myBuilder;

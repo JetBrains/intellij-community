@@ -25,7 +25,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         <error descr="A module file should not have 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
-    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix"))
+    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix", "FixAllHighlightingProblems"))
   }
 
   fun testSoftKeywords() {
@@ -371,7 +371,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testCorrectedType() {
     addFile("module-info.java", "module M { requires M6; requires lib.named; }")
-    
+
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
     highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
@@ -480,6 +480,43 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testSuppressedModuleInfo() {
+    val moduleFileText = "@SuppressWarnings(\"JPMS\") module M { requires M2; }"
+    addFile("module-info.java", moduleFileText)
+
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
+    addFile("pkg/sub/C2X.java", "package pkg.sub;\npublic class C2X { }", M2)
+
+    val checkFileText = """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import pkg.m2.impl.C2Impl;
+        import pkg.m2.impl.*;
+        import pkg.sub.*;
+        
+        import static pkg.m2.impl.C2Impl.make;
+        
+        import java.util.List;
+        import java.util.function.Supplier;
+        
+        /** See also {@link C2Impl#I} and {@link C2Impl#make} */
+        class C {{
+          C2Impl.I = 0;
+          C2Impl.make();
+          pkg.m2.impl.C2Impl.I = 1;
+          pkg.m2.impl.C2Impl.make();
+        
+          List<C2Impl> l1 = null;
+          List<pkg.m2.impl.C2Impl> l2 = null;
+        
+          Supplier<C2> s1 = C2Impl::make;
+          Supplier<C2> s2 = pkg.m2.impl.C2Impl::make;
+        }}
+        """.trimIndent()
+    highlight("test.java", checkFileText)
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -493,8 +530,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
+      .map { IntentionActionDelegate.unwrap(it)::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") }
+      .map { it.simpleName }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

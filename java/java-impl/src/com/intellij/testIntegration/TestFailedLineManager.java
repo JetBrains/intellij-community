@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -25,7 +24,7 @@ public class TestFailedLineManager implements FileEditorManagerListener {
   private final Map<VirtualFile, Map<String, TestInfo>> myMap;
 
   public static TestFailedLineManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TestFailedLineManager.class);
+    return project.getService(TestFailedLineManager.class);
   }
 
   public TestFailedLineManager(@NotNull Project project) {

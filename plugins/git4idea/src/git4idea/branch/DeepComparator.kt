@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -334,7 +333,7 @@ class DeepComparator(private val project: Project,
 
     @JvmStatic
     fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {
-      return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
+      return project.getService(DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
     }
 
     @JvmStatic

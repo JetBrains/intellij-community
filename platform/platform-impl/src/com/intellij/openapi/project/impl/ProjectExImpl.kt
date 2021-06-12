@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.preloadServices
@@ -45,7 +47,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
   }
 
-  private val earlyDisposable = AtomicReference<Disposable?>(Disposer.newDisposable())
+  private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
   @Volatile
   var isTemporarilyDisposed = false
@@ -170,14 +172,18 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
-    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this,
-                                                                       activityPrefix = "project ",
-                                                                       onlyIfAwait = isLight) else null
+    // for light project preload only services that are essential
+    // (await means "project component loading activity is completed only when all such services are completed")
+    val servicePreloadingFuture = if (preloadServices) {
+      preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
+    }
+    else {
+      null
+    }
     createComponents(indicator)
     servicePreloadingFuture?.join()
 
-    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling") else null
+    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.DEFAULT) else null
     @Suppress("DEPRECATION")
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 

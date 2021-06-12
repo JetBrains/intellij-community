@@ -2,9 +2,11 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,10 +97,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
   }
 
   public boolean isStagingAreaEnabled() {
-    if (Registry.is("git.enable.stage")) {
-      myState.STAGING_AREA_ENABLED = true;
-      Registry.get("git.enable.stage").setValue(false);
-    }
     return myState.STAGING_AREA_ENABLED;
   }
 

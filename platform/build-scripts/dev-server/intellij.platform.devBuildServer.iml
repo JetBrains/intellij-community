@@ -37,7 +37,6 @@
     <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.idea.community.build" scope="RUNTIME" />
-    <orderEntry type="library" name="directory-watcher" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />

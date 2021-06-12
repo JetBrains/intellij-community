@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,10 +41,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     myProject = project;
     myReplaceOptions = replaceOptions;
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
+    final LanguageFileType fileType = matchOptions.getFileType();
+    assert fileType != null;
     patternElements = MatcherImplUtil.createTreeFromText(
       matchOptions.getSearchPattern(),
       PatternTreeContext.Block,
-      matchOptions.getFileType(),
+      fileType,
       project
     );
   }
@@ -221,10 +224,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     else if (originalClass.isInterface() && !patternClass.isInterface()) {
       transform(replacementClass, ClassType.INTERFACE);
     }
+    else if (originalClass.isRecord() && !patternClass.isRecord()) {
+      transform(replacementClass, ClassType.RECORD);
+      final PsiRecordHeader recordHeader = originalClass.getRecordHeader();
+      if (recordHeader != null) {
+        replacementClass.addBefore(recordHeader, replacementClass.getExtendsList());
+      }
+    }
   }
 
   enum ClassType {
-    ENUM, INTERFACE, ANNOTATION
+    ENUM, INTERFACE, ANNOTATION, RECORD
   }
 
   private static void transform(PsiClass replacementClass, ClassType type) {
@@ -247,6 +257,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         break;
       case INTERFACE:
         aClass = factory.createInterface("X");
+        break;
+      case RECORD:
+        aClass = factory.createRecord("X");
         break;
       default:
         throw new AssertionError();
@@ -431,12 +444,14 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       replacementToMake = "@" + replacementToMake;
     }
 
+    final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+    assert fileType != null;
     final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(
       replacementToMake,
       elementToReplace instanceof PsiMember && !isSymbolReplacement(elementToReplace) ?
       PatternTreeContext.Class :
       PatternTreeContext.Block,
-      myReplaceOptions.getMatchOptions().getFileType(),
+      fileType,
       myProject);
 
     if (elementToReplace instanceof PsiAnnotation && replacements.length == 1) {

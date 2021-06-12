@@ -32,5 +32,5 @@ public abstract class ResolveScopeProvider {
    * @return {@link GlobalSearchScope} which defines destination scope where to resolve is allowed from given {@code invocationPoint}.
    */
   @Nullable
-  public abstract GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project);
+  public abstract GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -47,7 +47,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final String typeText = ((PsiType)infos[1]).getPresentableText();
-    return new StringBufferReplaceableByStringFix(typeText);
+    final boolean possibleSideEffect = (boolean)infos[2];
+    return new StringBufferReplaceableByStringFix(typeText, possibleSideEffect);
   }
 
   @Override
@@ -141,10 +142,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
     private final String myType;
+    private final boolean myPossibleSideEffect;
     private int currentLine = -1;
 
-    StringBufferReplaceableByStringFix(String type) {
+    StringBufferReplaceableByStringFix(String type, boolean possibleSideEffect) {
       myType = type;
+      myPossibleSideEffect = possibleSideEffect;
     }
 
     @NotNull
@@ -235,25 +238,25 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         }
       }
       final String expressionText = addConversionToStringIfNecessary(element, builder.toString());
-      final PsiExpression lastExpression = expressions.get(expressions.size() - 1);
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
-      if (statement == null) {
-        return;
-      }
       final List<PsiElement> toDelete = new SmartList<>();
       toDelete.add(variable);
       for (int i = 0, size = expressions.size() - 1; i < size; i++) {
         toDelete.add(expressions.get(i).getParent());
       }
 
-      final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
+      final PsiExpression lastExpression = expressions.get(expressions.size() - 1);
+      final boolean useVariable = myPossibleSideEffect || expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
-        toDelete.forEach(tracker::delete);
+        final PsiElement last = toDelete.remove(toDelete.size() - 1);
+        final PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(last, PsiStatement.class);
+        if (statement == null) {
+          return;
+        }
         final @NonNls String modifier = JavaCodeStyleSettings.getInstance(lastExpression.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
         final String statementText = modifier + CommonClassNames.JAVA_LANG_STRING + ' ' + variableName + "=" + expressionText + ';';
-        final PsiStatement newStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(statementText, lastExpression);
-        codeBlock.addBefore(newStatement, statement);
-        PsiReplacementUtil.replaceExpression(lastExpression, variableName, tracker);
+        toDelete.forEach(tracker::delete);
+        tracker.replaceAndRestoreComments(statement, statementText);
+        PsiReplacementUtil.replaceExpression(lastExpression, variableName);
       }
       else {
         tracker.replaceExpressionAndRestoreComments(lastExpression, expressionText, toDelete);
@@ -334,7 +337,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return result;
       }
       for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiExpressionList) {
+        if (child instanceof PsiExpressionList ||  child instanceof PsiWhiteSpace
+            || child instanceof PsiJavaToken || child instanceof PsiReferenceParameterList) {
           continue;
         }
         if (buildStringExpression(child, tracker, result) == null) {
@@ -496,7 +500,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       final ReplaceableByStringVisitor visitor = new ReplaceableByStringVisitor(variable);
       codeBlock.accept(visitor);
       if (!visitor.isReplaceable()) return;
-      registerVariableError(variable, variable, type);
+      registerVariableError(variable, variable, type, visitor.isPossibleSideEffect());
     }
 
     @Override
@@ -506,7 +510,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (!isConcatenatorConstruction(expression)) return;
       final PsiExpression completeExpression = getCompleteExpression(expression);
       if (completeExpression == null) return;
-      registerNewExpressionError(expression, expression, type);
+      registerNewExpressionError(expression, expression, type, false);
     }
 
     private static boolean isNewStringConcatenatorChain(PsiExpression expression) {
@@ -528,7 +532,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     private final PsiElement myParent;
     private final PsiVariable myVariable;
     private boolean myReplaceable = true;
-    private boolean myPossibleSideEffect;
+    private PsiExpression myPossibleSideEffect;
     private boolean myToStringFound;
 
     ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
@@ -538,6 +542,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
     public boolean isReplaceable() {
       return myReplaceable && myToStringFound;
+    }
+
+    public boolean isPossibleSideEffect() {
+      return myPossibleSideEffect != null;
     }
 
     @Override
@@ -551,16 +559,16 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myPossibleSideEffect = true;
+      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
+        myPossibleSideEffect = expression;
       }
     }
 
     @Override
     public void visitUnaryExpression(PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
-      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myPossibleSideEffect = true;
+      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
+        myPossibleSideEffect = expression;
       }
     }
 
@@ -572,12 +580,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
-        myPossibleSideEffect = true;
+        myPossibleSideEffect = expression;
         return;
       }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
-        myPossibleSideEffect = true;
+        myPossibleSideEffect = expression;
         return;
       }
       final String name = aClass.getQualifiedName();
@@ -589,10 +597,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (isArgumentOfStringBuilderMethod(expression)) {
         return;
       }
-      myPossibleSideEffect = true;
+      myPossibleSideEffect = expression;
     }
 
-    private boolean isArgumentOfStringBuilderMethod(PsiMethodCallExpression expression) {
+    private boolean isArgumentOfStringBuilderMethod(PsiExpression expression) {
       final PsiExpressionList parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiStatement.class);
       if (parent == null) {
         return false;
@@ -669,6 +677,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return;
       }
       if (ExpressionUtils.isImplicitToStringCall(expression)) {
+        if (myPossibleSideEffect != null && PsiTreeUtil.isAncestor(myPossibleSideEffect, expression, true)) {
+          myPossibleSideEffect = null;
+        }
         myToStringFound = true;
         return;
       }
@@ -684,10 +695,16 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             myReplaceable = false;
             return;
           }
+          if (myPossibleSideEffect != null && PsiTreeUtil.isAncestor(myPossibleSideEffect, grandParent, true)) {
+            // assume that a method call where the toString() is used as an argument, if present,
+            // does not modify any state used in the string concatenation. If a case like this is found
+            // in the wild this check can be removed, at the cost of an uglier quick fix.
+            myPossibleSideEffect = null;
+          }
           myToStringFound = true;
           return;
         }
-        if (myPossibleSideEffect) {
+        if (myPossibleSideEffect != null) {
           myReplaceable = false;
           return;
         }

@@ -22,10 +22,13 @@ import java.util.Map;
  */
 public final class FileTypeIndex {
   /**
+   * @deprecated please don't use this index directly.
+   *
    * Use {@link #getFiles(FileType, GlobalSearchScope)},
    * {@link #containsFileOfType(FileType, GlobalSearchScope)} or
    * {@link #processFiles(FileType, Processor, GlobalSearchScope)} instead
    */
+  @Deprecated
   @ApiStatus.Internal
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 

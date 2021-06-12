@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.JpsCompilationData
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -20,6 +21,12 @@ interface CompilationContext {
   JpsModel getProjectModel()
 
   JpsCompilationData getCompilationData()
+  KotlinBinaries getKotlinBinaries()
+
+  /**
+   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
+   */
+  File getProjectOutputDirectory()
 
   JpsModule findRequiredModule(String name)
 

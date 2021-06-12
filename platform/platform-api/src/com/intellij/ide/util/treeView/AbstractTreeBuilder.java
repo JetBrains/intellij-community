@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.treeView;
 
@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
@@ -387,12 +388,17 @@ public class AbstractTreeBuilder implements Disposable {
 
     final Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.runReadAction(new TreeRunnable("AbstractTreeBuilder.runBackgroundLoading") {
+      final class Task extends TreeRunnable {
+        private Task() {
+          super("AbstractTreeBuilder.runBackgroundLoading");
+        }
+
         @Override
         public void perform() {
           runnable.run();
         }
-      });
+      }
+      ReadAction.nonBlocking(new Task()).executeSynchronously();
     }
     else {
       runnable.run();

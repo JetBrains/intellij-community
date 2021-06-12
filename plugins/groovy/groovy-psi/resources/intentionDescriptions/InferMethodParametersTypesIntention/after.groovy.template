@@ -1,4 +1,4 @@
-<spot>def <T0></spot> void append(<spot>List<T0></spot> a, <spot>T0</spot> b) {
+<spot>def <T></spot> void append(<spot>List<T></spot> a, <spot>T</spot> b) {
   a.add(b)
 }
 

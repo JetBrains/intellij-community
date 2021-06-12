@@ -226,11 +226,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     setIntervalEnd(newRange.getEndOffset());
   }
 
-  protected int persistentHighlighterUpdate(@NotNull DocumentEvent e, int line, boolean wholeLineRange) {
+  protected void persistentHighlighterUpdate(@NotNull DocumentEvent e, boolean wholeLineRange) {
+    int line = 0;
     DocumentEventImpl event = (DocumentEventImpl)e;
     boolean viaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, getStartOffset(), getEndOffset());
     if (viaDiff) {
       try {
+        line = event.getLineNumberBeforeUpdate(getStartOffset());
         line = translatedViaDiff(event, line);
       }
       catch (FilesTooBigForDiffException exception) {
@@ -251,7 +253,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line));
       setIntervalEnd(getDocument().getLineEndOffset(line));
     }
-    return line;
   }
 
   private int translatedViaDiff(@NotNull DocumentEventImpl e, int line) throws FilesTooBigForDiffException {

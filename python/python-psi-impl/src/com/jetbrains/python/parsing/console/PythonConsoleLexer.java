@@ -19,11 +19,16 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import com.jetbrains.python.lexer.PythonLexerKind;
 import com.jetbrains.python.psi.PyElementType;
 
 import java.util.Map;
 
 public class PythonConsoleLexer extends PythonIndentingLexer {
+  public PythonConsoleLexer() {
+    super(PythonLexerKind.CONSOLE);
+  }
+
   private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = ImmutableMap.of(
     "?", PyConsoleTokenTypes.QUESTION_MARK,
     "!", PyConsoleTokenTypes.PLING,

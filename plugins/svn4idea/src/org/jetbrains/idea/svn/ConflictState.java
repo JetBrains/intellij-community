@@ -72,8 +72,8 @@ public enum ConflictState {
   }
 
   public static ConflictState mergeState(final ConflictState leftState, final ConflictState rightState) {
-    return getInstance(leftState.myTree | rightState.myTree, leftState.myText | rightState.myText,
-                             leftState.myProperty | rightState.myProperty);
+    return getInstance(leftState.myTree || rightState.myTree, leftState.myText || rightState.myText,
+                       leftState.myProperty || rightState.myProperty);
   }
 
   @NotNull

@@ -53,7 +53,13 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final Function<File, JavaFileObject> myFileToInputFileObjectConverter = new Function<File, JavaFileObject>() {
     @Override
     public JavaFileObject fun(File file) {
-      return new InputFileObject(file, myEncodingName);
+      return new InputFileObject(file, myEncodingName, false);
+    }
+  };
+  private final Function<File, JavaFileObject> myFileToCachingInputFileObjectConverter = new Function<File, JavaFileObject>() {
+    @Override
+    public JavaFileObject fun(File file) {
+      return new InputFileObject(file, myEncodingName, true);
     }
   };
   private static final Function<String, File> ourPathToFileConverter = new Function<String, File>() {
@@ -389,7 +395,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
-    return wrapJavaFileObjects(Iterators.map(files, myFileToInputFileObjectConverter));
+    return wrapJavaFileObjects(Iterators.map(files, myFileToCachingInputFileObjectConverter));
   }
 
   @Override
@@ -512,7 +518,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
                   );
                 }
               };
-              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter);
+              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), location.isOutputLocation()? myFileToInputFileObjectConverter : myFileToCachingInputFileObjectConverter);
             }
             catch (IOException e) {
               throw new RuntimeException(e);

@@ -2,6 +2,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -240,7 +243,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       IElementType type = polyadic.getOperationTokenType();
       boolean noUnboxing = (type == JavaTokenType.PLUS && TypeUtils.isJavaLangString(polyadic.getType())) ||
                            ((type == JavaTokenType.EQEQ || type == JavaTokenType.NE) &&
-                            !ContainerUtil.exists(polyadic.getOperands(), 
+                            !ContainerUtil.exists(polyadic.getOperands(),
                                                   op -> TypeConversionUtil.isPrimitiveAndNotNull(op.getType())));
       if (!noUnboxing) {
         return createUnboxingProblem(context, expression);
@@ -504,9 +507,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    * Represents a concrete nullability problem on PSI which consists of PSI element (anchor) and {@link NullabilityProblemKind}.
    * @param <T> a type of anchor element
    */
-  public static final class NullabilityProblem<T extends PsiElement> {
+  public static final class NullabilityProblem<T extends PsiElement> extends JvmDfaProblem<T> {
     private final @NotNull NullabilityProblemKind<T> myKind;
-    private final @NotNull T myAnchor;
     private final @Nullable PsiExpression myDereferencedExpression;
     private final boolean myFromUnknown;
 
@@ -514,15 +516,10 @@ public final class NullabilityProblemKind<T extends PsiElement> {
                        @NotNull T anchor,
                        @Nullable PsiExpression dereferencedExpression,
                        boolean unknown) {
+      super(anchor);
       myKind = kind;
-      myAnchor = anchor;
       myDereferencedExpression = dereferencedExpression;
       myFromUnknown = unknown;
-    }
-
-    @NotNull
-    public T getAnchor() {
-      return myAnchor;
     }
 
     /**
@@ -543,13 +540,13 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     /**
-     * @return true if dereferenced expression has unknown nullability 
+     * @return true if dereferenced expression has unknown nullability
      * (reported in {@link DataFlowInspectionBase#TREAT_UNKNOWN_MEMBERS_AS_NULLABLE} mode).
      */
     public boolean hasUnknownNullability() {
       return myFromUnknown;
     }
-    
+
     @NotNull
     public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
@@ -575,26 +572,26 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       if (this == o) return true;
       if (!(o instanceof NullabilityProblem)) return false;
       NullabilityProblem<?> problem = (NullabilityProblem<?>)o;
-      return myKind.equals(problem.myKind) && myAnchor.equals(problem.myAnchor) &&
+      return myKind.equals(problem.myKind) && getAnchor().equals(problem.getAnchor()) &&
              Objects.equals(myDereferencedExpression, problem.myDereferencedExpression);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKind, myAnchor, myDereferencedExpression);
+      return Objects.hash(myKind, getAnchor(), myDereferencedExpression);
     }
 
     @Override
     public String toString() {
-      return "[" + myKind + "] " + myAnchor.getText();
+      return "[" + myKind + "] " + getAnchor().getText();
     }
 
     public NullabilityProblem<T> withExpression(PsiExpression expression) {
-      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, myAnchor, expression, false);
+      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, getAnchor(), expression, false);
     }
 
     public NullabilityProblem<T> makeUnknown() {
-      return new NullabilityProblem<>(myKind, myAnchor, myDereferencedExpression, true);
+      return new NullabilityProblem<>(myKind, getAnchor(), myDereferencedExpression, true);
     }
   }
 }

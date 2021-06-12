@@ -37,12 +37,14 @@ SHELL_SCRIPT
                 SIMPLE_COMMAND_ELEMENT
                   PsiElement($)('$')
                   ARITHMETIC_EXPANSION
-                    PsiElement((()('((')
+                    PsiElement(()('(')
+                    PsiElement(()('(')
                     POST_EXPRESSION
                       LITERAL_EXPRESSION
                         PsiElement(word)('wait_seconds')
                       PsiElement(--)('--')
-                    PsiElement()))('))')
+                    PsiElement())(')')
+                    PsiElement())(')')
                 PsiWhiteSpace(' ')
                 LITERAL
                   PsiElement(word)('-eq')
@@ -124,12 +126,14 @@ SHELL_SCRIPT
                 SIMPLE_COMMAND_ELEMENT
                   PsiElement($)('$')
                   ARITHMETIC_EXPANSION
-                    PsiElement((()('((')
+                    PsiElement(()('(')
+                    PsiElement(()('(')
                     POST_EXPRESSION
                       LITERAL_EXPRESSION
                         PsiElement(word)('wait_seconds')
                       PsiElement(--)('--')
-                    PsiElement()))('))')
+                    PsiElement())(')')
+                    PsiElement())(')')
                 PsiWhiteSpace(' ')
                 LITERAL
                   PsiElement(word)('-eq')
@@ -209,12 +213,14 @@ SHELL_SCRIPT
                 SIMPLE_COMMAND_ELEMENT
                   PsiElement($)('$')
                   ARITHMETIC_EXPANSION
-                    PsiElement((()('((')
+                    PsiElement(()('(')
+                    PsiElement(()('(')
                     POST_EXPRESSION
                       LITERAL_EXPRESSION
                         PsiElement(word)('wait_seconds')
                       PsiElement(--)('--')
-                    PsiElement()))('))')
+                    PsiElement())(')')
+                    PsiElement())(')')
                 PsiWhiteSpace(' ')
                 LITERAL
                   PsiElement(word)('-eq')

@@ -1,14 +1,31 @@
 <html>
 <body>
-Reports calls to <b>BigDecimal</b> constructors which accept a <b>double</b> value.
-These constructors produce a <b>BigDecimal</b> which is exactly equal to the supplied <b>double</b> value.
+Reports calls to <code>BigDecimal</code> constructors which accept a <code>double</code> value.
+These constructors produce a <code>BigDecimal</code> which is exactly equal to the supplied <code>double</code> value.
 However, as doubles are encoded in <i>IEEE 754 64-bit double-precision binary floating-point</i> format, the exact value could be unexpected.
 <p>
-For example <code><b>new</b> BigDecimal(0.1)</code> yields a <b>BigDecimal</b> whose value is
-<small><code>0.1000000000000000055511151231257827021181583404541015625</code></small>,
+For example <code>new BigDecimal(0.1)</code> yields a <code>BigDecimal</code> whose value is
+<small><code>0.1000000000000000055511151231257827021181583404541015625</code></small>
 which is the nearest number to 0.1 representable as a double.
-To get a <b>BigDecimal</b> which stores the same value as written in the source code,
-use either <code><b>new</b> BigDecimal("0.1")</code> or <code>BigDecimal.valueOf(0.1)</code>.
+To get a <code>BigDecimal</code> which stores the same value as written in the source code,
+use either <code>new BigDecimal("0.1")</code> or <code>BigDecimal.valueOf(0.1)</code>.
+
+<p>Example:</p>
+<pre>
+  class Constructor {
+    void foo() {
+      new BigDecimal(0.1);
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  class Constructor {
+    void foo() {
+      new BigDecimal("0.1");
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

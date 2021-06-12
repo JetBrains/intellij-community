@@ -36,15 +36,15 @@ public final class SdkSetupNotificationProvider extends EditorNotifications.Prov
     for (ProjectSdkSetupValidator validator : ProjectSdkSetupValidator.EP_NAME.getExtensionList()) {
       if (validator.isApplicableFor(project, file)) {
         String errorMessage = validator.getErrorMessage(project, file);
-        return errorMessage != null ? createPanel(errorMessage, validator.getFixHandler(project, file)) : null;
+        return errorMessage != null ? createPanel(errorMessage, fileEditor, validator.getFixHandler(project, file)) : null;
       }
     }
     return null;
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(@NotNull @NlsContexts.LinkLabel String message, @NotNull ActionHandler fix) {
-    EditorNotificationPanel panel = new EditorNotificationPanel();
+  private static EditorNotificationPanel createPanel(@NotNull @NlsContexts.LinkLabel String message, @NotNull FileEditor fileEditor, @NotNull ActionHandler fix) {
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(message);
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), fix, true);
     return panel;

@@ -44,13 +44,14 @@ public final class PluginUtilImpl implements PluginUtil {
         if (visitedClassNames.add(className)) {
           PluginDescriptor descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
           PluginId id = descriptor == null ? null : descriptor.getPluginId();
-          if (id != null && id != PluginManagerCore.CORE_ID) {
+          if (id != null && !PluginManagerCore.CORE_ID.equals(id)) {
             if (descriptor.isBundled()) {
               if (bundledId == null) {
                 bundledId = id;
                 logPluginDetection(className, id);
               }
-            } else {
+            }
+            else {
               logPluginDetection(className, id);
               return id;
             }

@@ -35,9 +35,7 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author yole
- */
+
 public class PySuperMethodCompletionContributor extends CompletionContributor {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,

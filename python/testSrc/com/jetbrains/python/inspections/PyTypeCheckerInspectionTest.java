@@ -5,14 +5,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
  */
 public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
@@ -1277,6 +1285,16 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-43841
   public void testPyFunctionAgainstBuiltinFunction() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-39762
+  public void testOverloadsAndPureStubInSamePyiScope() {
+    doMultiFileTest();
+  }
+
+  // PY-45438
+  public void testFunctionAgainstCallbackProtocol() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 }

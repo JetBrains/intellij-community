@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -33,8 +32,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
-
+public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
@@ -43,12 +41,12 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALSANDHASHCODE_INCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
   private static final String EQUALSANDHASHCODE_EXCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
 
-  public EqualsAndHashCodeProcessor() {
+  EqualsAndHashCodeProcessor() {
     super(PsiMethod.class, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
+    return new EqualsAndHashCodeToStringHandler();
   }
 
   @Override

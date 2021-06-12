@@ -44,7 +44,7 @@ public class SequentialModalProgressTask extends Task.Modal {
       doRun(indicator);
     }
     catch (Exception e) {
-      LOG.info("Unexpected exception occurred during processing sequential task '" + myTitle + "'", e);
+      LOG.info("Unexpected exception occurred during processing sequential task '" + getTitle() + "'", e);
     }
   }
 

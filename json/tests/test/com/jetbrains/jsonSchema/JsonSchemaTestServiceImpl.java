@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -26,13 +27,7 @@ public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
   @NotNull
   @Override
   protected List<JsonSchemaProviderFactory> getProviderFactories() {
-    return Collections.singletonList(new JsonSchemaProviderFactory() {
-      @NotNull
-      @Override
-      public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
-        return ContainerUtil.createMaybeSingletonList(provider);
-      }
-    });
+    return Collections.singletonList(new MyJsonSchemaProviderFactory());
   }
 
   @Override
@@ -44,5 +39,13 @@ public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
   public boolean equals(Object obj) {
     if (obj instanceof JsonSchemaTestServiceImpl) return true;
     return super.equals(obj);
+  }
+
+  private static class MyJsonSchemaProviderFactory implements JsonSchemaProviderFactory, DumbAware {
+    @NotNull
+    @Override
+    public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
+      return ContainerUtil.createMaybeSingletonList(provider);
+    }
   }
 }

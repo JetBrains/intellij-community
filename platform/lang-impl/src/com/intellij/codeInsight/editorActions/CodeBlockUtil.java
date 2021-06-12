@@ -6,7 +6,6 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileTypes.FileType;
@@ -120,7 +119,7 @@ public final class CodeBlockUtil {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     final FileType fileType = getFileType(file, offset);
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return -1;
 
     int depth = 0;
@@ -190,7 +189,7 @@ public final class CodeBlockUtil {
 
     Document document = editor.getDocument();
     final FileType fileType = getFileType(file, offset);
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
 
     int depth = 0;
     Language braceType;

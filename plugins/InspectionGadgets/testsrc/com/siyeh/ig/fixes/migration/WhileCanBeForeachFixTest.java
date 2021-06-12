@@ -24,6 +24,7 @@ public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testRawIterator() { doTest(); }
   public void testUnboxing() { doTest(); }
   public void testParentheses() { doTest(); }
+  public void testEmptyLoop() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {

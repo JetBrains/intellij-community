@@ -56,7 +56,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     super(project);
     myMigrationMap = migrationMap;
     mySearchScope = scope;
-    myPsiMigration = startMigration(project);
+    
   }
 
   @Override
@@ -86,6 +86,12 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected void refreshElements(PsiElement @NotNull [] elements) {
     myPsiMigration = startMigration(myProject);
+  }
+
+  @Override
+  protected void doRun() {
+    myPsiMigration = startMigration(myProject);
+    super.doRun();
   }
 
   @Override
@@ -148,7 +154,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         String newName = entry.getNewName();
         PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
-                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName);
+                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName)[0];
         MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
         if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
           sameShortNames = true;

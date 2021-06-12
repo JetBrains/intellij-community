@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
@@ -23,11 +23,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import com.intellij.refactoring.rename.impl.TextOptions
+import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -63,13 +64,13 @@ object TemplateInlayUtil {
     Disposer.register(templateState, inlay)
     return inlay
   }
-  
+
   open class SelectableTemplateElement(val presentation: SelectableInlayPresentation) : VirtualTemplateElement {
+
     override fun onSelect(templateState: TemplateState) {
       presentation.isSelected = true
       templateState.focusCurrentHighlighter(false)
     }
-
   }
 
   @JvmStatic
@@ -78,7 +79,7 @@ object TemplateInlayUtil {
                                        presentation: SelectableInlayPresentation,
                                        panel: DialogPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
-                                       logStatisticsOnHide : () -> Unit = {}): Inlay<PresentationRenderer>? {
+                                       logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
     val editor = templateState.editor
     val inlay = createNavigatableButton(templateState, inEditorOffset, presentation, templateElement) ?: return null
     fun showPopup() {
@@ -135,10 +136,10 @@ object TemplateInlayUtil {
       val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip", KeymapUtil.getShortcutText(shortcut))
       hovered = factory.withTooltip(tooltip, hovered)
     }
-    return object: SelectableInlayButton(editor,
-                                        default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
-                                        active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-                                        hovered) {
+    return object : SelectableInlayButton(editor,
+                                          default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
+                                          active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
+                                          hovered) {
       override fun mouseClicked(event: MouseEvent, translated: Point) {
         super.mouseClicked(event, translated)
         onClick(event)
@@ -151,34 +152,73 @@ object TemplateInlayUtil {
                                 offset: Int,
                                 elementToRename: PsiNamedElement,
                                 restart: Runnable): Inlay<PresentationRenderer>? {
-    val editor = templateState.editor as EditorImpl
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
+    val initOptions = TextOptions(
+      commentStringOccurrences = processor.isToSearchInComments(elementToRename),
+      textOccurrences = if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
+        processor.isToSearchForTextOccurrences(elementToRename)
+      }
+      else {
+        null
+      }
+    )
+    return createRenameSettingsInlay(templateState, offset, initOptions) { (commentStringOccurrences, textOccurrences) ->
+      if (commentStringOccurrences != null) {
+        processor.setToSearchInComments(elementToRename, commentStringOccurrences)
+      }
+      if (textOccurrences != null) {
+        processor.setToSearchForTextOccurrences(elementToRename, textOccurrences)
+      }
+      restart.run()
+    }
+  }
 
+  internal fun createRenameSettingsInlay(
+    templateState: TemplateState,
+    offset: Int,
+    initOptions: TextOptions,
+    optionsListener: (TextOptions) -> Unit,
+  ): Inlay<PresentationRenderer>? {
+    if (initOptions.isEmpty) {
+      return null
+    }
+
+    val editor = templateState.editor as EditorImpl
     val factory = PresentationFactory(editor)
     val colorsScheme = editor.colorsScheme
-    fun button(iconPresentation: IconPresentation, second: Boolean = false) = factory.container(factory.container(
-      presentation = iconPresentation,
+    fun button(presentation: InlayPresentation, second: Boolean) = factory.container(
+      presentation = presentation,
       padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
-    ))
+    )
 
-    var tooltip = LangBundle.message("inlay.rename.tooltip.comments")
-    val toSearchInComments = processor.isToSearchInComments(elementToRename)
-    val commentsStatusIcon = if (toSearchInComments) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
-
-    var buttonsPresentation = button(factory.icon(commentsStatusIcon))
-    val toSearchForTextOccurrences: Boolean
-    if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
-      toSearchForTextOccurrences = processor.isToSearchForTextOccurrences(elementToRename)
-      val textOccurrencesStatusIcon = if (toSearchForTextOccurrences)
-                                                AllIcons.Actions.InlayRenameInNoCodeFilesActive 
-                                            else 
-                                                AllIcons.Actions.InlayRenameInNoCodeFiles
-      val inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
-      buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
+    var tooltip = LangBundle.message("inlay.rename.tooltip.header")
+    val commentStringPresentation = initOptions.commentStringOccurrences?.let { commentStringOccurrences ->
+      tooltip += LangBundle.message("inlay.rename.tooltip.comments.strings")
+      BiStatePresentation(
+        first = { factory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
+        second = { factory.icon(AllIcons.Actions.InlayRenameInComments) },
+        initiallyFirstEnabled = commentStringOccurrences,
+      )
+    }
+    val textPresentation = initOptions.textOccurrences?.let { textOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
+      BiStatePresentation(
+        first = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
+        second = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
+        initiallyFirstEnabled = textOccurrences,
+      )
+    }
+    val buttonsPresentation = if (commentStringPresentation != null && textPresentation != null) {
+      factory.seq(
+        button(commentStringPresentation, false),
+        button(textPresentation, true)
+      )
     }
     else {
-      toSearchForTextOccurrences = false
+      val presentation = commentStringPresentation
+                         ?: textPresentation
+                         ?: error("at least one option should be not null")
+      button(presentation, false)
     }
 
     val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
@@ -186,12 +226,12 @@ object TemplateInlayUtil {
       tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
     }
 
-    fun withBackground(bgKey: ColorKey) =
-      factory.container(factory.container(buttonsPresentation,
-                                          roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
-                                          background = colorsScheme.getColor(bgKey)),
-        padding = InlayPresentationFactory.Padding(4, 0,0, 0)
-      )
+    fun withBackground(bgKey: ColorKey) = factory.container(
+      presentation = buttonsPresentation,
+      roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
+      background = colorsScheme.getColor(bgKey),
+      padding = InlayPresentationFactory.Padding(4, 0, 0, 0),
+    )
 
     val presentation = object : SelectableInlayButton(editor,
                                                       withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
@@ -202,7 +242,7 @@ object TemplateInlayUtil {
         logStatisticsOnShow(editor, event)
       }
     }
-    
+
     val templateElement = object : SelectableTemplateElement(presentation) {
       override fun onSelect(templateState: TemplateState) {
         super.onSelect(templateState)
@@ -210,10 +250,19 @@ object TemplateInlayUtil {
       }
     }
 
-    val settings = Settings(toSearchInComments, toSearchForTextOccurrences)
-    val panel = renamePanel(elementToRename, editor, settings, restart)
+    var currentOptions: TextOptions = initOptions
+    val panel = renamePanel(editor, initOptions) { newOptions ->
+      currentOptions = newOptions
+      newOptions.commentStringOccurrences?.let {
+        commentStringPresentation?.state = BiStatePresentation.State(it)
+      }
+      newOptions.textOccurrences?.let {
+        textPresentation?.state = BiStatePresentation.State(it)
+      }
+      optionsListener.invoke(newOptions)
+    }
     return createNavigatableButtonWithPopup(templateState, offset, presentation, panel, templateElement) {
-      logStatisticsOnHide(editor, toSearchInComments, settings.inComments, toSearchForTextOccurrences, settings.inTextOccurrences)
+      logStatisticsOnHide(editor, initOptions, currentOptions)
     }
   }
 
@@ -224,50 +273,56 @@ object TemplateInlayUtil {
                                                EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
   }
 
-  private data class Settings (var inComments : Boolean, var inTextOccurrences : Boolean) 
-
-  private fun logStatisticsOnHide(editor: EditorImpl,
-                                  toSearchInComments: Boolean,
-                                  toSearchInCommentsNew: Boolean,
-                                  toSearchForTextOccurrences: Boolean,
-                                  toSearchForTextOccurrencesNew: Boolean) {
-    RenameInplacePopupUsagesCollector.hide.log(editor.project,
-                                               RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(toSearchInCommentsNew),
-                                               RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(toSearchForTextOccurrencesNew))
-    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project, RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
+  private fun logStatisticsOnHide(editor: EditorImpl, initOptions: TextOptions, newOptions: TextOptions) {
+    RenameInplacePopupUsagesCollector.hide.log(
+      editor.project,
+      RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(newOptions.commentStringOccurrences ?: false),
+      RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(newOptions.textOccurrences ?: false)
+    )
+    RenameInplacePopupUsagesCollector.settingsChanged.log(
+      editor.project,
+      RenameInplacePopupUsagesCollector.changedOnHide.with(initOptions != newOptions)
+    )
   }
 
-  private fun renamePanel(elementToRename: PsiElement,
-                          editor: Editor,
-                          settings : Settings,
-                          restart: Runnable): DialogPanel {
-    val processor = RenamePsiElementProcessor.forElement(elementToRename)
+  private fun renamePanel(
+    editor: Editor,
+    initOptions: TextOptions,
+    optionsListener: (TextOptions) -> Unit,
+  ): DialogPanel {
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
+    var (commentsStringsOccurrences, textOccurrences) = initOptions // model
     val panel = panel {
       row(LangBundle.message("inlay.rename.also.rename.options.title")) {
-        row {
-          cell {
-            checkBox(RefactoringBundle.message("comments.and.strings"),
-                     processor.isToSearchInComments(elementToRename),
-                     actionListener = { _, cb ->
-                       settings.inComments = cb.isSelected
-                       processor.setToSearchInComments(elementToRename, cb.isSelected)
-                       restart.run()
-                     }
-            ).focused()
-            component(JLabel(AllIcons.Actions.InlayRenameInComments))
-          }
-        }
-        if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
+        commentsStringsOccurrences?.let {
           row {
             cell {
-              checkBox(RefactoringBundle.message("text.occurrences"),
-                       processor.isToSearchForTextOccurrences(elementToRename),
-                       actionListener = { _, cb ->
-                         settings.inTextOccurrences = cb.isSelected
-                         processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
-                         restart.run()
-                       })
+              checkBox(
+                text = RefactoringBundle.message("comments.and.strings"),
+                isSelected = it,
+                actionListener = { _, cb ->
+                  commentsStringsOccurrences = cb.isSelected
+                  optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
+                }
+              ).focused()
+              component(JLabel(AllIcons.Actions.InlayRenameInComments))
+            }
+          }
+        }
+        textOccurrences?.let {
+          row {
+            cell {
+              val cb = checkBox(
+                text = RefactoringBundle.message("text.occurrences"),
+                isSelected = it,
+                actionListener = { _, cb ->
+                  textOccurrences = cb.isSelected
+                  optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
+                }
+              )
+              if (commentsStringsOccurrences == null) {
+                cb.focused()
+              }
               component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
             }
           }
@@ -297,7 +352,7 @@ object TemplateInlayUtil {
                               anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
                               ActionManager.getInstance(), 0)
     if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
-      ActionUtil.performActionDumbAware(renameAction, event)
+      ActionUtil.performActionDumbAwareWithCallbacks(renameAction, event)
     }
   }
 }

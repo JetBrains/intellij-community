@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -11,11 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -75,7 +74,7 @@ import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
-public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
+public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
@@ -112,6 +111,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Consumer<Runnable> requestMore, @NotNull Disposable disposable) {
     super(new GraphTableModel(logData, requestMore, uiProperties));
+    Disposer.register(disposable, this);
+
     myLogData = logData;
     myId = logId;
     myProperties = uiProperties;
@@ -120,13 +121,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myBaseStyleProvider = new BaseStyleProvider(this);
 
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
-    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), disposable);
+    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), this);
 
     initColumnModel();
     onColumnOrderSettingChanged();
     setRootColumnSize();
     myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
-    VcsLogColumnManager.getInstance().addCurrentColumnsListener(disposable, new MyCurrentColumnsListener());
+    VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
 
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
@@ -152,6 +153,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
       }
     };
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void initColumnModel() {
@@ -457,37 +462,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     repaint();
   }
 
-  @Override
-  public String getToolTipText(@NotNull MouseEvent event) {
-    int row = rowAtPoint(event.getPoint());
-    VcsLogColumn<?> column = getVcsLogColumn(columnAtPoint(event.getPoint()));
-    if (column == null || row < 0) {
-      return null;
-    }
-    if (column == Root.INSTANCE) {
-      Object path = getValueAt(row, VcsLogColumnManager.getInstance().getModelIndex(column));
-      if (path instanceof FilePath) {
-        String clickMessage = isShowRootNames()
-                              ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
-                              : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-        return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName((FilePath)path)).bold())
-          .br()
-          .append(clickMessage)
-          .wrapWith(HtmlChunk.html()).toString();
-      }
-    }
-    return null;
-  }
-
   private boolean isShowRootNames() {
     return myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES) && myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
 
-  public void jumpToRow(int rowIndex) {
+  public void jumpToRow(int rowIndex, boolean focus) {
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
-      if (!hasFocus()) {
+      if (focus && !hasFocus()) {
         IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
       }
     }
@@ -523,7 +506,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-          sb.append(getModel().getValueAt(selectedRows[i], Commit.INSTANCE).toString());
+          sb.append(getModel().getValueAt(selectedRows[i], Commit.INSTANCE));
           if (i != selectedRows.length - 1) sb.append("\n");
         }
         return sb.toString();
@@ -786,9 +769,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @NotNull
     public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected
-                         ? myTable.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListSelectionBackground(false)
-                         : UIUtil.getListBackground();
+      Color background = selected ? UIUtil.getListSelectionBackground(myTable.hasFocus()) : UIUtil.getListBackground();
       return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
     }
   }

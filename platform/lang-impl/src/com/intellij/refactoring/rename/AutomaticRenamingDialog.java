@@ -201,10 +201,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
-    if (myTableModel.getRowCount() != 0) {
-      myTable.getSelectionModel().addSelectionInterval(0, 0);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(() -> {
+        if (myTableModel.getRowCount() != 0) {
+          myTable.getSelectionModel().addSelectionInterval(0, 0);
+        }
+      });
     }
-
     myOptionsPanel.setVisible(false);
 
     return myPanel;
@@ -395,11 +398,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       String initial = (String)myModel.getValueAt(selectedRows[0], NEW_NAME_COLUMN);
       String newName = Messages.showInputDialog(myTable, RefactoringBundle.message("automatic.renaming.dialog.new.name.label"),
                                                 RefactoringBundle.message("automatic.renaming.dialog.rename.selected.title"), null, initial, new InputValidatorEx() {
-        @Override
-        public boolean checkInput(String inputString) {
-          return getErrorText(inputString) == null;
-        }
-
         @Override
         public boolean canClose(String inputString) {
           return checkInput(inputString);

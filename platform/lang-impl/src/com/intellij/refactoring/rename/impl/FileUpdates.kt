@@ -13,13 +13,15 @@ import com.intellij.refactoring.suggested.range
 import com.intellij.util.DocumentUtil
 import com.intellij.util.io.write
 import com.intellij.util.text.StringOperation
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal class FileUpdates(
-  private val filesToAdd: List<Pair<Path, CharSequence>>,
-  private val filesToMove: List<Pair<VirtualFile, Path>>,
-  private val filesToRemove: List<VirtualFile>,
-  private val documentModifications: List<Pair<RangeMarker, CharSequence>>
+@ApiStatus.Internal
+class FileUpdates(
+  val filesToAdd: List<Pair<Path, CharSequence>>,
+  val filesToMove: List<Pair<VirtualFile, Path>>,
+  val filesToRemove: List<VirtualFile>,
+  val documentModifications: List<Pair<RangeMarker, CharSequence>>
 ) {
   fun doUpdate() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()

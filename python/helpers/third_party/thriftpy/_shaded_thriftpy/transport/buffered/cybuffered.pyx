@@ -1,4 +1,4 @@
-from thriftpy.transport.cybase cimport (
+from _shaded_thriftpy.transport.cybase cimport (
     TCyBuffer,
     CyTransportBase,
     DEFAULT_BUFFER
@@ -52,7 +52,7 @@ cdef class TCyBufferedTransport(CyTransportBase):
             int r
 
         if cap < sz:
-            self.c_flush()
+            self.c_dump_wbuf()
 
         r = self.wbuf.write(sz, data)
         if r == -1:
@@ -74,11 +74,14 @@ cdef class TCyBufferedTransport(CyTransportBase):
             raise MemoryError("grow read buffer fail")
 
     cdef c_flush(self):
+        self.c_dump_wbuf()
+        self.trans.flush()
+
+    cdef c_dump_wbuf(self):
         cdef bytes data
         if self.wbuf.data_size > 0:
             data = self.wbuf.buf[:self.wbuf.data_size]
             self.trans.write(data)
-            self.trans.flush()
             self.wbuf.clean()
 
     def getvalue(self):

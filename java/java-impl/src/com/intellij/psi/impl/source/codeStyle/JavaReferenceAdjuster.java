@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -272,6 +273,28 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
               PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
+              }
+            }
+          }
+        }
+
+        PsiElement qualifier = ((PsiJavaCodeReferenceElement)psiReference).getQualifier();
+        if (qualifier instanceof PsiJavaCodeReferenceElement) {
+          PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)qualifier).getParameterList();
+          if (parameterList != null) {
+            PsiType[] typeArguments = parameterList.getTypeArguments();
+            if (typeArguments.length > 0) {
+              final PsiClass containingClass = refClass.getContainingClass();
+              if (containingClass != null) {
+                PsiTypeParameter[] classTypeParameters = containingClass.getTypeParameters();
+                if (typeArguments.length != classTypeParameters.length) {
+                  return false;
+                }
+                if (StreamEx.zip(typeArguments, classTypeParameters, 
+                                 (type, typeParam) -> manager.areElementsEquivalent(typeParam, PsiUtil.resolveClassInClassTypeOnly(type)))
+                  .has(false)) {
+                  return false;
+                }
               }
             }
           }

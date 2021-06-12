@@ -58,7 +58,7 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   private XValueNodeImpl[] getNodesToDrag() {
-    return myTree.getSelectedNodes(XValueNodeImpl.class, node -> DebuggerUIUtil.hasEvaluationExpression(node.getValueContainer()));
+    return myTree.getSelectedNodes(XValueNodeImpl.class, DebuggerUIUtil::hasEvaluationExpression);
   }
 
   @Override

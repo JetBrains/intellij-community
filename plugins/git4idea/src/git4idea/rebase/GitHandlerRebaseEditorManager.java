@@ -4,11 +4,10 @@ package git4idea.rebase;
 import com.intellij.util.BuiltinWebServerAccess;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.editor.GitRebaseEditorApp;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 
 import java.util.UUID;
 

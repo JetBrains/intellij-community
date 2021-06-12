@@ -11,7 +11,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @ApiStatus.Experimental
-public final class WriteThread {
+@ApiStatus.Internal
+final class WriteThread {
   private WriteThread() {
   }
 

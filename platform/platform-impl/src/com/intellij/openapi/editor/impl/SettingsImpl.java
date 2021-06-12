@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -9,16 +9,15 @@ import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -34,9 +33,9 @@ import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
-  private static final RegistryValue SPECIAL_CHARS_ENABLED = Registry.get("editor.show.special.chars");
+  public static final String EDITOR_SHOW_SPECIAL_CHARS = "editor.show.special.chars";
 
-  @Nullable private final EditorEx myEditor;
+  @Nullable private final EditorImpl myEditor;
   @Nullable private Supplier<? extends Language> myLanguageSupplier;
   private Boolean myIsCamelWords;
 
@@ -94,7 +93,7 @@ public class SettingsImpl implements EditorSettings {
     this(null, null);
   }
 
-  SettingsImpl(@Nullable EditorEx editor, @Nullable EditorKind kind) {
+  SettingsImpl(@Nullable EditorImpl editor, @Nullable EditorKind kind) {
     myEditor = editor;
     if (EditorKind.CONSOLE.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
@@ -366,6 +365,10 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("reinitDocumentIndentOptions, file " + file.getName());
+    }
+
     CodeStyle.updateDocumentIndentOptions(project, document);
   }
 
@@ -494,7 +497,11 @@ public class SettingsImpl implements EditorSettings {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myIsBlockCursor)) return;
     myIsBlockCursor = newValue;
-    fireEditorRefresh();
+
+    if (myEditor != null) {
+      myEditor.updateCaretCursor();
+      myEditor.getContentComponent().repaint();
+    }
   }
 
   @Override
@@ -751,7 +758,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isShowingSpecialChars() {
-    return myShowingSpecialCharacters == null ? SPECIAL_CHARS_ENABLED.asBoolean() : myShowingSpecialCharacters;
+    return myShowingSpecialCharacters == null ? AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) : myShowingSpecialCharacters;
   }
 
   @Override

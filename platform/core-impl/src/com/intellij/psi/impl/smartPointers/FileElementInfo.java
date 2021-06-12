@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -6,7 +6,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +16,9 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FileElementInfo extends SmartPointerElementInfo {
+import java.util.Objects;
+
+final class FileElementInfo extends SmartPointerElementInfo {
   @NotNull
   private final VirtualFile myVirtualFile;
   @NotNull
@@ -27,7 +28,7 @@ class FileElementInfo extends SmartPointerElementInfo {
   @NotNull
   private final String myFileClassName;
 
-  FileElementInfo(@NotNull final PsiFile file) {
+  FileElementInfo(@NotNull PsiFile file) {
     myVirtualFile = file.getViewProvider().getVirtualFile();
     myProject = file.getProject();
     myLanguageId = LanguageUtil.getRootLanguage(file).getID();
@@ -56,7 +57,7 @@ class FileElementInfo extends SmartPointerElementInfo {
   @Override
   boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
                                    @NotNull SmartPointerManagerImpl manager) {
-    return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
+    return other instanceof FileElementInfo && Objects.equals(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
   @NotNull

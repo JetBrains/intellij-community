@@ -18,13 +18,13 @@ public class ShellVariablesTest {
   @Test
   public void retrieveVariableValueBySelector() throws IOException {
     final ShellVariablesRegistry variablesRegistry = loadVariables(TestUtil.HTML);
-    assertEquals("<!-- ", variablesRegistry.getVariableValue(Constants.COMMENT_START_VARIABLE, "text.html.basic").value);
+    assertEquals("<!-- ", variablesRegistry.getVariableValue(Constants.COMMENT_START_VARIABLE, TestUtil.scopeFromString("text.html.basic")).value);
   }
 
   @Test
   public void retrieveVariableValueByUnmatchedSelector() throws IOException {
     final ShellVariablesRegistry preferencesRegistry = loadVariables(TestUtil.HTML);
-    assertNull(preferencesRegistry.getVariableValue(Constants.COMMENT_START_VARIABLE, "text.unknown.basic"));
+    assertNull(preferencesRegistry.getVariableValue(Constants.COMMENT_START_VARIABLE, TestUtil.scopeFromString("text.unknown.basic")));
   }
 
   @NotNull

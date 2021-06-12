@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class ScratchResolveScopeEnlarger extends ResolveScopeEnlarger{
   @Nullable
   @Override
-  public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, Project project) {
+  public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     return ScratchUtil.isScratch(file)? GlobalSearchScope.fileScope(project, file) : null;
   }
 }

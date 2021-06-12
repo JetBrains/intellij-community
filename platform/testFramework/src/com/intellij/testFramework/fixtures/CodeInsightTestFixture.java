@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -35,6 +35,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.testFramework.*;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
@@ -42,6 +43,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -596,6 +598,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param newName new name for the element
    */
   void renameElement(@NotNull PsiElement element, @NotNull String newName);
+
+  @Experimental
+  void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName);
 
   void allowTreeAccessForFile(@NotNull VirtualFile file);
 

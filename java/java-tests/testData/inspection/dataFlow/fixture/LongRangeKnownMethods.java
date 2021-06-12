@@ -300,6 +300,15 @@ public class LongRangeKnownMethods {
   void testSizeCheck() {
     List<String> list = new ArrayList<>();
     list.add(null);
+    if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+    if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+  }
+
+  native void unknown(List<String> list);
+
+  void testSizeCheck2() {
+    List<String> list = new ArrayList<>();
+    unknown(list);
     if(list.size() == 0) return;
     if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
   }
@@ -309,19 +318,26 @@ public class LongRangeKnownMethods {
       System.out.println("Oops");
     }
   }
-  
+
   void testCalendar(Calendar c) {
     int month = c.get(Calendar.MONTH);
     if (<warning descr="Condition 'month < 0' is always 'false'">month < 0</warning>) {}
+    if (month == 12) {} // could be lunar calendar
+    c = new GregorianCalendar(2020,1,1);
+    if (<warning descr="Condition 'c.get(Calendar.MONTH) == 12' is always 'false'">c.get(Calendar.MONTH) == 12</warning>) {}
   }
-  
+
+  void testDate(Date d) {
+    d.<warning descr="The call to 'setMonth' always fails as index is out of bounds">setMonth</warning>(12);
+  }
+
   void testSkip(InputStream is, int amount) throws IOException {
     long skipped = is.skip(amount);
     if (<warning descr="Condition 'skipped > Integer.MAX_VALUE' is always 'false'">skipped > Integer.MAX_VALUE</warning>) {}
     if (<warning descr="Condition 'skipped < 0' is always 'false'">skipped < 0</warning>) {}
     if (<warning descr="Condition 'is.skip(-1) == 0' is always 'true'">is.skip(-1) == 0</warning>) {}
   }
-  
+
   void testNumberToString(int i, long j) {
     String s;
     s = Integer.toHexString(i);
@@ -365,8 +381,10 @@ public class LongRangeKnownMethods {
     int i = b ? 123 : 456;
     String s = Integer.toString(i);
     if (<warning descr="Condition 's.equals(\"123\") || s.equals(\"456\")' is always 'true'">s.equals("123") || <warning descr="Condition 's.equals(\"456\")' is always 'true' when reached">s.equals("456")</warning></warning>) {}
+    // If we don't use 'b' at this point, 123 & 456 are joined into single LongRangeSet and constant evaluation for 's' doesn't work anymore
+    System.out.println(b);
   }
-  
+
   void testRandom(Random r, SplittableRandom sr, int x) {
     int val = r.nextInt(x);
     if (<warning descr="Condition 'val < 0' is always 'false'">val < 0</warning>) {}

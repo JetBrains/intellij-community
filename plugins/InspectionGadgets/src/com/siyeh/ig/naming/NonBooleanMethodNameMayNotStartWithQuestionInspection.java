@@ -17,14 +17,13 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,18 +58,15 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final var panel = new MultipleCheckboxOptionsPanel(this);
+
     final ListTable table = new ListTable(new ListWrappingTableModel(questionList, InspectionGadgetsBundle
       .message("boolean.method.name.must.start.with.question.table.column.name")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    final JPanel tablePanel = UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label"), true);
+    panel.addGrowing(tablePanel);
 
-    final CheckBox checkBox1 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), this, "ignoreBooleanMethods");
-    final CheckBox checkBox2 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), this, "onlyWarnOnBaseMethods");
-
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(FormBuilder.createFormBuilder().addComponent(checkBox1).addComponent(checkBox2).getPanel(), BorderLayout.SOUTH);
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), "ignoreBooleanMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "onlyWarnOnBaseMethods");
     return panel;
   }
 

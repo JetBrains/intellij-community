@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -7,9 +8,7 @@ import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public interface IPyDebugProcess extends PyFrameAccessor {
   PyPositionConverter getPositionConverter();
 

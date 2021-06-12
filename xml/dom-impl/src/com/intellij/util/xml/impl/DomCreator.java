@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.source.xml.XmlTagDelegate;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
@@ -126,21 +129,33 @@ final class DomCreator {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
-        .of(parentTag.findSubTags(tag.getName(), tag.getNamespace()))
+        .of(findSubTagsWithoutIncludes(parentTag, tag.getName(), tag.getNamespace()))
         .filter(t -> !(t instanceof IncludedXmlTag))
         .indexOf(t -> t == tag);
       ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();
         EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
-        return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
+        return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(),
+                                                      stub);
       }
     }
-    return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
+    return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent,
+                                                  null);
+  }
+
+  private static XmlTag @NotNull [] findSubTagsWithoutIncludes(@NotNull XmlTag parentTag,
+                                                               @NlsSafe String localName,
+                                                               @Nullable @NlsSafe String namespace) {
+    return XmlTagDelegate.findSubTags(localName, namespace,
+                                      parentTag instanceof XmlTagImpl ? ((XmlTagImpl)parentTag).getSubTags(false) : parentTag.getSubTags());
   }
 
   @Nullable
-  private static DomInvocationHandler createCustomHandler(XmlTag tag, DomInvocationHandler parent, String localName, DomGenericInfoEx info) {
+  private static DomInvocationHandler createCustomHandler(XmlTag tag,
+                                                          DomInvocationHandler parent,
+                                                          String localName,
+                                                          DomGenericInfoEx info) {
     List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
     if (customs.isEmpty()) return null;
 

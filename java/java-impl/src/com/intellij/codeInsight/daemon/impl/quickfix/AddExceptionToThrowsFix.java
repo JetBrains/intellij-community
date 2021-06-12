@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class AddExceptionToThrowsFix extends BaseIntentionAction {
+public final class AddExceptionToThrowsFix extends BaseIntentionAction implements IntentionActionWithFixAllOption {
   private final PsiElement myWrongElement;
 
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement) {

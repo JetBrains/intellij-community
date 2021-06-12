@@ -21,7 +21,6 @@ public class ImportSpecBuilder {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  private boolean myForceWhenUptodate;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isReportRefreshError = true;
@@ -46,12 +45,20 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  /**
+   * @deprecated see {@link ImportSpecBuilder#forceWhenUptodate(boolean)}
+   */
+  @Deprecated
   public ImportSpecBuilder forceWhenUptodate() {
     return forceWhenUptodate(true);
   }
 
+  /**
+   * @deprecated it does nothing from
+   * 16.02.2017, 16:42, ebef09cdbbd6ace3c79d3e4fb63028bac2f15f75
+   */
+  @Deprecated
   public ImportSpecBuilder forceWhenUptodate(boolean force) {
-    myForceWhenUptodate = force;
     return this;
   }
 
@@ -94,7 +101,6 @@ public class ImportSpecBuilder {
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
-    mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
@@ -117,7 +123,6 @@ public class ImportSpecBuilder {
 
   private void apply(ImportSpec spec) {
     myProgressExecutionMode = spec.getProgressExecutionMode();
-    myForceWhenUptodate = spec.isForceWhenUptodate();
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
     myCallback = spec.getCallback();
     isPreviewMode = spec.isPreviewMode();

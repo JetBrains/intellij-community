@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,45 +55,14 @@ public class TransientFieldNotInitializedInspection extends BaseInspection {
       }
       final PsiExpression initializer = field.getInitializer();
       if (initializer == null &&
-          !isInitializedInInitializer(field, containingClass) &&
-          !isInitializedInConstructors(field, containingClass)) {
+          !InitializationUtils.isInitializedInInitializer(field, containingClass) &&
+          !InitializationUtils.isInitializedInConstructors(field, containingClass)) {
         return;
       }
       if (SerializationUtils.hasReadObject(containingClass)) {
         return;
       }
       registerFieldError(field);
-    }
-
-    private static boolean isInitializedInConstructors(
-      @NotNull PsiField field, @NotNull PsiClass aClass) {
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length == 0) {
-        return false;
-      }
-      for (final PsiMethod constructor : constructors) {
-        if (!InitializationUtils.methodAssignsVariableOrFails(
-          constructor, field)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private static boolean isInitializedInInitializer(
-      @NotNull PsiField field, @NotNull PsiClass aClass) {
-      final PsiClassInitializer[] initializers = aClass.getInitializers();
-      for (final PsiClassInitializer initializer : initializers) {
-        if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiCodeBlock body = initializer.getBody();
-        if (InitializationUtils.blockAssignsVariableOrFails(body,
-                                                            field)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

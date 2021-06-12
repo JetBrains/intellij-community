@@ -3,9 +3,11 @@ package com.intellij.externalSystem;
 import com.intellij.buildsystem.model.DeclaredDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
+import com.intellij.idea.Bombed;
 import com.intellij.psi.xml.XmlTag;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.List;
 
 public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
@@ -23,7 +25,6 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
     assertEquals(someArtifact, dependencies.get(0).getPsiElement());
     assertEquals(another, dependencies.get(1).getPsiElement());
-
   }
 
   public void testAddDependency() throws IOException {
@@ -54,13 +55,39 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
   public void testUpdateDependency() throws IOException {
     myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyNoScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
     );
     assertFilesAsExpected();
   }
 
+  public void testUpdateDependencyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
+  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
   public void testUpdateManagedDependency() throws IOException {
+    myModifierService.updateDependency(getModule("m1"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
+  public void testUpdateManagedDependencyNoScope() throws IOException {
     myModifierService.updateDependency(getModule("m1"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
@@ -68,9 +95,34 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
     assertFilesAsExpected();
   }
 
+  @Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "alexander.bubenchikov", description = "Wrong indent in the result")
+  public void testUpdateManagedDependencyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("m1"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
   public void testUpdateDependencyWithProperty() throws IOException {
     myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyWithPropertyNoScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyWithPropertyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
     );
     assertFilesAsExpected();

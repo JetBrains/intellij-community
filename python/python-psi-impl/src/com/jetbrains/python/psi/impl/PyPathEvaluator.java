@@ -26,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author yole
- */
+
 public class PyPathEvaluator extends PyEvaluator {
 
   private final String myContainingFilePath;

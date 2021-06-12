@@ -7,13 +7,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
@@ -27,7 +28,10 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -38,7 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +91,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static String shorten(String pathStr) {
-    Path path = Paths.get(pathStr).toAbsolutePath(), userHome = Paths.get(SystemProperties.getUserHome());
+    Path path = Path.of(pathStr).toAbsolutePath(), userHome = Path.of(SystemProperties.getUserHome());
     if (path.startsWith(userHome)) {
       Path relative = userHome.relativize(path);
       return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
@@ -99,6 +102,16 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
+    if (isUnderRosetta()) {
+      NotificationAction downloadAction =
+        NotificationAction.createSimpleExpiring(
+          IdeBundle.message("bundled.jre.m1.arch.message.download"), () -> {
+            BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide");
+          });
+      showNotification("bundled.jre.m1.arch.message", downloadAction,
+                       ApplicationNamesInfo.getInstance().getFullProductName());
+    }
+
     String jreHome = SystemProperties.getJavaHome();
     if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
       // the JRE is non-bundled and is either non-JB or older than bundled
@@ -110,19 +123,17 @@ final class SystemHealthMonitor extends PreloadingActivity {
         String configName = scriptName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
         Path configFile = Path.of(directory, configName);
         if (Files.isRegularFile(configFile)) {
-          switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-              notification.expire();
-              try {
-                Files.delete(configFile);
-              }
-              catch (IOException x) {
-                LOG.warn("Can't delete JDK configuration file: " + configFile, x);
-              }
-              ApplicationManager.getApplication().restart();
+          switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text"), () -> {
+            try {
+              Files.delete(configFile);
+              ApplicationManagerEx.getApplicationEx().restart(true);
             }
-          };
+            catch (IOException x) {
+              LOG.warn("cannot delete " + configFile, x);
+              String content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x));
+              Notifications.Bus.notify(new Notification(DISPLAY_ID, "", content, NotificationType.ERROR));
+            }
+          });
         }
       }
 
@@ -154,19 +165,35 @@ final class SystemHealthMonitor extends PreloadingActivity {
     return false;
   }
 
+  private static boolean isUnderRosetta() {
+    // Use "sysctl.proc_translated" to check if running in Rosetta
+    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
+    // for more details
+
+    if (!SystemInfo.isMac || !CpuArch.isIntel64()) {
+      return false;
+    }
+
+    IntByReference size = new IntByReference(SystemB.INT_SIZE);
+    Pointer p = new Memory(size.getValue());
+
+    if (SystemB.INSTANCE.sysctlbyname(
+      "sysctl.proc_translated", p, size, null, 0) != -1)
+    {
+      return p.getInt(0) == 1;
+    }
+
+    return false;
+  }
+
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
-      NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action.cap")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          ActionUtil.performActionDumbAware(vmEditAction, e);
-        }
-      };
-      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
+      NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
+        IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> vmEditAction.actionPerformed(e)) : null;
+      showNotification("code.cache.warn.message", action, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
@@ -177,10 +204,23 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (!usedVars.isEmpty()) {
       showNotification("vm.options.env.vars", null, String.join(", ", usedVars));
     }
+
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
+      try {
+        if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
+          NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
+          String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
+          showNotification("shell.env.loading.failed", action, appName, shell);
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private static void checkSignalBlocking() {
-    if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
+    if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
       try {
         Memory sa = new Memory(256);
         LibC libC = Native.load("c", LibC.class);
@@ -216,13 +256,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
       notification.addAction(action);
     }
     if (suppressable) {
-      notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          PropertiesComponent.getInstance().setValue("ignore." + key, "true");
-        }
-      });
+      notification.addAction(NotificationAction.createSimpleExpiring(
+        IdeBundle.message("sys.health.acknowledge.action"), () -> PropertiesComponent.getInstance().setValue("ignore." + key, "true")));
     }
     notification.setImportant(true);
 
@@ -295,7 +330,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
                 }
                 else {
                   NotificationGroupManager.getInstance().getNotificationGroup(DISPLAY_ID)
-                    .createNotification(message, file.getPath(), NotificationType.ERROR, null)
+                    .createNotification(message, file.getPath(), NotificationType.ERROR)
                     .whenExpired(() -> {
                       reported.compareAndSet(true, false);
                       restart(timeout);

@@ -35,20 +35,20 @@ public class ChameleonAction extends AnAction {
 
   private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
-  public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
+  public ChameleonAction(@NotNull AnAction first, @Nullable ProjectType projectType) {
     addAction(first, projectType);
     copyFrom(myActions.values().iterator().next());
   }
 
-  public AnAction addAction(AnAction action, ProjectType projectType) {
+  @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
     if (action instanceof ActionStub) {
-      String type = ((ActionStub)action).getProjectType();
-      action = ActionManagerImpl.convertStub((ActionStub)action);
-      if (action == null) return null;
+      ActionStub actionStub = (ActionStub)action;
+      action = ActionManagerImpl.convertStub(actionStub);
 
-      projectType = type == null ? null : new ProjectType(type);
+      if (action == null) return this;
+      projectType = actionStub.getProjectType();
     }
-    return myActions.put(projectType, action);
+    return myActions.put(projectType, action) == null ? this : null;
   }
 
   @Override
@@ -61,22 +61,18 @@ public class ChameleonAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     AnAction action = getAction(e);
-    if (action != null) {
-      e.getPresentation().setVisible(true);
+    boolean visible = action != null;
+    e.getPresentation().setVisible(visible);
+    if (visible) {
       action.update(e);
-    }
-    else {
-      e.getPresentation().setVisible(false);
     }
   }
 
-  @Nullable
-  private AnAction getAction(@NotNull AnActionEvent e) {
+  private @Nullable AnAction getAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);
-    if (action == null) action = myActions.get(null);
-    return action;
+    return action != null ? action : myActions.get(null);
   }
 
   @TestOnly

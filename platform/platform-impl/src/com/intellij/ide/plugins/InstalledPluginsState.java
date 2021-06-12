@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
@@ -146,6 +147,7 @@ public final class InstalledPluginsState {
         myInstalledWithoutRestartPlugins.add(id);
       }
     }
+    PluginManagerUsageCollector.pluginInstallationFinished(descriptor);
   }
 
 
@@ -156,6 +158,7 @@ public final class InstalledPluginsState {
         myUninstalledWithoutRestartPlugins.add(id);
       }
     }
+    PluginManagerUsageCollector.pluginRemoved(id);
   }
 
   public void resetChangesAppliedWithoutRestart() {

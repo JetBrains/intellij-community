@@ -19,7 +19,6 @@ import git4idea.commands.GitLineHandler
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
                                                                                      protected val root: VirtualFile,
                                                                                      private val recordBuilder: GitLogRecordBuilder<R>) {
-  private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
   private val vcs = GitVcs.getInstance(project)
 
   @Throws(VcsException::class)
@@ -102,6 +101,10 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
   protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory,
                                       renameLimit: GitCommitRequirements.DiffRenameLimit): C
+
+  companion object {
+    private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
+  }
 }
 
 internal class GitFullDetailsCollector(project: Project, root: VirtualFile,

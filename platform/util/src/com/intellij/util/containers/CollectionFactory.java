@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +16,11 @@ public final class CollectionFactory {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap() {
     return new ConcurrentWeakHashMap<>(0.75f);
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentMap<String, V> createConcurrentWeakCaseInsensitiveMap() {
+    return new ConcurrentWeakHashMap<>(HashingStrategy.caseInsensitive());
   }
 
   @Contract(value = " -> new", pure = true)
@@ -122,6 +125,10 @@ public final class CollectionFactory {
 
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap() {
     return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+  }
+
+  public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap(int expectedSize) {
+    return new Object2ObjectOpenCustomHashMap<>(expectedSize, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap(@NotNull Map<String, V> source) {
@@ -281,21 +288,6 @@ public final class CollectionFactory {
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
     //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
-  }
-  /** See {@link #createSmallMemoryFootprintSet()}. */
-  @Contract(value = "_-> new", pure = true)
-  public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull HashingStrategy<? super K> strategy) {
-    return new ObjectOpenCustomHashSet<>(new Hash.Strategy<K>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        return strategy.hashCode(o);
-      }
-
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        return strategy.equals(a, b);
-      }
-    });
   }
 
   @Contract(value = " -> new", pure = true)

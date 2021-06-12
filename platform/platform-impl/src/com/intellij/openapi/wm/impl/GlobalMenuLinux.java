@@ -53,8 +53,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 interface GlobalMenuLib extends Library {
-  void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
-
   void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
 
   void execOnMainLoop(JRunnable run);
@@ -218,19 +216,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
-      try {
-        Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
-        Method startup = platformImpl.getMethod("startup", Runnable.class);
-        Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-        startup.invoke(null, r);
-      }
-      catch (Throwable e) {
-        LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
-        final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
-                                           "GlobalMenuLinux loop");
-        glibMain.start();
-      }
+      final String threadName = "GlobalMenuLinux loop";
+      new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
+                                         threadName).start();
+      LOG.info("Start glib main loop in thread: " + threadName);
     }
   }
 

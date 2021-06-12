@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -48,13 +48,10 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
    */
   protected abstract V create(UI ui);
 
-  /**
-   * @deprecated override {@link #dispose(Object, Component)} instead
-   */
+  /** @deprecated override {@link #dispose(Object, Component)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  protected void dispose(K key) {
-  }
+  protected void dispose(@SuppressWarnings("unused") K key) { }
 
   protected void dispose(K key, V value) {
     dispose(key);

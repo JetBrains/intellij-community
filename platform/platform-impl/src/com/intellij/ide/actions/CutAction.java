@@ -4,12 +4,12 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class CutAction extends AnAction implements DumbAware, LightEditCompatible {
+public class CutAction extends DumbAwareAction implements UpdateInBackground, LightEditCompatible {
   public CutAction() {
     setEnabledInModalContext(true);
   }

@@ -37,10 +37,6 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
-  protected void doQuickFixTest(final String hint, LanguageLevel languageLevel) {
-    runWithLanguageLevel(languageLevel, () -> doQuickFixTest(hint));
-  }
-
   protected void doQuickFixTest(final String hint) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");

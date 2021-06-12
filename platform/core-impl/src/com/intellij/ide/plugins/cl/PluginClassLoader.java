@@ -37,7 +37,7 @@ import java.util.function.Function;
 public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -129,10 +129,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
-  private final @Nullable ResolveScopeManager resolveScopeManager;
+  private final ResolveScopeManager resolveScopeManager;
 
   public interface ResolveScopeManager {
-    boolean isDefinitelyAlienClass(String name, String packagePrefix);
+    boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
   }
 
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
@@ -147,7 +147,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     instanceId = instanceIdProducer.incrementAndGet();
 
-    this.resolveScopeManager = resolveScopeManager;
+    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> false : resolveScopeManager;
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
@@ -323,7 +323,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (resolveScopeManager != null && resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix)) {
+    if (resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader)) {
       return null;
     }
 
@@ -403,6 +403,11 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     String canonicalPath = toCanonicalPath(name);
 
     if (canonicalPath.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (!canonicalPath.startsWith("/org/bridj/")) {
+        String message = "Do not request resource from classloader using path with leading slash";
+        Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
+      }
       canonicalPath = canonicalPath.substring(1);
     }
 

@@ -31,7 +31,7 @@ public final class GistManagerImpl extends GistManager {
 
   static final class MyBulkFileListener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       if (events.stream().anyMatch(MyBulkFileListener::shouldDropCache)) {
         ((GistManagerImpl)GistManager.getInstance()).invalidateGists();
       }

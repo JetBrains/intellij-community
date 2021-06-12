@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -124,7 +124,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
                     "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
                     "   final java.lang.Class |c = |loader.parseClass(");
     javaText.append("\"" + IMPORTS + "class DUMMY").append(" { ").append("public groovy.lang.Closure ")
-      .append(EVAL_NAME).append(" = {").append(TEXT).append("}}\"");
+      .append(EVAL_NAME).append(" = {\\n").append(TEXT).append("\\n}}\"");
     javaText.append(", \"DUMMY.groovy\");\n" +
                     "   int |i;\n" +
                     "   java.lang.reflect.Field[] |fields = |c.getFields();\n" +

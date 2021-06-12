@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,12 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   private final Map<String, LibraryTableBase> myCustomLibraryTables = new ConcurrentHashMap<>();
   private volatile boolean myExtensionsLoaded = false;
   private final Object myExtensionsLoadingLock = new Object();
+
+  LibraryTablesRegistrarImpl() {
+    //this is needed to ensure that VirtualFilePointerManager is initialized before custom library tables and therefore disposed after them;
+    //otherwise VirtualFilePointerManagerImpl.dispose will report non-disposed pointers from custom library tables
+    VirtualFilePointerManager.getInstance();
+  }
 
   @Override
   public @NotNull LibraryTable getLibraryTable() {

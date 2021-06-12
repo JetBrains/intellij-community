@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -46,6 +47,7 @@ public final class SystemShortcuts {
   private static boolean ourIsNotificationRegistered = false;
 
   private @NotNull final Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
+  private @NotNull final Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
   private @NotNull final MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
   private @NotNull final Set<String> myNotifiedActions = new HashSet<>();
   private int myNotifyCount = 0;
@@ -274,7 +276,7 @@ public final class SystemShortcuts {
     }
 
     final Notification notification =
-      new Notification(ourNotificationGroupId, IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING, null);
+      new Notification(ourNotificationGroupId, IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING);
 
     if (hasOtherConflicts) {
       final AnAction showKeymapPanelAction = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcuts"), e -> {
@@ -342,8 +344,10 @@ public final class SystemShortcuts {
   private static Method ourMethodGetDescription;
   private static Method ourMethodReadSystemHotkeys;
 
-  private static @NotNull
-  String getDescription(@NotNull AWTKeyStroke systemHotkey) {
+  private @NotNull String getDescription(@NotNull AWTKeyStroke systemHotkey) {
+    if (systemHotkey instanceof KeyStroke) {
+      return myKeyStrokeCustomDescription.get(systemHotkey);
+    }
     if (ourShkClass == null) {
       ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
     }
@@ -447,10 +451,27 @@ public final class SystemShortcuts {
       if (DEBUG_SYSTEM_SHORTCUTS) {
         Logger.getInstance(SystemShortcuts.class).info("system shortcuts:\n" + debugInfo);
       }
+      if (SystemInfo.isMacOSBigSur) {
+        addCustomShortcut(KeyEvent.VK_OPEN_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Next Tab Window");
+        addCustomShortcut(KeyEvent.VK_CLOSE_BRACKET, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, "Select Previous Tab Window");
+      }
     }
     catch (Throwable e) {
       Logger.getInstance(SystemShortcuts.class).debug(e);
     }
+  }
+
+  private void addCustomShortcut(int keycode, int modifiers, @NotNull String description) {
+    KeyStroke newStroke = KeyStroke.getKeyStroke(keycode, modifiers);
+
+    for (KeyStroke keyStroke : myKeyStroke2SysShortcut.keySet()) {
+      if (newStroke.equals(keyStroke)) {
+        return;
+      }
+    }
+
+    myKeyStroke2SysShortcut.put(newStroke, newStroke);
+    myKeyStrokeCustomDescription.put(newStroke, description);
   }
 
   private static final class MuteConflictsSettings {

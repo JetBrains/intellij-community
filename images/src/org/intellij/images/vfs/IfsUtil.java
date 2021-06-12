@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +49,7 @@ public final class IfsUtil {
   public static final String ICO_FORMAT = "ico";
   public static final String SVG_FORMAT = "svg";
 
-  private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
+  private static final Key<Pair<Long, Long>> TIME_MODIFICATION_STAMP_KEY = Key.create("Image.timeModificationStamp");
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
   private static final Key<SoftReference<ScaledImageProvider>> IMAGE_PROVIDER_REF_KEY = Key.create("Image.bufferedImageProvider");
   private static final IcoImageParser ICO_IMAGE_PARSER = new IcoImageParser();
@@ -61,9 +62,10 @@ public final class IfsUtil {
    * @throws IOException if image can not be loaded
    */
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
-    Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
+    Pair<Long, Long> loadedTimeModificationStamp = file.getUserData(TIME_MODIFICATION_STAMP_KEY);
+    Pair<Long, Long> actualTimeModificationStamp = Pair.create(file.getTimeStamp(), file.getModificationStamp());
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageProviderRef) == null) {
+    if (!actualTimeModificationStamp.equals(loadedTimeModificationStamp) || SoftReference.dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
         file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
@@ -142,7 +144,7 @@ public final class IfsUtil {
         }
       } finally {
         // We perform loading no more needed
-        file.putUserData(TIMESTAMP_KEY, file.getTimeStamp());
+        file.putUserData(TIME_MODIFICATION_STAMP_KEY, actualTimeModificationStamp);
       }
     }
     return false;

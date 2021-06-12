@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
@@ -38,12 +40,12 @@ public abstract class ContractValue {
   }
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
-  
+
   @NotNull
-  DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+  public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
     return DfaCondition.getUnknown();
   }
-  
+
   public DfaCondition fromCall(DfaValueFactory factory, PsiCallExpression call) {
     DfaCallArguments arguments = DfaCallArguments.fromCall(factory, call);
     if (arguments == null) return DfaCondition.getUnknown();
@@ -61,7 +63,7 @@ public abstract class ContractValue {
   public ContractValue invert() {
     return null;
   }
-  
+
   /**
    * @return true if this contract value represents a bounds-checking condition
    */
@@ -110,7 +112,8 @@ public abstract class ContractValue {
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(String.valueOf(value), factory -> factory.getConstant(TypeConversionUtil.computeCastTo(value, type), type)
+    return new IndependentValue(String.valueOf(value),
+                                factory -> factory.fromDfType(DfTypes.constant(TypeConversionUtil.computeCastTo(value, type), type))
     );
   }
 
@@ -236,20 +239,20 @@ public abstract class ContractValue {
   }
 
   private static class IndependentValue extends ContractValue {
-    static final IndependentValue NULL = new IndependentValue("null", factory -> factory.getNull());
-    static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.getBoolean(true)) {
+    static final IndependentValue NULL = new IndependentValue("null", factory -> factory.fromDfType(DfTypes.NULL));
+    static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.fromDfType(DfTypes.TRUE)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == FALSE;
       }
     };
-    static final IndependentValue FALSE = new IndependentValue("false", factory -> factory.getBoolean(false)) {
+    static final IndependentValue FALSE = new IndependentValue("false", factory -> factory.fromDfType(DfTypes.FALSE)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == TRUE;
       }
     };
-    static final IndependentValue ZERO = new IndependentValue("0", factory -> factory.getInt(0));
+    static final IndependentValue ZERO = new IndependentValue("0", factory -> factory.fromDfType(DfTypes.intValue(0)));
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;
@@ -407,14 +410,14 @@ public abstract class ContractValue {
 
     @NotNull
     @Override
-    DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+    public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
       if (left.getDfType() instanceof DfPrimitiveType) {
-        right = DfaUtil.boxUnbox(right, left.getType());
+        right = DfaUtil.boxUnbox(right, left.getDfType());
       }
       if (right.getDfType() instanceof DfPrimitiveType) {
-        left = DfaUtil.boxUnbox(left, right.getType());
+        left = DfaUtil.boxUnbox(left, right.getDfType());
       }
       return left.cond(myRelationType, right);
     }

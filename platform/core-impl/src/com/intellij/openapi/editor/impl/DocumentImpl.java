@@ -53,7 +53,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
-  @SuppressWarnings("RedundantStringConstructorCall") private final Object myLineSetLock = new String("line set lock");
+  private final Object myLineSetLock = ObjectUtils.sentinel("line set lock");
   private volatile LineSet myLineSet;
   private volatile ImmutableCharSequence myText;
   private volatile SoftReference<String> myTextString;
@@ -88,7 +88,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
 
     @Override
-    public CharSequence subSequence(int start, int end) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       return myText.subSequence(start, end);
     }
 
@@ -532,9 +532,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
-      throw new IndexOutOfBoundsException(
-        "Wrong offset: " + offset + "; documentLength: " + getTextLength() + "; " + s.subSequence(Math.max(0, s.length() - 20), s.length())
-      );
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset + "; documentLength: " + getTextLength());
     }
     assertWriteAccess();
     assertValidSeparators(s);
@@ -670,8 +668,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset + "; documentLength: " + getTextLength());
     }
     if (endOffset < startOffset) {
-      throw new IllegalArgumentException(
-        "endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
+      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
     }
   }
 

@@ -36,6 +36,16 @@ import static com.intellij.openapi.application.ex.ApplicationInfoEx.WHATS_NEW_EM
 
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
+    e.getPresentation().setEnabledAndVisible(available);
+    if (available) {
+      e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+      e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+    }
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
@@ -46,16 +56,6 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
     else {
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(whatsNewUrl));
-    }
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
-    e.getPresentation().setEnabledAndVisible(available);
-    if (available) {
-      e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
-      e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 
@@ -75,12 +75,13 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
       if (content == null) {
         String name = ApplicationNamesInfo.getInstance().getFullProductName();
-        String version = ApplicationInfo.getInstance().getMajorVersion() + '.' + ApplicationInfo.getInstance().getMinorVersionMainPart();
+        String version = ApplicationInfo.getInstance().getShortVersion();
         content = IdeBundle.message("whats.new.notification.text", name, version, url);
       }
 
       UpdateChecker.getNotificationGroup()
-        .createNotification(notificationTitle, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+        .createNotification(notificationTitle, content, NotificationType.INFORMATION)
+        .setListener(NotificationListener.URL_OPENING_LISTENER)
         .notify(project);
     }
     else if (url != null) {

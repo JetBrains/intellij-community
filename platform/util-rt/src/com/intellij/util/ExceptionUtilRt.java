@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 
 public class ExceptionUtilRt {
   public static void rethrowUnchecked(@Nullable Throwable t) {
@@ -34,6 +35,25 @@ public class ExceptionUtilRt {
     return findCause(e, klass) != null;
   }
 
+  /**
+   * @param throwable exception to unwrap
+   * @return the supplied exception, or unwrapped exception (if the supplied exception is InvocationTargetException)
+   */
+  public static @NotNull Throwable unwrapInvocationTargetException(@NotNull Throwable throwable) {
+    return unwrapException(throwable, InvocationTargetException.class);
+  }
+
+  /**
+   * @param throwable exception to unwrap
+   * @param classToUnwrap exception class to unwrap
+   * @return the supplied exception, or unwrapped exception (if the supplied exception class is classToUnwrap)
+   */
+  public static @NotNull Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
+    while (classToUnwrap.isInstance(throwable) && throwable.getCause() != null && throwable.getCause() != throwable) {
+      throwable = throwable.getCause();
+    }
+    return throwable;
+  }
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {

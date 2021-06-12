@@ -2,7 +2,6 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -27,6 +26,7 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertNotNull;
 
+@TestOnly
 public class XDebuggerTestUtil {
   public static final int TIMEOUT_MS = 25_000;
 
@@ -262,7 +263,7 @@ public class XDebuggerTestUtil {
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
   private static void flushEventQueue() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      IdeEventQueue.getInstance().flushQueue();
+      UIUtil.dispatchAllInvocationEvents();
     }
     else {
       UIUtil.pump();

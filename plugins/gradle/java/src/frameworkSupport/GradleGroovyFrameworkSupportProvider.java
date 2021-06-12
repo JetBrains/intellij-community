@@ -51,13 +51,7 @@ public class GradleGroovyFrameworkSupportProvider extends GradleFrameworkSupport
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinitionInPluginsGroup("id 'groovy'")
-      .addRepositoriesDefinition("mavenCentral()")
-      .addOther("test {\n" +
-                "    useJUnitPlatform()\n" +
-                "}")
-      .addDependencyNotation("implementation 'org.codehaus.groovy:groovy-all:3.0.5'")
-      .addDependencyNotation("testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'")
-      .addDependencyNotation("testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'");
+      .withGroovyPlugin()
+      .withJUnit();
   }
 }

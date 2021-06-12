@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreProjectScopeBuilder;
@@ -16,16 +16,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @NotNull
   protected final Project myProject;
@@ -52,12 +49,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
-          for (IndexableFileSet set : myFileBasedIndex.getIndexableSets()) {
-            if (set.isInSet(file) && myFileBasedIndex.containsIndexableSet(set, myProject)) {
-              return true;
-            }
-          }
-          return false;
+          return myFileBasedIndex.belongsToProjectIndexableFiles(file, myProject);
         }
 
         RootType rootType = RootType.forFile(file);

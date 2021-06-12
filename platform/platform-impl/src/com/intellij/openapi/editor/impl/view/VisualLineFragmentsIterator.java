@@ -62,6 +62,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private List<Inlay<?>> myInlays;
   private int myCurrentInlayIndex;
   private float myCurrentX;
+  private float myPrevX;
   private int myCurrentVisualColumn;
   private LineLayout.VisualFragment myDelegate;
   private FoldRegion myFoldRegion;
@@ -231,6 +232,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   @Override
   public Fragment next() {
     if (!hasNext()) throw new NoSuchElementException();
+    myPrevX = myCurrentX;
     if (mySegmentStartOffset == getCurrentFoldRegionStartOffset()) {
       myDelegate = null;
       myFoldRegion = myRegions[myCurrentFoldRegionIndex];
@@ -327,9 +329,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     float getStartX() {
-      return  myDelegate != null ? myDelegate.getStartX()
-                                 : myCurrentX - (myFoldRegion != null ? getFoldRegionWidthInPixels()
-                                                                      : getCurrentInlay().getWidthInPixels());
+      return  myDelegate != null ? myDelegate.getStartX() : myPrevX;
     }
 
     float getEndX() {

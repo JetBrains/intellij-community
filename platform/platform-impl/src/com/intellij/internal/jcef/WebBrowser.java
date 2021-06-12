@@ -14,6 +14,7 @@ import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefCookie;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.handler.CefLoadHandler;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,6 @@ import java.util.List;
  */
 public class WebBrowser extends AnAction implements DumbAware {
   private static final String URL = "https://maps.google.com";
-  private static final String myTitle = "Web Browser - JCEF";
   private static final String myCookieManagerText = "Cookie Manager";
 
   @Override
@@ -46,16 +46,36 @@ public class WebBrowser extends AnAction implements DumbAware {
       return;
     }
 
+    showBrowser(false);
+  }
+
+  private static void showBrowser(boolean isOffScreenRendering) {
+    Window activeFrame = IdeFrameImpl.getActiveFrame();
+    if (activeFrame == null) return;
+
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
     final JFrame frame = new IdeFrameImpl();
-    frame.setTitle(myTitle);
+    frame.setTitle("Web Browser" + (isOffScreenRendering ? " (OSR) " : " ") + "- JCEF");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
     frame.setLayout(new BorderLayout());
 
-    final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
-    myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
+    final JBCefBrowser myJBCefBrowser = JBCefBrowser.createBuilder()
+      .setOffScreenRendering(isOffScreenRendering)
+      .setUrl(URL)
+      .createBrowser();
+
+    myJBCefBrowser.setErrorPage(new JBCefBrowserBase.ErrorPage() {
+      @Override
+      public @Nullable String create(@NotNull CefLoadHandler.ErrorCode errorCode,
+                                     @NotNull String errorText,
+                                     @NotNull String failedUrl)
+      {
+        return (errorCode == CefLoadHandler.ErrorCode.ERR_ABORTED) ?
+               null : JBCefBrowserBase.ErrorPage.DEFAULT.create(errorCode, errorText, failedUrl);
+      }
+    });
     myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
 
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
@@ -149,6 +169,27 @@ public class WebBrowser extends AnAction implements DumbAware {
       }
     });
 
+    final JMenuItem menuItemContext = new JMenuItem("Disable context menu", 'm');
+    menu.add(menuItemContext);
+    menuItemContext.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowserBase.Properties.NO_CONTEXT_MENU));
+        myJBCefBrowser.setProperty(JBCefBrowserBase.Properties.NO_CONTEXT_MENU, !value);
+        menuItemContext.setText(value ? "Disable context menu" : "Enable context menu");
+      }
+    });
+
+    if (JBCefApp.isOffScreenRenderingModeEnabled()) {
+      JMenuItem menuItemOSR = new JMenuItem("Create OSR browser");
+      menu.add(menuItemOSR);
+      menuItemOSR.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          showBrowser(true);
+        }
+      });
+    }
     frame.setVisible(true);
   }
 }

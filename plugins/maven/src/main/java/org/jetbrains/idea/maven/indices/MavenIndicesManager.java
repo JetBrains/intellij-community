@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -192,7 +191,12 @@ public final class MavenIndicesManager implements Disposable {
       return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
     }
     catch (MavenIndexException e) {
-      MavenLog.LOG.warn(e);
+      if (myProject.isDisposed()) {
+        MavenLog.LOG.warn(e.getMessage());
+      }
+      else {
+        MavenLog.LOG.warn(e);
+      }
       return null;
     }
   }
@@ -217,7 +221,7 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  public synchronized List<MavenIndex> ensureIndicesExist(Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
+  public List<MavenIndex> ensureIndicesExist(Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
     // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
     LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
@@ -366,7 +370,7 @@ public final class MavenIndicesManager implements Disposable {
 
   public Set<MavenArchetype> getArchetypes() {
     ensureInitialized();
-    Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
+    Set<MavenArchetype> result = new HashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
     for (MavenIndex index : myIndices.getIndices()) {
       result.addAll(index.getArchetypes());

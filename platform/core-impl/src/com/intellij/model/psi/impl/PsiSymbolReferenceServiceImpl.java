@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +26,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   };
 
   @Override
-  public @NotNull Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
+  public @NotNull Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
     return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(
       Collections.unmodifiableList(getReferences(element, EMPTY_HINTS)), PsiModificationTracker.MODIFICATION_COUNT)
     );
@@ -39,7 +40,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
 
   @Override
   public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
-    List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
+    List<PsiSymbolReference> result = new ArrayList<>(element.getOwnReferences());
     if (result.isEmpty() && element instanceof PsiExternalReferenceHost) {
       result.addAll(doGetExternalReferences((PsiExternalReferenceHost)element, hints));
     }

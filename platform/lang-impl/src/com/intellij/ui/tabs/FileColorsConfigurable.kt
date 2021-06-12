@@ -372,7 +372,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
         val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
         it.preferredPopupPoint?.let { point -> popup.show(point) }
       }
-      .setAddIcon(LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }
       .setMoveDownActionUpdater { table.selectedRows.all { canExchangeRows(it, it + 1) } }
       .createPanel()

@@ -14,7 +14,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClassLiteralExpression : UExpression {
   override fun asLogString(): String = log()
 
-  override fun asRenderString(): String = (type?.name) ?: "(${expression?.asRenderString() ?: "<no expression>"})"+"::class"
+  override fun asRenderString(): String = (type?.name) ?: ("(${expression?.asRenderString() ?: "<no expression>"})" + "::class")
 
   /**
    * Returns the type referenced by this class literal, or null if the type can't be determined in a compile-time.

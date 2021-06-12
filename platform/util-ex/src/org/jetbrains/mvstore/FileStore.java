@@ -121,7 +121,7 @@ final class FileStore {
     }
 
     public void readFully(ByteBuf out, long position, int length) {
-        DataUtil.readFully(fileChannel, position, length, out);
+        DataUtil.readFully(fileChannel, position, length, out, file);
         readCount.incrementAndGet();
     }
 
@@ -222,15 +222,6 @@ final class FileStore {
     final long getWriteCount() {
         return writeCount.get();
     }
-
-    ///**
-    // * Get the number of written bytes since this store was opened.
-    // *
-    // * @return the number of write operations
-    // */
-    //final long getWriteBytes() {
-    //    return writeBytes.get();
-    //}
 
     /**
      * Get the number of read operations since this store was opened.

@@ -85,7 +85,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       }
     }
 
-    return FilenameIndex.getVirtualFilesByName(project, fileName, GlobalSearchScope.allScope(project));
+    return FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(project));
   }
 
   private static void navigateToFile(Project project, @NotNull VirtualFile file) {

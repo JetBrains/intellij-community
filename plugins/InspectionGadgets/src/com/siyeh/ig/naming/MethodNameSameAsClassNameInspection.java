@@ -30,7 +30,6 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -113,8 +112,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
       MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
       boolean canReplaceWithConstructor =
         method.getBody() != null && !containingClass.isInterface() &&
-        Arrays.stream(containingClass.getConstructors())
-          .noneMatch(ctor -> MethodSignatureUtil.areErasedParametersEqual(signature, ctor.getSignature(PsiSubstitutor.EMPTY)));
+        !ContainerUtil.exists(containingClass.getConstructors(), ctor -> MethodSignatureUtil.areErasedParametersEqual(signature, ctor.getSignature(PsiSubstitutor.EMPTY)));
       registerMethodError(method, isOnTheFly(), canReplaceWithConstructor);
     }
   }

@@ -96,14 +96,4 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   protected boolean requiresReadAccess() {
     return false;
   }
-
-  /**
-   * @deprecated Add {@link FeatureUsageData} directly to {@link MetricEvent} in {@link #getMetrics(Project)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  @Nullable
-  public FeatureUsageData getData(@NotNull Project project) {
-    return null;
-  }
 }

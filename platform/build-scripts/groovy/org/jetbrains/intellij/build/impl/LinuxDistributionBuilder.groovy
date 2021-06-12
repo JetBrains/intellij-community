@@ -5,11 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.LinuxDistributionCustomizer
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
@@ -48,7 +44,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
     BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
-    BuildTasksImpl.copyResourceFiles(buildContext, unixDistPath)
+    BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
     BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
     Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -232,7 +228,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
     } */
-    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("classpath.txt"))
+    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("lib/classpath.txt"))
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir
@@ -248,7 +244,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
               exclude(name: it)
             }
             if (hasPatchedClasspathTxt && path == buildContext.paths.distAll) {
-              exclude(name: "classpath.txt")
+              exclude(name: "lib/classpath.txt")
             }
             type(type: "file")
           }

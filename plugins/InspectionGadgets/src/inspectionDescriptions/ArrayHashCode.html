@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports improper hash code calculation for arrays. In order to
+Reports incorrect hash code calculation for arrays. In order to
 correctly calculate the hash code for an array, use:
 <ul>
-  <li><b>Arrays.hashcode()</b> for linear arrays</li>
-  <li><b>Arrays.deepHashcode()</b> for multidimensional arrays</li>
+  <li><code>Arrays.hashcode()</code> for linear arrays</li>
+  <li><code>Arrays.deepHashcode()</code> for multidimensional arrays</li>
 </ul>
-These methods should also be used with <b>Objects.hash()</b> when
+These methods should also be used with <code>Objects.hash()</code> when
 the sequence of input values includes arrays, for example:
-<b>Objects.hash(string, Arrays.hashcode(array))</b>
+<code>Objects.hash(string, Arrays.hashcode(array))</code>
 <!-- tooltip end -->
 <p>
 </body>

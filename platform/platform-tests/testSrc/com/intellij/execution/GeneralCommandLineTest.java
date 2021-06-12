@@ -3,9 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -116,11 +114,6 @@ public class GeneralCommandLineTest {
 
   protected GeneralCommandLine createCommandLine(String... command) {
     return new GeneralCommandLine(command);
-  }
-
-  @NotNull
-  protected GeneralCommandLine postProcessCommandLine(@NotNull GeneralCommandLine commandLine) {
-    return commandLine;
   }
 
   @NotNull
@@ -429,9 +422,10 @@ public class GeneralCommandLineTest {
     Assertions.assertThat(temp).doesNotExist();
   }
 
-  @NotNull
-  private String execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    ProcessOutput output = ExecUtil.execAndGetOutput(postProcessCommandLine(commandLine));
+  private @NotNull String execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    ProcessHandler processHandler = createProcessHandler(commandLine);
+    CapturingProcessRunner runner = new CapturingProcessRunner(processHandler);
+    ProcessOutput output = runner.runProcess();
     int ec = output.getExitCode();
     if (ec != 0 || !output.getStderr().isEmpty()) {
       fail("Command:\n" + commandLine.getPreparedCommandLine() +
@@ -439,6 +433,10 @@ public class GeneralCommandLineTest {
            "\nStdErr:\n" + output.getStderr());
     }
     return output.getStdout();
+  }
+
+  protected @NotNull ProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new OSProcessHandler(commandLine);
   }
 
   private Pair<GeneralCommandLine, File> makeHelperCommand(@Nullable File copyTo,

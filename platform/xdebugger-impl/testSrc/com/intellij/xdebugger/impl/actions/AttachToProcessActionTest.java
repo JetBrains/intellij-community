@@ -222,12 +222,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     assertItems("----group----\n" +
                 "1 exec1: dbg1\n" +
                 "2 exec2: dbg1\n",
-                new TestDebuggerProvider(new TestAttachGroup("group", 0) {
-                  @Override
-                  public int compare(@NotNull ProcessInfo a, @NotNull ProcessInfo b) {
-                    return a.getPid() - b.getPid();
-                  }
-                }, "dbg1"));
+                new TestDebuggerProvider(new TestAttachGroup("group", 0), "dbg1"));
     assertItems("----group----\n" +
                 "2 exec2: dbg1\n" +
                 "1 exec1: dbg1\n",

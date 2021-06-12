@@ -1,5 +1,4 @@
-
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -31,7 +30,6 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     setTitle(JavaRefactoringBundle.message("edit.migration.entry.title"));
-    setHorizontalStretch(1.2f);
     init();
   }
 
@@ -92,6 +90,9 @@ public class EditMigrationEntryDialog extends DialogWrapper{
       }
     };
     myOldNameField = new LanguageTextField(JavaLanguage.INSTANCE, myProject, "", documentCreator);
+    FontMetrics metrics = myOldNameField.getFontMetrics(myOldNameField.getFont());
+    int columnWidth = metrics.charWidth('m');
+    myOldNameField.setPreferredWidth(25 * columnWidth);
     panel.add(myOldNameField, gbConstraints);
 
     gbConstraints.weightx = 0;
@@ -104,7 +105,6 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.weightx = 1;
     myNewNameField = new LanguageTextField(JavaLanguage.INSTANCE, myProject, "", documentCreator);
-    panel.setPreferredSize(new Dimension(300, panel.getPreferredSize().height));
     panel.add(myNewNameField, gbConstraints);
 
     final DocumentListener documentAdapter = new DocumentListener() {

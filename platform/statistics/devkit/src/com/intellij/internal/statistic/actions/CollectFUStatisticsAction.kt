@@ -86,12 +86,6 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
       is ProjectUsagesCollector -> collector.getMetrics(project, indicator)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }
-    val groupData = when (collector) {
-      is ApplicationUsagesCollector -> collector.data
-      is ProjectUsagesCollector -> collector.getData(project)
-      else -> throw IllegalArgumentException("Unsupported collector: $collector")
-    }
-
     val gson = GsonBuilder().setPrettyPrinting().create()
     val result = StringBuilder()
 
@@ -99,7 +93,7 @@ internal class CollectFUStatisticsAction : GotoActionBase() {
       if (useExtendedPresentation) {
         result.append("[\n")
         for (metric in metrics) {
-          val metricData = FUStateUsagesLogger.mergeWithEventData(groupData, metric.data)!!.build()
+          val metricData = FUStateUsagesLogger.mergeWithEventData(null, metric.data)!!.build()
           val event = newLogEvent("test.session", "build", "bucket", System.currentTimeMillis(), collector.groupId,
                                   collector.version.toString(), "recorder.version", "event.id", true)
           for (datum in metricData) {

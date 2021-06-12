@@ -2,19 +2,18 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
-asyncio.AbstractEventLoop.sock_sendfile
 asyncio.compat  # Removed in 3.7
-asyncio.Future.__init__
-asyncio.Future._callbacks
-asyncio.events.AbstractEventLoop.sock_sendfile
+asyncio.Future.__init__  # Usually initialized from c object
+asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.exceptions  # Added in Python 3.8
-asyncio.futures.Future.__init__
-asyncio.futures.Future._callbacks
+asyncio.futures.Future.__init__  # Usually initialized from c object
+asyncio.futures.Future._callbacks  # Usually initialized from c object
 asyncio.staggered  # Added in Python 3.8
 asyncio.threads  # Added in Python 3.9
 asyncio.trsock  # Added in Python 3.8
 builtins.dict.get
 builtins.str.maketrans
+bz2.BZ2Compressor.compress  # does not accept keyword arguments even though signature says it does
 cmath.log
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
@@ -29,32 +28,31 @@ concurrent.futures.ProcessPoolExecutor.map
 contextvars.Context.__init__
 contextvars.Context.get
 contextvars.ContextVar.get
+contextlib.nullcontext  # not a function at runtime
 copy.PyStringMap
-ctypes.CDLL.__init__
 dataclasses.field
-email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
 http.client.HTTPSConnection.__init__
 http.server.SimpleHTTPRequestHandler.__init__
-importlib.metadata
+importlib.metadata  # Added in 3.8
 ipaddress._BaseNetwork.__init__
-itertools.accumulate
 json.loads
 macurl2path  # removed in 3.7
 multiprocessing.shared_memory
 nntplib._NNTPBase.starttls
 os.utime
-pyexpat.XMLParserType.ExternalEntityParserCreate
+pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 queue.SimpleQueue.__init__
 random.Random.randrange  # missing undocumented arg _int
 random.randrange  # missing undocumented arg _int
+sched.Event.__doc__  # __slots__ is overridden
 secrets.SystemRandom.getstate
 smtplib.SMTP.sendmail
 sre_constants.RANGE_IGNORE
-ssl.PROTOCOL_SSLv3
-ssl.RAND_egd
+ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
+ssl.RAND_egd  # Depends on openssl compilation
 types.ClassMethodDescriptorType.__get__
 types.MethodDescriptorType.__get__
 types.WrapperDescriptorType.__get__
@@ -73,7 +71,7 @@ uuid.getnode  # undocumented, unused parameter getters that was later removed
 webbrowser.Opera.raise_opts
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
-xml.parsers.expat.XMLParserType.ExternalEntityParserCreate
+xml.parsers.expat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 # These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
 enum.IntFlag.__new__
 pstats.SortKey.__new__

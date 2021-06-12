@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
-  private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int exclude) {
+  private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int keyToExclude) {
     super(oldMap.size());
     oldMap.forEachEntry((key, val) -> {
-      if (key != exclude) {
+      if (key != keyToExclude) {
         put(key, val);
       }
       assert key >= 0 : key;
@@ -35,8 +35,17 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     });
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
+  private MapBackedFMap(@NotNull MapBackedFMap oldMap, int newKey, @NotNull Object newValue) {
+    super(oldMap.size() + 1);
+    oldMap.forEachEntry((key, val) -> {
+      put(key, val);
+      return true;
+    });
+    put(newKey, newValue);
+    assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
+  }
 
-  MapBackedFMap(int @NotNull [] keys, int newKey, Object @NotNull [] values, @NotNull Object newValue) {
+  MapBackedFMap(int @NotNull [] keys, int newKey, @NotNull Object @NotNull [] values, @NotNull Object newValue) {
     super(keys.length + 1);
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
@@ -57,9 +66,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     //noinspection unchecked
     V oldValue = (V)get(keyCode);
     if (value == oldValue) return this;
-    MapBackedFMap newMap = new MapBackedFMap(this, -1);
-    newMap.put(keyCode, value);
-    return newMap;
+    return new MapBackedFMap(this, keyCode, value);
   }
 
   @NotNull
@@ -72,13 +79,15 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     }
     if (oldSize == ArrayBackedFMap.ARRAY_THRESHOLD + 1) {
       int[] keys = keys();
-      keys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
-      Arrays.sort(keys);
-      Object[] values = new Object[keys.length];
-      for (int i = 0; i < keys.length; i++) {
-        values[i] = get(keys[i]);
+      int[] newKeys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
+      Arrays.sort(newKeys);
+      Object[] newValues = new Object[newKeys.length];
+      for (int i = 0; i < newKeys.length; i++) {
+        Object value = get(newKeys[i]);
+        assert value != null;
+        newValues[i] = value;
       }
-      return new ArrayBackedFMap(keys, values);
+      return new ArrayBackedFMap(newKeys, newValues);
     }
     return new MapBackedFMap(this, keyCode);
   }
@@ -105,7 +114,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap other) {
+  public boolean equalsByReference(@NotNull KeyFMap other) {
     if(other == this) return true;
     if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
     final MapBackedFMap map = (MapBackedFMap)other;

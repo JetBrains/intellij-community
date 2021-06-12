@@ -1,9 +1,38 @@
 <html>
 <body>
-Reports assignment to variable declared as a <b>catch</b> block parameter.
-While occasionally intended, this construct can be confusing.
-<!-- tooltip end -->
+Reports assignment to variable declared as a <code>catch</code> block parameter.
+Changing the <code>catch</code> block parameter is very confusing and should be discouraged.
+If you need to update the exception for rethrowing, consider declaring a new variable.
+<p>Example:</p>
+<pre><code>
+  void processFile(String fileName) throws Exception {
+    try {
+      doProcessFile(fileName);
+    }
+    catch(Exception ex) {
+      if (ex instanceof UncheckedIOException) {
+        // Warning: catch block parameter reassigned
+        ex = ((UncheckedIOException) ex).getCause();
+      }
+      throw ex;
+    }
+  }
+</code></pre>
+<p>A quick-fix is suggested to declare a new variable:</p>
+<pre><code>
+    catch(Exception ex) {
+      Exception unwrapped = ex;
+      if (unwrapped instanceof UncheckedIOException) {
+        unwrapped = ((UncheckedIOException)
+          unwrapped).getCause();
+      }
+      throw unwrapped;
+    }
+</code></pre>
 <p>
-
+  Note that this inspection does not report parameters of multi-catch blocks, as such parameters
+  are implicitly final and reassigning them is a compilation error.
+</p>
+<!-- tooltip end -->
 </body>
 </html>

@@ -17,7 +17,9 @@ SHELL_SCRIPT
                 PsiElement(word)('git')
             PsiWhiteSpace(' ')
             LITERAL
-              PsiElement(word)('rev-parse')
+              PsiElement(word)('rev')
+            LITERAL
+              PsiElement(word)('-parse')
             PsiWhiteSpace(' ')
             LITERAL
               PsiElement(word)('--abbrev-ref')

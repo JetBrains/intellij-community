@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -16,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-/**
- * @author yole
- */
+
 public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override

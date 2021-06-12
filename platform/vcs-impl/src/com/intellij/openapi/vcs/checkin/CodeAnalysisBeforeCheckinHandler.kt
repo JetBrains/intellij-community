@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -86,7 +86,9 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(): CodeAnalysisCommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): CodeAnalysisCommitProblem? {
+    indicator.text = message("progress.text.analyzing.code")
+
     val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
@@ -116,7 +118,7 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
         }
-        val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
+        val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
 
         return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
       }
@@ -212,10 +214,10 @@ private class FindNewCodeSmellsTask(project: Project, private val files: List<Vi
 
   override fun compute(indicator: ProgressIndicator): List<CodeSmellInfo> {
     indicator.isIndeterminate = true
-    val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject!!, files, indicator)
+    val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(project, files, indicator)
 
     indicator.text = message("before.checkin.waiting.for.smart.mode")
-    DumbService.getInstance(myProject).waitForSmartMode()
+    DumbService.getInstance(project).waitForSmartMode()
 
     return codeSmells
   }

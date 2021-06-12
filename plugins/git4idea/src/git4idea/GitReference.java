@@ -3,9 +3,10 @@ package git4idea;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.FilePathHashingStrategy;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class GitReference implements Comparable<GitReference> {
 
-  public static final TObjectHashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY = FilePathHashingStrategy.create();
+  public static final Hash.Strategy<String> BRANCH_NAME_HASHING_STRATEGY =
+    FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isFileSystemCaseSensitive);
 
   @NotNull protected final String myName;
 
@@ -53,7 +55,7 @@ public abstract class GitReference implements Comparable<GitReference> {
 
   @Override
   public int hashCode() {
-    return BRANCH_NAME_HASHING_STRATEGY.computeHashCode(myName);
+    return BRANCH_NAME_HASHING_STRATEGY.hashCode(myName);
   }
 
   @Override

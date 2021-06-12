@@ -11,8 +11,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
+public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
 
   private MavenProjectsManager myProjectsManager;
   private ProjectNotificationAware myNotificationAware;
@@ -44,6 +45,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     addManagedFiles(myProjectPom);
   }
 
+  @Test
   public void testChangeConfigInAnotherProjectShouldNotUpdateOur() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
@@ -52,6 +54,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
+  @Test 
   public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
@@ -59,6 +62,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
+  @Test 
   public void testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
@@ -70,6 +74,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
+  @Test 
   public void testSaveDocumentChangesBeforeAutoImport() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
 
@@ -88,6 +93,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  @Test 
   public void testIncrementalAutoReload() {
     assertRootProjects("project");
     assertFalse(myNotificationAware.isNotificationVisible());

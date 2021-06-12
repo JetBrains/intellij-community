@@ -2,58 +2,55 @@
 package com.intellij.ide.customize;
 
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public final class IdSet {
-  private static final List<@NonNls String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
 
-  @Nls String myTitle;
-  List<PluginId> myIds;
+  private static final List<@NonNls String> STOP_LIST = List.of("Support", "support",
+                                                                "Integration", "integration");
 
-  IdSet(final PluginGroups pluginGroups, @NonNls String description) {
-    int i = description.indexOf(":");
-    if (i > 0) {
-      myTitle = description.substring(0, i); //NON-NLS
-      description = description.substring(i + 1);
-    }
-    myIds = ContainerUtil.map(description.split(","), PluginId::getId);
-    myIds = ContainerUtil.filter(myIds, id -> pluginGroups.findPlugin(id) != null);
+  private final @NotNull Set<PluginId> myPluginIds;
+  private final @Nls @NotNull String myTitle;
 
-    if (myIds.size() > 1 && myTitle == null) {
-      throw new IllegalArgumentException("There is no common title for " + myIds.size() + " ids: " + description);
-    }
-    if (myTitle == null && myIds.size() > 0) {
-      //noinspection ConstantConditions
-      myTitle = pluginGroups.findPlugin(myIds.get(0)).getName();
-    }
-    if (myIds.isEmpty() && myTitle != null) {
-      myTitle = null;
-    }
-    if (myTitle != null) {
-      for (String skipWord : BLACK_LIST) {
-        myTitle = myTitle.replaceAll(skipWord, ""); //NON-NLS
-      }
-      myTitle = myTitle.replaceAll("  ", " ").trim();
-    }
+  IdSet(@NotNull Set<PluginId> pluginIds,
+        @Nls @NotNull String title) {
+    assert !pluginIds.isEmpty();
+    myPluginIds = pluginIds;
+    myTitle = cleanTitle(title);
   }
 
   @Override
   public String toString() {
-    return myTitle + ": " + (myIds != null ? myIds.size() : 0);
+    return myTitle + ": " + myPluginIds.size();
   }
 
-  @Nullable
-  public @Nls String getTitle() {
+  public @NotNull Set<PluginId> getPluginIds() {
+    return Collections.unmodifiableSet(myPluginIds);
+  }
+
+  public @Nls @NotNull String getTitle() {
     return myTitle;
   }
 
-  public List<PluginId> getIds() {
-    return myIds;
+  /**
+   * @deprecated Please use {@link #getPluginIds()}.
+   */
+  @Deprecated
+  public @NotNull List<PluginId> getIds() {
+    return new ArrayList<>(myPluginIds);
+  }
+
+  private static @Nls @NotNull String cleanTitle(@Nls @NotNull String title) {
+    for (String skipWord : STOP_LIST) {
+      title = title.replaceAll(skipWord, ""); //NON-NLS
+    }
+    return title.replaceAll(" {2}", " ").trim();
   }
 }

@@ -472,14 +472,15 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
 
-    if (expected instanceof PyClassLikeType) {
+    final TypeEvalContext context = matchContext.context;
+
+    if (expected instanceof PyClassLikeType && !isCallableProtocol((PyClassLikeType)expected, context)) {
       return PyTypingTypeProvider.CALLABLE.equals(((PyClassLikeType)expected).getClassQName())
              ? Optional.of(actual.isCallable())
              : Optional.empty();
     }
 
     if (expected.isCallable() && actual.isCallable()) {
-      final TypeEvalContext context = matchContext.context;
       final List<PyCallableParameter> expectedParameters = expected.getParameters(context);
       final List<PyCallableParameter> actualParameters = actual.getParameters(context);
       if (expectedParameters != null && actualParameters != null) {
@@ -512,6 +513,10 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
+  }
+
+  private static boolean isCallableProtocol(@NotNull PyClassLikeType expected, @NotNull TypeEvalContext context) {
+    return PyProtocolsKt.isProtocol(expected, context) && expected.getMemberNames(false, context).contains(PyNames.CALL);
   }
 
   private static @Nullable PyType getActualReturnType(@NotNull PyCallableType actual, @NotNull TypeEvalContext context) {

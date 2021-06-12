@@ -26,14 +26,6 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
   }
 
   protected var actionGroup: ActionGroup? = null
-    set(value) {
-      val bla = field == null && value != null
-
-      field = value
-      if (bla) {
-        ActionToolbarImpl.updateAllToolbarsImmediately()
-      }
-    }
 
   override fun actionPerformed(e: AnActionEvent) {
 
@@ -48,6 +40,7 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
 
       init {
         setForceMinimumSize(true)
+        targetComponent = null
         layoutPolicy = NOWRAP_LAYOUT_POLICY
       }
 

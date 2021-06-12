@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.ui.components.JBList;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -32,7 +32,6 @@ import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -114,7 +113,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       }
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, locationDeclName);
+      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, locationDeclName);
     }
     return null;
   }
@@ -127,15 +126,12 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
       myClass = aClass;
     }
 
-    private static final JList ourDummyList = new JBList(); // to use ModuleRendererFactory
-
     @Override
     public String toString() {
       if (myText == null) {
         ModuleRendererFactory factory = ModuleRendererFactory.findInstance(myClass);
-        DefaultListCellRenderer moduleRenderer = factory.getModuleRenderer();
-        moduleRenderer.getListCellRendererComponent(ourDummyList, myClass, 1, false, false);
-        myText = moduleRenderer.getText();
+        TextWithIcon moduleTextWithIcon = factory.getModuleTextWithIcon(myClass);
+        myText = moduleTextWithIcon == null ? "" : moduleTextWithIcon.getText();
       }
       return myText;
     }
@@ -152,9 +148,12 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
   private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
     AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
                                               final PsiClass aClass,
-                                              final Project project,
-                                              final VirtualFile file,
+                                              @NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @NotNull FileEditor fileEditor,
                                               String locationDeclName) {
+      super(fileEditor);
+
       setText(JavaDebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
       final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {

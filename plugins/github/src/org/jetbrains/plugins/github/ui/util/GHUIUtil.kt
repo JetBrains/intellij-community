@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.UtilBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -21,8 +22,8 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.GithubIcons
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
@@ -49,9 +49,9 @@ object GHUIUtil {
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
-      GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
+      GHPullRequestState.CLOSED -> CollaborationToolsIcons.PullRequestClosed
       GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-      GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
+      GHPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
     }
 
   @NlsSafe

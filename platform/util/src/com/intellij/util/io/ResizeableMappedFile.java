@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -62,6 +64,7 @@ public class ResizeableMappedFile implements Forceable {
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) throws IOException {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
+    ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
@@ -134,10 +137,7 @@ public class ResizeableMappedFile implements Forceable {
         return new DataOutputStream(Files.newOutputStream(lengthFile));
       }
       catch (NoSuchFileException ex) {
-        Path parent = lengthFile.getParent();
-        if (!Files.exists(parent)) {
-          Files.createDirectories(parent);
-        }
+        ensureParentDirectoryExists();
         if (!lastAttempt) return null;
         throw ex;
       }
@@ -169,10 +169,19 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
+  private void ensureParentDirectoryExists() throws IOException {
+    Path parent = getLengthFile().getParent();
+    if (!Files.exists(parent)) {
+      Files.createDirectories(parent);
+    }
+  }
+
   private long readLength() throws IOException {
     Path lengthFile = getLengthFile();
-    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == 0L)) {
-      return 0L;
+    long zero = 0L;
+    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == zero)) {
+      writeLength(zero);
+      return zero;
     }
 
     try (DataInputStream stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ))) {
@@ -186,33 +195,33 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
-  public int getInt(long index) {
+  public int getInt(long index) throws IOException {
     return myStorage.getInt(index);
   }
 
-  public void putInt(long index, int value) {
+  public void putInt(long index, int value) throws IOException {
     ensureSize(index + 4);
     myStorage.putInt(index, value);
   }
 
-  public long getLong(long index) {
+  public long getLong(long index) throws IOException {
     return myStorage.getLong(index);
   }
 
-  public void putLong(long index, long value) {
+  public void putLong(long index, long value) throws IOException {
     ensureSize(index + 8);
     myStorage.putLong(index, value);
   }
 
-  public byte get(long index) {
+  public byte get(long index) throws IOException {
     return myStorage.get(index);
   }
 
-  public void get(long index, byte[] dst, int offset, int length) {
+  public void get(long index, byte[] dst, int offset, int length) throws IOException {
     myStorage.get(index, dst, offset, length);
   }
 
-  public void put(long index, byte[] src, int offset, int length) {
+  public void put(long index, byte[] src, int offset, int length) throws IOException {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
   }
@@ -240,5 +249,31 @@ public class ResizeableMappedFile implements Forceable {
   @NotNull
   public PagedFileStorage getPagedFileStorage() {
     return myStorage;
+  }
+
+  @NotNull
+  public StorageLockContext getStorageLockContext() {
+    return myStorage.getStorageLockContext();
+  }
+
+  public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer)
+    throws IOException {
+    return myStorage.readInputStream(consumer);
+  }
+
+  public void lockRead() {
+    myStorage.lockRead();
+  }
+
+  public void unlockRead() {
+    myStorage.unlockRead();
+  }
+
+  public void lockWrite() {
+    myStorage.lockWrite();
+  }
+
+  public void unlockWrite() {
+    myStorage.unlockWrite();
   }
 }

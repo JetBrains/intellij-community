@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.LightPlatformTestCase.assertThrows
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -58,11 +57,11 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     val lock = Semaphore(1)
     val job = launch(Dispatchers.Default) {
       check(!application.isReadAccessAllowed)
-      readAction { ctx ->
+      readAction { progress ->
         check(application.isReadAccessAllowed)
         lock.up()
         while (true) {
-          ctx.ensureActive()
+          progress.checkCancelled()
           Thread.sleep(100)
         }
       }
@@ -101,11 +100,11 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
   fun `test read action is cancelled on write`(): Unit = runBlocking {
     val limit = 10
     val attemptCount = AtomicInteger()
-    val job = launch(Dispatchers.Default) {
-      val result = readAction { ctx ->
+    val job: Deferred<Unit> = async(Dispatchers.Default) {
+      val result = readAction { progress ->
         if (attemptCount.incrementAndGet() < limit) {
           while (true) {
-            ctx.ensureActive()
+            progress.checkCancelled()
           }
         }
         "a"
@@ -113,11 +112,13 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
       assertEquals("a", result)
       assertTrue(attemptCount.toString(), attemptCount.get() >= limit)
     }
-    while (attemptCount.get() < limit) {
+    while (job.isActive && attemptCount.get() < limit) {
       runWriteAction {}
       UIUtil.dispatchAllInvocationEvents()
     }
-    job.join(1000)
+    withTimeout(1000) {
+      job.await()
+    }
   }
 
   fun `test write action after read is almost finished`(): Unit = runBlocking {
@@ -168,13 +169,13 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     val job: Deferred<Int> = async(Dispatchers.Default) {
       check(!application.isReadAccessAllowed)
       var counter = 0
-      readAction { ctx ->
+      readAction { progress ->
         check(application.isReadAccessAllowed)
-        ctx.ensureActive()
+        progress.checkCancelled()
         counter++
         inRead.up()
         while (!inWrite.waitFor(100)) {
-          ctx.ensureActive()
+          progress.checkCancelled()
         }
         counter
       }
@@ -203,14 +204,14 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
       check(!application.isReadAccessAllowed)
       check(!dumbService.isDumb)
       var counter = 0
-      smartReadAction(project) { ctx ->
+      smartReadAction(project) { progress ->
         check(application.isReadAccessAllowed)
         check(!dumbService.isDumb)
-        ctx.ensureActive()
+        progress.checkCancelled()
         counter++
         inRead.up()
         while (!inWrite.waitFor(100)) {
-          ctx.ensureActive()
+          progress.checkCancelled()
         }
         counter
       }

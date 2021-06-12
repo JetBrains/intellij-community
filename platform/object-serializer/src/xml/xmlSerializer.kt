@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
 package com.intellij.configurationStore
 
@@ -37,7 +37,8 @@ private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
   return result
 }
 
-internal class JdomSerializerImpl : JdomSerializer {
+@Suppress("unused")
+private class JdomSerializerImpl : JdomSerializer {
   override fun getDefaultSerializationFilter() = doGetDefaultSerializationFilter()
 
   override fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
@@ -87,7 +88,7 @@ internal class JdomSerializerImpl : JdomSerializer {
 
     @Suppress("UNCHECKED_CAST")
     try {
-      return (serializer.getRootBinding(clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
+      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
     }
     catch (e: SerializationException) {
       throw e

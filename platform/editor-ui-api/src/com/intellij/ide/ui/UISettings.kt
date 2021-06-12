@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -148,7 +149,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.closeTabButtonOnTheRight
 
   val cycleScrolling: Boolean
-    get() = Registry.`is`("ide.cycle.scrolling", false)
+    get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
@@ -496,8 +497,22 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     @JvmStatic
     val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
       get() {
+        val enableByDefault = SystemInfo.isMacOSCatalina || (FontSubpixelResolution.ENABLED
+                              && AntialiasingType.getKeyForCurrentScope(false) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
         return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
-                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", enableByDefault))
+          RenderingHints.VALUE_FRACTIONALMETRICS_ON
+        else
+          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+      }
+
+    @JvmStatic
+    val editorFractionalMetricsHint: Any
+      get() {
+        val enableByDefault = FontSubpixelResolution.ENABLED
+                              && AntialiasingType.getKeyForCurrentScope(true) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+        return if (!Registry.`is`("editor.text.disable.fractional.metrics", false)
+                   && (Registry.`is`("editor.text.fractional.metrics", false) || enableByDefault))
           RenderingHints.VALUE_FRACTIONALMETRICS_ON
         else
           RenderingHints.VALUE_FRACTIONALMETRICS_OFF
@@ -550,7 +565,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else JBUIScale.sysScale()
+      get() = when {
+        JreHiDpiUtil.isJreHiDPIEnabled() -> 1f
+        else -> JBUIScale.sysScale()
+      }
 
     /**
      * Returns the default font size scaled by #defFontScale
@@ -675,10 +693,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
     if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
       state.editorAAType = AntialiasingType.GREYSCALE
-    }
-    if (state.moveMouseOnDefaultButton) {
-      Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
-      state.moveMouseOnDefaultButton = false
     }
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)

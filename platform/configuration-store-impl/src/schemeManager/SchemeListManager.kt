@@ -3,6 +3,7 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
 import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.filterSmart
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
-internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
+internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeManagerImpl<T, *>) {
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>())
 
   internal val readOnlyExternalizableSchemes = ConcurrentHashMap<String, T>()

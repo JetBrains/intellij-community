@@ -19,8 +19,8 @@ class RunConfigEditorNotificationProvider : EditorNotifications.Provider<EditorN
     if (!file.name.endsWith(".run.xml")) return null
     if (!ProjectFileIndex.getInstance(project).isInContent(file)) return null
 
-    val panel = EditorNotificationPanel()
-    panel.setText(ExecutionBundle.message("manual.editing.of.config.file.not.recommended"))
+    val panel = EditorNotificationPanel(fileEditor)
+    panel.text = ExecutionBundle.message("manual.editing.of.config.file.not.recommended")
     panel.createActionLabel(ExecutionBundle.message("open.run.debug.dialog")) {
       val runManager = RunManagerImpl.getInstanceImpl(project)
       val oldSelectedConfig = runManager.selectedConfiguration

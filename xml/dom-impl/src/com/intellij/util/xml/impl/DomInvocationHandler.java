@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.FlakyTestLogger;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -655,7 +656,17 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   @Nullable
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      return findInvocation(method).invoke(this, args);
+      Invocation invocation = findInvocation(method);
+      Object r = invocation.invoke(this, args);
+      FlakyTestLogger log = FlakyTestLogger.get();
+      if (log != null && method.getName().equals("exists")) {
+        log.append("Invocation: for '" + method + "' is '" + invocation + " of " + invocation.getClass() + "' handler = '" + this +
+                   " of " + this.getClass() + "' r = " + r + " of " + ObjectUtils.doIfNotNull(r, Object::getClass));
+        if (this instanceof IndexedElementInvocationHandler) {
+          log.append(((IndexedElementInvocationHandler)this).created);
+        }
+      }
+      return r;
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();

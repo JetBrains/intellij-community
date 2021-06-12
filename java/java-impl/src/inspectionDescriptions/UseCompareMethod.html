@@ -1,13 +1,25 @@
 <html>
 <body>
-Suggests to use the static <code>Integer.compare()</code> method and similar methods where more verbose or less efficient constructs are
-used. For example, <code>x &gt; y ? 1 : x &lt; y ? -1 : 0</code> or <code>Integer.valueOf(x).compareTo(y)</code> could be
-replaced with <code>Integer.compare(x, y)</code>. If <code>x</code> and <code>y</code> are already boxed integers, then
-<code>x.compareTo(y)</code> is suggested.
-
-<p><code>Double.compare</code> and <code>Float.compare</code> methods appeared in Java 1.4, methods for other primitive types
-   are available since Java 1.7</p>
+Reports cases where the static <code>Integer.compare()</code> method or similar methods can be used
+instead of more verbose or less efficient constructs.
+If <code>x</code> and <code>y</code> are already boxed integers, then <code>x.compareTo(y)</code> is suggested.
+<p>Example:</p>
+<pre><code>
+  public int compare(int x, int y) {
+    return x > y ? 1 : x &lt; y ? -1 : 0;
+  }
+</code></pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre><code>
+  public int compare(int x, int y) {
+    return Integer.compare(x, y);
+  }
+</code></pre>
 <!-- tooltip end -->
+<p>
+  <code>Double.compare()</code> and <code>Float.compare()</code> methods were introduced in Java 1.4, methods for other primitive types
+  are available since Java 1.7.
+</p>
 <p><small>New in 2017.2</small></p>
 </body>
 </html>

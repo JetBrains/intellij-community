@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.project.DumbAware;
@@ -18,24 +18,13 @@ public abstract class StartupManager {
    * @param project the project for which the instance should be returned.
    * @return the startup manager instance.
    */
-  public static StartupManager getInstance(Project project) {
+  public static StartupManager getInstance(@NotNull Project project) {
     return project.getService(StartupManager.class);
-  }
-
-  /**
-   * @deprecated Use {@link #registerStartupActivity(Runnable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void registerPreStartupActivity(@NotNull Runnable runnable) {
-    registerStartupActivity(runnable);
   }
 
   /**
    * Registers an activity that is performed during project load while the "Loading Project"
    * progress bar is displayed. You may NOT access the PSI structures from the activity.
-   *
-   * @see StartupActivity#STARTUP_ACTIVITY
    */
   @ApiStatus.Internal
   public abstract void registerStartupActivity(@NotNull Runnable runnable);

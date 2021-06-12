@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.icons.AllIcons;
@@ -15,11 +15,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,23 +36,28 @@ import java.util.function.Function;
 /**
  * @author Konstantin Bulenkov
  */
-public class ApplyThemeAction extends DumbAwareAction {
+public final class ApplyThemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     applyTempTheme(e);
+  }
+
+  @Contract("null -> false")
+  private static boolean isThemeFile(@Nullable VirtualFile file) {
+    return file != null && StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), UITheme.FILE_EXT_ENDING);
   }
 
   public static boolean applyTempTheme(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return false;
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (!UITheme.isThemeFile(file)) {
+    if (!isThemeFile(file)) {
       file = null;
     }
 
     if (file == null) {
       for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getOpenFiles()) {
-        if (UITheme.isThemeFile(virtualFile)) {
+        if (isThemeFile(virtualFile)) {
           file = virtualFile;
           break;
         }
@@ -62,7 +69,7 @@ public class ApplyThemeAction extends DumbAwareAction {
           FilenameIndex.getAllFilesByExt(project, "theme.json", GlobalSearchScope.projectScope(project))
         );
     }
-    if (file != null && UITheme.isThemeFile(file)) {
+    if (file != null && isThemeFile(file)) {
       return applyTempTheme(file, project);
     }
     return false;
@@ -125,7 +132,7 @@ public class ApplyThemeAction extends DumbAwareAction {
   private static String findAbsoluteFilePathByRelativePath(Module module, String relativePath, String defaultResult) {
     String filename = new File(relativePath).getName();
     GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
-    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(module.getProject(), filename, moduleScope);
+    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(filename, moduleScope);
     for (VirtualFile file : filesByName) {
       String path = file.getPath();
       if (path.endsWith(relativePath) || path.endsWith(relativePath.replaceAll("/", "\\"))) {

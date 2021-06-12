@@ -76,8 +76,8 @@ public final class EditorLastActionTracker {
 
   final static class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      Editor editor = event.getData(CommonDataKeys.HOST_EDITOR);
       EditorLastActionTracker tracker = editor == null ? getTrackerIfCreated() : getInstance();
       if (tracker == null) {
         return;
@@ -90,7 +90,7 @@ public final class EditorLastActionTracker {
     }
 
     @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
       EditorLastActionTracker tracker = getInstance();
       tracker.myLastActionId = getActionId(action);
       tracker.myLastEditor = tracker.myCurrentEditor;

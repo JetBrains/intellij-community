@@ -1,12 +1,27 @@
 <html>
 <body>
-Suggests to replace <code>for(Entry&lt;?,?&gt; entry : map.entrySet()) {...}</code> or
+Suggests replacing <code>for(Entry&lt;?,?&gt; entry : map.entrySet()) {...}</code> or
 <code>map.entrySet().forEach(entry -&gt; ...)</code> with <code>map.forEach((key, value) -> ...)</code>.
+<p>Example</p>
+<pre>
+  void print(Map<String, Integer> map) {
+    map.entrySet().forEach(entry -> {
+      String str = entry.getKey();
+      System.out.println(str + ":" + entry.getValue());
+    });
+  }
+</pre>
+<p>After the quick fix is applied the result looks like:</p>
+<pre>
+  void print(Map<String, Integer> map) {
+    map.forEach((str, value) -> System.out.println(str + ":" + value));
+  }
+</pre>
+<!-- tooltip end -->
 <p>
   When checkbox is checked, only <code>entrySet().forEach()</code> cases will be reported.
-  However the quick-fix action will be available for <code>for</code>-loops as well.
+  However, the quick-fix action will be available for <code>for</code>-loops as well.
 </p>
-<!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 8 or higher</p>
 <p><small>New in 2017.1</small></p>
 </body>

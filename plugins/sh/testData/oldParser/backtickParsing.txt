@@ -29,11 +29,13 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           PsiElement($)('$')
           ARITHMETIC_EXPANSION
-            PsiElement((()('((')
+            PsiElement(()('(')
+            PsiElement(()('(')
             LITERAL_EXPRESSION
               NUMBER
                 PsiElement(int)('123')
-            PsiElement()))('))')
+            PsiElement())(')')
+            PsiElement())(')')
       PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST

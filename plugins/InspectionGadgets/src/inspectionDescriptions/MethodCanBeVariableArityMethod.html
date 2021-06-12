@@ -1,14 +1,17 @@
 <html>
 <body>
-Reports methods with which can be converted to a variable arity method. Example:
+Reports methods which can be converted to a variable arity method.
+<p>Example:</p>
 <pre>
   void process(String name, Object[] objects);
 </pre>
-Can be converted to:
+<p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
   void process(String name, Object... objects);
 </pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 5 or higher</p>
+<p>
+  This inspection only reports if the language level of the project or module is 5 or higher.
+</p>
 </body>
 </html>

@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -102,7 +99,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   private static final Logger LOG = Logger.getInstance(LogConsolePreferences.class);
 
   public static LogConsolePreferences getInstance(Project project) {
-    return ServiceManager.getService(project, LogConsolePreferences.class);
+    return project.getService(LogConsolePreferences.class);
   }
 
   public void updateCustomFilter(String customFilter) {

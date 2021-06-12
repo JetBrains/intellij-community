@@ -1,10 +1,15 @@
 <html>
 <body>
-Reports array fields
-which are declared as <b>volatile</b>. Such fields
-may be confusing, as accessing the array itself follows the rules for <b>volatile</b>
+Reports array fields which are declared as <code>volatile</code>. Such fields
+may be confusing, as accessing the array itself follows the rules for <code>volatile</code>
 fields, but accessing the array's contents does not. If such volatile access is needed to array contents,
-the JDK5.0 <b>java.util.concurrent.atomic</b> classes should be used instead.
+ <code>java.util.concurrent.atomic</code> classes should be used instead.
+<p>Example:</p>
+<pre><code>class Data {
+  private volatile int[] idx = new int[0];
+}</code></pre>
+
+Good code which allows volatile array content access should look like <code>private final AtomicIntegerArray idx = new AtomicIntegerArray(new int[0]);</code>
 <!-- tooltip end -->
 <p>
 

@@ -11,6 +11,6 @@ def test_numerics():
     float(False)
     complex(False)
     divmod(False, False)
-    divmod(<warning descr="Expected type '_N2', got 'bytes' instead">b'foo'</warning>, <warning descr="Expected type '_N2', got 'str' instead">'bar'</warning>)
+    divmod<warning descr="Unexpected type(s):(bytes, str)Possible type(s):(bytes, SupportsRDivMod[bytes, _T_co])(SupportsDivMod[_T_contra, _T_co], _T_contra)">(b'foo', 'bar')</warning>
     pow(False, True)
     round<warning descr="Unexpected type(s):(bool, str)Possible type(s):(SupportsRound[int], int)(SupportsRound, None)">(False, 'foo')</warning>

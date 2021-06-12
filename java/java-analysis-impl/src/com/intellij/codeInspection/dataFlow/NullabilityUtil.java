@@ -5,9 +5,6 @@ import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -17,52 +14,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public final class NullabilityUtil {
 
-  @NotNull
-  public static DfaNullability calcCanBeNull(DfaVariableValue value) {
-    if (value.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
-      return DfaNullability.NOT_NULL;
-    }
-    if (value.getDescriptor() == SpecialField.OPTIONAL_VALUE) {
-      return DfaNullability.NULLABLE;
-    }
-    PsiModifierListOwner var = value.getPsiVariable();
-    if (value.getType() instanceof PsiPrimitiveType) {
-      return DfaNullability.UNKNOWN;
-    }
-    if (var instanceof PsiField && DfaUtil.hasInitializationHacks((PsiField)var)) {
-      return DfaNullability.FLUSHED;
-    }
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
-    if (nullability != Nullability.UNKNOWN) {
-      return DfaNullability.fromNullability(nullability);
-    }
-    if (var == null) return DfaNullability.UNKNOWN;
-
-    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-      if (iteratedValue != null) {
-        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType != null) {
-          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, var));
-        }
-      }
-    }
-
-    if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var).second);
-    }
-
-    return DfaNullability.fromNullability(Nullability.UNKNOWN);
-  }
-
-  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
+  public static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {

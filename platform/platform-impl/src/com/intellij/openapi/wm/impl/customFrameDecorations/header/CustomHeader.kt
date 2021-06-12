@@ -21,7 +21,6 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -37,7 +36,6 @@ import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
-
 internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
   companion object {
     private val LOGGER = logger<CustomHeader>()
@@ -101,16 +99,15 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   private val icon: Icon
     get() = getFrameIcon()
 
-  protected val iconSize = (16 * UISettings.defFontScale).toInt()
-
   private fun getFrameIcon(): Icon {
     val scaleContext = ScaleContext.create(window)
-    scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+    //scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
     return myIconProvider.getOrProvide(scaleContext)!!
   }
 
   protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
-    return AppUIUtil.loadSmallApplicationIcon(scaleContext, iconSize)
+    val size = (JBUIScale.scale(16f) * UISettings.defFontScale).toInt()
+    return AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
   }
 
   protected val productIcon: JComponent by lazy {
@@ -419,4 +416,5 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     }
   }
 }
+
 

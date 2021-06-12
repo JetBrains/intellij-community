@@ -1,16 +1,19 @@
 <html>
 <body>
-Shows references to static methods and fields
-via a class instance rather than a class itself.<br>
-<br>
-Example:<br>
-<code>String s = String.valueOf(0); // correct: static method qualified with class name</code><br>
-<code>String s1 = s.valueOf(0); // wrong: static method qualified with class instance</code><br>
-<br>
-While allowed by Java Language Specification,
-referring to static members via instance variables makes the code confusing
-as the reader may think that the result of the method depends on the instance.<br>
-<br>
-Quick fix: replaces the instance variable with the class name.
+<p>Shows references to static methods and fields via a class instance rather than a class itself. While
+  allowed by Java Language Specification, referring to static members via instance variables makes the
+  code confusing as the reader may think that the result of the method depends on the instance.</p>
+<p>Quick-fix replaces the instance variable with the class name.</p>
+<p>Example:</p>
+<pre>
+  String s1 = s.valueOf(0);
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  String s = String.valueOf(0);
+</pre>
+<!-- tooltip end -->
+<p>
+
 </body>
 </html>

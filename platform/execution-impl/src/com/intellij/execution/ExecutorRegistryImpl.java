@@ -13,11 +13,11 @@ import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager;
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
-import com.intellij.execution.stateWidget.*;
+import com.intellij.execution.stateWidget.StateWidget;
+import com.intellij.execution.stateWidget.StateWidgetAdditionActionsHolder;
+import com.intellij.execution.stateWidget.StateWidgetGroup;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
@@ -33,10 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -325,10 +322,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
-        RunContentDescriptor contentDescriptor = RunContentManager.getInstance(project).findContentDescriptor(myExecutor, descriptor.getProcessHandler());
-        return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
-      });
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
 
       if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
         return AllIcons.Actions.Restart;
@@ -369,19 +363,20 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  // TODO: make private as soon as IDEA-207986 will be fixed
-  // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
-  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware, UpdateInBackground {
     protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
-    protected ExecutorGroupActionGroup(@NotNull ExecutorGroup<?> executorGroup, @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
+    protected ExecutorGroupActionGroup(@NotNull ExecutorGroup<?> executorGroup,
+                                       @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      // RunExecutorSettings configurations can be modified, so we request current childExecutors on each call
       List<Executor> childExecutors = myExecutorGroup.childExecutors();
       AnAction[] result = new AnAction[childExecutors.size()];
       for (int i = 0; i < childExecutors.size(); i++) {
@@ -397,11 +392,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         e.getPresentation().setEnabled(false);
         return;
       }
-      e.getPresentation().setEnabledAndVisible(isEnabled(project));
-    }
-
-    public boolean isEnabled(@NotNull Project project) {
-      return myExecutorGroup.isApplicable(project);
+      e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
     }
   }
 

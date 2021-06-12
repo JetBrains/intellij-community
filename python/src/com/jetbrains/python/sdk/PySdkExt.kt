@@ -45,7 +45,6 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -112,8 +111,7 @@ fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
 }
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module,
-                       !PyCondaSdkCustomizer.instance.disableEnvsSorting)
+  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, true)
 
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
@@ -340,22 +338,22 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   return newData
 }
 
-private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
+private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
                                  existingSdks: List<Sdk>,
                                  module: Module?,
-                                 sortByModule: Boolean = true): List<PyDetectedSdk> {
-  val existingPaths = existingSdks.map { it.homePath }.toSet()
-  val paths = suggestedPaths
+                                 mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
+  val existingPaths = existingSdks.mapTo(HashSet()) { it.homePath }
+  return suggestedPaths
     .asSequence()
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
+    .sortedWith(
+      compareBy(
+        { !it.isAssociatedWithModule(module) },
+        { if (mayContainCondaEnvs) !PythonSdkUtil.isBaseConda(it.homePath) else false },
+        { it.homePath }
+      )
+    )
     .toList()
-  return if (sortByModule) {
-    paths.sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
-                               { it.homePath }))
-  }
-  else {
-    paths
-  }
 }

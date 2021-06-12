@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection detects undefined roles.
+<p>Reports undefined roles in reStructuredText files.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+.. role:: custom
+.. role:: newcustom(emphasis)
+
+An example of using :custom:`interpreted text`
+An example of using :newcustom:`interpreted text`
+An example of using :emphasis:`interpreted text`
+
+
+Some text using undefined role :undef:`interpreted text`
+</pre>
 </body>
 </html>

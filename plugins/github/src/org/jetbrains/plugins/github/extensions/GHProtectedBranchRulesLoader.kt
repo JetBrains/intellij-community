@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.concurrency.SensitiveProgressWrapper
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
-import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
+import org.jetbrains.plugins.github.util.GithubProjectSettings
 
 private val LOG = logger<GHProtectedBranchRulesLoader>()
 
@@ -43,7 +43,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
     val githubAuthenticationManager = GithubAuthenticationManager.getInstance()
     if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !githubAuthenticationManager.hasAccounts()) {
       runInEdt {
-        GithubSharedProjectSettings.getInstance(project).branchProtectionPatterns = arrayListOf()
+        project.service<GithubProjectSettings>().branchProtectionPatterns = arrayListOf()
       }
       return
     }
@@ -76,7 +76,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
     }
 
     runInEdt {
-      GithubSharedProjectSettings.getInstance(project).branchProtectionPatterns = branchProtectionPatterns.toMutableList()
+      project.service<GithubProjectSettings>().branchProtectionPatterns = branchProtectionPatterns.toMutableList()
     }
   }
 

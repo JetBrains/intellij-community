@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.execution.ExecutionException;
@@ -74,7 +74,7 @@ class LinuxMimeTypeUpdater {
 
   static void createMimeFile(@NotNull List<? extends MimeTypeDescription> mimeTypeDescriptions)
     throws IOException, XMLStreamException, OSFileAssociationException {
-    XMLOutputFactory outputFactory =  XMLOutputFactory.newInstance();
+    XMLOutputFactory outputFactory =  XMLOutputFactory.newDefaultFactory();
     String mimePackagesPath = System.getProperty("user.home") + File.separator + LOCAL_MIME_PACKAGES_PATH;
     ensureMimePackagesDirExists(mimePackagesPath);
     final FileWriter fileWriter = new FileWriter(mimePackagesPath + File.separator + EXTENSIONS_FILE_NAME, StandardCharsets.UTF_8);

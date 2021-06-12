@@ -5,7 +5,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.text.ByteArrayCharSequence
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
@@ -99,6 +98,6 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     else if (configs.indexOf(packed) == -1) {
       configs = ArrayUtil.append(configs, packed)
     }
-    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs!!)
+    storage.put(option, configs!!)
   }
 }

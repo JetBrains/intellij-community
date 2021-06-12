@@ -49,6 +49,8 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
 // suspend() / resume() methods for viewers? To not interfere with MergeRequest lifecycle: single request -> single viewer -> single applyResult()
@@ -117,6 +119,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     setTitle(request.getTitle());
 
     myRequest = request;
+    onAssigned(myRequest, true);
     myViewer = createViewerFor(request);
     initViewer();
     installCallbackListener(myRequest);
@@ -135,6 +138,7 @@ public abstract class MergeRequestProcessor implements Disposable {
           () -> {
             if (myDisposed) return;
             myRequest = mergeRequest;
+            onAssigned(myRequest, true);
             swapViewer(createViewerFor(mergeRequest));
             installCallbackListener(myRequest);
           },
@@ -259,7 +263,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     toolbar.setTargetComponent(toolbar.getComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
-    ActionUtil.recursiveRegisterShortcutSet(group, myMainPanel, null);
+    recursiveRegisterShortcutSet(group, myMainPanel, null);
   }
 
   @NotNull
@@ -323,6 +327,10 @@ public abstract class MergeRequestProcessor implements Disposable {
 
       destroyViewer();
       applyRequestResult(MergeResult.CANCEL);
+
+      if (myRequest != null) {
+        onAssigned(myRequest, false);
+      }
     });
   }
 
@@ -370,6 +378,15 @@ public abstract class MergeRequestProcessor implements Disposable {
       myViewer = newViewer;
       initViewer();
     });
+  }
+
+  private static void onAssigned(@NotNull MergeRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   //

@@ -7,8 +7,23 @@ either dead code or a typographical error.
 <p>
 Use the tables below to specify which methods are update and/or query methods. The names are matched with
 the beginning of the method name. Query methods which return their result are automatically detected, only
-query methods which return their result in an argument (e.g. write to OutputStream) need to be specified.
+query methods which return their result in an argument (e.g. write to <code>OutputStream</code>) need to be specified.
 <p>
-
+<p>Example:</p>
+<p>Suppose you have your custom <code>FixedStack</code> class with method <code>store()</code>:
+<pre>
+  public class FixedStack&lt;T&gt; extends Collection&lt;T&gt; {
+    public T store(T t) {
+      // implementation
+    }
+  }
+</pre>
+<p>You can add <code>store</code> to the update methods table in order to report mismatched queries like:
+<pre>
+  void test(int i) {
+    FixedStack&lt;Integer&gt; stack = new FixedStack&lt;&gt;();
+    stack.store(i);
+  }
+</pre>
 </body>
 </html>

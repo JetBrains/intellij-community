@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -115,7 +116,7 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
       @Override
       public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
         assert editor != null;
-        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext()));
+        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, EditorUtil.getEditorDataContext(editor)));
       }
     };
   }

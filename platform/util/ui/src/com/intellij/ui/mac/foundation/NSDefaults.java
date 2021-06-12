@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class NSDefaults {
   private static final Logger LOG = Logger.getInstance(NSDefaults.class);
@@ -17,26 +18,17 @@ public class NSDefaults {
   // NOTE: skip call of Foundation.invoke(myDefaults, "synchronize") (when read settings)
   // It waits for any pending asynchronous updates to the defaults database and returns; this method is unnecessary and shouldn't be used.
 
-  public static final String ourTouchBarDomain = "com.apple.touchbar.agent";
-  public static final String ourTouchBarNode = "PresentationModePerApp";
-  public static final String ourTouchBarShowFnValue = "functionKeys";
-
   private static class Path {
     private final @NotNull ArrayList<Node> myPath = new ArrayList<>();
 
     @Override
     public String toString() {
-      String res = "";
-      for (Node pn: myPath) {
-        if (!res.isEmpty()) res += " | ";
-        res += pn.toString();
-      }
-      return res;
+      return myPath.stream().map(Node::toString).collect(Collectors.joining(" | "));
     }
 
     String readStringVal(@NotNull String key) { return readStringVal(key, false); }
 
-    String readStringVal(@NotNull String key, boolean doSyncronize) {
+    String readStringVal(@NotNull String key, boolean doSynchronize) {
       if (myPath.isEmpty())
         return null;
 
@@ -46,7 +38,7 @@ public class NSDefaults {
         if (defaults.equals(ID.NIL))
           return null;
 
-        if (doSyncronize) {
+        if (doSynchronize) {
           // NOTE: AppleDoc proposes to skip call of Foundation.invoke(myDefaults, "synchronize") - "this method is unnecessary and shouldn't be used."
           Foundation.invoke(defaults, "synchronize");
         }
@@ -126,21 +118,6 @@ public class NSDefaults {
       }
     }
 
-    static @NotNull Path createDomainPath(@NotNull String domain, String @NotNull [] nodes) {
-      final Path result = new Path();
-      result.myPath.add(new Node("persistentDomainForName:", domain));
-      for (String nodeName: nodes)
-        result.myPath.add(new Node("objectForKey:", nodeName));
-      return result;
-    }
-
-    static @NotNull Path createDomainPath(@NotNull String domain, @NotNull String nodeName) {
-      final Path result = new Path();
-      result.myPath.add(new Node("persistentDomainForName:", domain));
-      result.myPath.add(new Node("objectForKey:", nodeName));
-      return result;
-    }
-
     private static class Node {
       private final @NotNull String mySelector;
       private final @NotNull String myNodeName;
@@ -212,57 +189,6 @@ public class NSDefaults {
     }
   }
 
-  public static boolean isShowFnKeysEnabled(String appId) {
-    final Path path = Path.createDomainPath(ourTouchBarDomain, ourTouchBarNode);
-    final String sval = path.readStringVal(appId);
-    return sval != null && sval.equals(ourTouchBarShowFnValue);
-  }
-
-  /**
-   * @return True when value has been changed
-   */
-  public static boolean setShowFnKeysEnabled(String appId, boolean val) { return setShowFnKeysEnabled(appId, val, false); }
-
-  public static boolean setShowFnKeysEnabled(String appId, boolean val, boolean performExtraDebugChecks) {
-    if (!isDomainExists(ourTouchBarDomain)) {
-      final Map<String, Object> vals = new HashMap<>();
-      vals.put(ourTouchBarNode, new HashMap<>());
-      createPersistentDomain(ourTouchBarDomain, vals);
-      if (!isDomainExists(ourTouchBarDomain)) {
-        LOG.error("can't create domain '" + ourTouchBarDomain + "'");
-        return false;
-      }
-    }
-
-    final Path path = Path.createDomainPath(ourTouchBarDomain, ourTouchBarNode);
-    String sval = path.readStringVal(appId);
-    final boolean settingEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
-
-    final String initDesc = "appId='" + appId
-                            + "', value (requested be set) ='" + val
-                            + "', initial path (tail) value = '" + sval
-                            + "', path='" + path.toString() + "'";
-
-    if (val == settingEnabled) {
-      if (performExtraDebugChecks) LOG.error("nothing to change: " + initDesc);
-      return false;
-    }
-
-    path.writeStringValue(appId, val ? ourTouchBarShowFnValue : null);
-
-    if (performExtraDebugChecks) {
-      // just for embedded debug: make call of Foundation.invoke(myDefaults, "synchronize") - It waits for any pending asynchronous updates to the defaults database and returns; this method is unnecessary and shouldn't be used.
-      sval = path.readStringVal(appId, true);
-      final boolean isFNEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
-      if (val != isFNEnabled)
-        LOG.error("can't write value '" + val + "' (was written just now, but read '" + sval + "'): " + initDesc);
-      else
-        LOG.error("value '" + val + "' was written from second attempt: " + initDesc);
-    }
-
-    return true;
-  }
-
   public static String readStringVal(String domain, String key) {
     final Path result = new Path();
     result.myPath.add(new Path.Node("persistentDomainForName:", domain));
@@ -291,7 +217,7 @@ public class NSDefaults {
             final ID internalDict = Foundation.invoke("NSMutableDictionary", "new");
             Foundation.invoke(dict,"setObject:forKey:", internalDict, Foundation.nsString(me.getKey()));
           } else
-            LOG.error("unsupported type of domain value: " + String.valueOf(val));
+            LOG.error("unsupported type of domain value: " + val);
         }
       }
       Foundation.invoke(defaults, "setPersistentDomain:forName:", dict, Foundation.nsString(domainName));
@@ -312,6 +238,132 @@ public class NSDefaults {
     }
   }
 
+  //
+  // Touchbar related settings
+  //
+
+  // example of possible touchbar config : defaults read com.apple.touchbar.agent
+  //{
+  //  PresentationModeFnModes =     {
+  //    functionKeys = app;
+  //  };
+  //  PresentationModeGlobal = functionKeys;
+  //  PresentationModePerApp =     {
+  //    "com.apple.calculator" = functionKeys;
+  //  "com.eltima.cmd1.mas" = functionKeys;
+  //  };
+  //}
+  private static final String ourTouchBarDomain = "com.apple.touchbar.agent";
+  private static final String ourPerAppKey = "PresentationModePerApp";
+  private static final String ourGlobalKey = "PresentationModeGlobal";
+  private static final String ourShowFnValue = "functionKeys";
+
+  public static boolean isShowFnKeysEnabled(String appId) {
+    // 1. check global-mode setting
+    final Path p = new Path();
+    p.myPath.add(new Path.Node("persistentDomainForName:", ourTouchBarDomain));
+    String sval = p.readStringVal(ourGlobalKey);
+    if (sval != null && sval.equals(ourShowFnValue)) {
+      // PresentationModeGlobal = functionKeys;
+      return true;
+    }
+
+    // 2. check per-app setting
+    p.myPath.add(new Path.Node("objectForKey:", ourPerAppKey));
+    sval = p.readStringVal(appId);
+    return sval != null && sval.equals(ourShowFnValue);
+  }
+
+  public static boolean isFnShowsAppControls() {
+    //  PresentationModeFnModes =     {
+    //    functionKeys = app;
+    //  };
+    final Path p = new Path();
+    p.myPath.add(new Path.Node("persistentDomainForName:", ourTouchBarDomain));
+    p.myPath.add(new Path.Node("objectForKey:", "PresentationModeFnModes"));
+
+    final String sval = p.readStringVal("functionKeys");
+    return sval != null && sval.equals("app");
+  }
+
+  /**
+   * @return True when value has been changed
+   */
+  public static boolean setShowFnKeysEnabled(String appId, boolean val) { return setShowFnKeysEnabled(appId, val, false); }
+
+  public static boolean setShowFnKeysEnabled(String appId, boolean val, boolean performExtraDebugChecks) {
+    if (!isDomainExists(ourTouchBarDomain)) {
+      final Map<String, Object> vals = new HashMap<>();
+      vals.put(ourPerAppKey, new HashMap<>());
+      createPersistentDomain(ourTouchBarDomain, vals);
+      if (!isDomainExists(ourTouchBarDomain)) {
+        LOG.error("can't create domain '" + ourTouchBarDomain + "'");
+        return false;
+      }
+    }
+
+    final Path path = new Path();
+    path.myPath.add(new Path.Node("persistentDomainForName:", ourTouchBarDomain));
+    path.myPath.add(new Path.Node("objectForKey:", ourPerAppKey));
+    String sval = path.readStringVal(appId);
+    final boolean settingEnabled = sval != null && sval.equals(ourShowFnValue);
+
+    final String initDesc = "appId='" + appId
+                            + "', value (requested be set) ='" + val
+                            + "', initial path (tail) value = '" + sval
+                            + "', path='" + path + "'";
+
+    if (val == settingEnabled) {
+      if (performExtraDebugChecks) LOG.error("nothing to change: " + initDesc);
+      return false;
+    }
+
+    path.writeStringValue(appId, val ? ourShowFnValue : null);
+
+    if (performExtraDebugChecks) {
+      // just for embedded debug: make call of Foundation.invoke(myDefaults, "synchronize") - It waits for any pending asynchronous updates to the defaults database and returns; this method is unnecessary and shouldn't be used.
+      sval = path.readStringVal(appId, true);
+      final boolean isFNEnabled = sval != null && sval.equals(ourShowFnValue);
+      if (val != isFNEnabled)
+        LOG.error("can't write value '" + val + "' (was written just now, but read '" + sval + "'): " + initDesc);
+      else
+        LOG.error("value '" + val + "' was written from second attempt: " + initDesc);
+    }
+
+    return true;
+  }
+
+  private static final String TEST_APP_ID = "com.apple.terminal";
+
+  // returns error description when fails (null when success)
+  public static String testTouchBarSettingsWrite() {
+    if (isDomainExists(ourTouchBarDomain)) {
+      removePersistentDomain(ourTouchBarDomain);
+      if (isDomainExists(ourTouchBarDomain))
+        return "can't delete domain: " + ourTouchBarDomain;
+    }
+
+    final Map<String, Object> vals = new HashMap<>();
+    vals.put("TestNSDefaultsKey", "TestNSDefaultsValue");
+    vals.put("PresentationModePerApp", new HashMap<>());
+    createPersistentDomain(ourTouchBarDomain, vals);
+
+    if (!isDomainExists(ourTouchBarDomain))
+      return "can't create domain: " + ourTouchBarDomain;
+
+    final boolean enabled = isShowFnKeysEnabled(TEST_APP_ID);
+    setShowFnKeysEnabled(TEST_APP_ID, !enabled);
+    if (isShowFnKeysEnabled(TEST_APP_ID) == enabled)
+      return "can't write " + ourTouchBarDomain + "." + ourPerAppKey + "=" + !enabled;
+
+    setShowFnKeysEnabled(TEST_APP_ID, enabled);
+    return isShowFnKeysEnabled(TEST_APP_ID) == enabled ? null : "can't write " + ourTouchBarDomain + "." + ourPerAppKey + "=" + enabled;
+  }
+
+  //
+  // Appearance settings
+  //
+
   public static boolean isDarkMenuBar() {
     assert SystemInfo.isMac;
 
@@ -331,7 +383,7 @@ public class NSDefaults {
     }
   }
 
-  // for debug
+  // for debug only
   private List<String> _listAllKeys() {
     List<String> res = new ArrayList<>(100);
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();

@@ -28,6 +28,7 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   private JBCheckBox myExecuteFileInTerminal;
   private JBCheckBox myExecuteScriptInTerminal;
   private EnvironmentVariablesComponent myEnvComponent;
+  private EnvironmentVariablesComponent myScriptEnvComponent;
   private ButtonGroup myScriptGroup;
   private JBRadioButton myScriptFileRadioButton;
   private JBRadioButton myScriptTextRadioButton;
@@ -60,6 +61,7 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
     myScript.setText(configuration.getScriptText());
     myScriptWorkingDirectory.setText(configuration.getScriptWorkingDirectory());
     myExecuteScriptInTerminal.setSelected(configuration.isExecuteInTerminal());
+    myScriptEnvComponent.setEnvData(configuration.getEnvData());
 
     // Configure script by path execution
     myScriptSelector.setText(configuration.getScriptPath());
@@ -78,17 +80,18 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
     if (myScriptFileRadioButton.isSelected()) {
       configuration.setScriptWorkingDirectory(myScriptFileWorkingDirectory.getText());
       configuration.setExecuteInTerminal(myExecuteFileInTerminal.isSelected());
+      configuration.setEnvData(myEnvComponent.getEnvData());
       configuration.setExecuteScriptFile(true);
     } else {
       configuration.setScriptWorkingDirectory(myScriptWorkingDirectory.getText());
       configuration.setExecuteInTerminal(myExecuteScriptInTerminal.isSelected());
+      configuration.setEnvData(myScriptEnvComponent.getEnvData());
       configuration.setExecuteScriptFile(false);
     }
     configuration.setScriptPath(myScriptSelector.getText());
     configuration.setScriptOptions(myScriptOptions.getText());
     configuration.setInterpreterPath(myInterpreterSelector.getText());
     configuration.setInterpreterOptions(myInterpreterOptions.getText());
-    configuration.setEnvData(myEnvComponent.getEnvData());
   }
 
   @NotNull

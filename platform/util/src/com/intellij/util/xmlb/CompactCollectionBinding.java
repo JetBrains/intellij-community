@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.MutableAccessor;
+import com.intellij.util.XmlElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +69,56 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
   }
 
   @Override
+  public @NotNull Object deserialize(Object context, @NotNull XmlElement element) {
+    @SuppressWarnings("unchecked")
+    List<String> list = (List<String>)context;
+    list.clear();
+    if (element.name.equals(name)) {
+      for (XmlElement item : element.children) {
+        if (item.name.equals("item")) {
+          String v = item.attributes.get("value");
+          if (v != null) {
+            list.add(v);
+          }
+        }
+      }
+    }
+    else {
+      // JDOMExternalizableStringList format
+      XmlElement value = element.getChild("value");
+      if (value != null) {
+        value = value.getChild("list");
+      }
+      if (value != null) {
+        for (XmlElement item : value.children) {
+          if (item.name.equals("item")) {
+            String v = item.getAttributeValue("itemvalue");
+            if (v != null) {
+              list.add(v);
+            }
+          }
+        }
+      }
+    }
+    return list;
+  }
+
+  @Override
   public boolean isBoundTo(@NotNull Element element) {
     String elementName = element.getName();
+    if (isNameEqual(elementName)) {
+      return true;
+    }
+    else if (elementName.equals(Constants.OPTION)) {
+      // JDOMExternalizableStringList format
+      return isNameEqual(element.getAttributeValue(Constants.NAME));
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull XmlElement element) {
+    String elementName = element.name;
     if (isNameEqual(elementName)) {
       return true;
     }

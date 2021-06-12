@@ -37,8 +37,11 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
 
     registrar.register(new ImportClassFix(ref));
-    registrar.register(new StaticImportConstantFix(containingFile, ref));
-    registrar.register(new QualifyStaticConstantFix(containingFile, ref));
+    PsiElement refParent = ref.getParent();
+    if (!(refParent instanceof PsiMethodCallExpression)) {
+      registrar.register(new StaticImportConstantFix(containingFile, ref));
+      registrar.register(new QualifyStaticConstantFix(containingFile, ref));
+    }
 
     OrderEntryFix.registerFixes(registrar, ref);
 
@@ -76,7 +79,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
     PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
     if (parent instanceof PsiNewExpression &&
-        !(ref.getParent() instanceof PsiTypeElement) &&
+        !(refParent instanceof PsiTypeElement) &&
         (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
       registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));

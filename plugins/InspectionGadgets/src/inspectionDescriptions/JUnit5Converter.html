@@ -1,7 +1,35 @@
 <html>
 <body>
-Reports JUnit 4 tests which can be automatically converted to JUnit 5. Though default runners are automatically convertable, custom runners, method- and field- rules are not and require manual changes.
-This inspection requires JUnit 5 library already available on the classpath as well as JDK 1.8 or higher configured for the project.
+Reports JUnit 4 tests which can be automatically migrated to JUnit 5.
+Though default runners are automatically convertable, custom runners, method- and field- rules are not and require manual changes.
+<p>Example:</p>
+<pre><code>
+  <b>import</b> org.junit.Assert;
+  <b>import</b> org.junit.Test;
+
+  <b>public class</b> RelevantTest {
+
+    @Test
+    <b>public void</b> testIt() {
+      Assert.assertEquals("expected", "actual");
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>import</b> org.junit.jupiter.api.Assertions;
+  <b>import</b> org.junit.jupiter.api.Test;
+
+  <b>public class</b> RelevantTest {
+
+    @Test
+    <b>public void</b> testIt() {
+      Assertions.assertEquals("expected", "actual");
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+This inspection requires that the JUnit 5 library is available on the classpath, and JDK 1.8 or higher is configured for the project.
 <p>
   <small>New in 2017.1</small>
 </body>

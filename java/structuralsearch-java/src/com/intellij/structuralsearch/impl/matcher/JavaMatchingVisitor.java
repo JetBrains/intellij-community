@@ -443,6 +443,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     );
   }
 
+  @Override
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    final PsiRecordHeader other = myMatchingVisitor.getElement(PsiRecordHeader.class);
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(recordHeader.getRecordComponents(), other.getRecordComponents()));
+  }
+
   private boolean matchClasses(PsiClass patternClass, PsiClass matchClass) {
     final PsiClass saveClazz = this.myClazz;
     this.myClazz = matchClass;
@@ -457,7 +463,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (templateIsInterface && patternClass.isAnnotationType() && !matchClass.isAnnotationType()) return false;
       if (patternClass.isEnum() && !matchClass.isEnum()) return false;
       if (patternClass instanceof PsiTypeParameter != matchClass instanceof PsiTypeParameter) return false;
+      if (patternClass.isRecord() && !matchClass.isRecord()) return false;
 
+      if (!myMatchingVisitor.match(patternClass.getRecordHeader(), matchClass.getRecordHeader())) {
+        return false;
+      }
       if (!matchInAnyOrder(patternClass.getExtendsList(), matchClass.getExtendsList())) {
         return false;
       }
@@ -1567,7 +1577,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class, expression);
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()));
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
+    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getPattern(), other.getPattern()));
+  }
+
+  @Override
+  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    final PsiTypeTestPattern other = myMatchingVisitor.getElement(PsiTypeTestPattern.class);
+    final PsiPatternVariable variable = pattern.getPatternVariable();
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(variable, other.getPatternVariable()));
   }
 
   @Override

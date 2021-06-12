@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
@@ -14,7 +14,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.AbstractStorage;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +158,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
 
   @Override
   @Nullable
-  public synchronized ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard) {
+  public synchronized ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
     if (isCompletelyBroken) return null;
 
     int prevId = 0;
@@ -219,7 +220,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   public synchronized void purge(long period, int intervalBetweenActivities, Consumer<? super ChangeSet> processor) {
     if (isCompletelyBroken) return;
 
-    TIntHashSet recursionGuard = new TIntHashSet(1000);
+    IntSet recursionGuard = new IntOpenHashSet(1000);
 
     try {
       int firstObsoleteId = findFirstObsoleteBlock(period, intervalBetweenActivities, recursionGuard);
@@ -239,7 +240,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  private int findFirstObsoleteBlock(long period, int intervalBetweenActivities, TIntHashSet recursionGuard) throws IOException {
+  private int findFirstObsoleteBlock(long period, int intervalBetweenActivities, IntSet recursionGuard) throws IOException {
     long prevTimestamp = 0;
     long length = 0;
 
@@ -262,7 +263,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     return 0;
   }
 
-  private int doReadPrevSafely(int id, TIntHashSet recursionGuard) throws IOException {
+  private int doReadPrevSafely(int id, IntSet recursionGuard) throws IOException {
     recursionGuard.add(id);
     int prev = myStorage.getPrevRecord(id);
     if (!recursionGuard.add(prev)) throw new IOException("Recursive records found");

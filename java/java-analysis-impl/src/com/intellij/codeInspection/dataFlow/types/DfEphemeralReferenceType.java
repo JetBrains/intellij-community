@@ -1,8 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -13,10 +18,10 @@ import java.util.Set;
  * <p>
  * When ephemeral value is stored in the memory state variable we assume that the whole
  * memory state is ephemeral.
- * 
- * @see DfaMemoryState#isEphemeral() 
+ *
+ * @see DfaMemoryState#isEphemeral()
  */
-public class DfEphemeralReferenceType implements DfReferenceType {
+public class DfEphemeralReferenceType implements DfEphemeralType, DfReferenceType {
   private final @NotNull TypeConstraint myTypeConstraint;
 
   DfEphemeralReferenceType(@NotNull TypeConstraint constraint) {
@@ -45,7 +50,7 @@ public class DfEphemeralReferenceType implements DfReferenceType {
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    if (other == DfTypes.BOTTOM) return true;
+    if (other == DfType.BOTTOM) return true;
     if (other instanceof DfEphemeralReferenceType) {
       return myTypeConstraint.isSuperConstraintOf(((DfEphemeralReferenceType)other).myTypeConstraint);
     }
@@ -54,8 +59,8 @@ public class DfEphemeralReferenceType implements DfReferenceType {
 
   @Override
   public @NotNull DfType join(@NotNull DfType other) {
-    if (other == DfTypes.BOTTOM) return this;
-    if (other == DfTypes.TOP || !(other instanceof DfReferenceType)) return DfTypes.TOP;
+    if (other == DfType.BOTTOM) return this;
+    if (other == DfType.TOP || !(other instanceof DfReferenceType)) return DfType.TOP;
     TypeConstraint otherConstraint = ((DfReferenceType)other).getConstraint();
     TypeConstraint constraint = myTypeConstraint.join(otherConstraint);
     if (other instanceof DfEphemeralReferenceType) {
@@ -64,25 +69,40 @@ public class DfEphemeralReferenceType implements DfReferenceType {
              constraint == TypeConstraints.TOP ? DfTypes.NOT_NULL_OBJECT :
              new DfEphemeralReferenceType(constraint);
     }
-    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).myNotValues : Set.of();
+    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).getRawNotValues() : Set.of();
     return new DfGenericObjectType(notValues, constraint, ((DfReferenceType)other).getNullability(),
-                                   Mutability.UNKNOWN, null, DfTypes.BOTTOM, false);
+                                   Mutability.UNKNOWN, null, DfType.BOTTOM, false);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (other == DfType.BOTTOM) return this;
+    if (other == DfType.TOP) return other;
+    if (other instanceof DfEphemeralReferenceType) {
+      TypeConstraint otherConstraint = ((DfEphemeralReferenceType)other).getConstraint();
+      TypeConstraint constraint = myTypeConstraint.tryJoinExactly(otherConstraint);
+      return constraint == null ? null :
+             constraint == myTypeConstraint ? this :
+             constraint == otherConstraint ? other :
+             new DfEphemeralReferenceType(constraint);
+    }
+    return null;
   }
 
   @Override
   public @NotNull DfType meet(@NotNull DfType other) {
-    if (other == DfTypes.TOP) return this;
-    if (other == DfTypes.BOTTOM) return other;
+    if (other == DfType.TOP) return this;
+    if (other == DfType.BOTTOM) return other;
     if (other instanceof DfEphemeralReferenceType ||
         other instanceof DfGenericObjectType) {
       TypeConstraint otherConstraint = ((DfReferenceType)other).getConstraint();
       TypeConstraint constraint = myTypeConstraint.meet(otherConstraint);
       return constraint == myTypeConstraint ? this :
              constraint == otherConstraint ? other :
-             constraint == TypeConstraints.BOTTOM ? DfTypes.BOTTOM :
+             constraint == TypeConstraints.BOTTOM ? DfType.BOTTOM :
              new DfEphemeralReferenceType(constraint);
     }
-    return DfTypes.BOTTOM;
+    return DfType.BOTTOM;
   }
 
   @Override
@@ -96,7 +116,7 @@ public class DfEphemeralReferenceType implements DfReferenceType {
   }
 
   @Override
-  public String toString() {
-    return "ephemeral " + getConstraint().toString();
+  public @NotNull String toString() {
+    return "ephemeral " + getConstraint();
   }
 }

@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO: Create strategies instead of chain of instanceof
- *
- * @author yole
  */
 public class PythonFindUsagesProvider implements FindUsagesProvider {
   @Override

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -44,10 +45,10 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
       LOG.error("Could not find plugin by id: " + PluginManagerCore.CORE_ID);
       return;
     }
-    registerService(DirectoryIndex.class, LightEditDirectoryIndex.class, pluginDescriptor, true);
-    registerService(ProjectFileIndex.class, LightEditProjectFileIndex.class, pluginDescriptor, true);
-    registerService(FileIndexFacade.class, LightEditFileIndexFacade.class, pluginDescriptor, true);
-    registerService(DumbService.class, LightEditDumbService.class, pluginDescriptor, true);
+    registerService(DirectoryIndex.class, LightEditDirectoryIndex.class, pluginDescriptor, true, ServiceDescriptor.PreloadMode.FALSE);
+    registerService(ProjectFileIndex.class, LightEditProjectFileIndex.class, pluginDescriptor, true, ServiceDescriptor.PreloadMode.FALSE);
+    registerService(FileIndexFacade.class, LightEditFileIndexFacade.class, pluginDescriptor, true, ServiceDescriptor.PreloadMode.FALSE);
+    registerService(DumbService.class, LightEditDumbService.class, pluginDescriptor, true, ServiceDescriptor.PreloadMode.FALSE);
     registerComponent(FileEditorManager.class, LightEditFileEditorManagerImpl.class, pluginDescriptor, true);
   }
 

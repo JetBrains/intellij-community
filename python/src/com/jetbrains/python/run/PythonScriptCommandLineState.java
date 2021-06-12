@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,7 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import com.jetbrains.python.actions.PyExecuteSelectionAction;
+import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -49,9 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class PythonScriptCommandLineState extends PythonCommandLineState {
   private static final String INPUT_FILE_MESSAGE = "Input is being redirected from ";
   private final PythonRunConfiguration myConfig;
@@ -83,18 +82,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      final String runFileText = buildScriptWithConsoleRun();
+      final String runFileText = buildScriptWithConsoleRun(myConfig);
       final boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
-      final Sdk sdk = myConfig.getSdk();
-      if (useExistingConsole && sdk != null && PyExecuteSelectionAction.canFindConsole(project, sdk.getHomePath())) {
-        // there are existing consoles, don't care about Rerun action
-        PyExecuteSelectionAction.selectConsoleAndExecuteCode(project, runFileText);
-      }
-      else {
-        PyExecuteSelectionAction.startNewConsoleInstance(project, codeExecutor ->
-          PyExecuteSelectionAction.executeInConsole(codeExecutor, runFileText, null), runFileText, myConfig);
-      }
-
+      ApplicationManager.getApplication().invokeLater(() -> {
+        PyExecuteInConsole.executeCodeInConsole(project, runFileText, null, useExistingConsole, false, true, myConfig);
+      });
       return null;
     }
     else if (emulateTerminal()) {
@@ -271,7 +263,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
     }
 
-    scriptParameters.addParameters(getExpandedScriptParameters());
+    scriptParameters.addParameters(getExpandedScriptParameters(myConfig));
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
@@ -282,8 +274,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
   }
 
-  private @NotNull List<String> getExpandedScriptParameters() {
-    final String parameters = myConfig.getScriptParameters();
+  private static @NotNull List<String> getExpandedScriptParameters(PythonRunConfiguration config) {
+    final String parameters = config.getScriptParameters();
     return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
   }
 
@@ -291,9 +283,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     return StringUtil.escapeCharCharacters(s);
   }
 
-  private String buildScriptWithConsoleRun() {
+  public static String buildScriptWithConsoleRun(PythonRunConfiguration config) {
     StringBuilder sb = new StringBuilder();
-    final Map<String, String> configEnvs = myConfig.getEnvs();
+    final Map<String, String> configEnvs = config.getEnvs();
     configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED);
     if (configEnvs.size() > 0) {
       sb.append("import os\n");
@@ -302,13 +294,13 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
     }
 
-    final Project project = myConfig.getProject();
-    final Sdk sdk = myConfig.getSdk();
+    final Project project = config.getProject();
+    final Sdk sdk = config.getSdk();
     final PathMapper pathMapper =
       PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).getPythonConsoleSettings());
 
-    String scriptPath = myConfig.getScriptName();
-    String workingDir = myConfig.getWorkingDirectory();
+    String scriptPath = config.getScriptName();
+    String workingDir = config.getWorkingDirectory();
     if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
       scriptPath = pathMapper.convertToRemote(scriptPath);
       workingDir = pathMapper.convertToRemote(workingDir);
@@ -316,7 +308,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     sb.append("runfile('").append(escape(scriptPath)).append("'");
 
-    final List<String> scriptParameters = getExpandedScriptParameters();
+    final List<String> scriptParameters = getExpandedScriptParameters(config);
     if (scriptParameters.size() != 0) {
       sb.append(", args=[");
       for (int i = 0; i < scriptParameters.size(); i++) {
@@ -332,7 +324,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       sb.append(", wdir='").append(escape(workingDir)).append("'");
     }
 
-    if (myConfig.isModuleMode()) {
+    if (config.isModuleMode()) {
       sb.append(", is_module=True");
     }
 

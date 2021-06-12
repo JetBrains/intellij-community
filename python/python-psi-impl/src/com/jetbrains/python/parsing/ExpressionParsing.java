@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
 
-/**
- * @author yole
- */
+
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance(ExpressionParsing.class);
   public static final WhitespacesAndCommentsBinder CONSUME_COMMENTS_AND_SPACES_TO_LEFT = (tokens, atStreamEdge, getter) -> tokens.size();

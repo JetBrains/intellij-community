@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
@@ -10,8 +10,7 @@ import com.intellij.openapi.util.BuildNumber
 /**
  * Provides coordinates of external annotations artifacts for IntelliJ SDK.
  */
-class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
-
+internal class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
   override fun getLocations(
     project: Project,
     library: Library,
@@ -22,7 +21,8 @@ class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
     if (groupId == null || artifactId == null || version == null) {
       return emptyList()
     }
-    val libraries = LibrariesWithIntellijClassesSetting.getInstance(project).state.intellijApiContainingLibraries
+
+    val libraries = LibrariesWithIntellijClassesSetting.getInstance(project).intellijApiContainingLibraries
     if (libraries.any { it.groupId == groupId && it.artifactId == artifactId }) {
       return getAnnotationsLocations(version)
     }

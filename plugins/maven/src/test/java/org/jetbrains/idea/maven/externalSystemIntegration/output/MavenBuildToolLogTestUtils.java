@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.DefaultBuildDescriptor;
@@ -16,7 +16,6 @@ import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Logger;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -50,9 +49,9 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     try {
       LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
         @Override
-        public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-          super.processWarn(message, t, logger);
+        public boolean processWarn(@NotNull String category, String message, Throwable t) {
           fail(message + t);
+          return false;
         }
       });
       runnable.run();

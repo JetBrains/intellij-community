@@ -25,39 +25,44 @@ import java.nio.file.Paths
  *
  * @author traff
  */
-internal class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachProject.text")), DumbAware {
+open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachProject.text")), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                          GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val descriptor = OpenProjectFileChooserDescriptor(true)
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    FileChooser.chooseFiles(descriptor, project, null) {
-      attachProject(it[0], project)
-    }
+    chooseAndAttachToProject(project)
   }
-}
 
-
-private fun attachProject(virtualFile: VirtualFile, project: Project) {
-  var baseDir: VirtualFile? = virtualFile
-  if (!virtualFile.isDirectory) {
-    baseDir = virtualFile.parent
-    while (baseDir != null) {
-      if (isProjectDirectoryExistsUsingIo(baseDir)) {
-        break
+  companion object {
+    fun chooseAndAttachToProject(project: Project) {
+      val descriptor = OpenProjectFileChooserDescriptor(true)
+      FileChooser.chooseFiles(descriptor, project, null) {
+        attachProject(it[0], project)
       }
-      baseDir = baseDir.parent
     }
-  }
 
-  if (baseDir == null) {
-    Messages.showErrorDialog(IdeBundle.message("dialog.message.attach.project.not.found", virtualFile.path),
-                             IdeBundle.message("dialog.title.attach.project.error"))
-  }
-  else {
-    PlatformProjectOpenProcessor.attachToProject(project, Paths.get(FileUtil.toSystemDependentName(baseDir.path)), null)
+    private fun attachProject(virtualFile: VirtualFile, project: Project) {
+      var baseDir: VirtualFile? = virtualFile
+      if (!virtualFile.isDirectory) {
+        baseDir = virtualFile.parent
+        while (baseDir != null) {
+          if (isProjectDirectoryExistsUsingIo(baseDir)) {
+            break
+          }
+          baseDir = baseDir.parent
+        }
+      }
+
+      if (baseDir == null) {
+        Messages.showErrorDialog(IdeBundle.message("dialog.message.attach.project.not.found", virtualFile.path),
+                                 IdeBundle.message("dialog.title.attach.project.error"))
+      }
+      else {
+        PlatformProjectOpenProcessor.attachToProject(project, Paths.get(FileUtil.toSystemDependentName(baseDir.path)), null)
+      }
+    }
   }
 }

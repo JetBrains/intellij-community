@@ -53,6 +53,8 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
       toolbarState.state =
         getToolbarStateByVisibilityFlags(false, oldState.showMainToolbar, false,
                                          oldState.showNavigationBar)
+      logger.info("Loading old state, main toolbar: ${oldState.showMainToolbar} navBar ${oldState.showNavigationBar}")
+
     }
     else {
       toolbarState = state
@@ -63,6 +65,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   fun getToolbarStateByVisibilityFlags(newToolbarEnabled: Boolean, oldToolbarVisible: Boolean,
                                        newToolbarVisible: Boolean, navBarVisible: Boolean): ExperimentalToolbarStateEnum {
     if (oldToolbarVisible && newToolbarVisible) {
+      logger.error("Illegal double toolbar visible state")
       throw IllegalStateException()
     }
     if (newToolbarEnabled && newToolbarVisible) {
@@ -107,11 +110,15 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   private fun updateSettingsState() {
     UISettings.instance.state.showNavigationBar = toolbarState.state.navBarVisible
     UISettings.instance.state.showMainToolbar = toolbarState.state.oldToolbarVisible
-    logger.info("showNavigationBar: $UISettings.instance.state.showNavigationBar showMainToolbar: $UISettings.instance.state.showMainToolbar")
+    logger.info("showNavigationBar: ${UISettings.instance.state.showNavigationBar} showMainToolbar: ${UISettings.instance.state.showMainToolbar}")
   }
 
   override fun isToolbarVisible(): Boolean {
     return toolbarState.state.oldToolbarVisible
+  }
+
+  override fun showSettingsEntryPointInStatusBar(): Boolean {
+    return !isToolbarVisible() && !getShowToolbarInNavigationBar() && !toolbarState.state.newToolbarVisible
   }
 
   override fun setToolbarVisible(value: Boolean) {

@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -90,8 +91,11 @@ public final class StubTextInconsistencyException extends RuntimeException imple
 
   @NotNull
   private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
-    FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(), viewProvider.getContents());
-    fc.setProject(viewProvider.getManager().getProject());
+    Project project = viewProvider.getManager().getProject();
+    FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(),
+                                                                       viewProvider.getContents(),
+                                                                       project);
+    fc.setProject(project);
     PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }

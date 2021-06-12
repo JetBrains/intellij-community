@@ -39,7 +39,7 @@ public class EmptyTryBlockInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
   }
 
@@ -54,11 +54,11 @@ public class EmptyTryBlockInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      final PsiCodeBlock finallyBlock = statement.getTryBlock();
-      if (finallyBlock == null) {
+      final PsiCodeBlock tryBlock = statement.getTryBlock();
+      if (tryBlock == null) {
         return;
       }
-      if (!finallyBlock.isEmpty()) {
+      if (!tryBlock.isEmpty()) {
         return;
       }
       registerStatementError(statement);

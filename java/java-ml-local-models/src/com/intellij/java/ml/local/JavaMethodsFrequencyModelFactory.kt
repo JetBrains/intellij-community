@@ -3,12 +3,19 @@ package com.intellij.java.ml.local
 
 import com.intellij.ml.local.models.frequency.methods.MethodsFrequencyModelFactory
 import com.intellij.ml.local.models.frequency.methods.MethodsUsagesTracker
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 
 class JavaMethodsFrequencyModelFactory : MethodsFrequencyModelFactory() {
   override fun fileVisitor(usagesTracker: MethodsUsagesTracker): PsiElementVisitor = object : JavaRecursiveElementWalkingVisitor() {
 
+    override fun visitFile(file: PsiFile) {
+      super.visitFile(file)
+      usagesTracker.dump()
+    }
+
     override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
+      ProgressManager.checkCanceled()
       expression.resolveMethod()?.let { method ->
         JavaLocalModelsUtil.getMethodName(method)?.let { methodName ->
           method.containingClass?.let { cls ->

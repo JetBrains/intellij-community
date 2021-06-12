@@ -19,7 +19,7 @@ import training.util.WeakReferenceDelegator
 import training.util.courseCanBeUsed
 import training.util.switchOnExperimentalLessons
 
-class CourseManager internal constructor() : Disposable {
+internal class CourseManager internal constructor() : Disposable {
   val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
@@ -71,17 +71,6 @@ class CourseManager internal constructor() : Disposable {
 
   fun findLessonByName(lessonName: String): Lesson? {
     return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
-  }
-
-  fun calcLessonsForLanguage(primaryLangSupport: LangSupport): Int {
-    return ContainerUtil.concat(filterByLanguage(primaryLangSupport).map { m -> m.lessons }).size
-  }
-
-  fun calcPassedLessonsForLanguage(primaryLangSupport: LangSupport): Int {
-    return filterByLanguage(primaryLangSupport)
-      .flatMap { m -> m.lessons }
-      .filter { it.passed }
-      .size
   }
 
   private fun initAllModules(): List<IftModule> = COURSE_MODULES_EP.extensions

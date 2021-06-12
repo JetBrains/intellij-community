@@ -145,6 +145,10 @@ public final class MoveClassesOrPackagesUtil {
     return new PsiPackageImpl(manager, qName) {
       @Override
       public boolean isValid() {
+        if (scope.getModelBranchesAffectingScope().isEmpty()) {
+          // Already merged -- PsiPackage can live longer than the branch
+          return super.isValid();
+        }
         return !getProject().isDisposed() &&
                PackageIndex.getInstance(getProject()).getDirsByPackageName(qName, scope).findFirst() != null;
       }
@@ -311,16 +315,19 @@ public final class MoveClassesOrPackagesUtil {
     PsiDirectory[] directories = aPackage != null ? aPackage.getDirectories() : null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile baseDirVirtualFile = baseDir != null ? baseDir.getVirtualFile() : null;
-    final boolean isBaseDirInTestSources = baseDirVirtualFile != null && fileIndex.isInTestSourceContent(baseDirVirtualFile);
-    if (directories != null && directories.length == 1 && (baseDirVirtualFile == null ||
-                                                           fileIndex.isInTestSourceContent(directories[0].getVirtualFile()) == isBaseDirInTestSources)) {
+    final VirtualFile baseSourceRoot = baseDirVirtualFile != null ? fileIndex.getSourceRootForFile(baseDirVirtualFile) : null;
+    if (directories != null && 
+        directories.length == 1 && 
+        baseSourceRoot != null && 
+        baseSourceRoot.equals(fileIndex.getSourceRootForFile(directories[0].getVirtualFile()))) {
       directory = directories[0];
     }
     else {
       final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
-      if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
-        directory = WriteAction
-          .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0)));
+      if (contentSourceRoots.size() == 1 && 
+          baseSourceRoot != null && 
+          baseSourceRoot.equals(contentSourceRoots.get(0))) {
+        directory = WriteAction.compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0)));
       }
       else {
         final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);

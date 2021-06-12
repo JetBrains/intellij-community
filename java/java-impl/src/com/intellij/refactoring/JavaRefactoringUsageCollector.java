@@ -26,7 +26,7 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
@@ -80,6 +80,7 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
     addMetricIfDiffers(result, settings, defaultSettings, 
                        s -> getVisibility(settings.INTRODUCE_CONSTANT_VISIBILITY), 
                        javadoc -> new MetricEvent("introduce.constant.visibility", new FeatureUsageData().addData("visibility", javadoc)));
+    addBoolIfDiffers(result, settings, defaultSettings, s -> s.INTRODUCE_CONSTANT_REPLACE_ALL, "introduce.constant.replace.all");
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_METHOD_THIS, "inline.method.this.only.choice");
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_METHOD_KEEP, "inline.method.all.and.keep.choice");

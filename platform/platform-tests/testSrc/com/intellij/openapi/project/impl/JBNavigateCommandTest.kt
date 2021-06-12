@@ -147,7 +147,6 @@ class JBNavigateCommandTest {
 
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       navigate(projectName!!, mapOf("path" to "A.java"))
-      UIUtil.dispatchAllInvocationEvents()
 
       ProjectManager.getInstance().openProjects.find { it.name == projectName }!!.use { recentProject ->
         assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
@@ -178,6 +177,7 @@ class JBNavigateCommandTest {
     val map = hashMapOf("project" to projectName)
     map.putAll(parameters)
     JBProtocolCommand.findCommand("navigate")!!.perform("reference", map)
+    UIUtil.dispatchAllInvocationEvents()
   }
 }
 

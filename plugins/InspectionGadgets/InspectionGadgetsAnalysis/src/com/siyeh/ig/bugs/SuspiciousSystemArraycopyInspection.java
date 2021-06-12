@@ -17,8 +17,9 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -118,8 +119,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       LongRangeSet srcPosSet = DfIntType.extractRange(result.getDfType(srcPos));
       LongRangeSet destPosSet = DfIntType.extractRange(result.getDfType(destPos));
       LongRangeSet lengthSet = DfIntType.extractRange(result.getDfType(length));
-      LongRangeSet srcPossibleLengthToCopy = srcLengthSet.minus(srcPosSet, false);
-      LongRangeSet destPossibleLengthToCopy = destLengthSet.minus(destPosSet, false);
+      LongRangeSet srcPossibleLengthToCopy = srcLengthSet.minus(srcPosSet, LongRangeType.INT32);
+      LongRangeSet destPossibleLengthToCopy = destLengthSet.minus(destPosSet, LongRangeType.INT32);
       long lengthMin = lengthSet.min();
       if (lengthMin > destPossibleLengthToCopy.max()) {
         registerError(length, InspectionGadgetsBundle
@@ -146,8 +147,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
     @NotNull
     private static LongRangeSet getDefiniteRange(@NotNull LongRangeSet startSet, @NotNull LongRangeSet lengthSet) {
       long maxLeftBorder = startSet.max();
-      LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), false);
-      long minRightBorder = startSet.plus(lengthMinusOne, false).min();
+      LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), LongRangeType.INT32);
+      long minRightBorder = startSet.plus(lengthMinusOne, LongRangeType.INT32).min();
       if (maxLeftBorder > minRightBorder) return LongRangeSet.empty();
       return LongRangeSet.range(maxLeftBorder, minRightBorder);
     }

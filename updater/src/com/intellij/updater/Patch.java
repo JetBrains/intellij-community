@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
+
+import static com.intellij.updater.Runner.*;
 
 public class Patch {
   private static final int CREATE_ACTION_KEY = 1;
@@ -19,7 +19,6 @@ public class Patch {
   private static final int UPDATE_ZIP_ACTION_KEY = 3;
   private static final int DELETE_ACTION_KEY = 4;
   private static final int VALIDATE_ACTION_KEY = 5;
-  private static final int RENAME_ROOT_DIRECTORY_ACTION_KEY = 6;
 
   private final String myOldBuild;
   private final String myNewBuild;
@@ -76,7 +75,7 @@ public class Patch {
   }
 
   private List<PatchAction> calculateActions(PatchSpec spec, UpdaterUI ui) throws IOException {
-    Runner.logger().info("Calculating difference...");
+    LOG.info("Calculating difference...");
     ui.startProcess("Calculating difference...");
 
     File olderDir = new File(spec.getOldFolder());
@@ -91,7 +90,7 @@ public class Patch {
     Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
     DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, critical, optional, true);
 
-    Runner.logger().info("Preparing actions...");
+    LOG.info("Preparing actions...");
     ui.startProcess("Preparing actions...");
 
     List<PatchAction> tempActions = new ArrayList<>();
@@ -124,7 +123,7 @@ public class Patch {
 
     List<PatchAction> actions = new ArrayList<>();
     for (PatchAction action : tempActions) {
-      Runner.logger().info(action.getPath());
+      LOG.info(action.getPath());
       if (action.calculate(olderDir, newerDir)) {
         actions.add(action);
         action.setCritical(critical.contains(action.getPath()));
@@ -132,24 +131,7 @@ public class Patch {
         action.setStrict(strict.contains(action.getPath()));
       }
     }
-    addRenameRootDirectoryActionIfNeeded(spec, actions);
     return actions;
-  }
-
-  private void addRenameRootDirectoryActionIfNeeded(PatchSpec spec, List<PatchAction> actions) throws IOException {
-    if (!spec.isRenameRootDirectory()) {
-      return;
-    }
-    Path oldPath = Paths.get(spec.getOldFolder()).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName();
-    Path newPath = Paths.get(spec.getNewFolder()).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName();
-
-    String oldFilename = oldPath != null ? oldPath.toString() : null;
-    String newFilename = newPath != null ? newPath.toString() : null;
-
-    if (oldFilename == null || newFilename == null || oldFilename.equals(newFilename)) {
-      return;
-    }
-    actions.add(new RenameRootDirectoryAction(this, oldFilename, newFilename));
   }
 
   public List<PatchAction> getActions() {
@@ -209,9 +191,6 @@ public class Patch {
       else if (clazz == UpdateZipAction.class) key = UPDATE_ZIP_ACTION_KEY;
       else if (clazz == DeleteAction.class) key = DELETE_ACTION_KEY;
       else if (clazz == ValidateAction.class) key = VALIDATE_ACTION_KEY;
-      else if (clazz == RenameRootDirectoryAction.class) {
-        key = RENAME_ROOT_DIRECTORY_ACTION_KEY;
-      }
       else throw new RuntimeException("Unknown action " + each);
       dataOut.writeInt(key);
       each.write(dataOut);
@@ -258,9 +237,6 @@ public class Patch {
           break;
         case VALIDATE_ACTION_KEY:
           a = new ValidateAction(this, in);
-          break;
-        case RENAME_ROOT_DIRECTORY_ACTION_KEY:
-          a = new RenameRootDirectoryAction(this, in);
           break;
         default:
           throw new RuntimeException("Unknown action type " + key);
@@ -370,7 +346,7 @@ public class Patch {
       }
 
       if (actionsToApply.isEmpty()) {
-        Runner.logger().info("nothing to apply");
+        LOG.info("nothing to apply");
         return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
       }
 
@@ -390,7 +366,7 @@ public class Patch {
       }
     }
     catch (OperationCancelledException e) {
-      Runner.logger().warn("cancelled", e);
+      LOG.log(Level.WARNING, "cancelled", e);
       return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
     }
 
@@ -400,10 +376,10 @@ public class Patch {
       File _backupDir = backupDir;
       forEach(actionsToApply, "Applying patch...", ui, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
+          LOG.info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent directory is absent.");
+          LOG.info("Update action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else {
           appliedActions.add(action);
@@ -412,11 +388,11 @@ public class Patch {
       });
     }
     catch (OperationCancelledException e) {
-      Runner.logger().warn("cancelled", e);
+      LOG.log(Level.WARNING, "cancelled", e);
       return new PatchFileCreator.ApplicationResult(false, appliedActions);
     }
     catch (Throwable t) {
-      Runner.logger().error("apply failed", t);
+      LOG.log(Level.SEVERE, "apply failed", t);
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
     }
 
@@ -425,14 +401,14 @@ public class Patch {
       Files.setLastModifiedTime(toDir.toPath(), FileTime.from(Instant.now()));
     }
     catch (IOException e) {
-      Runner.logger().warn("setLastModified: " + toDir, e);
+      LOG.log(Level.WARNING, "setLastModified: " + toDir, e);
     }
 
     return new PatchFileCreator.ApplicationResult(true, appliedActions);
   }
 
   public void revert(List<? extends PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
-    Runner.logger().info("Reverting... [" + actions.size() + " actions]");
+    LOG.info("Reverting... [" + actions.size() + " actions]");
     ui.startProcess("Reverting...");
 
     List<PatchAction> reverse = new ArrayList<>(actions);
@@ -449,7 +425,7 @@ public class Patch {
                               String title,
                               UpdaterUI ui,
                               ActionsProcessor processor) throws OperationCancelledException, IOException {
-    Runner.logger().info(title + " [" + actions.size() + " actions]");
+    LOG.info(title + " [" + actions.size() + " actions]");
     ui.startProcess(title);
     ui.checkCancelled();
 

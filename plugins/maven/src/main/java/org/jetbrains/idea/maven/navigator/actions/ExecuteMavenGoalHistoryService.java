@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.openapi.components.*;
@@ -14,12 +14,9 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-@State(
-    name = "mavenExecuteGoalHistory",
-    storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
-public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<String[]> {
-
+@State(name = "mavenExecuteGoalHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
+public final class ExecuteMavenGoalHistoryService implements PersistentStateComponent<String[]> {
   private static final int MAX_HISTORY_LENGTH = 20;
 
   private final LinkedList<String> myHistory = new LinkedList<>();
@@ -29,7 +26,7 @@ public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<
   private String myCanceledCommand;
 
   public static ExecuteMavenGoalHistoryService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExecuteMavenGoalHistoryService.class);
+    return project.getService(ExecuteMavenGoalHistoryService.class);
   }
 
   @Nullable
@@ -69,12 +66,12 @@ public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<
   public String @Nullable [] getState() {
     String[] res = new String[myHistory.size() + 1];
     res[0] = myWorkDirectory;
-    
+
     int i = 1;
     for (String goal : myHistory) {
       res[i++] = goal;
     }
-    
+
     return res;
   }
 

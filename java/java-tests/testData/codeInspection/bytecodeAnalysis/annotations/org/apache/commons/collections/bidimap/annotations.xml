@@ -502,20 +502,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkKey(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkKeyAndValue(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_,null-&gt;fail;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 1'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkNonNullComparable(java.lang.Object, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -523,17 +514,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkNonNullComparable(java.lang.Object, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkValue(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void checkValue(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void copyColor(org.apache.commons.collections.bidimap.TreeBidiMap.Node, org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

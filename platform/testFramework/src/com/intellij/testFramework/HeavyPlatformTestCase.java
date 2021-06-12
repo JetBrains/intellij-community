@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -71,15 +71,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -87,16 +86,12 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.testFramework.RunAll.runAll;
-
 /**
  * Base class for heavy tests.
  * <p/>
  * NOTE: Because of the performance difference, we recommend plugin developers to write light tests whenever possible.
  * <p/>
  * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
- *
- * @author yole
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
@@ -477,7 +472,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> disposeRootDisposable(),
       () -> {
         if (project != null) {
@@ -743,6 +738,21 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return file.toFile();
   }
 
+  public @NotNull VirtualFile createTempVirtualFile(@NonNls @NotNull String fileName,
+                                                    byte @Nullable [] bom,
+                                                    @NonNls @NotNull String content,
+                                                    @NotNull Charset charset) throws IOException {
+    File file = createTempFile(fileName, null);
+    FileOutputStream stream = new FileOutputStream(file);
+    if (bom != null) {
+      stream.write(bom);
+    }
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
+      writer.write(content);
+    }
+    return getVirtualFile(file);
+  }
+
   protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }
@@ -757,7 +767,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   public @interface WrapInCommand {
   }
 
-  protected static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
+  public static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
     try {
       // requestor must be notnull (for GlobalUndoTest)
       return WriteAction.computeAndWait(() -> dir.createChildData(dir, name));
@@ -776,7 +786,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
+  public static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
     try {
       WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
     }

@@ -23,6 +23,11 @@ import java.util.*;
 
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!editor.getSelectionModel().hasSelection()) {

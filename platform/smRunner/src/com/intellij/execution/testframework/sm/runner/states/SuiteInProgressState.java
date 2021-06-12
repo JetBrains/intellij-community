@@ -56,16 +56,6 @@ public class SuiteInProgressState extends TestInProgressState {
   }
 
   @Override
-  public boolean wasTerminated() {
-    return false;
-  }
-
-  @Override
-  public Magnitude getMagnitude() {
-    return Magnitude.RUNNING_INDEX;
-  }
-
-  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "SUITE PROGRESS";

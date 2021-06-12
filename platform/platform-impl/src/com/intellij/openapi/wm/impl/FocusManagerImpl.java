@@ -31,7 +31,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -50,10 +49,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<>();
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Set<ActionCallback> myTypeAheadRequestors = new HashSet<>();
-  private boolean myTypeaheadEnabled = true;
 
   private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakValueMap();
   private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
@@ -123,8 +118,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    logFocusRequest(c, project, true);
-    c.requestFocusInWindow();
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
+      // this branch is needed to request focus to detached project windows (editor or tool window)
+      logFocusRequest(c, project, false);
+      c.requestFocus();
+    }
+    else {
+      logFocusRequest(c, project, true);
+      c.requestFocusInWindow();
+    }
     return ActionCallback.DONE;
   }
 
@@ -187,58 +189,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
     });
     immediate.set(false);
-  }
-
-  @Override
-  public void setTypeaheadEnabled(boolean enabled) {
-    myTypeaheadEnabled = enabled;
-  }
-
-  private boolean isTypeaheadEnabled() {
-    return myTypeaheadEnabled && Registry.is("actionSystem.fixLostTyping");
-  }
-
-  @Override
-  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
-    if (!isTypeaheadEnabled()) {
-      return;
-    }
-
-    final long currentTime = System.currentTimeMillis();
-    final ActionCallback done;
-    if (!Registry.is("type.ahead.logging.enabled")) {
-      done = callback;
-    }
-    else {
-      final String id = new Exception().getStackTrace()[2].getClassName();
-      //LOG.setLevel(Level.ALL);
-      final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy HH:ss:SSS", Locale.US);
-      LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tStarted:  " + id);
-      done = new ActionCallback();
-      callback.doWhenDone(() -> {
-        done.setDone();
-        LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tDone:     " + id);
-      });
-      callback.doWhenRejected(() -> {
-        done.setRejected();
-        LOG.info(dateFormat.format(System.currentTimeMillis()) + "\tRejected: " + id);
-      });
-    }
-    assertDispatchThread();
-
-    myTypeAheadRequestors.add(done);
-    done.notify(new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                     "Typeahead request blocked",
-                                     new Exception() {
-                                       @Override
-                                       public String getMessage() {
-                                         return "Time: " + (System.currentTimeMillis() - currentTime) + "; cause: " + cause +
-                                                "; runnable waiting for the focus change: " +
-                                                IdeEventQueue.getInstance().runnablesWaitingForFocusChangeState();
-                                       }
-                                     },
-                                     true)
-                  .doWhenProcessed(() -> myTypeAheadRequestors.remove(done)));
   }
 
   @DirtyUI

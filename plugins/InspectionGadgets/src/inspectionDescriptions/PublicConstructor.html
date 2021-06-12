@@ -1,7 +1,49 @@
 <html>
 <body>
-Reports <b>public</b> constructors. Some coding standards discourage <b>public</b> constructors, preferring to use
-<b>static</b> factory methods. This way the implementation can be swapped out without affecting the call sites.
+Reports <code>public</code> constructors.
+Some coding standards discourage <code>public</code> constructors, preferring to use
+<code>static</code> factory methods.
+This way the implementation can be swapped out without affecting the call sites.
+<p>Example:</p>
+<pre>
+  class Test {
+    private String name;
+
+    public Test(String name) {
+        this.name = name;
+    }
+
+    public void test() {
+        System.out.println(name);
+    }
+
+    public static void main(String[] args) {
+        new Test("str").test();
+    }
+  }
+</pre>
+<p>After quick-fix is applied, the result will be:</p>
+<pre>
+  class Test {
+    private String name;
+
+    private Test(String name) {
+        this.name = name;
+    }
+
+    public static Test getInstance(String name) {
+        return new Test(name);
+    }
+
+    public void test() {
+        System.out.println(name);
+    }
+
+    public static void main(String[] args) {
+        getInstance("str").test();
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 </body>

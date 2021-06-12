@@ -296,10 +296,11 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
                   Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
                   unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
                 }
-                if(unhandledExceptions.stream().noneMatch(ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
-                  if(parameter.getType() instanceof PsiDisjunctionType) {
+                if (!ContainerUtil.exists(unhandledExceptions, ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
+                  if (parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);
-                  } else {
+                  }
+                  else {
                     DeleteCatchFix.deleteCatch(parameter);
                   }
                 }

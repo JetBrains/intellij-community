@@ -6,6 +6,7 @@ import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -16,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -52,6 +54,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/packageClassClash1/pkg/sub.java", BASE_PATH + "/packageClassClash1", false, false);
   }
 
+  private EditorColorsScheme cloneColorSchema() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme globalScheme = manager.getGlobalScheme();
+    EditorColorsScheme scheme = (EditorColorsScheme)globalScheme.clone();
+    manager.addColorsScheme(scheme);
+    manager.setGlobalScheme(scheme);
+    Disposer.register(getTestRootDisposable(), () -> manager.setGlobalScheme(globalScheme));
+    return scheme;
+  }
+
   public void testScopeBased() {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
@@ -59,10 +71,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
 
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = cloneColorSchema();
     TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getScopeId());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
@@ -86,10 +95,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
 
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = cloneColorSchema();
     TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getScopeId());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, null, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
@@ -109,6 +115,14 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     finally {
       scopeManager.removeAllSets();
     }
+  }
+
+  public void testVisibilityBased() {
+    EditorColorsScheme scheme = cloneColorSchema();
+    TextAttributesKey xKey = JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES;
+    TextAttributes xAttributes = new TextAttributes(null, null, Color.orange, EffectType.BOXED, Font.PLAIN);
+    scheme.setAttributes(xKey, xAttributes);
+    testFile(BASE_PATH + "/visibility/Simple.java").projectRoot(BASE_PATH + "/visibility").checkSymbolNames().test();
   }
 
   public void testMultiJDKConflict() {

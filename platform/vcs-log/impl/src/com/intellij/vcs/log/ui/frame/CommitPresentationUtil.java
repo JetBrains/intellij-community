@@ -217,12 +217,14 @@ public final class CommitPresentationUtil {
       String date = DateFormatUtil.formatDate(commitTime);
       String time = DateFormatUtil.formatTime(commitTime);
       committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
-    } else {
+    }
+    else {
       String by = VcsUserUtil.getShortPresentation(committer) +
                   (!committer.getEmail().isEmpty() ? "</span> " + getEmailLink(committer) + "<span style=\"" + style + "\">" : "");
       if (commitTime == null) {
         committed = VcsLogBundle.message("vcs.log.details.committer.info.user", by);
-      } else {
+      }
+      else {
         String date = DateFormatUtil.formatDate(commitTime);
         String time = DateFormatUtil.formatTime(commitTime);
         committed = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
@@ -279,7 +281,7 @@ public final class CommitPresentationUtil {
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(branches, s -> HtmlChunk.text(s))).toString();
     }
 
-    String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all")).toString();
+    String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all"));
     int headAndTailWidth = metrics.stringWidth(head) + metrics.stringWidth(StringUtil.removeHtmlTags(tail));
     if (availableWidth <= headAndTailWidth) {
       return head + tail;

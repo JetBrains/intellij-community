@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
@@ -32,6 +33,14 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   @Override
   public RenameRefactoring createRename(@NotNull PsiElement element, String newName, boolean searchInComments, boolean searchInNonJavaFiles) {
     return new JavaRenameRefactoringImpl(myProject, element, newName, searchInComments, searchInNonJavaFiles);
+  }
+
+  @Override
+  public RenameRefactoring createRename(@NotNull PsiElement element,
+                                        String newName,
+                                        SearchScope scope,
+                                        boolean searchInComments, boolean searchInNonJavaFiles) {
+    return new JavaRenameRefactoringImpl(myProject, element, newName, scope, searchInComments, searchInNonJavaFiles);
   }
 
   @Override

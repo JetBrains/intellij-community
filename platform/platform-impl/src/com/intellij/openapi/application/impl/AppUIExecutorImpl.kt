@@ -236,7 +236,7 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
     }
   }
 
-  override fun isCorrectContext() = !DumbService.getInstance(project).isDumb
+  override fun isCorrectContext() = !project.isDisposed && !DumbService.isDumb(project)
 
   override fun schedule(runnable: Runnable) {
     DumbService.getInstance(project).runWhenSmart(runnable)

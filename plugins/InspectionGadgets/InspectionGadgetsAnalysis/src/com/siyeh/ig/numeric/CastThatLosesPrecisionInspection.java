@@ -16,6 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -117,9 +118,9 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       if (castTypeElement == null) {
         return;
       }
-      LongRangeSet targetRange = LongRangeSet.fromType(castType);
+      LongRangeSet targetRange = JvmPsiRangeSetUtil.typeRange(castType);
       LongRangeSet lostRange = LongRangeSet.all();
-      if (targetRange != null && LongRangeSet.fromType(operandType) != null) {
+      if (targetRange != null && JvmPsiRangeSetUtil.typeRange(operandType) != null) {
         LongRangeSet valueRange = DfLongType.extractRange(CommonDataflow.getDfType(operand));
         lostRange = valueRange.subtract(targetRange);
         if (lostRange.isEmpty()) return;

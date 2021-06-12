@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet;
 
 import com.intellij.ProjectTopics;
@@ -22,7 +21,6 @@ import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
 import org.junit.Assume;
 
 import java.io.File;
-
 
 public class FacetManagerTest extends FacetTestCase {
   public void testAddDeleteFacet() {
@@ -105,26 +103,6 @@ public class FacetManagerTest extends FacetTestCase {
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
   }
 
-  public void testTwoSubFacets() {
-    MockFacet mockFacet = addFacet();
-    Facet<?> subFacet1 = addSubFacet(mockFacet, "sub1");
-    Facet<?> subFacet2 = addSubFacet(mockFacet, "sub2");
-    assertSameElements(getFacetManager().getFacetsByType(mockFacet, MockSubFacetType.ID), subFacet1, subFacet2);
-
-    ModifiableFacetModel model = getFacetManager().createModifiableModel();
-    model.removeFacet(subFacet1);
-    commit(model);
-
-    assertSameElements(getFacetManager().getFacetsByType(mockFacet, MockSubFacetType.ID), subFacet2);
-    assertSameElements(getFacetManager().getFacetsByType(MockSubFacetType.ID), subFacet2);
-
-    model = getFacetManager().createModifiableModel();
-    model.removeFacet(mockFacet);
-    commit(model);
-    assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
-    assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
-  }
-
   public void testChangeFacetConfiguration() {
     String configData = "data";
     ModifiableFacetModel model = getFacetManager().createModifiableModel();
@@ -184,7 +162,7 @@ public class FacetManagerTest extends FacetTestCase {
   public void testListeners() {
     final FacetManager manager = getFacetManager();
     final MyFacetManagerListener listener = new MyFacetManagerListener();
-    myModule.getMessageBus().connect(/*getTestRootDisposable()*/).subscribe(FacetManager.FACETS_TOPIC, listener);
+    myModule.getProject().getMessageBus().connect(/*getTestRootDisposable()*/).subscribe(FacetManager.FACETS_TOPIC, listener);
 
     ModifiableFacetModel model = manager.createModifiableModel();
     final MockFacet facet = new MockFacet(myModule, "1");

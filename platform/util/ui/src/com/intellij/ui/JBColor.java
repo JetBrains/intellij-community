@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -35,7 +36,7 @@ public class JBColor extends Color {
   private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
-    this(new Color(rgb), new Color(darkRGB));
+    this(new Color(rgb, (rgb & 0xff000000) != 0), new Color(darkRGB, (rgb & 0xff000000) != 0));
   }
 
   public JBColor(@NotNull Color regular, @NotNull Color dark) {
@@ -61,12 +62,27 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  public static JBColor namedColor(@NonNls @NotNull final String propertyName) {
+    return namedColor(propertyName, fallbackColor(propertyName));
+  }
+
+  @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName), () ->
-                            notNull(findPatternMatch(propertyName), defaultColor));
+      Color color = UIManager.getColor(propertyName);
+      return color == null ? defaultColor : color;
+    });
+  }
+
+  @NotNull
+  private static JBColor fallbackColor(@NonNls @NotNull final String propertyName) {
+    return new JBColor(() -> {
+      Color color = notNull(UIManager.getColor(propertyName),
+                            () -> notNull(findPatternMatch(propertyName), Gray.TRANSPARENT));
       if (UIManager.get(propertyName) == null) {
-        UIManager.put(propertyName, color);
+        if (Registry.is("ide.save.missing.jb.colors", false)) {
+          return _saveAndReturnColor(propertyName, color);
+        }
       }
       return color;
     });
@@ -324,5 +340,26 @@ public class JBColor extends Color {
       defaultThemeColors.put(colorId, defaultColor);
       return defaultColor;
     });
+  }
+
+  private static void saveMissingColorInUIDefaults(String propertyName, Color color) {
+    if (Registry.is("ide.save.missing.jb.colors", false)) {
+      String key = propertyName + "!!!";
+      if (UIManager.get(key) == null) {
+        UIManager.put(key, color);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  private static Color _saveAndReturnColor(@NonNls @NotNull String propertyName, Color color) {
+    String key = propertyName + "!!!";
+    Object saved = UIManager.get(key);
+    if (saved instanceof Color) {
+      //in case a designer changed the key
+      return (Color)saved;
+    }
+    UIManager.put(key, color);
+    return color;
   }
 }

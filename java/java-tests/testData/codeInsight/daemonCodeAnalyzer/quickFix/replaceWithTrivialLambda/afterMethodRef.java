@@ -11,7 +11,7 @@ public class MethodReferenceConstantValue {
   }
 
   public void test(Optional<String> opt) {
-    X x = (methodReferenceConstantValue, s1) -> false;
+    X x = MethodReferenceConstantValue::strangeMethod;
     Boolean aBoolean = opt.map(s -> false)
       .map(o1 -> true)
       .map(o -> false)

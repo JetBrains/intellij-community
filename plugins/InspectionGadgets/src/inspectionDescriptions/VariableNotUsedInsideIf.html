@@ -1,13 +1,20 @@
 <html>
 <body>
-Reports any references to variables which are checked for nullity
-in the condition of an <b>if</b> statement or
+Reports any references to variables that are checked for nullability
+in the condition of an <code>if</code> statement or
 conditional expression but which are not used inside the
-<b>if</b> statement. Usually this either means that
+<code>if</code> statement. Usually this either means that
 the check is unnecessary or that the variable is not referenced inside the
-<b>if</b> statement because of a typo.
+<code>if</code> statement because of a typo.
+<p>Example:</p>
+<pre>
+  void test(Integer i) {
+    if (i != null) { // here 'i' is not used inside 'if' statement
+      System.out.println();
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
 </body>
 </html>

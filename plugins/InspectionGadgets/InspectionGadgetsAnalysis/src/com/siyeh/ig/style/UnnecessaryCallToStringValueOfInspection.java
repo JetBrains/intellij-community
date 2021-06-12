@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -80,13 +81,18 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     return new UnnecessaryCallToStringValueOfFix(text);
   }
 
-  public static String calculateReplacementText(PsiExpression expression) {
+  private static String calculateReplacementText(@NotNull PsiMethodCallExpression call, PsiExpression expression) {
     if (!(expression instanceof PsiPolyadicExpression)) {
       return expression.getText();
     }
+    PsiPolyadicExpression parentCall = ObjectUtils.tryCast(ParenthesesUtils.getParentSkipParentheses(call), PsiPolyadicExpression.class);
+    if (parentCall == null) {
+      return expression.getText();
+    }
     final PsiType type = expression.getType();
-    if (TypeUtils.typeEquals(JAVA_LANG_STRING, type) ||
-        ParenthesesUtils.getPrecedence(expression) < ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+    int precedence = ParenthesesUtils.getPrecedence(expression);
+    if (TypeUtils.typeEquals(JAVA_LANG_STRING, type) || precedence < ParenthesesUtils.ADDITIVE_PRECEDENCE ||
+        (precedence == ParenthesesUtils.ADDITIVE_PRECEDENCE && ArrayUtil.getFirstElement(parentCall.getOperands()) == call)) {
       return expression.getText();
     }
     return '(' + expression.getText() + ')';
@@ -119,7 +125,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       PsiExpression arg = tryUnwrapRedundantConversion(call);
       if (arg == null) return;
       CommentTracker tracker = new CommentTracker();
-      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(tracker.markUnchanged(arg)), tracker);
+      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(call, tracker.markUnchanged(arg)), tracker);
     }
   }
 
@@ -135,7 +141,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       final PsiExpression argument = tryUnwrapRedundantConversion(call);
       if (argument == null) return;
       registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    calculateReplacementText(argument));
+                    calculateReplacementText(call, argument));
     }
   }
 

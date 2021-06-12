@@ -21,7 +21,7 @@ public final class AnnotationTargetUtil {
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT);
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
@@ -242,7 +242,7 @@ public final class AnnotationTargetUtil {
       else if (parent instanceof PsiVariable) {
         type = ((PsiVariable)parent).getTypeElement();
       }
-      if (type != null && !type.getType().equals(PsiType.VOID)) return type;
+      if (type != null && type.acceptsAnnotations()) return type;
     }
     return list;
   }

@@ -14,10 +14,7 @@ import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.errorIfNotMessage
-import org.jetbrains.io.ChannelExceptionHandler
-import org.jetbrains.io.MessageDecoder
-import org.jetbrains.io.NettyUtil
-import org.jetbrains.io.send
+import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
 internal val LOG = logger<FastCgiService>()
@@ -129,6 +126,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     val httpResponse = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer)
     try {
       parseHeaders(httpResponse, buffer)
+      httpResponse.addServer()
       if (!HttpUtil.isContentLengthSet(httpResponse)) {
         HttpUtil.setContentLength(httpResponse, buffer.readableBytes().toLong())
       }

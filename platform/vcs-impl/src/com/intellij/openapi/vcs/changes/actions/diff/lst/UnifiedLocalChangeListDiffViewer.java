@@ -14,6 +14,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -128,7 +129,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     @NotNull
     @Override
     public Runnable retryLater() {
-      scheduleRediff();
+      ApplicationManager.getApplication().invokeLater(() -> scheduleRediff());
       throw new ProcessCanceledException();
     }
 

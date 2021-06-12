@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginDescriptor
+import java.util.concurrent.ForkJoinPool
 
 object CustomizeIDEWizardInteractions {
   var skippedOnPage = -1
@@ -36,11 +36,13 @@ data class CustomizeIDEWizardInteraction(
   val groupId: String?
 )
 
-class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
+internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
   override fun componentsInitialized() {
-    if (CustomizeIDEWizardInteractions.interactions.isEmpty()) return
+    if (CustomizeIDEWizardInteractions.interactions.isEmpty()) {
+      return
+    }
 
-    ApplicationManager.getApplication().executeOnPooledThread {
+    ForkJoinPool.commonPool().execute {
       if (CustomizeIDEWizardInteractions.skippedOnPage != -1) {
         FUCounterUsageLogger.getInstance().logEvent("customize.wizard", "remaining.pages.skipped",
                                                     FeatureUsageData().addData("page", CustomizeIDEWizardInteractions.skippedOnPage))

@@ -15,9 +15,7 @@ class DeclaredDependency(
 
   val coordinates: UnifiedCoordinates = unifiedDependency.coordinates
   val psiElement: PsiElement?
-    get() {
-      return dataContext.getData(CommonDataKeys.PSI_ELEMENT)
-    }
+    get() = dataContext.getData(CommonDataKeys.PSI_ELEMENT)
 
   constructor(groupId: String?,
               artifactId: String?,

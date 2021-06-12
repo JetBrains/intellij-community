@@ -15,11 +15,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
@@ -27,56 +24,50 @@ import org.jetbrains.annotations.Nullable;
 public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
 
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
-
   // PY-16938
   public void testByteString() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testIndexElementWithPackedReferenceExpr() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedDictLiteralInsideDictLiteral() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedDictCallInsideDictLiteral() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedListInsideList() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedTupleInsideList() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedTupleInsideTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testPackedListInsideTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
-  public void testPackedRefInsideList()  {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  public void testPackedRefInsideList() {
+    doTest();
   }
 
-  public void testPackedRefInsideTuple()  {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  public void testPackedRefInsideTuple() {
+    doTest();
   }
 
   // PY-20599
   public void testPy3kAsciiFormatSpecifier() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
+    doTest();
   }
 
   @NotNull

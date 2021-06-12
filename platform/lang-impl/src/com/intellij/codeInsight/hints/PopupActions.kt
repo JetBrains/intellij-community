@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -130,12 +130,12 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
     }
 
 
-    val notification = Notification("Parameter Name Hints",
-                                    CodeInsightBundle.message("notification.inlay.method.added.to.blacklist", methodName),
-                                    CodeInsightBundle.message("notification.show.parameter.hints.settings.or.undo.label"),
-                                    NotificationType.INFORMATION, listener)
-    
-    notification.notify(project)
+    Notification("Parameter Name Hints",
+                 CodeInsightBundle.message("notification.inlay.method.added.to.blacklist", methodName),
+                 CodeInsightBundle.message("notification.show.parameter.hints.settings.or.undo.label"),
+                 NotificationType.INFORMATION)
+      .setListener(listener)
+      .notify(project)
   }
   
   private fun showSettings(language: Language) {

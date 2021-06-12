@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.log
 
 import com.intellij.notification.NotificationType
@@ -70,13 +70,9 @@ private fun loadDetails(
       catch (e: VcsException) {
         val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", commits.size)
         LOG.warn(error, e)
-        val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(
-          "",
-          error,
-          NotificationType.ERROR,
-          null,
-          "git.log.could.not.load.changes.of.commit"
-        )
+        val notification = VcsNotifier.STANDARD_NOTIFICATION
+          .createNotification(error, NotificationType.ERROR)
+          .setDisplayId("git.log.could.not.load.changes.of.commit")
         VcsNotifier.getInstance(project).notify(notification)
       }
     },

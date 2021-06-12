@@ -1,11 +1,25 @@
 <html>
 <body>
-Reports <b>switch</b> statements with too few <b>case</b> labels.
-Such statements may be more clearly expressed as <b>if</b> statements.
+Reports <code>switch</code> statements and expressions with too few <code>case</code> labels, and suggests rewriting them as <code>if</code>
+and
+<code>else if</code> statements.
+<p>Example (minimum branches == 3):</p>
+<pre>
+  switch (expression) {
+    case "foo" -&gt; foo();
+    case "bar" -&gt; bar();
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  if ("foo".equals(expression)) {
+    foo();
+  } else if ("bar".equals(expression)) {
+    bar();
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-Use the field below to specify the minimum number of <b>case</b> labels expected.
-<p>
-
+<p>Configure the inspection:</p>
+<p>Use the <b>Minimum number of branches</b> field to specify the minimum expected number of <code>case</code> labels.</p>
 </body>
 </html>

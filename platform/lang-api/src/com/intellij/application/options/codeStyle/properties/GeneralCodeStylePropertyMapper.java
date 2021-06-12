@@ -34,7 +34,8 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     "INDENT_SIZE",
     "USE_TAB_CHARACTER",
     "TAB_SIZE",
-    "SMART_TABS"
+    "SMART_TABS",
+    "CONTINUATION_INDENT_SIZE"
   );
 
   public GeneralCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {

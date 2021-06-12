@@ -59,7 +59,7 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
       includeBuild '../$name-composite'
       includeFlat '$name-module'
     """.trimIndent())
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin().generate()
+    val buildScript = createBuildScriptBuilder().withJavaPlugin().generate()
     createProjectSubFile("$name-composite/build.gradle", buildScript)
     createProjectSubFile("$name-module/build.gradle", buildScript)
     createProjectSubFile("$name-project/module/build.gradle", buildScript)

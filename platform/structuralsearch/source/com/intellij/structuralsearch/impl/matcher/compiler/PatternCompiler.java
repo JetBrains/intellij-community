@@ -4,9 +4,10 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,6 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public final class PatternCompiler {
-  private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
   /**
@@ -62,7 +62,6 @@ public final class PatternCompiler {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     if (profile == null) {
-      LOG.warn("no profile found for " + options.getFileType().getDescription());
       return null;
     }
     final CompiledPattern result = profile.createCompiledPattern();
@@ -417,6 +416,8 @@ public final class PatternCompiler {
     int prevOffset = 0;
     final Set<String> variableNames = new HashSet<>();
 
+    final LanguageFileType fileType = options.getFileType();
+    assert fileType != null;
     for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
@@ -478,7 +479,7 @@ public final class PatternCompiler {
           }
 
           if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-            MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
+            MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), fileType, project);
             if (constraint.isInvertReference()) {
               predicate = new NotPredicate(predicate);
             }
@@ -519,7 +520,7 @@ public final class PatternCompiler {
 
       try {
         if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-          MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), options.getFileType(), project);
+          MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), fileType, project);
           if (constraint.isInvertWithinConstraint()) {
             predicate = new NotPredicate(predicate);
           }
@@ -541,8 +542,9 @@ public final class PatternCompiler {
       final PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
                                                                     options.getPatternContext(),
                                                                     constraint != null ? constraint.getContextConstraint() : null);
-      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
-                                                           options.getDialect(), project, false);
+      final Language dialect = options.getDialect();
+      assert dialect != null;
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, fileType, dialect, project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
     }
     catch (IncorrectOperationException e) {

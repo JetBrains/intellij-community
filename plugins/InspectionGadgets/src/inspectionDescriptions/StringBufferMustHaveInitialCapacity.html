@@ -1,10 +1,16 @@
 <html>
 <body>
-Reports any attempt to instantiate a new <b>StringBuffer</b> or
-<b>StringBuilder</b> object without specifying its initial capacity.
-If no initial capacity is specified, a default capacity is used, which will rarely be optimal. Failing
-to specify initial capacities for <b>StringBuffer</b>s may result in performance issues, if space needs to be reallocated and
-memory copied when capacity is exceeded
+Reports any attempt to instantiate a new <code>StringBuffer</code> or
+<code>StringBuilder</code> object without specifying its initial capacity.
+If no initial capacity is specified, a default capacity is used, which will rarely be optimal. 
+Failing to specify initial capacities for <code>StringBuffer</code> may result 
+in performance issues, if space needs to be reallocated and memory copied 
+when capacity is exceeded.
+<p>Example:</p>
+<pre><code>
+  // Capacity is not specified
+  var sb = new StringBuilder();
+</code></pre>
 <!-- tooltip end -->
 <p>
 

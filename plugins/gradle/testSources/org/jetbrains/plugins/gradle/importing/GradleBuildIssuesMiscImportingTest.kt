@@ -50,7 +50,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
         {
           assertThat(it).startsWith("""
             * Where:
-            Build file '$buildScript' line: 9
+            Build file '$buildScript' line: 10
       
             * What went wrong:
             Out of memory. $oomMessage

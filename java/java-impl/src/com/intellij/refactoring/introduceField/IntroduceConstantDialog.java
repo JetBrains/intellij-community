@@ -233,6 +233,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         }
       });
       myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
+      myCbReplaceAll.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL);
     }
     else {
       myCbReplaceAll.setVisible(false);
@@ -468,7 +469,11 @@ class IntroduceConstantDialog extends DialogWrapper {
       }
     }
 
-    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
+    JavaRefactoringSettings javaRefactoringSettings = JavaRefactoringSettings.getInstance();
+    javaRefactoringSettings.INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
+    if (myOccurrencesCount > 1) {
+      javaRefactoringSettings.INTRODUCE_CONSTANT_REPLACE_ALL = isReplaceAllOccurrences();
+    }
 
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, targetClassName);
     super.doOKAction();

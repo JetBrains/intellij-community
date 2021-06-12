@@ -13,19 +13,20 @@ import java.util.List;
 public final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
   private static int ourGlobalCounter = 0;
   private final boolean mySoftWrappable;
+  final int myPriority;
   final int myOrder;
 
   AfterLineEndInlayImpl(@NotNull EditorImpl editor,
                         int offset,
                         boolean relatesToPrecedingText,
-                        boolean insertFirst,
                         boolean softWrappable,
+                        int priority,
                         @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     mySoftWrappable = softWrappable;
+    myPriority = priority;
     //noinspection AssignmentToStaticFieldFromInstanceMethod
-    int order = ourGlobalCounter++;
-    myOrder = insertFirst ? -order : order;
+    myOrder = ourGlobalCounter++;
   }
 
   @Override

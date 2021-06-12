@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -7,11 +7,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author: db
@@ -126,7 +128,7 @@ public class ClassRepr extends ClassFileRepr {
     if (hasInlinedConstants() != pastClass.hasInlinedConstants()) {
       base |= Difference.CONSTANT_REFERENCES;
     }
-    
+
     final int d = base;
 
     return new Diff(diff) {
@@ -189,17 +191,9 @@ public class ClassRepr extends ClassFileRepr {
     };
   }
 
-  public int @NotNull [] getSupers() {
-    final int[] result = new int[myInterfaces.size() + 1];
-
-    result[0] = mySuperClass.className;
-
-    int i = 1;
-    for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).className;
-    }
-
-    return result;
+  public Iterable<TypeRepr.ClassType> getSuperTypes() {
+    final Iterable<TypeRepr.ClassType> supers = Iterators.map(myInterfaces, t -> (TypeRepr.ClassType)t);
+    return mySuperClass != null? Iterators.flat(Iterators.asIterable(mySuperClass), supers) : supers;
   }
 
   @Override
@@ -249,9 +243,9 @@ public class ClassRepr extends ClassFileRepr {
     super(context, in);
     try {
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new HashSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new HashSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new HashSet<>(), in);
       myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
@@ -343,11 +337,11 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
+  public Collection<MethodRepr> findMethods(final Predicate<MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
-      if (p.satisfy(mm)) {
+      if (p.test(mm)) {
         result.add(mm);
       }
     }

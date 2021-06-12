@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection detects cases when first parameter, such as &#39;self&#39; or &#39;cls&#39;, is reassigned in a method.
-In most cases imaginable, there&#39;s no point in such reassignment, and it indicates an error.
+<p>Reports cases when the first parameter,
+  such as <code>self</code> or <code>cls</code>, is reassigned in a method.
+  Because in most cases, there are no objectives in such reassignment, the
+  IDE indicates an error.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Account:
+    def calc(self, balance):
+        if balance == 0:
+            self = balance
+        return self
+</pre>
+<p>As a fix, you might want to check and modify the algorithm to ensure that reassignment is needed. If everything is correct,
+  you can invoke intention actions for this code and opt to ignore the warning.</p>
 </body></html>

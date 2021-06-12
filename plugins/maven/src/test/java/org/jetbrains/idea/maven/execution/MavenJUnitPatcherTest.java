@@ -22,8 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
@@ -31,7 +32,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class MavenJUnitPatcherTest extends MavenImportingTestCase {
+public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -41,7 +42,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassSystemProperties(true);
   }
 
-  public void testExcludeClassPathElement() throws CantRunException {
+  @Test
+  public void ExcludeClassPathElement() throws CantRunException {
     String[] excludeSpecifications = {
       "<classpathDependencyExcludes>" +
       "<classpathDependencyExclude>org.jetbrains:annotations" +
@@ -103,12 +105,13 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                    ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
       mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
       List<String> classPath = javaParameters.getClassPath().getPathList();
-      assertEquals(excludeSpecification,Collections.singletonList("annotations-java5-17.0.0.jar"),
+      assertEquals(excludeSpecification, Collections.singletonList("annotations-java5-17.0.0.jar"),
                    ContainerUtil.map(classPath, path -> new File(path).getName()));
     }
   }
 
-  public void testExcludeScope() throws CantRunException {
+  @Test
+  public void ExcludeScope() throws CantRunException {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
                                            "<artifactId>m1</artifactId>\n" +
                                            "<version>1</version>\n" +
@@ -152,7 +155,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  ContainerUtil.map(classPath, path -> new File(path).getName()));
   }
 
-  public void testAddClassPath() {
+  @Test
+  public void AddClassPath() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
                                            "<artifactId>m1</artifactId>\n" +
                                            "<version>1</version>\n" +
@@ -183,7 +187,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     assertEquals(asList("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath);
   }
 
-  public void testArgList() {
+  @Test
+  public void ArgList() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -215,7 +220,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testIgnoreJaCoCoOption() {
+  @Test
+  public void IgnoreJaCoCoOption() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -250,7 +256,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testImplicitArgLine() {
+  @Test
+  public void ImplicitArgLine() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -278,7 +285,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testVmPropertiesResolve() {
+  @Test
+  public void VmPropertiesResolve() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -307,11 +315,13 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.getVMParametersList().addProperty("argLineApx", "-DsomeKey=someValue");
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
-                 javaParameters.getVMParametersList().getList());
+    assertEquals(
+      asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
+      javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineLateReplacement() {
+  @Test
+  public void ArgLineLateReplacement() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -337,7 +347,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineRefersAnotherProperty() {
+  @Test
+  public void ArgLineRefersAnotherProperty() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -367,7 +378,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineProperty() {
+  @Test
+  public void ArgLineProperty() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -396,7 +408,8 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testResolvePropertiesUsingAt() {
+  @Test
+  public void ResolvePropertiesUsingAt() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
                                            "<artifactId>m1</artifactId>\n" +
                                            "<version>1</version>\n" +

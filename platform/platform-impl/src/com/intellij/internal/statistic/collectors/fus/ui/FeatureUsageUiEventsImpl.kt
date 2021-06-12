@@ -6,14 +6,45 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
 
-private const val DIALOGS = "ui.dialogs"
+class DialogsCounterUsagesCollector : CounterUsagesCollector() {
+  companion object {
+    private val GROUP = EventLogGroup("ui.dialogs", 59)
+
+    val EXIT_CODE = object: PrimitiveEventField<Int>() {
+      override val name: String = "code"
+
+      override val validationRule: List<String>
+        get() = listOf("{enum:0|1|2}")
+
+      override fun addData(fuData: FeatureUsageData, value: Int) {
+        val toReport = getExitCodeToReport(value)
+        fuData.addData(name, toReport)
+      }
+
+      private fun getExitCodeToReport(exitCode: Int): Int {
+        if (exitCode == DialogWrapper.OK_EXIT_CODE || exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+          return exitCode
+        }
+        return DialogWrapper.NEXT_USER_EXIT_CODE
+      }
+    }
+
+    val DIALOG_CLASS = EventFields.StringValidatedByCustomRule("dialog_class", "dialog_class")
+
+    val SHOW = GROUP.registerVarargEvent("show", DIALOG_CLASS, EventFields.PluginInfo)
+    val CLOSE = GROUP.registerVarargEvent("close", DIALOG_CLASS, EXIT_CODE, EventFields.PluginInfo)
+    val HELP = GROUP.registerVarargEvent("help.clicked", DIALOG_CLASS, EventFields.PluginInfo)
+  }
+
+  override fun getGroup(): EventLogGroup = GROUP
+}
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
@@ -33,10 +64,6 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
 }
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
-  private val CLOSE_OK_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.OK_EXIT_CODE)
-  private val CLOSE_CANCEL_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.CANCEL_EXIT_CODE)
-  private val CLOSE_CUSTOM_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.NEXT_USER_EXIT_CODE)
-
   override fun logSelectConfigurable(configurable: Configurable) {
     if (FeatureUsageLogger.isEnabled()) {
       logSettingsEvent(configurable, SettingsCounterUsagesCollector.SELECT)
@@ -64,32 +91,22 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
 
   override fun logShowDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = FeatureUsageData().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "show", data)
+      DialogsCounterUsagesCollector.SHOW.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(name))
     }
   }
 
   override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = getDialogCloseData(exitCode).copy().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "close", data)
+      DialogsCounterUsagesCollector.CLOSE.log(
+        DialogsCounterUsagesCollector.DIALOG_CLASS.with(name),
+        DialogsCounterUsagesCollector.EXIT_CODE.with(exitCode)
+      )
     }
   }
 
   override fun logClickOnHelpDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = FeatureUsageData().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "help.clicked", data)
+      DialogsCounterUsagesCollector.HELP.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(name))
     }
   }
-
-  private fun getDialogCloseData(exitCode: Int): FeatureUsageData {
-    return when (exitCode) {
-      DialogWrapper.OK_EXIT_CODE -> CLOSE_OK_DIALOG_DATA
-      DialogWrapper.CANCEL_EXIT_CODE -> CLOSE_CANCEL_DIALOG_DATA
-      else -> CLOSE_CUSTOM_DIALOG_DATA
-    }
-  }
-
-  internal fun FeatureUsageData.addDialogClass(name: String) = this.addData("dialog_class", name)
 }

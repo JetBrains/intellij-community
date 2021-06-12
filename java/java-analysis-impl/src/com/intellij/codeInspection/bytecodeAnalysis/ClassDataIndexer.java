@@ -52,7 +52,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 15; // change when inference algorithm changes
+  private static final int VERSION = 16; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -491,7 +491,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         if (!throwEquation.result.equals(Value.Top)) {
           result.add(throwEquation);
         }
-        shouldInferNonTrivialFailingContracts = !inThrowAnalysis.myHasNonTrivialReturn;
+        shouldInferNonTrivialFailingContracts = !inThrowAnalysis.myHasNonTrivialReturn && 
+                                                richControlFlow.controlFlow.errorTransitions.isEmpty();
       }
 
       boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();

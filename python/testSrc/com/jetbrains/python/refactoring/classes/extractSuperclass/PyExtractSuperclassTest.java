@@ -32,8 +32,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
   public void testPy3ParentHasObject() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34,
-                         () -> doSimpleTest("Child", "Parent", null, true, false, ".spam"));
+    doSimpleTest("Child", "Parent", null, true, false, ".spam");
   }
 
   // Ensures refactoring works even if memeberInfo has null element (no npe: PY-19136)
@@ -58,17 +57,14 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // Extracts method as abstract
   public void testMoveAndMakeAbstract() {
-    multiFileTestHelper(".foo_method", true);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      multiFileTestHelper(".foo_method", true);
+    });
   }
 
   // Extracts method as abstract and ensures that newly created class imports ABC in Py3
   public void testMoveAndMakeAbstractImportExistsPy3() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        multiFileTestHelper(".foo_method", true);
-      }
-    );
+    multiFileTestHelper(".foo_method", true);
   }
 
   /**
@@ -128,12 +124,16 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // PY-16747
   public void testAbstractMethodDocStringIndentationPreserved() {
-    doSimpleTest("B", "A", null, true, true, ".m");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doSimpleTest("B", "A", null, true, true, ".m");
+    });
   }
 
   // PY-16770
   public void testAbstractMethodDocStringPrefixPreserved() {
-    doSimpleTest("B", "A", null, true, true, ".m");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doSimpleTest("B", "A", null, true, true, ".m");
+    });
   }
 
   private void doSimpleTest(final String className,
@@ -242,7 +242,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // PY-46099
   public void testNoClassCastExceptionInCopiedFunctionWithClassInitAndMethodCall() {
-    runWithLanguageLevel(LanguageLevel.getLatest(),
-                         () -> doSimpleTest("Baz", "Bar", null, true, false, ".baz"));
+    doSimpleTest("Baz", "Bar", null, true, false, ".baz");
   }
 }

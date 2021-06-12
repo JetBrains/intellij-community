@@ -1,5 +1,20 @@
 <html>
 <body>
-Reports redundant local variable types. Theses types can be inferred from the context and thus be replaced with <b>var</b>.
+Reports redundant local variable types. These types can be inferred from the context and thus be replaced with <code>var</code>.
+<p>Example:</p>
+<pre>
+  void test(InputStream s) {
+    try (InputStream in = s) {}
+  }
+</pre>
+<p>After the fix is applied, the result will be like this:</p>
+<pre>
+  void test(InputStream s) {
+    try (var in = s) {}
+  }
+</pre>
+<!-- tooltip end -->
+<p>
+
 </body>
 </html>

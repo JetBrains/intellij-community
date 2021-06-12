@@ -51,12 +51,17 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return Arrays.asList(
       new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
-      new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
-      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
-      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac
-                                                                                                                           ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
-      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER),
-      new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.EXPLORER, "Edge", SystemInfo.isWindows ? EDGE_COMMAND : null, true, null)
+      new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI, BrowserFamily.SAFARI.getName(),
+                                 BrowserFamily.SAFARI.getExecutionPath(), SystemInfo.isMac,
+                                 BrowserFamily.SAFARI.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false, null),
+      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex",
+                                 SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false,
+                                 BrowserFamily.CHROME.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER, BrowserFamily.EXPLORER.getName(),
+                                 BrowserFamily.EXPLORER.getExecutionPath(), false,
+                                 BrowserFamily.EXPLORER.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.EXPLORER, "Edge", EDGE_COMMAND, SystemInfo.isWindows, null)
     );
   }
 
@@ -86,6 +91,10 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
            (browser.getId().equals(PREDEFINED_EDGE_ID) ||
             checkNameAndPath(EDGE_COMMAND, browser) ||
             checkNameAndPath("MicrosoftEdge", browser));
+  }
+
+  public static boolean isOpera(@NotNull WebBrowser browser) {
+    return checkNameAndPath("Opera", browser);
   }
 
   static boolean checkNameAndPath(@NotNull String what, @NotNull WebBrowser browser) {
@@ -168,6 +177,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   @Nullable
   private static BrowserFamily readFamily(String value) {
     try {
+      if ("OPERA".equals(value)) return BrowserFamily.CHROME;
       return BrowserFamily.valueOf(value);
     }
     catch (RuntimeException e) {
@@ -196,9 +206,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
           break;
         case FIREFOX:
           id = PREDEFINED_FIREFOX_ID;
-          break;
-        case OPERA:
-          id = PREDEFINED_OPERA_ID;
           break;
         case SAFARI:
           id = PREDEFINED_SAFARI_ID;

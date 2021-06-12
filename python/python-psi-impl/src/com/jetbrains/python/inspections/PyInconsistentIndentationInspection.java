@@ -33,9 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyInconsistentIndentationInspection extends PyInspection {
 
   @Override

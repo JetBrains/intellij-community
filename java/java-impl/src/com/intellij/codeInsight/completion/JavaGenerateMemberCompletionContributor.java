@@ -302,7 +302,7 @@ public final class JavaGenerateMemberCompletionContributor {
 
       String signature = element.getLookupString();
       FList<TextRange> fragments = matchingFragments(signature);
-      return fragments == null || fragments.stream().noneMatch(f -> isMiddleMatch(signature, f));
+      return fragments == null || !ContainerUtil.exists(fragments, f -> isMiddleMatch(signature, f));
 
     }
 

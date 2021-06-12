@@ -41,7 +41,7 @@ final class JreProxySelector implements ProxySelector {
           final String proxyType = chooseProxyType(uri.getScheme());
           if (proxyType != null) {
             final InetSocketAddress addr = (InetSocketAddress)proxy.address();
-            return new Proxy(proxyType, addr.getHostName(), addr.getPort(), JreProxyAuthentication.INSTANCE);
+            return new Proxy(proxyType, addr.getHostString(), addr.getPort(), JreProxyAuthentication.INSTANCE);
           }
         }
       }
@@ -69,7 +69,8 @@ final class JreProxySelector implements ProxySelector {
        * objects with empty host and port 0.
        */
       final InetSocketAddress addr = (InetSocketAddress)address;
-      return addr.getPort() > 0 && addr.getHostName() != null && !addr.getHostName().isEmpty();
+      String hostString = addr.getHostString();
+      return addr.getPort() > 0 && hostString != null && !hostString.isEmpty();
     }
     return false;
   }

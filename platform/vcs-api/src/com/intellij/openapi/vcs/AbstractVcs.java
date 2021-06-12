@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * The base class for a version control system integrated with IDEA.
+ * The base class for a version control system.
  *
  * @see ProjectLevelVcsManager
  */
@@ -379,7 +379,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * For some version controls (like Git) the revision parsing is dependent
-   * on the the specific repository instance since the the revision number
+   * on the specific repository instance since the the revision number
    * returned from this method is later used for comparison information.
    * By default, this method invokes {@link #parseRevisionNumber(String)}.
    * The client code should invoke this method, if it expect ordering information

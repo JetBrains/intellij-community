@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
@@ -31,16 +32,16 @@ public class ShellVariablesRegistry {
   /**
    * Returns variable value by scope selector.
    *
-   * @param scopeSelector selector of current context.
+   * @param scope scope of current context.
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
   @Nullable
-  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable CharSequence scopeSelector) {
-    if (scopeSelector == null) {
+  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope) {
+    if (scope == null) {
       return null;
     }
-    return new TextMateScopeComparator<>(scopeSelector, TextMateShellVariable::getScopeSelector).max(myVariables.get(name));
+    return new TextMateScopeComparator<>(scope, TextMateShellVariable::getScopeSelector).max(myVariables.get(name));
   }
 
   public void clear() {

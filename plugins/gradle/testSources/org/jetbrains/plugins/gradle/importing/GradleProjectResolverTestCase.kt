@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.setRegistryPropertyForTest
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
@@ -130,7 +131,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
 
   fun createGradleSubProject() {
-    createProjectSubFile("settings.gradle", GroovyBuilder().property("rootProject.name", "'project'").generate())
-    createProjectSubFile("build.gradle", GradleBuildScriptBuilderEx().withJavaPlugin().generate())
+    createProjectSubFile("settings.gradle", groovy { assign("rootProject.name", "project") })
+    createProjectSubFile("build.gradle", createBuildScriptBuilder().withJavaPlugin().generate())
   }
 }

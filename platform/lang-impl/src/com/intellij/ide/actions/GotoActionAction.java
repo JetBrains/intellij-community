@@ -8,7 +8,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -81,35 +80,37 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    ApplicationManager.getApplication().invokeLater(() -> {
-        DataManager instance = DataManager.getInstance();
-        DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-        InputEvent inputEvent = e != null ? e.getInputEvent() : null;
-        AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
-        if (inputEvent == null && modifiers != 0) {
-          event = new AnActionEvent(null, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager(), modifiers);
-        }
+    InputEvent inputEvent = e != null ? e.getInputEvent() : null;
+    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(action, component, inputEvent, modifiers));
+  }
 
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
-            ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
-            Window window = SwingUtilities.getWindowAncestor(component);
-            if (window != null) {
-              popup.showInCenterOf(window);
-            }
-            else {
-              popup.showInFocusCenter();
-            }
-          }
-          else {
-            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-            manager.fireBeforeActionPerformed(action, context, event);
-            ActionUtil.performActionDumbAware(action, event);
-            manager.fireAfterActionPerformed(action, context, event);
-          }
+  private static void performActionImpl(@NotNull AnAction action,
+                                        @NotNull Component component,
+                                        @Nullable InputEvent inputEvent,
+                                        int modifiers) {
+    DataManager dataManager = DataManager.getInstance();
+    DataContext context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
+    Presentation presentation = action.getTemplatePresentation().clone();
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, context, ActionPlaces.ACTION_SEARCH, presentation, ActionManager.getInstance(),
+      inputEvent == null ? modifiers : inputEvent.getModifiers());
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
+        ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+          event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
+        Window window = SwingUtilities.getWindowAncestor(component);
+        if (window != null) {
+          popup.showInCenterOf(window);
         }
-    });
+        else {
+          popup.showInFocusCenter();
+        }
+      }
+      else {
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+      }
+    }
   }
 
   @Override

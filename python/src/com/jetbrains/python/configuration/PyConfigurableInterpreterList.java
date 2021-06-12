@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -20,15 +19,13 @@ import java.util.List;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
- *
- * @author yole
  */
 public class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;
 
   public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
     final Project effectiveProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
-    final PyConfigurableInterpreterList instance = ServiceManager.getService(effectiveProject, PyConfigurableInterpreterList.class);
+    final PyConfigurableInterpreterList instance = effectiveProject.getService(PyConfigurableInterpreterList.class);
     if (effectiveProject != project) {
       instance.disposeModel();
     }
@@ -79,8 +76,8 @@ public class PyConfigurableInterpreterList {
         return -Comparing.compare(o1.getName(), o2.getName());
       }
 
-      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1);
-      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2);
+      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1) || PythonSdkUtil.isCondaVirtualEnv(o1);
+      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2) || PythonSdkUtil.isCondaVirtualEnv(o2);
       final boolean isRemote1 = PythonSdkUtil.isRemote(o1);
       final boolean isRemote2 = PythonSdkUtil.isRemote(o2);
 

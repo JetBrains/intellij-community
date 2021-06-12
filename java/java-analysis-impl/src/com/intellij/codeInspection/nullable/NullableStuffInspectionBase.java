@@ -1,15 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +26,7 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -209,11 +208,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                    ContainerUtil.filter(Nullability.values(), n -> n != nullability));
         }
         else {
-          Condition<PsiAnnotation> filter = anno -> 
+          Condition<PsiAnnotation> filter = anno ->
             anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
           oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
         }
-        if (oppositeAnno != null && 
+        if (oppositeAnno != null &&
             Objects.equals(AnnotationUtil.getRelatedType(annotation), AnnotationUtil.getRelatedType(oppositeAnno))) {
           PsiModifierListOwner listOwner = owner instanceof PsiModifierList
                                            ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class)
@@ -260,9 +259,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           PsiTypeElement[] typeArguments = getReferenceTypeArguments(reference);
           if (typeParameters.length > 0 && typeParameters.length == typeArguments.length && !(typeArguments[0].getType() instanceof PsiDiamondType)) {
             for (int i = 0; i < typeParameters.length; i++) {
-              if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
-                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullability.NOT_NULL) {
-                reportProblem(holder, typeArguments[i], "non.null.type.argument.is.expected");
+              PsiTypeElement typeArgument = typeArguments[i];
+              Project project = element.getProject();
+              if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(project).createType(typeParameters[i])) ==
+                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArgument.getType()) != Nullability.NOT_NULL) {
+                String annotationToAdd = manager.getDefaultNotNull();
+                PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
+                AddTypeAnnotationFix fix = null;
+                if (annotationClass != null &&
+                    AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
+                  fix = new AddTypeAnnotationFix(annotationToAdd, manager.getNullables());
+                }
+                reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
               }
             }
           }
@@ -401,11 +409,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                              PsiMethod overridingMethod,
                                                              PsiClass overridingMethodClass) {
     if (isNullableOverridingNotNull(Annotated.from(overridingMethod), intfMethod)) {
-      return JavaAnalysisBundle.message("inspection.message.nullable.method.implements.non.null.method", 
+      return JavaAnalysisBundle.message("inspection.message.nullable.method.implements.non.null.method",
                                         overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
     if (isNonAnnotatedOverridingNotNull(overridingMethod, intfMethod)) {
-      return JavaAnalysisBundle.message("inspection.message.non.annotated.method.implements.non.null.method", 
+      return JavaAnalysisBundle.message("inspection.message.non.annotated.method.implements.non.null.method",
                                         overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
 
@@ -417,15 +425,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiParameter parameter = overridingParameters[i];
         List<PsiParameter> supers = Collections.singletonList(superParameters[i]);
         if (findNullableSuperForNotNullParameter(parameter, supers) != null) {
-          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.nullable.parameter", 
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.nullable.parameter",
                                             parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (findNotNullSuperForNonAnnotatedParameter(manager, parameter, supers) != null) {
-          return JavaAnalysisBundle.message("inspection.message.non.annotated.parameter.should.not.override.non.null.parameter", 
+          return JavaAnalysisBundle.message("inspection.message.non.annotated.parameter.should.not.override.non.null.parameter",
                                             parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (isNotNullParameterOverridingNonAnnotated(manager, parameter, supers)) {
-          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.non.annotated.parameter", 
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.non.annotated.parameter",
                                             parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
       }
@@ -467,7 +475,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                      NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
       PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
-      String message = JavaAnalysisBundle.message("inspection.message.code.generation.different.nullability.annotation.will.be.used", 
+      String message = JavaAnalysisBundle.message("inspection.message.code.generation.different.nullability.annotation.will.be.used",
                                                   annotation.getQualifiedName(), anno);
       final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
@@ -610,7 +618,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   /**
-   * @return true if owner has a @NotNull or @Nullable annotation, 
+   * @return true if owner has a @NotNull or @Nullable annotation,
    * or is in scope of @ParametersAreNullableByDefault or ParametersAreNonnullByDefault
    */
   private static boolean hasNullability(@NotNull NullableNotNullManager manager, @NotNull PsiModifierListOwner owner) {
@@ -757,7 +765,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         !(method.getReturnType() instanceof PsiPrimitiveType) &&
         !method.isConstructor()) {
       NullabilityAnnotationInfo info = getNullityManager(method).findEffectiveNullabilityInfo(method);
-      if ((info == null || info.isInferred() || 
+      if ((info == null || info.isInferred() ||
            (!info.isContainer() && !info.isExternal() && !PsiTreeUtil.isAncestor(method, info.getAnnotation(), true))) &&
           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) &&
           !hasInheritableNotNull(superMethod)) {
@@ -975,7 +983,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   if (psiElement == null) continue;
                 }
                 LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, defaultNotNull)
-                                    ? new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())
+                                    ? new AnnotateOverriddenMethodParameterFix(Nullability.NOT_NULL, defaultNotNull)
                                     : createChangeDefaultNotNullFix(nullableManager, parameters[i]);
                 reportProblem(holder, psiElement, fix,
                               "nullable.stuff.problems.overridden.method.parameters.are.not.annotated");

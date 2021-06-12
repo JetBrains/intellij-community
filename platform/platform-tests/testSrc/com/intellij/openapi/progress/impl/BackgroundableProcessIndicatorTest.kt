@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressWindowTestCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
@@ -18,7 +19,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 @SkipInHeadlessEnvironment
-class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<IdeStatusBarImpl, Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
+class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
   private lateinit var statusBar: IdeStatusBarImpl
 
   override fun setUp(): Unit = super.setUp().also {
@@ -34,7 +35,7 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<IdeStatusBarIm
 
   override fun createProcess(): Pair<Task.Backgroundable, BackgroundableProcessIndicator> {
     val task = TestTask(project)
-    val indicator = BackgroundableProcessIndicator(task.project, task, task, statusBar)
+    val indicator = BackgroundableProcessIndicator(task.project, task, statusBar)
     return Pair(task, indicator)
   }
 
@@ -50,7 +51,7 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<IdeStatusBarIm
           cont.resume(Unit)
         }
       }
-      val indicator = BackgroundableProcessIndicator(task.project, task, task, statusBar)
+      val indicator = BackgroundableProcessIndicator(task.project, task, statusBar)
       cont.invokeOnCancellation { indicator.cancel() }
 
       deferredProcess.complete(Pair(task, indicator))

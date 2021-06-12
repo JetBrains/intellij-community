@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -14,9 +15,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -26,7 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentHolder
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -53,7 +52,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
   }
   private var showingSelectors: Boolean? = null
 
-  override var initialView = GHPRToolWindowInitialView.LIST
+  override var initialView = GHPRToolWindowViewType.LIST
   override val componentController: GHPRToolWindowTabComponentController?
     get() {
       for (component in mainPanel.components) {
@@ -64,14 +63,13 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(tab.disposer!!)
-      .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-        override fun tokenChanged(account: GithubAccount) {
-          ApplicationManager.getApplication().invokeLater(Runnable { Updater().update() }) {
-            Disposer.isDisposed(tab.disposer!!)
-          }
+    authManager.addListener(tab.disposer!!, object : AccountsListener<GithubAccount> {
+      override fun onAccountCredentialsChanged(account: GithubAccount) {
+        ApplicationManager.getApplication().invokeLater(Runnable { Updater().update() }) {
+          Disposer.isDisposed(tab.disposer!!)
         }
-      })
+      }
+    })
     repositoryManager.addRepositoryListChangedListener(tab.disposer!!) {
       Updater().update()
     }
@@ -188,7 +186,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       ComponentController(result, wrapper, disposable).also {
         UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, it)
       }
-      initialView = GHPRToolWindowInitialView.LIST
+      initialView = GHPRToolWindowViewType.LIST
       wrapper
     }
 
@@ -224,19 +222,19 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
     private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
-    private val createComponent = ClearableLazyValue.create {
-      GHPRCreateComponentFactory(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
-                                 parentDisposable)
-        .create()
+    private val createComponentHolder = ClearableLazyValue.create {
+      GHPRCreateComponentHolder(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
+                                parentDisposable)
     }
-    private var currentDisposable: Disposable? = null
 
+    override lateinit var currentView: GHPRToolWindowViewType
+    private var currentDisposable: Disposable? = null
     private var currentPullRequest: GHPRIdentifier? = null
 
     init {
       when (initialView) {
-        GHPRToolWindowInitialView.LIST -> viewList(false)
-        GHPRToolWindowInitialView.NEW -> createPullRequest(false)
+        GHPRToolWindowViewType.NEW -> createPullRequest(false)
+        else -> viewList(false)
       }
 
       DataManager.registerDataProvider(wrapper) { dataId ->
@@ -254,13 +252,14 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
-      wrapper.setContent(createComponent.value)
+      currentView = GHPRToolWindowViewType.NEW
+      wrapper.setContent(createComponentHolder.value.component)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
     override fun resetNewPullRequestView() {
-      createComponent.drop()
+      createComponentHolder.value.resetModel()
     }
 
     override fun viewList(requestFocus: Boolean) {
@@ -270,6 +269,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
+      currentView = GHPRToolWindowViewType.LIST
       wrapper.setContent(listComponent)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
@@ -288,6 +288,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
           Disposer.register(parentDisposable, it)
         }
         currentPullRequest = id
+        currentView = GHPRToolWindowViewType.DETAILS
         val pullRequestComponent = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, this, id,
                                                             currentDisposable!!)
           .create()

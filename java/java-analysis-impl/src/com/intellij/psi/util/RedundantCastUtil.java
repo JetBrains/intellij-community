@@ -130,7 +130,12 @@ public final class RedundantCastUtil {
     }
 
     @Override public void visitVariable(PsiVariable variable) {
-      processTypeCastWithExpectedType(variable.getInitializer(), variable.getType());
+      PsiExpression initializer = deparenthesizeExpression(variable.getInitializer());
+      // Do not read variable type if initializer is not a cast
+      // Variable could be a lambda parameter where there's no initializer but it's hard to determine its type
+      if (initializer instanceof PsiTypeCastExpression) {
+        processTypeCastWithExpectedType(initializer, variable.getType());
+      }
       super.visitVariable(variable);
     }
 
@@ -874,7 +879,7 @@ public final class RedundantCastUtil {
         if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
           return;
         }
-        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) || 
+        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) ||
             PsiPolyExpressionUtil.sameBooleanOrNumeric(operand, oppositeOperand)) {    //branches need to be of the same type
           if (oppositeOperand == null || !Comparing.equal(conditionalType, oppositeOperand.getType())) return;
         }

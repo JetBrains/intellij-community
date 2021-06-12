@@ -1,0 +1,6 @@
+// "Add 1st parameter to function 'foo'" "true"
+
+fun foo(s1: Nothing?, s: String) = Unit
+fun test() {
+    foo(<caret>null, "")
+}

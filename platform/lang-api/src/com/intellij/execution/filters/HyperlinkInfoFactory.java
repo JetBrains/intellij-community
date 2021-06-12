@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +46,6 @@ public abstract class HyperlinkInfoFactory {
   public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Collection<? extends PsiElement> elements);
 
   public interface HyperlinkHandler {
-    void onLinkFollowed(@NotNull PsiFile psiFile, @NotNull Editor targetEditor, @Nullable Editor originalEditor);
+    void onLinkFollowed(@NotNull Project project, @NotNull VirtualFile psiFile, @NotNull Editor targetEditor, @Nullable Editor originalEditor);
   }
 }

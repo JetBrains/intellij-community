@@ -28,8 +28,7 @@ public class DefaultProjectTypeEP {
   @Attribute("type")
   public String type;
 
-  @Nullable
-  public static ProjectType getDefaultProjectType() {
+  public static @Nullable ProjectType getDefaultProjectType() {
     DefaultProjectTypeEP[] extensions = EXTENSION_POINT_NAME.getExtensions();
     return extensions.length > 0 ? new ProjectType(extensions[0].type) : null;
   }

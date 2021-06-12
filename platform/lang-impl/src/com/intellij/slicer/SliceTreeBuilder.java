@@ -83,9 +83,6 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
       return;
     }
     analysisInProgress = true;
-    provider.startAnalyzeLeafValues(getTreeStructure(), () -> analysisInProgress = false);
-
-    analysisInProgress = true;
     provider.startAnalyzeNullness(getTreeStructure(), () -> analysisInProgress = false);
   }
 

@@ -7,12 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
-import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 /**
  * Replacement of read-write file channel with shadow file size, valid when file manipulations happen in with this class only.
@@ -22,7 +19,7 @@ final class FileChannelWithSizeTracking {
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
   private final Path myPath;
-  private final FileChannel myChannel;
+  private final UnInterruptibleFileChannelHandle myChannelHandle;
   private volatile long mySize;
 
   FileChannelWithSizeTracking(@NotNull Path path) throws IOException {
@@ -30,8 +27,8 @@ final class FileChannelWithSizeTracking {
     if (!Files.exists(parent)) {
       Files.createDirectories(parent);
     }
-    myChannel = unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
-    mySize = myChannel.size();
+    myChannelHandle = new UnInterruptibleFileChannelHandle(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    mySize = myChannelHandle.executeOperation(ch -> ch.size());
     myPath = path;
 
     if (LOG.isTraceEnabled()) {
@@ -41,7 +38,7 @@ final class FileChannelWithSizeTracking {
 
   long length() throws IOException {
     if (doAssertions) {
-      assert mySize == myChannel.size();
+      assert mySize == myChannelHandle.executeOperation(ch -> ch.size());
     }
     return mySize;
   }
@@ -50,7 +47,7 @@ final class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    int written = myChannel.write(ByteBuffer.wrap(dst, off, len), addr);
+    int written = myChannelHandle.executeOperation(ch -> ch.write(ByteBuffer.wrap(dst, off, len), addr));
     mySize = Math.max(written + addr, length());
   }
 
@@ -58,7 +55,7 @@ final class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    myChannel.read(ByteBuffer.wrap(dst, off, len), addr);
+    myChannelHandle.executeOperation(ch -> ch.read(ByteBuffer.wrap(dst, off, len), addr));
   }
 
   void close() throws IOException {
@@ -66,7 +63,7 @@ final class FileChannelWithSizeTracking {
       LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
     force();
-    myChannel.close();
+    myChannelHandle.close();
   }
 
   @Override
@@ -79,6 +76,9 @@ final class FileChannelWithSizeTracking {
       LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
     }
 
-    myChannel.force(true);
+    myChannelHandle.executeOperation(ch -> {
+      ch.force(true);
+      return null;
+    });
   }
 }

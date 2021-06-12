@@ -336,4 +336,5 @@
   <action id="MoveStatementDown"/>
   <action id="ToggleRenderedDocPresentation"/>
   <action id="EditorAddCaretPerSelectedLine"/>
+  <action id="GoGenerateFileAction"/>
 </keymap>

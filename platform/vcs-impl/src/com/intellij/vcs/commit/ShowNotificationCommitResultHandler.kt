@@ -2,7 +2,9 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil.*
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil.isEmpty
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_CANCELED
@@ -11,19 +13,8 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISH
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
 import org.jetbrains.annotations.Nls
-
-private val FROM = listOf("<", ">") // NON-NLS // NON-NLS
-private val TO = listOf("&lt;", "&gt;") // NON-NLS // NON-NLS
-
-/*
-  Commit message is passed to NotificationManagerImpl#doNotify and displayed as HTML.
-  Thus HTML tag braces (< and >) should be escaped,
-  but only they since the text is passed directly to HTML <BODY> tag and is not a part of an attribute or else.
- */
-private fun escape(s: String) = replace(s, FROM, TO)
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
@@ -57,20 +48,21 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
   }
 
   @NlsContexts.NotificationContent
-  private fun getCommitSummary() = StringBuilder(getFileSummaryReport()).apply {
+  private fun getCommitSummary() = HtmlBuilder().apply {
+    append(getFileSummaryReport())
     val commitMessage = committer.commitMessage
     if (!isEmpty(commitMessage)) {
-      append(": ").append(escape(commitMessage)) // NON-NLS
+      append(": ").append(commitMessage) // NON-NLS
     }
     val feedback = committer.feedback
     if (feedback.isNotEmpty()) {
-      append(UIUtil.BR)
-      append(join(feedback, UIUtil.BR))
+      br()
+      appendWithSeparators(HtmlChunk.br(), feedback.map(HtmlChunk::text))
     }
     val exceptions = committer.exceptions
     if (!hasOnlyWarnings(exceptions)) {
-      append(UIUtil.BR)
-      append(join(exceptions, { it.message }, UIUtil.BR))
+      br()
+      appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.message) })
     }
   }.toString()
 

@@ -28,14 +28,14 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (project.isDefault || !WorkspaceModel.isEnabled) return
+    if (project.isDefault) return
     val app = ApplicationManager.getApplication()
     app.invokeAndWait { app.runWriteAction(::updateEntitySource) }
   }
 
   override fun loadState(state: ExternalStorageConfiguration) {
     super.loadState(state)
-    if (project.isDefault || !WorkspaceModel.isEnabled) return
+    if (project.isDefault) return
     val app = ApplicationManager.getApplication()
     app.invokeLater { app.runWriteAction(::updateEntitySource) }
   }

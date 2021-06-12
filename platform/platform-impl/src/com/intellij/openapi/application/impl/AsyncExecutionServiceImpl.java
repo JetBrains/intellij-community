@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
  * @author peter
  */
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
-  private static long ourWriteActionCounter = 0;
+  private static long ourWriteActionCounter;
 
   public AsyncExecutionServiceImpl() {
     Application app = ApplicationManager.getApplication();

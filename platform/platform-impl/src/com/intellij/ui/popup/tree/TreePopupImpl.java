@@ -4,8 +4,7 @@ package com.intellij.ui.popup.tree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -32,7 +32,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHandler {
   private static final Logger LOG = Logger.getInstance(TreePopupImpl.class);
@@ -353,19 +352,9 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
           return;
         }
 
-        AtomicBoolean insideOnChosen = new AtomicBoolean(true);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (insideOnChosen.get()) {
-            LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
-          }
-        }, ModalityState.any());
-
-        final PopupStep queriedStep;
-        try {
+        PopupStep<?> queriedStep;
+        try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
           queriedStep = myStep.onChosen(userObject, handleFinalChoices);
-        }
-        finally {
-          insideOnChosen.set(false);
         }
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {
           setFinalRunnable(myStep.getFinalRunnable());

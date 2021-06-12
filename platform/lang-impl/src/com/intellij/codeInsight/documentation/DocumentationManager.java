@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -362,12 +363,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     super(project);
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        if (getDocInfoHint() != null &&
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+        JBPopup hint = getDocInfoHint();
+        if (hint != null &&
             LookupManager.getActiveLookup(myEditor) == null && // let the lookup manage all the actions
             !Conditions.instanceOf(ACTION_CLASSES_TO_IGNORE).value(action) &&
             !ArrayUtil.contains(event.getPlace(), ACTION_PLACES_TO_IGNORE) &&
-            !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> ActionManager.getInstance().getAction(id) == action)) {
+            !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> ActionManager.getInstance().getAction(id) == action) &&
+            clientOwns(hint)) {
           closeDocHint();
         }
       }
@@ -375,9 +378,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         JBPopup hint = getDocInfoHint();
-        if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
+        if (hint != null && LookupManager.getActiveLookup(myEditor) == null && clientOwns(hint)) {
           hint.cancel();
         }
+      }
+
+      private boolean clientOwns(@NotNull JBPopup hint) {
+        ClientId ownerId = hint.getUserData(ClientId.class);
+        return ownerId == null || ownerId.equals(ClientId.getCurrent());
       }
     };
     ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, actionListener);
@@ -487,6 +495,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback) {
+    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
+  }
+
+  public void showJavaDocInfo(@NotNull Editor editor,
+                              @NotNull PsiElement element,
+                              PsiElement original,
+                              boolean requestFocus,
+                              @Nullable Runnable closeCallback) {
+    myEditor = editor;
     showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 
@@ -766,6 +783,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setProject(myProject)
       .addListener(updateProcessor)
       .addUserData(updateProcessor)
+      .addUserData(ClientId.getCurrent())
       .setKeyboardActions(actions)
       .setResizable(true)
       .setMovable(true)

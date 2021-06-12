@@ -31,7 +31,7 @@ import java.util.List;
 public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbAware {
   private final ProjectGroup myGroup;
 
-  public ProjectGroupActionGroup(ProjectGroup group, List<AnAction> children) {
+  public ProjectGroupActionGroup(@NotNull ProjectGroup group, @NotNull List<? extends AnAction> children) {
     super(group.getName(), children);
     myGroup = group;
   }

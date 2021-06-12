@@ -45,7 +45,7 @@ public final class RncFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return RelaxngBundle.message("relaxng.file-type.compact-syntax");
+    return RelaxngBundle.message("filetype.relaxng.compact-syntax.description");
   }
 
   @Override

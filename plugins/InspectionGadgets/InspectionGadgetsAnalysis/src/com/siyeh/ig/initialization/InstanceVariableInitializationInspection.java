@@ -16,6 +16,7 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -26,9 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -104,7 +103,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
           return;
         }
       }
-      final boolean isTestClass = TestUtils.isJUnitTestClass(aClass);
+      final boolean isTestClass = TestFrameworks.getInstance().isTestClass(aClass);
       if (isTestClass) {
         if (isInitializedInSetup(field, aClass)) {
           return;
@@ -113,7 +112,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       if (isInitializedInInitializer(field)) {
         return;
       }
-      if (isInitializedInConstructors(field, aClass)) {
+      if (InitializationUtils.isInitializedInConstructors(field, aClass)) {
         return;
       }
       if (isTestClass) {
@@ -124,46 +123,10 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       }
     }
 
-    private boolean isInitializedInConstructors(PsiField field,
-                                                PsiClass aClass) {
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length == 0) {
-        return false;
-      }
-      for (final PsiMethod constructor : constructors) {
-        if (!InitializationUtils.methodAssignsVariableOrFails(
-          constructor, field)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
     private boolean isInitializedInSetup(PsiField field,
                                          PsiClass aClass) {
-      final PsiMethod setupMethod = getSetupMethod(aClass);
-      return InitializationUtils.methodAssignsVariableOrFails(setupMethod,
-                                                              field);
-    }
-
-    @Nullable
-    private PsiMethod getSetupMethod(@NotNull PsiClass aClass) {
-      final PsiMethod[] methods =
-        aClass.findMethodsByName("setUp", false);
-      for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiParameterList parameterList =
-          method.getParameterList();
-        if (!parameterList.isEmpty()) {
-          continue;
-        }
-        if (PsiType.VOID.equals(method.getReturnType())) {
-          return method;
-        }
-      }
-      return null;
+      final PsiMethod setupMethod = TestFrameworks.getInstance().findSetUpMethod(aClass);
+      return InitializationUtils.methodAssignsVariableOrFails(setupMethod, field);
     }
 
     private boolean isInitializedInInitializer(@NotNull PsiField field) {
@@ -171,16 +134,8 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       if (aClass == null) {
         return false;
       }
-      final PsiClassInitializer[] initializers = aClass.getInitializers();
-      for (final PsiClassInitializer initializer : initializers) {
-        if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiCodeBlock body = initializer.getBody();
-        if (InitializationUtils.blockAssignsVariableOrFails(body,
-                                                            field)) {
-          return true;
-        }
+      if (InitializationUtils.isInitializedInInitializer(field, aClass)) {
+        return true;
       }
       final PsiField[] fields = aClass.getFields();
       for (PsiField otherField : fields) {
@@ -191,8 +146,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
           continue;
         }
         final PsiExpression initializer = otherField.getInitializer();
-        if (InitializationUtils.expressionAssignsVariableOrFails(
-          initializer, field)) {
+        if (InitializationUtils.expressionAssignsVariableOrFails(initializer, field)) {
           return true;
         }
       }

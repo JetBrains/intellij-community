@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports calls to <strong>.equals()</strong> and <strong>==</strong> operator usages 
-where the target and argument are of incompatible types. 
-While such a call might theoretically be useful, most likely it represents a bug.
+<p>Reports calls to <code>equals()</code> where the target and argument are of incompatible types. While such a call might theoretically be useful, most likely it represents a bug, for example:</p>
+<pre><code>
+  new HashSet&lt;String&gt;() == new TreeSet&lt;Integer&gt;())
+</code></pre>
 </body>
 </html>

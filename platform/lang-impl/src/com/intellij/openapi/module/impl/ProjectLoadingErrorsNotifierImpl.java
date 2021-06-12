@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
@@ -12,12 +11,10 @@ import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -78,18 +75,17 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       ConfigurationErrorType type = entry.getKey();
       String invalidElements = type.getErrorText(descriptions.size(), descriptions.iterator().next().getElementName());
       String errorText = ProjectBundle.message("error.message.configuration.cannot.load", invalidElements);
-      new Notification(
-        NotificationGroup.createIdWithTitle("Project Loading Error", ProjectBundle.message("notification.group.project.loading.error")),
-        ProjectBundle.message("notification.title.error.loading.project"), errorText, NotificationType.ERROR,
-        new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            List<ConfigurationErrorDescription> validDescriptions = ContainerUtil.findAll(descriptions, ConfigurationErrorDescription::isValid);
-            if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements, validDescriptions)) {
-              notification.expire();
-            }
+      new Notification(NotificationGroup.createIdWithTitle("Project Loading Error", ProjectBundle.message("notification.group.project.loading.error")),
+                       ProjectBundle.message("notification.title.error.loading.project"),
+                       errorText,
+                       NotificationType.ERROR)
+        .setListener((notification, event) -> {
+          List<ConfigurationErrorDescription> validDescriptions = ContainerUtil.findAll(descriptions, ConfigurationErrorDescription::isValid);
+          if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements, validDescriptions)) {
+            notification.expire();
           }
-        }).notify(myProject);
+        })
+        .notify(myProject);
     }
   }
 }

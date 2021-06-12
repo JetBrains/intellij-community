@@ -2,7 +2,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -19,6 +18,8 @@ import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance(LightStubBuilder.class);
@@ -132,7 +133,7 @@ public class LightStubBuilder implements StubBuilder {
         }
       }
       else {
-        LOG.error("Element is not of ILightStubElementType: " + LogUtil.objectAndClass(elementType) + ", " + element);
+        LOG.error("Element is not of ILightStubElementType: " + objectInfo(elementType) + ", " + element);
       }
     }
 

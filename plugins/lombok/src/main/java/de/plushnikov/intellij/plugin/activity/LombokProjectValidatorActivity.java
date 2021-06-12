@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
-import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(BuildManagerListener.TOPIC, new LombokBuildManagerListener());
 
-    LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
@@ -46,20 +44,20 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
         for (Module module : moduleManager.getModules()) {
           String lombokVersion = Version.parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
-          if (null != lombokVersion && Version.compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
-            return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
-              LombokBundle.message("config.warn.dependency.outdated.message", project.getName(),
-                module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
-              NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
+          if (Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
+            return getNotificationGroup().createNotification(
+              LombokBundle.message("config.warn.dependency.outdated.title"),
+              LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+              NotificationType.WARNING);
           }
         }
       }
       return null;
-    }).expireWith(lombokProcessorProvider)
+    }).expireWith(LombokPluginDisposable.getInstance(project))
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
         if (notification != null) {
-          Notifications.Bus.notify(notification, project);
-          Disposer.register(lombokProcessorProvider, notification::expire);
+          notification.setListener(NotificationListener.URL_OPENING_LISTENER).notify(project);
+          Disposer.register(LombokPluginDisposable.getInstance(project), notification::expire);
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
   }

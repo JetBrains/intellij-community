@@ -186,4 +186,8 @@ public class PyJoinLinesTest extends PyTestCase {
   public void testFStringAndPlainLiteral() {
     doTest();
   }
+
+  public void testSlashAtFirstLine() {
+    doTest();
+  }
 }

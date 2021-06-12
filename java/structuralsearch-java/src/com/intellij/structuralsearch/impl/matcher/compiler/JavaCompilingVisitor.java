@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -374,10 +374,16 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandlerSimple(parameter);
     @NonNls final String name = "__catch_" + parent.getTextOffset();
-    final SubstitutionHandler substitutionHandler =
-      handler instanceof SubstitutionHandler
-      ? new SubstitutionHandler(name, false, ((SubstitutionHandler)handler).getMinOccurs(), ((SubstitutionHandler)handler).getMaxOccurs(), true)
-      : new SubstitutionHandler(name, false, 1, 1, true);
+    final SubstitutionHandler substitutionHandler;
+    if (handler instanceof SubstitutionHandler) {
+      final SubstitutionHandler parameterHandler = (SubstitutionHandler)handler;
+      substitutionHandler =
+        new SubstitutionHandler(name, false, parameterHandler.getMinOccurs(),
+                                parameterHandler.isTarget() ? Integer.MAX_VALUE : parameterHandler.getMaxOccurs(), true);
+    }
+    else {
+      substitutionHandler = new SubstitutionHandler(name, false, 1, 1, true);
+    }
     pattern.setHandler(parent, substitutionHandler);
   }
 

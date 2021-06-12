@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -8,9 +8,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class ApplyPatchContext {
   private final VirtualFile myBaseDir;
   private final int mySkipTopDirs;

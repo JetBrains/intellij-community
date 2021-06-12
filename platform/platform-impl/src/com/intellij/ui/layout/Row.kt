@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
@@ -70,6 +70,11 @@ interface RowBuilder : BaseBuilder {
   fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1, true))
   }
+
+  /**
+   * Creates a nested UI DSL panel, with a grid which is independent of this pane.
+   */
+  fun nestedPanel(@NlsContexts.BorderTitle title: String? = null, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel>
 
   fun onGlobalApply(callback: () -> Unit): Row
   fun onGlobalReset(callback: () -> Unit): Row
@@ -165,4 +170,9 @@ enum class GrowPolicy {
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }
+}
+
+fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
+  subRowsEnabled = predicate()
+  predicate.addListener { subRowsEnabled = it }
 }

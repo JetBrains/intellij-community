@@ -165,7 +165,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  public TypeDescriptor getTypeDescriptor(String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     return myDelegate instanceof XmlNSTypeDescriptorProvider ?
            ((XmlNSTypeDescriptorProvider)myDelegate).getTypeDescriptor(name, context) : null;
   }

@@ -1,10 +1,16 @@
 <html>
 <body>
-Reports "no-op" methods in <b>abstract</b> classes. It is usually a better
-design to make such methods <b>abstract</b> themselves, so that classes which inherit the methods will not forget to provide
+Reports "no-op" methods in <code>abstract</code> classes. It is usually a better
+design to make such methods <code>abstract</code> themselves, so that classes which inherit the methods will not forget to provide
 their own implementations.
+<p>Example:</p>
+<pre>
+  abstract class Test {
+    protected void doTest() {
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
 </body>
 </html>

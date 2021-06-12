@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
@@ -215,5 +216,18 @@ public final class GrLightModifierList extends LightElement implements GrModifie
     }
 
     setModifiers(mod);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightModifierList list = (GrLightModifierList)o;
+    return myModifiers == list.myModifiers && Objects.equals(myAnnotations, list.myAnnotations);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myModifiers, myAnnotations);
   }
 }

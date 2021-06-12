@@ -24,14 +24,11 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
@@ -47,25 +44,13 @@ public class PyiTypeTest extends PyTestCase {
     assertNotNull(file);
     file.refresh(false, true);
     ModuleRootModificationUtil.addContentRoot(fixture.getModule(), path);
-    return ()->ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
-                            for (ContentEntry entry : model.getContentEntries()) {
-                              if (file.equals(entry.getFile())) {
-                                model.removeContentEntry(entry);
-                              }
-                            }
-                          });
-  }
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    setLanguageLevel(LanguageLevel.PYTHON35);
+    return () -> ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
+      for (ContentEntry entry : model.getContentEntries()) {
+        if (file.equals(entry.getFile())) {
+          model.removeContentEntry(entry);
+        }
+      }
+    });
   }
 
   @Override
@@ -75,7 +60,6 @@ public class PyiTypeTest extends PyTestCase {
         Disposer.dispose(myDisposable);
         myDisposable = null;
       }
-      setLanguageLevel(null);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -135,7 +119,7 @@ public class PyiTypeTest extends PyTestCase {
 
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
-    doTest("Union[Dict[str, Any], list]");
+    doTest("Union[dict[str, Any], list]");
   }
 
   public void testGenericClassDefinitionInOtherFile() {

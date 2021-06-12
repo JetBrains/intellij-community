@@ -12,6 +12,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -247,13 +248,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     });
 
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+      MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
     });
 
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       DumbService.getInstance(myProject).runWhenSmart(() -> {
-        MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+        MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       });
     });
   }
@@ -285,7 +286,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         toolWindow.remove();
       }
     });
-    toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
     contentManager.addContent(content);
@@ -399,7 +399,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
       if (toolWindow.isAvailable() != hasMavenProjects) {
         toolWindow.setAvailable(hasMavenProjects);
-        if (hasMavenProjects) {
+        if (hasMavenProjects
+            && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null) {
           toolWindow.activate(null);
         }
       }

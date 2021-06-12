@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class SslKeyStore extends DelegateKeyStore {
+public final class SslKeyStore extends DelegateKeyStore {
   public static final String SSL_DEFERRED_KEY_LOADING = "sslDeferredKeyLoading";
   public static final String NAME = "idea-key-store";
   private static final Map<PrivateKey, X509Certificate> ourAutoAdded = new LinkedHashMap<PrivateKey, X509Certificate>();

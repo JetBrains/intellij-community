@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -44,7 +43,7 @@ public final class GroovyPsiManager {
   }
 
   public static GroovyPsiManager getInstance(Project project) {
-    return ServiceManager.getService(project, GroovyPsiManager.class);
+    return project.getService(GroovyPsiManager.class);
   }
 
   public @NotNull PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {

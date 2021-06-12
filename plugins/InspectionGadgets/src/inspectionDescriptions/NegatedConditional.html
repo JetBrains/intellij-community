@@ -4,15 +4,15 @@ Reports conditional expressions whose conditions are negated.
 Flipping the order of the conditional expression branches will usually increase the clarity of such statements.
 <!-- tooltip end -->
 <p>
-  Use the checkboxes below to ignore comparisons of the form <tt>obj != null</tt> or <tt>num != 0</tt>.
-  Since <tt>obj != null</tt> effectively means "obj exists",
+  Use the checkboxes below to ignore comparisons of the form <code>obj != null</code> or <code>num != 0</code>.
+  Since <code>obj != null</code> effectively means "obj exists",
   the meaning of the whole expression does not involve any negation
   and is therefore easy to understand.
 <p>
-  The same reasoning applies to <tt>num != 0</tt> expressions, especially when using bit masks.
+  The same reasoning applies to <code>num != 0</code> expressions, especially when using bit masks.
 <p>
   These forms have the added benefit of mentioning the interesting case first.
-  In most cases, the value for the <tt>== null</tt> branch is <tt>null</tt> itself,
+  In most cases, the value for the <code>== null</code> branch is <code>null</code> itself,
   like in the following examples:
 
 <pre>
@@ -21,7 +21,7 @@ Flipping the order of the conditional expression branches will usually increase 
     }
 
     static String getExecutableString(int fileMode) {
-        return (fileMode & 0xb001001001) != 0 ? "executable" : "non-executable";
+        return (fileMode & 0b001001001) != 0 ? "executable" : "non-executable";
     }
 </pre>
 

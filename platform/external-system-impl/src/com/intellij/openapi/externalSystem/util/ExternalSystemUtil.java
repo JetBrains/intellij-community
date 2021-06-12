@@ -25,7 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
@@ -35,7 +35,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
@@ -391,8 +390,7 @@ public final class ExternalSystemUtil {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-        IdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, data -> {
-        });
+        StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
           DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
         }
@@ -456,7 +454,7 @@ public final class ExternalSystemUtil {
         }
 
         Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
-        SyncViewManager syncViewManager = ServiceManager.getService(project, SyncViewManager.class);
+        SyncViewManager syncViewManager = project.getService(SyncViewManager.class);
         try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(resolveProjectTask.getId(), syncViewManager, false)) {
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
             @Override
@@ -829,13 +827,13 @@ public final class ExternalSystemUtil {
     if (group == null) {
       notification = new Notification(externalSystemId.getReadableName() + " build", notificationData.getTitle(),
                                       notificationData.getMessage(),
-                                      notificationData.getNotificationCategory().getNotificationType(),
-                                      notificationData.getListener());
+                                      notificationData.getNotificationCategory().getNotificationType())
+        .setListener(notificationData.getListener());
     }
     else {
-      notification = group.createNotification(
-        notificationData.getTitle(), notificationData.getMessage(),
-        notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+      notification = group
+        .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
+        .setListener(notificationData.getListener());
     }
     FailureImpl failure;
     if (exception instanceof BuildIssueException) {
@@ -1176,7 +1174,7 @@ public final class ExternalSystemUtil {
     if (!app.isDispatchThread()) {
       assert !((ApplicationEx)app).holdsReadLock();
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
 
   @Nullable

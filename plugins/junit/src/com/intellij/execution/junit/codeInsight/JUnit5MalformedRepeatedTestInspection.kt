@@ -12,7 +12,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.ExpressionUtils
 
@@ -26,8 +25,10 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val file = holder.file
     if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return PsiElementVisitor.EMPTY_VISITOR
-    if (JavaPsiFacade.getInstance(file.project).
-      findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST, file.resolveScope) == null) {
+    val psiFacade = JavaPsiFacade.getInstance(holder.project)
+    val repetitionInfo = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPETITION_INFO, file.resolveScope)
+    if (repetitionInfo == null || 
+        psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST, file.resolveScope) == null) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return object : JavaElementVisitor() {
@@ -50,8 +51,7 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
           }
         }
         else {
-          val repetitionInfo = JavaPsiFacade.getInstance(holder.project).findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPETITION_INFO, file.resolveScope)
-          val repetitionType = JavaPsiFacade.getElementFactory(holder.project).createType(repetitionInfo!!)
+          val repetitionType = JavaPsiFacade.getElementFactory(holder.project).createType(repetitionInfo)
           val repetitionInfoParam = method.parameterList.parameters.find { it.type == repetitionType }
           if (repetitionInfoParam != null) {
             if (MetaAnnotationUtil.isMetaAnnotated(method, Annotations.NON_REPEATED_ANNOTATIONS)) {

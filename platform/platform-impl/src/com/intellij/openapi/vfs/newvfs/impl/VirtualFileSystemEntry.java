@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
@@ -421,7 +421,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @ApiStatus.Internal
   public void appendInvalidationReason(@NotNull Object source, @NotNull Object reason) {
-    if (DebugInvalidation.DEBUG && !ApplicationInfoImpl.isInStressTest()) {
+    if (DebugInvalidation.DEBUG && !ApplicationManagerEx.isInStressTest()) {
       String oldReason = getUserData(DebugInvalidation.INVALIDATION_REASON);
       String newReason = source + ": " + reason;
       if (oldReason == null) {

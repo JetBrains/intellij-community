@@ -16,6 +16,7 @@
         <properties maven-id="org.apache.maven:maven-compat:3.3.9">
           <exclude>
             <dependency maven-id="com.google.inject:guice" />
+            <dependency maven-id="javax.inject:javax.inject" />
           </exclude>
         </properties>
         <CLASSES>
@@ -67,6 +68,7 @@
         <properties maven-id="org.apache.maven:maven-core:3.3.9">
           <exclude>
             <dependency maven-id="com.google.inject:guice" />
+            <dependency maven-id="javax.inject:javax.inject" />
           </exclude>
         </properties>
         <CLASSES>

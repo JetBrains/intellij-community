@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 
 class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
@@ -47,10 +48,14 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
     else -> StrategyUtils.indentIndexes(text, setOf(' ', '\t'))
   }
 
-  private val SINGLE_LINE_COMMENT_TYPES = setOf(END_OF_LINE_COMMENT, C_STYLE_COMMENT)
+  private fun IElementType?.isSingleLineCommentType() = when (this) {
+    END_OF_LINE_COMMENT, C_STYLE_COMMENT -> true
+    else -> false
+  }
+
   override fun getRootsChain(root: PsiElement): List<PsiElement> {
-    return if (root.elementType in SINGLE_LINE_COMMENT_TYPES) {
-      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, SINGLE_LINE_COMMENT_TYPES).toList()
+    return if (root.elementType.isSingleLineCommentType()) {
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root) { type -> type.isSingleLineCommentType() }.toList()
     }
     else super.getRootsChain(root)
   }

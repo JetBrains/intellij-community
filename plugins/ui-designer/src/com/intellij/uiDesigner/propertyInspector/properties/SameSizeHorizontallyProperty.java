@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
@@ -11,7 +10,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
  */
 public final class SameSizeHorizontallyProperty extends AbstractGridLayoutProperty {
   public static SameSizeHorizontallyProperty getInstance(Project project) {
-    return ServiceManager.getService(project, SameSizeHorizontallyProperty.class);
+    return project.getService(SameSizeHorizontallyProperty.class);
   }
 
   public SameSizeHorizontallyProperty(){

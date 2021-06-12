@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -6,13 +6,8 @@ import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.ForceableComparable
-import com.intellij.psi.Weigher
-import com.intellij.psi.WeigherExtensionPoint
-import com.intellij.psi.WeighingService
+import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
-import kotlin.streams.asSequence
 
 @ApiStatus.Internal
 object MLWeigherUtil {
@@ -20,12 +15,9 @@ object MLWeigherUtil {
 
   @JvmStatic
   fun findMLWeigher(location: CompletionLocation): LookupElementWeigher? {
-    val weigher: Weigher<Any, Any> = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Any>("com.intellij.weigher")
-                                        .extensions().asSequence()
-                                        .filterIsInstance<WeigherExtensionPoint>()
-                                        .filter { ML_COMPLETION_WEIGHER_ID == it.id && it.key == "completion" }
-                                        .firstOrNull()?.instance ?: return null
-
+    val weigher = WeigherExtensionPoint.EP.extensionList
+                    .firstOrNull { ML_COMPLETION_WEIGHER_ID == it.id && it.key == "completion" }
+                    ?.instance ?: return null
     return MLWeigherWrapper(weigher, location)
   }
 
@@ -37,7 +29,7 @@ object MLWeigherUtil {
       val id = weigher.toString()
       if (weigherIds.contains(id)) {
         result = result.weigh(object : LookupElementWeigher(id, true, false) {
-          override fun weigh(element: LookupElement): Comparable<*>? {
+          override fun weigh(element: LookupElement): Comparable<*> {
             val weigh = weigher.weigh(element, location) ?: return DummyWeigherComparableDelegate.EMPTY
             return DummyWeigherComparableDelegate(weigh)
           }
@@ -51,6 +43,15 @@ object MLWeigherUtil {
     : LookupElementWeigher(ML_COMPLETION_WEIGHER_ID) {
     override fun weigh(element: LookupElement): Comparable<*>? {
       return mlWeigher.weigh(element, location)
+    }
+  }
+
+  @ApiStatus.Internal
+  fun extractWeightsOrNull(comparable: Any): Map<String, Any>? {
+    return when (comparable) {
+      is DummyWeigherComparableDelegate -> comparable.getWeights()
+      is WeighingComparable<*, *> -> comparable.weights
+      else -> null
     }
   }
 }
@@ -70,6 +71,12 @@ private class DummyWeigherComparableDelegate(private val weigh: Comparable<*>?)
 
   override operator fun compareTo(other: DummyWeigherComparableDelegate): Int {
     return 0
+  }
+
+  fun getWeights(): Map<String, Any>? {
+    weigh ?: return emptyMap()
+
+    return if (weigh is WeighingComparable<*, *>) weigh.weights else null
   }
 
   override fun toString(): String {

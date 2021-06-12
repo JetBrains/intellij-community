@@ -1,9 +1,21 @@
 <html>
 <body>
-Reports <b>Serializable</b> classes where the <b>readResolve()</b>
-and <b>writeReplace()</b> methods are not declared <b>protected</b>. Note: in the case
-of classes declared <b>final</b>, these methods may be
-declared <b>private</b>, instead.
+Reports classes which implement <code>java.io.Serializable</code> interface where the <code>readResolve()</code>
+or <code>writeReplace()</code> methods are not declared <code>protected</code>.
+Declaring <code>readResolve()</code> and <code>writeReplace()</code> methods <code>private</code>
+can force subclasses to silently ignore them, while declaring them
+<code>public</code> allows them to be invoked by untrusted code. Note: in the case
+of classes declared <code>final</code>, these methods may be
+declared <code>private</code>, instead.
+<p><b>Example:</b></p>
+<pre><code>
+  class ClassWithSerialization implements Serializable {
+    public Object writeReplace() { // warning: 'writeReplace()' not declared protected
+        ...
+    }
+  }
+  </code>
+</pre>
 <!-- tooltip end -->
 <p>
 

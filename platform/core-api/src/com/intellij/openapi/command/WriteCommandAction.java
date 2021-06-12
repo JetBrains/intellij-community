@@ -118,9 +118,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       }
       else {
         try {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            thrown.set(doRunWriteCommandAction(action));
-          });
+          ApplicationManager.getApplication().invokeAndWait(() -> thrown.set(doRunWriteCommandAction(action)));
         }
         catch (ProcessCanceledException ignored) {
         }
@@ -137,7 +135,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
       AtomicReference<Throwable> thrown = new AtomicReference<>();
       Runnable wrappedRunnable = () -> {
-        if (myGlobalUndoAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+        if (myGlobalUndoAction) {
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+        }
         ApplicationManager.getApplication().runWriteAction(() -> {
           try {
             action.run();
@@ -150,6 +150,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       CommandProcessor.getInstance().executeCommand(myProject, wrappedRunnable, myCommandName, myGroupId,
                                                     ObjectUtils.notNull(myUndoConfirmationPolicy, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION),
                                                     myShouldRecordActionForActiveDocument);
+      //noinspection unchecked
       return (E)thrown.get();
     }
 

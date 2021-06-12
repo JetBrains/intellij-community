@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="intellij.java.langInjection" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
   <component name="copyright">
     <Base>

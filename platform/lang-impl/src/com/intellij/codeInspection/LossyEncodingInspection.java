@@ -320,6 +320,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       super(file);
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     public String getText() {

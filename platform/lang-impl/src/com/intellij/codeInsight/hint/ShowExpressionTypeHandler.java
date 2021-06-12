@@ -9,6 +9,7 @@ import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExpressionTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
@@ -108,11 +109,18 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
                                                                         @NotNull Editor editor,
                                                                         @NotNull Set<? extends ExpressionTypeProvider> handlers) {
+    return getExpressions(file, EditorUtil.getSelectionInAnyMode(editor), editor.getDocument(), handlers);
+  }
+
+  @NotNull
+  public static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                        @NotNull TextRange range,
+                                                                        @NotNull Document document,
+                                                                        @NotNull Set<? extends ExpressionTypeProvider> handlers) {
     if (handlers.isEmpty()) return Collections.emptyMap();
     boolean exactRange = false;
-    TextRange range = EditorUtil.getSelectionInAnyMode(editor);
     final Map<PsiElement, ExpressionTypeProvider> map = new LinkedHashMap<>();
-    int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
+    int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, document, range.getStartOffset());
     for (int i = 0; i < 3 && map.isEmpty() && offset >= i; i++) {
       PsiElement elementAt = file.findElementAt(offset - i);
       if (elementAt == null) continue;

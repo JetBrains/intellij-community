@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -64,7 +64,7 @@ private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.r
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
 private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
-private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
+private val parseNlBeforeAnonymousBody: Key<Boolean> = Key.create("groovy.parse.nl.before.anonymous.body")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -537,10 +537,12 @@ fun isBlockParseable(text: CharSequence): Boolean {
   }
 }
 
-fun insideParentheses(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
-  return builder.withKey(insideParentheses, true) {
+fun enableNlBeforeAnonymousBody(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  return builder.withKey(parseNlBeforeAnonymousBody, true) {
     parser.parse(builder, level)
   }
 }
 
-fun insideParentheses(builder: PsiBuilder, level: Int): Boolean = builder[insideParentheses]
+fun nlBeforeAnonymousBody(builder: PsiBuilder, level: Int, newLine: Parser): Boolean {
+  return !builder[parseNlBeforeAnonymousBody] || newLine.parse(builder, level)
+}

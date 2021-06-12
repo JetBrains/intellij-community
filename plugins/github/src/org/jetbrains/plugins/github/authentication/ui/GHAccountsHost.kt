@@ -20,11 +20,11 @@ internal interface GHAccountsHost {
     val KEY: DataKey<GHAccountsHost> = DataKey.create("GHAccountsHost")
 
     fun createAddAccountLink(): JButton =
-      DropDownLink(message("link.add.account"), {
+      DropDownLink(message("accounts.add.dropdown.link")) {
         val group = ActionManager.getInstance().getAction("Github.Accounts.AddAccount") as ActionGroup
         val dataContext = DataManager.getInstance().getDataContext(it)
 
         JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, ActionSelectionAid.MNEMONICS, false)
-      })
+      }
   }
 }

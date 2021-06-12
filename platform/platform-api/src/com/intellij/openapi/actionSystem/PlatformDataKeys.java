@@ -74,6 +74,7 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
 
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
+  public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");
 
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 
@@ -103,6 +104,13 @@ public class PlatformDataKeys extends CommonDataKeys {
    * This point should be relative to the currently focused component
    */
   public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
+
+  /**
+   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
+   * and the slow part to be queried on a background thread or under a progress.
+   * That slow part shall be returned when this data key is requested.
+   */
+  public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
 
   /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current

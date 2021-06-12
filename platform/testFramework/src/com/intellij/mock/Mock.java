@@ -93,14 +93,6 @@ public class Mock {
     }
 
     @Override
-    public void selectNotify() {
-    }
-
-    @Override
-    public void deselectNotify() {
-    }
-
-    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     }
 

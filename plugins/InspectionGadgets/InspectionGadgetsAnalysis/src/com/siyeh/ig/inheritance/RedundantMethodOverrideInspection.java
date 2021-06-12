@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -30,7 +29,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
+    boolean delegatesToSuperMethod = (boolean)infos[0];
+    return delegatesToSuperMethod
+           ? InspectionGadgetsBundle.message("redundant.method.override.delegates.to.super.problem.descriptor")
+           : InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
   }
 
   @Override
@@ -78,22 +80,32 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (body == null || method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod[] methods = method.findSuperMethods();
-      if (methods.length == 0) {
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      if (superMethods.length == 0) {
         return;
       }
-      PsiMethod superMethod = methods[0];
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && methods.length > 1) {
-        return;
+      PsiMethod superMethod = null;
+      if (superMethods.length > 1) {
+        for (PsiMethod candidate : superMethods) {
+          final PsiClass aClass = candidate.getContainingClass();
+          if (aClass != null && !aClass.isInterface()) {
+            superMethod = candidate;
+            break;
+          }
+        }
       }
-      if (!AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
+      else {
+        superMethod = superMethods[0];
+      }
+      if (superMethod == null ||
+          !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
       if (isSuperCallWithSameArguments(body, method, superMethod)) {
-        registerMethodError(method);
+        registerMethodError(method, Boolean.TRUE);
         return;
       }
       if (checkLibraryMethods && superMethod instanceof PsiCompiledElement) {
@@ -108,10 +120,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       final TrackingEquivalenceChecker checker = new TrackingEquivalenceChecker() {
         @Override
         protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
-          final boolean result = super.equivalentDeclarations(element1, element2);
-          return result || element1 instanceof PsiMethod &&
-                           element2 instanceof PsiMethod &&
-                           MethodSignatureUtil.isSuperMethod((PsiMethod)element1, (PsiMethod)element2);
+          if (super.equivalentDeclarations(element1, element2)) {
+            return true;
+          }
+          return checkLibraryMethods && element1.getNavigationElement().equals(element2.getNavigationElement());
         }
 
         @Override
@@ -137,7 +149,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       checker.markDeclarationsAsEquivalent(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody)) {
-        registerMethodError(method);
+        registerMethodError(method, Boolean.FALSE);
       }
     }
 
@@ -170,7 +182,13 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return false;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) return false;
+      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) {
+        return false;
+      }
+      final PsiMethod targetMethod = methodCallExpression.resolveMethod();
+      if (targetMethod != superMethod) {
+        return false;
+      }
 
       if (superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
         final PsiJavaFile file = (PsiJavaFile)method.getContainingFile();

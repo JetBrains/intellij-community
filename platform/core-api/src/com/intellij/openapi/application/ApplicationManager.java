@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * Provides access to the {@link Application}.
@@ -33,21 +34,22 @@ public class ApplicationManager {
   }
 
   public static void setApplication(@NotNull Application instance,
-                                    @NotNull Getter<FileTypeRegistry> fileTypeRegistryGetter,
+                                    @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
     final Application old = ourApplication;
-    final Getter<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
+    @SuppressWarnings("deprecation")
+    Supplier<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
+        if (old != null) {
+          // to prevent NPEs in threads still running
           setApplication(old);
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          FileTypeRegistry.ourInstanceGetter = oldFileTypeRegistry;
+          FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
         }
       }
     });
     setApplication(instance);
-    FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
+    FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
   }
 }

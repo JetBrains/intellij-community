@@ -114,7 +114,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
       val packageManager = EasyMock.createMock<PyPackageManager>(PyPackageManager::class.java)
       EasyMock
         .expect(packageManager.refreshAndGetPackages(false))
-        .andReturn(packages.map { PyPackage(it.key, it.value, null, emptyList()) })
+        .andReturn(packages.map { PyPackage(it.key, it.value) })
 
       EasyMock.replay(packageManager)
       return packageManager

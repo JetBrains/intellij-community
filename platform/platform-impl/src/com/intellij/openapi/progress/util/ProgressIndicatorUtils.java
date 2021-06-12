@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -131,11 +130,16 @@ public final class ProgressIndicatorUtils {
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
-        for (Runnable cancellation : ourWACancellations) {
-          cancellation.run();
-        }
+        cancelActionsToBeCancelledBeforeWrite();
       }
     }, app);
+  }
+
+  @ApiStatus.Internal
+  public static void cancelActionsToBeCancelledBeforeWrite() {
+    for (Runnable cancellation : ourWACancellations) {
+      cancellation.run();
+    }
   }
 
   @ApiStatus.Internal
@@ -272,7 +276,7 @@ public final class ProgressIndicatorUtils {
    * Ensure the current EDT activity finishes in case it requires many write actions, with each being delayed a bit
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
-  public static void yieldToPendingWriteActions() {
+  public static void yieldToPendingWriteActions(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed()) {
       throw new IllegalStateException("Mustn't be called from within read action");
@@ -282,13 +286,18 @@ public final class ProgressIndicatorUtils {
     }
     Semaphore semaphore = new Semaphore(1);
     application.invokeLater(semaphore::up, ModalityState.any());
-    awaitWithCheckCanceled(semaphore, ProgressIndicatorProvider.getGlobalProgressIndicator());
+    awaitWithCheckCanceled(semaphore, indicator);
+  }
+
+    /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
+  public static void yieldToPendingWriteActions() {
+    yieldToPendingWriteActions(ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
 
   /**
    * Run the given computation with its execution time restricted to the given amount of time in milliseconds.<p></p>
    *
-   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the the timeout.
+   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the timeout.
    * The computation should call {@link ProgressManager#checkCanceled()} frequently enough, so that after the timeout has been exceeded
    * it can stop the execution by throwing {@link ProcessCanceledException}, which will be caught by this {@code withTimeout}.<p></p>
    *

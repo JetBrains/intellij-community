@@ -1,9 +1,21 @@
 <html>
 <body>
-Reports cases when <b>==</b> or <b>!=</b> is applied to a newly allocated object
-instead of an <b>equals()</b> call. Newly allocated objects cannot be equal to other objects,
-thus the compared objects are always unequal. The inspection also may detect 
-newly created objects returned from simple methods.
+Reports cases when <code>==</code> or <code>!=</code> is applied to a newly allocated object
+instead of an <code>equals()</code> call. Newly allocated objects cannot be equal to other
+objects, thus the compared objects are always unequal. The inspection also may detect newly
+created objects returned from simple methods.
+<p>Example:</p>
+<pre>
+  void test(Object obj) {
+    if (new Object() == obj) {...}
+  }
+</pre>
+<p>After the fix is applied, the result will be like this:</p>
+<pre>
+  void test(Object obj) {
+    if (new Object().equals(obj)) {...}
+  }
+</pre>
 <!-- tooltip end -->
 <p>
   <small>New in 2018.3</small>

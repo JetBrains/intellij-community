@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -13,9 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
@@ -39,6 +37,7 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
@@ -75,10 +74,12 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  @Nullable private EditorDiffPreview myEditorDiffPreview;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
                        @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
+                       boolean isWithEditorDiffPreview,
                        @NotNull Disposable parent) {
     super(project, false, false);
     myUiProperties = uiProperties;
@@ -101,6 +102,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     GuiUtils.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
+
+    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
+    if (isWithEditorDiffPreview) {
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, () -> {
+        setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
+      });
+    }
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
@@ -393,6 +401,29 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     return ChangeDiffRequestProducer.create(project, change, context);
+  }
+
+  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
+    EditorDiffPreview preview = myEditorDiffPreview;
+
+    if (isWithEditorDiffPreview && preview == null) {
+      preview = new VcsLogEditorDiffPreview(myProject, this);
+      myEditorDiffPreview = preview;
+    }
+    else if (!isWithEditorDiffPreview && preview != null) {
+      preview.closePreview();
+      myEditorDiffPreview = null;
+    }
+  }
+
+  @NotNull
+  public VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
+    return new VcsLogChangeProcessor(myProject, this, isInEditor, this);
+  }
+
+  @Override
+  protected @Nullable DiffPreview getShowDiffActionPreview() {
+    return myEditorDiffPreview;
   }
 
   private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {

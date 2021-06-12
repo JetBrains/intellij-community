@@ -26,45 +26,27 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
   @NotNull
   public abstract List<TextRange> getContentRanges();
-
-  @NotNull
-  protected abstract String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore);
+  
+  public abstract @NotNull YamlScalarTextEvaluator getTextEvaluator();
 
   protected List<Pair<TextRange, String>> getDecodeReplacements(@NotNull CharSequence input) {
     return Collections.emptyList();
   }
 
   protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) throws IllegalArgumentException {
-    throw new IllegalArgumentException("Not implemented");
+    return Collections.emptyList();
   }
 
   @NotNull
   @Override
   public final String getTextValue() {
-    return getTextValue(null);
+    return getTextEvaluator().getTextValue(null);
   }
 
   @NotNull
-  public String getTextValue(@Nullable TextRange rangeInHost) {
-    final String text = getText();
-    final List<TextRange> contentRanges = getContentRanges();
-
-    final StringBuilder builder = new StringBuilder();
-
-    for (int i = 0; i < contentRanges.size(); i++) {
-      final TextRange range = rangeInHost != null ? rangeInHost.intersection(contentRanges.get(i)) : contentRanges.get(i);
-      if (range == null) continue;
-
-      final CharSequence curString = range.subSequence(text);
-      builder.append(curString);
-
-      if (range.getEndOffset() == contentRanges.get(i).getEndOffset() && i + 1 != contentRanges.size()) {
-        builder.append(getRangesJoiner(text, contentRanges, i));
-      }
-    }
-    return processReplacements(builder, getDecodeReplacements(builder));
+  public final String getTextValue(@Nullable TextRange rangeInHost) {
+    return getTextEvaluator().getTextValue(rangeInHost);
   }
-
 
   @Override
   public PsiReference getReference() {
@@ -129,11 +111,13 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
     @Override
     public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-      outChars.append(myHost.getTextValue(rangeInsideHost));
+      String text = myHost.getText();
       List<TextRange> ranges = myHost.getContentRanges();
-      if (ranges.size() > 0) {
-        return ranges.get(0).getStartOffset() <= rangeInsideHost.getStartOffset()
-               && ranges.get(ranges.size() - 1).getEndOffset() >= rangeInsideHost.getEndOffset();
+      for (TextRange range : ranges) {
+        TextRange intersection = range.intersection(rangeInsideHost);
+        if (intersection == null) continue;
+        String substring = intersection.substring(text);
+        outChars.append(processReplacements(substring, myHost.getDecodeReplacements(substring)));
       }
       return true;
     }
@@ -152,11 +136,6 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
         last = range;
 
         String curString = range.subSequence(text).toString();
-
-        if (range.getEndOffset() == contentRanges.get(i).getEndOffset() && i + 1 != contentRanges.size()) {
-          final String joiner = myHost.getRangesJoiner(text, contentRanges, i);
-          curString += joiner;
-        }
 
         final List<Pair<TextRange, String>> replacementsForThisLine = myHost.getDecodeReplacements(curString);
         int encodedOffsetInCurrentLine = 0;

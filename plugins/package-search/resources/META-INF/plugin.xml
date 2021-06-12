@@ -1,4 +1,4 @@
-<idea-plugin allow-bundled-update="true">
+<idea-plugin>
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
@@ -25,6 +25,11 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
     </extensionPoints>
 
     <depends>com.intellij.modules.java</depends>
@@ -35,9 +40,10 @@ Supports Maven and Gradle projects.
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchQuickFixProvider"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchUnresolvedReferenceQuickFixProvider"/>
 
-        <httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.ide.PackageSearchRestService"/>
+        <!-- TODO Re-enable when working on IDEA-267638 -->
+        <!--<httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.rest.PackageSearchRestService"/>-->
 
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchSearchableOptionContributor"/>
@@ -49,17 +55,26 @@ Supports Maven and Gradle projects.
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowAvailabilityService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowService"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService"/>
 
         <toolWindow id="Packages" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"
                     canCloseContents="true"
                     factoryClass="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
 
-        <registryKey id="packagesearch.repository.mock.api"
-                     key="packagesearch.repository.mock.api"
+        <registryKey id="packagesearch.plugin.debug.logging"
+                     key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
-                     description="Mock the package search remote API's /repositories call, and return multiple repositories."
+                     description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#com.jetbrains.packagesearch.intellij-plugin:trace'."
+                     restartRequired="true"/>
+
+        <registryKey id="packagesearch.plugin.repositories.tab"
+                     key="packagesearch.plugin.repositories.tab"
+                     defaultValue="false"
+                     description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
                      restartRequired="true"/>
     </extensions>
 

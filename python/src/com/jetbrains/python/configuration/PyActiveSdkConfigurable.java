@@ -59,16 +59,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private static final Logger LOG = Logger.getInstance(PyActiveSdkConfigurable.class);
 
   @NotNull
-  private final Project myProject;
+  protected final Project myProject;
 
   @Nullable
-  private final Module myModule;
+  protected final Module myModule;
 
   @NotNull
   private final PyConfigurableInterpreterList myInterpreterList;
 
   @NotNull
-  private final ProjectSdksModel myProjectSdksModel;
+  protected final ProjectSdksModel myProjectSdksModel;
 
   @NotNull
   private final JPanel myMainPanel;
@@ -212,8 +212,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     buildAllSdksDialog().show();
   }
 
-  private void onSdkSelected() {
+  protected void onSdkSelected() {
     final Sdk sdk = getOriginalSelectedSdk();
+    refreshPackages(sdk);
+  }
+
+  protected void refreshPackages(@Nullable Sdk sdk) {
     final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
     myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
@@ -266,13 +270,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   @Nullable
-  private Sdk getOriginalSelectedSdk() {
+  protected Sdk getOriginalSelectedSdk() {
     final Sdk editableSdk = getEditableSelectedSdk();
     return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
   }
 
   @Nullable
-  private Sdk getEditableSelectedSdk() {
+  protected Sdk getEditableSelectedSdk() {
     return (Sdk)mySdkCombo.getSelectedItem();
   }
 
@@ -303,11 +307,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void reset() {
-    updateSdkListAndSelect(getSdk());
+    Sdk sdk = getSdk();
+    updateSdkListAndSelect(sdk);
+  }
+
+  protected @NotNull List<Sdk> getAvailableSdks() {
+    return myInterpreterList.getAllPythonSdks(myProject);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
-    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> allPythonSdks = getAvailableSdks();
 
     final List<Object> items = new ArrayList<>();
     items.add(null);
@@ -328,12 +337,17 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
+    final Sdk selection = getEditableSdkUsingOriginal(selectedSdk);
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
     // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
     mySdkCombo.setSelectedItem(selection);
     onSdkSelected();
+  }
+
+  @Nullable
+  protected Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
+    return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
   }
 
   @Override

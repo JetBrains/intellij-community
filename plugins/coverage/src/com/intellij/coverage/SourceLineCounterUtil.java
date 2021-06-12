@@ -14,12 +14,12 @@ import java.util.Set;
 public final class SourceLineCounterUtil {
   public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
                                                    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content,
-                                                   final boolean excludeLines,
+                                                   final boolean excludeLines, final boolean ignoreEmptyPrivateConstructors,
                                                    final Condition<? super String> includeDescriptionCondition) {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
-    SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
+    SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null, ignoreEmptyPrivateConstructors);
     reader.accept(counter, 0);
     Set<Object> descriptions = new HashSet<>();
     TIntObjectHashMap lines = counter.getSourceLines();
@@ -50,7 +50,7 @@ public final class SourceLineCounterUtil {
                                                       final boolean excludeLines,
                                                       final Project project) {
     final ClassReader reader = new ClassReader(content);
-    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
+    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null, JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors());
     reader.accept(collector, 0);
 
     String qualifiedName = reader.getClassName();

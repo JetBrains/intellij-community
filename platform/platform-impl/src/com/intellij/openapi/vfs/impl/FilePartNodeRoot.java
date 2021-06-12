@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.NodeToUpdate;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -17,7 +18,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.FilePathHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +170,7 @@ final class FilePartNodeRoot extends FilePartNode {
         if (fsRoot == null) {
           String rootPath = ContainerUtil.getLastItem(names);
           fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
-          if (fsRoot != null && !FilePathHashingStrategy.create(fsRoot.isCaseSensitive()).equals(fsRoot.getName(), rootPath)) {
+          if (fsRoot != null && !StringUtilRt.equal(fsRoot.getName(), rootPath, fsRoot.isCaseSensitive())) {
             // ignore really weird root names, like "/" under windows
             fsRoot = null;
           }
@@ -214,7 +214,7 @@ final class FilePartNodeRoot extends FilePartNode {
         StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR) && end > 2 && path.charAt(end - 3) != '/';
       if (isJarSeparator) {
         names.add(JarFileSystem.JAR_SEPARATOR);
-        end = end - 2;
+        end -= 2;
         continue;
       }
       if (path.charAt(end-1) == '/') {

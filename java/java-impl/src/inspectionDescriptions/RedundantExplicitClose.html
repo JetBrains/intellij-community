@@ -1,7 +1,20 @@
 <html>
 <body>
-Inspection reports unnecessary close of resource in the end of try-with-resources block
+Reports unnecessary calls to <code>close()</code> at the end of a try-with-resources block, and suggests removing it.
+<p>Example:</p>
+<pre>
+  try(MyAutoCloseable ac = new MyAutoCloseable()) {
+    foo();
+    ac.close();
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  try(MyAutoCloseable ac = new MyAutoCloseable()) {
+    foo();
+  }
+</pre>
 <!-- tooltip end -->
-<p><small>New in 2018.1</small></p>
+<small>New in 2018.1</small>
 </body>
 </html>

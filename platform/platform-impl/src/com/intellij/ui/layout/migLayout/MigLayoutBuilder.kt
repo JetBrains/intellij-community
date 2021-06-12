@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
@@ -136,9 +137,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
      */
 
     lc.isVisualPadding = true
-
-    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
-    lc.hideMode = 2
+    lc.hideMode = 3
 
     val rowConstraints = AC()
     (container as JComponent).putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
@@ -193,6 +192,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           if (index == row.components.size - 1) {
             cc.spanX()
             cc.isWrap = true
+            if (row.components.size > 1) {
+              cc.hideMode = 2   // if hideMode is 3, the wrap constraint won't be processed
+            }
           }
 
           if (index >= row.rightIndex) {
@@ -273,6 +275,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           }
         }
       }
+      else if (prevRowType == RowType.NESTED_PANEL) {
+        prevRow.gapAfter = "0px!"
+      }
     }
   }
 
@@ -287,11 +292,14 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           it is JBTextArea || it is JComboBox<*>
         }) return RowType.CHECKBOX_TALL
     }
+    if (row.components.singleOrNull() is DialogPanel) {
+      return RowType.NESTED_PANEL
+    }
     return RowType.GENERIC
   }
 
   private enum class RowType {
-    GENERIC, CHECKBOX, CHECKBOX_TALL;
+    GENERIC, CHECKBOX, CHECKBOX_TALL, NESTED_PANEL;
 
     val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
   }

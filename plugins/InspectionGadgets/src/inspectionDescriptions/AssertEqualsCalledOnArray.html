@@ -1,8 +1,26 @@
 <html>
 <body>
-Reports any calls to JUnit's <b>assertEquals()</b>
-method with arguments of type array. Arrays should be checked with one of the
-<b>assertArrayEquals()</b> methods.
+Reports calls to one of the JUnit <code>assertEquals()</code> methods with arguments of type array.
+This will compare the arrays' identity instead of the array contents.
+Array contents should be checked with one of the <code>assertArrayEquals()</code> methods.
+<p>For example:</p>
+<pre><code>
+  @Test
+  <b>public void</b> testSort() {
+    <b>int</b>[] actual = {248, 496, 0, 56};
+    Arrays.sort(actual);
+    Assert.assertEquals(<b>new int</b>[] {0, 56, 248, 496}, actual);
+  }
+</code></pre>
+<p>A quick fix is provided to perform the replacement:</p>
+<pre><code>
+  @Test
+  <b>public void</b> testSort() {
+    <b>int</b>[] actual = {248, 496, 0, 56};
+    Arrays.sort(actual);
+    Assert.assertArrayEquals(<b>new int</b>[] {0, 56, 248, 496}, actual);
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

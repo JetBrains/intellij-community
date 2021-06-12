@@ -1,4 +1,4 @@
-// "Replace with 'Map.ofEntries' call" "true"
+// "Replace with 'Map.ofEntries()' call" "true"
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

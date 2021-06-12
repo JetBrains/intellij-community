@@ -27,6 +27,11 @@ data class RegisterToolWindowTask(
 
     @JvmStatic
     @JvmOverloads
+    fun notClosable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, icon = icon, anchor = anchor)
+
+    @JvmStatic
+    @JvmOverloads
     fun closable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
       RegisterToolWindowTask(id, icon = icon, anchor = anchor)
 

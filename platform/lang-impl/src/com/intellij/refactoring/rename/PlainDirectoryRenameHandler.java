@@ -6,9 +6,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * Explicit handler for renaming directories which don't correspond to packages. It duplicates behavior of the default {@link PsiElementRenameHandler}.
@@ -23,7 +22,7 @@ public class PlainDirectoryRenameHandler extends DirectoryRenameHandlerBase {
   }
 
   public static boolean isPlainDirectory(@NotNull PsiDirectory directory) {
-    return Arrays.stream(EP_NAME.getExtensions()).noneMatch(extension -> extension instanceof DirectoryAsPackageRenameHandlerBase<?> &&
+    return !ContainerUtil.exists(EP_NAME.getExtensions(), extension -> extension instanceof DirectoryAsPackageRenameHandlerBase<?> &&
                                                                          ((DirectoryAsPackageRenameHandlerBase)extension).getPackage(directory) != null);
   }
 

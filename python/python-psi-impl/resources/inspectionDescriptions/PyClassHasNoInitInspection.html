@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection used when a class has no __init__ method, neither its parent classes.
+<p>Reports cases in Python 2 when a class has no <code>__init__</code> method, neither its parent
+  classes.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Book():
+    pass
+</pre>
+<p>The quick-fix adds the <code>__init__</code> method:</p>
+<pre style="font-family: monospace">
+class Book():
+    def __init__(self):
+        pass
+</pre>
 </body>
 </html>

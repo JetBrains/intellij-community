@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.application.invokeLater
@@ -97,9 +97,8 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
 
     val wasEmpty = toolWindow.contentManager.contentCount == 0
     getExtensions(project, toolWindow).forEach { extension ->
-      val isVisible = extension.newPredicateInstance(project)?.`fun`(project) != false
+      val isVisible = extension.newPredicateInstance(project)?.test(project) != false
       val content = changesViewContentManager.findContents { it.getExtension() === extension }.firstOrNull()
-
       if (isVisible && content == null) {
         changesViewContentManager.addContent(createExtensionContent(project, extension))
       }

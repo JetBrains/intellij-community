@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -23,7 +21,7 @@ public final class MavenProjectNamer {
       artifactIdMap.putValue(project.getMavenId().getArtifactId(), project);
     }
 
-    Map<MavenProject, String> res = new THashMap<>();
+    Map<MavenProject, String> res = new HashMap<>();
 
     for (Map.Entry<String, Collection<MavenProject>> entry : artifactIdMap.entrySet()) {
       List<MavenProject> projectList = (List<MavenProject>)entry.getValue();
@@ -71,7 +69,7 @@ public final class MavenProjectNamer {
   }
 
   private static boolean allGroupsAreDifferent(Collection<MavenProject> mavenProjects) {
-    Set<String> exitingGroups = new THashSet<>();
+    Set<String> exitingGroups = new HashSet<>();
 
     for (MavenProject mavenProject : mavenProjects) {
       if (!exitingGroups.add(mavenProject.getMavenId().getGroupId())) {

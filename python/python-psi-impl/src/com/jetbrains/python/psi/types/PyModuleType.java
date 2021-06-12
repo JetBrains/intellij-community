@@ -36,9 +36,7 @@ import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.inSameFile;
 
-/**
- * @author yole
- */
+
 public class PyModuleType implements PyType { // Modules don't descend from object
   @NotNull private final PyFile myModule;
 

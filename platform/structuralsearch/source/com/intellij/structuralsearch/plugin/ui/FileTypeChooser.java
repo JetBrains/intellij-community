@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.core.CoreBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -81,11 +83,16 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     return infos;
   }
 
-  public void setSelectedItem(@NotNull LanguageFileType type, @Nullable Language dialect, @Nullable PatternContext context) {
-    for (FileTypeInfo info : myFileTypeInfos) {
-      if (info.isEqualTo(type, dialect, context)) {
-        setSelectedItem(info);
-        return;
+  public void setSelectedItem(@Nullable LanguageFileType type, @Nullable Language dialect, @Nullable PatternContext context) {
+    if (type == null) {
+      setSelectedItem(null);
+    }
+    else {
+      for (FileTypeInfo info : myFileTypeInfos) {
+        if (info.isEqualTo(type, dialect, context)) {
+          setSelectedItem(info);
+          return;
+        }
       }
     }
   }
@@ -105,8 +112,14 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setIcon(mySelectedItem.getFileType().getIcon());
-    presentation.setText(mySelectedItem.getText());
+    if (mySelectedItem == null) {
+      presentation.setIcon(AllIcons.FileTypes.Unknown);
+      presentation.setText(CoreBundle.message("filetype.unknown.description"));
+    }
+    else {
+      presentation.setIcon(mySelectedItem.getFileType().getIcon());
+      presentation.setText(mySelectedItem.getText());
+    }
   }
 
   @NotNull

@@ -10,6 +10,7 @@ import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import java.util.List;
 
 @ApiStatus.Experimental
+@Presentation(icon = "AllIcons.Nodes.Related")
 public interface DependencyDescriptor extends DomElement {
 
   @NotNull
@@ -35,6 +36,7 @@ public interface DependencyDescriptor extends DomElement {
     @Required
     @Stubbed
     @Convert(IdeaPluginConverter.class)
-    GenericAttributeValue<String> getId();
+    @NameValue(referencable = false)
+    GenericAttributeValue<IdeaPlugin> getId();
   }
 }

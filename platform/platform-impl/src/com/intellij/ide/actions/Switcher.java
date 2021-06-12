@@ -159,13 +159,12 @@ public final class Switcher extends BaseSwitcherAction {
 
       SwitcherListRenderer renderer = new SwitcherListRenderer(this);
       List<SwitcherToolWindow> windows = renderer.getToolWindows();
-      updateMnemonics(windows);
+      boolean showMnemonics = mySpeedSearch == null || is("ide.recent.files.tool.window.mnemonics");
+      if (showMnemonics || is("ide.recent.files.tool.window.sort.by.mnemonics")) {
+        updateMnemonics(windows);
+      }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
-      if (pinned) {
-        registerAction(this::navigate, getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
-        registerAction(this::navigate, getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
-      }
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
       if (!pinned) {
@@ -219,7 +218,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (pinned && !windows.isEmpty()) {
         twModel.add(new SwitcherRecentLocations(this));
       }
-      if (mySpeedSearch != null && !is("ide.recent.files.tool.window.mnemonics")) {
+      if (!showMnemonics) {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
@@ -395,18 +394,12 @@ public final class Switcher extends BaseSwitcherAction {
         }
       }
 
-      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
       if (filesData.size() <= 1) {
         if (!filesForInit.isEmpty()) {
           int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
           int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
           int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
           for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-            if (pinned
-                && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
-                && selectedFiles.contains(filesForInit.get(i))) {
-              continue;
-            }
 
             FileInfo info = new FileInfo(filesForInit.get(i), null, project);
             boolean add = true;
@@ -521,7 +514,9 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
-      for (Shortcut shortcut : getShortcutSet(actionId).getShortcuts()) {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) return;
+      for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
           keymap.put(onKeyRelease.getForbiddenMnemonic(keyboardShortcut.getFirstKeyStroke()), null);
@@ -748,17 +743,11 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    private static @NotNull ShortcutSet getShortcutSet(@NotNull @NonNls String id) {
-      AnAction action = ActionManager.getInstance().getAction(id);
-      return action == null ? CustomShortcutSet.EMPTY : action.getShortcutSet();
-    }
-
     private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
       registerAction(action, onKeyRelease.getShortcuts(keys));
     }
 
     private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
-      if (shortcuts.getShortcuts().length == 0) return; // ignore empty shortcut set
       LightEditActionFactory.create(event -> {
         if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
       }).registerCustomShortcutSet(shortcuts, this, this);

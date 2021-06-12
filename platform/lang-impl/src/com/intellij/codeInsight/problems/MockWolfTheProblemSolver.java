@@ -73,6 +73,10 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     myDelegate = delegate;
   }
 
+  public void resetDelegate() {
+    myDelegate = null;
+  }
+
   @Override
   public void reportProblems(final @NotNull VirtualFile file, @NotNull Collection<? extends Problem> problems) {
     if (myDelegate != null) myDelegate.reportProblems(file,problems);

@@ -241,7 +241,7 @@ final class ReturnReplacementContext {
                                    PsiIfStatement ifStatement,
                                    boolean inThen, PsiCodeBlock ifParent) {
     PsiElement[] tail = extractTail(currentContext, ifParent);
-    if (Arrays.stream(tail).noneMatch(PsiStatement.class::isInstance)) return null;
+    if (!ContainerUtil.exists(tail, PsiStatement.class::isInstance)) return null;
     PsiBlockStatement blockForTail = getBlockFromIf(ifStatement, inThen);
     PsiCodeBlock codeBlock = blockForTail.getCodeBlock();
     PsiJavaToken brace = requireNonNull(codeBlock.getRBrace());

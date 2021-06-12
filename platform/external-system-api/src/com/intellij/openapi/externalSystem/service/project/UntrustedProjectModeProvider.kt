@@ -18,7 +18,7 @@ interface UntrustedProjectModeProvider {
   val systemId: ProjectSystemId
 
   /**
-   * Return true if the project is in the untrusted mode now, and the IDE should show a noticeable
+   * Return true if the IDE should show a noticeable
    * [com.intellij.ui.EditorNotificationPanel permanent notification].
    */
   fun shouldShowEditorNotification(project: Project): Boolean

@@ -1,9 +1,17 @@
 <html>
 <body>
-Reports String literals of length one being used
-as a parameter in <b>String.indexOf()</b> or
-<b>String.lastIndexOf()</b> calls.
-These String literals may be replaced by equivalent character literals, gaining some performance enhancement.
+Reports single character string being used
+as a parameter in <code>String.indexOf()</code> or
+<code>String.lastIndexOf()</code> calls.
+There is a fix that allows to replace these string literals with equivalent character literals, gaining some performance enhancement.
+<p>Example</p>
+<pre>
+  return s.indexOf("x");
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  return s.indexOf('x');
+</pre>
 <!-- tooltip end -->
 <p>
 

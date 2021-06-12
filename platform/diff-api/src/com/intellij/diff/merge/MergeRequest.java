@@ -50,6 +50,10 @@ public abstract class MergeRequest implements UserDataHolder {
   public void resultRetargeted() {
   }
 
+  @RequiresEdt
+  public void onAssigned(boolean assigned) {
+  }
+
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {

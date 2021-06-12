@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -348,9 +349,12 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
                   !isSuppressedFor(element, suppressId, myToolToSuppressScopes.get(suppressId)) &&
                   //suppression in local pass is intentionally disabled to pass ALL
                   !SuppressionUtil.inspectionResultSuppressed(element, LocalRedundantSuppressionInspection.this)) {
-                holder.registerProblem(element, mySuppressor.getHighlightingRange(element, suppressId),
-                                       InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                       mySuppressor.createRemoveRedundantSuppressionFix(suppressId));
+                TextRange highlightingRange = mySuppressor.getHighlightingRange(element, suppressId);
+                if (highlightingRange != null) {
+                  holder.registerProblem(element, highlightingRange,
+                                         InspectionsBundle.message("inspection.redundant.suppression.description"),
+                                         mySuppressor.createRemoveRedundantSuppressionFix(suppressId));
+                }
               }
             }
           }

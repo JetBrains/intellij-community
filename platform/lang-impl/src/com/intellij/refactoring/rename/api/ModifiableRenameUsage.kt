@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
-import kotlinx.coroutines.ensureActive
-import kotlin.coroutines.CoroutineContext
+import com.intellij.openapi.progress.Progress
 
 /**
  * Implement this interface to consider the usage modifiable.
@@ -43,12 +42,12 @@ interface ModifiableRenameUsage : RenameUsage {
      */
     @JvmDefault
     fun prepareFileUpdateBatch(
-      ctx: CoroutineContext,
+      progress: Progress,
       usages: Collection<ModifiableRenameUsage>,
       newName: String
     ): Collection<FileOperation> {
       return usages.flatMap { usage ->
-        ctx.ensureActive()
+        progress.checkCancelled()
         prepareFileUpdate(usage, newName)
       }
     }
@@ -70,9 +69,9 @@ interface ModifiableRenameUsage : RenameUsage {
   interface ModelUpdater {
 
     @JvmDefault
-    fun prepareModelUpdateBatch(ctx: CoroutineContext, usages: Collection<ModifiableRenameUsage>): Collection<ModelUpdate> {
+    fun prepareModelUpdateBatch(progress: Progress, usages: Collection<ModifiableRenameUsage>): Collection<ModelUpdate> {
       return usages.mapNotNull { usage ->
-        ctx.ensureActive()
+        progress.checkCancelled()
         prepareModelUpdate(usage)
       }
     }

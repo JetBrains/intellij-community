@@ -17,12 +17,26 @@ public class RecursiveFilePathSet {
     myMapping.add(filePath.getPath(), filePath);
   }
 
+  public void addAll(@NotNull Collection<? extends FilePath> filePath) {
+    for (FilePath path : filePath) {
+      add(path);
+    }
+  }
+
   public void remove(@NotNull FilePath filePath) {
     myMapping.remove(filePath.getPath());
   }
 
+  public void clear() {
+    myMapping.clear();
+  }
+
+  public boolean contains(@NotNull FilePath filePath) {
+    return myMapping.containsKey(filePath.getPath());
+  }
+
   public boolean hasAncestor(@NotNull FilePath filePath) {
-    return myMapping.getMappingFor(filePath) != null;
+    return myMapping.getMappingFor(filePath.getPath()) != null;
   }
 
   @NotNull

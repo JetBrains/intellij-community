@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -145,7 +147,7 @@ public final class StandardMethodContract extends MethodContract {
    * @return list of equivalent non-intersecting contracts or null if the result is too big or the input list contains errors
    * (e.g. contracts with different parameter count)
    */
-  public static @Nullable("When result is too big or contracts are erroneous") List<StandardMethodContract> 
+  public static @Nullable("When result is too big or contracts are erroneous") List<StandardMethodContract>
   toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
     if (contracts.isEmpty()) return contracts;
     int paramCount = contracts.get(0).getParameterCount();
@@ -154,7 +156,7 @@ public final class StandardMethodContract extends MethodContract {
     for (StandardMethodContract contract : contracts) {
       if (contract.getParameterCount() != paramCount) return null;
       StreamEx.of(leftovers).map(c -> c.intersect(contract)).nonNull().into(result);
-      if (result.size() >= DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) return null;
+      if (result.size() >= StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH) return null;
       leftovers = StreamEx.of(leftovers).flatMap(c -> c.excludeContract(contract)).toList();
       if (leftovers.isEmpty()) break;
     }
@@ -286,8 +288,8 @@ public final class StandardMethodContract extends MethodContract {
 
     @Nullable
     DfaValue getComparisonValue(DfaValueFactory factory) {
-      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.getNull();
-      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.getBoolean(true);
+      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.fromDfType(DfTypes.NULL);
+      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.fromDfType(DfTypes.TRUE);
       return null;
     }
 

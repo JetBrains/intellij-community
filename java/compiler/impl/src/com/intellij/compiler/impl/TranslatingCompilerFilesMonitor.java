@@ -95,7 +95,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
   }
 
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     Set<File> filesChanged = FileCollectionFactory.createCanonicalFileSet();
     Set<File> filesDeleted = FileCollectionFactory.createCanonicalFileSet();
     for (VFileEvent event : events) {

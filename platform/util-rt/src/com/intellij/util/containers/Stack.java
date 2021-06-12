@@ -47,6 +47,11 @@ public class Stack<T> extends ArrayList<T> {
     return remove(size - 1);
   }
 
+  public int search(Object o) {
+    int idx = lastIndexOf(o);
+    return idx == -1 ? -1 : size() - idx;
+  }
+
   @Nullable
   public T tryPop() {
     return isEmpty() ? null : pop();

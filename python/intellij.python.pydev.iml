@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/pydevSrc">
       <sourceFolder url="file://$MODULE_DIR$/pydevSrc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pydevSrc/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

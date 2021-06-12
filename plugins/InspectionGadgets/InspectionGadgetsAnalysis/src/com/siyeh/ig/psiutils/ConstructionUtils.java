@@ -243,14 +243,16 @@ public final class ConstructionUtils {
            ContainerUtil.or(aClass.getConstructors(), ConstructionUtils::isCollectionConstructor);
   }
 
+  /**
+   * @param ctor method to check
+   * @return true if given method is a constructor that accepts a collection or map
+   */
   @Contract("null -> false")
-  private static boolean isCollectionConstructor(PsiMethod ctor) {
-    if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
+  public static boolean isCollectionConstructor(PsiMethod ctor) {
+    if (ctor == null || !ctor.isConstructor() || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
     PsiParameterList list = ctor.getParameterList();
     if (list.getParametersCount() != 1) return false;
-    PsiTypeElement typeElement = Objects.requireNonNull(list.getParameter(0)).getTypeElement();
-    if (typeElement == null) return false;
-    PsiType type = typeElement.getType();
+    PsiType type = Objects.requireNonNull(list.getParameter(0)).getType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass != null &&
            (CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName()) ||

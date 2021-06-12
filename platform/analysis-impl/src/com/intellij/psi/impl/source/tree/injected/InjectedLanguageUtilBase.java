@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
@@ -226,7 +227,7 @@ public class InjectedLanguageUtilBase {
   }
 
   // list of injected fragments injected into this psi element (can be several if some crazy injector calls startInjecting()/doneInjecting()/startInjecting()/doneInjecting())
-  private static final Key<Getter<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
+  private static final Key<Supplier<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
   private static void probeElementsUp(@NotNull PsiElement element,
                                       @NotNull PsiFile hostPsiFile,
@@ -290,7 +291,7 @@ public class InjectedLanguageUtilBase {
   }
 
   private static void cacheResults(@NotNull PsiElement from, @Nullable PsiElement upUntil, @NotNull PsiFile hostFile, @Nullable InjectionResult result) {
-    Getter<InjectionResult> cachedRef = result == null || result.isEmpty() ? getEmptyInjectionResult(hostFile) : new SoftReference<>(result);
+    Supplier<InjectionResult> cachedRef = result == null || result.isEmpty() ? getEmptyInjectionResult(hostFile) : new SoftReference<>(result);
     for (PsiElement e = from; e != upUntil && e != null; e = e.getParent()) {
       ProgressManager.checkCanceled();
       e.putUserData(INJECTED_PSI, cachedRef);

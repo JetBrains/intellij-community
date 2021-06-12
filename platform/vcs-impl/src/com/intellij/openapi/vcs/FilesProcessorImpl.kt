@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -11,84 +10,73 @@ import com.intellij.vcsUtil.VcsUtil
 abstract class FilesProcessorImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()
 
-  abstract val askedBeforeProperty: String
-
-  abstract val doForCurrentProjectProperty: String?
-
   abstract fun doActionOnChosenFiles(files: Collection<VirtualFile>)
 
   abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
-
-  abstract fun rememberForAllProjects()
-
-  protected open fun rememberForCurrentProject() {
-    setForCurrentProject(true)
-  }
 
   init {
     Disposer.register(parentDisposable, this)
   }
 
-  override fun processFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
+  override fun processFiles(files: Collection<VirtualFile>) {
     val filteredFiles = doFilterFiles(files)
 
-    if (filteredFiles.isEmpty()) return files
+    if (filteredFiles.isEmpty()) return
 
     addNewFiles(filteredFiles)
 
-    doProcess()
-
-    return files - filteredFiles
-  }
-
-  protected open fun doProcess(): Boolean {
-    val doForCurrentProject = needDoForCurrentProject()
-
-    if (doForCurrentProject) {
+    if (needDoForCurrentProject()) {
       doActionOnChosenFiles(acquireValidFiles())
-      clearFiles()
     }
-
-    return doForCurrentProject
+    else {
+      handleProcessingForCurrentProject()
+    }
   }
 
-  @Synchronized
+  protected open fun handleProcessingForCurrentProject() = Unit
+
   protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean {
-    return VcsUtil.removeAllFromSet(files, filesToRemove)
+    synchronized(files) {
+      return VcsUtil.removeAllFromSet(files, filesToRemove)
+    }
   }
 
-  @Synchronized
-  protected fun isFilesEmpty() = files.isEmpty()
+  protected fun isFilesEmpty(): Boolean {
+    synchronized(files) {
+      return files.isEmpty()
+    }
+  }
 
-  @Synchronized
   protected fun addNewFiles(filesToAdd: Collection<VirtualFile>) {
-    files.addAll(filesToAdd)
+    synchronized(files) {
+      files.addAll(filesToAdd)
+    }
   }
 
-  @Synchronized
+  protected fun selectValidFiles(): List<VirtualFile> {
+    synchronized(files) {
+      files.removeAll { !it.isValid }
+      return files.toList()
+    }
+  }
+
   protected fun acquireValidFiles(): List<VirtualFile> {
-    files.removeAll { !it.isValid }
-    return files.toList()
+    synchronized(files) {
+      val result = files.filter { it.isValid }
+      files.clear()
+      return result
+    }
   }
 
-  @Synchronized
   protected fun clearFiles() {
-    files.clear()
+    synchronized(files) {
+      files.clear()
+    }
   }
 
   override fun dispose() {
     clearFiles()
   }
 
-  protected fun setForCurrentProject(value: Boolean) {
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, value) }
-  }
-
-  private fun getForCurrentProject(): Boolean =
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
-
-  protected fun notAskedBefore() = !wasAskedBefore()
-  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
-
-  protected open fun needDoForCurrentProject() = getForCurrentProject()
+  protected abstract fun needDoForCurrentProject(): Boolean
 }

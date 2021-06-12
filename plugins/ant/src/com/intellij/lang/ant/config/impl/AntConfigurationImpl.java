@@ -138,7 +138,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
       @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toDelete = null;
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {

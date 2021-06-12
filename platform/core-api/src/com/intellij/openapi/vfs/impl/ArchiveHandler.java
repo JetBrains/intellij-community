@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,7 +222,7 @@ public abstract class ArchiveHandler {
                                     @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
     String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
-      if (logger != null) logger.info("invalid entry: " + getFile() + "!/" + entryName);
+      if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
     }
 
@@ -234,7 +233,7 @@ public abstract class ArchiveHandler {
 
     EntryInfo existing = map.get(normalizedName);
     if (existing != null) {
-      if (logger != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       return;
     }
 
@@ -246,14 +245,14 @@ public abstract class ArchiveHandler {
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
     EntryInfo entry = map.get(normalizedName);
     if (entry == null || !entry.isDirectory) {
-      if (logger != null && entry != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       if (normalizedName.isEmpty()) {
         entry = createRootEntry();
       }
       else {
         Pair<String, String> path = split(normalizedName);
         EntryInfo parent = directoryEntry(map, logger, path.first);
-        entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(path.second), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+        entry = new EntryInfo(path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
       }
       map.put(normalizedName, entry);
     }
@@ -283,7 +282,7 @@ public abstract class ArchiveHandler {
         entryName = parentName + '/' + shortName;
       }
       EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(shortName), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
       map.put(entryName, entry);
     }
     return entry;

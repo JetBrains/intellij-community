@@ -3,8 +3,22 @@
 Reports increment or decrement expressions nested inside other expressions.
 While admirably terse, such expressions may be confusing, and violate the general design principle that a
 given construct should do precisely one thing.
+<p>Example:</p>
+<pre>
+  int i = 10;
+  while (i-- > 0) {
+    System.out.println(i);
+  }
+</pre>
+<p>A quick-fix could be suggested to extract the increment or decrement operation to a separate expression statement:</p>
+<pre>
+  int i = 10;
+  while (i > 0) {
+    i--;
+    System.out.println(i);
+  }
+  i--;
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

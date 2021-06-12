@@ -4,10 +4,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -481,17 +479,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @NotNull
   private List<? extends LocalQuickFix> registerFixes() {
-    List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrar() {
-      @Override
-      public void register(@NotNull IntentionAction action) {
-      }
-
-      @Override
-      public void register(@NotNull TextRange fixRange,
-                           @NotNull IntentionAction action,
-                           HighlightDisplayKey key) {
-      }
-    }, this);
+    List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(QuickFixActionRegistrar.IGNORE_ALL, this);
 
     String extendClass = ContainerUtil.getFirstItem(getSuperClasses());
 

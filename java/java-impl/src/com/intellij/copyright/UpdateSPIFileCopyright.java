@@ -6,7 +6,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.psi.UpdateCopyright;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
@@ -19,9 +22,7 @@ public class UpdateSPIFileCopyright extends UpdateCopyrightsProvider {
       @Override
       protected void scanFile() {
         final PsiElement firstChild = getFile().getFirstChild();
-        if (firstChild != null) {
-          checkComments(firstChild, firstChild, true);
-        }
+        checkComments(firstChild, PsiTreeUtil.skipSiblingsForward(firstChild, PsiComment.class, PsiWhiteSpace.class), true);
       }
 
       @Override

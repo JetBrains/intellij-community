@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,16 +25,14 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 @State(name = "IssueNavigationConfiguration", storages = @Storage("vcs.xml"))
 public class IssueNavigationConfiguration extends SimpleModificationTracker
   implements PersistentStateComponent<IssueNavigationConfiguration> {
   private static final Logger LOG = Logger.getInstance(IssueNavigationConfiguration.class);
 
   public static IssueNavigationConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, IssueNavigationConfiguration.class);
+    return project.getService(IssueNavigationConfiguration.class);
   }
 
   private List<IssueNavigationLink> myLinks = new ArrayList<>();

@@ -181,7 +181,7 @@ public class CompressedAppendableFile {
       assert false:"data corruption detected:"+chunkNumber + "," + myChunkTableLength;
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
-    catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutofBounds, etc
+    catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutOfBoundsException, etc
       throw new IOException(e);
     }
   }
@@ -220,8 +220,13 @@ public class CompressedAppendableFile {
   @NotNull
   protected InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
     InputStream in = Files.newInputStream(getChunksFile());
-    if (offset > 0) {
-      in.skip(offset);
+    long toSkip = offset;
+    while (toSkip > 0) {
+      long skipped = in.skip(toSkip);
+      if (skipped == 0) {
+        throw new EOFException("Unable to skip " + offset + " bytes: end-of-file reached");
+      }
+      toSkip -= skipped;
     }
     return new BufferedInputStream(new LimitedInputStream(in, pageSize) {
       @Override
@@ -281,7 +286,12 @@ public class CompressedAppendableFile {
       myNextChunkBuffer = new byte[calcBufferSize(myBufferPosition)];
 
       try (InputStream stream = Files.newInputStream(tempAppendFile)) {
-        stream.read(myNextChunkBuffer, 0, myBufferPosition);
+        int n = 0;
+        while (n < myBufferPosition) {
+          int count = stream.read(myNextChunkBuffer, n, myBufferPosition - n);
+          if (count < 0) break;
+          n += count;
+        }
       }
     }
     else {
@@ -488,7 +498,6 @@ public class CompressedAppendableFile {
   }
 
   private class SegmentedChunkInputStream extends InputStream {
-    private final long myAddr;
     private final int myChunkLengthTableSnapshotLength;
     private final byte[] myNextChunkBufferSnapshot;
     private final int myBufferPositionSnapshot;
@@ -500,12 +509,11 @@ public class CompressedAppendableFile {
     private int myPageOffset;
 
     SegmentedChunkInputStream(long addr, int chunkLengthTableSnapshotLength, byte[] tableRef, int position) {
-      myAddr = addr;
       myChunkLengthTableSnapshotLength = chunkLengthTableSnapshotLength;
       myNextChunkBufferSnapshot = tableRef;
       myBufferPositionSnapshot = position;
-      myCurrentPageNumber = (int)(myAddr / myAppendBufferLength);
-      myPageOffset = (int)(myAddr % myAppendBufferLength);
+      myCurrentPageNumber = (int)(addr / myAppendBufferLength);
+      myPageOffset = (int)(addr % myAppendBufferLength);
     }
 
     @Override

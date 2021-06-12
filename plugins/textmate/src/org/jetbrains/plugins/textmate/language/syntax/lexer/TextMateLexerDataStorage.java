@@ -51,7 +51,7 @@ public final class TextMateLexerDataStorage extends ShortBasedStorage {
 
   @Override
   public IElementType unpackTokenFromData(int data) {
-    return data != 0 ? tokenTypes.get(Math.abs(data) - 1) : new TextMateElementType("empty");
+    return data != 0 ? tokenTypes.get(Math.abs(data) - 1) : new TextMateElementType(TextMateScope.EMPTY);
   }
 
   @Override

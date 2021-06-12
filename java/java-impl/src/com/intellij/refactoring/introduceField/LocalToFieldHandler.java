@@ -36,6 +36,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -69,9 +70,11 @@ public abstract class LocalToFieldHandler {
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     boolean tempIsStatic = myIsConstant;
     PsiElement parent = local.getParent();
+    PsiType localType = local.getType();
+    boolean runtimeConstant = (localType instanceof PsiPrimitiveType || localType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) && PsiUtil.isConstantExpression(local.getInitializer());
     final List<PsiClass> classes = new ArrayList<>();
     while (parent != null && parent.getContainingFile() != null) {
-      if (parent instanceof PsiClass && !(myIsConstant && parent instanceof PsiAnonymousClass)) {
+      if (parent instanceof PsiClass && (runtimeConstant || !myIsConstant || mayContainConstants((PsiClass) parent))) {
         classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
@@ -111,6 +114,11 @@ public abstract class LocalToFieldHandler {
     return true;
   }
 
+  public static boolean mayContainConstants(@NotNull PsiClass aClass) {
+    return aClass.hasModifierProperty(PsiModifier.STATIC) || 
+           aClass.getParent() instanceof PsiJavaFile;
+  }
+
   protected int getChosenClassIndex(List<PsiClass> classes) {
     return classes.size() - 1;
   }
@@ -134,7 +142,7 @@ public abstract class LocalToFieldHandler {
     final PsiClass aaClass = aClass;
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
-      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, isStatic, occurences);
+      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, occurences);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable),
                                                   getRefactoringName(), null);
     return false;
@@ -290,11 +298,10 @@ public abstract class LocalToFieldHandler {
     private PsiField myField;
 
     IntroduceFieldRunnable(boolean rebindNeeded,
-                                  PsiLocalVariable local,
-                                  PsiClass aClass,
-                                  BaseExpressionToFieldHandler.Settings settings,
-                                  boolean isStatic,
-                                  PsiExpression[] occurrences) {
+                           PsiLocalVariable local,
+                           PsiClass aClass,
+                           BaseExpressionToFieldHandler.Settings settings,
+                           PsiExpression[] occurrences) {
       myVariableName = local.getName();
       myFieldName = settings.getFieldName();
       myRebindNeeded = rebindNeeded;
@@ -322,11 +329,18 @@ public abstract class LocalToFieldHandler {
         final PsiMethod enclosingConstructor = BaseExpressionToFieldHandler.getEnclosingConstructor(myDestinationClass, myLocal);
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(myDestinationClass, myLocal, myFieldName)
                                                        : createField(myLocal, mySettings.getForcedType(), myFieldName, myInitializerPlace == IN_FIELD_DECLARATION);
-        myField = (PsiField)myDestinationClass.add(myField);
         BaseExpressionToFieldHandler.setModifiers(myField, mySettings);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurences, myField, mySettings.getFieldVisibility());
         }
+        PsiElement finalAnchorElement = myLocal;
+        while (finalAnchorElement != null && finalAnchorElement.getParent() != myDestinationClass) {
+          finalAnchorElement = finalAnchorElement.getParent();
+        }
+        PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
+        //required to check anchors as rearranger allows any configuration 
+        myField = BaseExpressionToFieldHandler.ConvertToFieldRunnable
+          .appendField(myLocal.getInitializer(), myInitializerPlace, myDestinationClass, myDestinationClass, myField, anchorMember);
 
         myLocal.normalizeDeclaration();
         PsiElement declarationStatement = myLocal.getParent();

@@ -20,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public interface PyCollectionType extends PyClassType {
   @NotNull
   List<PyType> getElementTypes();

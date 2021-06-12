@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -21,7 +22,10 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.GlobalMenuLinux
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
@@ -87,7 +91,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     show(true)
   }
 
-  fun show(restoreBounds: Boolean) {
+  fun createContents() {
     val frame = getFrame()
     if (frame is JFrame) {
       frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
@@ -162,11 +166,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
     }
 
-    val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
-    if (restoreBounds) {
-      loadFrameState(state)
-    }
-
     if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
       val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
@@ -175,6 +174,18 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
     focusWatcher = FocusWatcher()
     focusWatcher!!.install(component!!)
+  }
+
+  fun show(restoreBounds: Boolean) {
+    createContents()
+
+    val frame = getFrame()
+
+    val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
+    if (restoreBounds) {
+      loadFrameState(state)
+    }
+
     frame.isVisible = true
   }
 
@@ -302,6 +313,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     private var frameTitle: String? = null
     private var fileTitle: String? = null
     private var file: Path? = null
+    var myFrameDecorator: IdeFrameDecorator? = null
 
     init {
       FrameState.setFrameStateListener(this)
@@ -311,6 +323,10 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       }
       MouseGestureManager.getInstance().add(this)
       focusTraversalPolicy = IdeFocusTraversalPolicy()
+      // NB!: the root pane must be set before decorator,
+      // which holds its own client properties in a root pane
+      myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
+
     }
 
     override fun isInFullScreen() = false
@@ -354,7 +370,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     private fun updateTitle() {
-      if (Registry.`is`("ide.show.fileType.icon.in.titleBar")) {
+      if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
         // this property requires java.io.File
         rootPane.putClientProperty("Window.documentFile", file?.toFile())
       }

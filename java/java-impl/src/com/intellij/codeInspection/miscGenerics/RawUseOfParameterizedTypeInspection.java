@@ -77,7 +77,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
@@ -115,8 +115,12 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
-      if (typeElement.getParent() instanceof PsiVariable) {
-        PsiVariable variable = (PsiVariable)typeElement.getParent();
+      PsiElement directParent = typeElement.getParent();
+      if (directParent instanceof PsiVariable) {
+        if (directParent instanceof PsiPatternVariable) {
+          return;
+        }
+        PsiVariable variable = (PsiVariable)directParent;
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
           final String typeText = GenericsUtil.getVariableTypeByExpressionType(type).getPresentableText();
@@ -135,7 +139,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       super.visitTypeElement(typeElement);
-      PsiElement directParent = typeElement.getParent();
       if (ignoreUncompilable && directParent instanceof PsiTypeElement) {
         PsiType parentType = ((PsiTypeElement)directParent).getType();
         if (parentType instanceof PsiArrayType) {

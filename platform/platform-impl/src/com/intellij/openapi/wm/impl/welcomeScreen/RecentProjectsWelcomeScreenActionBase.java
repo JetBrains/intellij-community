@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.ListUtil;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,11 +76,9 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
     }
   }
 
-  public static void rebuildRecentProjectDataModel(@NotNull DefaultListModel model) {
-    model.clear();
-    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false, true)) {
-      //noinspection unchecked
-      model.addElement(action);
-    }
+  public static void rebuildRecentProjectDataModel(@NotNull ListModel<? super AnAction> model) {
+    ListUtil.removeAllItems(model);
+    List<AnAction> actions = RecentProjectListActionProvider.getInstance().getActions(false, true);
+    ListUtil.addAllItems(model, actions);
   }
 }

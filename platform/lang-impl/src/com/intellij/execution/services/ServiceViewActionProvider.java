@@ -143,7 +143,6 @@ class ServiceViewActionProvider {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(EMPTY_ACTION);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, false);
-    toolbar.updateActionsImmediately();
     return toolbar;
   }
 

@@ -70,7 +70,7 @@ class SuperCall {
 }
 class S2 extends SuperCall {
   @Override
-  void <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+  void <warning descr="Method 'some()' only delegates to its super method">some</warning>() {
     super.some();
   }
 }
@@ -81,14 +81,14 @@ class B {
 }
 class C extends B {
   @Override
-  int <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+  int <warning descr="Method 'some()' only delegates to its super method">some</warning>() {
     return super.some();
   }
 }
 @interface NotNull {}
 class MyList<E> extends ArrayList<E> {
   @Override
-  protected void <warning descr="Method 'removeRange()' is identical to its super method">removeRange</warning>(int fromIndex, int toIndex) {
+  protected void <warning descr="Method 'removeRange()' only delegates to its super method">removeRange</warning>(int fromIndex, int toIndex) {
     super.removeRange(fromIndex, toIndex);
   }
 
@@ -328,5 +328,96 @@ class X10 extends X9{
       System.out.println();
     }
     System.out.println();
+  }
+}
+class RedundantSuperBug {
+  static class A {
+    public void foo() {
+      System.out.println(1);
+    }
+  }
+
+  static class B extends A {
+    @Override
+    public void foo() {
+      super.foo();
+      System.out.println(1);
+    }
+  }
+
+  static class C extends B {
+    @Override
+    public void foo() {
+      super.foo();
+      System.out.println(1);
+    }
+  }
+
+  public static void main(String[] args) {
+    new C().foo();
+  }
+}
+class RedundantSuperBug2 {
+  static class Super {
+    public void foo() {
+      System.out.println("From super");
+    }
+  }
+
+  interface Iface {
+    default void foo() {
+      System.out.println("From iface");
+    }
+  }
+  static class Sub extends Super implements Iface {
+    @Override
+    public void foo() {
+      Iface.super.foo();
+    }
+  }
+
+  static class Sub2 extends Super implements Iface {
+    @Override
+    public void <warning descr="Method 'foo()' only delegates to its super method">foo</warning>() {
+      Sub2.super.foo();
+    }
+  }
+
+  static class Sub3 implements Iface {
+    @java.lang.Override
+    public void <warning descr="Method 'foo()' only delegates to its super method">foo</warning>() {
+      Iface.super.foo();
+    }
+  }
+
+  interface Iface2 {
+    default void foo() {
+      System.out.println("From iface2");
+    }
+  }
+
+  class X implements Iface, Iface2 {
+
+    @Override
+    public void foo() {
+      Iface.super.foo();
+    }
+  }
+
+  interface Iface3 extends Iface2 {
+    default void foo() {
+      System.out.println("From iface3");
+    }
+  }
+
+  class Y implements Iface3 {
+    @java.lang.Override
+    public void <warning descr="Method 'foo()' only delegates to its super method">foo</warning>() {
+      Iface3.super.foo();
+    }
+  }
+
+  public static void main(String[] args) {
+    new Sub().foo();
   }
 }

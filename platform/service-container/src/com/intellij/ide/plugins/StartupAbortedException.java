@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,10 +33,10 @@ public final class StartupAbortedException extends RuntimeException {
       return;
     }
 
-    logAndExit(t);
+    logAndExit(t, null);
   }
 
-  public static void logAndExit(@NotNull Throwable t) {
+  public static void logAndExit(@NotNull Throwable t, @Nullable Logger log) {
     PluginManagerCore.EssentialPluginMissingException essentialPluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
     if (essentialPluginMissingException != null && essentialPluginMissingException.pluginIds != null) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.corrupted.installation"),
@@ -49,9 +50,9 @@ public final class StartupAbortedException extends RuntimeException {
     PluginException pluginException = findCause(t, PluginException.class);
     PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
 
-    if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
+    if ((log != null || Logger.isInitialized()) && !(t instanceof ProcessCanceledException)) {
       try {
-        PluginManagerCore.getLogger().error(t);
+        (log == null ? PluginManagerCore.getLogger() : log).error(t);
       }
       catch (Throwable ignore) {
       }

@@ -448,8 +448,6 @@ public final class FindInProjectUtil {
 
   @NotNull
   public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
-    if (!Registry.is("idea.regexp.search.uses.indices")) return "";
-
     return StringUtil.trim(StringUtil.join(extractStringToFind(stringToFind, project), " "));
   }
 
@@ -480,11 +478,6 @@ public final class FindInProjectUtil {
     @Override
     public @Nls @NotNull String getLongDescriptiveName() {
       return getPresentableText();
-    }
-
-    @Override
-    public String getLocationString() {
-      return myFindModel + "!!";
     }
 
     @Override

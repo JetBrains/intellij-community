@@ -18,7 +18,6 @@ package com.intellij.updater;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -35,11 +34,6 @@ import static org.junit.Assume.assumeFalse;
 
 public class UtilsTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
-
-  @BeforeClass
-  public static void initLogger() {
-    Runner.initTestLogger();
-  }
 
   @Test
   public void testDelete() throws Exception {

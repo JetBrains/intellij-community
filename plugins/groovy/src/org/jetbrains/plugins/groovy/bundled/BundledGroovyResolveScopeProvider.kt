@@ -15,8 +15,7 @@ import com.intellij.psi.search.SearchScope
 
 class BundledGroovyResolveScopeProvider : ResolveScopeEnlarger() {
 
-  override fun getAdditionalResolveScope(file: VirtualFile, project: Project?): SearchScope? {
-    if (project == null) return null
+  override fun getAdditionalResolveScope(file: VirtualFile, project: Project): SearchScope? {
     val index = ProjectFileIndex.SERVICE.getInstance(project)
     if (index.getModuleForFile(file) != null) {
       return null

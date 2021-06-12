@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -11,12 +12,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +52,15 @@ public final class ProgressRunner<R> {
     /**
      * Arbitrary thread with the ability to execute read actions.
      */
-    POOLED
+    POOLED,
+    /**
+     * Use only to open project on start-up.
+     */
+    FJ
   }
 
   @NotNull
-  private final Function<? super ProgressIndicator, ? extends R> myComputation;
+  private final Function<@NotNull ? super ProgressIndicator, ? extends R> myComputation;
 
   private final boolean isSync;
 
@@ -65,7 +68,7 @@ public final class ProgressRunner<R> {
 
   private final ThreadToUse myThreadToUse;
   @NotNull
-  private final CompletableFuture<? extends ProgressIndicator> myProgressIndicatorFuture;
+  private final CompletableFuture<? extends @NotNull ProgressIndicator> myProgressIndicatorFuture;
 
   /**
    * Creates new {@code ProgressRunner} builder instance dedicated to calculating {@code computation}.
@@ -106,15 +109,15 @@ public final class ProgressRunner<R> {
    *
    * @param computation runnable to be executed under progress
    */
-  public ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation) {
+  public ProgressRunner(@NotNull Function<@NotNull ? super ProgressIndicator, ? extends R> computation) {
     this(computation, false, false, ThreadToUse.POOLED, CompletableFuture.completedFuture(new EmptyProgressIndicator()));
   }
 
-  private ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation,
+  private ProgressRunner(@NotNull Function<@NotNull ? super ProgressIndicator, ? extends R> computation,
                          boolean sync,
                          boolean modal,
                          @NotNull ThreadToUse use,
-                         @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
+                         @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
@@ -124,12 +127,12 @@ public final class ProgressRunner<R> {
 
   @NotNull
   public ProgressRunner<R> sync() {
-    return new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
+    return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
   }
 
   @NotNull
   public ProgressRunner<R> modal() {
-    return new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
+    return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
   }
 
   /**
@@ -139,7 +142,7 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
+    return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
   }
 
   /**
@@ -149,17 +152,25 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressRunner<R> withProgress(@NotNull ProgressIndicator progressIndicator) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
+    ProgressIndicator myIndicator;
+    try {
+      myIndicator = myProgressIndicatorFuture.isDone() ? myProgressIndicatorFuture.get() : null;
+    }
+    catch (InterruptedException | ExecutionException e) {
+      myIndicator = null;
+    }
+    return progressIndicator.equals(myIndicator) ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
   }
 
   /**
    * Specifies an asynchronous computation which will be used to obtain progress indicator to be associated with computation under progress.
+   * The future must return not null indicator.
    *
    * @param progressIndicatorFuture future with progress indicator
    */
   @NotNull
-  public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
+  public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
+    return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }
 
   /**
@@ -199,7 +210,7 @@ public final class ProgressRunner<R> {
 
     boolean forceSyncExec = checkIfForceDirectExecNeeded();
 
-    CompletableFuture<? extends ProgressIndicator> progressFuture = myProgressIndicatorFuture.thenApply(progress -> {
+    CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture = myProgressIndicatorFuture.thenApply(progress -> {
       // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
       // does not have a chance to run, and as a result the progress won't be disposed
       if (progress instanceof Disposable) {
@@ -219,10 +230,14 @@ public final class ProgressRunner<R> {
       // runProcess handles starting/stopping progress and setting thread's current progress
       ProgressIndicator progressIndicator;
       try {
-        progressIndicator = progressFuture.get();
+        progressIndicator = progressFuture.join();
       }
       catch (Throwable e) {
         throw new RuntimeException("Can't get progress", e);
+      }
+      //noinspection ConstantConditions
+      if (progressIndicator == null) {
+        throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
       }
 
       ProgressManager.getInstance().runProcess(() -> result.set(myComputation.apply(progressIndicator)), progressIndicator);
@@ -269,8 +284,8 @@ public final class ProgressRunner<R> {
       String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
       @NonNls String failedConstraints = "";
       if (isModal) failedConstraints += "Use Modal execution; ";
-      if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
-      failedConstraints = StringUtil.defaultIfEmpty(failedConstraints, "none");
+      if (myThreadToUse == ThreadToUse.POOLED || myThreadToUse == ThreadToUse.FJ) failedConstraints += "Use pooled thread; ";
+      failedConstraints = failedConstraints.isEmpty() ? "none" : failedConstraints;
       Logger.getInstance(ProgressRunner.class)
         .warn("Forced to sync exec on EDT. Reason: " + reason + ". Failed constraints: " + failedConstraints, new Throwable());
     }
@@ -278,7 +293,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends ProgressIndicator> progressFuture,
+  private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                            @NotNull Semaphore modalityEntered,
                                            @NotNull Supplier<R> onThreadCallable) {
     CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
@@ -323,7 +338,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends ProgressIndicator> progressFuture,
+  private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                           @NotNull Semaphore modalityEntered,
                                           @NotNull Supplier<R> onThreadCallable) {
 
@@ -416,11 +431,14 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
+  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     CompletableFuture<R> resultFuture;
     switch (myThreadToUse) {
       case POOLED:
         resultFuture = CompletableFuture.supplyAsync(callable, AppExecutorUtil.getAppExecutorService());
+        break;
+      case FJ:
+        resultFuture = CompletableFuture.supplyAsync(callable, ForkJoinPool.commonPool());
         break;
       case WRITE:
         resultFuture = new CompletableFuture<>();

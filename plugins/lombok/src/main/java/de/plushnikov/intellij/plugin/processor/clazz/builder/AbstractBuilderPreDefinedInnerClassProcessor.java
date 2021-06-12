@@ -67,7 +67,9 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     return result;
   }
 
-  protected abstract BuilderHandler getBuilderHandler();
+  protected BuilderHandler getBuilderHandler() {
+    return new BuilderHandler();
+  }
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 

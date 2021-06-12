@@ -16,32 +16,29 @@
 
 <body>
 <p>
-  This inspection checks for any implicit conversions between the predefined XPath-types STRING, NUMBER, BOOLEAN and
-  NODESET. While this is usually not a problem as the conversions are well-defined by the standard, this inspection can
-  help to write XSLT scripts that are more expressive about types and can even help to avoid subtle bugs:
+  Reports an implicit conversion among the predefined XPath-types <code>STRING</code>, <code>NUMBER</code>, <code>BOOLEAN</code>,
+  and <code>NODESET</code>. Helps to write XSLT scripts that are more expressive about types and prevents subtle bugs:
 </p>
-
+<p>Example:</p>
 <p>
   <code>&lt;xsl:if test="<b>foo</b>" /></code> is not the same as <code>&lt;xsl:if test="<b>string(foo)</b>" /></code>
 </p>
 
 <p>
-  The first test checks whether the element "foo" exists (<code>count(foo) > 0)</code>, the latter one however is only
-  true if the element actually contains any text (<code>string-length(foo) > 0</code>). The plugin will then offer to
-  make the type-conversion more explicit.
+The first test checks whether the element "foo" exists (<code>count(foo) > 0)</code>; the latter one however is only
+ true if the element actually contains any text (<code>string-length(foo) > 0</code>). Suggests making 
+the type conversion more explicit.
 </p>
 
 <p>
-  There are several options to adjust the inspection to personal preferences by offering the possibility to
-  individually enable it for implicit conversions between certain types.<br>
+Use the   controls below to customize the inspection.
 </p>
-
-<p>
-  The plugin can also be told to always flag explicit conversions that do not result in the actually expected type, such
-  as <code>&lt;xsl:if test="number(foo)" /></code> and provides a special option to ignore the conversion from NODESET
-  to BOOLEAN by using the <code>string()</code> function as a shortcut for writing <code>string-length() > 0</code>.
+<ul><li>Enable or disable implicit conversions between certain types</li>
+<li>Always report explicit conversions that do not result in the actually expected type, for example,
+ <code>&lt;xsl:if test="number(foo)" /></code></li> 
+<li>Ignore conversion from <code>NODESET</code>
+  to <code>BOOLEAN</code> by using the <code>string()</code> function as a shortcut for writing <code>string-length() > 0</code>.</li></ul>
 </p>
-
 <p id="footer">Powered by XPathView + XSLT-Support</p>
 </body>
 </html>

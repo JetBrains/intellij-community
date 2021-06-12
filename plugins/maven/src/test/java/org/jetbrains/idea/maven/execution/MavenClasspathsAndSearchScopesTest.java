@@ -20,9 +20,10 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
 import org.jetbrains.idea.maven.importing.MavenModuleImporter;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
+public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImportingTestCase {
   private enum Type {PRODUCTION, TESTS}
 
   private enum Scope {COMPILE, RUNTIME, MODULE}
@@ -52,6 +53,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                          "m4/src/test/java");
   }
 
+  @Test
   public void testConfiguringModuleDependencies() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -142,17 +144,18 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m4/target/classes");
   }
 
+  @Test
   public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() {
     VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
-                                          "<artifactId>m</artifactId>" +
-                                          "<version>1</version>" +
-                                          "<dependencies>" +
-                                          "  <dependency>" +
-                                          "    <groupId>test</groupId>" +
-                                          "    <artifactId>dep</artifactId>" +
-                                          "    <version>1</version>" +
-                                          "  </dependency>" +
-                                          "</dependencies>");
+                                         "<artifactId>m</artifactId>" +
+                                         "<version>1</version>" +
+                                         "<dependencies>" +
+                                         "  <dependency>" +
+                                         "    <groupId>test</groupId>" +
+                                         "    <artifactId>dep</artifactId>" +
+                                         "    <version>1</version>" +
+                                         "  </dependency>" +
+                                         "</dependencies>");
 
     VirtualFile dep = createModulePom("dep", "<groupId>test</groupId>" +
                                            "<artifactId>dep</artifactId>" +
@@ -177,9 +180,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     VirtualFile[] jdkRoots = ModuleRootManager.getInstance(module).getSdk().getRootProvider().getFiles(OrderRootType.CLASSES);
     VirtualFile[] junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName("Maven: junit:junit:4.0")
       .getFiles(OrderRootType.CLASSES);
-    assertOrderedEquals(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots(), ArrayUtil.mergeArrays(jdkRoots, junitRoots));
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots(),
+                        ArrayUtil.mergeArrays(jdkRoots, junitRoots));
   }
 
+  @Test
   public void testDoNotIncludeTestClassesWhenConfiguringModuleDependenciesForProductionCode() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -218,6 +223,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                                  getProjectPath() + "/m2/target/classes");
   }
 
+  @Test
   public void testConfiguringModuleDependenciesOnTestJar() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -273,6 +279,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m3/target/test-classes");
   }
 
+  @Test
   public void testConfiguringModuleDependenciesOnTestJarWithTestScope() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -326,6 +333,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m3/target/test-classes");
   }
 
+  @Test
   public void testConfiguringModuleDependenciesOnBothNormalAndTestJar() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -379,6 +387,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m2/target/test-classes");
   }
 
+  @Test
   public void testConfiguringModuleDependenciesOnNormalAndTestJarWithTestScope() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -430,6 +439,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m2/target/test-classes");
   }
 
+  @Test
   public void testOptionalLibraryDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -514,6 +524,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
+  @Test
   public void testProvidedAndTestDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -594,6 +605,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/jmock/jmock/4.0/jmock-4.0.jar");
   }
 
+  @Test
   public void testRuntimeDependency() throws Exception {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -653,6 +665,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
+  @Test
   public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -738,6 +751,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
+  @Test
   public void testLibraryScopeForTwoDependentModules() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -785,13 +799,15 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
       new CommonProcessors.CollectProcessor<>(modules2));
     GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
 
-    List<String> expectedPaths = ContainerUtil.newArrayList(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath);
+    List<String> expectedPaths =
+      ContainerUtil.newArrayList(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath);
     if (new File(librarySrcPath).exists()) {
       expectedPaths.add(librarySrcPath);
     }
     assertSearchScope(scope2, ArrayUtilRt.toStringArray(expectedPaths));
   }
 
+  @Test
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -934,6 +950,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             f3.getPath());
   }
 
+  @Test
   public void testDoNotChangeClasspathForRegularModules() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -1024,11 +1041,13 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
+  @Test
   public void testDirIndexOrderEntriesTransitiveCompileScope() throws IOException {
     List<Module> modules = setupDirIndexTestModulesWithScope("compile");
     checkDirIndexTestModulesWithCompileOrRuntimeScope(modules);
   }
 
+  @Test
   public void testDirIndexOrderEntriesTransitiveRuntimeScope() throws IOException {
     List<Module> modules = setupDirIndexTestModulesWithScope("runtime");
     checkDirIndexTestModulesWithCompileOrRuntimeScope(modules);
@@ -1183,6 +1202,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertInstanceOf(jmockE1, LibraryOrderEntry.class);
   }
 
+  @Test
   public void testDirIndexOrderEntriesTransitiveTestScope() throws IOException {
     // This test is a bit different from the above tests of compile or runtime scope,
     // because test scope does not propagate transitive dependencies.
@@ -1235,6 +1255,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertInstanceOf(jmockE1, LibraryOrderEntry.class);
   }
 
+  @Test
   public void testDirIndexOrderEntriesStartingFromRegularModule() throws IOException {
     final List<Module> modules = setupDirIndexTestModulesWithScope("compile");
     assertEquals(6, modules.size());

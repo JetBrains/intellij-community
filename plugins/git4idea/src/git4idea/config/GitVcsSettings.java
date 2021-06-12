@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.SimplePersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -36,7 +39,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   public static GitVcsSettings getInstance(Project project) {
-    return ServiceManager.getService(project, GitVcsSettings.class);
+    return project.getService(GitVcsSettings.class);
   }
 
   @NotNull

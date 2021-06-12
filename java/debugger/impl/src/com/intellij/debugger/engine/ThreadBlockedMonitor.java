@@ -91,10 +91,11 @@ public class ThreadBlockedMonitor {
   private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
-    XDebuggerManagerImpl.getNotificationGroup().createNotification(
-      JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
-      JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
-      NotificationType.INFORMATION, (notification, event) -> {
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
+                          JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
+                          NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           notification.expire();
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
@@ -107,7 +108,8 @@ public class ThreadBlockedMonitor {
             }
           });
         }
-      }).notify(process.getProject());
+      })
+      .notify(process.getProject());
   }
 
   private ThreadReference getCurrentThread() {

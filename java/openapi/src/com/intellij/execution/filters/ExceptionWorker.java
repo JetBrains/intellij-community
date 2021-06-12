@@ -405,16 +405,19 @@ public class ExceptionWorker {
     }
 
     @Override
-    public void onLinkFollowed(@NotNull PsiFile file, @NotNull Editor targetEditor, @Nullable Editor originalEditor) {
-      Project project = file.getProject();
+    public void onLinkFollowed(@NotNull Project project,
+                               @NotNull VirtualFile file,
+                               @NotNull Editor targetEditor,
+                               @Nullable Editor originalEditor) {
       if (DumbService.isDumb(project)) return; // may need to resolve refs
-      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null || document.getLineCount() <= myLineNumber) return;
       if (!PsiDocumentManager.getInstance(project).isCommitted(document)) return;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
       LinkInfo info = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> computeLinkInfo(file, startOffset, endOffset, originalEditor)),
+        .runProcessWithProgressSynchronously(() -> ReadAction.compute(
+          () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor)),
                                              JavaBundle.message("exception.navigation.fetching.target.position"), true, project);
       if (info == null) return;
       TextRange range = info.target.getTextRange();
@@ -423,7 +426,7 @@ public class ExceptionWorker {
         displayAnalysisAction(project, info.target, targetEditor, info.analysisAction);
       }
     }
-    
+
     private static class LinkInfo {
       final @NotNull PsiElement target;
       final @Nullable AnAction analysisAction;
@@ -434,14 +437,21 @@ public class ExceptionWorker {
       }
     }
 
-    private @Nullable LinkInfo computeLinkInfo(@NotNull PsiFile file, int lineStart, int lineEnd, @Nullable Editor originalEditor) {
-      PsiElement target = getExceptionOrigin(file, lineStart, lineEnd);
+    private @Nullable LinkInfo computeLinkInfo(@NotNull Project project,
+                                               @NotNull VirtualFile file,
+                                               int lineStart,
+                                               int lineEnd,
+                                               @Nullable Editor originalEditor) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null) return null;
+      PsiElement target = getExceptionOrigin(psiFile, lineStart, lineEnd);
       if (target == null) return null;
-      AnAction action = findAnalysisAction(file.getProject(), target, originalEditor);
+      AnAction action = findAnalysisAction(project, target, originalEditor);
       return new LinkInfo(target, action);
     }
 
     private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+      if (!file.isValid()) return null;
       PsiElement element = file.findElementAt(lineStart);
       List<PsiElement> candidates = new ArrayList<>();
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {

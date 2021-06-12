@@ -77,6 +77,35 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     )
   }
 
+  /**
+   * Indicator of the following bug: IDEA-189247
+   * When a directory is soft-linked into a project, its excluded subdirectories are still indexed.
+   */
+  @Test
+  fun `index excluded directories if they are referenced via symlink`() {
+    lateinit var sourcesDir: DirectorySpec
+    lateinit var workspaceSymlink: SymlinkSpec
+    projectModelRule.createJavaModule("moduleName") {
+      content("contentRoot") {
+        val workspace = moduleDir("workspace") {
+          sourcesDir = source("sources") {
+            file("SourceFile.java", "class SourceFile {}")
+          }
+          excluded("excluded") {
+            file("ExcludedFile.java", "class ExcludedFile {}")
+          }
+        }
+        workspaceSymlink = symlink("workspace-link", workspace)
+      }
+    }
+    assertIndexableFiles(
+      sourcesDir.file / "SourceFile.java",
+      workspaceSymlink.file,
+      workspaceSymlink.file / "sources" / "SourceFile.java",
+      workspaceSymlink.file / "excluded" / "ExcludedFile.java",
+    )
+  }
+
   @Test
   fun `symlink which is a root of a Library must be indexed even if its target is excluded`() {
     lateinit var classesSymlink: SymlinkSpec

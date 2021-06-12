@@ -147,7 +147,10 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<@Nullable Project> openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
     boolean canAttach = ProjectAttachProcessor.canAttachToProject();
-    boolean preferAttach = currentProject != null && canAttach && PlatformUtils.isDataGrip() && !ProjectUtil.isValidProjectPath(file);
+    boolean preferAttach = currentProject != null &&
+                           canAttach &&
+                           (PlatformUtils.isDataGrip() && !ProjectUtil.isValidProjectPath(file)
+                            || PlatformUtils.isPyCharmDs());
     if (preferAttach && PlatformProjectOpenProcessor.attachToProject(currentProject, file, null)) {
       return CompletableFuture.completedFuture(null);
     }

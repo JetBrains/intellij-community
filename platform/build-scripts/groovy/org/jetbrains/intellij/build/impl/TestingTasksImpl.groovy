@@ -289,7 +289,7 @@ class TestingTasksImpl extends TestingTasks {
     if (isRunningInBatchMode()) {
       context.messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
     } else {
-      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"} from classpath of module '$mainModule'")
     }
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
@@ -379,7 +379,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (PortableCompilationCache.CAN_BE_USED) {
-      def compiledClassesDir = "$context.paths.buildOutputRoot/$CompilationContextImpl.CLASSES_DIR_NAME"
+      def compiledClassesDir = "$context.projectOutputDirectory"
       systemProperties[BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY] = compiledClassesDir.toString()
       systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
     }
@@ -532,7 +532,8 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupBundledMaven')
+      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
+      context.kotlinBinaries.setUpPlugin(context, true)
     }
   }
 

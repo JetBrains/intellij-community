@@ -1,4 +1,4 @@
-// "Add 'Locale.ENGLISH' argument" "true"
+// "Add 'Locale.ROOT' argument" "true"
 class X {
   void test() {
     String foo = "bar";

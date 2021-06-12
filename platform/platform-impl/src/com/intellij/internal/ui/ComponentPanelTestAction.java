@@ -264,7 +264,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
-      // Abracadaba button
+      // Abracadabra button
       gc.gridy++;
       abracadabraButton = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
@@ -396,7 +396,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           else {
             try {
               int iv = Integer.parseInt(value.toString());
-              return iv <= 8 ? null : new ValidationInfo("Value " + value.toString() + " is not preferred").asWarning();
+              return iv <= 8 ? null : new ValidationInfo("Value " + value + " is not preferred").asWarning();
             } catch (NumberFormatException nfe) {
               return NAN_VALUE_ERROR;
             }
@@ -529,7 +529,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private JComponent createValidatorsPanel() {
       // JTextField component with browse button
       TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null).
+      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() < 50 ? new ValidationInfo(tfbb.getText() + " is too short. Enter at least 50 symbols",  tfbb) : null).
         withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
         andStartOnFocusLost().
         installOn(tfbb);
@@ -836,7 +836,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
-          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          actionGotIt.assignTo(getTemplatePresentation(),
+                               GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
@@ -850,7 +851,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JComponent createJSliderTab() {
       JPanel panel = new JPanel(new MigLayout("fillx, ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(JSlider.HORIZONTAL){
+      JSlider hSlider = new JSlider(SwingConstants.HORIZONTAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -866,7 +867,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL);
+      JSlider hSliderBase = new JSlider(SwingConstants.HORIZONTAL);
 
       JPanel pane1 = new JPanel(new MigLayout("fillx, debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
@@ -984,7 +985,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       slider.setSnapToTicks(true);
 
-      Hashtable<Integer, JLabel> position = new Hashtable<>();
+      @SuppressWarnings("UseOfObsoleteCollectionType") 
+      var position = new Hashtable<Integer, JLabel>();
       position.put(0, new JLabel("Hashtable"));
       position.put(25, new JLabel("Hash"));
       position.put(50, new JLabel("Ha"));

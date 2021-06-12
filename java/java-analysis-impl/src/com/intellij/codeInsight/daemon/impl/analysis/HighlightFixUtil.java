@@ -22,6 +22,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -397,5 +398,39 @@ public final class HighlightFixUtil {
         QUICK_FIX_FACTORY.createModifierListFix(var, PsiModifier.FINAL, false, false)
       );
     }
+  }
+
+  static void registerFixesForExpressionStatement(HighlightInfo info, PsiElement statement) {
+    if (info == null) return;
+    if (!(statement instanceof PsiExpressionStatement)) return;
+    PsiCodeBlock block = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
+    if (block == null) return;
+    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+    if (expression instanceof PsiAssignmentExpression) return;
+    PsiType type = expression.getType();
+    if (type == null) return;
+    if (!type.equals(PsiType.VOID)) {
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIntroduceVariableAction(expression));
+      QuickFixAction.registerQuickFixAction(info, PriorityIntentionActionWrapper
+        .highPriority(QUICK_FIX_FACTORY.createIterateFix(expression)));
+    }
+    if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace()) {
+      PsiElement blockParent = block.getParent();
+      if (blockParent instanceof PsiMethod) {
+        PsiType returnType = ((PsiMethod)blockParent).getReturnType();
+        if (returnType != null && isPossibleReturnValue(expression, type, returnType)) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertReturnFix(expression));
+        }
+      }
+    }
+  }
+
+  private static boolean isPossibleReturnValue(PsiExpression expression, PsiType type, PsiType returnType) {
+    if (returnType.isAssignableFrom(type)) return true;
+    if (!(type instanceof PsiClassType) || !(returnType instanceof PsiClassType)) return false;
+    if (!returnType.isAssignableFrom(TypeConversionUtil.erasure(type))) return false;
+    PsiExpression copy = (PsiExpression)LambdaUtil.copyWithExpectedType(expression, returnType);
+    PsiType copyType = copy.getType();
+    return copyType != null && returnType.isAssignableFrom(copyType);
   }
 }

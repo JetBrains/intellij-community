@@ -125,10 +125,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
-    myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
+    myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myStorage.getStorageLockContext(), initial);
   }
 
-  private void storeVars(boolean toDisk) {
+  private void storeVars(boolean toDisk) throws IOException {
     myLogicalFileLength = store(DATA_START, myLogicalFileLength, toDisk);
     myDataPageStart = store(DATA_START + 4, myDataPageStart, toDisk);
     myDataPageOffset = store(DATA_START + 8, myDataPageOffset, toDisk);
@@ -141,20 +141,20 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     storeBTreeVars(toDisk);
   }
 
-  private void storeBTreeVars(boolean toDisk) {
+  private void storeBTreeVars(boolean toDisk) throws IOException {
     final IntToIntBtree tree = myBTree;
     if (tree != null) {
       final int BTREE_DATA_START = DATA_START + 36;
       tree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
-        public int persistInt(int offset, int value, boolean toDisk) {
+        public int persistInt(int offset, int value, boolean toDisk) throws IOException {
           return store(BTREE_DATA_START + offset, value, toDisk);
         }
       }, toDisk);
     }
   }
 
-  private int store(int offset, int value, boolean toDisk) {
+  private int store(int offset, int value, boolean toDisk) throws IOException {
     assert offset + 4 < MAX_DATA_SEGMENT_LENGTH;
 
     if (toDisk) {
@@ -201,7 +201,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
         @Override
-        public boolean process(final int record) {
+        public boolean process(final int record) throws IOException {
           if (filter == null || filter.accept(record)) {
             Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
             return processor.process(data);
@@ -215,34 +215,39 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
+    getReadLock().lock();
     try {
-      // TODO downgrade to read
-      lockStorageWrite();
-      return myBTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
-        @Override
-        public boolean process(int key, int value) throws IOException {
-          p.setCurrentKey(key);
+      lockStorageRead();
+      try {
+        return myBTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+          @Override
+          public boolean process(int key, int value) throws IOException {
+            p.setCurrentKey(key);
 
-          if (value > 0 || myInlineKeysNoMapping) {
-            return p.process(value);
+            if (value > 0 || myInlineKeysNoMapping) {
+              return p.process(value);
+            }
+            int rec = -value;
+            while (rec != 0) {
+              int id = myStorage.getInt(rec);
+              if (!p.process(id)) return false;
+              rec = myStorage.getInt(rec + COLLISION_OFFSET);
+            }
+            return true;
           }
-          int rec = -value;
-          while (rec != 0) {
-            int id = myStorage.getInt(rec);
-            if (!p.process(id)) return false;
-            rec = myStorage.getInt(rec + COLLISION_OFFSET);
-          }
-          return true;
-        }
-      });
-    }
-    catch (IllegalStateException e) {
-      CorruptedException corruptedException = new CorruptedException(myFile);
-      corruptedException.initCause(e);
-      throw corruptedException;
+        });
+      }
+      catch (IllegalStateException e) {
+        CorruptedException corruptedException = new CorruptedException(myFile);
+        corruptedException.initCause(e);
+        throw corruptedException;
+      }
+      finally {
+        unlockStorageRead();
+      }
     }
     finally {
-      unlockStorageWrite();
+      getReadLock().unlock();
     }
   }
 
@@ -252,7 +257,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int indexToAddr(int idx) {
+  protected int indexToAddr(int idx) throws IOException {
     if (myExternalKeysNoMapping) {
       IntToIntBtree.myAssert(idx > 0);
       return idx - KEY_SHIFT;
@@ -266,7 +271,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int setupValueId(int hashCode, int dataOff) {
+  protected int setupValueId(int hashCode, int dataOff) throws IOException {
     if (myExternalKeysNoMapping) return addrToIndex(dataOff);
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = getRecordHandler();
     final byte[] buf = recordHandler.getRecordBuffer(this);
@@ -296,66 +301,78 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final int[] myResultBuf = new int[1];
 
   long getNonNegativeValue(Data key) throws IOException {
-    assert myInlineKeysNoMapping;
+    getReadLock().lock();
     try {
-      lockStorageRead();
-      final boolean hasMapping = myBTree.get(((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key), myResultBuf);
-      if (!hasMapping) {
-        return NULL_ID;
-      }
+      assert myInlineKeysNoMapping;
+      try {
+        lockStorageRead();
+        final boolean hasMapping = myBTree.get(((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key), myResultBuf);
+        if (!hasMapping) {
+          return NULL_ID;
+        }
 
-      return keyIdToNonNegativeOffset(myResultBuf[0]);
-    }
-    catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile);
-      exception.initCause(e);
-      throw exception;
+        return keyIdToNonNegativeOffset(myResultBuf[0]);
+      }
+      catch (IllegalStateException e) {
+        CorruptedException exception = new CorruptedException(myFile);
+        exception.initCause(e);
+        throw exception;
+      }
+      finally {
+        unlockStorageRead();
+      }
     }
     finally {
-      unlockStorageRead();
+      getReadLock().unlock();
     }
   }
 
-  long keyIdToNonNegativeOffset(int value) {
+  long keyIdToNonNegativeOffset(int value) throws IOException {
     if (value >= 0) return value;
     return myStorage.getLong(-value);
   }
 
   void putNonNegativeValue(Data key, long value) throws IOException {
-    assert value >= 0;
-    assert myInlineKeysNoMapping;
+    getWriteLock().lock();
     try {
-      lockStorageWrite();
+      assert value >= 0;
+      assert myInlineKeysNoMapping;
+      try {
+        lockStorageWrite();
 
-      int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
+        int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
 
-      markDirty(true);
+        markDirty(true);
 
-      if (value < Integer.MAX_VALUE) {
-        myBTree.put(intKey, (int)value);
-      }
-      else {
-        // reuse long record if it was allocated
-        boolean hasMapping = myBTree.get(intKey, myResultBuf);
-        if (hasMapping) {
-          if (myResultBuf[0] < 0) {
-            myStorage.putLong(-myResultBuf[0], value);
-            return;
-          }
+        if (value < Integer.MAX_VALUE) {
+          myBTree.put(intKey, (int)value);
         }
+        else {
+          // reuse long record if it was allocated
+          boolean hasMapping = myBTree.get(intKey, myResultBuf);
+          if (hasMapping) {
+            if (myResultBuf[0] < 0) {
+              myStorage.putLong(-myResultBuf[0], value);
+              return;
+            }
+          }
 
-        int pos = nextLongValueRecord();
-        myStorage.putLong(pos, value);
-        myBTree.put(intKey, -pos);
+          int pos = nextLongValueRecord();
+          myStorage.putLong(pos, value);
+          myBTree.put(intKey, -pos);
+        }
       }
-    }
-    catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile);
-      exception.initCause(e);
-      throw exception;
+      catch (IllegalStateException e) {
+        CorruptedException exception = new CorruptedException(myFile);
+        exception.initCause(e);
+        throw exception;
+      }
+      finally {
+        unlockStorageWrite();
+      }
     }
     finally {
-      unlockStorageWrite();
+      getWriteLock().unlock();
     }
   }
 
@@ -375,15 +392,16 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    synchronized (getDataAccessLock()) {
-      try {
-        if (onlyCheckForExisting) {
-          lockStorageRead();
-        }
-        else {
-          lockStorageWrite();
-        }
+    (onlyCheckForExisting ? getReadLock() : getWriteLock()).lock();
+    try {
+      if (onlyCheckForExisting) {
+        lockStorageRead();
+      }
+      else {
+        lockStorageWrite();
+      }
 
+      try {
         if (IntToIntBtree.doDump) System.out.println(value);
         final int valueHC = myDataDescriptor.getHashCode(value);
 
@@ -435,6 +453,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         }
 
+        assert !onlyCheckForExisting;
         int newValueId = writeData(value, valueHC);
         ++myValuesCount;
 
@@ -502,6 +521,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         }
       }
     }
+    finally {
+      (onlyCheckForExisting ? getReadLock() : getWriteLock()).unlock();
+    }
   }
 
   @Override
@@ -540,7 +562,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     private ThreadLocal<byte[]> myBuffer;
 
     @Override
-    int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) {
+    int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) throws IOException {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
         int existingOffset = enumerator.myDataPageStart % INTERNAL_PAGE_SIZE;

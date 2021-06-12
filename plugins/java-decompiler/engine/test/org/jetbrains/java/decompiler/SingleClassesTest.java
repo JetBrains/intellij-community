@@ -5,7 +5,9 @@ import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +20,13 @@ import static org.junit.Assert.assertTrue;
 
 public class SingleClassesTest {
   private DecompilerTestFixture fixture;
+
+  /*
+   * Set individual test duration time limit to 60 seconds.
+   * This will help us to test bugs hanging decompiler.
+   */
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
 
   @Before
   public void setUp() throws IOException {
@@ -134,6 +143,8 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+
+  @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

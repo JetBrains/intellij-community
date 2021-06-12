@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -69,8 +69,9 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    final LanguageFileType type = options.getMatchOptions().getFileType();
-    return testReplace(in, what, by, options, project, sourceIsFile, false, type, type.getLanguage());
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    return testReplace(in, what, by, options, project, sourceIsFile, false, fileType, fileType.getLanguage());
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions replaceOptions, Project project, boolean sourceIsFile,
@@ -267,7 +268,6 @@ public class Replacer {
     try {
       final String search = options.getMatchOptions().getSearchPattern();
       final String replacement = options.getReplacement();
-      final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final Template searchTemplate = TemplateManager.getInstance(project).createTemplate("" , "", search);
       final Template replaceTemplate = TemplateManager.getInstance(project).createTemplate("", "", replacement);
 
@@ -306,9 +306,11 @@ public class Replacer {
         }
       }
 
+      final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-      assert profile != null;
-      ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+      if (profile != null) {
+        ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+      }
     } catch (IncorrectOperationException ex) {
       throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));
     }
@@ -317,7 +319,9 @@ public class Replacer {
   @NotNull
   public ReplacementInfo buildReplacement(@NotNull MatchResult result) {
     final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
-    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType()));
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, fileType));
 
     return replacementInfo;
   }

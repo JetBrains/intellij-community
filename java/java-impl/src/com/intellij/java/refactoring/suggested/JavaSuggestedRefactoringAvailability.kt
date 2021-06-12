@@ -13,8 +13,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringAvailability(refactoringSupport)
-{
+  SuggestedRefactoringAvailability(refactoringSupport) {
   private val HAS_OVERRIDES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_OVERRIDES")
   private val HAS_USAGES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_USAGES")
 
@@ -75,7 +74,9 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
     val updateOverridesData = if (canHaveOverrides)
-      updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) RefactoringBundle.message("suggested.refactoring.implementations") else RefactoringBundle.message("suggested.refactoring.overrides"))
+      updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) RefactoringBundle.message(
+        "suggested.refactoring.implementations")
+      else RefactoringBundle.message("suggested.refactoring.overrides"))
     else
       null
 

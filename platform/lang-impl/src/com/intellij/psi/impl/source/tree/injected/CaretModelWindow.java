@@ -24,7 +24,7 @@ class CaretModelWindow implements CaretModel {
   private final EditorWindow myEditorWindow;
   private final Map<Caret, InjectedCaret> myInjectedCaretMap = new WeakHashMap<>();
 
-  CaretModelWindow(CaretModel delegate, EditorWindow editorWindow) {
+  CaretModelWindow(@NotNull CaretModel delegate, @NotNull EditorWindow editorWindow) {
     myDelegate = delegate;
     myHostEditor = (EditorEx)editorWindow.getDelegate();
     myEditorWindow = editorWindow;

@@ -120,7 +120,7 @@ class GitMergeOperation extends GitBranchOperation {
         }
         else {
           LOG.info("Unknown error. " + result);
-          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
+          fatalError(getCommonErrorTitle(), result);
           fatalErrorHappened = true;
         }
       }
@@ -236,7 +236,7 @@ class GitMergeOperation extends GitBranchOperation {
           markSuccessful(repository);
         }
         else {
-          fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
+          fatalError(getCommonErrorTitle(), result);
           return false;
         }
       }

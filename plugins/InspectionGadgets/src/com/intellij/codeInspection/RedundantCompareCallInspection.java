@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -34,7 +35,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
         if (!COMPARE_METHODS.test(call)) return;
         PsiBinaryExpression binOp = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiBinaryExpression.class);
         if (binOp == null) return;
-        RelationType type = RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType type = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
         if (type == null) return;
         if (ExpressionUtils.isZero(binOp.getLOperand())) {
           type = type.getFlipped();

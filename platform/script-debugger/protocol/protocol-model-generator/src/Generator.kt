@@ -232,7 +232,7 @@ internal class Generator(outputDir: String, rootPackage: String, requestClassNam
 
 const val READER_INTERFACE_NAME: String = "ProtocolResponseReader"
 
-private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
+private val INCLUDED_DOMAINS = arrayOf("Mono", "CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
                                        "Tracing", "Target", "Overlay", "Console", "DOMDebugger", "Profiler", "HeapProfiler", "NodeWorker")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {

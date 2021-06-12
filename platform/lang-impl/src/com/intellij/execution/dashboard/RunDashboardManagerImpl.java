@@ -20,6 +20,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -66,8 +67,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final ContentManager myContentManager;
   private final ContentManagerListener myServiceContentManagerListener;
   private State myState = new State();
-  private final Set<String> myTypes = new THashSet<>();
-  private final Set<RunConfiguration> myHiddenConfigurations = new THashSet<>();
+  private final Set<String> myTypes = new HashSet<>();
+  private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
   private volatile List<List<RunDashboardServiceImpl>> myServices = Collections.emptyList();
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
@@ -197,10 +198,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public @NotNull String getToolWindowId() {
     if (myToolWindowId == null) {
-      String toolWindowId =
-        ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
-          .getToolWindowId(RunDashboardServiceViewContributor.class);
-      myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
+      if (LightEdit.owns(myProject)) {
+        myToolWindowId = ToolWindowId.SERVICES;
+      }
+      else {
+        String toolWindowId =
+          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
+            .getToolWindowId(RunDashboardServiceViewContributor.class);
+        myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
+      }
     }
     return myToolWindowId;
   }
@@ -370,7 +376,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     Set<RunConfiguration> storedConfigurations = new HashSet<>(RunManager.getInstance(myProject).getAllConfigurationsList());
 
-    return descriptorConfigurations.stream().noneMatch(descriptorConfiguration -> {
+    return !ContainerUtil.exists(descriptorConfigurations, descriptorConfiguration -> {
       RunConfiguration configuration = descriptorConfiguration.getConfiguration();
       return isShowInDashboard(configuration) && storedConfigurations.contains(configuration);
     });
@@ -614,7 +620,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   Set<String> getEnableByDefaultTypes() {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (RunDashboardDefaultTypesProvider provider : DEFAULT_TYPES_PROVIDER_EP_NAME.getExtensionList()) {
       result.addAll(provider.getDefaultTypeIds(myProject));
     }

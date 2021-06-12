@@ -1,10 +1,25 @@
 <html>
 <body>
-Reports issues on fields of type <b>java.util.concurrent.atomic.AtomicLongFieldUpdater</b>,
-<b>java.util.concurrent.atomic.AtomicIntegerFieldUpdater</b> or <b>java.util.concurrent.atomic.AtomicReferenceFieldUpdater</b>.
+Reports issues on fields of type <code>java.util.concurrent.atomic.AtomicLongFieldUpdater</code>,
+<code>java.util.concurrent.atomic.AtomicIntegerFieldUpdater</code> or <code>java.util.concurrent.atomic.AtomicReferenceFieldUpdater</code>.
 The issues reported are identical to the runtime problems that can happen with atomic field updaters:
 specified field not found, specified field not accessible, specified field of the wrong type, etc.
-
+<p><b>Examples:</b></p>
+<ul>
+  <li><pre>
+  class A {
+    private static volatile int value = 0;
+    private static final AtomicIntegerFieldUpdater updater =
+    AtomicIntegerFieldUpdater.newUpdater((A.class), "value"); // warning: Field 'value' has 'static' modifier
+  }
+  </pre></li>
+  <li><pre>
+  class B {
+    private static final AtomicIntegerFieldUpdater updater =
+      AtomicIntegerFieldUpdater.newUpdater(B.class, "value"); // warning: No field named 'value' found in class 'B'
+  }
+  </pre></li>
+</ul>
 <!-- tooltip end -->
 <p>
 <small>New in 16</small>

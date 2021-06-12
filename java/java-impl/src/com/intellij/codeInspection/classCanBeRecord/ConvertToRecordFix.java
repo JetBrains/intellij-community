@@ -4,6 +4,7 @@ package com.intellij.codeInspection.classCanBeRecord;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -236,23 +237,37 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     private RecordConstructorCandidate(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
       myConstructor = constructor;
 
-      if (constructor.getTypeParameters().length > 0) {
+      if (myConstructor.getTypeParameters().length > 0) {
+        myCanonical = false;
+        return;
+      }
+      Set<String> instanceFieldNames = instanceFields.stream().map(PsiField::getName).collect(Collectors.toSet());
+      if (instanceFieldNames.size() != instanceFields.size()) {
         myCanonical = false;
         return;
       }
       PsiParameter[] ctorParams = myConstructor.getParameterList().getParameters();
-      Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
-        .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
-      if (ctorParams.length != ctorParamsWithType.size()) {
+      if (instanceFields.size() != ctorParams.length) {
         myCanonical = false;
         return;
       }
+      PsiCodeBlock ctorBody = myConstructor.getBody();
+      if (ctorBody == null) {
+        myCanonical = false;
+        return;
+      }
+      Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
+        .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
       for (PsiField instanceField : instanceFields) {
         PsiType ctorParamType = ObjectUtils.tryCast(ctorParamsWithType.get(instanceField.getName()), PsiType.class);
         if (ctorParamType instanceof PsiEllipsisType) {
           ctorParamType = ((PsiEllipsisType)ctorParamType).toArrayType();
         }
         if (ctorParamType == null || !TypeUtils.typeEquals(ctorParamType.getCanonicalText(), instanceField.getType())) {
+          myCanonical = false;
+          return;
+        }
+        if (!HighlightControlFlowUtil.variableDefinitelyAssignedIn(instanceField, ctorBody)) {
           myCanonical = false;
           return;
         }

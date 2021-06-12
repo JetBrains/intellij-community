@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 @file:JvmName("GradleJvmValidationUtil")
 
@@ -104,8 +104,9 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
       EditorHelper.openInEditor(psiFile)
     }
   }
-  val notification = NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION, hyperLinkProcessor)
-  notification.notify(project)
+  NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+    .setListener(hyperLinkProcessor)
+    .notify(project)
 }
 
 sealed class JavaHomeValidationStatus {

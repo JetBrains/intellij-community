@@ -7,9 +7,10 @@ import org.apache.tools.ant.input.InputRequest;
 import org.apache.tools.ant.input.MultipleChoiceInputRequest;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
 public class IdeaInputHandler implements InputHandler {
+  @Override
   public void handleInput(InputRequest request) throws BuildException {
     final String prompt = request.getPrompt();
     if (prompt == null) {
@@ -23,12 +24,13 @@ public class IdeaInputHandler implements InputHandler {
     packet.appendLimitedString(prompt);
     packet.appendLimitedString(request.getDefaultValue());
     if (request instanceof MultipleChoiceInputRequest) {
-      Vector choices = ((MultipleChoiceInputRequest)request).getChoices();
+      @SuppressWarnings("unchecked") 
+      List<String> choices = ((MultipleChoiceInputRequest)request).getChoices();
       if (choices != null && choices.size() > 0) {
         int count = choices.size();
         packet.appendLong(count);
-        for (int i = 0; i < count; i++) {
-          packet.appendLimitedString((String)choices.elementAt(i));
+        for (String choice : choices) {
+          packet.appendLimitedString(choice);
         }
       }
       else {

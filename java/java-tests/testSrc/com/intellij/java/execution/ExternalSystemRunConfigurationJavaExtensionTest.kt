@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution
 
 import com.intellij.execution.ExecutionException
@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.runInEdtAndWait
-import org.apache.log4j.Logger
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
 
@@ -35,11 +34,8 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
     val oldTestDialog = TestDialogManager.setTestDialog(notificationsCollector)
     try {
       LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
-          // don't fail this if `LOG.error()` was called for our exception somewhere
-          if (t is FakeExecutionException) return
-          super.processError(message, t, details, logger)
-        }
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
+          t !is FakeExecutionException  // don't fail this if `LOG.error()` was called for our exception somewhere
       })
       runInEdtAndWait {
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()

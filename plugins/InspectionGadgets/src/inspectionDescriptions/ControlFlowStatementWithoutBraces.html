@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports any <b>if</b>, <b>while</b> or <b>for</b> statements without braces.
-Braces make the code easier to read and help prevent errors when modifying the code.
+Reports any <code>if</code>, <code>while</code>, or <code>for</code> statements without braces.
+<p>Braces make the code easier to read and help prevent errors.</p>
 <p>Example:</p>
-<pre>
-  if (x > 0) System.out.println("x is positive");
-</pre>
-<p>The quick fix for the inspection wraps the statement body with braces:
-<pre>
-  if (x > 0) {
+<pre><code>
+  if (x &gt; 0) System.out.println("x is positive");
+</code></pre>
+<p>The quick-fix wraps the statement body with braces:</p>
+<pre><code>
+  if (x &gt; 0) {
     System.out.println("x is positive");
   }
-</pre>
+</code></pre>
 </body>
 </html>

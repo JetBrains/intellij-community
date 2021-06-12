@@ -1,9 +1,17 @@
 <html>
 <body>
-Reports <b>static</b> methods with an identical signature as a <b>static</b> method of a superclass.
-Because <b>static</b> methods cannot override methods in superclasses, this may result in confusing semantics.
-<!-- tooltip end -->
-<p>
+Reports <code>static</code> methods with an identical signature as a <code>static</code> method of a superclass.
+Because <code>static</code> methods cannot override methods in superclasses, this may result in confusing semantics.
+<p>Example:</p>
+<pre>
+  class Parent {
+    static void method(){}
+  }
 
+  class Example extends Parent {
+    static void method(){} //warning
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

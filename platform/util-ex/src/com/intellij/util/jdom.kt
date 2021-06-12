@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
 import com.intellij.util.io.outputStream
@@ -19,7 +18,10 @@ import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
-import java.io.*
+import java.io.CharArrayReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.Path
 import javax.xml.XMLConstants
 
@@ -42,19 +44,9 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 }
 
 @Throws(IOException::class, JDOMException::class)
-@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(reader)", "com.intellij.openapi.util.JDOMUtil"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
-
-@Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(stream)", "com.intellij.openapi.util.JDOMUtil"))
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream)
-
-@Throws(IOException::class, JDOMException::class)
-@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(path)", "com.intellij.openapi.util.JDOMUtil"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-fun loadElement(path: Path): Element = JDOMUtil.load(path)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 

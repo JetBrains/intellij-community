@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
@@ -10,8 +10,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getPresentableText
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getSingleTooltip
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
@@ -20,6 +18,8 @@ import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
+import com.intellij.vcs.branch.BranchPresentation.getPresentableText
+import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -36,7 +36,7 @@ class RepositoryChangesBrowserNode(repository: Repository,
                                    private val colorManager: VcsLogColorManager = getColorManager(repository.project)) : ChangesBrowserNode<Repository>(repository) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.icon = ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
+    renderer.icon = getRepositoryIcon(getUserObject(), colorManager)
     renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
     appendCount(renderer)
 
@@ -67,5 +67,8 @@ class RepositoryChangesBrowserNode(repository: Repository,
   companion object {
     fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
       findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys)
+
+    fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
+      ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(repository.root)))
   }
 }

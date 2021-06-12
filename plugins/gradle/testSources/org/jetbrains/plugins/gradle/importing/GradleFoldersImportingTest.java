@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -38,7 +39,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   public void testUnsupportedTypesInDsl() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx().addPostfix(
+      createBuildScriptBuilder().addPostfix(
           "import org.gradle.api.internal.FactoryNamedDomainObjectContainer;",
           "import org.gradle.internal.reflect.Instantiator;",
           "class MyObj implements Named {",
@@ -630,24 +631,26 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../outer3/A.java", "class A {}");
     createProjectSubFile("build/generated/A.java", "class A {}");
     createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    GradleBuildScriptBuilder buildScript = new GradleBuildScriptBuilderEx()
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
-      .addPrefix("sourceSets {")
-      .addPrefix("  generated.java.srcDirs += \"${buildDir}/generated\"")
-      .addPrefix("  generated.java.srcDirs += '../outer4/generated'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/kotlin'")
-      .addPrefix("  main.java.srcDirs += '../outer2/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer3'")
-      .addPrefix("}")
-      .addPrefix("idea {")
-      .addPrefix("  module {")
-      .addPrefix("    inheritOutputDirs = true")
-      .addPrefix("    generatedSourceDirs += file(\"${buildDir}/generated\")")
-      .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
-      .addPrefix("  }")
-      .addPrefix("}");
+      .addPrefix(
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
     importPerSourceSet(true);
     importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test", "project.generated");
@@ -679,24 +682,26 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../outer3/A.java", "class A {}");
     createProjectSubFile("build/generated/A.java", "class A {}");
     createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    GradleBuildScriptBuilder buildScript = new GradleBuildScriptBuilderEx()
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
-      .addPrefix("sourceSets {")
-      .addPrefix("  generated.java.srcDirs += \"${buildDir}/generated\"")
-      .addPrefix("  generated.java.srcDirs += '../outer4/generated'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/kotlin'")
-      .addPrefix("  main.java.srcDirs += '../outer2/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer3'")
-      .addPrefix("}")
-      .addPrefix("idea {")
-      .addPrefix("  module {")
-      .addPrefix("    inheritOutputDirs = true")
-      .addPrefix("    generatedSourceDirs += file(\"${buildDir}/generated\")")
-      .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
-      .addPrefix("  }")
-      .addPrefix("}");
+      .addPrefix(
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
     importPerSourceSet(false);
     importProject(buildScript.generate());
     assertModules("project");
@@ -722,7 +727,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
-    createProjectSubFile("app1/build.gradle", new GradleBuildScriptBuilderEx()
+    createProjectSubFile("app1/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
         "sourceSets {",
@@ -730,7 +735,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "  }"
       )
       .generate());
-    createProjectSubFile("app2/build.gradle", new GradleBuildScriptBuilderEx()
+    createProjectSubFile("app2/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
         "sourceSets {",

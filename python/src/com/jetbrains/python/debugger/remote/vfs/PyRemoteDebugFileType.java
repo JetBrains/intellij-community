@@ -2,7 +2,6 @@
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public class PyRemoteDebugFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyBundle.message("python.debug.remote.description");
+    return PyBundle.message("filetype.python.debug.remote.description");
   }
 
   @NotNull

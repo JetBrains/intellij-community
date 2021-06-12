@@ -3,11 +3,13 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -73,6 +75,11 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   @Override
   protected @NlsContexts.BorderTitle String getDependenciesTitle() {
     return JavaUiBundle.message("title.library.contents");
+  }
+
+  @Override
+  protected @NotNull Set<String> getExistingNames() {
+    return getInsight().getExistingProjectLibraryNames();
   }
 
   @Override

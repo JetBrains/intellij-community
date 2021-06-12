@@ -29,9 +29,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElement> {
   public static PyFunctionInsertHandler INSTANCE = new PyFunctionInsertHandler();
 

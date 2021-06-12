@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -39,7 +42,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   }
 
   public static HighlightingSettingsPerFile getInstance(Project project) {
-    return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
+    return (HighlightingSettingsPerFile)project.getService(HighlightingLevelManager.class);
   }
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();

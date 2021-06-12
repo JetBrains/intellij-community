@@ -8,6 +8,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,16 +16,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -32,6 +31,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -285,7 +285,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
     isUpdatingTitle = true;
     try {
-      if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
+      if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
         File ioFile = currentFile == null ? null : currentFile.toFile();
         frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
@@ -346,13 +346,15 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   @Override
   public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
-      if (project != null) {
-        return project.isInitialized() ? project : null;
-      }
+      return project != null && project.isInitialized() ? project : null;
     }
-
-    if (IdeFrame.KEY.is(dataId)) {
+    else if (IdeFrame.KEY.is(dataId)) {
       return this;
+    }
+    else if (PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.is(dataId)) {
+      ToolWindowManager manager = project != null && project.isInitialized() ? project.getServiceIfCreated(ToolWindowManager.class) : null;
+      return manager instanceof ToolWindowManagerImpl ? JBIterable.from(
+        ((ToolWindowManagerImpl)manager).getLastActiveToolWindows()).toArray(new ToolWindow[0]) : null;
     }
 
     return null;

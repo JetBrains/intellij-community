@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.mac.MacMessages
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.Window
 import javax.swing.Icon
@@ -28,6 +29,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
 
   protected var icon: Icon? = null
   protected var doNotAskOption: DoNotAskOption? = null
+  @NonNls protected var helpId: String? = null
+
   protected abstract fun getThis(): T
 
   companion object {
@@ -93,6 +96,11 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     return getThis()
   }
 
+  fun help(@NonNls helpId: String): T {
+    this.helpId = helpId
+    return getThis()
+  }
+
   class YesNo internal constructor(title: String, message: String) : MessageDialogBuilder<YesNo>(title, message) {
     override fun getThis() = this
 
@@ -116,12 +124,13 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val yesText = yesText ?: CommonBundle.getYesButtonText()
       val noText = noText ?: CommonBundle.getNoButtonText()
       return showMessage(project, parentComponent, mac = { window ->
-        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption, icon, helpId)
       }, other = {
         (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                          message = message, title = title, icon = icon,
                                                          options = arrayOf(yesText, noText),
-                                                         doNotAskOption = doNotAskOption, alwaysUseIdeaUI = false) == 0)
+                                                         doNotAskOption = doNotAskOption,
+                                                         helpId = helpId, alwaysUseIdeaUI = true) == 0)
       })
     }
   }
@@ -155,18 +164,60 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val noText = noText ?: CommonBundle.getNoButtonText()
       val cancelText = cancelText ?: CommonBundle.getCancelButtonText()
       return showMessage(project, parentComponent, mac = { window ->
-        MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+        MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption, icon, helpId)
       }, other = {
         val options = arrayOf(yesText, noText, cancelText)
         when (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
-                                                              message = message, title = title, icon = icon,
-                                                              options = options,
-                                                              doNotAskOption = doNotAskOption, alwaysUseIdeaUI = false)) {
+                                                              message = message, title = title, options = options,
+                                                              icon = icon,
+                                                              doNotAskOption = doNotAskOption,
+                                                              helpId = helpId, alwaysUseIdeaUI = true)) {
           0 -> YES
           1 -> NO
           else -> CANCEL
         }
       })
+    }
+  }
+
+  @ApiStatus.Experimental
+  class Message(title: String, message: String) : MessageDialogBuilder<Message>(title, message) {
+    private lateinit var buttons: List<String>
+    private var defaultButton: String? = null
+    private var focusedButton: String? = null
+
+    override fun getThis() = this
+
+    fun buttons(vararg buttonNames: String): Message {
+      buttons = buttonNames.toList()
+      return this
+    }
+
+    fun defaultButton(defaultButtonName: String): Message {
+      defaultButton = defaultButtonName
+      return this
+    }
+
+    fun focusedButton(focusedButtonName: String): Message {
+      focusedButton = focusedButtonName
+      return this
+    }
+
+    fun show(project: Project? = null, parentComponent: Component? = null): String? {
+      val options = buttons.toTypedArray()
+      val defaultOptionIndex = buttons.indexOf(defaultButton)
+      val focusedOptionIndex = buttons.indexOf(focusedButton)
+      val result = showMessage(project, parentComponent, mac = { window ->
+        MacMessages.getInstance().showMessageDialog(title, message, options, window, defaultOptionIndex, focusedOptionIndex,
+                                                    doNotAskOption, icon, helpId)
+      }, other = {
+        MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent, message = message,
+                                                        title = title, options = options,
+                                                        defaultOptionIndex = defaultOptionIndex, focusedOptionIndex = focusedOptionIndex,
+                                                        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId,
+                                                        alwaysUseIdeaUI = true)
+      })
+      return if (result < 0) null else buttons[result]
     }
   }
 }
@@ -187,11 +238,11 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
     val yesText = yesText ?: CommonBundle.getOkButtonText()
     val noText = noText ?: CommonBundle.getCancelButtonText()
     return showMessage(project, parentComponent, mac = { window ->
-      MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+      MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption, icon, helpId)
     }, other = {
       MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
-                                                      message = message, title = title, icon = icon,
-                                                      options = arrayOf(yesText, noText),
+                                                      message = message, title = title, options = arrayOf(yesText, noText),
+                                                      icon = icon,
                                                       doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true) == 0
     })
   }

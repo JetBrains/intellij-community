@@ -17,7 +17,6 @@ package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.HighlightableCellRenderer;
-import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.treeStructure.treetable.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
+public class TreeTableView extends TreeTable implements SelectionProvider {
   private static final Logger LOG = Logger.getInstance(TreeTableView.class);
 
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
@@ -138,7 +137,6 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
   }
 
-  @Override
   public List getItems() {
     return getTreeViewModel().getItems();
   }

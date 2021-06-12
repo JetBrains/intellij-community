@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @Service
 public final class DocRenderItemUpdater implements Runnable {
@@ -29,7 +29,7 @@ public final class DocRenderItemUpdater implements Runnable {
     if (inlays.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (Inlay<DocRenderer> inlay : inlays) {
-      myQueue.merge(inlay, recreateContent, (oldValue, newValue) -> newValue | oldValue);
+      myQueue.merge(inlay, recreateContent, Boolean::logicalOr);
     }
     if (wasEmpty) processChunk();
   }

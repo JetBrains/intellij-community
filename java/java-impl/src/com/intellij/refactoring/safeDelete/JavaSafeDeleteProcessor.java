@@ -119,6 +119,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return Arrays.asList(directories);
     }
     if (element instanceof PsiMethod) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return Collections.singletonList(element);
+      }
       final PsiMethod[] methods =
         SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element,
                                                  allElementsToDelete);
@@ -129,8 +132,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
     if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
-      final Set<PsiParameter> parametersToDelete = new HashSet<>();
-      parametersToDelete.add((PsiParameter) element);
+      final Set<PsiElement> parametersToDelete = new HashSet<>();
+      parametersToDelete.add(element);
       final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
       final List<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findDeepestSuperMethods()));
       if (superMethods.isEmpty()) {
@@ -140,7 +143,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       for (PsiMethod superMethod : superMethods) {
         parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
         OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
-          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
+          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
           return true;
         });
       }
@@ -170,13 +173,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
               }
               return true;
             });
-            if (overriders.size() > 1) {
+            if (overriders.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
               String message = JavaRefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.type.parameters", UsageViewUtil.getLongName(owner));
               int result = ApplicationManager.getApplication().isUnitTestMode()
                            ? Messages.YES :Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.getRefactoringName(), Messages.getQuestionIcon());
               if (result == Messages.CANCEL) return null;
-              if (result == Messages.YES) return overriders;
+              if (result == Messages.NO) return Collections.singletonList(element);
             }
+            return overriders;
           }
         }
       }
@@ -947,26 +951,32 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return true;
     });
 
-    PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField, psiField.getContainingClass());
-    PsiParameter setterParameter = setterPrototype.getParameterList().getParameters()[0];
-    for (PsiParameter parameter : parameters) {
-      PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        if (!ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(ref -> {
-          PsiElement element = ref.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-            if (parent instanceof PsiAssignmentExpression) {
-              PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-              if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == psiField) {
-                return true;
+    PsiClass containingClass = psiField.getContainingClass();
+    if (containingClass != null) {
+      PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField, containingClass);
+      PsiParameter setterParameter = setterPrototype.getParameterList().getParameters()[0];
+      for (PsiParameter parameter : parameters) {
+        PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          if (!ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(ref -> {
+            PsiElement element = ref.getElement();
+            if (element instanceof PsiReferenceExpression) {
+              PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+              if (parent instanceof PsiAssignmentExpression) {
+                PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
+                if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == psiField) {
+                  return true;
+                }
               }
             }
-          }
-          return false;
-        })) continue;
-        usages.add(createParameterCallHierarchyUsageInfo(setterPrototype, setterParameter, (PsiMethod)scope, parameter));
+            return false;
+          })) continue;
+          usages.add(createParameterCallHierarchyUsageInfo(setterPrototype, setterParameter, (PsiMethod)scope, parameter));
+        }
       }
+    }
+    else {
+      LOG.assertTrue(!psiField.isPhysical(), "No containing class for field: " + psiField.getClass());
     }
 
     appendCallees(psiField, usages);

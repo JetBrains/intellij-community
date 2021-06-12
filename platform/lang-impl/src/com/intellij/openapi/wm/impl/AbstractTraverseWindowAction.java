@@ -5,6 +5,7 @@ import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,12 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
         window = SwingUtilities.getWindowAncestor(window);
       }
 
-      if (!ActiveWindowsWatcher.isTheCurrentWindowOnTheActivatedList(window)) return;
+      if (!ActiveWindowsWatcher.isTheCurrentWindowOnTheActivatedList(window)) {
+        if (AppUIUtil.isInFullscreen(window)) {
+          switchFullScreenFrame((JFrame)window);
+        }
+        return;
+      }
 
       Window mappedWindow = mapWindow.fun(window);
       Component recentFocusOwner = mappedWindow.getMostRecentFocusOwner();
@@ -36,6 +42,9 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
 
       (recentFocusOwner == null || !recentFocusOwner.isFocusable() ? mappedWindow : recentFocusOwner).requestFocus();
     }
+  }
+
+  protected void switchFullScreenFrame(@NotNull JFrame frame) {
   }
 
   @Override

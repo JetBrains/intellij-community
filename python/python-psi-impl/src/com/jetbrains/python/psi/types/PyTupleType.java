@@ -12,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   @NotNull

@@ -135,9 +135,14 @@ public final class JavaSourceInference {
   private static @NotNull MutationSignature findMutationSignature(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
     PurityInferenceResult result = data.getPurity();
     if (result == null) return MutationSignature.unknown();
-    MutationSignature signature =
-      RecursionManager.doPreventingRecursion(method, true, () -> result.getMutationSignature(method, data.methodBody(method)));
-    return signature == null ? MutationSignature.unknown() : signature;
+    try {
+      MutationSignature signature =
+        RecursionManager.doPreventingRecursion(method, true, () -> result.getMutationSignature(method, data.methodBody(method)));
+      return signature == null ? MutationSignature.unknown() : signature;
+    }
+    catch (CannotRestoreExpressionException e) {
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
+    }
   }
 
   @NotNull

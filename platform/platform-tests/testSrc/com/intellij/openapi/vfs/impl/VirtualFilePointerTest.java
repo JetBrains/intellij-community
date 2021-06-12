@@ -189,7 +189,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Object url = ((VirtualFilePointerImpl)pointer).myNode.myFileOrUrl;
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());

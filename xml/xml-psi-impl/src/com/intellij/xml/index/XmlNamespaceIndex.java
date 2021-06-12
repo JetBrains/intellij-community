@@ -122,7 +122,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (namespace == null) {
       dtdFiles = FileTypeIndex.getFiles(DTDFileType.INSTANCE, scope);
     } else {
-      dtdFiles = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName(project, namespace, scope), f -> FileTypeRegistry.getInstance().isFileOfType(f, DTDFileType.INSTANCE));
+      dtdFiles = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName(namespace, scope), f -> FileTypeRegistry.getInstance().isFileOfType(f, DTDFileType.INSTANCE));
     }
     return ContainerUtil.map(dtdFiles, resourceFunction);
   }

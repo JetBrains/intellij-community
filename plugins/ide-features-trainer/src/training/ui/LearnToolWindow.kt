@@ -23,12 +23,12 @@ import training.ui.views.ModulesPanel
 import java.util.concurrent.TimeUnit
 import javax.swing.JLabel
 
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
+internal class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
   : SimpleToolWindowPanel(true, true), DataProvider {
   val parentDisposable: Disposable = wholeToolWindow.disposable
 
   val learnPanel: LearnPanel = LearnPanel(this)
-  private val modulesPanel: ModulesPanel = ModulesPanel()
+  private val modulesPanel: ModulesPanel = ModulesPanel(project)
   private val scrollPane: JBScrollPane = if (LangManager.getInstance().languages.isEmpty()) {
     JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
   }

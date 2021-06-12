@@ -1,7 +1,13 @@
 <html>
 <body>
-<p>
-  Detects unresolved identifiers in @TupleConstructor/@MapConstructor annotation attributes <code>includes</code> and <code>excludes</code>
-</p>
+<p>Reports unresolved identifiers in <code>@TupleConstructor</code> and <code>@MapConstructor</code> <code>includes</code> and <code>excludes</code> attribute values, for example:</p>
+<pre><code>
+// unresolved 'c'
+@TupleConstructor(includes = ['a', 'b', 'c'])
+class X {
+  def a
+  def b
+}
+</code></pre>
 </body>
 </html>

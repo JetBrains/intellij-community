@@ -13,10 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getSmartReturnTypeInContext
 
 class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
 
@@ -56,7 +56,7 @@ fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement): PsiTy
   for (ext in ep.extensions) {
     return ext.getType(receiverType, method, arguments, context) ?: continue
   }
-  return getSmartReturnType(method)
+  return getSmartReturnTypeInContext(method, context)
 }
 
 private val ep: ExtensionPointName<GrCallTypeCalculator> = ExtensionPointName.create("org.intellij.groovy.callTypeCalculator")

@@ -1,13 +1,17 @@
 <html>
 <body>
-Reports <b>static</b> variables which are not guaranteed to be initialized upon class initialization.
-<p>
-Note: This inspection uses a very conservative dataflow algorithm, and may report static variables
+Reports <code>static</code> variables which are not guaranteed to be initialized upon class initialization.
+<p>Example:</p>
+<pre>
+  class Foo {
+    public static int bar;
+
+    static { }
+  }
+</pre>
+Note: this inspection uses a very conservative dataflow algorithm, and may report static variables
 as uninitialized incorrectly. Variables reported as initialized will always be initialized.
 <!-- tooltip end -->
-<p>
- Use the checkbox below to indicate whether you want uninitialized primitive fields to be reported.
-<p>
-
+<p>Use the checkbox below to indicate whether you want uninitialized primitive fields to be reported.</p>
 </body>
 </html>

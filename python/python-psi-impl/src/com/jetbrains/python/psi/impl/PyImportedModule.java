@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyImportedModule extends LightElement implements PyTypedElement {
   @Nullable private final PyImportElement myImportElement;
   @NotNull private final PyFile myContainingFile;

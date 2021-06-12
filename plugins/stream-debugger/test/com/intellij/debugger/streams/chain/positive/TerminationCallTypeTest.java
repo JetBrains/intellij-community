@@ -53,8 +53,4 @@ public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase 
     assertNotNull(chain);
     assertEquals(returnType, chain.getTerminationCall().getResultType());
   }
-
-  @Override
-  protected void checkResultChains(@NotNull List<StreamChain> chains) {
-  }
 }

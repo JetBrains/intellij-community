@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,7 +98,7 @@ public class HgRefManager implements VcsLogRefManager {
 
   public HgRefManager(@NotNull Project project, @NotNull RepositoryManager<HgRepository> repositoryManager) {
     myRepositoryManager = repositoryManager;
-    myBranchManager = ServiceManager.getService(project, HgBranchManager.class);
+    myBranchManager = project.getService(HgBranchManager.class);
   }
 
   @NotNull

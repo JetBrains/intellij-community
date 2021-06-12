@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.services
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.editorconfig.language.psi.*
@@ -21,7 +20,7 @@ interface EditorConfigElementFactory {
 
   companion object {
     fun getInstance(project: Project): EditorConfigElementFactory {
-      return ServiceManager.getService(project, EditorConfigElementFactory::class.java)
+      return project.getService(EditorConfigElementFactory::class.java)
     }
   }
 }

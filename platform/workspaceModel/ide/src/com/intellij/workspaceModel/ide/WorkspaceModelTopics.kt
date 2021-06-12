@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -10,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
-import com.intellij.workspaceModel.ide.impl.finishModuleLoadingActivity
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.*
 
@@ -68,27 +68,31 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded")
+    val activity = StartUpMeasurer.startActivity("events sending after modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
-    val application = ApplicationManager.getApplication()
-    application.invokeAndWait {
-      application.runWriteAction {
-        val innerActivity = activity.startChild("(wm) WriteAction. After modules are loaded")
-        allEvents.forEach { queue ->
-          queue.collectToQueue = false
-          queue.events.forEach { (isBefore, event) ->
-            if (isBefore) queue.originalListener.beforeChanged(event)
-            else queue.originalListener.changed(event)
+    if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
+      val activityInQueue = activity.startChild("events sending (in queue)")
+      val application = ApplicationManager.getApplication()
+      application.invokeAndWait {
+        application.runWriteAction {
+          val innerActivity = activityInQueue.endAndStart("events sending")
+          allEvents.forEach { queue ->
+            queue.collectToQueue = false
+            queue.events.forEach { (isBefore, event) ->
+              if (isBefore) queue.originalListener.beforeChanged(event)
+              else queue.originalListener.changed(event)
+            }
+            queue.events.clear()
           }
-          queue.events.clear()
+          innerActivity.end()
         }
-        innerActivity.end()
       }
+    } else {
+      allEvents.forEach { queue -> queue.collectToQueue = false }
     }
     allEvents.clear()
     modulesAreLoaded = true
     activity.end()
-    finishModuleLoadingActivity()
   }
 
   private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {

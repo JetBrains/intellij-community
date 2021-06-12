@@ -101,16 +101,16 @@ private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>
   Backgroundable(project, GitBundle.message(
     "git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
-    if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject)) {
+    if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
       throw ProcessCanceledException()
     }
   }
 
   override fun onSuccess() {
-    if (!myProject.isDisposed) {
-      val content = createManagerAndContent(myProject, vcs, roots, false)
+    if (!project.isDisposed) {
+      val content = createManagerAndContent(project, vcs, roots, false)
       val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
-        .setProject(myProject)
+        .setProject(project)
         .setTitle(GitBundle.message("git.log.external.window.title"))
         .setPreferredFocusedComponent(content)
         .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)

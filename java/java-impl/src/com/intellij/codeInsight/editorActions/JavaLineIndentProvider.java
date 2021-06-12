@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider;
 import com.intellij.psi.tree.IElementType;
@@ -88,7 +90,26 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
       // For arrays like int x = {<caret>0, 1, 2}
       return getDefaultIndentFromType(CONTINUATION);
     }
+    else if (beforeStart.isAt(JavaTokenType.IDENTIFIER)) {
+      moveBeforeExtendsImplementsAndIdentifier(beforeStart);
+      if (beforeStart.isAt(JavaTokenType.CLASS_KEYWORD) &&  doNotIndentClassMembers(beforeStart)) {
+        return Indent.getNoneIndent();
+      }
+    }
     return super.getIndentInBlock(project, language, blockStartPosition);
+  }
+
+  private static void moveBeforeExtendsImplementsAndIdentifier(@NotNull SemanticEditorPosition position) {
+    while (position.isAt(JavaTokenType.IDENTIFIER) || position.isAtAnyOf(Whitespace, Comma) ||
+           position.isAt(JavaTokenType.EXTENDS_KEYWORD) || position.isAt(JavaTokenType.IMPLEMENTS_KEYWORD)) {
+      position.moveBefore();
+    }
+  }
+
+  private static boolean doNotIndentClassMembers(@NotNull SemanticEditorPosition position) {
+    Editor editor = position.getEditor();
+    CommonCodeStyleSettings javaSettings = CodeStyle.getSettings(editor).getCommonSettings(JavaLanguage.INSTANCE);
+    return javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS;
   }
 
   @Override

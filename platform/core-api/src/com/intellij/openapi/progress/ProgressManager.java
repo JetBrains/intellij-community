@@ -173,6 +173,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
+
   /**
    * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and

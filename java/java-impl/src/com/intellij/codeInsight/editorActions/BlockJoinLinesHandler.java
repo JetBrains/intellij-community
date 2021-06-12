@@ -56,7 +56,7 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
       if (foundStatement != null) return -1;
       foundStatement = element;
     }
-    if (foundStatement == null) return -1;
+    if (!(foundStatement instanceof PsiStatement)) return -1;
     PsiElement parent = codeBlock.getParent();
     if (isPotentialShortIf(foundStatement) && parent instanceof PsiBlockStatement) {
       PsiElement grandParent = parent.getParent();

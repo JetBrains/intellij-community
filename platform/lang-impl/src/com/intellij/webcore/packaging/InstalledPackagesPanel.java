@@ -2,6 +2,7 @@
 package com.intellij.webcore.packaging;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,6 +23,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -416,20 +418,20 @@ public class InstalledPackagesPanel extends JPanel {
 
   public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
     onUpdateStarted();
-    ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, IdeBundle.message("packages.settings.loading"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
+                                                              IdeBundle.message("packages.settings.loading"),
+                                                              true,
+                                                              PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Collection<InstalledPackage> packages = new ArrayList<>();
+        List<? extends InstalledPackage> packages = List.of();
         try {
-          packages = packageManagementService.getInstalledPackages();
+          packages = packageManagementService.getInstalledPackagesList();
         }
-        catch (IOException e) {
+        catch (ExecutionException e) {
           LOG.warn(e.getMessage()); // do nothing, we already have an empty list
         }
         finally {
-          final Collection<InstalledPackage> finalPackages = packages;
-
           final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
           final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
           if (cache.isEmpty()) {
@@ -437,14 +439,19 @@ public class InstalledPackagesPanel extends JPanel {
               refreshLatestVersions(packageManagementService);
             }
           }
+
+          List<Object[]> rows = ContainerUtil.map(packages,
+                                                  pkg -> new Object[]{
+                                                    pkg,
+                                                    pkg.getVersion(),
+                                                    getVersionString(cache.get(pkg.getName()))
+                                                  });
+
           UIUtil.invokeLaterIfNeeded(() -> {
             if (packageManagementService == myPackageManagementService) {
               myPackagesTableModel.getDataVector().clear();
-              for (InstalledPackage pkg : finalPackages) {
-                RepoPackage repoPackage = cache.get(pkg.getName());
-                final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
-                myPackagesTableModel
-                  .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
+              for (Object[] row : rows) {
+                myPackagesTableModel.addRow(row);
               }
               if (!cache.isEmpty()) {
                 onUpdateFinished();
@@ -570,6 +577,11 @@ public class InstalledPackagesPanel extends JPanel {
       packageMap.put(aPackage.getName(), aPackage);
     }
     return packageMap;
+  }
+
+  private static @NotNull String getVersionString(@Nullable RepoPackage repoPackage) {
+    String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
+    return version != null ? version : "";
   }
 
   private class MyTableCellRenderer extends DefaultTableCellRenderer {

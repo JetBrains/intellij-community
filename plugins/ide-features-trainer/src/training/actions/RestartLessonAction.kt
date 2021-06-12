@@ -9,7 +9,7 @@ import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 
-class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesson) {
+private class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesson) {
   override fun actionPerformed(e: AnActionEvent) {
     val activeToolWindow = LearningUiManager.activeToolWindow ?: return
     val lesson = LessonManager.instance.currentLesson ?: return

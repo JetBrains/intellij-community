@@ -39,7 +39,7 @@ import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
 
 public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final LanguageLevel myLanguageLevel;
-  
+
   public ConvertRecordToClassFix(@NotNull PsiElement candidate) {
     super(candidate);
     myLanguageLevel = PsiUtil.getLanguageLevel(candidate);
@@ -107,10 +107,9 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   @NotNull
   private String generateText(@NotNull PsiClass recordClass) {
     PsiField lastField =
-      StreamEx.of(recordClass.getFields()).filter(field -> field.hasModifierProperty(PsiModifier.STATIC)).reduce((a, b) -> b)
-        .orElse(null);
+      StreamEx.ofReversed(recordClass.getFields()).findFirst(field -> field.hasModifierProperty(PsiModifier.STATIC)).orElse(null);
     PsiMethod lastMethod =
-      StreamEx.of(recordClass.getMethods()).filter(method -> !(method instanceof SyntheticElement)).reduce((a, b) -> b).orElse(null);
+      StreamEx.ofReversed(recordClass.getMethods()).findFirst(method -> !(method instanceof SyntheticElement)).orElse(null);
     PsiElement lBrace = recordClass.getLBrace();
     PsiElement insertFieldsAfter = lastField == null ? lBrace : lastField;
     PsiElement insertMethodsAfter = lastMethod == null ? insertFieldsAfter : lastMethod;
@@ -328,7 +327,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (myLanguageLevel.isAtLeast(HighlightingFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) + 
+                  (myLanguageLevel.isAtLeast(HighlightingFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
                    " that = (" + psiClass.getName() + ")obj;\n" +
                    "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +

@@ -1,4 +1,4 @@
-abstract class <warning descr="Class 'AbstractClass1' implements 'java.lang.Comparable' but does not override 'equals()'">AbstractClass1</warning> implements Comparable<AbstractClass1> {
+abstract class <warning descr="Class 'AbstractClass1' implements 'java.lang.Comparable' but does not override 'equals()'"><caret>AbstractClass1</warning> implements Comparable<AbstractClass1> {
 
   int field = 1;
 

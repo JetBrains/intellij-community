@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -90,10 +90,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE it was adopted
-  private VirtualFileSystemEntry doFindChildInArray(@NotNull String name) {
+  private VirtualFileSystemEntry doFindChildInArray(@NotNull String name, boolean isCaseSensitive) {
     if (myData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
     int[] array = myData.myChildrenIds;
-    int indexInReal = findIndex(array, name);
+    int indexInReal = findIndex(array, name, isCaseSensitive);
     if (indexInReal >= 0) {
       return getVfsData().getFileById(array[indexInReal], this, true);
     }
@@ -104,7 +104,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFileSystemEntry doFindChild(@NotNull String name,
                                              boolean ensureCanonicalName,
                                              @NotNull NewVirtualFileSystem delegate,
-                                             boolean caseSensitive) {
+                                             boolean isCaseSensitive) {
     if (name.isEmpty()) {
       return null;
     }
@@ -112,14 +112,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return handleInvalidDirectory(null);
     }
 
-    VirtualFileSystemEntry found = doFindChildInArray(name);
+    VirtualFileSystemEntry found = doFindChildInArray(name, isCaseSensitive);
     if (found != null) return found;
 
     if (ensureCanonicalName) {
       String trimmedName = deSlash(name);
       if (trimmedName == null) return null;
       if (!trimmedName.equals(name)) {
-        found = doFindChildInArray(trimmedName);
+        found = doFindChildInArray(trimmedName, isCaseSensitive);
         if (found != null) return found;
         name = trimmedName;
       }
@@ -129,18 +129,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return NULL_VIRTUAL_FILE;
     }
 
-    return findInPersistence(name, ensureCanonicalName, delegate, caseSensitive);
+    return findInPersistence(name, ensureCanonicalName, delegate, isCaseSensitive);
   }
 
   @Nullable
   private VirtualFileSystemEntry findInPersistence(@NotNull String name,
                                                    boolean ensureCanonicalName,
                                                    @NotNull NewVirtualFileSystem delegate,
-                                                   boolean caseSensitive) {
+                                                   boolean isCaseSensitive) {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
-      child = doFindChildInArray(name);
+      child = doFindChildInArray(name, isCaseSensitive);
       if (child != null) return child; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
         return null;
@@ -149,7 +149,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       ChildInfo childInfo = ourPersistence.findChildInfo(this, name, delegate);
       if (childInfo == null) {
-        myData.addAdoptedName(name, caseSensitive);
+        myData.addAdoptedName(name, isCaseSensitive);
         return null;
       }
 
@@ -158,7 +158,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         CharSequence persistedName = childInfo.getName();
         if (!Comparing.equal(name, persistedName)) {
           name = persistedName.toString();
-          child = doFindChildInArray(name);
+          child = doFindChildInArray(name, isCaseSensitive);
           if (child != null) return child;
         }
       }
@@ -316,6 +316,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently-held VFP/Refresh queue locks
       RefreshQueue.getInstance().processSingleEvent(true, caseSensitivityEvent);
+      // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
+      resortChildren();
+    }
+  }
+
+  private void resortChildren() {
+    boolean isCaseSensitive = isCaseSensitive();
+    synchronized (myData) {
+      VirtualFileSystemEntry[] children = getArraySafely(true);
+
+      Comparator<VirtualFile> byName = (v1, v2) -> compareNames(v1.getNameSequence(), v2.getNameSequence(), isCaseSensitive);
+
+      ContainerUtil.sort(children, byName);
+      int[] result = ArrayUtil.newIntArray(children.length);
+      for (int i = 0; i < children.length; i++) {
+        VirtualFileSystemEntry child = children[i];
+        result[i] = child.getId();
+      }
+
+      myData.myChildrenIds = result;
+      assertConsistency(isCaseSensitive, children, "afterCaseSensitivityChanged", isCaseSensitive);
     }
   }
 
@@ -328,7 +349,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @Nullable
   public NewVirtualFile findChildIfCached(@NotNull String name) {
-    VirtualFileSystemEntry found = doFindChildInArray(name);
+    VirtualFileSystemEntry found = doFindChildInArray(name, isCaseSensitive());
     //noinspection UseVirtualFileEquals
     return found == NULL_VIRTUAL_FILE ? null : found;
   }
@@ -363,8 +384,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private void loadPersistedChildren() {
-    final String[] names = ourPersistence.listPersisted(this);
-    final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
+    String[] names = ourPersistence.listPersisted(this);
+    NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
     for (String name : names) {
       findChild(name, false, false, delegate);
     }
@@ -384,7 +405,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private VirtualFile @NotNull [] loadAllChildren() {
     NewVirtualFileSystem delegate = getFileSystem();
-    boolean caseSensitive = isCaseSensitive();
+    boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
       List<? extends ChildInfo> children = ourPersistence.listAll(this);
@@ -399,18 +420,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         children.sort((o1, o2) -> {
           CharSequence name1 = o1.getName();
           CharSequence name2 = o2.getName();
-          int cmp = compareNames(name1, name2, caseSensitive);
+          int cmp = compareNames(name1, name2, isCaseSensitive);
           if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
-            LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
-                      " caseSensitive: " + caseSensitive +
+            LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+                      " caseSensitive: " + isCaseSensitive +
                       " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                      " isCaseSensitive(): " + isCaseSensitive() +
+                      " isCaseSensitive(): " + isCaseSensitive +
                       " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
-                      " in the dir: " + this + ";" +
+                      " in the dir: " + this + "; " + children.size() +
                       " children: " + StringUtil.first(children.toString(), 300, true));
             errorsCount[0]++;
-            if (!caseSensitive) {
+            if (!isCaseSensitive) {
               // Sometimes file system rules for case insensitive comparison differ from Java rules.
               // E.g. on NTFS files named \u1E9B (small long S with dot) and \u1E60 (capital S with dot)
               // can coexist while the uppercase for \u1E9B is \u1E60. It's probably because the lower case of
@@ -448,15 +469,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.myChildrenIds = result;
       setAllChildrenLoaded();
       if (CHECK) {
-        assertConsistency(caseSensitive, children);
+        assertConsistency(isCaseSensitive, children);
       }
 
       return files;
     }
   }
 
-  private void assertConsistency(boolean caseSensitive, @NotNull Object details) {
-    if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
+  private void assertConsistency(boolean isCaseSensitive, Object @NotNull ... details) {
+    if (!CHECK || ApplicationManagerEx.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     if (childrenIds.length == 0) return;
     VfsData vfsData = getVfsData();
@@ -465,22 +486,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int id = childrenIds[i];
       int prev = childrenIds[i - 1];
       CharSequence name = vfsData.getNameByFileId(id);
-      int cmp = compareNames(name, prevName, caseSensitive);
+      int cmp = compareNames(name, prevName, isCaseSensitive);
       prevName = name;
       if (cmp <= 0) {
-        error(verboseToString(vfsData.getFileById(prev, this, true)) +
-              " is wrongly placed before " +
-              verboseToString(vfsData.getFileById(id, this, true)), getArraySafely(true), details);
+        VirtualFileSystemEntry prevFile = vfsData.getFileById(prev, this, true);
+        VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
+        String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ";" +
+                      "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ";" +
+                      "this.isCaseSensitive()=" + this.isCaseSensitive();
+
+        String message = info + " but in "+this+" the " +verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child)+"\n";
+        error(message, details);
       }
       synchronized (myData) {
         if (myData.isAdoptedName(name)) {
-          try {
-            error("In " + verboseToString(this) + " file '" + name + "' is both child and adopted",
-                  getArraySafely(true), "Adopted: " + myData.getAdoptedNames() + ";\n " + details);
-          }
-          finally {
-            myData.removeAdoptedName(name);
-          }
+          List<String> adoptedNames = myData.getAdoptedNames();
+          myData.removeAdoptedName(name);
+          String message = "In " + verboseToString(this) + " file '" + name + "' is both `child` and `adopted`";
+          error(message, "Adopted: " + adoptedNames + ";\n ", details);
         }
       }
     }
@@ -488,7 +511,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   @NonNls
-  private static String verboseToString(VirtualFileSystemEntry file) {
+  private static String verboseToString(@Nullable VirtualFileSystemEntry file) {
     if (file == null) return "null";
     return file + " (name: '" + file.getName()
            + "', " + file.getClass()
@@ -496,20 +519,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + "; id: "+file.getId()
            + "; FS: " +file.getFileSystem()
            + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
-           + "; caseSensitive: " +file.isCaseSensitive()
+           + "; isCaseSensitive: " +file.isCaseSensitive()
            + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
            + ") ";
   }
 
-  private static void error(@NonNls String message, VirtualFileSystemEntry @NotNull [] array, @NonNls Object @NotNull ... details) {
+  private void error(@NonNls String message, @NonNls Object @NotNull ... details) {
+    VirtualFileSystemEntry[] array = getArraySafely(true);
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
-    throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);
+    throw new AssertionError(message + ";\n children: \n" + children + "\nDetails: " + detailsStr);
   }
 
   @Override
   @Nullable
-  public VirtualFileSystemEntry findChild(@NotNull final String name) {
+  public VirtualFileSystemEntry findChild(@NotNull String name) {
     return findChild(name, false, true, getFileSystem());
   }
 
@@ -530,6 +554,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimisation: works faster than added.forEach(this::addChild)
+  @ApiStatus.Internal
   public void createAndAddChildren(@NotNull List<? extends ChildInfo> added,
                                    boolean markAllChildrenLoaded,
                                    @NotNull PairConsumer<? super VirtualFile, ? super ChildInfo> fileCreated) {
@@ -557,24 +582,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     // optimization: when there are many children, it's cheaper to
     // merge sorted added and existing lists just like in merge sort
-    final boolean caseSensitive = isCaseSensitive();
-    Comparator<ChildInfo> pairComparator = (p1, p2) -> compareNames(p1.getName(), p2.getName(), caseSensitive);
-    added.sort(pairComparator);
+    boolean isCaseSensitive = isCaseSensitive();
+    Comparator<ChildInfo> byName = (p1, p2) -> compareNames(p1.getName(), p2.getName(), isCaseSensitive);
+    added.sort(byName);
 
     synchronized (myData) {
       int[] oldIds = myData.myChildrenIds;
       IntList mergedIds = new IntArrayList(oldIds.length + added.size());
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < added.size(); i++) {
-        ChildInfo info = added.get(i);
-        assert info.getId() > 0 : info;
-        @PersistentFS.Attributes
-        int attributes = info.getFileAttributeFlags();
-        boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
-        myData.removeAdoptedName(info.getName());
-        VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
-        fileCreated.consume(file, info);
-      }
       VfsData vfsData = getVfsData();
       List<ChildInfo> existingChildren = new AbstractList<>() {
         @Override
@@ -590,58 +604,65 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, (nextInfo,__) -> mergedIds.add(nextInfo.getId()));
+      ContainerUtil.processSortedListsInOrder(existingChildren, added, byName, true, (nextInfo, isFileExistsAlready) -> {
+        if (!isFileExistsAlready) {
+          assert nextInfo.getId() > 0 : nextInfo;
+          @PersistentFS.Attributes
+          int attributes = nextInfo.getFileAttributeFlags();
+          boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
+          myData.removeAdoptedName(nextInfo.getName());
+          VirtualFileSystemEntry file = createChild(nextInfo.getId(), nextInfo.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
+          fileCreated.consume(file, nextInfo);
+        }
+        mergedIds.add(nextInfo.getId());
+      });
       myData.myChildrenIds = mergedIds.toIntArray();
 
       if (markAllChildrenLoaded) {
         setAllChildrenLoaded();
       }
-      assertConsistency(caseSensitive, added);
+      assertConsistency(isCaseSensitive, added);
     }
   }
 
   public void addChild(@NotNull VirtualFileSystemEntry child) {
-    final CharSequence childName = child.getNameSequence();
-    final boolean caseSensitive = isCaseSensitive();
+    CharSequence childName = child.getNameSequence();
+    boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       myData.removeAdoptedName(childName);
-      int indexInReal = findIndex(myData.myChildrenIds, childName);
+      int indexInReal = findIndex(myData.myChildrenIds, childName, isCaseSensitive);
       if (indexInReal < 0) {
         int i = -indexInReal -1;
-        insertChildAt(child, i);
+        int id = child.getId();
+        assert id > 0 : child + ": " + id;
+        myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
       }
       // else already stored
-      assertConsistency(caseSensitive, child);
+      assertConsistency(isCaseSensitive, child, "indexInReal", indexInReal, isCaseSensitive);
     }
   }
 
-  private void insertChildAt(@NotNull VirtualFileSystemEntry file, int i) {
-    int id = file.getId();
-    assert id > 0 : file +": "+id;
-    myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
-  }
-
   public void removeChild(@NotNull VirtualFile file) {
-    boolean caseSensitive = isCaseSensitive();
+    boolean isCaseSensitive = isCaseSensitive();
     String name = file.getName();
     synchronized (myData) {
-      int indexInReal = findIndex(myData.myChildrenIds, name);
+      int indexInReal = findIndex(myData.myChildrenIds, name, isCaseSensitive);
       if (indexInReal >= 0) {
         // there suddenly can be that we ask to add name to adopted whereas it already contained in the real part
         // in this case we should remove it from there
         myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, indexInReal);
       }
       if (!allChildrenLoaded()) {
-        myData.addAdoptedName(name, caseSensitive);
+        myData.addAdoptedName(name, isCaseSensitive);
       }
 
-      assertConsistency(caseSensitive, file);
+      assertConsistency(isCaseSensitive, file);
     }
   }
 
   // optimization: faster than forEach(this::removeChild)
   public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
-    boolean caseSensitive = isCaseSensitive();
+    boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       // remove from array by merging two sorted lists
       int[] newIds = new int[myData.myChildrenIds.length];
@@ -659,10 +680,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.myChildrenIds = newIds;
 
       if (!allChildrenLoaded()) {
-        myData.addAdoptedNames(namesToRemove, caseSensitive);
+        myData.addAdoptedNames(namesToRemove, isCaseSensitive);
       }
 
-      assertConsistency(caseSensitive, namesToRemove);
+      assertConsistency(isCaseSensitive, namesToRemove);
     }
   }
 
@@ -673,9 +694,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       childrenToCreate.removeIf(event -> !event.isValid());
       return;
     }
-    boolean caseSensitive = isCaseSensitive();
+    boolean isCaseSensitive = isCaseSensitive();
 
-    Set<CharSequence> existingNames = CollectionFactory.createCharSequenceSet(caseSensitive, myData.myChildrenIds.length);
+    Set<CharSequence> existingNames = CollectionFactory.createCharSequenceSet(isCaseSensitive, myData.myChildrenIds.length);
     VfsData vfsData = getVfsData();
     for (int id : myData.myChildrenIds) {
       existingNames.add(vfsData.getNameByFileId(id));
@@ -719,18 +740,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myData.getAdoptedNames();
   }
 
-  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name) {
+  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name, boolean isCaseSensitive) {
     VfsData vfsData = getVfsData();
-    boolean caseSensitive = isCaseSensitive();
-    return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
+    return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(vfsData.getNameByFileId(ids[mid]), name, isCaseSensitive));
   }
 
-  private static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean caseSensitive) {
+  private static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean isCaseSensitive) {
     int d = name1.length() - name2.length();
     if (d != 0) return d;
     for (int i = 0; i < name1.length(); i++) {
       // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
-      d = StringUtil.compare(name1.charAt(i), name2.charAt(i), !caseSensitive);
+      d = StringUtil.compare(name1.charAt(i), name2.charAt(i), !isCaseSensitive);
       if (d != 0) return d;
     }
     return 0;
@@ -754,7 +774,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
+  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
   }
 

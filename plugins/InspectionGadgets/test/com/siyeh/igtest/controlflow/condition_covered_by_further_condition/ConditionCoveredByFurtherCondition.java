@@ -9,19 +9,19 @@ public class ConditionCoveredByFurtherCondition {
         public void m() {
             if (this == C1 || this == C2) { /* ...*/ }
         }
-        
+
         public static final Object C3 = getC();
         public static final Object C4 = getC();
-        
+
         public void m2() {
             if (this == C3 || this == C4) {}
         }
-        
+
         private static Object getC() {
             return new C();
         }
     }
-    
+
     public void testInstanceOf(Object arg) {
         if (<warning descr="Condition 'arg != null' covered by subsequent condition 'arg instanceof String'">arg != null</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");
@@ -148,8 +148,8 @@ public class ConditionCoveredByFurtherCondition {
     }
 
     void testErrorElement(Object obj) {
-        if(!(obj instanceof Integer) && !(obj instanceof Long) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error>Number<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {}
-        if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error>Number<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {}
+        if(!(obj instanceof Integer) && !(obj instanceof Long) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
+        if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
     }
 
     void testErrorElement2(char ch) {
@@ -168,7 +168,7 @@ public class ConditionCoveredByFurtherCondition {
     void testIncompleteLambda2(Object x) {
         if (x != null && () -> x instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>
     }
-    
+
     void testBooleanChain(boolean b1, boolean b2) {
         if (<warning descr="Condition 'b1 || b2' covered by subsequent condition 'b1 != b2'">(b1 || b2)</warning> && b1 != b2) {}
     }

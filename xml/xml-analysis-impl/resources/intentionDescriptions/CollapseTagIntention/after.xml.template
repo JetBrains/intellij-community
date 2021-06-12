@@ -1,1 +1,3 @@
-<mytag/>
+<foo>
+  <spot><bar x="true"/></spot>
+</foo>

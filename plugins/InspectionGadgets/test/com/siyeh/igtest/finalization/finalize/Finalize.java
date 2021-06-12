@@ -7,7 +7,7 @@ public class Finalize
         super();
     }
 
-    protected void <warning descr="'finalize()' declared">finalize</warning>() throws Throwable
+    protected void <warning descr="'finalize()' should not be overridden">finalize</warning>() throws Throwable
     {
         super.finalize();
     }

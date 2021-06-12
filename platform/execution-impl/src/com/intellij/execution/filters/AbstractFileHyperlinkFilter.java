@@ -147,7 +147,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       Ref<VirtualFile> fileRef = myFileRef;
       if (fileRef == null) {
         VirtualFile file = WriteAction.compute(() -> VfsUtil.findFileByIoFile(myIoFile, true));

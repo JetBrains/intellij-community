@@ -39,7 +39,6 @@ public final class NonNlsUastUtil {
    * <code>false</code> otherwise.
    */
   public static boolean isCallableReferenceExpressionWithNonNlsQualifier(@Nullable UCallableReferenceExpression expression) {
-    if (expression == null) return false;
     return false; //TODO implement
   }
 

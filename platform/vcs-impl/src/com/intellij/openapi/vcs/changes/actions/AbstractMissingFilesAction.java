@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
       for (FilePath file : files) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
-      ChangesViewManager.getInstance(project).scheduleRefresh();
       if (allExceptions.size() > 0) {
         AbstractVcsHelper.getInstance(project).showErrors(allExceptions, VcsBundle.message("changes.tab.title.vcs.errors"));
       }

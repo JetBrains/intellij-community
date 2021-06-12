@@ -1,6 +1,6 @@
 package com.siyeh.igtest.classlayout;
 
-public class StaticInheritance implements <warning descr="Interface 'ConstantInterface' is implemented only for its 'static' constants">ConstantInterface</warning> {
+public class StaticInheritance implements <warning descr="Interface 'ConstantInterface' is implemented only for its static constants">ConstantInterface</warning> {
     public void foo()
     {
         System.out.println(CONST1);

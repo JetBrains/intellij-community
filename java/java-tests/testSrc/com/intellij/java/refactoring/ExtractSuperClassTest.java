@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -22,9 +22,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class ExtractSuperClassTest extends LightMultiFileTestCase {
   @NotNull
   @Override

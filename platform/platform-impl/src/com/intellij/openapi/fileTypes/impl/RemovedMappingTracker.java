@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -18,6 +17,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 final class RemovedMappingTracker {
+  private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
+
   static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
@@ -47,6 +48,25 @@ final class RemovedMappingTracker {
     public String toString() {
       return "Removed mapping '" + myFileNameMatcher + "' -> " + myFileTypeName;
     }
+
+    // must not look at myApproved
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RemovedMapping mapping = (RemovedMapping)o;
+
+      if (!myFileNameMatcher.equals(mapping.myFileNameMatcher)) return false;
+      return myFileTypeName.equals(mapping.myFileTypeName);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileNameMatcher.hashCode();
+      result = 31 * result + myFileTypeName.hashCode();
+      return result;
+    }
   }
 
   private final MultiMap<FileNameMatcher, RemovedMapping> myRemovedMappings = new MultiMap<>();
@@ -64,34 +84,31 @@ final class RemovedMappingTracker {
   RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
     RemovedMapping mapping = new RemovedMapping(matcher, fileTypeName, approved);
     List<RemovedMapping> mappings = (List<RemovedMapping>)myRemovedMappings.getModifiable(matcher);
+    boolean found = false;
     for (int i = 0; i < mappings.size(); i++) {
       RemovedMapping removedMapping = mappings.get(i);
       if (removedMapping.getFileTypeName().equals(fileTypeName)) {
         mappings.set(i, mapping);
-        return mapping;
+        found = true;
+        break;
       }
     }
-    mappings.add(mapping);
+    if (!found) {
+      mappings.add(mapping);
+    }
     return mapping;
   }
 
   void load(@NotNull Element e) {
     myRemovedMappings.clear();
-    Set<RemovedMapping> uniques = CollectionFactory.createSmallMemoryFootprintSet(new HashingStrategy<>() {
-      @Override
-      public int hashCode(RemovedMapping object) {
-        return object.myFileNameMatcher.hashCode();
-      }
-
-      @Override
-      public boolean equals(RemovedMapping o1, RemovedMapping o2) {
-        return o1 != null && o2 != null && o1.getFileNameMatcher().equals(o2.getFileNameMatcher()) && o1.getFileTypeName().equals(o2.getFileTypeName());
-      }
-    });
-    for (RemovedMapping mapping : readRemovedMappings(e)) {
+    List<RemovedMapping> removedMappings = readRemovedMappings(e);
+    Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
+    for (RemovedMapping mapping : removedMappings) {
       if (!uniques.add(mapping)) {
-        throw new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping);
+        LOG.error(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
       }
+    }
+    for (RemovedMapping mapping : uniques) {
       myRemovedMappings.putValue(mapping.myFileNameMatcher, mapping);
     }
   }
@@ -130,7 +147,10 @@ final class RemovedMappingTracker {
     }
   }
 
-  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Collection<? extends FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map,
+                                      @NotNull String fileTypeName,
+                                      @NotNull Collection<? extends FileNameMatcher> associations,
+                                      boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
       Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher, fileTypeName));
       if (content != null) {
@@ -182,9 +202,13 @@ final class RemovedMappingTracker {
     return result;
   }
 
-  @NotNull
-  List<RemovedMapping> deleteUnapprovedMappings() {
-    return removeIf(mapping -> !mapping.isApproved());
+  void approveUnapprovedMappings() {
+    for (RemovedMapping mapping : new ArrayList<>(myRemovedMappings.values())) {
+      if (!mapping.isApproved()) {
+        myRemovedMappings.remove(mapping.getFileNameMatcher(), mapping);
+        myRemovedMappings.putValue(mapping.getFileNameMatcher(), new RemovedMapping(mapping.getFileNameMatcher(), mapping.getFileTypeName(), true));
+      }
+    }
   }
 
   private static Element writeRemovedMapping(@NotNull String fileTypeName,

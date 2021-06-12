@@ -14,21 +14,27 @@ public class TextMateLexerState {
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;
   @NotNull public final TextMateWeigh.Priority priorityMatch;
+  // offset on line where state was emitted. used for local loop protection only
+  public final int enterByteOffset;
+  public final boolean matchedEOL;
   @Nullable public final StringWithId string;
 
   TextMateLexerState(@NotNull SyntaxNodeDescriptor syntaxRule,
                      @NotNull MatchData matchData,
                      @NotNull TextMateWeigh.Priority priority,
+                     int enterByteOffset,
                      @Nullable StringWithId line) {
     this.syntaxRule = syntaxRule;
     this.matchData = matchData;
     this.priorityMatch = priority;
+    this.enterByteOffset = enterByteOffset;
+    this.matchedEOL = matchData.matched() && line != null && matchData.byteOffset().end == line.bytes.length;
     string = matchData.matched() ? line : null;
     hashcode = Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
   }
 
   public static TextMateLexerState notMatched(@NotNull SyntaxNodeDescriptor syntaxRule) {
-    return new TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, null);
+    return new TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, 0,null);
   }
 
   @NotNull

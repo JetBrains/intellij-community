@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -249,6 +249,7 @@ public final class StaticGenericInfoBuilder {
 
     return false;
   }
+
 
   private static final Set<JavaMethodSignature> ourDomElementMethods =
     ContainerUtil.map2Set(DomElement.class.getMethods(), method -> new JavaMethodSignature(method));

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.MutableAccessor;
+import com.intellij.util.XmlElement;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
     String tagName = tag == null ? null : tag.value();
-    myTagName = StringUtil.isEmpty(tagName) ? myAccessor.getName() : tagName;
+    myTagName = tagName == null || tagName.isEmpty() ? myAccessor.getName() : tagName;
   }
 
   @Override
@@ -52,7 +52,7 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[0]));
     }
@@ -60,6 +60,11 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
       myAccessor.set(context, elements.get(0));
     }
     return context;
+  }
+
+  @Override
+  public @NotNull Object deserializeList2(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
+    throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
   }
 
   @Override
@@ -74,7 +79,17 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
   }
 
   @Override
+  public @NotNull Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull XmlElement element) {
+    throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
+  }
+
+  @Override
   public boolean isBoundTo(@NotNull Element element) {
     return element.getName().equals(myTagName);
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull XmlElement element) {
+    return element.name.equals(myTagName);
   }
 }

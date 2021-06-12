@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.StatisticsDevKitUtil
-import com.intellij.internal.statistic.eventLog.EventLogNotificationService
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -26,9 +28,13 @@ internal object FusStatesRecorder {
     synchronized(lock) {
       state.clear()
       isRecordingInProgress.getAndSet(true)
-      val subscriber: (LogEvent) -> Unit = { this.recordEvent(it) }
+      val subscriber = object : StatisticsEventLogListener {
+        override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
+          recordEvent(validatedEvent)
+        }
+      }
       val recorderId = StatisticsDevKitUtil.DEFAULT_RECORDER
-      EventLogNotificationService.subscribe(subscriber, recorderId)
+      service<EventLogListenersManager>().subscribe(subscriber, recorderId)
       try {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
@@ -37,14 +43,14 @@ internal object FusStatesRecorder {
 
         CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
           .thenCompose { FeatureUsageLogger.flush() }
-          .get(10, TimeUnit.SECONDS)
+          .get(30, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
         log.warn("Failed recording state collectors to log", e)
         return null
       }
       finally {
-        EventLogNotificationService.unsubscribe(subscriber, recorderId)
+        service<EventLogListenersManager>().unsubscribe(subscriber, recorderId)
         isRecordingInProgress.getAndSet(false)
       }
       return state.toList()

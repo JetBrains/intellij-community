@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -17,7 +17,6 @@ import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
@@ -26,7 +25,11 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
   protected val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, serviceActivities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
+  fun write(timeOffset: Long,
+            serviceActivities: Map<String, MutableList<ActivityImpl>>,
+            instantEvents: List<ActivityImpl>,
+            end: Long,
+            projectName: String) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -40,47 +43,21 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
 
         writeProjectName(writer, projectName)
-
         writeExtraData(writer)
 
-        writer.array("traceEvents") {
-          TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
-        }
-
-        writeServiceEvents(writer, serviceActivities, timeOffset)
-
-        var totalDuration = 0L
-        writer.array("items") {
-          for ((index, item) in items.withIndex()) {
-            writer.obj {
-              writer.writeStringField("name", item.name)
-              if (item.description != null) {
-                writer.writeStringField("description", item.description)
-              }
-
-              val duration = item.end - item.start
-              if (!isSubItem(item, index, items)) {
-                totalDuration += duration
-              }
-
-              writeItemTimeInfo(item, duration, timeOffset, writer)
-            }
-          }
-        }
-
-        totalDuration += end - items.last().end
-
         writeParallelActivities(timeOffset, writer)
-
-        writeTotalDuration(writer, totalDuration, end, timeOffset)
+        writer.array("traceEvents") {
+          writeInstantEvents(writer, instantEvents, timeOffset, threadNameManager)
+        }
+        writeServiceEvents(writer, serviceActivities, timeOffset)
+        writeTotalDuration(writer, end, timeOffset)
       }
     }
   }
 
-  protected open fun writeTotalDuration(writer: JsonGenerator, totalDuration: Long, end: Long, timeOffset: Long): Long {
-    writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
+  protected open fun writeTotalDuration(writer: JsonGenerator, end: Long, timeOffset: Long): Long {
     val totalDurationActual = TimeUnit.NANOSECONDS.toMillis(end - timeOffset)
-    writer.writeNumberField("totalDurationActual", totalDurationActual)
+    writer.writeNumberField("totalDuration", totalDurationActual)
     return totalDurationActual
   }
 
@@ -107,14 +84,11 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     return stringWriter.toByteBuffer(logPrefix.length)
   }
 
-
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
-    // sorted to get predictable JSON
-    for (name in activities.keys.sorted()) {
-      val list = activities.getValue(name)
+    for ((name, list ) in activities) {
       StartUpPerformanceReporter.sortItems(list)
 
-      val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
+      val measureThreshold = if (name == ActivityCategory.DEFAULT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
       val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
       ownDurations.defaultReturnValue(-1)
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold, timeUnit = TimeUnit.MILLISECONDS)
@@ -200,6 +174,30 @@ private fun compactName(name: String): String {
     }
   }
   return name
+}
+
+private fun writeInstantEvents(writer: JsonGenerator,
+                               instantEvents: List<ActivityImpl>,
+                               timeOffset: Long,
+                               threadNameManager: ThreadNameManager) {
+  for (event in instantEvents) {
+    writer.obj {
+      writeCommonFields(event, writer, timeOffset, threadNameManager)
+      writer.writeStringField("ph", "i")
+      writer.writeStringField("s", "g")
+    }
+  }
+}
+
+private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator, timeOffset: Long, threadNameManager: ThreadNameManager) {
+  writer.writeStringField("name", event.name)
+  writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
+  writer.writeNumberField("pid", 1)
+  writer.writeStringField("tid", threadNameManager.getThreadName(event))
+
+  event.category?.let {
+    writer.writeStringField("cat", it.jsonName)
+  }
 }
 
 class ExposingCharArrayWriter : CharArrayWriter(8192) {

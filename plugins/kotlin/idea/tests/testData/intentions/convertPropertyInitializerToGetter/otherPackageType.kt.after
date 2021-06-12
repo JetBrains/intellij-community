@@ -1,0 +1,7 @@
+import foo.Bar
+import foo.Foo
+
+class Test {
+    val foo: Foo
+        get() = Bar().foo()
+}

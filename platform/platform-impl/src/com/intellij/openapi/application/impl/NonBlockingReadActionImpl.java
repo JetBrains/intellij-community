@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -237,7 +237,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    private void expireWithDisposables(Set<? extends Disposable> disposables) {
+    private void expireWithDisposables(@NotNull Set<? extends Disposable> disposables) {
       for (Disposable parent : disposables) {
         if (parent instanceof Project ? ((Project)parent).isDisposed() : Disposer.isDisposed(parent)) {
           cancel();
@@ -350,9 +350,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       synchronized (ourTasksByEquality) {
         if (isDone()) return;
 
-        Submission<?> current = ourTasksByEquality.get(coalesceEquality);
+        Submission<?> current = ourTasksByEquality.putIfAbsent(coalesceEquality, this);
         if (current == null) {
-          ourTasksByEquality.put(coalesceEquality, this);
           transferToBgThread();
         }
         else {
@@ -450,13 +449,15 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private boolean attemptComputation() {
-      ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
-        @NotNull
-        @Override
-        public ModalityState getModalityState() {
-          return creationModality;
-        }
-      } : new EmptyProgressIndicator(creationModality);
+      ProgressIndicator indicator =
+        myProgressIndicator == null ? new EmptyProgressIndicator(creationModality) :
+        new SensitiveProgressWrapper(myProgressIndicator) {
+          @NotNull
+          @Override
+          public ModalityState getModalityState() {
+            return creationModality;
+          }
+        };
       if (myProgressIndicator != null) {
         indicator.setIndeterminate(myProgressIndicator.isIndeterminate());
       }
@@ -465,9 +466,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       try {
         Ref<ContextConstraint> unsatisfiedConstraint = Ref.create();
         boolean success;
-        Runnable runnable = () -> insideReadAction(indicator, unsatisfiedConstraint);
         if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-          runnable.run();
+          insideReadAction(indicator, unsatisfiedConstraint);
           success = true;
           if (!unsatisfiedConstraint.isNull()) {
             throw new IllegalStateException("Constraint " + unsatisfiedConstraint + " cannot be satisfied");
@@ -483,7 +483,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               return false;
             }
           }
-          success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(runnable, indicator);
+          success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator, unsatisfiedConstraint), indicator);
         }
         return success && unsatisfiedConstraint.isNull();
       }
@@ -576,7 +576,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         if (isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           builder.myUiThreadAction.accept(result);
         }
-      }, builder.myModalityState);
+      }, builder.myModalityState, __ -> isCancelled());
     }
 
     @Override

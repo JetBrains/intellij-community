@@ -1,6 +1,6 @@
 public class Aaa {
-  public String method(String stringstring) {
-    return stringstring + stringstring + stringstring;
+  public String method(String string) {
+    return string + string + string;
   }
 
   public String getString() {

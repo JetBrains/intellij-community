@@ -31,7 +31,6 @@ public class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  private boolean forceWhenUptodate;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
@@ -67,15 +66,6 @@ public class ImportSpecImpl implements ImportSpec {
 
   public void setProgressExecutionMode(@NotNull ProgressExecutionMode progressExecutionMode) {
     myProgressExecutionMode = progressExecutionMode;
-  }
-
-  @Override
-  public boolean isForceWhenUptodate() {
-    return forceWhenUptodate;
-  }
-
-  public void setForceWhenUptodate(boolean forceWhenUptodate) {
-    this.forceWhenUptodate = forceWhenUptodate;
   }
 
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {

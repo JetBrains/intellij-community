@@ -17,7 +17,7 @@
 package com.intellij.util;
 
 /**
- * @author peter
+ * Deprecated. Use {@link java.util.function.BiConsumer} instead
  */
 @FunctionalInterface
 public interface PairConsumer<S, T> {

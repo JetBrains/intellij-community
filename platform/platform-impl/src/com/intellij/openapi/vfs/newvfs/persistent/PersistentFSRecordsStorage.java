@@ -34,93 +34,93 @@ public final class PersistentFSRecordsStorage {
     myFile = file;
   }
 
-  int getGlobalModCount() {
+  int getGlobalModCount() throws IOException {
     return myFile.getInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET);
   }
 
-  int incGlobalModCount() {
+  int incGlobalModCount() throws IOException {
     final int count = getGlobalModCount() + 1;
     myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
     return count;
   }
 
-  long getTimestamp() {
+  long getTimestamp() throws IOException {
     return myFile.getLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
   }
 
-  void setVersion(int version) {
+  void setVersion(int version) throws IOException {
     myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
     myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
   }
 
-  int getVersion() {
+  int getVersion() throws IOException {
     return myFile.getInt(PersistentFSHeaders.HEADER_VERSION_OFFSET);
   }
 
-  void setConnectionStatus(int connectionStatus) {
+  void setConnectionStatus(int connectionStatus) throws IOException {
     myFile.putInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
   }
 
-  int getConnectionStatus() {
+  int getConnectionStatus() throws IOException {
     return myFile.getInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
   }
 
-  int getNameId(int id) {
+  int getNameId(int id) throws IOException {
     assert id > 0 : id;
     return getRecordInt(id, NAME_OFFSET);
   }
 
-  void setNameId(int id, int nameId) {
+  void setNameId(int id, int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
     putRecordInt(id, NAME_OFFSET, nameId);
   }
 
-  int getParent(int id) {
+  int getParent(int id) throws IOException {
     return getRecordInt(id, PARENT_OFFSET);
   }
 
-  void setParent(int id, int parent) {
+  void setParent(int id, int parent) throws IOException {
     putRecordInt(id, PARENT_OFFSET, parent);
   }
 
-  int getModCount(int id) {
+  int getModCount(int id) throws IOException {
     return getRecordInt(id, MOD_COUNT_OFFSET);
   }
 
   @PersistentFS.Attributes
-  int doGetFlags(int id) {
+  int doGetFlags(int id) throws IOException {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 
-  void setFlags(int id, @PersistentFS.Attributes int flags) {
+  void setFlags(int id, @PersistentFS.Attributes int flags) throws IOException {
     putRecordInt(id, FLAGS_OFFSET, flags);
   }
 
-  void setModCount(int id, int value) {
+  void setModCount(int id, int value) throws IOException {
     putRecordInt(id, MOD_COUNT_OFFSET, value);
   }
 
-  int getContentRecordId(int fileId) {
+  int getContentRecordId(int fileId) throws IOException {
     return getRecordInt(fileId, CONTENT_OFFSET);
   }
 
-  void setContentRecordId(int id, int value) {
+  void setContentRecordId(int id, int value) throws IOException {
     putRecordInt(id, CONTENT_OFFSET, value);
   }
 
-  int getAttributeRecordId(int id) {
+  int getAttributeRecordId(int id) throws IOException {
     return getRecordInt(id, ATTR_REF_OFFSET);
   }
 
-  void setAttributeRecordId(int id, int value) {
+  void setAttributeRecordId(int id, int value) throws IOException {
     putRecordInt(id, ATTR_REF_OFFSET, value);
   }
 
-  long getTimestamp(int id) {
+  long getTimestamp(int id) throws IOException {
     return myFile.getLong(getOffset(id, TIMESTAMP_OFFSET));
   }
 
-  boolean putTimeStamp(int id, long value) {
+  boolean putTimeStamp(int id, long value) throws IOException {
     int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
     if (myFile.getLong(timeStampOffset) != value) {
       myFile.putLong(timeStampOffset, value);
@@ -129,11 +129,11 @@ public final class PersistentFSRecordsStorage {
     return false;
   }
 
-  long getLength(int id) {
+  long getLength(int id) throws IOException {
     return myFile.getLong(getOffset(id, LENGTH_OFFSET));
   }
 
-  boolean putLength(int id, long value) {
+  boolean putLength(int id, long value) throws IOException {
     int lengthOffset = getOffset(id, LENGTH_OFFSET);
     if (myFile.getLong(lengthOffset) != value) {
       myFile.putLong(lengthOffset, value);
@@ -142,15 +142,15 @@ public final class PersistentFSRecordsStorage {
     return false;
   }
 
-  void cleanRecord(int id) {
+  void cleanRecord(int id) throws IOException {
     myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
   }
 
-  private int getRecordInt(int id, int offset) {
+  private int getRecordInt(int id, int offset) throws IOException {
     return myFile.getInt(getOffset(id, offset));
   }
 
-  private void putRecordInt(int id, int offset, int value) {
+  private void putRecordInt(int id, int offset, int value) throws IOException {
     myFile.putInt(getOffset(id, offset), value);
   }
 

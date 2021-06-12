@@ -16,7 +16,9 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.actions.CodeInsightEditorAction;
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -59,9 +61,27 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     int offset = caret != null ? caret.getOffset() : editor.getCaretModel().getOffset();
     PsiElement exprList = getExpressionList(editor, offset, dataContext);
-    if (exprList != null) {
-      int listOffset = exprList.getTextRange().getStartOffset();
-      ParameterInfoControllerBase.prevOrNextParameter(editor, listOffset, myIsNextParameterHandler);
+    ParameterInfoControllerBase controller =
+      exprList == null ? null : ParameterInfoControllerBase.findControllerAtOffset(editor, exprList.getTextRange().getStartOffset());
+    int paramOffset = controller == null ? -1 : controller.getPrevOrNextParameterOffset(myIsNextParameterHandler);
+
+    boolean checkTabOut = myIsNextParameterHandler &&
+                          CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+    int tabOutOffset = checkTabOut ? TabOutScopesTracker.getInstance().getScopeEndingAt(editor, offset) : -1;
+
+    // decide which feature tabOut or nextParam is closer to the current offset
+    if (paramOffset > offset && tabOutOffset > offset) {
+      if (paramOffset < tabOutOffset) tabOutOffset = -1;
+      else paramOffset = -1;
+    }
+
+    if (paramOffset != -1) {
+      controller.moveToParameterAtOffset(paramOffset);
+    }
+    else if (tabOutOffset != -1) {
+      TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, offset);
+      if (caret != null) caret.moveToOffset(tabOutOffset);
+      else editor.getCaretModel().moveToOffset(tabOutOffset);
     }
   }
 

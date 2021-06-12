@@ -21,6 +21,8 @@ import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -33,40 +35,68 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 
 public class IterateOverIterableIntention implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(IterateOverIterableIntention.class);
+  private final @Nullable PsiExpression myExpression;
+  private @IntentionName String myText;
+
+  public IterateOverIterableIntention() {
+    this(null);
+  }
+
+  public IterateOverIterableIntention(@Nullable PsiExpression expression) {
+    myExpression = expression;
+  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
-    if (template != null) {
-      int offset = editor.getCaretModel().getOffset();
-      int startOffset = offset;
-      if (editor.getSelectionModel().hasSelection()) {
-        final int selStart = editor.getSelectionModel().getSelectionStart();
-        final int selEnd = editor.getSelectionModel().getSelectionEnd();
-        startOffset = (offset == selStart) ? selEnd : selStart;
-      }
-      PsiElement element = file.findElementAt(startOffset);
-      while (element instanceof PsiWhiteSpace) {
-        element = element.getPrevSibling();
-      }
-      PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
-      if (psiStatement != null) {
-        startOffset = psiStatement.getTextRange().getStartOffset();
-      }
-      if (!template.isDeactivated() &&
-          (TemplateManagerImpl.isApplicable(file, offset, template) ||
-           (TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
-        return getIterableExpression(editor, file) != null;
-      }
+    if (template == null) return false;
+    int offset = editor.getCaretModel().getOffset();
+    int startOffset = offset;
+    if (editor.getSelectionModel().hasSelection()) {
+      final int selStart = editor.getSelectionModel().getSelectionStart();
+      final int selEnd = editor.getSelectionModel().getSelectionEnd();
+      startOffset = (offset == selStart) ? selEnd : selStart;
     }
-    return false;
+    PsiElement element = file.findElementAt(startOffset);
+    while (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
+    }
+    PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+    if (myExpression == null && psiStatement instanceof PsiExpressionStatement &&
+        startOffset == offset && startOffset == psiStatement.getTextRange().getEndOffset() &&
+        psiStatement.getLastChild() instanceof PsiErrorElement) {
+      // At this position, we provide a quick-fix for error
+      return false;
+    }
+    if (psiStatement != null) {
+      startOffset = psiStatement.getTextRange().getStartOffset();
+    }
+    if (template.isDeactivated() ||
+        (!TemplateManagerImpl.isApplicable(file, offset, template) &&
+         (!TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
+      return false;
+    }
+    PsiExpression expression = getIterableExpression(editor, file);
+    if (expression == null) return false;
+    if (ConstructionUtils.isEmptyCollectionInitializer(expression)) {
+      // Empty collection: iterating doesn't make much sense
+      return false;
+    }
+    if (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayDimensions().length > 0) {
+      // new array without initializers: all elements are 0/null/false, so iterating doesn't make much sense
+      return false;
+    }
+    myText = JavaBundle.message("intention.name.iterate.over", Objects.requireNonNull(expression.getType()).getPresentableText());
+    return true;
   }
 
   @Nullable
@@ -74,15 +104,20 @@ public class IterateOverIterableIntention implements IntentionAction {
     return TemplateSettings.getInstance().getTemplate("I", "Java");
   }
 
-
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message("iterate.iterable");
+    return myText == null ? getFamilyName() : myText;
   }
 
   @Nullable
-  private static PsiExpression getIterableExpression(Editor editor, PsiFile file) {
+  private PsiExpression getIterableExpression(Editor editor, PsiFile file) {
+    if (myExpression != null) {
+      if (!myExpression.isValid()) return null;
+      final PsiType type = myExpression.getType();
+      if (type instanceof PsiArrayType || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return myExpression;
+      return null;
+    }
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       PsiElement elementAtStart = file.findElementAt(selectionModel.getSelectionStart());
@@ -150,6 +185,6 @@ public class IterateOverIterableIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("iterate.iterable");
   }
 }

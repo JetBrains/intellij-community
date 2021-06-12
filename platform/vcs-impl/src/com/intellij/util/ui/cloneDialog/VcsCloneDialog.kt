@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.openapi.application.ModalityState
@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.CLONE
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -17,7 +18,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.ListSelectionListener
@@ -84,7 +84,11 @@ class VcsCloneDialog private constructor(private val project: Project,
   override fun getPreferredFocusedComponent(): JComponent? = getSelectedComponent()?.getPreferredFocusedComponent()
 
   fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    getSelectedComponent()?.doClone(checkoutListener)
+    val selectedComponent = getSelectedComponent()
+    if (selectedComponent != null) {
+      CLONE.log(project, selectedComponent.javaClass)
+      selectedComponent.doClone(checkoutListener)
+    }
   }
 
   private fun switchComponent(extension: VcsCloneDialogExtension) {

@@ -9,6 +9,8 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
   @Nullable
   protected abstract DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info);
 
-  protected abstract boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode<?> dropNode);
+  protected abstract boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode);
 
   @Override
   public boolean update(DnDEvent aEvent) {
@@ -56,7 +58,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
 
     ChangesBrowserNode<?> dropNode = getDropRootNode(myTree, aEvent);
 
-    boolean canHandle = dropNode != null && canHandleDropEvent(aEvent, dropNode);
+    boolean canHandle = canHandleDropEvent(aEvent, dropNode);
     if (!canHandle) return true;
 
     highlightDropNode(aEvent, dropNode);
@@ -65,8 +67,21 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
     return false;
   }
 
-  private void highlightDropNode(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode<?> dropNode) {
-    final Rectangle tableCellRect = myTree.getPathBounds(new TreePath(dropNode.getPath()));
+  private void highlightDropNode(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode) {
+    final Rectangle tableCellRect;
+    if (dropNode == null) {
+      if (myTree.getRowCount() == 0) {
+        tableCellRect = new Rectangle(0, 0, JBUI.scale(300), JBUI.scale(25));
+      }
+      else {
+        Rectangle lastRowRect = myTree.getRowBounds(myTree.getRowCount() - 1);
+        int y = lastRowRect.y + lastRowRect.height;
+        tableCellRect = new Rectangle(0, y, JBUI.scale(300), lastRowRect.height);
+      }
+    }
+    else {
+      tableCellRect = myTree.getPathBounds(new TreePath(dropNode.getPath()));
+    }
     if (tableCellRect != null && fitsInBounds(tableCellRect)) {
       aEvent.setHighlighting(new RelativeRectangle(myTree, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     }
@@ -76,8 +91,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
   public static ChangesBrowserNode<?> getDropRootNode(@NotNull ChangesTree tree, @NotNull DnDEvent event) {
     RelativePoint dropPoint = event.getRelativePoint();
     Point onTree = dropPoint.getPoint(tree);
-    final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
-
+    TreePath dropPath = TreeUtil.getPathForLocation(tree, onTree.x, onTree.y);
     if (dropPath == null) return null;
 
     ChangesBrowserNode<?> dropNode = (ChangesBrowserNode<?>)dropPath.getLastPathComponent();

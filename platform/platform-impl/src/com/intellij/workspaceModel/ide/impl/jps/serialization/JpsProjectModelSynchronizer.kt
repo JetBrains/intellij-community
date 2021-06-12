@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
@@ -17,7 +19,6 @@ import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -31,7 +32,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
@@ -51,23 +51,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
   private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
-
-  init {
-    if (!project.isDefault) {
-      ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-        override fun projectComponentsInitialized(project: Project) {
-          LOG.debug { "Project component initialized" }
-          val workspaceModelImpl = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-          if (blockCidrDelayedUpdate()) workspaceModelImpl.blockDelayedLoading()
-          if (project === this@JpsProjectModelSynchronizer.project && !workspaceModelImpl.loadedFromCache) {
-            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-            loadRealProject(project)
-            project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-          }
-        }
-      })
-    }
-  }
+  private var activity: Activity? = null
+  private var childActivity: Activity? = null
 
   fun needToReloadProjectEntities(): Boolean {
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
@@ -197,40 +182,52 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  fun loadRealProject(project: Project) {
-    val configLocation: JpsProjectConfigLocation = project.configLocation!!
+  fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
+    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
-      recordModuleLoadingActivity()
-    }
-    val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
-    var childActivity = activity.startChild("(wm) Prepare serializers")
+    activity = startActivity("project files loading", ActivityCategory.DEFAULT)
+    childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
-    childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
+    childActivity = childActivity?.endAndStart("unloaded modules loading")
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
-      childActivity = childActivity.endAndStart("(wm) Read serializers")
+      childActivity = childActivity?.endAndStart("entities loading")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
-      childActivity = childActivity.endAndStart("(wm) Add changes to store")
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
-                                    || it is DummyParentEntitySource }, builder.toStorage())
+      childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
+      return builder.toStorage() to sourcesToUpdate
+    } else {
+      childActivity?.end()
+      childActivity = null
+      activity?.end()
+      activity = null
+      return null
+    }
+  }
+
+  fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
+    if (storeToEntitySources == null) return
+    WriteAction.runAndWait<RuntimeException> {
+      childActivity = childActivity?.endAndStart("project model changes saving")
+      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
+                                  || it is DummyParentEntitySource }, storeToEntitySources.first)
         runAutomaticModuleUnloader(updater)
       }
-      }
-
-      sourcesToSave.clear()
-      sourcesToSave.addAll(sourcesToUpdate)
-
-      fileContentReader.clearCache()
-      childActivity.end()
+      childActivity?.end()
+      childActivity = null
     }
-    activity.end()
+    sourcesToSave.clear()
+    sourcesToSave.addAll(storeToEntitySources.second)
+
+    fileContentReader.clearCache()
+    activity?.end()
+    activity = null
   }
+
+  fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))
 
   private fun runAutomaticModuleUnloader(storage: WorkspaceEntityStorage) {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)
@@ -256,16 +253,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   private fun createSerializers(): JpsProjectSerializers {
-    val configLocation: JpsProjectConfigLocation = project.configLocation!!
+    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
     //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
-    return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
-                                                                        virtualFileManager, externalStorageConfigurationManager, fileInDirectorySourceNames)
-
-
+    return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
+                                                             WorkspaceModel.enabledForArtifacts,
+                                                             virtualFileManager,
+                                                             externalStorageConfigurationManager, fileInDirectorySourceNames)
   }
 
   fun saveChangedProjectEntities(writer: JpsFileContentWriter) {

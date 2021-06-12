@@ -20,23 +20,51 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipInputStream
 
-object MarketplacePluginDownloadService {
-  private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
+private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
-  private const val BLOCKMAP_ZIP_SUFFIX = ".blockmap.zip"
+private const val BLOCKMAP_ZIP_SUFFIX = ".blockmap.zip"
 
-  private const val BLOCKMAP_FILENAME = "blockmap.json"
+private const val BLOCKMAP_FILENAME = "blockmap.json"
 
-  private const val HASH_FILENAME_SUFFIX = ".hash.json"
+private const val HASH_FILENAME_SUFFIX = ".hash.json"
 
-  private const val FILENAME = "filename="
+private const val FILENAME = "filename="
 
-  private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
+private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
+
+open class MarketplacePluginDownloadService {
+
+  companion object {
+
+    @JvmStatic
+    val instance = MarketplacePluginDownloadService()
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun getPluginTempFile(): File {
+      val pluginsTemp = File(PathManager.getPluginTempPath())
+      if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
+        throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
+      }
+      return FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
+    }
+
+    @JvmStatic
+    fun renameFileToZipRoot(zip: File): File {
+      val newName = "${PluginInstaller.rootEntryName(zip.toPath())}.zip"
+      val newZip = File("${zip.parent}/$newName")
+      if (newZip.exists()) {
+        FileUtil.delete(newZip)
+      }
+      FileUtil.rename(zip, newName)
+      return newZip
+    }
+  }
 
   private val objectMapper by lazy { ObjectMapper() }
 
   @Throws(IOException::class)
-  fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
     val file = getPluginTempFile()
     return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
       HttpRequests.RequestProcessor { request: HttpRequests.Request ->
@@ -129,91 +157,73 @@ object MarketplacePluginDownloadService {
       }
     }
   }
+}
 
-  private fun guessPluginFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
-    val fileName: String = guessFileName(contentDisposition, url, file, pluginUrl)
-    val newFile = File(file.parentFile, fileName)
-    FileUtil.rename(file, newFile)
-    return newFile
-  }
+private fun guessPluginFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
+  val fileName: String = guessFileName(contentDisposition, url, file, pluginUrl)
+  val newFile = File(file.parentFile, fileName)
+  FileUtil.rename(file, newFile)
+  return newFile
+}
 
-  @Throws(IOException::class)
-  private fun guessFileName(contentDisposition: String?, usedURL: String, file: File, pluginUrl: String): String {
-    var fileName: String? = null
-    LOG.debug("header: $contentDisposition")
-    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-      val startIdx = contentDisposition.indexOf(FILENAME)
-      val endIdx = contentDisposition.indexOf(';', startIdx)
-      fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
-      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
-        fileName = fileName.substring(1, fileName.length - 1)
-      }
-    }
-    if (fileName == null) {
-      // try to find a filename in an URL
-      LOG.debug("url: $usedURL")
-      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
-      if (fileName.isEmpty() || fileName.contains("?")) {
-        fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
-      }
-    }
-    if (!PathUtil.isValidFileName(fileName)) {
-      LOG.debug("fileName: $fileName")
-      FileUtil.delete(file)
-      throw IOException("Invalid filename returned by a server")
-    }
-    return fileName
-  }
-
-  fun renameFileToZipRoot(zip: File): File {
-    val newName = "${PluginInstaller.rootEntryName(zip.toPath())}.zip"
-    val newZip = File("${zip.parent}/$newName")
-    if (newZip.exists()) {
-      FileUtil.delete(newZip)
-    }
-    FileUtil.rename(zip, newName)
-    return newZip
-  }
-
-  private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
-    val oldSet = oldBlockMap.chunks.toSet()
-    val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
-    return newChunks.sumBy { chunk -> chunk.length }.toDouble() /
-           newBlockMap.chunks.sumBy { chunk -> chunk.length }.toDouble()
-  }
-
-  private fun getPluginFileUrl(connection: URLConnection): String {
-    val url = connection.url
-    val port = url.port
-    return if (port == -1) {
-      "${url.protocol}://${url.host}${url.path}"
-    }
-    else {
-      "${url.protocol}://${url.host}:${port}${url.path}"
+@Throws(IOException::class)
+private fun guessFileName(contentDisposition: String?, usedURL: String, file: File, pluginUrl: String): String {
+  var fileName: String? = null
+  LOG.debug("header: $contentDisposition")
+  if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+    val startIdx = contentDisposition.indexOf(FILENAME)
+    val endIdx = contentDisposition.indexOf(';', startIdx)
+    fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
+    if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
+      fileName = fileName.substring(1, fileName.length - 1)
     }
   }
-
-  private data class GuessFileParameters(val contentDisposition: String?, val url: String)
-
-  private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<String, GuessFileParameters> {
-    return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
-      val connection = request.connection
-      Pair(getPluginFileUrl(connection),
-           GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+  if (fileName == null) {
+    // try to find a filename in an URL
+    LOG.debug("url: $usedURL")
+    fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
+    if (fileName.isEmpty() || fileName.contains("?")) {
+      fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
     }
   }
-
-  private fun getPrevPluginArchive(prevPlugin: Path): Path {
-    val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
-    return Paths.get(PathManager.getPluginTempPath()).resolve("${prevPlugin.fileName}$suffix")
+  if (!PathUtil.isValidFileName(fileName)) {
+    LOG.debug("fileName: $fileName")
+    FileUtil.delete(file)
+    throw IOException("Invalid filename returned by a server")
   }
+  return fileName
+}
 
-  @Throws(IOException::class)
-  fun getPluginTempFile(): File {
-    val pluginsTemp = File(PathManager.getPluginTempPath())
-    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-      throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
-    }
-    return FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
+private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
+  val oldSet = oldBlockMap.chunks.toSet()
+  val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
+  return newChunks.sumBy { chunk -> chunk.length }.toDouble() /
+         newBlockMap.chunks.sumBy { chunk -> chunk.length }.toDouble()
+}
+
+private fun getPluginFileUrl(connection: URLConnection): String {
+  val url = connection.url
+  val port = url.port
+  return if (port == -1) {
+    "${url.protocol}://${url.host}${url.path}"
+  }
+  else {
+    "${url.protocol}://${url.host}:${port}${url.path}"
   }
 }
+
+private data class GuessFileParameters(val contentDisposition: String?, val url: String)
+
+private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<String, GuessFileParameters> {
+  return HttpRequests.request(pluginUrl).productNameAsUserAgent().connect { request ->
+    val connection = request.connection
+    Pair(getPluginFileUrl(connection),
+         GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+  }
+}
+
+private fun getPrevPluginArchive(prevPlugin: Path): Path {
+  val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
+  return Paths.get(PathManager.getPluginTempPath()).resolve("${prevPlugin.fileName}$suffix")
+}
+

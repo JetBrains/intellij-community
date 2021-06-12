@@ -1,0 +1,29 @@
+<html>
+<body>
+Reports thread-blocking method calls in code fragments where threads should not be blocked.
+
+<p>Example (Reactor):</p>
+<pre><code>
+Flux.just("1").flatMap(f -&gt; {
+    Flux&lt;String&gt; just = Flux.just(f);
+    just.toIterable(); // Error: blocking operator call in non-blocking scope
+    return just;
+  }
+);
+</code></pre>
+
+<p>Example (Kotlin Coroutines):</p>
+<pre><code>
+suspend fun exampleFun() {
+    Thread.sleep(100); // Error: inappropriate blocking method call inside suspend function
+}
+</code></pre>
+<!-- tooltip end -->
+<p>Configure the inspection:</p>
+<ul>
+  <li>In the <b>Blocking Annotations</b> list, specify annotations that mark thread-blocking methods.</li>
+  <li>In the <b>Non-Blocking Annotations</b> list, specify annotations that mark non-blocking methods.</li>
+</ul>
+<p>Specified annotations can be used as <a href="https://www.jetbrains.com/help/idea/external-annotations.html">External Annotations</a></p>
+</body>
+</html>

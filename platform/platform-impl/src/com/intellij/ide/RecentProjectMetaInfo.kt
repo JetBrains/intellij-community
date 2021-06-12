@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -56,7 +56,7 @@ class RecentProjectManagerState : BaseState() {
   var lastProjectLocation by string()
 
   fun validateRecentProjects(modCounter: AtomicLong) {
-    val limit = Registry.intValue("ide.max.recent.projects")
+    val limit = AdvancedSettings.getInt("ide.max.recent.projects")
     if (additionalInfo.size <= limit) {
       return
     }

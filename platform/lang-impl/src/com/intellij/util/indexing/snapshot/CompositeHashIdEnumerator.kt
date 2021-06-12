@@ -3,6 +3,7 @@ package com.intellij.util.indexing.snapshot
 
 import com.intellij.openapi.Forceable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Comparing
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.DataInputOutputUtil
@@ -59,7 +60,7 @@ private class CompositeHashIdDescriptor : KeyDescriptor<CompositeHashId> {
   }
 
   override fun isEqual(val1: CompositeHashId, val2: CompositeHashId): Boolean {
-    return val1 == val2
+    return Comparing.equal(val1, val2)
   }
 
   @Throws(IOException::class)

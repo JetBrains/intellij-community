@@ -1,9 +1,16 @@
 <html>
 <body>
-Reports "auto-boxing", i.e. the automatic wrapping of primitive values as objects, where needed.
-Code which relies on auto-boxing will not work in pre-Java 5.0 environments.
+Reports expressions which are affected by autoboxing conversion, the automatic wrapping of primitive values as objects.
+Don't use objects instead of primitives in hot code when possible. It may significantly affect the performance.
+<p>Example:</p>
+<pre>
+  Integer x = 42;
+</pre>
+<p>The quick-fix makes the conversion explicit:</p>
+<pre>
+  Integer x = Integer.valueOf(42);
+</pre>
 <!-- tooltip end -->
-<p>
-
+<p>Autoboxing conversion is not supported under Java 1.4 or earlier JVMs.</p>
 </body>
 </html>

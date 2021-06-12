@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
@@ -19,12 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
@@ -163,21 +165,22 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
     Activity() {
-      if (ApplicationManager.getApplication().isUnitTestMode() || 
-          ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
         throw ExtensionNotApplicableException.INSTANCE;
       }
     }
 
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
-      cacheAll(indicator, null); // for application
+      // for application
+      cacheAll(indicator, null);
     }
 
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      NonUrgentExecutor.getInstance().execute(() -> {
+      ForkJoinPool.commonPool().execute(() -> {
         if (project.isDisposed()) {
           return;
         }
@@ -189,7 +192,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       String name = project == null ? "application" : "project";
-      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name);
+      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.DEFAULT);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
           OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;

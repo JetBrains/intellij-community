@@ -1,3 +1,6 @@
+import logging
+
+
 class SuperClass(object):
     def __init__(self):
         pass
@@ -8,7 +11,7 @@ class SuperClass(object):
 
     @new_property.setter
     def new_property(self, value):
-        pass
+        logging.debug("Setting %s", value)
 
     @new_property.deleter
     def new_property(self):

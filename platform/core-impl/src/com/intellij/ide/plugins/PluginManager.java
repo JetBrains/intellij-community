@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
@@ -11,29 +11,29 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
-import org.jdom.JDOMException;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
+  public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
   public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
@@ -65,19 +65,6 @@ public final class PluginManager {
   public static @Nullable Path getOnceInstalledIfExists() {
     Path onceInstalledFile = PathManager.getConfigDir().resolve(INSTALLED_TXT);
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
-  }
-
-  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                                  @NotNull Set<PluginId> disabledPlugins,
-                                                                  boolean bundled,
-                                                                  PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
-      return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
-                                                                PluginManagerCore.PLUGIN_XML,
-                                                                context,
-                                                                Files.isDirectory(file));
-    }
   }
 
   /**
@@ -121,7 +108,6 @@ public final class PluginManager {
     return PluginManagerCore.getLoadedPlugins();
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
@@ -133,7 +119,32 @@ public final class PluginManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static @NotNull List<String> getDisabledPlugins() {
-    return DisabledPluginsState.getDisabledPlugins();
+    Set<PluginId> list = DisabledPluginsState.disabledPlugins();
+    return new AbstractList<String>() {
+      //<editor-fold desc="Just a list-like immutable wrapper over a set; move along.">
+      @Override
+      public boolean contains(Object o) {
+        return list.contains(o);
+      }
+
+      @Override
+      public int size() {
+        return list.size();
+      }
+
+      @Override
+      public String get(int index) {
+        if (index < 0 || index >= list.size()) {
+          throw new IndexOutOfBoundsException("index=" + index + " size=" + list.size());
+        }
+        Iterator<PluginId> iterator = list.iterator();
+        for (int i = 0; i < index; i++) {
+          iterator.next();
+        }
+        return iterator.next().getIdString();
+      }
+      //</editor-fold>
+    };
   }
 
   public static boolean disablePlugin(@NotNull String id) {
@@ -151,7 +162,6 @@ public final class PluginManager {
   /**
    * Consider using {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}.
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
@@ -161,21 +171,10 @@ public final class PluginManager {
     return PluginManagerCore.getLogger();
   }
 
-  @ApiStatus.Internal
-  public static void loadDescriptorFromFile(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                            @NotNull Path file,
-                                            @Nullable SafeJdomFactory factory,
-                                            @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
-    descriptor.readExternal(JDOMUtil.load(file, factory), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, parentContext, descriptor);
-  }
-
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) {
       return false;
@@ -194,44 +193,34 @@ public final class PluginManager {
     return false;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {
-      if (id == plugin.getPluginId()) {
+      if (id.equals(plugin.getPluginId())) {
         return plugin;
       }
     }
     return null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean hideImplementationDetails() {
     return !Registry.is("plugins.show.implementation.details");
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")
-    IdeaPluginDescriptorImpl[] list = descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] list = descriptors.toArray(new IdeaPluginDescriptorImpl[0]);
     PluginManagerCore.doSetPlugins(list);
   }
 
+  @ApiStatus.Internal
   public boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                 boolean withOptionalDeps,
-                                                @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = new HashMap<>();
+                                                @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = PluginManagerCore.buildPluginIdMap();
     Collection<IdeaPluginDescriptorImpl> allPlugins = PluginManagerCore.getAllPlugins();
-    for (IdeaPluginDescriptorImpl plugin : allPlugins) {
-      idMap.put(plugin.getPluginId(), plugin);
-    }
-
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = PluginManagerCore
-      .createPluginIdGraph(allPlugins,
-                           idMap::get,
-                           withOptionalDeps,
-                           PluginManagerCore.findPluginByModuleDependency(PluginManagerCore.ALL_MODULES_MARKER) != null);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = PluginManagerCore.createPluginIdGraph(allPlugins, idMap, withOptionalDeps);
     Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
     Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
     GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
@@ -244,6 +233,12 @@ public final class PluginManager {
       }
     }
     return true;
+  }
+
+  @NotNull IdeaPluginDescriptorImpl @NotNull [] getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = PluginManagerCore.buildPluginIdMap();
+    InboundSemiGraph<IdeaPluginDescriptorImpl> graph = PluginManagerCore.createPluginIdGraph(descriptors, idMap, true);
+    return PluginManagerCore.getTopologicallySorted(graph);
   }
 
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {
@@ -273,5 +268,19 @@ public final class PluginManager {
 
   interface PluginAwareDisposable extends Disposable {
     int getClassLoaderId();
+  }
+
+  /**
+   * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
+   * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
+   */
+  @ApiStatus.Internal
+  public static @Nullable String convertExplicitBigNumberInUntilBuildToStar(@Nullable String build) {
+    if (build == null) {
+      return null;
+    }
+
+    Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
+    return matcher.matches() ? (matcher.group(1) + ".*") : build;
   }
 }

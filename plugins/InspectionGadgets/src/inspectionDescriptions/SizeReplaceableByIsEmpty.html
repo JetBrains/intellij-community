@@ -1,12 +1,20 @@
 <html>
 <body>
-Reports any <b>.size()</b> or <b>.length()</b>
-comparisons with a <b>0</b> literal which can be replaced with a call to <b>.isEmpty()</b>.
+Reports any <code>.size()</code> or <code>.length()</code>
+comparisons with a <code>0</code> literal which can be replaced with a call to <code>.isEmpty()</code>.
+<p>Example:</p>
+<pre>
+  boolean emptyList = list.size() == 0;
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  boolean emptyList = list.isEmpty();
+</pre>
 <!-- tooltip end -->
 <p>
-Use the table below to add classes for which any <b>.size()</b> or <b>.length()</b> comparisons should not be replaced.
+Use the table below to add classes for which any <code>.size()</code> or <code>.length()</code> comparisons should not be replaced.
 <p>
-Use the checkbox below to ignore any expressions which would be replaced with '!isEmpty()'.
+Use the checkbox below to ignore any expressions which would be replaced with <code>!isEmpty()</code>.
 <p>
 
 </body>

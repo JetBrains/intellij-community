@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -52,7 +52,6 @@ import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.RunAll.runAll;
 import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
@@ -159,7 +158,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   protected void refreshSvnMappingsSynchronously() {
     CountDownLatch done = new CountDownLatch(1);
     vcs.getSvnFileUrlMappingImpl().scheduleRefresh(() -> done.countDown());
-    runAll(() -> done.await());
+    RunAll.runAll(() -> done.await());
   }
 
   protected void refreshChanges() {
@@ -192,12 +191,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   @After
   public void after() throws Exception {
-    new RunAll(
+    RunAll.runAll(
       () -> changeListManager.waitEverythingDoneInTestMode(),
       () -> runInEdtAndWait(this::tearDownProject),
       this::tearDownTempDirectoryFixture,
       () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
-    ).run();
+    );
   }
 
   private void tearDownTempDirectoryFixture() throws Exception {

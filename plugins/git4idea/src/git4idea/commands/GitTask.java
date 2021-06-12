@@ -281,7 +281,7 @@ public class GitTask {
 
     private void justRun() {
       String oldTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(myTitle);
+      myProgressIndicator.setText(getTitle());
       myDelegate.run(myProgressIndicator);
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
@@ -294,7 +294,7 @@ public class GitTask {
     @Override
     public void execute(ProgressIndicator indicator) {
       addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
     }
 
     @Override
@@ -319,7 +319,7 @@ public class GitTask {
     @Override
     public void execute(ProgressIndicator indicator) {
       addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
     }
 
     @Override

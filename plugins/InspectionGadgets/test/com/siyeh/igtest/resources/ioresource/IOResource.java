@@ -213,6 +213,10 @@ public class IOResource {
       }
     };
   }
+
+  void testImmediatelyClosed() throws IOException {
+    new FileInputStream("").close();
+  }
 }
 class Foo {
   InputStream test(int i) throws FileNotFoundException {

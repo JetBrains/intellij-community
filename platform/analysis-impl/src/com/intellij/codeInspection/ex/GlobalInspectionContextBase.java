@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -11,7 +11,6 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -229,7 +228,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected PerformInBackgroundOption createOption() {
-    return () -> true;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
@@ -372,12 +371,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     codeCleanup(scope, profile, commandName, postRunnable, modal, __ -> true);
   }
 
-  public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
-    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    globalContext.codeCleanup(scope, profile, null, runnable, true, descriptor -> true);
-  }
-
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, PsiElement @NotNull ... scope) {
     cleanupElements(project, runnable, descriptor -> true, scope);
   }
@@ -402,7 +395,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                       @Nullable final Runnable runnable,
                                       final List<? extends SmartPsiElementPointer<PsiElement>> elements,
                                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    WriteThread.submit(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
         PsiElement psiElement = element.getElement();

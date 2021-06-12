@@ -9,9 +9,7 @@ import com.intellij.util.containers.Convertor;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-/**
- * @author yole
- */
+
 final class TreeUIHelperImpl extends TreeUIHelper {
   @Override
   public void installToolTipHandler(final JTree tree) {

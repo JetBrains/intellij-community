@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -13,13 +15,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
-import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.codereview.InlineIconButton
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import org.jetbrains.plugins.github.util.getEDTExecutor
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
@@ -131,7 +131,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetad
           isBusy = true
           adjust(EmptyProgressIndicator(), delta)
         }
-      }, getEDTExecutor())
+      }, CompletableFutureUtil.getEDTExecutor())
       ?.handleOnEdt { _, error ->
         adjustmentError = error
         isBusy = false

@@ -1,17 +1,34 @@
 <html>
 <body>
-Reports any calls of <b>abstract</b> methods of the current class during object construction.
-A call is during object construction if it is made inside a constructor, in an non-static instance initializer,
-in a non-static field initializer or inside a <b>clone()</b>, <b>readObject()</b> or <b>readObjectNoData()</b> method.
-Such calls may result in subtle bugs, as the object is not guaranteed to be initialized
-before the method call occurs.
-<!-- tooltip end -->
-<p>
-The inspections <i>Overridable method called during object construction</i>,
-<i>Overridden method called during object construction</i> and
-<i>Abstract method called during object construction</i> report overlapping problem sets and only one should be enabled at a time
-to prevent duplicate warnings.
-<p>
+Reports any calls of <code>abstract</code> methods of the current class during object construction.
+A call is during object construction if it is inside:
+<ul>
+  <li>A Constructor</li>
+  <li>A Non-static instance initializer</li>
+  <li>A Non-static field initializer</li>
+  <li><code>clone()</code></li>
+  <li><code>readObject()</code></li>
+  <li><code>readObjectNoData()</code></li>
+</ul>
+Such calls may result in subtle bugs, as the object is not guaranteed to be initialized before the method call occurs.
+<p>Example:</p>
+<pre>
+  abstract class Parent {
+    abstract void abstractMethod();
+  }
 
+  class Child extends Parent {
+    Child() {
+      abstractMethod();
+    }
+  }
+</pre>
+<!-- tooltip end -->
+This inspection shares functionality with:
+<ul>
+  <li>Overridable method called during object construction inspection</li>
+  <li>Overridden method called during object construction inspection</li>
+</ul>
+Only one inspection should be enabled at the same time to prevent duplicate warnings.
 </body>
 </html>

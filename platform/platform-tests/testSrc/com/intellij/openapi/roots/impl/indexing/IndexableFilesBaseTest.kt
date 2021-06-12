@@ -81,7 +81,7 @@ abstract class IndexableFilesBaseTest {
     iterateIndexableFiles(collector, project, expectedNumberOfSkippedFiles)
     val actualFiles = actualIndexed.filter { !it.isDirectory || it.`is`(VFileProperty.SYMLINK) }
     if (expectedFiles.isEmpty()) {
-      Assertions.assertThat(actualFiles).isEmpty()
+      Assertions.assertThat(actualFiles).overridingErrorMessage { actualFiles.joinToString { it.url + "\n" } }.isEmpty()
     }
     else {
       Assertions.assertThat(actualFiles).containsExactlyInAnyOrderElementsOf(expectedFiles.toList())

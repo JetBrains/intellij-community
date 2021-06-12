@@ -104,9 +104,7 @@ public final class ProjectUtil {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
-  /**
-   * @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)}
-   */
+  /** @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)} */
   @Deprecated
   public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
@@ -479,20 +477,34 @@ public final class ProjectUtil {
   }
 
   /**
-   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
-   * {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
-   * {@link Messages#CANCEL} - if user canceled the dialog
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link Messages#CANCEL} (when a user cancels the dialog)
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
+    return confirmOpenNewProject(isNewProject, null);
+  }
+
+  /**
+   * @param isNewProject true if the project is just created
+   * @param projectName name of the project to open (can be displayed to the user)
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link Messages#CANCEL} (when a user cancels the dialog)
+   */
+  public static int confirmOpenNewProject(boolean isNewProject, @Nullable String projectName) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
     }
 
     int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+      String message = projectName == null ? 
+                       IdeBundle.message("prompt.open.project.in.new.frame") :
+                       IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName);
       if (isNewProject) {
         boolean openInExistingFrame =
-          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
@@ -501,7 +513,7 @@ public final class ProjectUtil {
       }
       else {
         int exitCode =
-          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
@@ -518,10 +530,10 @@ public final class ProjectUtil {
   }
 
   /**
-   * @return 0 == GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-   * 1 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-   * 2 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH
-   * -1 == CANCEL
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW_ATTACH} or
+   *         {@code -1} (when a user cancels the dialog)
    */
   public static int confirmOpenOrAttachProject() {
     int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
@@ -549,9 +561,7 @@ public final class ProjectUtil {
     return mode;
   }
 
-  /**
-   * @deprecated Use {@link #isSameProject(Path, Project)}
-   */
+  /** @deprecated Use {@link #isSameProject(Path, Project)} */
   @Deprecated
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
     return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
@@ -611,12 +621,23 @@ public final class ProjectUtil {
       return;
     }
 
+    boolean appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
+
+    // On macOS 'toFront' restores the frame, if needed.
+    // On Linux restoring minimized frame can steal focus from active application, so we do it only if IDE is active.
+    if (SystemInfo.isWindows || SystemInfo.isXWindow && appIsActive) {
+      int state = frame.getExtendedState();
+      if ((state & Frame.ICONIFIED) != 0) {
+        frame.setExtendedState(state & ~Frame.ICONIFIED);
+      }
+    }
+
     if (stealFocusIfAppInactive) {
       AppIcon.getInstance().requestFocus((IdeFrame)frame);
     }
     else {
-      if (!SystemInfo.isXWindow || KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
-        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE application is not active
+      if (!SystemInfo.isXWindow || appIsActive) {
+        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE is not active
         frame.toFront();
       }
 
@@ -784,7 +805,7 @@ public final class ProjectUtil {
     if (projectFile == null) {
       return null;
     }
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, OpenProjectTask.newProjectFromWizardAndRunConfigurators(null, false));
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile, OpenProjectTask.fromWizardAndRunConfigurators());
   }
 
   private static void saveAndDisposeProject(@NotNull Project project) {

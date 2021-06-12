@@ -28,9 +28,7 @@ import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyBlock implements ASTBlock {
   private static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
 

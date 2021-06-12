@@ -1,0 +1,1 @@
+expect fun foo<!NO_ACTUAL_FOR_EXPECT!>(x: Int)<!>: Int

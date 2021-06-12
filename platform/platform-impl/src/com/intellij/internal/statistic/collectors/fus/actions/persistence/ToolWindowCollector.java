@@ -119,11 +119,8 @@ public final class ToolWindowCollector {
     record(project, info.getId(), SHOWN, info, source);
   }
 
-  //todo[kb] provide a proper way to track activations by clicks
-  public void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
-  }
-
-  private static void record(@NotNull Project project, @Nullable String toolWindowId,
+  private static void record(@NotNull Project project,
+                             @Nullable String toolWindowId,
                              @NotNull VarargEventId event,
                              @Nullable WindowInfoImpl windowInfo,
                              @Nullable ToolWindowEventSource source) {
@@ -142,7 +139,7 @@ public final class ToolWindowCollector {
     if (source != null) {
       data.add(SOURCE.with(source));
     }
-    event.log(data.toArray(new EventPair[0]));
+    event.log(project, data.toArray(new EventPair[0]));
   }
 
   @NotNull

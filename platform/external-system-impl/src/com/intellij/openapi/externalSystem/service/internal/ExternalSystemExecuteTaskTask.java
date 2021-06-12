@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -126,7 +126,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       throw e;
     }
 
-    IdeActivity activity =
+    StructuredIdeActivity activity =
       externalSystemTaskStarted(getIdeProject(), getExternalSystemId(), ExecuteTask, environmentConfigurationProvider);
     try {
       taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);

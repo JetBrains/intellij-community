@@ -30,7 +30,7 @@ import java.util.Set;
  * A {@link JLabel}-based link that does not support mnemonics.
  * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
  * @author kir
- * @see https://jetbrains.github.io/ui/controls/link/
+ * @see <a href="https://jetbrains.github.io/ui/controls/link/">IJ Platform UI Guidelines | Link</a>
  */
 public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;

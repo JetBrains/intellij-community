@@ -20,7 +20,6 @@ import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate;
 import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.editor.BaseQuoteHandler;
@@ -40,7 +39,7 @@ public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
       boolean mayBeTripleQuote = offset >= 3 && offset + 2 < text.length();
       if (mayBeTripleQuote) {
         final int quoteOffset = offset - 1;
-        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(quoteOffset);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(quoteOffset);
         boolean hasTripleQuoteAfter = offset + 2 < text.length() &&
                                       text.charAt(offset) == c && text.charAt(offset + 1) == c && text.charAt(offset + 2) == c;
         isTripleQuote = quoteHandler.isOpeningQuote(iterator, quoteOffset) && hasTripleQuoteAfter;

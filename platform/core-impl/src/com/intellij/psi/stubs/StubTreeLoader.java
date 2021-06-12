@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class StubTreeLoader {
 
   public static StubTreeLoader getInstance() {
@@ -34,10 +32,13 @@ public abstract class StubTreeLoader {
   }
 
   @Nullable
-  public abstract ObjectStubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
 
   @Nullable
-  public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
+  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+
+  @Nullable
+  public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
 
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
@@ -65,13 +66,7 @@ public abstract class StubTreeLoader {
       IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
       boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
-      boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
-
       @NonNls String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
-
-      if (canBePrebuilt) {
-        msg += "This stub can have pre-built origin\n";
-      }
 
       if (upToDate) {
         msg += "INDEXED VERSION IS THE CURRENT ONE";
@@ -86,7 +81,7 @@ public abstract class StubTreeLoader {
         String text = psiFile.getText();
         PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
         if (fromText.getLanguage().equals(psiFile.getLanguage())) {
-          boolean consistent = DebugUtil.psiToString(psiFile, true).equals(DebugUtil.psiToString(fromText, true));
+          boolean consistent = DebugUtil.psiToString(psiFile, false).equals(DebugUtil.psiToString(fromText, false));
           if (consistent) {
             msg += "\n tree consistent";
           } else {
@@ -132,8 +127,6 @@ public abstract class StubTreeLoader {
              new RuntimeExceptionWithAttachments(msg, cause, attachments);
     });
   }
-
-  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
 
   private static RuntimeExceptionWithAttachments handleUpToDateMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
     return new UpToDateStubIndexMismatch(message, cause, attachments);

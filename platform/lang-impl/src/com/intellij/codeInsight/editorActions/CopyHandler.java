@@ -19,12 +19,9 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +58,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection(true)) {
-      if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
         return;
       }
       editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
@@ -90,8 +87,17 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
   }
 
   private static @NotNull Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
-    commitDocuments(editor, project);
+    TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
+    try {
+      typingActionsExtension.startCopy(project, editor);
+      return getSelectionAction(editor, project, file);
+    }
+    finally {
+      typingActionsExtension.endCopy(project, editor);
+    }
+  }
 
+  private static @NotNull Transferable getSelectionAction(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
@@ -131,26 +137,5 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     return new TextBlockTransferable(escapedText != null ? escapedText : rawText,
                                      transferableDataList,
                                      escapedText != null ? new RawText(rawText) : null);
-  }
-
-  private static void commitDocuments(@NotNull Editor editor, @NotNull Project project) {
-    final List<CopyPastePostProcessor<? extends TextBlockTransferableData>> postProcessors =
-      ContainerUtil.filter(CopyPastePostProcessor.EP_NAME.getExtensionList(), p -> p.requiresAllDocumentsToBeCommitted(editor, project));
-    final List<CopyPastePreProcessor> preProcessors =
-      ContainerUtil.filter(CopyPastePreProcessor.EP_NAME.getExtensionList(), p -> p.requiresAllDocumentsToBeCommitted(editor, project));
-    final boolean commitAllDocuments = !preProcessors.isEmpty() || !postProcessors.isEmpty();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CommitAllDocuments: " + commitAllDocuments);
-      if (commitAllDocuments) {
-        final String processorNames = StringUtil.join(preProcessors, ",") + "," + StringUtil.join(postProcessors, ",");
-        LOG.debug("Processors with commitAllDocuments requirement: [" + processorNames + "]");
-      }
-    }
-    if (commitAllDocuments) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    else {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    }
   }
 }

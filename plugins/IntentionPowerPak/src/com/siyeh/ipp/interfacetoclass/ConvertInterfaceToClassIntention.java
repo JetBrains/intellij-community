@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,67 +49,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     return false;
   }
 
-  public static void changeInterfaceToClass(PsiClass anInterface) {
-    final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
-    assert nameIdentifier != null;
-    final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
-    assert whiteSpace != null;
-    final PsiElement interfaceToken = whiteSpace.getPrevSibling();
-    assert interfaceToken != null;
-    final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
-    final Project project = anInterface.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiKeyword classKeyword = factory.createKeyword("class");
-    interfaceKeyword.replace(classKeyword);
-
-    final PsiModifierList classModifierList = anInterface.getModifierList();
-    if (classModifierList == null) {
-      return;
-    }
-    classModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
-
-    final PsiElement parent = anInterface.getParent();
-    if (parent instanceof PsiClass) {
-      classModifierList.setModifierProperty(PsiModifier.STATIC, true);
-    }
-
-    final PsiMethod[] methods = anInterface.getMethods();
-    for (final PsiMethod method : methods) {
-      PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
-      if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
-        PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
-      }
-      else if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
-      }
-    }
-
-    final PsiField[] fields = anInterface.getFields();
-    for (final PsiField field : fields) {
-      final PsiModifierList modifierList = field.getModifierList();
-      if (modifierList != null) {
-        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        modifierList.setModifierProperty(PsiModifier.STATIC, true);
-        modifierList.setModifierProperty(PsiModifier.FINAL, true);
-      }
-    }
-
-    final PsiClass[] innerClasses = anInterface.getInnerClasses();
-    for (PsiClass innerClass : innerClasses) {
-      final PsiModifierList modifierList = innerClass.getModifierList();
-      if (modifierList != null) {
-        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        if (!innerClass.isInterface()) {
-          modifierList.setModifierProperty(PsiModifier.STATIC, true);
-        }
-      }
-    }
-  }
-
-  @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    final PsiClass anInterface = (PsiClass)element.getParent();
+  public static void convert(@NotNull PsiClass anInterface) {
     final SearchScope searchScope = anInterface.getUseScope();
     final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -153,6 +94,84 @@ public class ConvertInterfaceToClassIntention extends Intention {
     if (conflictsDialogOK) {
       convertInterfaceToClass(anInterface, inheritors);
     }
+  }
+
+  public static boolean canConvertToClass(@NotNull PsiClass aClass) {
+    if (!aClass.isInterface() || aClass.isAnnotationType()) {
+      return false;
+    }
+    final SearchScope useScope = aClass.getUseScope();
+    for (PsiClass inheritor :
+      ClassInheritorsSearch.search(aClass, useScope, true)) {
+      if (inheritor.isInterface()) {
+        return false;
+      }
+    }
+    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
+  }
+
+  public static void changeInterfaceToClass(PsiClass anInterface) {
+    final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
+    assert nameIdentifier != null;
+    final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
+    assert whiteSpace != null;
+    final PsiElement interfaceToken = whiteSpace.getPrevSibling();
+    assert interfaceToken != null;
+    final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
+    final Project project = anInterface.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final PsiKeyword classKeyword = factory.createKeyword("class");
+    interfaceKeyword.replace(classKeyword);
+
+    final PsiModifierList classModifierList = anInterface.getModifierList();
+    if (classModifierList == null) {
+      return;
+    }
+    classModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
+
+    final PsiElement parent = anInterface.getParent();
+    if (parent instanceof PsiClass) {
+      classModifierList.setModifierProperty(PsiModifier.STATIC, true);
+    }
+
+    final PsiMethod[] methods = anInterface.getMethods();
+    for (final PsiMethod method : methods) {
+      PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
+      if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+        PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
+      }
+      else if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.isConstructor()) {
+        PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
+      }
+    }
+
+    final PsiField[] fields = anInterface.getFields();
+    for (final PsiField field : fields) {
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+        modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      }
+    }
+
+    final PsiClass[] innerClasses = anInterface.getInnerClasses();
+    for (PsiClass innerClass : innerClasses) {
+      final PsiModifierList modifierList = innerClass.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+        if (!innerClass.isInterface()) {
+          modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        }
+      }
+    }
+  }
+
+  @Override
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiClass anInterface = (PsiClass)element.getParent();
+    convert(anInterface);
   }
 
   private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors) {

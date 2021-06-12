@@ -1,10 +1,11 @@
 <html>
 <body>
-Reports <code>abstract</code> classes which can be converted to interfaces.
-Java doesn't support multiple class inheritance while class can implement multiple interfaces,
-so it makes sense to use interfaces wherever possible instead of classes.
-A class may be converted to an interface if it has no superclass (other
-than Object), has only <code>public static final</code> fields, <code>public abstract</code> methods, and <code>public</code> inner classes.
+Reports <code>abstract</code> classes that can be converted to interfaces.
+<p>Using interfaces instead of classes is preferable as Java doesn't support multiple class inheritance,
+  while a class can implement multiple interfaces.</p>
+<p>A class may be converted to an interface if it has no superclasses (other
+than Object), has only <code>public static final</code> fields,
+  <code>public abstract</code> methods, and <code>public</code> inner classes.
 <!-- tooltip end -->
 
 <p>Example:</p>
@@ -22,7 +23,7 @@ class Inheritor extends Example {
 }
 </code></pre>
 
-<p>After applying the fix:</p>
+<p>After the quick-fix is applied:</p>
 
 <pre><code>
 interface Example {
@@ -37,9 +38,9 @@ class Inheritor implements Example {
     }
 }
 </code></pre>
-
+<p>Configure the inspection:</p>
 <p>
-  You can configure the inspection to only report classes containing <code>static</code> methods and non-abstract methods which can be converted to
+  Use the <b>Report classes containing non-abstract methods when using Java 8</b> option to report only the classes with <code>static</code> methods and non-abstract methods that can be converted to
   <code>default</code> methods (only applicable to language level of 8 or higher).
 <p>
 

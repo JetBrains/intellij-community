@@ -150,7 +150,11 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
       "LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
       "METHOD_CALL_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
       "METHOD_DECLARATION_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
+      "PACKAGE_PRIVATE_REFERENCE { color: #000000;  font-style: normal; }\n" +
       "PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
+      "PRIVATE_REFERENCE { color: #000000;  font-style: normal; }\n" +
+      "PROTECTED_REFERENCE { color: #000000;  font-style: normal; }\n" +
+      "PUBLIC_REFERENCE { color: #000000;  font-style: normal; }\n" +
       "REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }\n" +
       "REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }\n" +
       "STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }\n" +
@@ -202,7 +206,11 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
       "LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
       "METHOD_CALL_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
       "METHOD_DECLARATION_ATTRIBUTES { color: #ffc66d;  font-style: normal; }\n" +
+      "PACKAGE_PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
       "PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
+      "PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
+      "PROTECTED_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
+      "PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
       "REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }\n" +
       "REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }\n" +
       "STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }\n" +

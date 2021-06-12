@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "fsnotifier.h"
 
 #include <dirent.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
-#include <syslog.h>
 #include <unistd.h>
 
 
@@ -32,11 +16,11 @@
 
 #define DEFAULT_SUBDIR_COUNT 5
 
-typedef struct __watch_node {
+typedef struct watch_node_str {
   int wd;
-  struct __watch_node* parent;
+  struct watch_node_str* parent;
   array* kids;
-  int path_len;
+  unsigned int path_len;
   char path[];
 } watch_node;
 
@@ -44,7 +28,7 @@ static int inotify_fd = -1;
 static int watch_count = 0;
 static table* watches;
 static bool limit_reached = false;
-static void (* callback)(const char*, int) = NULL;
+static void (* callback)(const char*, uint32_t) = NULL;
 
 #define EVENT_SIZE (sizeof(struct inotify_event))
 #define EVENT_BUF_LEN (2048 * (EVENT_SIZE + 16))
@@ -66,7 +50,6 @@ bool init_inotify() {
     }
     return false;
   }
-  userlog(LOG_DEBUG, "inotify fd: %d", get_inotify_fd());
 
   read_watch_descriptors_count();
   if (watch_count <= 0) {
@@ -99,14 +82,14 @@ static void read_watch_descriptors_count() {
     userlog(LOG_ERR, "can't read from %s", WATCH_COUNT_NAME);
   }
   else {
-    watch_count = atoi(str);
+    watch_count = (int)strtol(str, NULL, 10);
   }
 
   fclose(f);
 }
 
 
-void set_inotify_callback(void (* _callback)(const char*, int)) {
+void set_inotify_callback(void (* _callback)(const char*, uint32_t)) {
   callback = _callback;
 }
 
@@ -116,13 +99,13 @@ int get_inotify_fd() {
 }
 
 
-#define EVENT_MASK IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF | IN_MOVE_SELF
+#define EVENT_MASK (IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF | IN_MOVE_SELF)
 
-static int add_watch(int path_len, watch_node* parent) {
+static int add_watch(unsigned int path_len, watch_node* parent) {
   int wd = inotify_add_watch(inotify_fd, path_buf, EVENT_MASK);
   if (wd < 0) {
     if (errno == EACCES || errno == ENOENT) {
-      userlog(LOG_DEBUG, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
+      userlog(LOG_INFO, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
       return ERR_IGNORE;
     }
     else if (errno == ENOSPC) {
@@ -136,13 +119,13 @@ static int add_watch(int path_len, watch_node* parent) {
     }
   }
   else {
-    userlog(LOG_DEBUG, "watching %s: %d", path_buf, wd);
+    userlog(LOG_INFO, "watching %s: %d", path_buf, wd);
   }
 
   watch_node* node = table_get(watches, wd);
   if (node != NULL) {
     if (node->wd != wd) {
-      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s)", wd, path_buf, node->wd, node->path);
+      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s / %d", wd, path_buf, node->wd, node->path, watch_count);
       return ERR_ABORT;
     }
     else if (strcmp(node->path, path_buf) != 0) {
@@ -163,7 +146,7 @@ static int add_watch(int path_len, watch_node* parent) {
   }
 
   node = malloc(sizeof(watch_node) + path_len + 1);
-  CHECK_NULL(node, ERR_ABORT);
+  CHECK_NULL(node, ERR_ABORT)
   memcpy(node->path, path_buf, path_len + 1);
   node->path_len = path_len;
   node->wd = wd;
@@ -173,9 +156,9 @@ static int add_watch(int path_len, watch_node* parent) {
   if (parent != NULL) {
     if (parent->kids == NULL) {
       parent->kids = array_create(DEFAULT_SUBDIR_COUNT);
-      CHECK_NULL(parent->kids, ERR_ABORT);
+      CHECK_NULL(parent->kids, ERR_ABORT)
     }
-    CHECK_NULL(array_push(parent->kids, node), ERR_ABORT);
+    CHECK_NULL(array_push(parent->kids, node), ERR_ABORT)
   }
 
   if (table_put(watches, wd, node) == NULL) {
@@ -199,13 +182,13 @@ static void rm_watch(int wd, bool update_parent) {
     return;
   }
 
-  userlog(LOG_DEBUG, "unwatching %s: %d (%p)", node->path, node->wd, node);
+  userlog(LOG_INFO, "unwatching %s: %d (%p)", node->path, node->wd, node);
 
   if (inotify_rm_watch(inotify_fd, node->wd) < 0) {
-    userlog(LOG_DEBUG, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
+    userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
   }
 
-  for (int i=0; i<array_size(node->kids); i++) {
+  for (int i = 0; i < array_size(node->kids); i++) {
     watch_node* kid = array_get(node->kids, i);
     if (kid != NULL) {
       rm_watch(kid->wd, false);
@@ -213,7 +196,7 @@ static void rm_watch(int wd, bool update_parent) {
   }
 
   if (update_parent && node->parent != NULL) {
-    for (int i=0; i<array_size(node->parent->kids); i++) {
+    for (int i = 0; i < array_size(node->parent->kids); i++) {
       if (array_get(node->parent->kids, i) == node) {
         array_put(node->parent->kids, i, NULL);
         break;
@@ -227,11 +210,11 @@ static void rm_watch(int wd, bool update_parent) {
 }
 
 
-static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mounts) {
-  for (int j=0; j<array_size(mounts); j++) {
+static int walk_tree(unsigned int path_len, watch_node* parent, bool recursive, array* mounts) {
+  for (int j = 0; j < array_size(mounts); j++) {
     char* mount = array_get(mounts, j);
     if (strncmp(path_buf, mount, strlen(mount)) == 0) {
-      userlog(LOG_DEBUG, "watch path '%s' crossed mount point '%s' - skipping", path_buf, mount);
+      userlog(LOG_INFO, "watch path '%s' crossed mount point '%s' - skipping", path_buf, mount);
       return ERR_IGNORE;
     }
   }
@@ -240,7 +223,7 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
   if (recursive) {
     if ((dir = opendir(path_buf)) == NULL) {
       if (errno == EACCES || errno == ENOENT || errno == ENOTDIR) {
-        userlog(LOG_DEBUG, "opendir(%s): %d", path_buf, errno);
+        userlog(LOG_INFO, "opendir(%s): %d", path_buf, errno);
         return ERR_IGNORE;
       }
       else {
@@ -271,13 +254,13 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
       continue;
     }
 
-    int name_len = strlen(entry->d_name);
+    unsigned int name_len = strlen(entry->d_name);
     memcpy(path_buf + path_len + 1, entry->d_name, name_len + 1);
 
     if (entry->d_type == DT_UNKNOWN) {
       struct stat st;
       if (stat(path_buf, &st) != 0) {
-        userlog(LOG_DEBUG, "(DT_UNKNOWN) stat(%s): %d", path_buf, errno);
+        userlog(LOG_INFO, "(DT_UNKNOWN) stat(%s): %d", path_buf, errno);
         continue;
       }
       if (!S_ISDIR(st.st_mode)) {
@@ -305,7 +288,7 @@ int watch(const char* root, array* mounts) {
     recursive = false;
   }
 
-  int path_len = strlen(root);
+  size_t path_len = strlen(root);
   if (root[path_len - 1] == '/') {
     --path_len;
   }
@@ -351,13 +334,13 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
-  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
+  userlog(LOG_INFO, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
 
-  int path_len = node->path_len;
+  unsigned int path_len = node->path_len;
   memcpy(path_buf, node->path, path_len + 1);
   if (event->len > 0) {
     path_buf[path_len] = '/';
-    int name_len = strlen(event->name);
+    unsigned int name_len = strlen(event->name);
     memcpy(path_buf + path_len + 1, event->name, name_len + 1);
     path_len += name_len + 1;
   }
@@ -374,7 +357,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   if (is_dir && event->mask & (IN_DELETE | IN_MOVED_FROM)) {
-    for (int i=0; i<array_size(node->kids); i++) {
+    for (int i = 0; i < array_size(node->kids); i++) {
       watch_node* kid = array_get(node->kids, i);
       if (kid != NULL && strncmp(path_buf, kid->path, kid->path_len) == 0) {
         rm_watch(kid->wd, false);
@@ -395,10 +378,10 @@ bool process_inotify_input() {
     return false;
   }
 
-  int i = 0;
+  ssize_t i = 0;
   while (i < len) {
-    struct inotify_event* event = (struct inotify_event*) &event_buf[i];
-    i += EVENT_SIZE + event->len;
+    struct inotify_event *event = (struct inotify_event *) &event_buf[i];
+    i += (int)EVENT_SIZE + event->len;
 
     if (event->mask & IN_IGNORED) {
       continue;

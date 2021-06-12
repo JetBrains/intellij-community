@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBase<MutableMap<K, V>>() {
   private val value: MutableMap<K, V> = value ?: MyMap()
@@ -67,7 +67,7 @@ class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBas
   }
 }
 
-private class MyMap<K: Any, V> : THashMap<K, V>() {
+private class MyMap<K: Any, V> : Object2ObjectOpenHashMap<K, V>() {
   @Volatile
   var modificationCount = 0L
 
@@ -80,9 +80,10 @@ private class MyMap<K: Any, V> : THashMap<K, V>() {
   }
 
   // to detect a remove from iterator
-  override fun removeAt(index: Int) {
-    super.removeAt(index)
+  override fun remove(key: K): V? {
+    val result = super.remove(key)
     modificationCount++
+    return result
   }
 
   override fun clear() {

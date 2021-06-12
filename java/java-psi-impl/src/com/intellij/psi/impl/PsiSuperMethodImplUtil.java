@@ -171,7 +171,7 @@ public final class PsiSuperMethodImplUtil {
       }
       list.add(method);
 
-      LOG.assertTrue(newH.getMethod().isValid());
+      LOG.assertTrue(newH.getMethod().isValid(), newH.getMethod().getClass());
       result.put(signature, newH);
       map.put(signature, newH);
     }

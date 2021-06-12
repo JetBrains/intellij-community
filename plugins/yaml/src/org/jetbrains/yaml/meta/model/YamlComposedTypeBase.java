@@ -139,8 +139,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return ContainerUtil.filter(myTypes, next -> !(next instanceof YamlScalarType));
   }
 
-  protected final Iterable<YamlMetaType> getSubTypes() {
-    return myTypes;
+  public final Iterable<YamlMetaType> getSubTypes() {
+    return copyList(myTypes);
   }
 
   protected final Stream<YamlMetaType> streamSubTypes() {

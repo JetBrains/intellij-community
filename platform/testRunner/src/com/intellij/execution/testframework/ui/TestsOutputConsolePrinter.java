@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       if (!value.booleanValue()) myMarkOffset = 0;
     }
   };
+  private boolean myDisposed;
 
   public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, @NotNull TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myConsole = testsOutputConsoleView.getConsole();
@@ -145,6 +147,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   @Override
   public void dispose() {
     myProperties.removeListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
+    myDisposed = true;
   }
 
   public boolean canPause() {
@@ -152,11 +155,15 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   protected void scrollToBeginning() {
-    myConsole.performWhenNoDeferredOutput(() -> {
-      final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
-      if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
-        //do not scroll to any mark during run
-        myConsole.scrollTo(myMarkOffset);
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      if (!myDisposed) {
+        myConsole.performWhenNoDeferredOutput(() -> {
+          final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
+          if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
+            //do not scroll to any mark during run
+            myConsole.scrollTo(myMarkOffset);
+          }
+        });
       }
     });
   }

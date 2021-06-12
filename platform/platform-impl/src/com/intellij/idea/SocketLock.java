@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
@@ -13,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -38,10 +38,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -164,11 +161,11 @@ public final class SocketLock {
     }
 
     myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("built-in server launch");
+      Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
 
       String token = UUID.randomUUID().toString();
       Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.start(6942, 50, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
+      BuiltInServer server = BuiltInServer.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
       try {
         byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
         Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
@@ -195,7 +192,7 @@ public final class SocketLock {
 
       activity.end();
       return server;
-    }, AppExecutorUtil.getAppExecutorService());
+    }, ForkJoinPool.commonPool());
 
     log("exit: lock(): succeed");
     return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
@@ -266,7 +263,7 @@ public final class SocketLock {
       boolean result = ContainerUtil.intersects(paths, stringList);
       if (result) {
         // update property right now, without scheduling to EDT - in some cases, allows to avoid a splash flickering
-        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
+        System.setProperty(CommandLineArgs.SPLASH, "false");
         EventQueue.invokeLater(() -> {
           Runnable hideSplashTask = SplashManager.getHideTask();
           if (hideSplashTask != null) {
@@ -282,7 +279,7 @@ public final class SocketLock {
           if (currentDirectory == null) {
             currentDirectory = ".";
           }
-          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + Paths.get(currentDirectory).toAbsolutePath().toString() + '\0' + String.join("\0", args));
+          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + Paths.get(currentDirectory).toAbsolutePath() + '\0' + String.join("\0", args));
           out.flush();
 
           socket.setSoTimeout(0);

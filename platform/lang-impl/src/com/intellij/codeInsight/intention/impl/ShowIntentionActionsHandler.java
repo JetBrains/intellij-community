@@ -31,7 +31,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -97,11 +97,23 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       editor.getScrollingModel().runActionOnScrollingFinished(() -> {
           CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
           cachedIntentions.wrapAndUpdateGutters();
-          IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
+          if (cachedIntentions.getAllActions().isEmpty()) {
+            showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+          }
+          else {
+            IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
+          }
       });
     }
-    else if (showFeedbackOnEmptyMenu) {
-      HintManager.getInstance().showInformationHint(editor, LangBundle.message("hint.text.no.context.actions.available.at.this.location"));
+    else {
+      showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+    }
+  }
+
+  private static void showEmptyMenuFeedback(@NotNull Editor editor, boolean showFeedbackOnEmptyMenu) {
+    if (showFeedbackOnEmptyMenu) {
+      HintManager.getInstance()
+        .showInformationHint(editor, LangBundle.message("hint.text.no.context.actions.available.at.this.location"));
     }
   }
 
@@ -233,7 +245,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
     if (Registry.is("ide.check.stub.text.consistency") ||
-        ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       if (hostFile.isValid()) {
         StubTextInconsistencyException.checkStubTextConsistency(hostFile);
       }

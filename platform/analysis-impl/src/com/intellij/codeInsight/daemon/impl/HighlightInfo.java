@@ -4,9 +4,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -732,6 +731,7 @@ public class HighlightInfo implements Segment {
     if (problemHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (problemHighlightType == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
     if (problemHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
+    if (problemHighlightType == ProblemHighlightType.POSSIBLE_PROBLEM) return HighlightInfoType.POSSIBLE_PROBLEM;
     return convertSeverity(severity);
   }
 
@@ -852,6 +852,9 @@ public class HighlightInfo implements Segment {
         return null;
       }
       List<IntentionAction> options = myOptions;
+      if (options != null) {
+        return options;
+      }
       HighlightDisplayKey key = myKey;
       if (myProblemGroup != null) {
         String problemName = myProblemGroup.getProblemName();
@@ -860,8 +863,15 @@ public class HighlightInfo implements Segment {
           key = problemGroupKey;
         }
       }
-      if (options != null || key == null) {
-        return options;
+      if (key == null) {
+        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+        if (action instanceof IntentionActionWithOptions) {
+          options = ((IntentionActionWithOptions)action).getOptions();
+          if (!options.isEmpty()) {
+            return updateOptions(options);
+          }
+        }
+        return null;
       }
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
@@ -874,7 +884,6 @@ public class HighlightInfo implements Segment {
         }
       }
       if (toolWrapper != null) {
-
         myCanCleanup = toolWrapper.isCleanupTool();
 
         IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
@@ -916,15 +925,15 @@ public class HighlightInfo implements Segment {
         ContainerUtil.addAll(newOptions, suppressActions);
       }
 
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        options = myOptions;
-        if (options == null) {
-          myOptions = options = newOptions;
-        }
-        myKey = null;
-      }
+      return updateOptions(newOptions);
+    }
 
+    private synchronized List<IntentionAction> updateOptions(List<IntentionAction> newOptions) {
+      List<IntentionAction> options = myOptions;
+      if (options == null) {
+        myOptions = options = newOptions;
+      }
+      myKey = null;
       return options;
     }
 
@@ -1002,5 +1011,15 @@ public class HighlightInfo implements Segment {
     if (quickFixActionRanges != null) {
       quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
     }
+  }
+  
+  public @Nullable IntentionAction getSameFamilyFix(IntentionActionWithFixAllOption action) {
+    if (quickFixActionRanges == null) return null;
+    for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
+      IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
+      if (other instanceof IntentionActionWithFixAllOption &&
+          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
+    }
+    return null;
   }
 }

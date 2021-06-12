@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports redundant calls of <b>java.lang.Class</b> methods. E.g. <b>Xyz.class.isInstance(object)</b> could be replaced with <b>object instanceof Xyz</b>.
+Reports redundant calls of <code>java.lang.Class</code> methods. E.g. <code>Xyz.class.isInstance(object)</code> could be replaced with <code>object instanceof Xyz</code>.
+The instanceof check is preferred, even though the performance will probably be the same as these methods are intrinsics, they show more clear that it is a static check.
 <!-- tooltip end -->
 <p><small>New in 2018.2</small></p>
 </body>

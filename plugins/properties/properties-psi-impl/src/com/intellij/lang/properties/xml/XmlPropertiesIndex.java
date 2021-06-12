@@ -167,6 +167,14 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
 
     @Override
+    public String toString() {
+      return "Key{" +
+             "isMarker=" + isMarker +
+             ", key='" + key + '\'' +
+             '}';
+    }
+
+    @Override
     public int hashCode() {
       return isMarker ? 0 : key.hashCode();
     }

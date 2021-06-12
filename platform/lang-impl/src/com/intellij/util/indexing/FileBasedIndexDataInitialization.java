@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -56,13 +58,15 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     myRegisteredIndexes = registeredIndexes;
   }
 
-  @NotNull
-  private Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
-    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    Iterator<FileBasedIndexExtension<?, ?>> extensions =
-      IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :
-      Collections.emptyIterator();
+  private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
+    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.DEFAULT);
+    Iterator<FileBasedIndexExtension<?, ?>> extensions;
+    if (IndexInfrastructure.hasIndices()) {
+      extensions = ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator();
+    }
+    else {
+      extensions = Collections.emptyIterator();
+    }
     List<ThrowableRunnable<?>> tasks = new ArrayList<>();
 
     // todo: init contentless indices first ?
@@ -96,9 +100,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     return tasks;
   }
 
-  @NotNull
   @Override
-  protected Collection<ThrowableRunnable<?>> prepareTasks() {
+  protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
     // 1) we call for it's instance before index creation to make sure it's initialized
     // 2) we dispose FileBasedIndex before PersistentFS disposing
@@ -114,12 +117,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     PersistentIndicesConfiguration.loadConfiguration();
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
+    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
+      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
-    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     myCurrentVersionCorrupted = myCurrentVersionCorrupted || storageLayoutChanged;
 
     if (myCurrentVersionCorrupted) {
@@ -158,6 +161,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       return myState;
     }
     finally {
+      CorruptionMarker.markIndexesAsDirty();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
@@ -183,7 +187,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
 
     NotificationGroupManager.getInstance().getNotificationGroup("Indexing")
-      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION, null)
+      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION)
       .notify(null);
   }
 

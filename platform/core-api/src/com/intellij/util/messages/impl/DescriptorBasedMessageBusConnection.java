@@ -13,11 +13,13 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 final class DescriptorBasedMessageBusConnection<L> implements MessageBusImpl.MessageHandlerHolder {
-  final PluginId pluginId;
-  final Topic<L> topic;
-  final List<? extends L> handlers;
+  final @NotNull PluginId pluginId;
+  final @NotNull Topic<L> topic;
+  final @NotNull List<? extends L> handlers;
 
-  DescriptorBasedMessageBusConnection(@NotNull PluginId pluginId, @NotNull Topic<L> topic, @NotNull List<? extends L> handlers) {
+  DescriptorBasedMessageBusConnection(@NotNull PluginId pluginId,
+                                      @NotNull Topic<L> topic,
+                                      @NotNull List<? extends L> handlers) {
     this.pluginId = pluginId;
     this.topic = topic;
     this.handlers = handlers;

@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -512,50 +510,4 @@ public final class VfsUtil extends VfsUtilCore {
     }
     return file;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @Nullable String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
-    final VirtualFile commonAncestor = getCommonAncestor(src, dst);
-    if (commonAncestor != null) {
-      StringBuilder buffer = new StringBuilder();
-      if (!Comparing.equal(src, commonAncestor)) {
-        while (!Comparing.equal(src.getParent(), commonAncestor)) {
-          buffer.append("..").append(separatorChar);
-          src = src.getParent();
-        }
-      }
-      buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
-      return buffer.toString();
-    }
-
-    return null;
-  }
-
-  /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull URI toUri(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    try {
-      String protocol = file.getFileSystem().getProtocol();
-      if (file.isInLocalFileSystem()) {
-        if (SystemInfo.isWindows && path.charAt(0) != '/') {
-          path = '/' + path;
-        }
-        return new URI(protocol, "", path, null, null);
-      }
-      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
-        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
-      }
-      return new URI(protocol, path, null);
-    }
-    catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-  //</editor-fold>
 }

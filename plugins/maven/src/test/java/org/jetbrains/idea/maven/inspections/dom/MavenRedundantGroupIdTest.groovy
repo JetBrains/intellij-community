@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.idea.maven.dom.MavenDomTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
@@ -32,6 +33,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     myFixture.enableInspections(MavenRedundantGroupIdInspection)
   }
 
+  @Test
   void testHighlighting1() {
     createProjectPom("""
   <groupId>my.group</groupId>
@@ -42,6 +44,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
+  @Test
   void testHighlighting2() {
     createProjectPom("""
   <groupId>childGroupId</groupId>
@@ -58,6 +61,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
+  @Test
   void testHighlighting3() {
     createProjectPom("""
   <warning><groupId>my.group</groupId></warning>
@@ -74,6 +78,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
+  @Test
   void testQuickFix() {
     createProjectPom("""
     <artifactId>childA</artifactId>

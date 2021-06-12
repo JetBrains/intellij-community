@@ -1,16 +1,30 @@
 <html>
 <body>
-Reports on any unnecessary uses of <b>this</b> in the code.
-Using <b>this</b> to
-disambiguate a code reference may easily become unnecessary via automatic refactorings, and is discouraged
-by many coding styles.
-<p>
-For example:
-<pre><code><b>this</b>.a = 3;</code></pre>
+Reports on any unnecessary uses of <code>this</code> in the code.
+Using <code>this</code> to disambiguate a code reference may easily become unnecessary
+via automatic refactorings, and is discouraged by many coding styles.
+<p>Example:</p>
+<pre>
+  class Foo {
+    int x;
+    void foo() {
+      this.x = 2;
+    }
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  class Foo {
+    int x;
+    void foo() {
+      x = 2;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore assignments to fields.
+  Use the checkbox below to ignore assignments to fields.
+  For instance, <code>this.x = 2;</code> won't be reported, but <code>int y = this.x;</code> will.
 <p>
-
 </body>
 </html>

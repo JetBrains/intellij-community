@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
-import com.intellij.openapi.util.text.StringUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Comment
 import org.jsoup.nodes.Node
@@ -29,7 +28,7 @@ internal object IncrementalDOM {
         append(",'")
         append(attribute.key)
         append("','")
-        append(escapeAttributeContent(attribute.value))
+        append(encodeArgument(attribute.value))
         append("'")
       }
       append(");")
@@ -76,7 +75,7 @@ internal object IncrementalDOM {
     // language=JavaScript
     return """
       () => {
-        const o = (tag, ...attrs) => IncrementalDOM.elementOpen(tag, null, null, ...attrs);
+        const o = (tag, ...attrs) => IncrementalDOM.elementOpen(tag, null, null, ...attrs.map(decodeURIComponent));
         const t = content => IncrementalDOM.text(decodeURIComponent(content));
         const c = IncrementalDOM.elementClose;
         ${generateDomBuildCalls(html)}
@@ -88,9 +87,4 @@ internal object IncrementalDOM {
     val document = Jsoup.parse(html)
     return traverse(document.body()).toString()
   }
-
-  private fun escapeTagContent(string: String): String =
-    StringUtil.escapeChars(string, '\\', '`', '$')
-
-  private fun escapeAttributeContent(string: String): String = StringUtil.escapeChar(string, '\'')
 }

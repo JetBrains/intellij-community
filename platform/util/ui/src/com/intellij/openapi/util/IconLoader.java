@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -27,9 +27,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
+import java.lang.invoke.MethodHandles;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -51,13 +51,13 @@ import java.util.function.Supplier;
  */
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance(IconLoader.class);
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
   // the key: URL or Pair(path, classLoader)
-  private static final ConcurrentMap<Object, CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
-  /**
-   * This cache contains mapping between icons and disabled icons.
-   */
-  private static final Cache<Icon, Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
+  private static final ConcurrentMap<@NotNull Object, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
+
+  // contains mapping between icons and disabled icons.
+  private static final Cache<@NotNull Icon, @NotNull Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -87,9 +87,9 @@ public final class IconLoader {
     }
   };
 
-  private static boolean ourIsActivated;
+  private static boolean isActivated = !GraphicsEnvironment.isHeadless();
 
-  private IconLoader() { }
+  private IconLoader() {}
 
   public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
     STRICT_LOCAL.set(true);
@@ -117,8 +117,9 @@ public final class IconLoader {
 
     if (prev != next) {
       iconToDisabledIcon.invalidateAll();
-      //clears svg cache
+      // clear svg cache
       ImageLoader.ImageCache.INSTANCE.clearCache();
+      // iconCache is not cleared because it contain original icon (instance that will delegate to)
     }
   }
 
@@ -148,8 +149,16 @@ public final class IconLoader {
   }
 
   public static void clearCache() {
-    // Copy the transform to trigger update of cached icons
+    // copy the transform to trigger update of cached icons
     updateTransform(IconTransform::copy);
+  }
+
+  @TestOnly
+  public static void clearCacheInTests() {
+    iconCache.clear();
+    iconToDisabledIcon.invalidateAll();
+    ImageLoader.ImageCache.INSTANCE.clearCache();
+    pathTransformGlobalModCount.incrementAndGet();
   }
 
   /**
@@ -171,12 +180,10 @@ public final class IconLoader {
       if (!Character.isLowerCase(path.charAt(0))) {
         fullClassName = (path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.") + fullClassName.replace('.', '$');
       }
-      Class<?> aClass = Class.forName(fullClassName, true, classLoader);
-      Field field = aClass.getField(path.substring(lastDotIndex + 1));
-      field.setAccessible(true);
-      return (Icon)field.get(null);
+      Class<?> aClass = classLoader.loadClass(fullClassName);
+      return (Icon)LOOKUP.findStaticGetter(aClass, path.substring(lastDotIndex + 1), Icon.class).invoke();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       return null;
     }
   }
@@ -291,12 +298,12 @@ public final class IconLoader {
   }
 
   public static void activate() {
-    ourIsActivated = true;
+    isActivated = true;
   }
 
   @TestOnly
   public static void deactivate() {
-    ourIsActivated = false;
+    isActivated = false;
   }
 
   @Nullable
@@ -519,7 +526,7 @@ public final class IconLoader {
    * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
    */
   public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
-    if (!ourIsActivated) {
+    if (!isActivated) {
       return icon;
     }
 
@@ -530,8 +537,9 @@ public final class IconLoader {
       icon = getOrigin((RetrievableIcon)icon);
     }
 
-    return Objects.requireNonNull(iconToDisabledIcon.get(icon,
-           existingIcon -> filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor)));
+    return Objects.requireNonNull(iconToDisabledIcon.get(icon, existingIcon -> {
+      return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
+    }));
   }
 
   /**
@@ -778,7 +786,7 @@ public final class IconLoader {
 
     private @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context) {
       ImageDataLoader resolver = this.resolver;
-      if (resolver == null || !ourIsActivated) {
+      if (resolver == null || !isActivated) {
         return EMPTY_ICON;
       }
 
@@ -1389,7 +1397,7 @@ public final class IconLoader {
     return null;
   }
 
-  private static class LabelHolder {
+  private static final class LabelHolder {
     /**
      * To get disabled icon with paint it into the image. Some icons require
      * not null component to paint.

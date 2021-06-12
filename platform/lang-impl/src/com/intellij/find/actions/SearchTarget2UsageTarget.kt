@@ -47,7 +47,7 @@ class SearchTarget2UsageTarget<O>(
     return object : ItemPresentation {
       override fun getIcon(unused: Boolean): Icon? = presentation.icon
       override fun getPresentableText(): String = presentation.presentableText
-      override fun getLocationString(): String = error("must not be called")
+      override fun getLocationString(): String = presentation.locationText ?: ""
     }
   }
 

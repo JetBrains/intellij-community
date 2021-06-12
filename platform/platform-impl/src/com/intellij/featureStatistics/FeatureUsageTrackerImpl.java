@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -199,6 +200,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     String group = descriptor.getGroupId();
     FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
     FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(FeaturesRegistryListener.TOPIC).featureUsed(descriptor);
   }
 
   @Override

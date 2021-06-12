@@ -5,10 +5,14 @@ import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.TestMethod;
+import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.ui.CommandLinePanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -17,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
@@ -31,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -108,6 +114,22 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     JUnitConfigurable.setupChangeLists(project, myChangeLists);
     setupField(BY_SOURCE_CHANGES, myChangeLists, null, null, null);
     setupField(BY_SOURCE_POSITION, new JLabel(), null, null, null); // empty stub
+    setValidation((configuration) -> {
+      ArrayList<ValidationInfo> infos = new ArrayList<>();
+      TestObject testObject = configuration.getTestObject();
+      JComponent field = myFields[getTestKind()];
+      JComponent component = field instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)field).getChildComponent() : field;
+      if (testObject instanceof TestMethod) {
+        ValidationInfo info = RuntimeConfigurationException.validate(myFields[CLASS], () -> ReadAction.run(() -> ((TestMethod)testObject).checkClass()));
+        infos.add(info);
+        if (!info.message.isEmpty()) {
+          infos.add(new ValidationInfo("", component));
+          return infos;
+        }
+      }
+      infos.add(RuntimeConfigurationException.validate(component, () -> ReadAction.run(() -> testObject.checkConfiguration())));
+      return infos;
+    });
   }
 
   @Override
@@ -180,5 +202,6 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     s.getPersistentData().setTags(myTagsField.getText());
     s.getPersistentData().setChangeList(myChangeLists.getItem());
     myModel.apply(myModuleSelector.getModule(), s);
+    validate(s);
   }
 }

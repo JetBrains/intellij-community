@@ -85,5 +85,5 @@ public interface KeyFMap {
    * @param other {@code KeyFMap} to compare with
    * @return true if other map equals to this map.
    */
-  boolean equalsByReference(KeyFMap other);
+  boolean equalsByReference(@NotNull KeyFMap other);
 }

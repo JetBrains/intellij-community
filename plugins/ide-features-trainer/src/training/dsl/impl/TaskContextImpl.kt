@@ -138,7 +138,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
     if (useBalloon != null) {
       val ui = useBalloon.highlightingComponent ?: runtimeContext.previous.ui as? JComponent ?: return
-      LessonExecutorUtil.showBalloonMessage(text, ui, useBalloon, runtimeContext.actionsRecorder, lessonExecutor.project)
+      LessonExecutorUtil.showBalloonMessage(text,
+                                            ui,
+                                            useBalloon,
+                                            runtimeContext.actionsRecorder,
+                                            lessonExecutor.project,
+                                            lessonExecutor.visualIndexNumber)
     }
   }
 

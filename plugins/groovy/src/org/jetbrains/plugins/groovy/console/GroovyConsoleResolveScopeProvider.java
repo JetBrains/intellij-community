@@ -16,7 +16,7 @@ public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
 
   @Nullable
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
+  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
 
     final Module module = projectConsole.getSelectedModule(file);

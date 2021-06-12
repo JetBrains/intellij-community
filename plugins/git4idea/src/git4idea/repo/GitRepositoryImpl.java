@@ -1,17 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
-import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangesViewI;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.util.StopWatch;
@@ -20,7 +15,6 @@ import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
-import git4idea.commands.Git;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.ApiStatus;
@@ -58,7 +52,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     super(project, rootDir, parentDisposable);
     myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
+    myRepositoryFiles = GitRepositoryFiles.getInstance(rootDir, gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
 
@@ -68,12 +62,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
 
-      myIgnoredRepositoryFilesHolder =
-        new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
-      Disposer.register(this, myIgnoredRepositoryFilesHolder);
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(project));
-      IgnoredToExcludedSynchronizer ignoredToExcludedSynchronizer = project.getService(IgnoredToExcludedSynchronizer.class);
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(ignoredToExcludedSynchronizer);
+      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredFilesHolder(this);
     }
     else {
       myStagingAreaHolder = null;
@@ -117,8 +106,6 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
                                       boolean listenToRepoChanges) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
     if (listenToRepoChanges) {
-      repository.getUntrackedFilesHolder().setupVfsListener(project);
-      repository.getIgnoredFilesHolder().setupListeners();
       repository.setupUpdater();
       GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     }
@@ -128,9 +115,6 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   private void setupUpdater() {
     GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
-    if (myIgnoredRepositoryFilesHolder != null) {
-      myIgnoredRepositoryFilesHolder.startRescan();
-    }
   }
 
   @Deprecated
@@ -259,6 +243,8 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     StopWatch sw = StopWatch.start("Reading Git repo info in " + getShortRepositoryName(this));
     File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(configFile);
+    myRepositoryFiles.updateCustomPaths(config.parseCore());
+
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     boolean isShallow = myReader.hasShallowCommits();
@@ -298,27 +284,5 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
     if (myIgnoredRepositoryFilesHolder == null) throw new UnsupportedOperationException("Unsupported for light Git repository");
     return myIgnoredRepositoryFilesHolder;
-  }
-
-  private static class MyRepositoryIgnoredHolderUpdateListener implements VcsIgnoredHolderUpdateListener {
-    @NotNull private final ChangesViewI myChangesViewI;
-    @NotNull private final Project myProject;
-
-    MyRepositoryIgnoredHolderUpdateListener(@NotNull Project project) {
-      myChangesViewI = ChangesViewManager.getInstance(project);
-      myProject = project;
-    }
-
-    @Override
-    public void updateStarted() {
-      myChangesViewI.scheduleRefresh(); //TODO optimize: remove additional refresh
-    }
-
-    @Override
-    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
-      if(myProject.isDisposed()) return;
-
-      myChangesViewI.scheduleRefresh();
-    }
   }
 }

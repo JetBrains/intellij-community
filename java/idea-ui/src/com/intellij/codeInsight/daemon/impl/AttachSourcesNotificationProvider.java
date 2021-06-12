@@ -82,7 +82,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   public EditorNotificationPanel createNotificationPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
 
     String text = JavaUiBundle.message("class.file.decompiled.text");
     String classInfo = getClassFileInfo(file);

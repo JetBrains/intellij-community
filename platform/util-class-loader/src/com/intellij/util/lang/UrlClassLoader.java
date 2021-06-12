@@ -30,14 +30,13 @@ import java.util.function.Predicate;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
-  protected static final boolean USE_PARALLEL_LOADING = Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
   private final List<Path> files;
   protected final ClassPath classPath;
-  private final ClassLoadingLocks classLoadingLocks;
+  private final ClassLoadingLocks<String> classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
 
   /**
@@ -164,7 +163,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, this, isMimicJarUrlConnectionNeeded);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
-    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
+    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -321,6 +320,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     String canonicalPath = toCanonicalPath(name);
     Resource resource = classPath.findResource(canonicalPath);
     if (resource == null && canonicalPath.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (!canonicalPath.startsWith("/org/bridj/")) {
+        logError("Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
+      }
       resource = classPath.findResource(canonicalPath.substring(1));
     }
     return resource;
@@ -536,12 +539,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
     List<Path> files = Collections.emptyList();
-    Set<Path> pathsWithProtectionDomain;
+    @Nullable Set<Path> pathsWithProtectionDomain;
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache;
     boolean isClassPathIndexEnabled;
-    boolean preloadJarContents = true;
     boolean isBootstrapResourcesAllowed;
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
@@ -632,7 +634,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     public @NotNull UrlClassLoader.Builder noPreload() {
-      preloadJarContents = false;
       return this;
     }
 
@@ -651,9 +652,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     public @NotNull UrlClassLoader.Builder autoAssignUrlsWithProtectionDomain() {
-      Set<Path> result = new HashSet<>();
+      Set<Path> result = null;
       for (Path path : files) {
         if (isUrlNeedsProtectionDomain(path)) {
+          if (result == null) {
+            result = new HashSet<>();
+          }
           result.add(path);
         }
       }

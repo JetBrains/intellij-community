@@ -16,11 +16,12 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlNSTypeDescriptorProvider {
   @Nullable
-  TypeDescriptor getTypeDescriptor(String name, XmlTag context);
+  TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context);
 
   @Nullable
   TypeDescriptor getTypeDescriptor(XmlTag descriptorTag);

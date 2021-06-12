@@ -89,7 +89,7 @@ public class RefreshLogAction extends RefreshAction {
       if (toolWindow != null) {
         String contentDump = StringUtil.join(toolWindow.getContentManager().getContents(), content -> {
           if (content instanceof TabbedContent) {
-            return content.toString() + ", tabs=[" +
+            return content + ", tabs=[" +
                    StringUtil.join(((TabbedContent)content).getTabs(), pair -> pair.first, ", ") + "]";
           }
           return content.toString();

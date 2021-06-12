@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -55,7 +55,7 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   }
 
   override fun writeProjectName(writer: JsonGenerator, projectName: String) {
-    writer.writeStringField("project", safeHashValue(projectName))
+    writer.writeStringField("project", System.getProperty("idea.performanceReport.projectName") ?: safeHashValue(projectName))
   }
 
   override fun writeExtraData(writer: JsonGenerator) {
@@ -106,8 +106,8 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     super.writeItemTimeInfo(item, duration, offset, writer)
   }
 
-  override fun writeTotalDuration(writer: JsonGenerator, totalDuration: Long, end: Long, timeOffset: Long): Long {
-    val totalDurationActual = super.writeTotalDuration(writer, totalDuration, end, timeOffset)
+  override fun writeTotalDuration(writer: JsonGenerator, end: Long, timeOffset: Long): Long {
+    val totalDurationActual = super.writeTotalDuration(writer, end, timeOffset)
     publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
     return totalDurationActual
   }
@@ -157,13 +157,13 @@ private fun writeServiceStats(writer: JsonGenerator) {
 
   val plugins = PluginManagerCore.getLoadedPlugins(null).sortedBy { it.pluginId }
   for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).app.services.size
-    service.project += plugin.project.services.size
-    service.module += plugin.module.services.size
+    service.app += (plugin as IdeaPluginDescriptorImpl).appContainerDescriptor.services?.size ?: 0
+    service.project += plugin.projectContainerDescriptor.services?.size ?: 0
+    service.module += plugin.moduleContainerDescriptor.services?.size ?: 0
 
-    component.app += plugin.app.components?.size ?: 0
-    component.project += plugin.project.components?.size ?: 0
-    component.module += plugin.module.components?.size ?: 0
+    component.app += plugin.appContainerDescriptor.components?.size ?: 0
+    component.project += plugin.projectContainerDescriptor.components?.size ?: 0
+    component.module += plugin.moduleContainerDescriptor.components?.size ?: 0
   }
 
   writer.obj("stats") {

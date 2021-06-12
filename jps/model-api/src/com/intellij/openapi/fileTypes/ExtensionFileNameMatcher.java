@@ -11,6 +11,9 @@ public class ExtensionFileNameMatcher implements FileNameMatcher {
   public ExtensionFileNameMatcher(@NotNull String extension) {
     myExtension = Strings.toLowerCase(extension);
     myDotExtension = "." + myExtension;
+    if (extension.contains("*") || extension.contains("?")) {
+      throw new IllegalArgumentException("extension should not contain regexp but got: '"+extension+"'");
+    }
   }
 
   @Override

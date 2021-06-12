@@ -26,21 +26,25 @@
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getKey()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object next()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object previous()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -64,6 +68,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -163,6 +168,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ArrayIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -415,6 +421,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.FilterListIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -538,6 +545,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ListIteratorWrapper void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -620,6 +628,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ObjectArrayIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

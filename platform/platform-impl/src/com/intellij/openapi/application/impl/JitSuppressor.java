@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
@@ -59,7 +59,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
 
   @Override
   public void componentsInitialized() {
-    if (!SystemProperties.getBooleanProperty("enable.jit.suppressor", false)) {
+    if (!Boolean.getBoolean("enable.jit.suppressor")) {
       return;
     }
 
@@ -76,7 +76,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
 
     if (!"true".equals(System.getProperty(SELF_ATTACH_PROP))) {
       String msg = "JitSuppressor wasn't registered. Please ensure the command line contains -D" + SELF_ATTACH_PROP + "=true";
-      if (ApplicationInfoImpl.isInStressTest()) {
+      if (ApplicationManagerEx.isInStressTest()) {
         LOG.warn(msg + " to get production-like performance");
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {

@@ -13,7 +13,7 @@ import training.lang.LangManager
 import training.util.isLearningProject
 import training.util.trainerPluginConfigName
 
-internal class LearnProjectStateListener : ProjectManagerListener {
+private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
     if (isLearningProject(project, langSupport)) {

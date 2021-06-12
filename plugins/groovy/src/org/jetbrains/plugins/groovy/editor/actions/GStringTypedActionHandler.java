@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,7 @@ public class GStringTypedActionHandler extends TypedHandlerDelegate {
     if (!(file instanceof GroovyFile)) return Result.CONTINUE;
 
     int caret = editor.getCaretModel().getOffset();
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret < 1) return Result.CONTINUE;
 
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ public final class StructuralSearchUtil {
   private static LanguageFileType ourDefaultFileType;
 
   private static boolean ourUseUniversalMatchingAlgorithm;
+  private static Map<String, LanguageFileType> ourNames2FileTypes;
   private static final Map<String, StructuralSearchProfile> cache = new HashMap<>();
 
   private static List<Configuration> ourPredefinedConfigurations;
@@ -40,6 +40,7 @@ public final class StructuralSearchUtil {
     StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
       ourPredefinedConfigurations = null;
       ourDefaultFileType = null;
+      ourNames2FileTypes = null;
       cache.clear();
     }, null);
   }
@@ -57,8 +58,8 @@ public final class StructuralSearchUtil {
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByFileType(@NotNull LanguageFileType fileType) {
-    return getProfileByLanguage(fileType.getLanguage());
+  public static StructuralSearchProfile getProfileByFileType(@Nullable LanguageFileType fileType) {
+    return (fileType == null) ? null : getProfileByLanguage(fileType.getLanguage());
   }
 
   @Nullable
@@ -129,17 +130,31 @@ public final class StructuralSearchUtil {
     return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
   }
 
-  public static LanguageFileType @NotNull [] getSuitableFileTypes() {
-    final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
-    final Set<LanguageFileType> fileTypes = StreamEx.of(types).select(LanguageFileType.class).collect(Collectors.toSet());
+  public static Collection<LanguageFileType> getSuitableFileTypes() {
+    return Collections.unmodifiableCollection(getNames2FileTypes().values());
+  }
+
+  private static @NotNull Map<String, LanguageFileType> getNames2FileTypes() {
+    final Map<String, LanguageFileType> names2FileTypes = ourNames2FileTypes;
+    if (names2FileTypes != null) {
+      return names2FileTypes;
+    }
+
+    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    final Map<String, LanguageFileType> cache = Arrays.stream(fileTypes)
+      .filter(fileType -> fileType instanceof LanguageFileType)
+      .collect(Collectors.toMap(FileType::getName, fileType -> (LanguageFileType)fileType));
     for (Language language : Language.getRegisteredLanguages()) {
       final LanguageFileType fileType = language.getAssociatedFileType();
       if (fileType != null) {
-        fileTypes.add(fileType);
+        cache.put(fileType.getName(), fileType);
       }
     }
+    return ourNames2FileTypes = cache;
+  }
 
-    return fileTypes.toArray(new LanguageFileType[0]);
+  public static LanguageFileType getSuitableFileTypeByName(String name) {
+    return getNames2FileTypes().get(name);
   }
 
   public static boolean containsRegExpMetaChar(String s) {

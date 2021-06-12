@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Thrown to indicate that a configurable component cannot {@link UnnamedConfigurable#apply() apply} entered values.
  */
 public class ConfigurationException extends Exception {
   private @NlsContexts.DialogTitle String myTitle = getDefaultTitle();
-  private Runnable myQuickFix;
+  private ConfigurationQuickFix myQuickFix;
   private Configurable myOriginator;
 
   /**
@@ -65,22 +67,36 @@ public class ConfigurationException extends Exception {
   /**
    * @param quickFix a runnable task that can fix the problem somehow
    */
-  public void setQuickFix(Runnable quickFix) {
+  public void setQuickFix(@Nullable Runnable quickFix) {
+    myQuickFix = quickFix == null ? null : dataContext -> quickFix.run();
+  }
+
+  public void setQuickFix(@Nullable ConfigurationQuickFix quickFix) {
     myQuickFix = quickFix;
   }
 
   /**
    * @return a runnable task that can fix the problem somehow, or {@code null} if it is not set
+   *
+   * @deprecated use {@link #getConfigurationQuickFix()} instead.
    */
+  @Deprecated
+  @Nullable
   public Runnable getQuickFix() {
+    return () -> myQuickFix.applyFix(DataContext.EMPTY_CONTEXT);
+  }
+
+  @Nullable
+  public ConfigurationQuickFix getConfigurationQuickFix() {
     return myQuickFix;
   }
 
+  @Nullable
   public Configurable getOriginator() {
     return myOriginator;
   }
 
-  public void setOriginator(Configurable originator) {
+  public void setOriginator(@Nullable Configurable originator) {
     myOriginator = originator;
   }
 

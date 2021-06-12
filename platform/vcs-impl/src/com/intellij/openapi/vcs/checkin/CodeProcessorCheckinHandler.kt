@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -21,7 +22,7 @@ abstract class CodeProcessorCheckinHandler(
 
   abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
 
-  override suspend fun runCheck(): CommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {

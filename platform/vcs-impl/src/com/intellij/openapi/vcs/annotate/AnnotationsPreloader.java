@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.ide.PowerSaveMode;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -35,7 +36,7 @@ public final class AnnotationsPreloader {
 
   private static boolean isEnabled() {
     // TODO: check cores number?
-    return Registry.is("vcs.annotations.preload") && !PowerSaveMode.isEnabled();
+    return AdvancedSettings.getBoolean("vcs.annotations.preload") && !PowerSaveMode.isEnabled();
   }
 
   private void schedulePreloading(@NotNull final VirtualFile file) {

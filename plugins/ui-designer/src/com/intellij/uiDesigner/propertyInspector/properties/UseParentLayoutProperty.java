@@ -1,19 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-/**
- * @author yole
- */
+
 public class UseParentLayoutProperty extends AbstractBooleanProperty<RadComponent> {
   public static UseParentLayoutProperty getInstance(Project project) {
-    return ServiceManager.getService(project, UseParentLayoutProperty.class);
+    return project.getService(UseParentLayoutProperty.class);
   }
 
   public UseParentLayoutProperty() {

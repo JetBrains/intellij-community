@@ -123,8 +123,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
       }
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      val project = e.project ?: return false
-      return ReaderModeSettings.instance(project).enabled
+      return true
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {

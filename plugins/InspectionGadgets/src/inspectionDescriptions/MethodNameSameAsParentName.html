@@ -1,7 +1,20 @@
 <html>
 <body>
 Reports methods being named identically to the superclass of the method's class.
-Such a method name may be confusing.
+Such a method name may be confusing. 
+This inspection doesn't consider interfaces or superclasses deep in the hierarchy. 
+<p><b>Example:</b>
+  <pre>
+  <code>
+    class Parent {}
+    class Child extends Parent {
+       public Parent Parent() {
+         return null;
+       }    
+    }
+  </code>
+</pre>
+<p>Quick-fix to rename the method is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,10 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
       setupEmptyText(project, emptyText);
       ((ToolWindowImpl) toolWindow).setEmptyStateBackground(JBColor.background());
     }
-    ContentManagerImpl manager = (ContentManagerImpl) toolWindow.getContentManager();
-    manager.rebuildContentUi();
+    ContentManager manager = toolWindow.getContentManager();
+    if (manager instanceof ContentManagerImpl) {
+      ((ContentManagerImpl) manager).rebuildContentUi();
+    }
     toolWindow.show();
     toolWindow.activate(null, true);
   }

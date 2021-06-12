@@ -2,24 +2,40 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FileContentUtilCore;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 /**
  * @author Rustam Vishnyakov
+ * @deprecated use {@link OverrideFileTypeManager} instead
  */
+@Deprecated
 @State(name = "ProjectPlainTextFileTypeManager")
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {
     return project.getService(ProjectPlainTextFileTypeManager.class);
   }
 
+  /**
+  * @deprecated use {@link OverrideFileTypeManager#getFiles()} instead
+  */
+  @Deprecated
   @Override
-  protected void onFileSettingsChanged(@NotNull Collection<VirtualFile> files) {
-    FileContentUtilCore.reparseFiles(files);
+  @NotNull
+  public Collection<VirtualFile> getFiles() {
+    return OverrideFileTypeManager.getInstance().getFiles();
+  }
+
+  @Override
+  public void loadState(@NotNull Element state) {
+    super.loadState(state);
+    for (VirtualFile file : super.getFiles()) {
+      OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
+    }
   }
 }

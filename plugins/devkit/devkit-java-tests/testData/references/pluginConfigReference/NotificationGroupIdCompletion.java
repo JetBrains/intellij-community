@@ -3,6 +3,6 @@ import com.intellij.notification.NotificationType;
 
 public class NotificationGroupIdCompletion {
   public static void main(String[] args) {
-    new Notification("<caret>", null, NotificationType.INFORMATION);
+    new Notification("<caret>", "Content", NotificationType.INFORMATION);
   }
 }

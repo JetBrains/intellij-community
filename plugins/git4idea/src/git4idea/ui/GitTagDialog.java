@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static git4idea.GitNotificationIdsHolder.TAG_NOT_CREATED;
 import static git4idea.GitNotificationIdsHolder.TAG_CREATED;
+import static git4idea.GitNotificationIdsHolder.TAG_NOT_CREATED;
 
 public class GitTagDialog extends DialogWrapper {
 

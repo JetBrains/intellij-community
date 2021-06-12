@@ -7,9 +7,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import org.junit.Test
 
-class AddFileAsMavenProjectActionTest : MavenImportingTestCase() {
+class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
+  @Test
   fun testFilesSavedOnAction() {
     val projectPom = createProjectPom("<groupId>test</groupId>" +
                                             "<artifactId>project</artifactId>" +

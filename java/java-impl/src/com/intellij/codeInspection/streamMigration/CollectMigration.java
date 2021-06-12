@@ -10,11 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -24,11 +26,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
@@ -38,10 +43,10 @@ class CollectMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 
   static final Map<String, String> INTERMEDIATE_STEPS = EntryStream.of(
-    CommonClassNames.JAVA_UTIL_ARRAY_LIST, "",
-    CommonClassNames.JAVA_UTIL_LINKED_LIST, "",
-    CommonClassNames.JAVA_UTIL_HASH_SET, ".distinct()",
-    CommonClassNames.JAVA_UTIL_LINKED_HASH_SET, ".distinct()",
+    JAVA_UTIL_ARRAY_LIST, "",
+    JAVA_UTIL_LINKED_LIST, "",
+    JAVA_UTIL_HASH_SET, ".distinct()",
+    JAVA_UTIL_LINKED_HASH_SET, ".distinct()",
     "java.util.TreeSet", ".distinct().sorted()"
   ).toMap();
 
@@ -89,8 +94,8 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiClass varClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
     return initializerClass != null &&
            varClass != null &&
-           CommonClassNames.JAVA_UTIL_HASH_MAP.equals(initializerClass.getQualifiedName()) &&
-           CommonClassNames.JAVA_UTIL_MAP.equals(varClass.getQualifiedName()) &&
+           JAVA_UTIL_HASH_MAP.equals(initializerClass.getQualifiedName()) &&
+           JAVA_UTIL_MAP.equals(varClass.getQualifiedName()) &&
            !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer);
   }
 
@@ -186,7 +191,8 @@ class CollectMigration extends BaseStreamApiMigration {
       List<PsiElement> usedElements = usedElements().toList();
       PsiElement block = PsiUtil.getVariableCodeBlock(myTargetVariable, null);
       return StreamEx.of(VariableAccessUtils.getVariableReferences(myTargetVariable, block))
-        .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
+        .filter(ref -> !ContainerUtil
+          .exists(usedElements, allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
     }
 
     boolean isTargetReference(PsiExpression expression) {
@@ -284,7 +290,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Nullable
     static AddingTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
-      if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
+      if (!isCallOf(call, JAVA_UTIL_COLLECTION, "add")) return null;
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       if (qualifierExpression == null) return null;
       PsiExpression count = tb.getCountExpression();
@@ -295,7 +301,7 @@ class CollectMigration extends BaseStreamApiMigration {
         if (count == null) return terminal;
         // like "list.add(x); if(list.size() >= limit) break;"
         if (CollectionUtils.isCollectionOrMapSize(count, qualifierExpression) &&
-            InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(variable.getType()), CommonClassNames.JAVA_UTIL_LIST)) {
+            InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(variable.getType()), JAVA_UTIL_LIST)) {
           return terminal;
         }
       }
@@ -310,14 +316,14 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
     PsiClassType rawVarType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
     if (!strictMode && rawType != null && rawVarType != null &&
-        rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
-        (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+        rawType.equalsToText(JAVA_UTIL_ARRAY_LIST) &&
+        (rawVarType.equalsToText(JAVA_UTIL_LIST) || rawVarType.equalsToText(JAVA_UTIL_COLLECTION)) &&
         !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toList()";
     }
     else if (!strictMode && rawType != null && rawVarType != null &&
-             rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
-             (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+             rawType.equalsToText(JAVA_UTIL_HASH_SET) &&
+             (rawVarType.equalsToText(JAVA_UTIL_SET) || rawVarType.equalsToText(JAVA_UTIL_COLLECTION)) &&
              !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toSet()";
     }
@@ -335,10 +341,14 @@ class CollectMigration extends BaseStreamApiMigration {
       }
       collector = "toCollection(() -> " + copy.getText() + ")";
     }
-    return CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + collector;
+    return JAVA_UTIL_STREAM_COLLECTORS + "." + collector;
   }
 
   static class AddingAllTerminal extends AddingTerminal {
+    public static final CallMatcher COLLECTIONS_ADD_ALL =
+      CallMatcher.staticCall(JAVA_UTIL_COLLECTIONS, "addAll").parameterTypes(JAVA_UTIL_COLLECTION, "T...");
+    public static final CallMatcher COLLECTION_ADD_ALL =
+      CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "addAll").parameterTypes(JAVA_UTIL_COLLECTION);
     private final PsiMethodCallExpression myAddAllCall;
 
     AddingAllTerminal(PsiLocalVariable target,
@@ -352,32 +362,67 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Override
     public String generateIntermediate(CommentTracker ct) {
-      PsiType[] typeParameters = myAddAllCall.getMethodExpression().getTypeParameters();
-      String generic = "";
-      if(typeParameters.length == 1) {
-        generic = "<"+typeParameters[0].getCanonicalText()+">";
+      String nestedStreamSource;
+      if (COLLECTION_ADD_ALL.test(myAddAllCall)) {
+        // result.addAll(c)
+        PsiExpression collection = myAddAllCall.getArgumentList().getExpressions()[0];
+        if (myElement.getType() instanceof PsiPrimitiveType) {
+          String collectionVariableName = new VariableNameGenerator(myAddAllCall, VariableKind.PARAMETER)
+            .byExpression(collection)
+            .byName("c", "col")
+            .generate(true);
+          return ".mapToObj(" + myElement.getName() + "->" + collection.getText() + ")" +
+                 ".flatMap(" + collectionVariableName + "->" + collectionVariableName + ".stream())";
+        } else {
+          nestedStreamSource = ParenthesesUtils.getText(
+            collection, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()";
+          String lambda = myElement.getName() + "->" + nestedStreamSource;
+          return ".flatMap(" + lambda + ")";
+        }
       }
-      String method = MethodCallUtils.isVarArgCall(myAddAllCall) ? CommonClassNames.JAVA_UTIL_STREAM_STREAM + "." + generic + "of"
-                                                                 : CommonClassNames.JAVA_UTIL_ARRAYS + "." + generic + "stream";
-      String lambda = myElement.getName() + "->" + method + "(" +
-                      StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(ct::text).joining(",") + ")";
-      return myElement.getType() instanceof PsiPrimitiveType ?
-             ".mapToObj(" + lambda + ").flatMap("+ CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION+".identity())" :
-             ".flatMap(" + lambda + ")";
+      else {// Collections.addAll(result, ...)
+        PsiType[] typeParameters = myAddAllCall.getMethodExpression().getTypeParameters();
+        String generic = "";
+        if (typeParameters.length == 1) {
+          generic = "<" + typeParameters[0].getCanonicalText() + ">";
+        }
+        String method = MethodCallUtils.isVarArgCall(myAddAllCall) ? JAVA_UTIL_STREAM_STREAM + "." + generic + "of"
+                                                                   : JAVA_UTIL_ARRAYS + "." + generic + "stream";
+        nestedStreamSource = StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(ct::text)
+          .joining(",", method + "(", ")");
+        String lambda = myElement.getName() + "->" + nestedStreamSource;
+        return myElement.getType() instanceof PsiPrimitiveType ?
+               ".mapToObj(" + lambda + ").flatMap(" + JAVA_UTIL_FUNCTION_FUNCTION + ".identity())" :
+               ".flatMap(" + lambda + ")";
+      }
     }
 
     @Nullable
     static AddingAllTerminal tryExtractAddAll(TerminalBlock tb, PsiMethodCallExpression call) {
-      if(tb.getCountExpression() != null ||
-         !MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "addAll", 2)) {
-        return null;
+      if (tb.getCountExpression() != null) return null;
+      if (COLLECTIONS_ADD_ALL.test(call)) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length < 2) return null;
+        return createAddAll(tb, call, args[0]);
       }
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if(args.length < 2) return null;
-      PsiReferenceExpression collectionReference = tryCast(args[0], PsiReferenceExpression.class);
+      if (COLLECTION_ADD_ALL.test(call)) {
+        return createAddAll(tb, call, call.getMethodExpression().getQualifierExpression());
+      }
+
+      return null;
+    }
+
+    private static @Nullable AddingAllTerminal createAddAll(TerminalBlock tb,
+                                                            PsiMethodCallExpression call,
+                                                            PsiExpression targetExpr) {
+      PsiReferenceExpression collectionReference = tryCast(PsiUtil.skipParenthesizedExprDown(targetExpr), PsiReferenceExpression.class);
       if (collectionReference == null || tb.dependsOn(collectionReference)) return null;
       PsiLocalVariable target = tryCast(collectionReference.resolve(), PsiLocalVariable.class);
-      if (target == null || StreamEx.of(args).skip(1).anyMatch(arg -> VariableAccessUtils.variableIsUsed(target, arg))) return null;
+      if (target == null) return null;
+      if (ContainerUtil.or(call.getArgumentList().getExpressions(), 
+                           arg -> arg != targetExpr && VariableAccessUtils.variableIsUsed(target, arg))) {
+        return null;
+      }
       InitializerUsageStatus status = getInitializerUsageStatus(target, tb.getStreamSourceStatement());
       return new AddingAllTerminal(target, tb.getVariable(), call, tb.getStreamSourceStatement(), status);
     }
@@ -385,8 +430,8 @@ class CollectMigration extends BaseStreamApiMigration {
 
   static class GroupingTerminal extends CollectTerminal {
 
-    private final static CallMatcher LIST_ADD = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "add").parameterCount(1);
-    private final static CallMatcher COMPUTE_IF_ABSENT = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent").parameterCount(2);
+    private final static CallMatcher LIST_ADD = CallMatcher.instanceCall(JAVA_UTIL_LIST, "add").parameterCount(1);
+    private final static CallMatcher COMPUTE_IF_ABSENT = CallMatcher.instanceCall(JAVA_UTIL_MAP, "computeIfAbsent").parameterCount(2);
 
     private final AddingTerminal myDownstream;
     private final PsiExpression myKeyExpression;
@@ -415,12 +460,12 @@ class CollectMigration extends BaseStreamApiMigration {
       String downstreamCollector = myDownstream.generateCollector(ct, strictMode);
       PsiVariable elementVariable = myDownstream.getElementVariable();
       if (!ExpressionUtils.isReferenceTo(myDownstream.getMapping(), myDownstream.getElementVariable())) {
-        downstreamCollector = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".mapping(" +
+        downstreamCollector = JAVA_UTIL_STREAM_COLLECTORS + ".mapping(" +
                               myDownstream.getElementVariable().getName() + "->" + ct.text(myDownstream.getMapping()) + "," +
                               downstreamCollector + ")";
       }
       StringBuilder builder = new StringBuilder();
-      builder.append(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".groupingBy(")
+      builder.append(".collect(" + JAVA_UTIL_STREAM_COLLECTORS + ".groupingBy(")
         .append(ct.lambdaText(elementVariable, myKeyExpression));
       PsiLocalVariable variable = Objects.requireNonNull(getTargetVariable());
       PsiExpression initializer = variable.getInitializer();
@@ -428,7 +473,7 @@ class CollectMigration extends BaseStreamApiMigration {
       if (!isHashMap(variable)) {
         builder.append(",()->").append(ct.text(initializer)).append(",").append(downstreamCollector);
       }
-      else if (!(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + "toList()").equals(downstreamCollector)) {
+      else if (!(JAVA_UTIL_STREAM_COLLECTORS + "." + "toList()").equals(downstreamCollector)) {
         builder.append(",").append(downstreamCollector);
       }
       builder.append("))");
@@ -482,7 +527,7 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiLocalVariable listVar = tryCast(valueReference.resolve(), PsiLocalVariable.class);
       if (nonFinalVariables != null && !nonFinalVariables.get(0).equals(listVar) ||
           listVar == null ||
-          !InheritanceUtil.isInheritor(listVar.getType(), CommonClassNames.JAVA_UTIL_LIST)) {
+          !InheritanceUtil.isInheritor(listVar.getType(), JAVA_UTIL_LIST)) {
         return null;
       }
       PsiLocalVariable mapVariable = ExpressionUtils.resolveLocalVariable(condition.getMapExpression());
@@ -556,7 +601,7 @@ class CollectMigration extends BaseStreamApiMigration {
         PsiLocalVariable variable = extractQualifierVariable(tb, computeIfAbsentCall);
         if (hasLambdaCompatibleEmptyInitializer(variable)) {
           PsiType mapType = variable.getType();
-          PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+          PsiType valueType = PsiUtil.substituteTypeParameter(mapType, JAVA_UTIL_MAP, 1, false);
           if (valueType == null) return null;
           AddingTerminal adding = new AddingTerminal(valueType, body, tb.getVariable(), addCall);
           InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
@@ -615,7 +660,7 @@ class CollectMigration extends BaseStreamApiMigration {
         default:
           return null;
       }
-      StringBuilder collector = new StringBuilder(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + collectorName + "(");
+      StringBuilder collector = new StringBuilder(".collect(" + JAVA_UTIL_STREAM_COLLECTORS + "." + collectorName + "(");
       collector.append(ct.lambdaText(myElementVariable, args[0])).append(',')
         .append(ct.lambdaText(myElementVariable, args[1])).append(',')
         .append(merger);
@@ -632,7 +677,7 @@ class CollectMigration extends BaseStreamApiMigration {
     @Nullable
     static ToMapTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
       if (tb.getCountExpression() != null ||
-          !isCallOf(call, CommonClassNames.JAVA_UTIL_MAP, "merge", "put", "putIfAbsent")) {
+          !isCallOf(call, JAVA_UTIL_MAP, "merge", "put", "putIfAbsent")) {
         return null;
       }
       PsiLocalVariable variable = extractQualifierVariable(tb, call);
@@ -700,8 +745,8 @@ class CollectMigration extends BaseStreamApiMigration {
       if (containingClass == null) return null;
       PsiExpression containerExpression = null;
       PsiExpression comparatorExpression = null;
-      if (CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName()) ||
-          CommonClassNames.JAVA_UTIL_ARRAYS.equals(containingClass.getQualifiedName())) {
+      if (JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName()) ||
+          JAVA_UTIL_ARRAYS.equals(containingClass.getQualifiedName())) {
         PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length == 1) {
           containerExpression = args[0];
@@ -714,7 +759,7 @@ class CollectMigration extends BaseStreamApiMigration {
           return null;
         }
       }
-      else if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_LIST)) {
+      else if (InheritanceUtil.isInheritor(containingClass, JAVA_UTIL_LIST)) {
         containerExpression = methodExpression.getQualifierExpression();
         PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length != 1) return null;
@@ -880,10 +925,10 @@ class CollectMigration extends BaseStreamApiMigration {
       if (candidate == null) return null;
       if (!(candidate.myCandidate instanceof PsiCallExpression)) return null;
       PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(candidate.myCandidate.getType());
-      if (!InheritanceUtil.isInheritor(targetClass, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
+      if (!InheritanceUtil.isInheritor(targetClass, JAVA_UTIL_COLLECTION)) return null;
       PsiCallExpression callExpression = (PsiCallExpression)candidate.myCandidate;
       if (!ConstructionUtils.isPrepopulatedCollectionInitializer(callExpression)) return null;
-      if (CommonClassNames.JAVA_UTIL_HASH_SET.equals(targetClass.getQualifiedName()) && intermediateSteps.equals(".distinct()")) {
+      if (JAVA_UTIL_HASH_SET.equals(targetClass.getQualifiedName()) && intermediateSteps.equals(".distinct()")) {
         intermediateSteps = "";
       }
       PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -896,22 +941,22 @@ class CollectMigration extends BaseStreamApiMigration {
 
   static class UnmodifiableTerminal extends RecreateTerminal {
     private static final Map<String, String> TYPE_TO_UNMODIFIABLE_WRAPPER = EntryStream.of(
-      CommonClassNames.JAVA_UTIL_ARRAY_LIST, "toUnmodifiableList",
-      CommonClassNames.JAVA_UTIL_LINKED_LIST, "toUnmodifiableList",
-      CommonClassNames.JAVA_UTIL_HASH_SET, "toUnmodifiableSet",
-      CommonClassNames.JAVA_UTIL_HASH_MAP, "toUnmodifiableMap"
+      JAVA_UTIL_ARRAY_LIST, "toUnmodifiableList",
+      JAVA_UTIL_LINKED_LIST, "toUnmodifiableList",
+      JAVA_UTIL_HASH_SET, "toUnmodifiableSet",
+      JAVA_UTIL_HASH_MAP, "toUnmodifiableMap"
     ).toMap();
 
     private static final CallMatcher UNMODIFIABLE_WRAPPER = CallMatcher.staticCall(
-      CommonClassNames.JAVA_UTIL_COLLECTIONS,
+      JAVA_UTIL_COLLECTIONS,
       "unmodifiableList", "unmodifiableSet", "unmodifiableCollection", "unmodifiableMap").parameterCount(1);
 
     private static final CallMatcher STREAM_COLLECT =
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+      CallMatcher.instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
     private static final CallMatcher TO_LIST =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
+      CallMatcher.staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
     private static final CallMatcher TO_SET =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet").parameterCount(0);
+      CallMatcher.staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toSet").parameterCount(0);
 
     private final String myUnmodifiableCollector;
 
@@ -928,7 +973,7 @@ class CollectMigration extends BaseStreamApiMigration {
       if (myUpstream instanceof ToMapTerminal) {
         return ((ToMapTerminal)myUpstream).generateTerminal(ct, myUnmodifiableCollector);
       }
-      return ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + myUnmodifiableCollector + "())";
+      return ".collect(" + JAVA_UTIL_STREAM_COLLECTORS + "." + myUnmodifiableCollector + "())";
     }
 
     @Override

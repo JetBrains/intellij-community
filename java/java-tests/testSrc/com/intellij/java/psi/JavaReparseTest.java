@@ -71,8 +71,8 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     insert(",");
     PsiFile file1 = myDummyFile;
     prepareFile(text1, text2);
-    assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), false),
-                 DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), false));
+    assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), true),
+                 DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), true));
   }
 
 
@@ -237,12 +237,12 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     String text = "/** .../ */";
     final int offset = text.indexOf("...");
     myDummyFile = createDummyFile(getName() + ".java", text);
-    String treeBefore = DebugUtil.psiTreeToString(myDummyFile, true);
+    String treeBefore = DebugUtil.psiTreeToString(myDummyFile, false);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 3, "*");
       BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 1, "...");
     });
-    String treeAfter = DebugUtil.psiTreeToString(myDummyFile, true);
+    String treeAfter = DebugUtil.psiTreeToString(myDummyFile, false);
     assertEquals(treeBefore, treeAfter);
   }
 

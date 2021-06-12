@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public class Junit4ConverterInspection extends BaseInspection {
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     if (PsiUtil.isLanguageLevel5OrHigher(file)) return true;
     return super.shouldInspect(file);
   }

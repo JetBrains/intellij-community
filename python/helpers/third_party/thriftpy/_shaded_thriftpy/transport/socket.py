@@ -99,26 +99,33 @@ class TSocket(object):
                 self.sock.settimeout(self.socket_timeout)
 
         except (socket.error, OSError):
+            self.close()
             raise TTransportException(
                 type=TTransportException.NOT_OPEN,
                 message="Could not connect to %s" % str(addr))
 
     def read(self, sz):
-        try:
-            buff = self.sock.recv(sz)
-        except socket.error as e:
-            if (e.args[0] == errno.ECONNRESET and
-                    (sys.platform == 'darwin' or
-                     sys.platform.startswith('freebsd'))):
-                # freebsd and Mach don't follow POSIX semantic of recv
-                # and fail with ECONNRESET if peer performed shutdown.
-                # See corresponding comment and code in TSocket::read()
-                # in lib/cpp/src/transport/TSocket.cpp.
-                self.close()
-                # Trigger the check to raise the END_OF_FILE exception below.
-                buff = ''
+        while True:
+            try:
+                buff = self.sock.recv(sz)
+            except socket.error as e:
+                if e.errno == errno.EINTR:
+                    continue
+                if (e.args[0] == errno.ECONNRESET and
+                        (sys.platform == 'darwin' or
+                         sys.platform.startswith('freebsd'))):
+                    # freebsd and Mach don't follow POSIX semantic of recv
+                    # and fail with ECONNRESET if peer performed shutdown.
+                    # See corresponding comment and code in TSocket::read()
+                    # in lib/cpp/src/transport/TSocket.cpp.
+                    self.close()
+                    # Trigger the check to raise the END_OF_FILE exception.
+                    buff = ''
+                    break
+                else:
+                    raise
             else:
-                raise
+                break
 
         if len(buff) == 0:
             raise TTransportException(type=TTransportException.END_OF_FILE,
@@ -140,6 +147,7 @@ class TSocket(object):
             self.sock.close()
         except (socket.error, OSError):
             pass
+        self.sock = None
 
 
 class TServerSocket(object):
@@ -190,7 +198,13 @@ class TServerSocket(object):
 
         _sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(socket, "SO_REUSEPORT"):
-            _sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            try:
+                _sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            except socket.error as err:
+                if err[0] in (errno.ENOPROTOOPT, errno.EINVAL):
+                    pass
+                else:
+                    raise
         _sock.settimeout(None)
         self.sock = _sock
 
@@ -203,7 +217,8 @@ class TServerSocket(object):
 
     def accept(self):
         client, _ = self.sock.accept()
-        client.settimeout(self.client_timeout)
+        if self.client_timeout:
+            client.settimeout(self.client_timeout)
         return TSocket(sock=client)
 
     def close(self):

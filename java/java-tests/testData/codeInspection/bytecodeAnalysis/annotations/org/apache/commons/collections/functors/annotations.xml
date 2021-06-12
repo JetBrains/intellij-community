@@ -436,26 +436,17 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.functors.FunctorUtils void validate(org.apache.commons.collections.Closure[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils void validate(org.apache.commons.collections.Predicate[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.functors.FunctorUtils void validate(org.apache.commons.collections.Predicate[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils void validate(org.apache.commons.collections.Transformer[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.functors.FunctorUtils void validate(org.apache.commons.collections.Transformer[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.IdentityPredicate IdentityPredicate(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>

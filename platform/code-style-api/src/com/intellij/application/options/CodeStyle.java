@@ -18,6 +18,8 @@ import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -85,11 +87,6 @@ public final class CodeStyle {
     CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     if (tempSettings != null) {
       return tempSettings;
-    }
-
-    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
-    if (result != null) {
-      return result;
     }
 
     PsiFile settingsFile = getSettingsPsi(file);
@@ -513,4 +510,16 @@ public final class CodeStyle {
     return new DefaultCodeStyleSettingsFacade(getSettings(project), fileType);
   }
 
+  /**
+   * Finds a language at the specified offset and common language settings for it.
+   *
+   * @param editor The current editor.
+   * @param offset The offset to find the language at.
+   * @return
+   */
+  public static CommonCodeStyleSettings getLocalLanguageSettings(Editor editor, int offset) {
+    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, offset);
+    return getLanguageSettings(psiFile, language);
+  }
 }

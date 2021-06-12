@@ -15,28 +15,50 @@
  */
 package com.intellij.internal.validation;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
+import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Random;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class TestMacMessagesAction extends AnAction {
   static int num = 1;
+  static String TITLE = "Title";
+  static String MESSAGE = "Message";
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    new DialogWrapper(e.getProject()) {
+    final Project project = e.getProject();
+
+    new DialogWrapper(project) {
       {
         setSize(500, 500);
         setTitle("Dialog 1");
@@ -47,15 +69,54 @@ public class TestMacMessagesAction extends AnAction {
       protected JComponent createCenterPanel() {
         JPanel panel = new JPanel(new VerticalLayout(5));
 
+        JLabel titleLabel = new JLabel("Title:");
+        JTextField titleField = new JTextField(TITLE);
+        Insets insets = titleField.getBorder().getBorderInsets(titleField);
+        titleField.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
+            TITLE = titleField.getText();
+          }
+        });
+        titleLabel.setLabelFor(titleField);
+
+        JPanel titlePanel = new BorderLayoutPanel(5, 5);
+        titlePanel.add(titleLabel, BorderLayout.WEST);
+        titlePanel.add(titleField, BorderLayout.CENTER);
+        panel.add(titlePanel);
+
+        JLabel messageLabel = new JLabel("Message:");
+        JTextArea messageArea = new JTextArea(MESSAGE, 3, 30);
+        messageArea.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
+            MESSAGE = messageArea.getText();
+          }
+        });
+        messageLabel.setLabelFor(messageArea);
+
+        JPanel messagePanel = new BorderLayoutPanel(5, 5);
+        messagePanel.add(messageLabel, BorderLayout.WEST);
+        JBScrollPane scrollPane = new JBScrollPane(messageArea);
+        scrollPane.setBorder(new CompoundBorder(new LineBorder(UIUtil.getPanelBackground(), insets.top), scrollPane.getBorder()));
+        messagePanel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(messagePanel);
+
         JButton yesNoCancel = new JButton("Show YesNoCancel Alert");
         yesNoCancel.addActionListener(event -> {
-          System.out.println(Messages.showYesNoCancelDialog("Message", "Title", "YesText", "NoText", "CancelText", null));
+          System.out.println(Messages.showYesNoCancelDialog(MESSAGE, TITLE, "YesText", "NoText", "CancelText", null));
         });
         panel.add(yesNoCancel);
 
-        JButton yesNo = new JButton("Show YesNo Alert");
-        yesNo.addActionListener(event -> {
-          Messages.showYesNoDialog(null, "Message", "Title", Messages.getQuestionIcon(), new DoNotAskOption() {
+        JButton yesNo1 = new JButton("Show YesNo Alert");
+        yesNo1.addActionListener(event -> {
+          Messages.showYesNoDialog((Project)null, MESSAGE, TITLE, Messages.getQuestionIcon());
+        });
+        panel.add(yesNo1);
+
+        JButton yesNo2 = new JButton("Show YesNo Alert with DoNotAsk");
+        yesNo2.addActionListener(event -> {
+          Messages.showYesNoDialog(null, MESSAGE, TITLE, Messages.getQuestionIcon(), new DoNotAskOption() {
             @Override
             public boolean isToBeShown() {
               return false;
@@ -81,17 +142,17 @@ public class TestMacMessagesAction extends AnAction {
             }
           });
         });
-        panel.add(yesNo);
+        panel.add(yesNo2);
 
         JButton ok = new JButton("Show Ok Alert");
         ok.addActionListener(event -> {
-          Messages.showInfoMessage("Message", "Title");
+          Messages.showInfoMessage(ok, MESSAGE, TITLE);
         });
         panel.add(ok);
 
         JButton error = new JButton("Show Error Alert");
         error.addActionListener(event -> {
-          Messages.showErrorDialog((Project)null, "Message", "Title");
+          Messages.showErrorDialog((Project)null, MESSAGE, TITLE);
         });
         panel.add(error);
 
@@ -101,7 +162,7 @@ public class TestMacMessagesAction extends AnAction {
         alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Cancel"});
 
         JButton dialogAlert = new JButton("Dialog -> YesNo Alert");
-        dialogAlert.addActionListener(event -> new DialogWrapper(e.getProject()) {
+        dialogAlert.addActionListener(event -> new DialogWrapper(project) {
           {
             setSize(400, 400);
             setTitle("Dialog 2");
@@ -115,7 +176,8 @@ public class TestMacMessagesAction extends AnAction {
             b.addActionListener(new ActionListener() {
               @Override
               public void actionPerformed(ActionEvent e1) {
-                Messages.showYesNoDialog(b, "Message", "Title", Messages.getQuestionIcon());
+                getWindow().setVisible(false);
+                Messages.showYesNoDialog(b, MESSAGE, TITLE, Messages.getQuestionIcon());
               }
             });
             return b;
@@ -125,7 +187,7 @@ public class TestMacMessagesAction extends AnAction {
 
 
         JButton changeTitleDialog = new JButton("Dialog(dynamic title) -> Alert");
-        changeTitleDialog.addActionListener(event -> new DialogWrapper(e.getProject()) {
+        changeTitleDialog.addActionListener(event -> new DialogWrapper(project) {
           {
             setSize(400, 400);
             setTitle("Dialog [0]");
@@ -150,7 +212,7 @@ public class TestMacMessagesAction extends AnAction {
                   }
                 }, "");
                 thread.start();
-                Messages.showYesNoDialog(b, "Message", "Title", Messages.getQuestionIcon());
+                Messages.showYesNoDialog(b, MESSAGE, TITLE, Messages.getQuestionIcon());
                 if (thread.isAlive()) {
                   thread.interrupt();
                 }
@@ -170,7 +232,7 @@ public class TestMacMessagesAction extends AnAction {
             catch (InterruptedException ignore) {
             }
             SwingUtilities.invokeLater(() -> {
-              DialogWrapper dialog = new DialogWrapper(e.getProject()) {
+              DialogWrapper dialog = new DialogWrapper(project) {
                 {
                   setSize(400, 400);
                   setTitle("Dialog");
@@ -186,7 +248,7 @@ public class TestMacMessagesAction extends AnAction {
               dialog.show();
             });
           }, "").start();
-          Messages.showYesNoDialog(secondDialog, "Message", "Title", Messages.getQuestionIcon());
+          Messages.showYesNoDialog(secondDialog, MESSAGE, TITLE, Messages.getQuestionIcon());
         });
         panel.add(secondDialog);
 
@@ -200,17 +262,100 @@ public class TestMacMessagesAction extends AnAction {
             }
             SwingUtilities.invokeLater(() -> Messages.showInfoMessage("Message", "Title"));
           }, "").start();
-          Messages.showYesNoDialog(secondAlert, "Message", "Title", Messages.getQuestionIcon());
+          Messages.showYesNoDialog(secondAlert, MESSAGE, TITLE, Messages.getQuestionIcon());
         });
         panel.add(secondAlert);
 
         JButton html = new JButton("Show Alert with HTML content");
         html.addActionListener(event -> {
-          Messages.showInfoMessage(
+          Messages.showDialog(
             "<html>Message <a>Message</a> Message<br>Test <b>Test</b> Test<br>&nbsp;&nbsp;&nbsp;Foo &lt;&gt;&amp;&#39;&quot; Foo</html>",
-            "Title");
+            "<html>Title <b>AA</b></html>", new String[]{"Y&es", "<html>ZZZZ</html>", "Cancel"}, 0, null, new DoNotAskOption() {
+              @Override
+              public boolean isToBeShown() {
+                return false;
+              }
+
+              @Override
+              public void setToBeShown(boolean toBeShown, int exitCode) {
+              }
+
+              @Override
+              public boolean canBeHidden() {
+                return true;
+              }
+
+              @Override
+              public boolean shouldSaveOptionsOnCancel() {
+                return false;
+              }
+
+              @Override
+              public @NotNull String getDoNotShowMessage() {
+                return "<html>Delete branch:</br>EE-F1-0A</html>";
+              }
+            });
         });
         panel.add(html);
+
+        JButton decompiler = new JButton("Decompiler");
+        decompiler.addActionListener(event -> {
+          System.out.println(Messages.showDialog(decompiler,
+                                                 "IMPORTANT: BY ACCESSING AND USING JETBRAINS DECOMPILER, YOU AGREE TO THE CERTAIN TERMS AND CONDITIONS SET FORTH IN THE END-USER LICENSE AGREEMENT AND QUOTED BELOW. IF YOU DO NOT AGREE WITH THESE TERMS OR CONDITIONS, DO NOT ACCESS OR USE JETBRAINS DECOMPILER. The Software includes decompiling functionality (\"\"JetBrains Decompiler\"\") that enables reproducing source code from the original binary code. Licensee aknowledges that binary code and source code might be protected by copyright and trademark laws. Before using JetBrains Decompiler, Licensee should make sure that decompilation of binary code is not prohibited by the applicable license agreement (except to the extent that Licensee may be expressly permitted under applicable law) or that Licensee has obtained permission to decompile the binary code from the copyright owner. Using JetBrains Decompiler is entirely optional. Licensor does neither encourage nor condone the use of JetBrains Decompiler, and disclaims any liability for Licensee's use of  JetBrains Decompiler in violation of applicable laws.",
+                                                 "\n\n\n\n\nDecompiler Legal Notice — Accept", new String[]{"Yes", "No"}, 0, null));
+        });
+        panel.add(decompiler);
+
+        JButton progress = new JButton("Progress");
+        progress.addActionListener(event -> {
+          if (Messages.showYesNoDialog("Continue?", TITLE, null) != Messages.YES) {
+            return;
+          }
+          Runnable runnable = () -> {
+            ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+            Semaphore done = new Semaphore();
+            done.down();
+
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              try {
+                int count = new Random(System.currentTimeMillis()).nextInt(10);
+                indicator.setText("Count: " + count);
+                for (int i = 0; i < count; i++) {
+                  Thread.sleep(1000);
+                  indicator.setText("Count: " + i + "/" + count);
+                }
+              }
+              catch (InterruptedException exception) {
+                exception.printStackTrace();
+              }
+              finally {
+                done.up();
+              }
+            });
+
+            while (!done.waitFor(1000)) {
+              if (indicator.isCanceled()) {
+                break;
+              }
+            }
+            ApplicationManager.getApplication().invokeAndWait(() -> Messages.showInfoMessage("Finish11111", "Title"), ModalityState.any());
+          };
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Progress", true, null, progress);
+          Messages.showInfoMessage("Finish", TITLE);
+        });
+        panel.add(progress);
+
+        JButton popupButton = new JButton("Popup");
+        popupButton.addActionListener(event -> {
+          NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
+          JTextField nameField = contentPanel.getTextField();
+          JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
+          contentPanel.setApplyAction(_event -> {
+            Messages.showYesNoCancelDialog(MESSAGE, TITLE, "YesText", "NoText", "CancelText", null);
+          });
+          popup.showCenteredInCurrentWindow(project);
+        });
+        panel.add(popupButton);
 
         return panel;
       }
@@ -220,7 +365,7 @@ public class TestMacMessagesAction extends AnAction {
   private static void alertWithButtons(JPanel panel, String title, String[] buttons) {
     JButton button = new JButton(title);
     button.addActionListener(event -> {
-      System.out.println(Messages.showDialog(button, "Message", "Title", buttons, 0, null));
+      System.out.println(Messages.showDialog(button, MESSAGE, TITLE, buttons, 0, null));
     });
     panel.add(button);
   }

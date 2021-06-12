@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.build.issue.BuildIssue;
@@ -9,11 +9,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
@@ -53,7 +51,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -87,7 +88,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   public static @NotNull ExternalSystemNotificationManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalSystemNotificationManager.class);
+    return project.getService(ExternalSystemNotificationManager.class);
   }
 
   /**
@@ -211,9 +212,9 @@ public class ExternalSystemNotificationManager implements Disposable {
           }
           if (group == null) return;
 
-          final Notification notification = group.createNotification(
-            notificationData.getTitle(), notificationData.getMessage(),
-            notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+          final Notification notification = group
+            .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
+            .setListener(notificationData.getListener());
 
           if (notificationKey == null) {
             myNotifications.add(notification);
@@ -273,7 +274,7 @@ public class ExternalSystemNotificationManager implements Disposable {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (toolWindow == null) return;
 
-        final MessageView messageView = ServiceManager.getService(project, MessageView.class);
+        final MessageView messageView = project.getService(MessageView.class);
         UIUtil.invokeLaterIfNeeded(() -> {
           if (project.isDisposed()) return;
           for (Content content: messageView.getContentManager().getContents()) {
@@ -381,7 +382,7 @@ public class ExternalSystemNotificationManager implements Disposable {
     Content targetContent = findContent(contentIdPair, contentDisplayName);
 
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+    final MessageView messageView = myProject.getService(MessageView.class);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
       targetContent = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, contentDisplayName, true);
@@ -406,7 +407,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   private @Nullable Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
     Content targetContent = null;
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+    final MessageView messageView = myProject.getService(MessageView.class);
     for (Content content: messageView.getContentManager().getContents()) {
       if (contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))
           && StringUtil.equals(content.getDisplayName(), contentDisplayName) && !content.isPinned()) {

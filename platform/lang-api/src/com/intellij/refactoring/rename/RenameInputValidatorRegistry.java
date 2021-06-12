@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public final class RenameInputValidatorRegistry {
       }
     }
 
-    return validators.isEmpty() ? null : newName -> validators.stream().allMatch(p -> p.first.isInputValid(newName, element, p.second));
+    return validators.isEmpty() ? null : newName -> ContainerUtil.and(validators, p -> p.first.isInputValid(newName, element, p.second));
   }
 
   @Nullable

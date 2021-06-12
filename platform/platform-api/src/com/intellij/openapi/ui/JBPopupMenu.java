@@ -288,12 +288,15 @@ public class JBPopupMenu extends JPopupMenu {
       Component[] components = target.getComponents();
       int y = -myShift + insets.top;
       for (Component component : components) {
-        // Android Studio: Workaround for issue IDEA-148511
-        if (component.isVisible()) {
-          int height = component.getPreferredSize().height;
-          component.setBounds(insets.left, y, width, height);
-          y += height;
+        if (!component.isVisible()) {
+          String itemText = component instanceof AbstractButton ?
+                            "\"" + ((AbstractButton)component).getText() + "\"" : component.getClass().getName();
+          LOG.error("Invisible menu item " + itemText);
+          continue;
         }
+        int height = component.getPreferredSize().height;
+        component.setBounds(insets.left, y, width, height);
+        y += height;
       }
     }
 

@@ -1,9 +1,15 @@
 <html>
 <body>
-This inspection detects unconditional redeclarations of names without being used in between, like this: <br/>
- <pre>def x(): pass
+<p>Reports unconditional redeclarations of names without being used in between.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def x(): pass
+
+
 x = 2
 </pre>
-It applies to function and class declarations, and top-level assignments. <br/>
+<p>It applies to function and class declarations, and top-level assignments. </p>
+<p>When the warning is shown, you can try a recommended action, for example, you might be prompted to
+  rename the variable.</p>
 </body>
 </html>

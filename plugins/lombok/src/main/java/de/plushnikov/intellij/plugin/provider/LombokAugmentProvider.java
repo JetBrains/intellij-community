@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -33,7 +32,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
-    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
+    valProcessor = new ValProcessor();
   }
 
   @NotNull
@@ -111,13 +110,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
     final List<Psi> result = new ArrayList<>();
-    final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance(psiClass.getProject()).getLombokProcessors(type);
-    for (Processor processor : lombokProcessors) {
-      if (processor.notNameHintIsEqualToSupportedAnnotation(nameHint)) {
-        final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
-        for (Object psiElement : generatedElements) {
-          result.add((Psi) psiElement);
-        }
+    for (Processor processor : LombokProcessorManager.getProcessors(type)) {
+      final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
+      for (Object psiElement : generatedElements) {
+        result.add((Psi) psiElement);
       }
     }
     return result;

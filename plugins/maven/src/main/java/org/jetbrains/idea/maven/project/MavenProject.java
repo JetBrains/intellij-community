@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +166,7 @@ public class MavenProject {
       newState.myProfilesIds = newProfiles;
     }
     else {
-      Set<String> mergedProfiles = new THashSet<>(newState.myProfilesIds);
+      Set<String> mergedProfiles = new HashSet<>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
       newState.myProfilesIds = new ArrayList<>(mergedProfiles);
     }
@@ -188,7 +187,7 @@ public class MavenProject {
                                               boolean reset) {
     MavenModel model = readerResult.mavenModel;
 
-    Set<MavenId> newUnresolvedArtifacts = new THashSet<>();
+    Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<>();
@@ -277,7 +276,7 @@ public class MavenProject {
   private static Collection<String> collectProfilesIds(Collection<MavenProfile> profiles) {
     if (profiles == null) return Collections.emptyList();
 
-    Set<String> result = new THashSet<>(profiles.size());
+    Set<String> result = new HashSet<>(profiles.size());
     for (MavenProfile each : profiles) {
       result.add(each.getId());
     }
@@ -950,7 +949,7 @@ public class MavenProject {
   }
 
   public Set<String> getDependencyTypesFromImporters(@NotNull SupportedRequestType type) {
-    THashSet<String> res = new THashSet<>();
+    Set<String> res = new HashSet<>();
 
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedDependencyTypes(res, type);

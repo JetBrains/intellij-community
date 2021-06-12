@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,7 @@ import static com.intellij.vcsUtil.VcsUtil.*;
 /**
  * for vcses where it is reasonable to ask revision of each item separately
  */
-public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
+public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
 
   // every hour (time unit to check for server commits)

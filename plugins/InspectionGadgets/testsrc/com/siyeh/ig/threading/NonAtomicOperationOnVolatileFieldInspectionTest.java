@@ -60,6 +60,7 @@ public class NonAtomicOperationOnVolatileFieldInspectionTest extends LightJavaIn
   }
 
   public void testQualified2() {
+    //noinspection Convert2Lambda
     doTest("class Segment {" +
            "  private volatile int count = 0;" +
            "  public void x() {" +

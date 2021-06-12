@@ -42,13 +42,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import static com.intellij.ide.impl.DataValidators.validOrNull;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
 
-  private static final ThreadLocal<AtomicInteger> ourGetDataLevel = ThreadLocal.withInitial(AtomicInteger::new);
+  private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
 
@@ -59,7 +60,7 @@ public class DataManagerImpl extends DataManager {
     GetDataRule rule = getDataRule(dataId);
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       for (Component c = focusedComponent; c != null; c = c.getParent()) {
-        final DataProvider dataProvider = getDataProviderEx(c);
+        DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
         Object data = getDataFromProvider(dataProvider, dataId, null, rule);
         if (data != null) return data;
@@ -82,28 +83,29 @@ public class DataManagerImpl extends DataManager {
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
+    int[] depth = ourGetDataLevel.get();
     try {
-      ourGetDataLevel.get().incrementAndGet();
+      depth[0]++;
       Object data = provider.getData(dataId);
-      if (data != null) return validated(data, dataId, provider);
+      if (data != null) return validOrNull(data, dataId, provider);
 
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
         ids.add(dataId);
         data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
-        if (data != null) return validated(data, dataId, provider);
+        if (data != null) return validOrNull(data, dataId, provider);
       }
 
       return null;
     }
     finally {
-      ourGetDataLevel.get().decrementAndGet();
+      depth[0]--;
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
 
-  public static @Nullable DataProvider getDataProviderEx(Object component) {
+  public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -123,49 +125,50 @@ public class DataManagerImpl extends DataManager {
   }
 
   public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
-    GetDataRule rule = getRuleFromMap(dataId);
-    if (rule != null) {
-      return rule;
-    }
-
-    final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
-    if (plainRule != null) {
-      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
-    }
-
-    return null;
-  }
-
-  private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
-    List<GetDataRule> rules = myDataRuleCollector.forKey(dataId);
-    return rules.isEmpty() ? null :
-           rules.size() == 1 ? rules.get(0) :
-           dataProvider -> {
-             for (GetDataRule rule : rules) {
-               Object data = rule.getData(dataProvider);
-               if (data != null) return data;
-             }
-             return null;
-           };
-  }
-
-  private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
-    Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
-    if (invalidData != null) {
+    String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
+    GetDataRule slowRule = dataProvider -> getSlowData(dataId, dataProvider);
+    List<GetDataRule> rules1 = ContainerUtil.nullize(myDataRuleCollector.forKey(dataId));
+    List<GetDataRule> rules2 = uninjectedId == null ? null : ContainerUtil.nullize(myDataRuleCollector.forKey(uninjectedId));
+    if (rules1 == null && rules2 == null) return slowRule;
+    return dataProvider -> {
+      Object data = slowRule.getData(dataProvider);
+      if (data != null) return data;
+      if (rules1 != null) {
+        for (GetDataRule rule : rules1) {
+          data = rule.getData(dataProvider);
+          if (data != null) return data;
+        }
+      }
+      if (rules2 != null) {
+        for (GetDataRule rule : rules2) {
+          data = rule.getData(id -> {
+            String injectedId = InjectedDataKeys.injectedId(id);
+            return injectedId != null ? dataProvider.getData(injectedId) : null;
+          });
+          if (data != null) return data;
+        }
+      }
       return null;
-      /*
-      LOG.assertTrue(false, "Data isn't valid. " + dataId + "=" + invalidData + " Provided by: " + dataSource.getClass().getName() + " (" +
-                            dataSource.toString() + ")");
-      */
+    };
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
+    Iterable<DataProvider> asyncProviders = PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
+    if (asyncProviders == null) return null;
+    for (DataProvider provider : asyncProviders) {
+      Object data = provider.getData(dataId);
+      if (data != null) {
+        return data;
+      }
     }
-    return data;
+    return null;
   }
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
     if (Registry.is("actionSystem.dataContextAssertions")) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      if (ourGetDataLevel.get().get() > 0) {
+      if (ourGetDataLevel.get()[0] > 0) {
         LOG.error("DataContext shall not be created and queried inside another getData() call.");
       }
     }

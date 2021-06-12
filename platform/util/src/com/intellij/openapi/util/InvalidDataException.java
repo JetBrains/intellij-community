@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
 public class InvalidDataException extends RuntimeException {
@@ -9,15 +10,15 @@ public class InvalidDataException extends RuntimeException {
     super();
   }
 
-  public InvalidDataException(String s) {
+  public InvalidDataException(@NotNull String s) {
     super(s);
   }
 
-  public InvalidDataException(String message, Throwable cause) {
+  public InvalidDataException(@NotNull String message, @NotNull Throwable cause) {
     super(message, cause);
   }
 
-  public InvalidDataException(Throwable cause) {
+  public InvalidDataException(@NotNull Throwable cause) {
     super(cause);
   }
 }

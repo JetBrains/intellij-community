@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
@@ -417,7 +418,7 @@ public abstract class DialogWrapper {
   protected void createDefaultActions() {
     myOKAction = new OkAction();
     myCancelAction = new CancelAction();
-    myHelpAction = new HelpAction();
+    myHelpAction = new HelpAction(this::doHelpAction);
   }
 
   public void setUndecorated(boolean undecorated) {
@@ -561,11 +562,16 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected JButton createHelpButton(@NotNull Insets insets) {
-    JButton helpButton = new JButton(getHelpAction());
+    JButton helpButton = createHelpButton(getHelpAction());
+    setHelpTooltip(helpButton);
+    helpButton.setMargin(insets);
+    return helpButton;
+  }
+
+  public static @NotNull JButton createHelpButton(@NotNull Action action) {
+    JButton helpButton = new JButton(action);
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
-    helpButton.setMargin(insets);
-    setHelpTooltip(helpButton);
     helpButton.addPropertyChangeListener("ancestor", evt -> {
       if (evt.getNewValue() == null) {
         HelpTooltip.dispose((JComponent)evt.getSource());
@@ -819,7 +825,6 @@ public abstract class DialogWrapper {
   private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
     optionButton.setOptionTooltipText(getDefaultTooltip());
-    optionButton.setOkToProcessDefaultMnemonics(false);
     return optionButton;
   }
 
@@ -1603,8 +1608,8 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
   /**
    * @see JDialog#isResizable
    */
-  public void isResizable() {
-    myPeer.isResizable();
+  public boolean isResizable() {
+    return myPeer.isResizable();
   }
 
   /**
@@ -1643,6 +1648,15 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
     myUserBounds.setLocation(x, y);
     myUserLocationSet = true;
     myPeer.setLocation(x, y);
+  }
+
+  /**
+   * Called to fit window bounds of dialog to a screen
+   * @param rect the suggested window bounds. This rect should be modified to change resulting bounds.
+   */
+  @ApiStatus.Internal
+  public void fitToScreen(Rectangle rect) {
+    ScreenUtil.fitToScreen(rect);
   }
 
   @SuppressWarnings("unused")
@@ -1935,14 +1949,17 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
     }
   }
 
-  private final class HelpAction extends AbstractAction {
-    private HelpAction() {
+  public static final class HelpAction extends AbstractAction {
+    private final @NotNull Runnable myHelpActionPerformed;
+
+    public HelpAction(@NotNull Runnable helpActionPerformed) {
       super(CommonBundle.getHelpButtonText());
+      myHelpActionPerformed = helpActionPerformed;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doHelpAction();
+      myHelpActionPerformed.run();
     }
   }
 

@@ -6,6 +6,23 @@ Surrounding a logging call with a guard clause prevents that cost, when the logg
 is disabled for the level used by the logging statement. This is especially useful for the
 least serious level (trace, debug, finest) of logging calls, because those are
 most often disabled in a production environment.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> Principal {
+    <b>void</b> bad(Object object) {
+      <b>if</b> (true) {
+        LOG.debug("log log log " + expensiveCalculation(object));
+      }
+      LOG.debug("some more logging " + expensiveCalculation(1));
+    }
+
+    <b>void</b> good(Object) {
+      <b>if</b> (LOG.isDebug()) {
+        LOG.debug("value: " + expensiveCalculation(object));
+      }
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the text field below to specify the logger class name used.

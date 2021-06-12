@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -97,15 +96,9 @@ public final class TextMateServiceImpl extends TextMateService {
           String bundleName = bundleConfigBean.getName();
           String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
                                                    : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
-          Notification notification = new Notification("TextMate Bundles",
-                                                  TextMateBundle.message("textmate.bundle.load.error", bundleName),
-                                                  errorMessage,
-                                                  NotificationType.ERROR, null);
-          notification.addAction(NotificationAction.createSimple(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> {
-            bundleConfigBean.setEnabled(false);
-            notification.expire();
-          }));
-          Notifications.Bus.notify(notification);
+          new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage, NotificationType.ERROR)
+            .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> bundleConfigBean.setEnabled(false)))
+            .notify(null);
         }
       }
     }

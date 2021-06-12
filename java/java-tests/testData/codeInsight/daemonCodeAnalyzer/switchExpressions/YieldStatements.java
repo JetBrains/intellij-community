@@ -14,7 +14,7 @@ class YieldStatements {
       case 1 -> { while (true) yield ref; }
       case 2 -> { while (true) break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 3 -> { yield ref; }
-      case 4 -> { <error descr="Illegal reference to restricted type 'yield'">yield</error> (ref); }
+      case 4 -> { yield (ref); }
       case 5 -> { break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 6 -> {
         int a = 0;

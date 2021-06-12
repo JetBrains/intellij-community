@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.actions.PyExecuteSelectionAction;
+import com.jetbrains.python.actions.PyExecuteInConsole;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +36,8 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    PyExecuteSelectionAction.showConsoleAndExecuteCode(e, null);
+    Project project = e.getProject();
+    if (project == null) return;
+    PyExecuteInConsole.executeCodeInConsole(project, null, null, true, true, true, null);
   }
 }

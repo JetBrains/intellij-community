@@ -355,6 +355,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testConflictInInheritor() throws Exception {
+    try {
+      doSingleFileTest();
+      fail("Side effect was ignored");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", message);
+    }
+  }
+
   public void testParameterInMethodUsedInMethodReference() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());

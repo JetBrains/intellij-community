@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.ui.components.ActionLink
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -33,7 +32,8 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) = Label(text, style, fontColor, bold, null)
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) =
+  Label(text, style, fontColor, bold, null)
 
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
@@ -334,13 +334,10 @@ val JPasswordField.chars: CharSequence?
     if (doc.length == 0) {
       return ""
     }
-
-    val segment = Segment()
-    try {
-      doc.getText(0, doc.length, segment)
+    else try {
+      return Segment().also { doc.getText(0, doc.length, it) }
     }
     catch (e: BadLocationException) {
       return null
     }
-    return segment
   }

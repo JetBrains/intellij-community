@@ -129,7 +129,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
       myModuleEditors.clear();
 
-      myModuleModel.dispose();
+      if (myModuleModel != null) {
+        myModuleModel.dispose();
+      }
       myWorkspaceEntityStorageBuilder = null;
 
       if (myFacetsConfigurator != null) {

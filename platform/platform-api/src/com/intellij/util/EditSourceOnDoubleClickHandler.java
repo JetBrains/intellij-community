@@ -68,7 +68,11 @@ public final class EditSourceOnDoubleClickHandler {
     }.installOn(table);
   }
 
-  public static void install(final JList list, final Runnable whenPerformed) {
+  public static void install(@NotNull JList list) {
+    install(list, null);
+  }
+
+  public static void install(@NotNull JList list, @Nullable Runnable whenPerformed) {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
@@ -78,7 +82,9 @@ public final class EditSourceOnDoubleClickHandler {
         if (!list.getCellBounds(index, index).contains(point)) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(list);
         OpenSourceUtil.openSourcesFrom(dataContext, true);
-        whenPerformed.run();
+        if (whenPerformed != null) {
+          whenPerformed.run();
+        }
         return true;
       }
     }.installOn(list);

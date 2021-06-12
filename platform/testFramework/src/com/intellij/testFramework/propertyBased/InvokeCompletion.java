@@ -26,7 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -160,7 +160,7 @@ public class InvokeCompletion extends ActionOnFile {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {
       EditorActionManager.getInstance();
-      TypedAction.getInstance().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
+      TypedAction.getInstance().actionPerformed(editor, completionChar, EditorUtil.getEditorDataContext(lookup.getTopLevelEditor()));
     }
   }
 

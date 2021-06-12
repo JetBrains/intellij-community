@@ -24,9 +24,11 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -406,28 +408,26 @@ class ServiceTreeView extends ServiceView {
   }
 
   @Override
-  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath) {
+  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
     Queue<Object> values = new LinkedList<>(valueSubPath);
     Object visibleRoot = values.poll();
     if (visibleRoot == null) return Collections.emptyList();
 
-    int count = myTree.getRowCount();
-    for (int i = 0; i < count; i++) {
-      TreePath path = myTree.getPathForRow(i);
-      Object node = path.getLastPathComponent();
-      if (!(node instanceof ServiceViewItem)) continue;
+    List<? extends ServiceViewItem> roots = getModel().getVisibleRoots();
+    ServiceViewItem item = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
+      contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(getModel().getChildren(node)) : null)
+      .withRoots(roots)
+      .traverse(ServiceModel.ONLY_LOADED_BFS)
+      .filter(node -> node.getValue().equals(visibleRoot))
+      .first();
+    if (item == null) return Collections.emptyList();
 
-      ServiceViewItem item = (ServiceViewItem)node;
-      if (!visibleRoot.equals(item.getValue())) continue;
-
-      while (!values.isEmpty()) {
-        Object value = values.poll();
-        item = ContainerUtil.find(getModel().getChildren(item), child -> value.equals(child.getValue()));
-        if (item == null) return Collections.emptyList();
-      }
-      return ContainerUtil.map(getModel().getChildren(item), ServiceViewItem::getValue);
+    while (!values.isEmpty()) {
+      Object value = values.poll();
+      item = ContainerUtil.find(getModel().getChildren(item), child -> value.equals(child.getValue()));
+      if (item == null) return Collections.emptyList();
     }
-    return Collections.emptyList();
+    return ContainerUtil.map(getModel().getChildren(item), ServiceViewItem::getValue);
   }
 
   private void cancelSelectionUpdate() {

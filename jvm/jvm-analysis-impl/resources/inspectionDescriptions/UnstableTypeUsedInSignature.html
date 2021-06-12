@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports declarations of classes, methods and fields that reference an unstable API type in the signature,
+Reports declarations of classes, methods, and fields that reference an unstable API type in the signature,
 but are not marked with the same unstable annotation.
-This inspection may be useful to check that no <i>unstable (internal, experimental)</i> types are exposed in signatures of public API.
-For example, if an <i>experimental</i> class is used as the return type of a method, the method is also considered <i>experimental</i>
-because incompatible changes of the type (deletion or move to another package) lead to incompatible method signature changes.
+<p>
+  This inspection ensures that the signatures of a public API do not expose any <i>unstable</i> (internal, experimental) types.
+  For example, if a method returns an <i>experimental</i> class, the method itself is considered <i>experimental</i>
+  because incompatible changes of the type (deletion or move to another package) lead to incompatible method signature changes.
+</p>
 <!-- tooltip end -->
-Use the list below to specify the annotations which mark an unstable API.
+<p>Use the list below to specify which annotations mark an unstable API.</p>
 </body>
 </html>

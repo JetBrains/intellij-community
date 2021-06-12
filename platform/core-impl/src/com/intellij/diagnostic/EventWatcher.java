@@ -49,8 +49,6 @@ public interface EventWatcher {
 
   void edtEventFinished(@NotNull AWTEvent event, long startedAt);
 
-  void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind);
-
   void logTimeMillis(@NotNull String processId, long startedAt,
                      @NotNull Class<? extends Runnable> runnableClass);
 

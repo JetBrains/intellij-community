@@ -12,9 +12,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class LightNamedElement extends LightElement implements PyElement, PsiNamedElement {
   protected final String myName;
 

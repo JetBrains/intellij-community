@@ -63,6 +63,10 @@ public class SearchTextField extends JPanel {
 
     myModel = new MyModel();
     myTextField = new TextFieldWithProcessing() {
+      {
+        this.putClientProperty("History.Popup.Enabled", historyPopupEnabled);
+      }
+
       @Override
       public void processKeyEvent(final KeyEvent e) {
         if (preprocessEventForTextField(e)) return;

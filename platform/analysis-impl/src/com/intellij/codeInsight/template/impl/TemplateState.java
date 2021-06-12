@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -135,14 +135,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       @Override
       public void beforeCommandFinished(@NotNull CommandEvent event) {
         if (started && !isDisposed() && !isUndoOrRedoInProgress()) {
-          Runnable runnable = () -> afterChangedUpdate();
-          final LookupEx lookup = getEditor() != null ? LookupManager.getActiveLookup(getEditor()) : null;
-          if (lookup != null) {
-            lookup.performGuardedChange(runnable);
-          }
-          else {
-            runnable.run();
-          }
+          LookupUtil.performGuardedChange(getEditor(), () -> afterChangedUpdate());
         }
       }
     });
@@ -559,6 +552,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(getDocument());
   }
 
+  @ApiStatus.Internal
+  public void update() {
+    calcResults(false);
+  }
+
   // Hours spent fixing code : 3.5
   void calcResults(final boolean isQuick) {
     if (getSegments().isInvalid()) {
@@ -894,6 +892,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
+      }
+
+      @Override
+      public TextResult getVariableValue(String variableName) {
+        return TemplateState.this.getVariableValue(variableName);
       }
     };
   }

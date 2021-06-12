@@ -1,7 +1,14 @@
 <html>
 <body>
-This inspection detects names that should resolve but don't.
-Due to dynamic dispatch and duck typing, this is possible in a limited but useful
-number of cases. Top-level and class-level items are supported better than instance items.
+<p>Reports references in your code that cannot be resolved.</p>
+<p>In a dynamically typed language, this is possible in a limited number of cases. </p>
+<p>If a reference type is unknown, then its attributes are not highlighted as unresolved even if you know that they should be:</p>
+<pre style="font-family: monospace">
+def print_string(s):
+  print(s.abc())
+</pre>
+<p>In this code fragment <code>s</code> is always a string and <code>abc</code> should be highlighted as unresolved. However, <code>s</code>
+  type is inferred as <code>Any</code> and no warning is reported.</p>
+<p>The IDE provides quick-fix actions to add missing references on-the-fly.</p>
 </body>
 </html>

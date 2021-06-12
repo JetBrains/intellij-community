@@ -18,7 +18,10 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -36,7 +39,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
 
   public FileAssociationsConfigurable(Project project) {
     myProject = project;
-    myState = ServiceManager.getService(project, UIState.class);
+    myState = project.getService(UIState.class);
   }
 
   @Override

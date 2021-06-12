@@ -316,7 +316,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
     else {
       text = inputEditor.getDocument().getText(textRange);
-      highlighter = ((EditorEx)inputEditor).getHighlighter();
+      highlighter = inputEditor.getHighlighter();
     }
     SyntaxHighlighter syntax =
       highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;

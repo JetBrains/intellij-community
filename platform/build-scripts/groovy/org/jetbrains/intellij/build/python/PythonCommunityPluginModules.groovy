@@ -18,6 +18,7 @@ class PythonCommunityPluginModules {
     "intellij.python.copyright",
     "intellij.python.terminal",
     "intellij.python.grazie",
+    "intellij.python.markdown",
     "intellij.python.reStructuredText",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",

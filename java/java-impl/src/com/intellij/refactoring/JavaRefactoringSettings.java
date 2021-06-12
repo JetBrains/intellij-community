@@ -69,6 +69,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS;
   public Boolean INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
   public Boolean INTRODUCE_PARAMETER_CREATE_FINALS;
+  public Boolean INTRODUCE_CONSTANT_REPLACE_ALL = false;
 
   public boolean INLINE_CLASS_SEARCH_IN_COMMENTS = true;
   public boolean INLINE_CLASS_SEARCH_IN_NON_JAVA = true;

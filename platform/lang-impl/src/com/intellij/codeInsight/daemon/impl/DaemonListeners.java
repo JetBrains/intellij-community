@@ -75,6 +75,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -254,7 +255,7 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         boolean isDaemonShouldBeStopped = false;
         for (VFileEvent event : events) {
           if (event instanceof VFilePropertyChangeEvent) {
@@ -392,6 +393,8 @@ public final class DaemonListeners implements Disposable {
           PsiManager.getInstance(myProject).dropPsiCaches();
         }
       }));
+    HeavyProcessLatch.INSTANCE.addListener(this, __ ->
+      myDaemonCodeAnalyzer.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
@@ -581,7 +584,7 @@ public final class DaemonListeners implements Disposable {
     private AnAction cachedEscapeAction;
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (cachedEscapeAction == null) {
         myEscPressed = IdeActions.ACTION_EDITOR_ESCAPE.equals(event.getActionManager().getId(action));
         if (myEscPressed) {

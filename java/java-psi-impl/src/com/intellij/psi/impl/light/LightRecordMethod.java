@@ -105,11 +105,6 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
   }
 
   @Override
-  public PsiElement getContext() {
-    return getContainingClass();
-  }
-
-  @Override
   public @NotNull LightRecordMethod obtainBranchCopy(@NotNull ModelBranch branch) {
     PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
     PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);

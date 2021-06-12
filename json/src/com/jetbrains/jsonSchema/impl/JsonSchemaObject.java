@@ -322,6 +322,9 @@ public final class JsonSchemaObject {
     if (!StringUtil.isEmptyOrSpaces(other.myHtmlDescription)) {
       myHtmlDescription = other.myHtmlDescription;
     }
+    if (!StringUtil.isEmptyOrSpaces(other.myDeprecationMessage)) {
+      myDeprecationMessage = other.myDeprecationMessage;
+    }
 
     myType = mergeTypes(myType, other.myType, other.myTypeVariants);
 

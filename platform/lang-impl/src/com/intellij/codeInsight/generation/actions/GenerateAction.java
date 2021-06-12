@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class GenerateAction extends DumbAwareAction {
+public class GenerateAction extends DumbAwareAction implements UpdateInBackground {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -87,7 +87,7 @@ public class GenerateAction extends DumbAwareAction {
     return copy;
   }
 
-  private static class GenerateWrappingGroup extends ActionGroup {
+  private static class GenerateWrappingGroup extends ActionGroup implements UpdateInBackground {
 
     private final AnAction myAction;
     private final AnAction myEditTemplateAction;
@@ -97,6 +97,11 @@ public class GenerateAction extends DumbAwareAction {
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);
       setPopup(true);
+    }
+
+    @Override
+    public boolean isUpdateInBackground() {
+      return myAction instanceof UpdateInBackground && ((UpdateInBackground)myAction).isUpdateInBackground();
     }
 
     @Override

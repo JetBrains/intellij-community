@@ -1,43 +1,39 @@
-/*
- * Copyright 2011 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class IgnoredJUnitTestInspection extends BaseInspection {
+
+  public boolean onlyReportWithoutReason = true;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignored.junit.test.ignore.reason.option"),
+                                          this, "onlyReportWithoutReason");
+  }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     final PsiNamedElement info = (PsiNamedElement)infos[0];
     if (info instanceof PsiClass) {
-      return InspectionGadgetsBundle.message(
-        "ignored.junit.test.classproblem.descriptor",
-        info.getName());
+      return InspectionGadgetsBundle.message("ignored.junit.test.classproblem.descriptor", info.getName());
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "ignored.junit.test.method.problem.descriptor",
-        info.getName());
+      return InspectionGadgetsBundle.message("ignored.junit.test.method.problem.descriptor", info.getName());
     }
   }
 
@@ -46,14 +42,13 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
     return new IgnoredJUnitTestVisitor();
   }
 
-  private static class IgnoredJUnitTestVisitor extends BaseInspectionVisitor {
+  private class IgnoredJUnitTestVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
-      if (!(modifierListOwner instanceof PsiClass ||
-            modifierListOwner instanceof PsiMethod)) {
+      if (!(modifierListOwner instanceof PsiClass || modifierListOwner instanceof PsiMethod)) {
         return;
       }
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -69,7 +64,15 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
       if (!"org.junit.Ignore".equals(qualifiedName) && !"org.junit.jupiter.api.Disabled".equals(qualifiedName)) {
         return;
       }
-      registerError(annotation, modifierListOwner);
+      final PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, null);
+      if (attribute != null) {
+        final PsiAnnotationMemberValue value = attribute.getValue();
+        if (onlyReportWithoutReason && value instanceof PsiExpression &&
+            ExpressionUtils.computeConstantExpression((PsiExpression)value) instanceof String) {
+          return;
+        }
+      }
+      registerError(nameReferenceElement, modifierListOwner);
     }
   }
 }

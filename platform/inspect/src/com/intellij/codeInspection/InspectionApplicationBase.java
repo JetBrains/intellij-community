@@ -64,6 +64,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -456,12 +457,17 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       setupSecondAnalysisHandler(project, context);
     }
 
-    final List<Path> inspectionsResults = new ArrayList<>();
+    List<Path> inspectionsResults = new ArrayList<>();
     runUnderProgress(project, projectPath, context, scope, resultsDataPath, inspectionsResults);
-    final Path descriptionsFile = resultsDataPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
-    InspectionsResultUtil.describeInspections(descriptionsFile,
-                                              myRunWithEditorSettings ? null : inspectionProfile.getName(),
-                                              inspectionProfile);
+    Path descriptionsFile = resultsDataPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
+    try {
+      InspectionsResultUtil.describeInspections(descriptionsFile,
+                                                myRunWithEditorSettings ? null : inspectionProfile.getName(),
+                                                inspectionProfile);
+    }
+    catch (XMLStreamException e) {
+      throw new IOException(e);
+    }
     inspectionsResults.add(descriptionsFile);
     saveProfile(context);
     // convert report
@@ -614,13 +620,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   private boolean secondAnalysisFilter(ChangeListManager changeListManager, String text, VirtualFile file, int line) {
     List<Range> ranges = getOrComputeUnchangedRanges(file, changeListManager);
-    Optional<Range> first = StreamEx.of(ranges).findFirst(it -> it.start1 <= line && line < it.end1);
-    if (first.isEmpty()) {
+    Range first = ContainerUtil.find(ranges, it -> it.start1 <= line && line < it.end1);
+    if (first == null) {
       logNotFiltered(text, file, line, -1);
       return true;
     }
-    Range originRange = first.get();
-    int position = originRange.start2 + line - originRange.start1;
+    int position = first.start2 + line - first.start1;
     Collection<String> problems = originalWarnings.get(Pair.create(file.getPath(), position));
     if (problems.stream().anyMatch(it -> Objects.equals(it, text))) {
       return false;

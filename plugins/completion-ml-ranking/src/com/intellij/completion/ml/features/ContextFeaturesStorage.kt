@@ -17,9 +17,9 @@ class ContextFeaturesStorage(private val featuresSnapshot: Map<String, MLFeature
   override fun categoricalValue(name: String): String? = findValue<MLFeatureValue.CategoricalValue>(name)?.value
 
   override fun classNameValue(name: String): String? = findValue<MLFeatureValue.ClassNameValue>(name)
-    ?.let { MLFeaturesUtil.valueAsString(it) }
+    ?.let { MLFeaturesUtil.getClassNameSafe(it) }
 
-  override fun asMap(): Map<String, String> = featuresSnapshot.mapValues { MLFeaturesUtil.valueAsString(it.value) }
+  override fun asMap(): Map<String, String> = featuresSnapshot.mapValues { MLFeaturesUtil.getRawValue(it.value).toString() }
 
   private inline fun <reified T : MLFeatureValue> findValue(name: String): T? {
     return featuresSnapshot[name] as? T

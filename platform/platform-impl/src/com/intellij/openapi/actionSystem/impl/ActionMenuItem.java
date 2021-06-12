@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.Application;
@@ -23,7 +22,6 @@ import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,14 +39,14 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
   static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
+
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
   private final boolean myInsideCheckedGroup;
   private final boolean myEnableMnemonics;
   private final boolean myToggleable;
-  private DataContext myContext;
-  private AnActionEvent myEvent;
+  private final DataContext myContext;
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private boolean myToggled;
   private final boolean myUseDarkIcons;
@@ -70,7 +68,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myInsideCheckedGroup = insideCheckedGroup;
     myUseDarkIcons = useDarkIcons;
 
-    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0, true, false);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
 
@@ -138,7 +135,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   private void init() {
     AnAction action = myAction.getAction();
-    updateIcon(action);
+    updateIcon();
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
@@ -166,6 +163,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         //If action has Enter shortcut, do not add it. Otherwise, user won't be able to chose any ActionMenuItem other than that
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke);
+          if (KeymapUtil.isSimplifiedMacShortcuts()) {
+            putClientProperty("accelerator.text", KeymapUtil.getPreferredShortcutText(shortcuts));
+          }
         }
         break;
       }
@@ -191,51 +191,41 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction.getAction());
   }
 
-  public void updateContext(@NotNull DataContext context) {
-    myContext = context;
-    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0, true, false);
-  }
-
-  private void updateIcon(AnAction action) {
+  private void updateIcon() {
+    myToggled = isToggleable() && Toggleable.isSelected(myPresentation);
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
-      action.update(myEvent);
-      myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
         setIcon(wrapNullIcon(getIcon()));
       }
+      else if (myToggled) {
+        setIcon(LafIconLookup.getIcon("checkmark"));
+        setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));
+        setDisabledIcon(LafIconLookup.getDisabledIcon("checkmark"));
+      }
       else {
-        if (myToggled) {
-          setIcon(LafIconLookup.getIcon("checkmark"));
-          setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));
-          setDisabledIcon(LafIconLookup.getDisabledIcon("checkmark"));
-        }
-        else {
-          setIcon(EmptyIcon.ICON_16);
-          setSelectedIcon(EmptyIcon.ICON_16);
-          setDisabledIcon(EmptyIcon.ICON_16);
-        }
+        setIcon(EmptyIcon.ICON_16);
+        setSelectedIcon(EmptyIcon.ICON_16);
+        setDisabledIcon(EmptyIcon.ICON_16);
       }
     }
-    else {
-      if (UISettings.getInstance().getShowIconsInMenus()) {
-        Icon icon = myPresentation.getIcon();
-        if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
-          icon = new PoppedIcon(icon, 16, 16);
-        }
-        Icon disabled = myPresentation.getDisabledIcon();
-        if (disabled == null) {
-          disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
-        }
-        Icon selected = myPresentation.getSelectedIcon();
-        if (selected == null) {
-          selected = icon;
-        }
-
-        setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
-        setSelectedIcon(wrapNullIcon(selected));
-        setDisabledIcon(wrapNullIcon(disabled));
+    else if (UISettings.getInstance().getShowIconsInMenus()) {
+      Icon icon = myPresentation.getIcon();
+      if (isToggleable() && myToggled) {
+        icon = new PoppedIcon(icon, 16, 16);
       }
+      Icon disabled = myPresentation.getDisabledIcon();
+      if (disabled == null) {
+        disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
+      }
+      Icon selected = myPresentation.getSelectedIcon();
+      if (selected == null) {
+        selected = icon;
+      }
+
+      setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
+      setSelectedIcon(wrapNullIcon(selected));
+      setDisabledIcon(wrapNullIcon(disabled));
     }
   }
 
@@ -271,58 +261,34 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private final class ActionTransmitter implements ActionListener {
-    /**
-     * @param component component
-     * @return whether the component in Swing tree or not. This method is more
-     *         weak then {@link Component#isShowing() }
-     */
-    private boolean isInTree(final Component component) {
-      if (component instanceof Window) {
-        return component.isShowing();
-      }
-      else {
-        Window windowAncestor = SwingUtilities.getWindowAncestor(component);
-        return windowAncestor != null && windowAncestor.isShowing();
-      }
-    }
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
-      ActionCallback typeAhead = new ActionCallback();
       String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
 
-      focusManager.typeAheadUntil(typeAhead, getText());
       focusManager.runOnOwnContext(myContext, () -> {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
-        final AnAction menuItemAction = myAction.getAction();
+        AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
-          focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
-          ActionUtil.performActionDumbAware(menuItemAction, event);
-          actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
-        }
-        else {
-          typeAhead.setDone();
+          ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
         }
       });
     }
   }
 
   private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {
-    @NonNls private static final String SELECTED = "selected";
 
     private final Set<String> mySynchronized = new HashSet<>();
 
-    private MenuItemSynchronizer() {
+    MenuItemSynchronizer() {
       myPresentation.addPropertyChangeListener(this);
     }
 
@@ -352,7 +318,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         }
         else if (Presentation.PROP_ENABLED.equals(name)) {
           setEnabled(myPresentation.isEnabled());
-          updateIcon(myAction.getAction());
+          updateIcon();
         }
         else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
           setMnemonic(myPresentation.getMnemonic());
@@ -365,15 +331,16 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           Window window = ComponentUtil.getWindow(ActionMenuItem.this);
           if (window != null) window.pack();
         }
-        else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name) || SELECTED.equals(name)) {
-          updateIcon(myAction.getAction());
+        else if (Presentation.PROP_ICON.equals(name) ||
+                 Presentation.PROP_DISABLED_ICON.equals(name) ||
+                 Toggleable.SELECTED_PROPERTY.equals(name)) {
+          updateIcon();
         }
       }
       finally {
         mySynchronized.remove(name);
         if (queueForDispose) {
           // later since we cannot remove property listeners inside event processing
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (getParent() == null) {
               uninstallSynchronizer();

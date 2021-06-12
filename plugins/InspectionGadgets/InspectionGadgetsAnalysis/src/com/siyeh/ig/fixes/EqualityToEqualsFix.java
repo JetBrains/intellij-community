@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,6 +56,8 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   @Nullable
   public static EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+    final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
+    if (nullability == Nullability.NULLABLE) return null;
     if (lhs instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();

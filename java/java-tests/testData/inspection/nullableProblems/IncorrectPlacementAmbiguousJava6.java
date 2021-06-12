@@ -1,7 +1,7 @@
 import typeUse.*;
 
-public class IncorrectPlacementAmbiguousJava6 extends <error descr="Type annotations are not supported at language level '6'"><warning descr="Nullability annotation is not applicable to extends/implements lists">@Nullable</warning></error> Object
-        implements <error descr="Type annotations are not supported at language level '6'"><warning descr="Nullability annotation is not applicable to extends/implements lists">@Nullable</warning></error> Cloneable {
+public class IncorrectPlacementAmbiguousJava6 extends <error descr="Type annotations are not supported at language level '6'"><warning descr="Nullability annotation is not applicable to extends/implements clause">@Nullable</warning></error> Object
+        implements <error descr="Type annotations are not supported at language level '6'"><warning descr="Nullability annotation is not applicable to extends/implements clause">@Nullable</warning></error> Cloneable {
   
   <warning descr="Nullability annotation is not applicable to constructors">@Nullable</warning> IncorrectPlacementAmbiguousJava6() {}
   

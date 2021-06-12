@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
 import com.intellij.openapi.project.Project;
@@ -23,15 +23,14 @@ import java.util.List;
  * @see SemContributor
  */
 public abstract class SemService {
-  public static SemService getSemService(@NotNull Project p) {
-    return p.getService(SemService.class);
+  public static SemService getSemService(@NotNull Project project) {
+    return project.getService(SemService.class);
   }
 
   @Nullable
   public <T extends SemElement> T getSemElement(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
-    final List<T> list = getSemElements(key, psi);
-    if (list.isEmpty()) return null;
-    return list.get(0);
+    List<T> list = getSemElements(key, psi);
+    return list.isEmpty() ? null : list.get(0);
   }
 
   @NotNull

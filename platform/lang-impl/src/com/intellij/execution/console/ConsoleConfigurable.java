@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,16 +21,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
@@ -267,15 +268,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final @NlsContexts.DialogMessage String myQuery;
 
-    MyAddDeleteListPanel(@NlsContexts.BorderTitle String title, @NlsContexts.DialogMessage String query) {
+    MyAddDeleteListPanel(@NlsContexts.Label String title, @NlsContexts.DialogMessage String query) {
       super(title, new ArrayList<>());
       myQuery = query;
       new ListSpeedSearch(myList);
-    }
-
-    @Override
-    protected Border createTitledBorder(String title) {
-      return IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false);
     }
 
     @Override

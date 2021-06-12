@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 /**
  * A set of element types.
@@ -116,7 +117,7 @@ public final class TokenSet {
     for (IElementType type : types) {
       if (type != null) {
         final short index = type.getIndex();
-        assert index >= 0 : "Unregistered elements are not allowed here: " + LogUtil.objectAndClass(type);
+        assert index >= 0 : "Unregistered elements are not allowed here: " + objectInfo(type);
         if (min > index) min = index;
         if (max < index) max = index;
       }

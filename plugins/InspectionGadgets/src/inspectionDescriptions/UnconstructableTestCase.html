@@ -1,9 +1,20 @@
 <html>
 <body>
-Reports non-abstract JUnit test cases which do not
+Reports non-<code>abstract</code> JUnit test cases which do not
 expose a public no-arg constructor or a public constructor which takes a single string
-as an argument. Such test cases will be unrunnable by most JUnit test runners, including
-IDEA's.
+as an argument. Such test cases will not be runnable by most JUnit test runners.
+<p>Example:
+<pre><code>
+public class MyTest {
+
+  private MyTest() {} // no-arg constructor is private
+
+  @Test
+  public void testSomething() {
+    assertEquals(1, 1);
+  }
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
 

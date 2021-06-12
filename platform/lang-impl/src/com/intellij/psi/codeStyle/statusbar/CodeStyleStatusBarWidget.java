@@ -66,7 +66,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
 
   @Nullable
-  private static IndentStatusBarUIContributor getUiContributor(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+  private static CodeStyleStatusBarUIContributor getUiContributor(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);
     if (provider != null) {
       return provider.getIndentStatusBarUiContributor(indentOptions);
@@ -79,7 +79,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     FileIndentOptionsProvider optionsProvider = indentOptions.getFileIndentOptionsProvider();
     if (optionsProvider != null) return optionsProvider;
     for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensions()) {
-      IndentStatusBarUIContributor uiContributor = provider.getIndentStatusBarUiContributor(indentOptions);
+      CodeStyleStatusBarUIContributor uiContributor = provider.getIndentStatusBarUiContributor(indentOptions);
       if (uiContributor != null && uiContributor.areActionsAvailable(file)) {
         return provider;
       }

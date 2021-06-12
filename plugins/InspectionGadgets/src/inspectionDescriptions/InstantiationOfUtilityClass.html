@@ -1,11 +1,27 @@
 <html>
 <body>
-Reports any <b>new</b> expressions which instantiate utility classes.
-Utility classes have all fields and methods declared <b>static</b>, and their
-presence may indicate a lack of object-oriented design. Instantiation of such classes most likely indicates
-programmer error.
-<!-- tooltip end -->
+Reports any <code>new</code> expressions that instantiate utility classes.
+Utility classes have all fields and methods declared <code>static</code>. 
+Instantiation of such classes is most likely unnecessary and indicates
+a mistake.
+<p>Example:</p>
+<pre>
+  class MyUtils {
+    public static double cube(double x) {
+      return x * x * x;
+    }
+  }
+  class Main {
+    public static void main(String[] args) {
+      // Instantiation of utility class
+      MyUtils utils = new MyUtils();
+    }
+  }
+</pre>
 <p>
-
+  To avoid instantiations of utility classes completely,
+  it's recommended to add a private default constructor.
+</p>
+<!-- tooltip end -->
 </body>
 </html>

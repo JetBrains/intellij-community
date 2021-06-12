@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import org.junit.Test;
+
 public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -24,6 +26,7 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
                   "<version>1</version>");
   }
 
+  //@Test 
   //public void testResolvingDependenciesWithVersionRanges() throws Throwable {
   //  createProjectPom("<groupId>test</groupId>" +
   //                   "<artifactId>project</artifactId>" +
@@ -42,6 +45,7 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
   //  assertResolved(myProjectPom, findPsiFile(f));
   //}
 
+  @Test
   public void testDoNotHighlightVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -58,6 +62,7 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotHighlightLatestAndReleaseDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

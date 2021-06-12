@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.icons.AllIcons;
@@ -7,8 +7,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -51,12 +51,10 @@ public class OpenEventLogFileAction extends DumbAwareAction {
                                   @NotNull NotificationType type,
                                   @NotNull String message) {
     String title = StatisticsBundle.message("stats.feature.usage.statistics");
-    final NotificationBuilder notificationBuilder = new NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, title, message, type)
+    new Notification(STATISTICS_NOTIFICATION_GROUP_ID, title, message, type)
       .addAction(NotificationAction.createSimple(
-        StatisticsBundle.messagePointer("stats.enable.data.sharing"), () -> {
-          final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ConsentConfigurable());
-          editor.show();
-        }));
-    notificationBuilder.buildAndNotify(project);
+        StatisticsBundle.message("stats.enable.data.sharing"),
+        () -> new SingleConfigurableEditor(project, new ConsentConfigurable()).show()))
+      .notify(project);
   }
 }

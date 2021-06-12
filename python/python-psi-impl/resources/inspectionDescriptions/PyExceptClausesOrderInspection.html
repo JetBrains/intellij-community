@@ -1,7 +1,27 @@
 <html>
 <body>
-This inspection highlights situations when except clauses are not in the correct order
-(from the more specific to the more generic) or one exception class is caught twice. <br/>
-If you don't fix the order, some exceptions may not be catched by the most specific handler.
+<p>Reports cases when <code>except</code> clauses are not in the proper order,
+  from the more specific to the more generic, or one exception class is caught twice. </p>
+<p>
+  If you do not fix the order, some exceptions may not be caught by the most specific handler.
+</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+try:
+    call()
+except ValueError:
+    pass
+except UnicodeError:
+    pass
+</pre>
+<p>The IDE recommends moving the clause up. When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+try:
+    call()
+except UnicodeError:
+    pass
+except ValueError:
+    pass
+</pre>
 </body>
 </html>

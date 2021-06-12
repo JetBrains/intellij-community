@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection detects classic style classes usage.
+<p>Reports <a href="https://docs.python.org/2/reference/datamodel.html#new-style-and-classic-classes">
+  classic style classes</a> usage. This inspection applies only to Python 2.
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class A:
+    pass
+</pre>
+<p>With quick-fixes provided by the IDE, this code fragment changes to:</p>
+<pre style="font-family: monospace">
+class A(object):
+    def __init__(self):
+        pass
+</pre>
 </body>
 </html>

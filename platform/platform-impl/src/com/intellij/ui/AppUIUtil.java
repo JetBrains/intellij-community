@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -8,7 +8,10 @@ import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +43,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 public final class AppUIUtil {
@@ -310,14 +314,14 @@ public final class AppUIUtil {
   }
 
   public static boolean needToShowConsentsAgreement() {
-    return ConsentOptions.getInstance().getConsents().second;
+    return ConsentOptions.getInstance().getConsents().getValue();
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
-    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    final Map.Entry<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.second) {
-      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.first)));
+    if (consentsToShow.getValue()) {
+      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getKey())));
     }
     return result.get();
   }
@@ -406,7 +410,7 @@ public final class AppUIUtil {
 
   public static List<Consent> loadConsentsForEditing() {
     final ConsentOptions options = ConsentOptions.getInstance();
-    List<Consent> result = options.getConsents().first;
+    List<Consent> result = options.getConsents().getKey();
     if (options.isEAP()) {
       final Consent statConsent = options.getUsageStatsConsent();
       if (statConsent != null) {

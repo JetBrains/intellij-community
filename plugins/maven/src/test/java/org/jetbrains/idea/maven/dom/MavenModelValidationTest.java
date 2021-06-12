@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.junit.Test;
 
 public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -28,6 +29,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                   "<version>1</version>");
   }
 
+  @Test
   public void testCompletionRelativePath() throws Exception {
     createProjectSubDir("src");
     createProjectSubFile("a.txt", "");
@@ -43,6 +45,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(modulePom, "src", "module1", "pom.xml");
   }
 
+  @Test 
   public void testRelativePathDefaultValue() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -63,6 +66,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertEquals(((PsiFile)elementAtCaret).getVirtualFile(), myProjectPom);
   }
 
+  @Test 
   public void testUnderstandingProjectSchemaWithoutNamespace() {
     myFixture.saveText(myProjectPom,
                        "<project>" +
@@ -72,6 +76,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "dependencies", "dependencyManagement");
   }
 
+  @Test 
   public void testUnderstandingProfilesSchemaWithoutNamespace() {
     VirtualFile profiles = createProfilesXml("<profile>" +
                                              "  <<caret>" +
@@ -80,6 +85,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariantsInclude(profiles, "id", "activation");
   }
 
+  @Test 
   public void testUnderstandingSettingsSchemaWithoutNamespace() throws Exception {
     VirtualFile settings = updateSettingsXml("<profiles>" +
                                              "  <profile>" +
@@ -90,6 +96,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariantsInclude(settings, "id", "activation");
   }
 
+  @Test 
   public void testAbsentModelVersion() {
     myFixture.saveText(myProjectPom,
                        "<<error descr=\"'modelVersion' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
@@ -100,6 +107,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testAbsentArtifactId() {
     myFixture.saveText(myProjectPom,
                        "<<error descr=\"'artifactId' child tag should be defined\">project</error> xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
@@ -110,6 +118,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testUnknownModelVersion() {
     myFixture.saveText(myProjectPom,
                        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
@@ -121,6 +130,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testEmptyValues() {
     createProjectPom("<<error>groupId</error>></groupId>" +
                      "<<error>artifactId</error>></artifactId>" +
@@ -128,6 +138,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testAddingSettingsXmlReadingProblemsToProjectTag() throws Exception {
     myFixture.saveText(myProjectPom,
                        "<project>" +
@@ -150,6 +161,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testAddingProfilesXmlReadingProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        "<project>" +
@@ -172,6 +184,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testAddingStructureReadingProblemsToParentTag() {
     myFixture.saveText(myProjectPom,
                        "<project>" +
@@ -204,6 +217,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting(myProjectPom, true, false, true);
   }
 
+  @Test 
   public void testAddingParentReadingProblemsToParentTag() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
@@ -242,6 +256,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotAddReadingSyntaxProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        "<project>" +
@@ -265,6 +280,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotAddDependencyAndModuleProblemsToProjectTag() {
     myFixture.saveText(myProjectPom,
                        "<project>" +

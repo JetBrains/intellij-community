@@ -11,6 +11,7 @@ import com.intellij.compiler.impl.ExcludeFromCompileAction;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.RegexpFilter;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -85,6 +86,7 @@ public class BuildOutputService implements BuildViewService {
         .withAction(new CompilerPropertiesAction())
         .withExecutionFilter(new ModuleLinkFilter(myProject))
         .withExecutionFilter(new RegexpFilter(myProject, FILE_PATH_MACROS + ":" + LINE_MACROS + ":" + COLUMN_MACROS))
+        .withExecutionFilter(new UrlFilter(myProject))
         .withContextAction(node -> {
           return new ExcludeFromCompileAction(myProject) {
             @Override

@@ -1,10 +1,17 @@
 <html>
 <body>
-Reports calls to <code>assertEquals()</code> which have the expected argument and the actual argument in the wrong order.
-For JUnit 3, 4 and 5 the correct order is <code>(expected, actual)</code>. For TestNG the correct order is <code>(actual, expected)</code>
-Such calls will behave fine for assertions which pass, but may give confusing error reports on failure.
+Reports calls to <code>assertEquals()</code> which have the expected argument and the actual argument in the wrong order. For JUnit 3, 4
+and 5 the correct order is <code>(expected, actual)</code>. For TestNG the correct order is <code>(actual, expected)</code>. Such calls will
+behave fine for assertions which pass, but may give confusing error reports on failure. Use the quick-fix to flip the order of the
+arguments.
+<p>Example (JUnit):</p>
+<pre>
+  assertEquals(actual, expected)
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  assertEquals(expected, actual)
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

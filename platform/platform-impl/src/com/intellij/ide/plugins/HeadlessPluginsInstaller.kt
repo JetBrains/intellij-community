@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import java.io.IOException
 
 internal class HeadlessPluginsInstaller : ApplicationStarter {
@@ -13,9 +13,10 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
 
   override fun main(args: List<String>) {
     try {
-      val ids = args.subList(1, args.size - 1).map { PluginId.getId(it) }.toSet()
-
-      PluginsAdvertiser.installAndEnable(null, ids, false) {}
+      installAndEnable(
+        null,
+        args.subList(1, args.size).map { PluginId.getId(it) }.toSet(),
+      ) {}
     }
     catch (e: IOException) {
       e.printStackTrace(System.err)

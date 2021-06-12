@@ -29,10 +29,12 @@ import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +47,7 @@ public final class SuperMethodWarningUtil {
 
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return checkSuperMethods(method, Collections.emptyList());
+    return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   public static PsiMethod @NotNull [] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
@@ -58,6 +60,12 @@ public final class SuperMethodWarningUtil {
   }
 
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
+                                                      @NotNull Collection<? extends PsiElement> ignore) {
+    return checkSuperMethods(method, null, ignore);
+  }
+
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
+                                                        @NlsSafe @Nullable String actionString,
                                                         @NotNull Collection<? extends PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
@@ -77,6 +85,7 @@ public final class SuperMethodWarningUtil {
     int shouldIncludeBase = showDialog(
       method.getProject(),
       DescriptiveNameUtil.getDescriptiveName(method),
+      actionString,
       superAbstract,
       parentInterface,
       method.getContainingClass().isInterface(),
@@ -143,6 +152,7 @@ public final class SuperMethodWarningUtil {
 
     int useSuperMethod = showDialog(
       method.getProject(),
+      actionString,
       DescriptiveNameUtil.getDescriptiveName(method),
       containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
       containingClass.isInterface(),
@@ -221,11 +231,12 @@ public final class SuperMethodWarningUtil {
   @Messages.YesNoCancelResult
   private static int showDialog(@NotNull Project project,
                                 @NotNull String name,
+                                @NlsSafe @Nullable String actionString,
                                 boolean isSuperAbstract,
                                 boolean isParentInterface,
                                 boolean isContainedInInterface,
                                 String @NotNull ... classNames) {
-    String message = getDialogMessage(name, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
+    String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
     return Messages.showYesNoCancelDialog(project,
                                           message, JavaBundle.message("dialog.title.super.method.found"), JavaBundle.message("button.base.method"),
                                           JavaBundle.message("button.current.method"),
@@ -235,6 +246,7 @@ public final class SuperMethodWarningUtil {
   @Nls
   @NotNull
   private static String getDialogMessage(@NotNull String name,
+                                         @NlsSafe @Nullable String actionString,
                                          boolean isSuperAbstract,
                                          boolean isParentInterface,
                                          boolean isContainedInInterface,
@@ -258,7 +270,9 @@ public final class SuperMethodWarningUtil {
     }
 
     labelText.br();
-    labelText.append(HtmlChunk.text(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", classNames.length)));
+    labelText.append(HtmlChunk.text(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", 
+                                                       classNames.length, 
+                                                       ObjectUtils.notNull(actionString, RefactoringBundle.message("to.refactor")))));
     return labelText.wrapWithHtmlBody().toString();
   }
 }

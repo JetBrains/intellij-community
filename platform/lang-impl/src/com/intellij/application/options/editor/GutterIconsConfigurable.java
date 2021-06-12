@@ -104,13 +104,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     myDescriptors.addAll(options);
     */
     myDescriptors.sort((o1, o2) -> {
-      final PluginDescriptor descriptor1 = pluginDescriptorMap.get(o1);
-      final PluginDescriptor descriptor2 = pluginDescriptorMap.get(o2);
-      final int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(descriptor1),
-                                                     getPluginDisplayName(descriptor2));
-      if (byPlugin != 0) return byPlugin;
-
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
+      int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(pluginDescriptorMap.get(o1)),
+                                               getPluginDisplayName(pluginDescriptorMap.get(o2)));
+      return byPlugin != 0 ?
+             byPlugin :
+             StringUtil.naturalCompare(o1.getName(), o2.getName());
     });
     PluginDescriptor current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
@@ -170,9 +168,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
   }
 
-  private static @Nls String getPluginDisplayName(PluginDescriptor pluginDescriptor) {
-    if (pluginDescriptor instanceof IdeaPluginDescriptor && pluginDescriptor.getPluginId() == PluginManagerCore.CORE_ID) return IdeBundle.message("title.common");
-    return pluginDescriptor.getName();
+  private static @Nls String getPluginDisplayName(@Nullable PluginDescriptor pluginDescriptor) {
+    return pluginDescriptor instanceof IdeaPluginDescriptor &&
+           PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId()) ?
+           IdeBundle.message("title.common") :
+           pluginDescriptor.getName();
   }
 
   private void createUIComponents() {

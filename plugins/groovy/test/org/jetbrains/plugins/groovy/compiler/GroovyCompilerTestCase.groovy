@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.server.BuildManager
+import com.intellij.compiler.server.LocalBuildCommandLineBuilder
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.application.ApplicationConfiguration
@@ -44,6 +45,9 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
+
+import java.nio.file.Path
+
 /**
  * @author aalmiray
  * @author peter
@@ -91,6 +95,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tearDown() throws Exception {
+    Path buildDir = BuildManager.getInstance().getBuildSystemDirectory(myFixture.getProject());
     try {
       EdtTestUtil.runInEdtAndWait {
         try {
@@ -106,7 +111,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }
     finally {
-      PathKt.delete(BuildManager.getInstance().getLocalBuildSystemDirectory())
+      PathKt.delete(buildDir)
     }
   }
 

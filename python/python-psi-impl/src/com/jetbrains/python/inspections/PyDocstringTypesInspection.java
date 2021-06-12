@@ -26,11 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDocstringTypesInspection extends PyInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

@@ -185,6 +185,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     }
     else {
       List<String> commandLine = new ArrayList<>();
+      addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs(), true);
       addIfPresent(commandLine, myRunConfiguration.getScriptText());
       return String.join(" ", commandLine);
     }
@@ -195,17 +196,29 @@ final class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   private static void addIfPresent(@NotNull List<String> commandLine, @NotNull Map<String, String> envs) {
-    envs.forEach((key, value) -> {
+    addIfPresent(commandLine, envs, false);
+  }
+
+  private static void addIfPresent(@NotNull List<String> commandLine, @NotNull Map<String, String> envs, boolean endWithSemicolon) {
+    int index = 0;
+    for (Map.Entry<String, String> entry : envs.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
       String quotedString;
       if (Platform.current() != Platform.WINDOWS) {
         quotedString = ShStringUtil.quote(value);
       }
       else {
         String escapedValue = StringUtil.escapeQuotes(value);
-        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.fun(escapedValue) : escapedValue;
+        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.apply(escapedValue) : escapedValue;
       }
-      commandLine.add(key + "=" + quotedString);
-    });
+      if (endWithSemicolon && index == envs.size() - 1) {
+        commandLine.add(key + "=" + quotedString + ";");
+      } else {
+        commandLine.add(key + "=" + quotedString);
+      }
+      index++;
+    }
   }
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
@@ -213,7 +226,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     if (wslDistribution != null) return ShStringUtil.quote(wslDistribution.getWslPath(systemDependentPath));
     if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
-    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
+    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
   }
 
   private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {

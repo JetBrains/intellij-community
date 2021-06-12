@@ -41,6 +41,7 @@
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+      <override-text place="MainMenu"/>
     </action>
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
@@ -130,6 +131,7 @@
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
         <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
         <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
+        <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
         <separator/>
         <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
         <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
@@ -149,11 +151,6 @@
     <action internal="true" id="CollectFUStatisticsAction"
             class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
-    </action>
-
-    <!-- Help -->
-    <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
-      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>
     </action>
 
     <!-- Toolbar -->
@@ -272,6 +269,7 @@
 
     <group>
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
+      <action id="ExtractModuleFromPackage" class="com.intellij.ide.projectView.actions.ExtractModuleFromPackageAction" internal="true"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
@@ -619,10 +617,6 @@
       <separator/>
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
-
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ExportImportGroup"/>
-    </action>
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>

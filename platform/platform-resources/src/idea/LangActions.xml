@@ -54,7 +54,6 @@
     </group>
 
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
-    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
 
@@ -154,6 +153,7 @@
       <action id="EditBookmark" class="com.intellij.ide.bookmarks.actions.EditBookmarkAction"/>
       <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
       <action id="ToggleBookmarkWithMnemonic" class="com.intellij.ide.bookmarks.actions.ChooseBookmarkTypeAction"/>
+      <action id="DeleteMnemonicFromBookmark" class="com.intellij.ide.bookmarks.actions.DeleteBookmarkTypeAction"/>
       <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.BookmarksAction"/>
       <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
       <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
@@ -240,6 +240,7 @@
 
     <group id="EditBookmarksGroup" popup="true">
       <reference ref="ToggleBookmark"/>
+      <reference ref="DeleteMnemonicFromBookmark"/>
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -252,6 +253,7 @@
     <group id="popup@BookmarkContextMenu">
       <reference ref="EditBookmark"/>
       <reference ref="ToggleBookmark"/>
+      <reference ref="DeleteMnemonicFromBookmark"/>
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <separator/>
 
@@ -642,8 +644,7 @@
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
-        <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
-        <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
+        <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
       </group>
     </group>
 
@@ -1071,13 +1072,13 @@
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
       <reference ref="Resume"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
-      <separator/>
-      <reference ref="Rerun"/>
-      <reference ref="Stop"/>
       <separator/>
       <reference ref="ViewBreakpoints"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
@@ -1175,6 +1176,8 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
+      <reference ref="CreateRunConfiguration"/>
+      <separator/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>
       <reference ref="XDebugger.ToggleSortValues"/>
@@ -1428,6 +1431,18 @@
     </action>
 
     <group id="TouchBar">
+      <group id="TouchBarEditorSearch">
+        <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
+        <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
+        <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
+        <separator text="type.large"/>
+        <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
+        <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
+        <group id="TouchBarEditorSearch_ctrl">
+          <reference id="EditorSearchSession.ToggleMatchCase"/>
+          <reference id="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
+        </group>
+      </group>
       <group id="TouchBarDefault">
         <reference ref="RunConfiguration"/>
         <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
@@ -1439,8 +1454,7 @@
           <separator/>
         </group>
         <group id="TouchBarDefault_alt">
-          <reference ref="SelectInProjectView"/>
-          <separator text="type.flexible"/>
+          <separator/>
         </group>
         <group id="TouchBarDefault_cmd">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
@@ -1451,19 +1465,12 @@
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
           <separator text="type.flexible"/>
-          <reference ref="ShowUsages"/>
         </group>
         <group id="TouchBarDefault_cmd.alt">
-          <separator text="type.flexible"/>
-          <reference ref="FindUsages"/>
+          <separator/>
         </group>
         <group id="TouchBarDefault_shift">
           <!--Use Shift to show Refactor actions/-->
-          <reference ref="RenameElement"/>
-          <reference ref="ChangeSignature"/>
-          <separator text="type.flexible"/>
-          <reference ref="CopyElement"/>
-          <reference ref="Move"/>
         </group>
       </group>
       <group id="TouchBarDebug">
@@ -1543,5 +1550,7 @@
             internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
+            use-shortcut-of="GotoDeclaration" />
   </actions>
 </idea-plugin>

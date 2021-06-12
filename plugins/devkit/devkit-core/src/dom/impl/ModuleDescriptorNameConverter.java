@@ -21,6 +21,7 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -60,7 +61,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   @Override
   public @Nullable LookupElement createLookupElement(IdeaPlugin plugin) {
     return LookupElementBuilder.create(plugin, getDisplayName(plugin))
-      .withIcon(ElementPresentationManager.getIcon(plugin))
+      .withIcon(ElementPresentationManager.getIconForClass(ContentDescriptor.ModuleDescriptor.class))
       .withTypeText(plugin.getPackage().getStringValue());
   }
 

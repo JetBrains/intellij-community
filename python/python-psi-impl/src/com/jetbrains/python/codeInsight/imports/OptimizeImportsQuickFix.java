@@ -16,9 +16,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, HighPriorityAction {
 
   @NotNull

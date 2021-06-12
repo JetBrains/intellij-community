@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,7 +27,7 @@ import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 /**
  * @author Irina.Chernushina on 2/13/2016.
  */
-public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   @NotNull
   @Override
   public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {

@@ -7,7 +7,7 @@ import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.learn.lesson.LessonManager
 
-class OpenPassedContext(private val project: Project) : LessonContext() {
+internal class OpenPassedContext(private val project: Project) : LessonContext() {
   override fun task(taskContent: TaskContext.() -> Unit) {
     OpenPassedTaskContext(project).apply(taskContent)
   }

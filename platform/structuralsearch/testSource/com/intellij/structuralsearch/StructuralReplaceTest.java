@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    setLanguageLevel(LanguageLevel.JDK_16);
     final MatchOptions matchOptions = options.getMatchOptions();
     matchOptions.setFileType(JavaFileType.INSTANCE);
   }
@@ -886,7 +888,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "interface X {\n" +
                 "  void x();\n" +
                 "}\n" +
-                "@interface Anno {}\n";
+                "@interface Anno {}\n" +
+                "record R(int i, int j) {}\n";
     String what = "class 'X {}";
     String by = "/** @author me */\n" +
                 "class $X$ {}";
@@ -899,7 +902,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                       "  void x();\n" +
                       "}\n" +
                       "/** @author me */\n" +
-                      "@interface Anno {}\n";
+                      "@interface Anno {}\n" +
+                      "/** @author me */\n" +
+                      "record R(int i, int j) {}\n";
     assertEquals("Special class replacement", expected, replace(in, what, by, true));
 
     String in2 = "new ArrayList<String>(null) {\n" +

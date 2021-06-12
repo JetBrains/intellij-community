@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.management.ThreadInfo;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -94,6 +96,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
               addDumpsAttachments(dumps, Function.identity(), attachments);
 
+              FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
+
               if (message != null && throwable != null && !attachments.isEmpty()) {
                 IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
                 setAppInfo(event, appInfo);
@@ -142,14 +146,21 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   @Override
-  public void uiFreezeStarted() {
+  public void uiFreezeStarted(@NotNull File reportDir) {
     if (DEBUG || !DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
       reset();
       myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
-                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000);
+                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000) {
+        @Override
+        public void stop() {
+          super.stop();
+          FreezeProfiler.EP_NAME.forEachExtensionSafe(FreezeProfiler::stop);
+        }
+      };
+      FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> p.start(reportDir));
     }
   }
 
@@ -175,17 +186,17 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(dir, THROWABLE_FILE_NAME)))) {
             oos.writeObject(event.getThrowable());
           }
-          saveAppInfo(dir, false);
+          saveAppInfo(dir.toPath().resolve(APPINFO_FILE_NAME), false);
         }
         catch (IOException ignored) { }
       }
     }
   }
 
-  static void saveAppInfo(File dir, boolean overwrite) throws IOException {
-    File appInfoFile = new File(dir, APPINFO_FILE_NAME);
-    if (overwrite || !appInfoFile.exists()) {
-      FileUtil.writeToFile(appInfoFile, ITNProxy.getAppInfoString());
+  static void saveAppInfo(Path appInfoFile, boolean overwrite) throws IOException {
+    if (overwrite || !Files.exists(appInfoFile)) {
+      Files.createDirectories(appInfoFile.getParent());
+      Files.writeString(appInfoFile, ITNProxy.getAppInfoString());
     }
   }
 
@@ -195,6 +206,11 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return;
     }
     myDumpTask.stop();
+
+    List<Attachment> extraAttachments = new ArrayList<>();
+    if (reportDir != null) {
+      FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.getAttachments(reportDir)));
+    }
 
     cleanup(reportDir);
 
@@ -209,6 +225,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
         List<Attachment> attachments = new ArrayList<>();
         addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
+        attachments.addAll(extraAttachments);
 
         report(createEvent(lengthInSeconds, attachments, myDumpTask, reportDir, true));
       }
@@ -339,9 +356,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
       }
-      double averageLoad = dumpTask.getOsAverageLoad();
-      if (averageLoad > 0) {
-        message += ", load average: " + String.format("%.2f", averageLoad);
+      double processCpuLoad = dumpTask.getProcessCpuLoad();
+      if (processCpuLoad > 0) {
+        message += ", cpu load: " + (int)(processCpuLoad * 100) + "%";
       }
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";

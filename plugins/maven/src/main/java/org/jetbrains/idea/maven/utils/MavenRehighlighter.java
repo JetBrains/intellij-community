@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,7 +26,8 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
-public class MavenRehighlighter implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class MavenRehighlighter implements Disposable {
   private final MergingUpdateQueue queue;
 
   public MavenRehighlighter(@NotNull Project project) {
@@ -82,7 +83,7 @@ public class MavenRehighlighter implements Disposable {
   public static void rehighlight(@NotNull Project project, @Nullable MavenProject mavenProject) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!project.isDisposed()) {
-        ServiceManager.getService(project, MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
+        project.getService(MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
       }
     });
   }

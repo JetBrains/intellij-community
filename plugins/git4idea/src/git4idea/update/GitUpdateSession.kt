@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getShortNames
@@ -93,7 +93,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type, null)
+    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type)
   }
 }
 

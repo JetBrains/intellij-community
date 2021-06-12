@@ -114,12 +114,12 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["my module"]["MyModuleTestCase"]["test2"].element
     )
     assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
-      """:test --tests "GroovyTestCase.Don\'t use single * quo\*tes"""",
-      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element
+      """:test --tests "GroovyTestCase.Don\'t use single quo\*tes"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single quo\"tes"""].element
     )
     assertConfigurationFromContext<PatternGradleConfigurationProducer>(
-      """:test --tests "GroovyTestCase.Don\'t use single * quo\*tes" --tests "GroovyTestCase.test2"""",
-      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element,
+      """:test --tests "GroovyTestCase.Don\'t use single quo\*tes" --tests "GroovyTestCase.test2"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single quo\"tes"""].element,
       projectData["project"]["GroovyTestCase"]["test2"].element
     )
   }
@@ -215,8 +215,8 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     runReadActionAndWait {
       val producer = getConfigurationProducer<PatternGradleConfigurationProducer>()
       val testClass = projectData["project"]["TestCase"].element
-      val abstractTestClass = projectData["project"]["AbstractTestCase"].element
-      val abstractTestMethod = projectData["project"]["AbstractTestCase"]["test"].element
+      val abstractTestClass = projectData["project"]["org.example.AbstractTestCase"].element
+      val abstractTestMethod = projectData["project"]["org.example.AbstractTestCase"]["test"].element
       val templateConfiguration = producer.createTemplateConfiguration()
       getContextByLocation(testClass, abstractTestClass).let {
         assertTrue(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))

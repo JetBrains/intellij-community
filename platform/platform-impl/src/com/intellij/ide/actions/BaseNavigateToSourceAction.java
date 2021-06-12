@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.pom.PomTargetPsiElement;
@@ -10,7 +10,7 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends AnAction implements DumbAware {
+public abstract class BaseNavigateToSourceAction extends DumbAwareAction implements UpdateInBackground {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {

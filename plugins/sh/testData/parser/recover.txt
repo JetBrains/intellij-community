@@ -76,7 +76,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -108,7 +109,8 @@ SHELL_SCRIPT
         PsiErrorElement:'av' unexpected
           PsiElement(word)('av')
         PsiWhiteSpace('  ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -135,7 +137,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -164,7 +167,8 @@ SHELL_SCRIPT
             PsiElement(word)('i')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
         PsiErrorElement:<list terminator> expected, got 'fo'
           PsiElement(word)('fo')
@@ -209,7 +213,7 @@ SHELL_SCRIPT
         PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('4')
-        PsiErrorElement:'!', $, <list terminator>, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word or '{' expected, got 'do'
+        PsiErrorElement:'!', $, <list terminator>, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var or '{' expected, got 'do'
           <empty list>
       PsiWhiteSpace('   ')
       DO_BLOCK
@@ -326,7 +330,7 @@ SHELL_SCRIPT
       CASE_CLAUSE
         PATTERN
           PsiElement(word)('fss')
-          PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word, '{' or '|' expected
+          PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, '{' or '|' expected
             PsiElement(\n)('\n')
           PsiElement(word)('pattern')
         PsiElement())(')')
@@ -364,7 +368,7 @@ SHELL_SCRIPT
       CASE_CLAUSE
         PATTERN
           PsiElement(word)('fss')
-          PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word, '{' or '|' expected
+          PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, '{' or '|' expected
             PsiElement(\n)('\n')
           PsiElement(DUMMY_BLOCK)
             PsiElement(word)('pattern')

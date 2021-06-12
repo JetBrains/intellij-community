@@ -38,7 +38,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
   private val panels = createPanels(existingSdks, newProjectPath)
-  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
+  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == (preferredType ?: PySdkSettings.instance.preferredEnvironmentType) } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 

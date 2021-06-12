@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
@@ -18,18 +15,20 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
   @Override
   public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo info) {
     PsiElement parent = errorElement.getParent();
-    if (parent instanceof PsiTryStatement && errorElement.getErrorDescription().equals(
-      JavaPsiBundle.message("expected.catch.or.finally"))) {
+    String description = errorElement.getErrorDescription();
+    if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
+      QuickFixAction.registerQuickFixAction(info, new InsertMissingTokenFix(";"));
+      HighlightFixUtil.registerFixesForExpressionStatement(info, parent);
+    }
+    if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
       QuickFixAction.registerQuickFixAction(info, new AddExceptionToCatchFix(false));
       QuickFixAction.registerQuickFixAction(info, new AddFinallyFix((PsiTryStatement)parent));
     }
-    if (parent instanceof PsiSwitchLabeledRuleStatement && errorElement.getErrorDescription().equals(
-      JavaPsiBundle.message("expected.switch.rule"))) {
+    if (parent instanceof PsiSwitchLabeledRuleStatement && description.equals(JavaPsiBundle.message("expected.switch.rule"))) {
       QuickFixAction.registerQuickFixAction(
         info, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix((PsiSwitchLabeledRuleStatement)parent));
     }
-    if (parent instanceof PsiJavaFile && errorElement.getErrorDescription().equals(
-      JavaPsiBundle.message("expected.class.or.interface"))) {
+    if (parent instanceof PsiJavaFile && description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
       PsiElement child = errorElement.getFirstChild();
       if (child instanceof PsiIdentifier) {
         switch (child.getText()) {

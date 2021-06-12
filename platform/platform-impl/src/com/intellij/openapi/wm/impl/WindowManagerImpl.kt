@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -34,7 +33,6 @@ import java.util.function.Supplier
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JWindow
-import javax.swing.SwingUtilities
 
 private val LOG = logger<WindowManagerImpl>()
 
@@ -205,17 +203,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun setAlphaModeEnabled(window: Window, state: Boolean) {
     require(window.isDisplayable && window.isShowing) { "window must be displayable and showing. window=$window" }
-  }
-
-  override fun adjustContainerWindow(component: Component, oldSize: Dimension, newSize: Dimension) {
-    val window = SwingUtilities.getWindowAncestor(component) as? JWindow ?: return
-    val popup = window.rootPane.getClientProperty(JBPopup.KEY) as JBPopup? ?: return
-    if (oldSize.height < newSize.height) {
-      val size = popup.size
-      size.height += newSize.height - oldSize.height
-      popup.size = size
-      popup.moveToFitScreen()
-    }
   }
 
   override fun isNotSuggestAsParent(window: Window): Boolean = windowWatcher.isNotSuggestAsParent(window)

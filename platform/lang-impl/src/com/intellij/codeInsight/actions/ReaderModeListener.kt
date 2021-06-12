@@ -36,16 +36,16 @@ class ReaderModeSettingsListener : ReaderModeListener {
     @JvmStatic
     val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
-    fun applyToAllEditors(project: Project, preferGlobalSettings: Boolean = false) {
+    fun applyToAllEditors(project: Project) {
       FileEditorManager.getInstance(project).allEditors.forEach {
         if (it !is TextEditor) return
-        applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+        applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true)
       }
 
       EditorFactory.getInstance().allEditors.forEach {
         if (it !is EditorImpl) return
         applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
-                        fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+                        fileIsOpenAlready = true)
       }
     }
 
@@ -75,7 +75,7 @@ internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
       when (event.propertyName) {
         EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> {
           ReaderModeSettings.instance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
-          applyToAllEditors(project, true)
+          applyToAllEditors(project)
         }
       }
     }
@@ -85,7 +85,7 @@ internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
     fontPreferences.changeListener = Runnable {
       fontPreferences.changeListener
       ReaderModeSettings.instance(project).showLigatures = fontPreferences.useLigatures()
-      applyToAllEditors(project, true)
+      applyToAllEditors(project)
     }
 
     Disposer.register(project) { fontPreferences.changeListener = null }

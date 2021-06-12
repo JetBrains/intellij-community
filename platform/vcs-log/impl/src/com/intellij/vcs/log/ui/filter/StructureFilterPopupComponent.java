@@ -200,10 +200,10 @@ public class StructureFilterPopupComponent
   protected ActionGroup createActionGroup() {
     Set<VirtualFile> roots = getAllRoots();
 
-    List<AnAction> rootActions = new ArrayList<>();
+    List<SelectVisibleRootAction> rootActions = new ArrayList<>();
     if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
-        rootActions.add(new SelectVisibleRootAction(root));
+        rootActions.add(new SelectVisibleRootAction(root, rootActions));
       }
     }
     List<AnAction> structureActions = new ArrayList<>();
@@ -319,15 +319,17 @@ public class StructureFilterPopupComponent
   }
 
   private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
-    @NotNull private final CheckboxColorIcon myIcon;
-    @NotNull private final VirtualFile myRoot;
+    final CheckboxColorIcon myIcon;
+    final VirtualFile myRoot;
+    final List<SelectVisibleRootAction> myAllActions;
 
-    private SelectVisibleRootAction(@NotNull VirtualFile root) {
+    SelectVisibleRootAction(@NotNull VirtualFile root, @NotNull List<SelectVisibleRootAction> allActions) {
       super(null, root.getPresentableUrl(), null);
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
-      myIcon = JBUIScale.scaleIcon(new CheckboxColorIcon(CHECKBOX_ICON_SIZE,
-                                                         VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
+      myAllActions = allActions;
+      myIcon = JBUIScale.scaleIcon(new CheckboxColorIcon(
+        CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -348,6 +350,9 @@ public class StructureFilterPopupComponent
         else {
           setVisible(myRoot, state);
         }
+      }
+      for (SelectVisibleRootAction action : myAllActions) {
+        action.updateIcon();
       }
     }
 

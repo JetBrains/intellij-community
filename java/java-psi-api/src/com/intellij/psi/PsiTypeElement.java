@@ -57,4 +57,13 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
   default boolean isInferredType() {
     return false;
   }
+
+  /**
+   * @return false if annotations cannot be added to this type element 
+   * For example, the JVM language that doesn't support type-use annotations;
+   * or type element represents the void type.
+   */
+  default boolean acceptsAnnotations() {
+    return true;
+  }
 }

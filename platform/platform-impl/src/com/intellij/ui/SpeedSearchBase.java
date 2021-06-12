@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -110,7 +111,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         if (StringUtil.isEmpty(text)) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myComponent.hasFocus()) {
-            showPopup(text);
+            manageSearchPopup(createPopup(text)); // keep selection
           }
         });
       }
@@ -367,6 +368,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
+    if (mySearchPopup != null && myComponent.isDisplayable()) {
+      mySearchPopup.refreshSelection();
+    }
   }
 
   public void showPopup() {
@@ -392,7 +396,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       char c = e.getKeyChar();
       if (Character.isLetterOrDigit(c) || !Character.isWhitespace(c) && SpeedSearch.PUNCTUATION_MARKS.indexOf(c) != -1) {
-        manageSearchPopup(createPopup(String.valueOf(c)));
+        showPopup(String.valueOf(c));
         e.consume();
       }
     }
@@ -460,6 +464,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected class SearchPopup extends JPanel {
     protected final SearchField mySearchField;
+    private String myLastPattern = "";
 
     protected SearchPopup(String initialString) {
       mySearchField = new SearchField();
@@ -490,9 +495,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       add(mySearchField, BorderLayout.CENTER);
       mySearchField.setText(initialString);
 
-      onSearchFieldUpdated(initialString);
-      Object element = findElement(mySearchField.getText());
-      updateSelection(element);
+      updateLastPattern();
+    }
+
+    private void updateLastPattern() {
+      String pattern = StringUtil.notNullize(mySearchField.getText());
+      if (!pattern.equals(myLastPattern)) {
+        myLastPattern = pattern;
+        onSearchFieldUpdated(pattern);
+      }
     }
 
     protected void handleInsert(String newText) {
@@ -508,8 +519,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
+        updateLastPattern();
         String s = mySearchField.getText();
-        onSearchFieldUpdated(s);
         int keyCode = e.getKeyCode();
         Object element;
         if (isUpDownHomeEnd(keyCode)) {
@@ -549,6 +560,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected void onSearchFieldUpdated(String pattern) {
+    if (Registry.is("ide.speed.search.close.when.empty") && StringUtil.isEmpty(pattern)) hidePopup();
   }
 
   protected class SearchField extends ExtendableTextField {
@@ -692,8 +704,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
-
-    mySearchPopup.refreshSelection();
   }
 
   private void moveSearchPopup() {

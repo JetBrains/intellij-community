@@ -1,11 +1,19 @@
 <html>
 <body>
-Reports any access to the <b>java.util.Collections</b>
-fields <b>EMPTY_LIST</b>, <b>EMPTY_MAP</b>
-or <b>EMPTY_SET</b>. Those expressions can be replaced by method
-calls to <b>emptyList()</b>,
-<b>emptyMap()</b> and <b>emptySet()</b>.
+Reports usages of the <code>java.util.Collections</code>
+fields <code>EMPTY_LIST</code>, <code>EMPTY_MAP</code>
+or <code>EMPTY_SET</code>. These field usages can be replaced with method
+calls <code>emptyList()</code>, <code>emptyMap()</code> or <code>emptySet()</code>.
 Such method calls prevent "unchecked" warnings by the compiler because the type parameters can be inferred.
+
+<p>Example:</p>
+<pre>
+  List&lt;Integer&gt; emptyList = Collections.EMPTY_LIST;
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  List&lt;Integer&gt; emptyList = Collections.emptyList();
+</pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 5 or higher</p>
 <p>

@@ -35,7 +35,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
   @Test
   fun `test buildSrc project level dependencies are imported`() {
-    createProjectSubFile("buildSrc/build.gradle", GradleBuildScriptBuilderEx().withJUnit("4.12").generate())
+    createProjectSubFile("buildSrc/build.gradle", createBuildScriptBuilder().withJUnit4().generate())
     importProject("")
     assertModules("project",
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test")
@@ -47,7 +47,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
   @Test
   fun `test explore files after double importing`() {
-    createProjectSubFile("buildSrc/build.gradle", GradleBuildScriptBuilderEx().withJUnit("4.12").generate())
+    createProjectSubFile("buildSrc/build.gradle", createBuildScriptBuilder().withJUnit4().generate())
     importProject("")
     importProject("")
 

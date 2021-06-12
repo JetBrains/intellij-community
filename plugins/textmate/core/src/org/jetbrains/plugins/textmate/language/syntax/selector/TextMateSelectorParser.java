@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -138,7 +139,7 @@ public class TextMateSelectorParser {
   }
 
   interface Node {
-    TextMateWeigh weigh(@NotNull CharSequence scope);
+    TextMateWeigh weigh(@NotNull TextMateScope scope);
   }
 
   private static class Selector implements Node {
@@ -149,9 +150,10 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull CharSequence scope) {
-      if (StringUtil.startsWith(scope, selector)) {
-        return new TextMateWeigh(BASE_WEIGH - countChars(scope, '.') + countChars(selector, '.'),
+    public TextMateWeigh weigh(@NotNull TextMateScope scope) {
+      CharSequence scopeName = scope.getScopeName();
+      if (scopeName != null && StringUtil.startsWith(scopeName, selector)) {
+        return new TextMateWeigh(BASE_WEIGH - scope.getDotsCount() + countChars(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }
       return TextMateWeigh.ZERO;
@@ -175,11 +177,15 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull CharSequence scope) {
+    public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       for (Node exclusion : exclusions) {
         if (exclusion.weigh(scope).weigh > 0) {
           return TextMateWeigh.ZERO;
         }
+      }
+
+      if (scope.getLevel() > 100) {
+        return TextMateWeigh.ZERO;
       }
 
       Deque<Node> highlightingSelectors = new LinkedList<>();
@@ -189,12 +195,8 @@ public class TextMateSelectorParser {
       if (highlightingSelectors.isEmpty()) {
         highlightingSelectors.push(new Selector(""));
       }
-      Deque<CharSequence> targetSelectors = new LinkedList<>();
-      for (CharSequence s : StringUtil.split(scope, " ")) {
-        targetSelectors.push(s);
-      }
 
-      CharSequence currentTargetSelector = targetSelectors.pop();
+      TextMateScope currentTargetSelector = scope;
       Node currentHighlightingSelector = highlightingSelectors.peek();
 
       int nestingWeigh = NESTING_WEIGH_INITIAL;
@@ -211,12 +213,12 @@ public class TextMateSelectorParser {
           }
         }
         nestingWeigh--;
-        currentTargetSelector = !highlightingSelectors.isEmpty() && !targetSelectors.isEmpty() ? targetSelectors.pop() : null;
+        currentTargetSelector = currentTargetSelector.getParent();
       }
       if (!highlightingSelectors.isEmpty()) {
         return TextMateWeigh.ZERO;
       }
-      return new TextMateWeigh(!startMatch || targetSelectors.isEmpty() ? result : 0, priority);
+      return new TextMateWeigh(!startMatch || currentTargetSelector == null || currentTargetSelector.isEmpty() ? result : 0, priority);
     }
   }
 
@@ -228,7 +230,7 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull CharSequence scope) {
+    public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       TextMateWeigh result = TextMateWeigh.ZERO;
       for (Node child : children) {
         TextMateWeigh weigh = child.weigh(scope);
@@ -248,7 +250,7 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull CharSequence scope) {
+    public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       for (Node child : children) {
         TextMateWeigh weigh = child.weigh(scope);
         if (weigh.weigh > 0) {

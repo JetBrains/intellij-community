@@ -12,19 +12,20 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -212,19 +213,19 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private void updateContext(final String qName) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      Project project = myProject;
-      if (project != null) {
-        Pair<PsiElement, PsiType>pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
-        PsiElement context = pair.first;
-        if (context != null) {
-          myLabelEditor.setContext(context);
-          myChildrenEditor.setContext(context);
-          myChildrenExpandedEditor.setContext(context);
-          myListChildrenEditor.setContext(context);
-        }
-      }
-    });
+    if (myProject != null) {
+      ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(qName, myProject).first)
+        .inSmartMode(myProject)
+        .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
+          if (context != null) {
+            myLabelEditor.setContext(context);
+            myChildrenEditor.setContext(context);
+            myChildrenExpandedEditor.setContext(context);
+            myListChildrenEditor.setContext(context);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   private void updateEnabledState() {

@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -151,10 +150,9 @@ public class BuildResult implements MessageHandler {
 
   public void assertSuccessful() {
     if (!isSuccessful()) {
-      Function<BuildMessage, String> toStringFunction = StringUtil.createToStringFunction(BuildMessage.class);
       fail("Build failed.\n" +
-           "Errors:\n" + StringUtil.join(myErrorMessages, toStringFunction, "\n") + "\n" +
-           "Info messages:\n" + StringUtil.join(myInfoMessages, toStringFunction, "\n"));
+           "Errors:\n" + StringUtil.join(myErrorMessages, "\n") + "\n" +
+           "Info messages:\n" + StringUtil.join(myInfoMessages, "\n"));
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -306,8 +307,8 @@ public final class BoolUtils {
     if (expression1 instanceof PsiBinaryExpression && expression2 instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp1 = (PsiBinaryExpression)expression1;
       PsiBinaryExpression binOp2 = (PsiBinaryExpression)expression2;
-      RelationType rel1 = RelationType.fromElementType(binOp1.getOperationTokenType());
-      RelationType rel2 = RelationType.fromElementType(binOp2.getOperationTokenType());
+      RelationType rel1 = DfaPsiUtil.getRelationByToken(binOp1.getOperationTokenType());
+      RelationType rel2 = DfaPsiUtil.getRelationByToken(binOp2.getOperationTokenType());
       if (rel1 == null || rel2 == null) return false;
       PsiType type = binOp1.getLOperand().getType();
       // a > b and a <= b are not strictly opposite due to NaN semantics

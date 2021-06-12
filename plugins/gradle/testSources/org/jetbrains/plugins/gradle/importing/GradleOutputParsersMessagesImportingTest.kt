@@ -131,7 +131,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin()
+    val buildScript = createBuildScriptBuilder().withJavaPlugin()
 
     // check sunny case
     importProject(buildScript.generate())
@@ -218,7 +218,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
     val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
       currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
@@ -10,7 +11,6 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
@@ -163,6 +164,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     super.checkDomElement(element, holder, helper);
 
+    ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
+      new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
+
     if (element instanceof IdeaPlugin) {
       Module module = element.getModule();
       if (module != null) {
@@ -171,67 +175,66 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
-    else {
-      ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
-        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
-      if (element instanceof Extension) {
-        annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
+    else if (element instanceof Extension) {
+      annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof ExtensionPoint) {
+      annotateExtensionPoint((ExtensionPoint)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof Vendor) {
+      annotateVendor((Vendor)element, holder);
+    }
+    else if (element instanceof ProductDescriptor) {
+      annotateProductDescriptor((ProductDescriptor)element, holder);
+    }
+    else if (element instanceof IdeaVersion) {
+      annotateIdeaVersion((IdeaVersion)element, holder);
+    }
+    else if (element instanceof Dependency) {
+      annotateDependency((Dependency)element, holder);
+    }
+    else if (element instanceof DependencyDescriptor) {
+      annotateDependencyDescriptor((DependencyDescriptor)element, holder);
+    }
+    else if (element instanceof ContentDescriptor) {
+      annotateContentDescriptor((ContentDescriptor)element, holder);
+    }
+    else if (element instanceof ContentDescriptor.ModuleDescriptor) {
+      annotateModuleDescriptor((ContentDescriptor.ModuleDescriptor)element, holder);
+    }
+    else if (element instanceof Extensions) {
+      annotateExtensions((Extensions)element, holder);
+    }
+    else if (element instanceof Extensions.UnresolvedExtension) {
+      annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
+    }
+    else if (element instanceof AddToGroup) {
+      annotateAddToGroup((AddToGroup)element, holder);
+    }
+    else if (element instanceof Action) {
+      annotateAction((Action)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof Synonym) {
+      annotateSynonym((Synonym)element, holder);
+    }
+    else if (element instanceof Group) {
+      annotateGroup((Group)element, holder);
+    }
+    else if (element instanceof Component) {
+      annotateComponent((Component)element, holder, componentModuleRegistrationChecker);
+      if (element instanceof Component.Project) {
+        annotateProjectComponent((Component.Project)element, holder);
       }
-      else if (element instanceof ExtensionPoint) {
-        annotateExtensionPoint((ExtensionPoint)element, holder, componentModuleRegistrationChecker);
-      }
-      else if (element instanceof Vendor) {
-        annotateVendor((Vendor)element, holder);
-      }
-      else if (element instanceof ProductDescriptor) {
-        annotateProductDescriptor((ProductDescriptor)element, holder);
-      }
-      else if (element instanceof IdeaVersion) {
-        annotateIdeaVersion((IdeaVersion)element, holder);
-      }
-      else if (element instanceof Dependency) {
-        annotateDependency((Dependency)element, holder);
-      }
-      else if (element instanceof DependencyDescriptor) {
-        annotateDependencyDescriptor((DependencyDescriptor)element, holder);
-      }
-      else if (element instanceof ContentDescriptor) {
-        annotateContentDescriptor((ContentDescriptor)element, holder);
-      }
-      else if (element instanceof Extensions) {
-        annotateExtensions((Extensions)element, holder);
-      }
-      else if (element instanceof Extensions.UnresolvedExtension) {
-        annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
-      }
-      else if (element instanceof AddToGroup) {
-        annotateAddToGroup((AddToGroup)element, holder);
-      }
-      else if (element instanceof Action) {
-        annotateAction((Action)element, holder, componentModuleRegistrationChecker);
-      }
-      else if (element instanceof Synonym) {
-        annotateSynonym((Synonym)element, holder);
-      }
-      else if (element instanceof Group) {
-        annotateGroup((Group)element, holder);
-      }
-      else if (element instanceof Component) {
-        annotateComponent((Component)element, holder, componentModuleRegistrationChecker);
-        if (element instanceof Component.Project) {
-          annotateProjectComponent((Component.Project)element, holder);
-        }
-      }
-      else //noinspection deprecation
-        if (element instanceof Helpset) {
-          highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
-        }
-        else if (element instanceof Listeners) {
-          annotateListeners((Listeners)element, holder);
-        }
-        else if (element instanceof Listeners.Listener) {
-          annotateListener((Listeners.Listener)element, holder);
-        }
+    }
+    else //noinspection deprecation
+      if (element instanceof Helpset) {
+      highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
+    }
+    else if (element instanceof Listeners) {
+      annotateListeners((Listeners)element, holder);
+    }
+    else if (element instanceof Listeners.Listener) {
+      annotateListener((Listeners.Listener)element, holder);
     }
 
     if (element instanceof GenericDomValue) {
@@ -244,15 +247,41 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateDependencyDescriptor(DependencyDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (isIdeaProjectOrJetBrains(descriptor)) return;
+    if (!isIdeaProjectOrJetBrains(descriptor)) {
+      highlightJetbrainsOnly(descriptor, holder);
+      return;
+    }
 
-    highlightJetbrainsOnly(descriptor, holder);
+    if (descriptor.getModuleEntry().isEmpty() &&
+        descriptor.getPlugin().isEmpty()) {
+      holder.createProblem(descriptor, HighlightSeverity.ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.dependency.descriptor.at.least.one.dependency"));
+    }
   }
 
   private static void annotateContentDescriptor(ContentDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (isIdeaProjectOrJetBrains(descriptor)) return;
+    if (!isIdeaProjectOrJetBrains(descriptor)) {
+      highlightJetbrainsOnly(descriptor, holder);
+      return;
+    }
 
-    highlightJetbrainsOnly(descriptor, holder);
+    if (descriptor.getModuleEntry().isEmpty()) {
+      holder.createProblem(descriptor, HighlightSeverity.ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
+    }
+  }
+
+  private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
+    final IdeaPlugin ideaPlugin = descriptor.getName().getValue();
+    if (ideaPlugin == null) return;
+
+    final String moduleDescriptorPackage = ideaPlugin.getPackage().getStringValue();
+    final String descriptorPackage = descriptor.getPackage().getStringValue();
+    if (!Comparing.strEqual(moduleDescriptorPackage, descriptorPackage)) {
+      holder.createProblem(descriptor.getPackage(),
+                           DevKitBundle.message("inspections.plugin.xml.module.descriptor.package.does.not.match",
+                                                descriptorPackage, moduleDescriptorPackage, descriptor.getName().getStringValue()));
+    }
   }
 
   private static boolean isIdeaProjectOrJetBrains(DomElement element) {
@@ -273,6 +302,28 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       if (psiClass.getContainingClass() != null &&
           !StringUtil.containsChar(StringUtil.notNullize(domValue.getRawText()), '$')) {
         holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.inner.class.must.be.separated.with.dollar"));
+      }
+
+      Module module = domValue.getModule();
+      if (module == null) return;
+
+      if (!isIdeaProjectOrJetBrains(domValue)) return;
+
+      IdeaPlugin ideaPlugin = domValue.getParentOfType(IdeaPlugin.class, true);
+      assert ideaPlugin != null;
+      String pluginPackage = ideaPlugin.getPackage().getStringValue();
+      if (pluginPackage == null) return;
+
+      final String psiClassFqn = psiClass.getQualifiedName();
+      assert psiClassFqn != null;
+
+      // only highlight if located in same module
+      if (!StringUtil.startsWith(psiClassFqn, pluginPackage + ".") &&
+          domValue.getModule() == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
+        holder.createProblem(domValue, HighlightSeverity.ERROR,
+                             DevKitBundle.message("inspections.plugin.xml.dependency.class.located.in.wrong.package",
+                                                  psiClassFqn, pluginPackage),
+                             new MoveToPackageFix(psiClass.getContainingFile(), pluginPackage));
       }
     }
   }
@@ -502,7 +553,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (Boolean.TRUE == ideaPlugin.getImplementationDetail().getValue()) return;
 
     Collection<VirtualFile> pluginIconFiles =
-      FilenameIndex.getVirtualFilesByName(module.getProject(), PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
+      FilenameIndex.getVirtualFilesByName(PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
     if (pluginIconFiles.isEmpty()) {
       holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
                            DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
@@ -731,13 +782,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     String untilBuild = ideaVersion.getUntilBuild().getStringValue();
     if (untilBuild != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
-      Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
+      Matcher matcher = PluginManager.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
         holder.createProblem(
           ideaVersion.getUntilBuild(),
           DevKitBundle.message("inspections.plugin.xml.until.build.use.asterisk.instead.of.big.number", matcher.group(2)),
-          new CorrectUntilBuildAttributeFix(
-            IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+          new CorrectUntilBuildAttributeFix(PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
       }
       if (untilBuild.matches("\\d+")) {
         int branch = Integer.parseInt(untilBuild);
@@ -909,6 +959,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateText(vendor, "YourCompany", holder);
     checkMaxLength(vendor, 255, holder);
 
+    //noinspection HttpUrlsUsage
     checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>Provides custom name/tooltip for editor tab instead of filename/path.</p>
  *
  * <p>Implement {@link com.intellij.openapi.project.DumbAware} to be active during indexing.</p>
- *
- * @author yole
  */
 public interface EditorTabTitleProvider {
   ExtensionPointName<EditorTabTitleProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorTabTitleProvider");

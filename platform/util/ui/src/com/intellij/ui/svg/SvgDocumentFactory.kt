@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg
 
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.createXmlStreamReader
 import org.apache.batik.anim.dom.SVG12DOMImplementation
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.anim.dom.SVGOMDocument
@@ -13,24 +13,22 @@ import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
-import java.io.Reader
+import java.io.InputStream
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 
 @ApiStatus.Internal
-fun createSvgDocument(uri: String?, reader: Reader): Document {
-  val result = reader.use {
-    val xmlStreamReader = JDOMUtil.getXmlInputFactory().createXMLStreamReader(reader)
-    try {
-      buildDocument(xmlStreamReader)
-    }
-    catch (e: XMLStreamException) {
-      throw TranscoderException(e)
-    }
-    finally {
-      xmlStreamReader.close()
-    }
+fun createSvgDocument(uri: String?, reader: InputStream): Document {
+  val xmlStreamReader = createXmlStreamReader(reader)
+  val result = try {
+    buildDocument(xmlStreamReader)
+  }
+  catch (e: XMLStreamException) {
+    throw TranscoderException(e)
+  }
+  finally {
+    xmlStreamReader.close()
   }
 
   if (uri != null) {

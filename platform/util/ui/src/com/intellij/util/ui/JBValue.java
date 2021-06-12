@@ -87,7 +87,14 @@ public abstract class JBValue {
      * @param value unscaled value
      */
     public Float(float value) {
-      this.value = value;
+      this(value, false);
+    }
+
+    /**
+     * @param value unscaled or pre-scaled value
+     */
+    public Float(float value, boolean preScaled) {
+      this.value = preScaled ? value / JBUIScale.scale(1f) : value;
     }
 
     @Override

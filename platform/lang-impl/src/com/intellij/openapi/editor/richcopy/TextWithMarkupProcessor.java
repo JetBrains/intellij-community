@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -50,7 +49,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   @NotNull
   @Override
   public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
-    if (!RichCopySettings.getInstance().isEnabled() || !(editor instanceof EditorEx)) {
+    if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }
 
@@ -74,7 +73,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       }
       logInitial(editor, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = editor.getDocument().getCharsSequence();
-      highlighter = ((EditorEx)editor).getHighlighter();
+      highlighter = editor.getHighlighter();
       if (editorColorsScheme != schemeToUse) {
         highlighter.setColorScheme(schemeToUse);
       }

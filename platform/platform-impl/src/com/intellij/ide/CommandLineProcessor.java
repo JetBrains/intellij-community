@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -69,7 +69,7 @@ public final class CommandLineProcessor {
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
     if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
       RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
-      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart()) {
+      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart().join()) {
         projects = ProjectUtil.getOpenProjects();
       }
     }

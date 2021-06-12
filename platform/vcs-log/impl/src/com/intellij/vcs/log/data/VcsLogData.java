@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,11 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.*;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -49,7 +48,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * Current user name, as specified in the VCS settings.
    * It can be configured differently for different roots => store in a map.
    */
-  private final Map<VirtualFile, VcsUser> myCurrentUser = new HashMap<>();
+  private final Map<VirtualFile, VcsUser> myCurrentUser = new ConcurrentHashMap<>();
 
   /**
    * Cached details of the latest commits.
@@ -77,7 +76,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
                     @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
-    myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
+    myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
     VcsLogProgress progress = new VcsLogProgress(this);

@@ -66,9 +66,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
 
     store.clearStorages();
     store.setPath(baseDir);
-    if (WorkspaceModel.isEnabled()) {
-      WriteAction.run(() -> JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat());
-    }
+    WriteAction.run(() -> JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat());
   }
 
   @TestOnly

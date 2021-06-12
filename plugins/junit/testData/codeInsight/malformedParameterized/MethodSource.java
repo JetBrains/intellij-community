@@ -129,7 +129,7 @@ class MethodSourceMalformed {
   @ParameterizedTest
   @MethodSource(value = { <warning descr="Method source 'a' must be static">"a"</warning>,
     <warning descr="Method source 'b' should have no parameters">"b"</warning>,
-    <warning descr="Method source 'c' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]">"c"</warning>,
+    <warning descr="Method source 'c' must have one of the following return type: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">"c"</warning>,
     "d", 
     "MethodSourceMalformed.Foreign#e"})
   void testWithParams(Object s) { }

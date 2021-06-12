@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 
 @Service
@@ -13,7 +12,7 @@ class JavaFxDisposable(val project: Project) : Disposable {
 
   companion object {
     @JvmStatic fun getInstance(project: Project): JavaFxDisposable {
-      return ServiceManager.getService(project, JavaFxDisposable::class.java)
+      return project.getService(JavaFxDisposable::class.java)
     }
   }
 }

@@ -2,12 +2,21 @@
 <body>
 Reports fields with the same name as a field in an ancestor class. Such field
 names may be confusing, and can be bug-prone.
+<p>Example:</p>
+<pre><code>class Parent {
+  Parent parent;
+}
+class Child extends Parent {
+  Child parent;
+}
+</code></pre>
+<p>A quick-fix to rename the field is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to indicate whether this inspection should report all name clashes, or only
 clashes with fields which are visible from the subclass.
 <p>
-Use the second checkbox below to ignore <b>static</b> fields which hide <b>static</b> fields in super classes.
+Use the second checkbox below to ignore <code>static</code> fields which hide <code>static</code> fields in super classes.
 <p>
 
 </body>

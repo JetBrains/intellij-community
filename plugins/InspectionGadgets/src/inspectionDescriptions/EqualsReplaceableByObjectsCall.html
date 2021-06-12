@@ -1,17 +1,23 @@
 <html>
 <body>
-Reports expressions that can be replaced with a call to <code>java.util.Objects.equals()</code>, which is available since JDK 1.7.
-For example:
-<p>
-  <code><pre>a == b || a != <b>null</b> && a.equals(b)</pre></code>
-<br>
-  <code><pre>a != <b>null</b> ? a.equals(b) : b == <b>null</b></pre></code>
-</p>
+Reports expressions that can be replaced with a call to <code>java.util.Objects#equals</code>.
+<p>Example:</p>
+<pre>
+  void f(Object a, Object b) {
+    boolean result = a != null && a.equals(b);
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void f(Object a, Object b) {
+    boolean result = Objects.equals(a, b);
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-  Replacing expressions like <code><pre>a != null && a.equals(b)</pre></code> with
-  <code><pre>Objects.equals(a, b)</pre></code> slightly changes the semantics,
-  but if that's what you need there's a check box for that in the inspection settings.
+  Replacing expressions like <code>a != null && a.equals(b)</code> with <code>Objects.equals(a, b)</code>
+  slightly changes the semantics, but if that's what you need there's a check box for that in the inspection settings.
+</p>
 <p>This inspection only reports if the language level of the project or module is 7 or higher</p>
 </body>
 </html>

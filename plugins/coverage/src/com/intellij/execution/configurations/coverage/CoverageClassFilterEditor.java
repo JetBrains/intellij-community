@@ -24,6 +24,7 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
         return true;
       }
     }, null);
+    myTableModel.setEditEnabled(false);
     myTable.setVisibleRowCount(4);
   }
 

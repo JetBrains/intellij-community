@@ -77,7 +77,6 @@ public abstract class ChooseByNameFilter<T> {
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
     myToolbar.getComponent().setFocusable(false);
     myToolbar.getComponent().setBorder(null);
     myProject = project;

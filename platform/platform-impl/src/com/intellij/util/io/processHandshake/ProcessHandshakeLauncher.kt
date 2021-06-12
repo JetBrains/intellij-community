@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package com.intellij.util.io.processHandshake
@@ -30,7 +30,7 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
   /**
    * The launcher process might exit without waiting for the target process to finish,
    * in which case it can also exit before the target process writes the handshake response.
-   * This timeout gives the the handshake a chance to be read even after the launcher process has finished.
+   * This timeout gives the handshake a chance to be read even after the launcher process has finished.
    */
   protected open val handshakeTimeoutAfterLauncherFinishedMillis: Long = 5000
 

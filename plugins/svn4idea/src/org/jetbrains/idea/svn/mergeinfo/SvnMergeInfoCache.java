@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,7 +44,7 @@ public final class SvnMergeInfoCache {
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SvnMergeInfoCache.class);
+    return project.getService(SvnMergeInfoCache.class);
   }
 
   public void clear(@NotNull WCInfoWithBranches info, String branchPath) {

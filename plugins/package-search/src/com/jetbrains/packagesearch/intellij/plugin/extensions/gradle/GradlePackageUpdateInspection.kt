@@ -1,18 +1,18 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 
+import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageUpdateInspection
-import org.jetbrains.plugins.gradle.util.GradleConstants.DEFAULT_SCRIPT_NAME
-import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 
-class GradlePackageUpdateInspection : PackageUpdateInspection() {
+internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
 
-    override fun getStaticDescription(): String? = PackageSearchBundle.getMessage("packagesearch.inspection.update.description.gradle")
+    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.upgrade.description.gradle")
 
-    override fun shouldCheckFile(file: PsiFile): Boolean = file.name.let { it == DEFAULT_SCRIPT_NAME || it == KOTLIN_DSL_SCRIPT_NAME }
-
-    override fun getVersionElement(file: PsiFile, dependency: StandardV2Package) =
-        GradleProjectModuleProvider.findDependencyElement(file, dependency.groupId, dependency.artifactId)
+    override fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement? {
+        val groupId = dependency.coordinates.groupId ?: return null
+        val artifactId = dependency.coordinates.artifactId ?: return null
+        return GradleProjectModuleProvider.findDependencyElement(file, groupId, artifactId)
+    }
 }

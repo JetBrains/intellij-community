@@ -1,9 +1,28 @@
 <html>
 <body>
 Reports any references to static members which are statically imported and also qualified with
-their containing class name. Because the elements are already statically imported such qualification is unnecessary
-and can be removed.
+their containing class name. Such qualification is unnecessary and can be removed
+because the elements are already statically imported.
+<p>Example:</p>
+<pre>
+  import static foo.Test.WIDTH;
+
+  class Bar {
+    void bar() {
+      System.out.println(Test.WIDTH);
+    }
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  import static foo.Test.WIDTH;
+
+  class Bar {
+    void bar() {
+      System.out.println(WIDTH);
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

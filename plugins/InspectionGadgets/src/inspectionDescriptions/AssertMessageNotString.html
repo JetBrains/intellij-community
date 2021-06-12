@@ -1,13 +1,19 @@
 <html>
 <body>
-Reports <b>assert</b> messages which are not of type <b>java.lang.String</b>.
-By using a String more information can be provided to help diagnose the failure,
+Reports <code>assert</code> messages which are not of type <code>java.lang.String</code>.
+By using a string, more information can be provided to help diagnose the failure
 or the reason for the assertion.
+<p>Example:</p>
+<pre>
+  void foo(List&lt;Integer&gt; myList) {
+    assert myList.isEmpty() : false;
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to only warn when the <b>assert</b> message type is <b>boolean</b> or <b>java.lang.Boolean</b>.
-A <b>boolean</b> detail message is unlikely to provide additional information about an assertion failure,
-  and could possibly be the result of a mistakenly entered <b>':'</b> instead of a <b>'&'</b>.
+Use the checkbox below to only warn when the <code>assert</code> message type is <code>boolean</code> or <code>java.lang.Boolean</code>.
+A <code>boolean</code> detail message is unlikely to provide additional information about an assertion failure,
+  and could possibly be the result of a mistakenly entered <code>:</code> instead of <code>&</code>.
 <p>
 <small>New in 15</small>
 </body>

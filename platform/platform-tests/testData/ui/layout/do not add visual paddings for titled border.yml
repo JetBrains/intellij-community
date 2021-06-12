@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
-  hideMode: 2
+  hideMode: 3
   insets:
   - &id003 {horizontal: false, unit: 0, value: 0.0}
   - &id004 {horizontal: true, unit: 0, value: 0.0}
@@ -33,7 +33,7 @@ columnConstraints:
   count: 2
 componentConstrains:
   Repository [label]: {}
-  Auto Sync: {spanX: INF, wrap: true}
+  Auto Sync: {hideMode: 2, spanX: INF, wrap: true}
   Use File -> Settings Repository... to configure [label]:
     horizontal:
       gapBefore: {}

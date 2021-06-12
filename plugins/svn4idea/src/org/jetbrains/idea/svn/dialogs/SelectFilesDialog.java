@@ -3,11 +3,8 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -16,46 +13,34 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author alex
  */
 public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
-  private final String[] myFiles;
+  private final @NotNull SortedSet<String> myPaths;
   private FilesList myFilesList;
   private JButton mySelectAllButton;
   private JButton myDeselectAllButton;
-  private final @NlsContexts.Label String myLabel;
-  private final @NonNls String myHelpID;
 
-  public SelectFilesDialog(Project project,
-                           @NlsContexts.Label String label,
-                           @NlsContexts.DialogTitle String title,
-                           @NlsContexts.Button @NotNull String actionName,
-                           String[] paths,
-                           @NonNls String helpID) {
+  public SelectFilesDialog(@NotNull Project project,
+                           @NotNull SortedSet<String> paths) {
     super(project, true);
-    myHelpID = helpID;
-    setOKButtonText(actionName);
-    setTitle(title);
-    setResizable(true);
+    myPaths = paths;
 
-    myFiles = paths;
-    myLabel = label;
-    getHelpAction().setEnabled(myHelpID != null);
+    setOKButtonText(SvnBundle.message("action.name.mark.resolved"));
+    setTitle(SvnBundle.message("dialog.title.mark.resolved"));
+    setResizable(true);
+    getHelpAction().setEnabled(true);
 
     init();
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
-    return myHelpID;
+  protected @NotNull String getHelpId() {
+    return "vcs.subversion.resolve";
   }
 
   @Override
@@ -64,8 +49,6 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
     mySelectAllButton.addActionListener(this);
     myDeselectAllButton.addActionListener(this);
-
-    myFilesList.addListener(() -> getOKAction().setEnabled(isOKActionEnabled()));
   }
 
   @Override
@@ -85,25 +68,18 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
   @Override
   public boolean isOKActionEnabled() {
-    return myFilesList.getSelectedPaths().length > 0;
+    return !getSelectedPaths().isEmpty();
   }
 
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
 
-    JLabel label = new JLabel(myLabel);
+    JLabel label = new JLabel(SvnBundle.message("label.select.files.and.directories.to.mark.resolved"));
     panel.add(label, BorderLayout.NORTH);
 
-    myFilesList = new FilesList(myFiles);
-    myFilesList.setCheckboxColumnName("");
-    myFilesList.setEntriesEditable(false);
-    for (String myFile : myFiles) {
-      myFilesList.add(myFile);
-    }
-    Font font = myFilesList.getFont();
-    FontMetrics fm = myFilesList.getFontMetrics(font);
-    int height = fm.getHeight();
+    myFilesList = new FilesList(myPaths);
+    int height = myFilesList.getFontMetrics(myFilesList.getFont()).getHeight();
     myFilesList.setPreferredSize(new Dimension(myFilesList.getPreferredSize().width, height*7));
     panel.add(ScrollPaneFactory.createScrollPane(myFilesList), BorderLayout.CENTER);
 
@@ -120,59 +96,57 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    for (String file : myFiles) {
+    for (String file : myPaths) {
       myFilesList.setChecked(file, e.getSource() == mySelectAllButton);
     }
-    myFilesList.refresh();
+    myFilesList.clear();
+    myFilesList.init();
     setOKActionEnabled(isOKActionEnabled());
   }
 
-  public String[] getSelectedPaths() {
+  public @NotNull SortedSet<String> getSelectedPaths() {
     return myFilesList.getSelectedPaths();
   }
 
   private class FilesList extends OrderPanel<String> {
 
-    private final Map<String, Boolean> mySelectedFiles;
+    private final Map<String, Boolean> mySelectedFiles = new TreeMap<>();
 
-    protected FilesList(String[] files) {
-      super(String.class, true);
-      mySelectedFiles = new TreeMap<>();
-      for (String file : files) {
-        mySelectedFiles.put(file, Boolean.TRUE);
+    private FilesList(@NotNull SortedSet<String> paths) {
+      super(String.class);
+      for (String path : paths) {
+        mySelectedFiles.put(path, Boolean.TRUE);
       }
-    }
-    @Override
-    public boolean isCheckable(final String entry) {
-      return true;
+      init();
     }
 
     @Override
-    public boolean isChecked(final String entry) {
-      return Boolean.TRUE.equals(mySelectedFiles.get(entry));
+    public boolean isChecked(@NotNull String entry) {
+      return isChecked(mySelectedFiles.get(entry));
     }
 
     @Override
-    public void setChecked(final String entry, final boolean checked) {
+    public void setChecked(@NotNull String entry, boolean checked) {
       mySelectedFiles.put(entry, checked);
       getOKAction().setEnabled(isOKActionEnabled());
     }
 
-    public void refresh() {
-      clear();
-      for (String path : mySelectedFiles.keySet()) {
-        add(path);
-      }
+    private void init() {
+      addAll(mySelectedFiles.keySet());
     }
 
-    public String[] getSelectedPaths() {
-      Collection<String> selected = new TreeSet<>();
-      for (String path : mySelectedFiles.keySet()) {
-        if (isChecked(path)) {
-          selected.add(path);
+    private @NotNull SortedSet<String> getSelectedPaths() {
+      TreeSet<String> selected = new TreeSet<>();
+      for (Map.Entry<String, Boolean> entry : mySelectedFiles.entrySet()) {
+        if (isChecked(entry.getValue())) {
+          selected.add(entry.getKey());
         }
       }
-      return ArrayUtilRt.toStringArray(selected);
+      return Collections.unmodifiableSortedSet(selected);
+    }
+
+    private boolean isChecked(@Nullable Boolean value) {
+      return Boolean.TRUE.equals(value);
     }
   }
 }

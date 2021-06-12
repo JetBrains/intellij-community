@@ -6,6 +6,7 @@ import array
 from struct import pack, unpack
 
 from .exc import TProtocolException
+from .base import TProtocolBase
 from ..thrift import TException
 from ..thrift import TType
 
@@ -20,6 +21,8 @@ FIELD_READ = 5
 CONTAINER_READ = 6
 VALUE_READ = 7
 BOOL_READ = 8
+
+BIN_TYPES = (TType.STRING, TType.BINARY)
 
 
 def check_integer_limits(i, bits):
@@ -58,12 +61,12 @@ def write_varint(trans, n):
         else:
             out.append((n & 0xff) | 0x80)
             n = n >> 7
-    data = array.array('B', out).tostring()
+    data = array.array('B', out)
 
     if PY3:
-        trans.write(data)
+        trans.write(data.tobytes())
     else:
-        trans.write(bytes(data))
+        trans.write(data.tostring())
 
 
 def read_varint(trans):
@@ -107,13 +110,14 @@ CTYPES = {
     TType.STRUCT: CompactType.STRUCT,
     TType.LIST: CompactType.LIST,
     TType.SET: CompactType.SET,
-    TType.MAP: CompactType.MAP
+    TType.MAP: CompactType.MAP,
+    TType.BINARY: CompactType.BINARY,
 }
 TTYPES = dict((v, k) for k, v in CTYPES.items())
 TTYPES[CompactType.FALSE] = TType.BOOL
 
 
-class TCompactProtocol(object):
+class TCompactProtocol(TProtocolBase):
     """Compact implementation of the Thrift protocol driver."""
     PROTOCOL_ID = 0x82
     VERSION = 1
@@ -123,7 +127,7 @@ class TCompactProtocol(object):
     TYPE_SHIFT_AMOUNT = 5
 
     def __init__(self, trans, decode_response=True):
-        self.trans = trans
+        TProtocolBase.__init__(self, trans)
         self._last_fid = 0
         self._bool_fid = None
         self._bool_value = None
@@ -140,13 +144,13 @@ class TCompactProtocol(object):
         return result
 
     def read_message_begin(self):
-        proto_id = self.read_ubyte()
+        proto_id = self._read_ubyte()
         if proto_id != self.PROTOCOL_ID:
             raise TProtocolException(TProtocolException.BAD_VERSION,
                                      'Bad protocol id in the message: %d'
                                      % proto_id)
 
-        ver_type = self.read_ubyte()
+        ver_type = self._read_ubyte()
         type = (ver_type >> self.TYPE_SHIFT_AMOUNT) & self.TYPE_BITS
         version = ver_type & self.VERSION_MASK
         if version != self.VERSION:
@@ -154,14 +158,14 @@ class TCompactProtocol(object):
                                      'Bad version: %d (expect %d)'
                                      % (version, self.VERSION))
         seqid = read_varint(self.trans)
-        name = self.read_string()
+        name = self._read_string()
         return name, type, seqid
 
     def read_message_end(self):
         assert len(self._structs) == 0
 
-    def read_field_begin(self):
-        type = self.read_ubyte()
+    def _read_field_begin(self):
+        type = self._read_ubyte()
         if type & 0x0f == TType.STOP:
             return None, 0, 0
 
@@ -180,53 +184,57 @@ class TCompactProtocol(object):
 
         return None, self._get_ttype(type), fid
 
-    def read_field_end(self):
+    def _read_field_end(self):
         pass
 
-    def read_struct_begin(self):
+    def _read_struct_begin(self):
         self._structs.append(self._last_fid)
         self._last_fid = 0
 
-    def read_struct_end(self):
+    def _read_struct_end(self):
         self._last_fid = self._structs.pop()
 
-    def read_map_begin(self):
+    def _read_map_begin(self):
         size = self._read_size()
         types = 0
         if size > 0:
-            types = self.read_ubyte()
+            types = self._read_ubyte()
         vtype = self._get_ttype(types)
         ktype = self._get_ttype(types >> 4)
         return (ktype, vtype, size)
 
-    def read_collection_begin(self):
-        size_type = self.read_ubyte()
+    def _read_collection_begin(self):
+        size_type = self._read_ubyte()
         size = size_type >> 4
         type = self._get_ttype(size_type)
         if size == 15:
             size = self._read_size()
         return type, size
 
-    def read_collection_end(self):
+    def _read_collection_end(self):
         pass
 
-    def read_byte(self):
+    def _read_byte(self):
         result, = unpack('!b', self.trans.read(1))
         return result
 
-    def read_ubyte(self):
+    def _read_ubyte(self):
         result, = unpack('!B', self.trans.read(1))
         return result
 
-    def read_int(self):
+    def _read_int(self):
         return from_zig_zag(read_varint(self.trans))
 
-    def read_double(self):
+    def _read_double(self):
         buff = self.trans.read(8)
         val, = unpack('<d', buff)
         return val
 
-    def read_string(self):
+    def _read_binary(self):
+        length = self._read_size()
+        return self.trans.read(length)
+
+    def _read_string(self):
         len = self._read_size()
         byte_payload = self.trans.read(len)
 
@@ -237,17 +245,17 @@ class TCompactProtocol(object):
                 pass
         return byte_payload
 
-    def read_bool(self):
+    def _read_bool(self):
         if self._bool_value is not None:
             result = self._bool_value
             self._bool_value = None
             return result
-        return self.read_byte() == CompactType.TRUE
+        return self._read_byte() == CompactType.TRUE
 
     def read_struct(self, obj):
-        self.read_struct_begin()
+        self._read_struct_begin()
         while True:
-            fname, ftype, fid = self.read_field_begin()
+            fname, ftype, fid = self._read_field_begin()
             if ftype == TType.STOP:
                 break
 
@@ -261,31 +269,37 @@ class TCompactProtocol(object):
                 self.skip(ftype)
                 raise
             else:
-                if field is not None and ftype == field[0]:
+                if field is not None and\
+                        (ftype == field[0]
+                         or (ftype in BIN_TYPES
+                             and field[0] in BIN_TYPES)):
                     fname = field[1]
                     fspec = field[2]
-                    val = self.read_val(ftype, fspec)
+                    val = self._read_val(field[0], fspec)
                     setattr(obj, fname, val)
                 else:
                     self.skip(ftype)
-            self.read_field_end()
-        self.read_struct_end()
+            self._read_field_end()
+        self._read_struct_end()
 
-    def read_val(self, ttype, spec=None):
+    def _read_val(self, ttype, spec=None):
         if ttype == TType.BOOL:
-            return self.read_bool()
+            return self._read_bool()
 
         elif ttype == TType.BYTE:
-            return self.read_byte()
+            return self._read_byte()
 
         elif ttype in (TType.I16, TType.I32, TType.I64):
-            return self.read_int()
+            return self._read_int()
 
         elif ttype == TType.DOUBLE:
-            return self.read_double()
+            return self._read_double()
+
+        elif ttype == TType.BINARY:
+            return self._read_binary()
 
         elif ttype == TType.STRING:
-            return self.read_string()
+            return self._read_string()
 
         elif ttype in (TType.LIST, TType.SET):
             if isinstance(spec, tuple):
@@ -293,12 +307,12 @@ class TCompactProtocol(object):
             else:
                 v_type, v_spec = spec, None
             result = []
-            r_type, sz = self.read_collection_begin()
+            r_type, sz = self._read_collection_begin()
 
             for i in range(sz):
-                result.append(self.read_val(v_type, v_spec))
+                result.append(self._read_val(v_type, v_spec))
 
-            self.read_collection_end()
+            self._read_collection_end()
             return result
 
         elif ttype == TType.MAP:
@@ -315,19 +329,23 @@ class TCompactProtocol(object):
                 v_type, v_spec = spec[1]
 
             result = {}
-            sk_type, sv_type, sz = self.read_map_begin()
+            sk_type, sv_type, sz = self._read_map_begin()
+            if sk_type in BIN_TYPES:
+                sk_type = k_type
+            if sv_type in BIN_TYPES:
+                sv_type = v_type
             if sk_type != k_type or sv_type != v_type:
                 for _ in range(sz):
                     self.skip(sk_type)
                     self.skip(sv_type)
-                self.read_collection_end()
+                self._read_collection_end()
                 return {}
 
             for i in range(sz):
-                k_val = self.read_val(k_type, k_spec)
-                v_val = self.read_val(v_type, v_spec)
+                k_val = self._read_val(k_type, k_spec)
+                v_val = self._read_val(v_type, v_spec)
                 result[k_val] = v_val
-            self.read_collection_end()
+            self._read_collection_end()
             return result
 
         elif ttype == TType.STRUCT:
@@ -341,97 +359,95 @@ class TCompactProtocol(object):
     def _write_field_header(self, type, fid):
         delta = fid - self._last_fid
         if 0 < delta <= 15:
-            self.write_ubyte(delta << 4 | type)
+            self._write_ubyte(delta << 4 | type)
         else:
-            self.write_byte(type)
-            self.write_i16(fid)
+            self._write_byte(type)
+            self._write_i16(fid)
         self._last_fid = fid
 
     def write_message_begin(self, name, type, seqid):
-        self.write_ubyte(self.PROTOCOL_ID)
-        self.write_ubyte(self.VERSION | (type << self.TYPE_SHIFT_AMOUNT))
+        self._write_ubyte(self.PROTOCOL_ID)
+        self._write_ubyte(self.VERSION | (type << self.TYPE_SHIFT_AMOUNT))
         write_varint(self.trans, seqid)
-        self.write_string(name)
+        self._write_string(name)
 
     def write_message_end(self):
         pass
 
-    def write_field_stop(self):
-        self.write_byte(0)
+    def _write_field_stop(self):
+        self._write_byte(0)
 
-    def write_field_begin(self, name, type, fid):
+    def _write_field_begin(self, name, type, fid):
         if type == TType.BOOL:
             self._bool_fid = fid
         else:
             self._write_field_header(CTYPES[type], fid)
 
-    def write_field_end(self):
+    def _write_field_end(self):
         pass
 
-    def write_struct_begin(self):
+    def _write_struct_begin(self):
         self._structs.append(self._last_fid)
         self._last_fid = 0
 
-    def write_struct_end(self):
+    def _write_struct_end(self):
         self._last_fid = self._structs.pop()
 
-    def write_collection_begin(self, etype, size):
+    def _write_collection_begin(self, etype, size):
         if size <= 14:
-            self.write_ubyte(size << 4 | CTYPES[etype])
+            self._write_ubyte(size << 4 | CTYPES[etype])
         else:
-            self.write_ubyte(0xf0 | CTYPES[etype])
+            self._write_ubyte(0xf0 | CTYPES[etype])
             self._write_size(size)
 
-    def write_map_begin(self, ktype, vtype, size):
+    def _write_map_begin(self, ktype, vtype, size):
         if size == 0:
-            self.write_byte(0)
+            self._write_byte(0)
         else:
             self._write_size(size)
-            self.write_ubyte(CTYPES[ktype] << 4 | CTYPES[vtype])
+            self._write_ubyte(CTYPES[ktype] << 4 | CTYPES[vtype])
 
-    def write_collection_end(self):
+    def _write_collection_end(self):
         pass
 
-    def write_ubyte(self, byte):
+    def _write_ubyte(self, byte):
         self.trans.write(pack('!B', byte))
 
-    def write_byte(self, byte):
+    def _write_byte(self, byte):
         self.trans.write(pack('!b', byte))
 
-    def write_bool(self, bool):
-        if self._bool_fid and self._bool_fid > self._last_fid \
-                and self._bool_fid - self._last_fid <= 15:
-            if bool:
-                ctype = CompactType.TRUE
-            else:
-                ctype = CompactType.FALSE
+    def _write_bool(self, bool):
+        ctype = CompactType.TRUE if bool else CompactType.FALSE
+        if self._bool_fid is not None:
             self._write_field_header(ctype, self._bool_fid)
+            self._bool_fid = None
         else:
-            if bool:
-                self.write_byte(CompactType.TRUE)
-            else:
-                self.write_byte(CompactType.FALSE)
+            self._write_byte(ctype)
 
-    def write_i16(self, i16):
+    def _write_i16(self, i16):
         write_varint(self.trans, make_zig_zag(i16, 16))
 
-    def write_i32(self, i32):
+    def _write_i32(self, i32):
         write_varint(self.trans, make_zig_zag(i32, 32))
 
-    def write_i64(self, i64):
+    def _write_i64(self, i64):
         write_varint(self.trans, make_zig_zag(i64, 64))
 
-    def write_double(self, dub):
+    def _write_double(self, dub):
         self.trans.write(pack('<d', dub))
 
-    def write_string(self, s):
+    def _write_binary(self, b):
+        self._write_size(len(b))
+        self.trans.write(b)
+
+    def _write_string(self, s):
         if not isinstance(s, bytes):
             s = s.encode('utf-8')
         self._write_size(len(s))
         self.trans.write(s)
 
     def write_struct(self, obj):
-        self.write_struct_begin()
+        self._write_struct_begin()
 
         for field in obj.thrift_spec:
             if field is None:
@@ -442,38 +458,41 @@ class TCompactProtocol(object):
                 f_container_spec = None
             else:
                 ftype, fname, f_container_spec, f_req = fspec
-            val = getattr(obj, fname)
+            val = getattr(obj, fname, None)
             if val is None:
                 continue
 
-            self.write_field_begin(fname, ftype, field)
-            self.write_val(ftype, val, f_container_spec)
-            self.write_field_end()
-        self.write_field_stop()
-        self.write_struct_end()
+            self._write_field_begin(fname, ftype, field)
+            self._write_val(ftype, val, f_container_spec)
+            self._write_field_end()
+        self._write_field_stop()
+        self._write_struct_end()
 
-    def write_val(self, ttype, val, spec=None):
+    def _write_val(self, ttype, val, spec=None):
 
         if ttype == TType.BOOL:
-            self.write_bool(val)
+            self._write_bool(val)
 
         elif ttype == TType.BYTE:
-            self.write_byte(val)
+            self._write_byte(val)
 
         elif ttype == TType.I16:
-            self.write_i16(val)
+            self._write_i16(val)
 
         elif ttype == TType.I32:
-            self.write_i32(val)
+            self._write_i32(val)
 
         elif ttype == TType.I64:
-            self.write_i64(val)
+            self._write_i64(val)
 
         elif ttype == TType.DOUBLE:
-            self.write_double(val)
+            self._write_double(val)
+
+        elif ttype == TType.BINARY:
+            self._write_binary(val)
 
         elif ttype == TType.STRING:
-            self.write_string(val)
+            self._write_string(val)
 
         elif ttype == TType.LIST or ttype == TType.SET:
             if isinstance(spec, tuple):
@@ -482,10 +501,10 @@ class TCompactProtocol(object):
                 e_type, t_spec = spec, None
 
             val_len = len(val)
-            self.write_collection_begin(e_type, val_len)
+            self._write_collection_begin(e_type, val_len)
             for e_val in val:
-                self.write_val(e_type, e_val, t_spec)
-            self.write_collection_end()
+                self._write_val(e_type, e_val, t_spec)
+            self._write_collection_end()
 
         elif ttype == TType.MAP:
             if isinstance(spec[0], int):
@@ -500,11 +519,11 @@ class TCompactProtocol(object):
             else:
                 v_type, v_spec = spec[1]
 
-            self.write_map_begin(k_type, v_type, len(val))
+            self._write_map_begin(k_type, v_type, len(val))
             for k in iter(val):
-                self.write_val(k_type, k, k_spec)
-                self.write_val(v_type, val[k], v_spec)
-            self.write_collection_end()
+                self._write_val(k_type, k, k_spec)
+                self._write_val(v_type, val[k], v_spec)
+            self._write_collection_end()
 
         elif ttype == TType.STRUCT:
             self.write_struct(val)
@@ -514,48 +533,51 @@ class TCompactProtocol(object):
             return
 
         elif ttype == TType.BOOL:
-            self.read_bool()
+            self._read_bool()
 
         elif ttype == TType.BYTE:
-            self.read_byte()
+            self._read_byte()
 
         elif ttype in (TType.I16, TType.I32, TType.I64):
             from_zig_zag(read_varint(self.trans))
 
         elif ttype == TType.DOUBLE:
-            self.read_double()
+            self._read_double()
+
+        elif ttype == TType.BINARY:
+            self._read_binary()
 
         elif ttype == TType.STRING:
-            self.read_string()
+            self._read_string()
 
         elif ttype == TType.STRUCT:
-            name = self.read_struct_begin()
+            name = self._read_struct_begin()
             while True:
-                (name, ttype, id) = self.read_field_begin()
+                (name, ttype, id) = self._read_field_begin()
                 if ttype == TType.STOP:
                     break
                 self.skip(ttype)
-                self.read_field_end()
-            self.read_struct_end()
+                self._read_field_end()
+            self._read_struct_end()
 
         elif ttype == TType.MAP:
-            ktype, vtype, size = self.read_map_begin()
+            ktype, vtype, size = self._read_map_begin()
             for i in range(size):
                 self.skip(ktype)
                 self.skip(vtype)
-            self.read_collection_end()
+            self._read_collection_end()
 
         elif ttype == TType.SET:
-            etype, size = self.read_collection_begin()
+            etype, size = self._read_collection_begin()
             for i in range(size):
                 self.skip(etype)
-            self.read_collection_end()
+            self._read_collection_end()
 
         elif ttype == TType.LIST:
-            etype, size = self.read_collection_begin()
+            etype, size = self._read_collection_begin()
             for i in range(size):
                 self.skip(etype)
-            self.read_collection_end()
+            self._read_collection_end()
 
 
 class TCompactProtocolFactory(object):

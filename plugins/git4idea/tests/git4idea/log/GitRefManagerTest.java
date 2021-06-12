@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -51,7 +50,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
   protected List<VcsRef> expect(String @NotNull ... refNames) {
-    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, getProjectRoot(), ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
+    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, getProjectRoot(), myProject.getService(VcsLogObjectsFactory.class));
     return ContainerUtil.map2List(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
       assertNotNull("Ref " + refName + " not found among " + refs, item);

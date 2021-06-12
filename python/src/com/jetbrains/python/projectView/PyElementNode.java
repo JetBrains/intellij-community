@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -19,9 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyElementNode extends BasePsiNode<PyElement> {
   public PyElementNode(Project project, @NotNull PyElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

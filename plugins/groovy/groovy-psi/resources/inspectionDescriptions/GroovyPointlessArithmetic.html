@@ -5,5 +5,14 @@ expressions. Such expressions include adding or subtracting zero, multiplying by
 division by one, and shift by zero. Such expressions may be the result of automated refactorings
 not completely followed through to completion, and in any case are unlikely to be what the developer
 intended to do.
+
+<p>Example:</p>
+<pre>
+a + 0
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+a
+</pre>
 </body>
 </html>

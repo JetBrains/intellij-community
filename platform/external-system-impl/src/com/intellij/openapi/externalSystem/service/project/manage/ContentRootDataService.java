@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,6 +48,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -271,7 +272,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
     String url = pathToUrl(path);
 
-    if (!FileUtil.exists(path)) {
+    if (!Files.exists(Path.of(path))) {
       logDebug("Source folder [%s] does not exist and will not be created, will add when dir is created", url);
       logUnitTest("Adding source folder listener to watch [%s] for creation in project [hashCode=%d]", url, module.getProject().hashCode());
       sourceFolderManager.addSourceFolder(module, url, sourceRootType);
@@ -311,7 +312,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   private static void createEmptyDirectory(@NotNull String path) {
-    if (FileUtil.exists(path)) return;
+    if (Files.exists(Path.of(path))) return;
     ExternalSystemApiUtil.doWriteAction(() -> {
       try {
         VfsUtil.createDirectoryIfMissing(path);

@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom
  * The base class for JUnit platform tests of the github plugin.<br></br>
  * Extend this test to write a test on GitHub which has the following features/limitations:
  *
- *  * This is a "platform test case", which means that IDEA [almost] production platform is set up before the test starts.
+ *  * This is a "platform test case", which means that IDEA "almost" production platform is set up before the test starts.
  *  * Project base directory is the root of everything.
  *
  *
@@ -142,7 +142,11 @@ abstract class GithubTest : GitPlatformTest() {
   private fun deleteRepos(account: AccountData, repos: Collection<String>) {
     setCurrentAccount(account)
     for (repo in repos) {
-      account.executor.execute(GithubApiRequests.Repos.delete(repo))
+      retry(LOG, true) {
+        account.executor.execute(GithubApiRequests.Repos.delete(repo))
+        val info = account.executor.execute(GithubApiRequests.Repos.get(repo))
+        check(info == null) { "Repository still exists" }
+      }
     }
   }
 
@@ -181,14 +185,20 @@ abstract class GithubTest : GitPlatformTest() {
   companion object {
     private const val RETRIES = 3
 
-    internal fun retry(LOG: Logger, action: () -> Unit) {
+    internal fun retry(LOG: Logger, exception: Boolean = true, action: () -> Unit) {
       for (i in 1..RETRIES) {
         try {
           LOG.debug("Attempt #$i")
           return action()
         }
         catch (e: Throwable) {
-          if (i == RETRIES) throw e
+          if (i == RETRIES) {
+            if (exception) throw e
+            else {
+              LOG.error(e)
+              return
+            }
+          }
           Thread.sleep(1000L)
         }
       }

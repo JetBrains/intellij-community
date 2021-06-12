@@ -3,8 +3,6 @@ package com.jetbrains.python.packaging;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
 /**
  * @author Ilya.Kazakevich
  */
@@ -12,7 +10,7 @@ public class PyPackageTest extends TestCase {
 
   // http://legacy.python.org/dev/peps/pep-0386/
   public void testIsAtLeastVersionNormal() {
-    final PyPackage pyPackage = new PyPackage("somePackage", "1.2.3.4", null, Collections.emptyList());
+    final PyPackage pyPackage = new PyPackage("somePackage", "1.2.3.4");
     assertTrue("Failed to check normal version", pyPackage.matches(createRequirement("somePackage>=1.2")));
     assertTrue("Failed to check normal version", pyPackage.matches(createRequirement("somePackage>=1.2.3")));
     assertTrue("Failed to check normal version", pyPackage.matches(createRequirement("somePackage>=1")));
@@ -28,7 +26,7 @@ public class PyPackageTest extends TestCase {
 
 
   public void testIsAtLeastVersionBeta() {
-    final PyPackage pyPackage = new PyPackage("somePackage", "0.5a3", null, Collections.emptyList());
+    final PyPackage pyPackage = new PyPackage("somePackage", "0.5a3");
     assertTrue("Failed to check alpha version", pyPackage.matches(createRequirement("somePackage>=0.4")));
     assertTrue("Failed to check alpha version", pyPackage.matches(createRequirement("somePackage<=0.5")));
     assertTrue("Failed to check alpha version", pyPackage.matches(createRequirement("somePackage>=0.5a")));

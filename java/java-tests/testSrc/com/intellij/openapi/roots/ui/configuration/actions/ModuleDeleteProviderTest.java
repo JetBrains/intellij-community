@@ -92,7 +92,6 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
   }
 
   private void deleteModules(String... names) {
-    ModuleDeleteProvider provider = new ModuleDeleteProvider();
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, myProject);
     List<Module> modules = new ArrayList<>();
@@ -114,6 +113,7 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
     if (!unloaded.isEmpty()) {
       dataContext.put(ProjectView.UNLOADED_MODULES_CONTEXT_KEY, unloaded);
     }
+    ModuleDeleteProvider provider = ModuleDeleteProvider.getInstance();
     assertTrue(provider.canDeleteElement(dataContext));
     provider.deleteElement(dataContext);
   }

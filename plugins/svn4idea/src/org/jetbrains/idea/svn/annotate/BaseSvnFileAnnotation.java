@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.List;
 
 import static com.intellij.xml.util.XmlStringUtil.escapeString;
-import static git4idea.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
+import static com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
 
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   private final String myContents;

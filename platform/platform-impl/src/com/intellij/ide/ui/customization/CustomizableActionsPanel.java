@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
@@ -190,7 +190,7 @@ public class CustomizableActionsPanel {
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
     if (SystemInfo.isMac) {
-      TouchBarsManager.reloadAll();
+      TouchbarSupport.reloadAllActions();
     }
   }
 

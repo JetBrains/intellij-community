@@ -12,9 +12,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.2.4/util-2.2.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/smali/dexlib2/2.2.4/dexlib2-2.2.4-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/smali/util/2.2.4/util-2.2.4-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

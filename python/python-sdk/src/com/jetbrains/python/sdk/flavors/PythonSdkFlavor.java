@@ -27,9 +27,7 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public abstract class PythonSdkFlavor {
   public static final ExtensionPointName<PythonSdkFlavor> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
 

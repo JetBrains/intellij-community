@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import groovy.transform.CompileStatic
@@ -78,8 +79,8 @@ final class CrossPlatformDistributionBuilder {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
 
-          if (linuxFiles.containsKey("classpath.txt")) { //linux has extra dbus-java
-            exclude(name: "classpath.txt")
+          if (linuxFiles.containsKey("lib/classpath.txt")) { //linux has extra dbus-java
+            exclude(name: "lib/classpath.txt")
           }
 
           extraExecutables.each {
@@ -105,8 +106,8 @@ final class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
           exclude(name: "build.txt")
-          for (Path resourceFile : buildContext.resourceFiles) {
-            exclude(name: resourceFile.fileName.toString())
+          for (Pair<Path, String> item : buildContext.distFiles) {
+            exclude(name: item.getSecond() + "/" + item.getFirst().fileName.toString())
           }
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {

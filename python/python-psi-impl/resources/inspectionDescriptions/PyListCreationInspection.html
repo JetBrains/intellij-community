@@ -1,6 +1,16 @@
 <html>
 <body>
-This inspection detects situations when list creation
-could be rewritten with list literal.
+<p>Reports cases when a list declaration
+  can be rewritten with a list literal.</p>
+<p>This ensures better performance of your application.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+l = [1]
+l.append(2)
+</pre>
+<p>When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+l = [1, 2]
+</pre>
 </body>
 </html>

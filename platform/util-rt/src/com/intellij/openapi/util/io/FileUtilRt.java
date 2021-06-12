@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -94,14 +95,18 @@ public class FileUtilRt {
       return ourFileToPathMethod.invoke(file);
     }
 
-    static void deleteRecursively(Object path) throws InvocationTargetException, IllegalAccessException {
+    static void deleteRecursively(Object path, @Nullable Consumer<Object> callback) throws InvocationTargetException, IllegalAccessException {
       try {
+        ourCallback.set(callback);
         ourFilesWalkMethod.invoke(null, path, ourDeletionVisitor);
       }
       catch (InvocationTargetException e) {
         if (!ourNoSuchFileExceptionClass.isInstance(e.getCause())) {
           throw e;
         }
+      }
+      finally {
+        ourCallback.remove();
       }
     }
 
@@ -113,6 +118,7 @@ public class FileUtilRt {
     private static Object ourDeletionVisitor;
     private static Class<?> ourNoSuchFileExceptionClass;
     private static Class<?> ourAccessDeniedExceptionClass;
+    private static final ThreadLocal<Consumer<Object>> ourCallback = new ThreadLocal<Consumer<Object>>();
 
     static {
       boolean initSuccess = false;
@@ -122,7 +128,6 @@ public class FileUtilRt {
         final Class<?> filesClass = Class.forName("java.nio.file.Files");
         ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
         ourAccessDeniedExceptionClass = Class.forName("java.nio.file.AccessDeniedException");
-
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
@@ -147,6 +152,8 @@ public class FileUtilRt {
                 }
               }
               else if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
+                Consumer<Object> consumer = ourCallback.get();
+                if (consumer != null) consumer.consume(args[0]);
                 performDelete(args[0]);
               }
               else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
@@ -155,7 +162,7 @@ public class FileUtilRt {
                   notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
                 }
                 catch (Throwable ignored) { }
-                if (notDirectory) {
+                if (notDirectory) {  // probably an NTFS reparse point
                   performDelete(args[0]);
                   return Result_Skip;
                 }
@@ -214,12 +221,8 @@ public class FileUtilRt {
       }
       catch (Throwable ignored) {
         logger().info("Was not able to detect NIO API");
-        ourFileToPathMethod = null;
-        ourFilesWalkMethod = null;
-        ourFilesDeleteIfExistsMethod = null;
-        ourDeletionVisitor = null;
-        ourNoSuchFileExceptionClass = null;
       }
+
       IS_AVAILABLE = initSuccess;
     }
   }
@@ -896,12 +899,12 @@ public class FileUtilRt {
    * <b>IMPORTANT</b>: the method is not symlinks- or junction-aware when invoked on Java 6 or earlier.
    *
    * @param file file or directory to delete
-   * @return true if the file did not exist or was successfully deleted
+   * @return {@code true} if the file did not exist or was successfully deleted
    */
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
       try {
-        deleteRecursivelyNIO(NIOReflect.toPath(file));
+        deleteRecursivelyNIO(NIOReflect.toPath(file), null);
         return true;
       }
       catch (IOException e) {
@@ -917,15 +920,14 @@ public class FileUtilRt {
     }
   }
 
-  static void deleteRecursivelyNIO(@NotNull Object path) throws IOException {
+  static void deleteRecursivelyNIO(@NotNull Object path, @Nullable Consumer<Object> callback) throws IOException {
     try {
-      NIOReflect.deleteRecursively(path);
+      NIOReflect.deleteRecursively(path, callback);
     }
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
+      if (cause instanceof IOException) throw (IOException)cause;
+      logger().info(e);
     }
     catch (Exception e) {
       logger().info(e);
@@ -1161,14 +1163,5 @@ public class FileUtilRt {
     }
   };
 
-  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return file.isDirectory();
-    }
-  };
   //</editor-fold>
 }

@@ -12,10 +12,12 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -148,32 +150,32 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
     assertEquals("dir", artifacts[0].name)
     assertTrue(artifacts[0].includeInProjectBuild)
-    assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl.url))
+    assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl!!.url))
     val children = artifacts[0].rootElement.children.sortedBy { it::class.qualifiedName }.toList()
     assertEquals(2, children.size)
     val innerJar = children[0] as ArchivePackagingElementEntity
     assertEquals("x.jar", innerJar.fileName)
-    assertEquals(utilModule, (innerJar.children.single() as ModuleOutputPackagingElementEntity).module.resolve(storage))
+    assertEquals(utilModule, (innerJar.children.single() as ModuleOutputPackagingElementEntity).module!!.resolve(storage))
     val innerDir = children[1] as DirectoryPackagingElementEntity
     assertEquals("lib", innerDir.directoryName)
     val innerChildren = innerDir.children.toList()
     assertEquals(5, innerChildren.size)
-    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == log4jModuleLibrary })
-    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == junitProjectLibrary })
-    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().file.url))
-    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().directory.url))
+    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == log4jModuleLibrary })
+    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == junitProjectLibrary })
+    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().filePath!!.url))
+    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().filePath!!.url))
     innerChildren.filterIsInstance<ExtractedDirectoryPackagingElementEntity>().single().let {
-      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.archive.url))
+      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.filePath!!.url))
       assertEquals("/junit/", it.pathInArchive)
     }
 
     assertEquals("jar", artifacts[1].name)
-    assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl.url))
+    assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl!!.url))
     val archiveRoot = artifacts[1].rootElement as ArchivePackagingElementEntity
     assertEquals("jar.jar", archiveRoot.fileName)
     val archiveChildren = archiveRoot.children.toList()
     assertEquals(3, archiveChildren.size)
-    assertEquals(artifacts[0], archiveChildren.filterIsInstance<ArtifactOutputPackagingElementEntity>().single().artifact.resolve(storage))
+    assertEquals(artifacts[0], archiveChildren.filterIsInstance<ArtifactOutputPackagingElementEntity>().single().artifact!!.resolve(storage))
   }
 
   @Test

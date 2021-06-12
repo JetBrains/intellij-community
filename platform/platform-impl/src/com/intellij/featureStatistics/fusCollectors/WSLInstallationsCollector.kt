@@ -2,16 +2,13 @@
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
-import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WSLUtil
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
-import java.nio.charset.StandardCharsets
 
 class WSLInstallationsCollector : ApplicationUsagesCollector() {
   companion object {
@@ -25,32 +22,19 @@ class WSLInstallationsCollector : ApplicationUsagesCollector() {
   }
 
   override fun getMetrics(): Set<MetricEvent> {
-    if (!SystemInfo.isWin10OrNewer) return emptySet()
+    if (!WSLUtil.isSystemCompatible()) return emptySet()
 
-    val wslExe = WSLDistribution.findWslExe() ?: return emptySet()
-    val output = try {
-      ExecUtil.execAndGetOutput(GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE), 10_000)
+    val distributionsWithVersions = try {
+      WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions()
     }
     catch(e: ExecutionException) {
-      LOG.info("Failed to run wsl: " + e.message)
+      LOG.info("Failed to load installed WSL distributions: " + e.message)
       return emptySet()
     }
 
-    if (output.exitCode != 0) {
-      LOG.info("Failed to run wsl: exit code ${output.exitCode}, stderr ${output.stderr}")
-      return emptySet()
-    }
-
-    //C:\JetBrains>wsl -l -v
-    //  NAME      STATE           VERSION
-    //* Ubuntu    Running         2
-    val installations = output.stdoutLines
-      .drop(1)
-      .groupBy { it.substringAfterLast(' ') }
-    return installations.mapNotNullTo(HashSet()) { (versionString, distributions) ->
-      versionString.toIntOrNull()?.let { version ->
-        installationCountEvent.metric(version, distributions.size)
-      }
+    val installations = distributionsWithVersions.groupBy { it.version }
+    return installations.mapNotNullTo(HashSet()) { (version, distributions) ->
+      installationCountEvent.metric(version, distributions.size)
     }
   }
 }

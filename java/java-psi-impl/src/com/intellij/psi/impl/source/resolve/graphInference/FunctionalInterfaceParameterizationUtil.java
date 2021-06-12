@@ -175,6 +175,9 @@ public final class FunctionalInterfaceParameterizationUtil {
           final PsiType bound = ((PsiWildcardType)paramType).getBound();
           for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
             if (PsiTypesUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+              if (bound == null) {
+                return null;
+              }
               newParameters[i] = bound;
               continue next;
             }

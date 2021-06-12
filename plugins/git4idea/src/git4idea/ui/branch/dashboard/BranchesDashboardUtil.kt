@@ -4,10 +4,12 @@ package git4idea.ui.branch.dashboard
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -16,9 +18,11 @@ import gnu.trove.TIntHashSet
 
 internal object BranchesDashboardUtil {
 
-  fun getLocalBranches(project: Project): Set<BranchInfo> {
+  fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val localMap = mutableMapOf<String, MutableSet<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (branch in repo.branches.localBranches) {
         localMap.computeIfAbsent(branch.name) { hashSetOf() }.add(repo)
       }
@@ -31,15 +35,18 @@ internal object BranchesDashboardUtil {
     val local = localMap.map { (branchName, repos) ->
       BranchInfo(branchName, true, repos.any { it.currentBranch?.name == branchName },
                  repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branchName) },
+                 repos.anyIncomingOutgoingState(branchName),
                  repos.toList())
     }.toHashSet()
 
     return local
   }
 
-  fun getRemoteBranches(project: Project): Set<BranchInfo> {
+  fun getRemoteBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val remoteMap = mutableMapOf<String, MutableList<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (remoteBranch in repo.branches.remoteBranches) {
         remoteMap.computeIfAbsent(remoteBranch.name) { mutableListOf() }.add(repo)
       }
@@ -48,6 +55,7 @@ internal object BranchesDashboardUtil {
     return remoteMap.map { (branchName, repos) ->
       BranchInfo(branchName, false, false,
                  repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branchName) },
+                 null,
                  repos)
     }.toHashSet()
   }
@@ -73,6 +81,32 @@ internal object BranchesDashboardUtil {
 
     return myBranches
   }
+
+  fun Collection<GitRepository>.anyIncomingOutgoingState(localBranchName: String): IncomingOutgoing? {
+    for (repository in this) {
+      val incomingOutgoingState = repository.getIncomingOutgoingState(localBranchName)
+      if (incomingOutgoingState != null) {
+        return incomingOutgoingState
+      }
+    }
+
+    return null
+  }
+
+
+  fun GitRepository.getIncomingOutgoingState(localBranchName: String): IncomingOutgoing? =
+    with(project.service<GitBranchIncomingOutgoingManager>()) {
+      val repo = this@getIncomingOutgoingState
+      val hasIncoming = hasIncomingFor(repo, localBranchName)
+      val hasOutgoing = hasOutgoingFor(repo, localBranchName)
+
+      when {
+        hasIncoming && hasOutgoing -> IncomingOutgoing.INCOMING_AND_OUTGOING
+        hasIncoming -> IncomingOutgoing.INCOMING
+        hasOutgoing -> IncomingOutgoing.OUTGOING
+        else -> null
+      }
+    }
 
   private fun findMyCommits(log: VcsProjectLog): Set<Int> {
     val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogFilterObject.ME), log.dataManager!!)

@@ -105,7 +105,7 @@ class GHPRDiffRequestChainProducer(private val project: Project,
   private fun getReviewSupport(changesProvider: GHPRChangesProvider, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.findChangeDiffData(change) ?: return null
 
-    return GHPRDiffReviewSupportImpl(dataProvider.reviewData, diffData, avatarIconsProvider, currentUser)
+    return GHPRDiffReviewSupportImpl(project, dataProvider.reviewData, diffData, avatarIconsProvider, currentUser)
   }
 
   private fun getDiffComputer(changesProvider: GHPRChangesProvider, change: Change): DiffUserDataKeysEx.DiffComputer? {

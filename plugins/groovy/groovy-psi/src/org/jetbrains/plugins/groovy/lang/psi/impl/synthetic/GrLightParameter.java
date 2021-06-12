@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -19,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+
+import java.util.Objects;
 
 /**
  * @author ven
@@ -165,5 +167,21 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     modifiersList.setModifiers(modifiers);
     myModifierList = modifiersList;
     return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightParameter parameter = (GrLightParameter)o;
+    return myOptional == parameter.myOptional &&
+           Objects.equals(myModifierList, parameter.myModifierList) &&
+           Objects.equals(myInitializer, parameter.myInitializer) &&
+           Objects.equals(myTypeGroovy, parameter.myTypeGroovy);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myOptional, myModifierList, myInitializer, myTypeGroovy);
   }
 }

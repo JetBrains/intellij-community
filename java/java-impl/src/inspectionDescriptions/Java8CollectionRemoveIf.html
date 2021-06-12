@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports loops which could be collapsed into single <code>Collection.removeIf</code> call.
-<p>For example:</p>
+Reports loops which can be collapsed into a single <code>Collection.removeIf</code> call.
+<p>Example:</p>
 <pre>
   for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
     String aValue = it.next();
@@ -10,8 +10,14 @@ Reports loops which could be collapsed into single <code>Collection.removeIf</co
     }
   }
 </pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  collection.removeIf(aValue -> shouldBeRemoved(aValue));
+</pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>
+  This inspection only reports if the language level of the project or module is 8 or higher
+</p>
 <p><small>New in 2016.3</small></p>
 </body>
 </html>

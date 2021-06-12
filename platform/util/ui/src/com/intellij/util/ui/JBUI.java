@@ -434,7 +434,12 @@ public class JBUI {
 
       @NotNull
       public static int elementIconGap() {
-        return new JBValue.UIInteger("ActionsList.icon.gap", scale(8)).get();
+        return new JBValue.UIInteger("ActionsList.icon.gap", scale(6)).get();
+      }
+
+      @NotNull
+      public static int mnemonicIconGap() {
+        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", scale(4)).get();
       }
 
       @NotNull
@@ -1109,8 +1114,7 @@ public class JBUI {
     }
 
     public interface ContextHelp {
-      @NotNull
-      public static Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+      @NotNull Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
     }
 
     public static final class Arrow {

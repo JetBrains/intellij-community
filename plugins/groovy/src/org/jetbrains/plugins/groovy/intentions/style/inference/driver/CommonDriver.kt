@@ -58,7 +58,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       for (parameter in targetParameters) {
         val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
         typeParameters.add(newTypeParameter)
-        virtualMethodPointer.element!!.typeParameterList!!.add(newTypeParameter)
+        virtualMethodPointer.element?.typeParameterList?.add(newTypeParameter) ?: return EmptyDriver
         parameter.setTypeWithoutFormatting(newTypeParameter.type())
       }
       val varargParameter = targetParameters.find { it.isVarArgs }

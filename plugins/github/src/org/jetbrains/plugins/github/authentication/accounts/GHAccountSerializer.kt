@@ -7,6 +7,6 @@ import com.intellij.openapi.components.service
 object GHAccountSerializer {
   fun serialize(account: GithubAccount): String = account.id
   fun deserialize(string: String): GithubAccount? {
-    return service<GithubAccountManager>().accounts.find { it.id == string }
+    return service<GHAccountManager>().accounts.find { it.id == string }
   }
 }

@@ -325,4 +325,5 @@
   <action id="Debugger.EditTypeSource"/>
   <action id="CopyElement"/>
   <action id="CheckinProject"/>
+  <action id="GoGenerateFileAction"/>
 </keymap>

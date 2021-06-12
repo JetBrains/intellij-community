@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nls
 /**
  * Allows to show and hide notification about unlinked projects with [systemId].
  */
-@ApiStatus.Experimental
 interface ExternalSystemUnlinkedProjectAware {
 
   val systemId: ProjectSystemId

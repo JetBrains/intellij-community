@@ -37,22 +37,9 @@ public final class Utils {
                                          final JList list,
                                          @NlsContexts.PopupTitle String title,
                                          final JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad, (PopupState<JBPopup>)null);
-  }
-
-  /**
-   * @deprecated use overloaded method instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
-                                         @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
                                          @NlsContexts.PopupAdvertisement String ad,
                                          JBPopupListener listener) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad);
+    showCompletionPopup(toolbarComponent, list, title, textField, ad, (PopupState<JBPopup>)null);
   }
 
   public static void showCompletionPopup(JComponent toolbarComponent,

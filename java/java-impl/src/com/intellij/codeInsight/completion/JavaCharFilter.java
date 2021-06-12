@@ -50,6 +50,12 @@ public class JavaCharFilter extends CharFilter {
     if (item == null || !item.isValid()) return null;
 
     final Object o = item.getObject();
+    if (c == '!' || c == '?') {
+      JavaPsiClassReferenceElement typeItem = item.as(JavaPsiClassReferenceElement.class);
+      if (typeItem != null && typeItem.getInsertHandler() instanceof JavaClassNameInsertHandler) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+    }
     if (c == '!') {
       VariableLookupItem varItem = item.as(VariableLookupItem.class);
       if (varItem != null && varItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;

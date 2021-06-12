@@ -93,8 +93,12 @@ public final class LombokProcessorUtil {
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    final Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
-    return collectAnnotationStrings(annotations);
+    if (psiAnnotation.hasAttribute(parameterName)) {
+      final Collection<PsiAnnotation> annotations =
+        PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
+      return collectAnnotationStrings(annotations);
+    }
+    return Collections.emptyList();
   }
 
   private static Collection<String> collectAnnotationStrings(Collection<PsiAnnotation> annotations) {

@@ -90,7 +90,8 @@ final class CompletionAssertions {
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
-    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy, false, true));
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy,
+                                                                                                                                   true, true));
   }
 
   private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {

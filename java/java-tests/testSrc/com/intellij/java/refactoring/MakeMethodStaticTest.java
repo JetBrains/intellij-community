@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
@@ -96,7 +97,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
   public void testGeneralUsageNoParam() {
     configureByFile("/refactoring/makeMethodStatic/before10.java");
-    perform(false);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> perform(false));
     checkResultByFile("/refactoring/makeMethodStatic/after10-np.java");
   }
 
@@ -108,7 +109,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
   public void testUsageInSubclassWithSuper() {
     configureByFile("/refactoring/makeMethodStatic/before11.java");
-    perform(true);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> perform(true));
     checkResultByFile("/refactoring/makeMethodStatic/after11.java");
   }
 
@@ -204,15 +205,15 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   public void testThisMethodReference() {
-    doTest(false);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(false));
   }
 
   public void testMethodReferenceInTheSameMethod() {
-    doTest(false);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(false));
   }
 
   public void testExpandMethodReference() {
-    doTest(true);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true));
   }
 
   public void testPreserveParametersAlignment() {

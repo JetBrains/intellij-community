@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.lang.invoke.MethodHandle
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -65,13 +66,13 @@ final class DistributionJARsBuilder {
   private final BuildContext buildContext
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   final PlatformLayout platform
-  private final Path patchedApplicationInfo
+  private final String patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
   private final PluginXmlPatcher pluginXmlPatcher
 
   @CompileStatic(TypeCheckingMode.SKIP)
   DistributionJARsBuilder(BuildContext buildContext,
-                          @Nullable Path patchedApplicationInfo,
+                          @Nullable String patchedApplicationInfo,
                           Set<PluginLayout> pluginsToPublish = Collections.emptySet()) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
@@ -109,14 +110,14 @@ final class DistributionJARsBuilder {
       exclude(name: "**/icon-robots.txt")
     }
 
-    def productLayout = buildContext.productProperties.productLayout
-    def enabledPluginModules = getEnabledPluginModules()
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> enabledPluginModules = getEnabledPluginModules()
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
       plugin.moduleJars.values().collectMany {
-        def module = buildContext.findRequiredModule(it)
-        def libraries =
+        JpsModule module = buildContext.findRequiredModule(it)
+        Set<JpsLibrary> libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
@@ -138,112 +139,18 @@ final class DistributionJARsBuilder {
           .collect { it.name }
       }
 
-    platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
-      BaseLayoutSpec.metaClass.addModule = { String moduleName ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName)
-        }
-      }
-      BaseLayoutSpec.metaClass.addModule = { String moduleName, String relativeJarPath ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName, relativeJarPath)
-        }
-      }
-
-      productLayout.additionalPlatformJars.entrySet().each {
-        def jarName = it.key
-        it.value.each {
-          addModule(it, jarName)
-        }
-      }
-      CommunityRepositoryModules.PLATFORM_API_MODULES.each {
-        addModule(it, "platform-api.jar")
-      }
-      CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES.each {
-        addModule(it, "platform-impl.jar")
-      }
-      productLayout.productApiModules.each {
-        addModule(it, "openapi.jar")
-      }
-
-      productLayout.productImplementationModules.each {
-        addModule(it, productLayout.mainJarName)
-      }
-
-      productLayout.moduleExcludes.entrySet().each {
-        layout.moduleExcludes.putValues(it.key, it.value)
-      }
-
-      addModule("intellij.platform.util", "util.jar")
-      addModule("intellij.platform.util.rt", "util.jar")
-      addModule("intellij.platform.util.zip", "util.jar")
-      addModule("intellij.platform.util.classLoader", "util.jar")
-      addModule("intellij.platform.util.text.matching", "util.jar")
-      addModule("intellij.platform.util.collections", "util.jar")
-      addModule("intellij.platform.util.strings", "util.jar")
-      addModule("intellij.platform.util.diagnostic", "util.jar")
-      addModule("intellij.platform.util.ui", "util.jar")
-      addModule("intellij.platform.util.ex", "util.jar")
-      addModule("intellij.platform.ide.util.io", "util.jar")
-      addModule("intellij.platform.extensions", "util.jar")
-
-      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
-      addModule("intellij.json")
-      addModule("intellij.spellchecker")
-      addModule("intellij.platform.statistics", "stats.jar")
-      addModule("intellij.platform.statistics.uploader", "stats.jar")
-      addModule("intellij.platform.statistics.config", "stats.jar")
-      addModule("intellij.platform.statistics.devkit")
-
-      addModule("intellij.relaxng", "intellij-xml.jar")
-      addModule("intellij.xml.analysis.impl", "intellij-xml.jar")
-      addModule("intellij.xml.psi.impl", "intellij-xml.jar")
-      addModule("intellij.xml.structureView.impl", "intellij-xml.jar")
-      addModule("intellij.xml.impl", "intellij-xml.jar")
-
-      addModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.codeReview", "intellij-dvcs.jar")
-
-      addModule("intellij.platform.objectSerializer.annotations")
-
-      addModule("intellij.platform.bootstrap")
-      addModule("intellij.java.guiForms.rt")
-      addModule("intellij.platform.icons")
-      addModule("intellij.platform.boot", "bootstrap.jar")
-      addModule("intellij.platform.resources", "resources.jar")
-      addModule("intellij.platform.colorSchemes", "resources.jar")
-      addModule("intellij.platform.resources.en", "resources.jar")
-      addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
-      addModule("intellij.platform.jps.model.impl", "jps-model.jar")
-
-      addModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
-
-      addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
-
-      if (allProductDependencies.contains("intellij.platform.coverage")) {
-        addModule("intellij.platform.coverage")
-      }
-
-      projectLibrariesUsedByPlugins.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
-          withProjectLibrary(it.name)
-        }
-      }
-      productLayout.projectLibrariesToUnpackIntoMainJar.each {
-        withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
-      }
-      withProjectLibrariesFromIncludedModules(buildContext)
-
-      for (def toRemoveVersion : getLibsToRemoveVersion()) {
-        removeVersionFromProjectLibraryJarNames(toRemoveVersion)
-      }
-    }
+    platform = PlatformModules.createPlatformLayout(productLayout, allProductDependencies, projectLibrariesUsedByPlugins, buildContext)
   }
 
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
+    plugins = plugins.findAll {
+      // Kotlin Multiplatform Mobile plugin is excluded since:
+      // * is compatible with Android Studio only;
+      // * has release cycle of its
+      // * shadows IntelliJ utility modules included via Kotlin Compiler;
+      // * breaks searchable options index and jar order generation steps.
+      it.mainModule != 'kotlin-ultimate.kmm-plugin'
+    }
     if (plugins.isEmpty()) {
       return plugins
     }
@@ -258,10 +165,6 @@ final class DistributionJARsBuilder {
     return plugins.findAll { toInclude.contains(it.directoryName) }
   }
 
-  private static @NotNull Set<String> getLibsToRemoveVersion() {
-    return Set.of("Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM")
-  }
-
   private Set<String> getEnabledPluginModules() {
     buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
   }
@@ -271,7 +174,7 @@ final class DistributionJARsBuilder {
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    CommunityRepositoryModules.PLATFORM_API_MODULES + CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
+    PlatformModules.PLATFORM_API_MODULES + PlatformModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
     modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
@@ -320,25 +223,26 @@ final class DistributionJARsBuilder {
       return
     }
 
-    Path result = (Path)BuildHelper.getInstance(buildContext).reorderJars
+    BuildHelper.getInstance(buildContext).reorderJars
       .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
                            buildContext.getBootClassPathJarNames(),
                            buildContext.paths.tempDir,
                            buildContext.productProperties.platformPrefix ?: "idea",
                            buildContext.productProperties.isAntRequired ? Paths.get(buildContext.paths.communityHome, "lib/ant/lib") : null,
                            buildContext.messages)
-    buildContext.addResourceFile(result)
   }
 
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
     return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
-      Path targetFile = Paths.get(buildContext.paths.temp, "brokenPlugins.db")
+      Path targetFile = buildContext.paths.tempDir.resolve("brokenPlugins.db")
       String currentBuildString = buildContext.buildNumber
       BuildHelper.getInstance(buildContext).brokenPluginsTask.invokeWithArguments(targetFile,
                                                                                   currentBuildString,
                                                                                   buildContext.options.isInDevelopmentMode,
                                                                                   buildContext.messages)
-      buildContext.addResourceFile(targetFile)
+      if (Files.exists(targetFile)) {
+        buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
+      }
     }
   }
 
@@ -405,13 +309,13 @@ final class DistributionJARsBuilder {
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
     def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-            CommunityRepositoryModules.PLATFORM_API_MODULES +
-            CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-            productLayout.productApiModules +
-            productLayout.productImplementationModules +
-            productLayout.additionalPlatformJars.values() +
-            toolModules + buildContext.productProperties.additionalModulesToCompile +
-            ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
+                           PlatformModules.PLATFORM_API_MODULES +
+                           PlatformModules.PLATFORM_IMPLEMENTATION_MODULES +
+                           productLayout.productApiModules +
+                           productLayout.productImplementationModules +
+                           productLayout.additionalPlatformJars.values() +
+                           toolModules + buildContext.productProperties.additionalModulesToCompile +
+                           ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
     modulesToInclude - productLayout.excludedModuleNames
   }
 
@@ -436,14 +340,7 @@ final class DistributionJARsBuilder {
     if (productProperties.buildSourcesArchive) {
       String archiveName = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + "-sources.zip"
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
-        buildContext.findRequiredModule(moduleName).contentRootsList.urls.every { url ->
-          // Android Studio: Also include cidr sources in the output zip file.
-          FileUtil.isAncestor(buildContext.paths.communityHome, JpsPathUtil.urlToOsPath(url), false) ||
-          FileUtil.isAncestor(
-            Paths.get(buildContext.paths.communityHome, "../../tools/vendor/intellij/cidr/").toString(),
-            JpsPathUtil.urlToOsPath(url),
-            false)
-        }
+        productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
       }
       BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
     }
@@ -521,11 +418,10 @@ final class DistributionJARsBuilder {
 
     addSearchableOptions(layoutBuilder)
 
-    Path applicationInfoDir = buildContext.paths.tempDir.resolve("applicationInfo")
-    Path ideaDir = applicationInfoDir.resolve("idea")
-    Files.createDirectories(ideaDir)
-    Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName), StandardCopyOption.REPLACE_EXISTING)
-    layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
+    Path patchedAppInfoFile = buildContext.paths.tempDir.resolve("appInfo.xml")
+    Files.createDirectories(patchedAppInfoFile.parent)
+    Files.writeString(patchedAppInfoFile, patchedApplicationInfo)
+    buildContext.addDistFile(new Pair<Path, String>(patchedAppInfoFile, "bin"))
 
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", createKeyMapWithAltClickReassignedToMultipleCarets())
@@ -1068,7 +964,7 @@ final class DistributionJARsBuilder {
           }
         }
 
-        copyProjectLibraries(outputDir, layout, layoutSpec, buildContext)
+        copyProjectLibraries(outputDir, layout, layoutSpec, buildContext.paths.distAllDir == targetDirectory, buildContext)
 
         for (Map.Entry<String, String> entry in layout.includedArtifacts.entrySet()) {
           String artifactName = entry.key
@@ -1142,11 +1038,24 @@ final class DistributionJARsBuilder {
     }
   }
 
+  @SuppressWarnings('SpellCheckingInspection')
+  private static final Set<String> excludedFromMergeLibs = Set.of(
+    "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
+    "dexlib2", // android-only lib
+    "intellij-coverage", "intellij-test-discovery", // used as agent
+    "winp", "junixsocket-core", "pty4j", // contains native library
+    "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
+  )
+
   private static void copyProjectLibraries(Path outputDir,
                                            BaseLayout layout,
                                            LayoutBuilder.LayoutSpec layoutSpec,
+                                           boolean mergeLibs,
                                            BuildContext buildContext) {
     Map<Path, ProjectLibraryData> copiedFiles = new HashMap<>()
+    Map<String, List<Path>> toMerge = mergeLibs ? new HashMap<String, List<Path>>() : Collections.<String, List<Path>>emptyMap()
+    boolean copyFiles = layoutSpec.copyFiles
+
     libProcessing:
     for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
       Path libOutputDir = outputDir
@@ -1164,25 +1073,45 @@ final class DistributionJARsBuilder {
                                          layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)
       List<File> files = library.getFiles(JpsOrderRootType.COMPILED)
       List<Path> nioFiles = new ArrayList<Path>(files.size())
+
+      String libName = library.name
       for (File file : files) {
         Path nioFile = file.toPath()
         nioFiles.add(nioFile)
         ProjectLibraryData alreadyCopiedFor = copiedFiles.putIfAbsent(nioFile, libraryData)
         if (alreadyCopiedFor != null) {
-          throw new IllegalStateException("File $nioFile from ${library.name} is already provided by ${alreadyCopiedFor.libraryName} library")
+          throw new IllegalStateException("File $nioFile from ${libName} is already provided by ${alreadyCopiedFor.libraryName} library")
         }
       }
 
-      boolean copyFiles = layoutSpec.copyFiles
 /* Android Studio: work around commit 1052a20b
       if (copyFiles) {
-        Files.createDirectories(libOutputDir)
-        if (!removeVersionFromJarName && files.size() > 1) {
-          String mergedFilename = FileUtil.sanitizeFileName(library.name.toLowerCase(), false)
-          if (mergedFilename == "gradle") {
-            mergedFilename = "gradle-lib"
+        String lowerCasedLibName = libName.toLowerCase()
+        if (mergeLibs) {
+          String key
+          if (!excludedFromMergeLibs.contains(libName) &&
+              !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+              !lowerCasedLibName.contains("annotations") &&
+              !lowerCasedLibName.startsWith("junit") &&
+              !lowerCasedLibName.startsWith("cucumber-") &&
+              !lowerCasedLibName.contains("groovy")) {
+            key = "3rd-party"
           }
-          Path targetFile = outputDir.resolve(mergedFilename + ".jar")
+          else {
+            key = null
+          }
+
+          if (key != null) {
+            toMerge.computeIfAbsent(key, { new ArrayList<>() }).addAll(nioFiles)
+            String jarName = key + ".jar"
+            layoutSpec.addLibraryMapping(library, jarName, outputDir.resolve(jarName).toString())
+            continue libProcessing
+          }
+        }
+
+        Files.createDirectories(libOutputDir)
+        if (!removeVersionFromJarName && nioFiles.size() > 1 && lowerCasedLibName != "gradle") {
+          Path targetFile = outputDir.resolve(FileUtil.sanitizeFileName(lowerCasedLibName, false) + ".jar")
           BuildHelper.getInstance(buildContext).mergeJars.invokeWithArguments(targetFile, nioFiles)
           layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), targetFile.toString())
           continue libProcessing
@@ -1207,6 +1136,16 @@ Android Studio: work around commit 1052a20b */ Files.createDirectories(libOutput
           layoutSpec.addLibraryMapping(library, file.fileName.toString(), file.toString())
           buildContext.messages.debug(" include $file from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
         }
+      }
+    }
+
+    if (mergeLibs && copyFiles) {
+      Files.createDirectories(outputDir)
+      MethodHandle mergeJarsMethod = BuildHelper.getInstance(buildContext).mergeJars
+      for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
+        List<Path> list = entry.value
+        list.sort(null)
+        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key + ".jar"), list)
       }
     }
   }

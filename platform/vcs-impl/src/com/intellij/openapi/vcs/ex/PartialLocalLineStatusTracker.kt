@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.CalledInAny
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.awt.Point
@@ -52,7 +53,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.collections.HashSet
 
 interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun getAffectedChangeListsIds(): List<String>
@@ -81,10 +81,15 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   open class ListenerAdapter : Listener
   interface Listener : EventListener {
-    fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {}
-    fun onChangeListsChange(tracker: PartialLocalLineStatusTracker) {}
-    fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {}
-    fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {}
+    fun onBecomingValid(tracker: PartialLocalLineStatusTracker) = Unit
+
+    @CalledInAny
+    fun onChangeListsChange(tracker: PartialLocalLineStatusTracker) = Unit
+
+    @CalledInAny
+    fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) = Unit
+
+    fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) = Unit
   }
 }
 

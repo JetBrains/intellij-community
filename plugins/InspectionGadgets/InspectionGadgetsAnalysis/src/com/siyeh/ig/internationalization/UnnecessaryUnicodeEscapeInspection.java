@@ -45,6 +45,11 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.descriptor", c);
   }
 
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

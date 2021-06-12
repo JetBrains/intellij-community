@@ -1,26 +1,25 @@
-/*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class GroovyImporterTest extends MavenImportingTestCase {
+public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
   private String repoPath;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -28,6 +27,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     setRepositoryPath(repoPath);
   }
 
+  @Test
   public void testConfiguringFacetWithoutLibrary() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -47,6 +47,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(GroovyConfigUtils.getInstance().getSDKLibrariesByModule(getModule("project")));
   }
 
+  @Test
   public void testConfiguringFacetWithLibrary() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -79,6 +80,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
       Arrays.asList("jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"));
   }
 
+  @Test
   public void testAddingGroovySpecificSources() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -109,6 +111,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
   public void testAddingGroovySpecificSources2() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -139,6 +142,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
   public void testAddingGroovySpecificSources3GmavenPlus() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -169,6 +173,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
   public void testGroovyEclipsePlugin() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -231,10 +236,11 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
+  @Test
   public void testGroovyEclipsePluginWhenOnlyCompilerDependency() throws IOException {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -297,10 +303,11 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
   }
 
+  @Test
   public void testAddingCustomGroovySpecificSources() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -371,6 +378,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
   public void testAddingCustomGroovySpecificSources2GmavenPlus() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
@@ -441,6 +449,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
   public void testAddingCustomGroovySpecificSourcesByRelativePath() {
     createProjectSubDirs("src/foo",
                          "src/test-foo");
@@ -492,6 +501,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestSources("project", "src/test-foo");
   }
 
+  @Test
   public void testDoNotAddGroovySpecificGeneratedSources() {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/xxx/yyy",
@@ -533,6 +543,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
+  @Test
   public void testDoNotAddCustomGroovySpecificGeneratedSources() {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/xxx/yyy",
@@ -584,6 +595,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
+  @Test
   public void testDoNotAddCustomGroovySpecificGeneratedSourcesByRelativePath() {
     createProjectSubDirs("target/generated-sources/xxx/yyy",
                          "target/generated-sources/foo/aaa",
@@ -631,6 +643,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
+  @Test
   public void testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() {
     try {
       importProject("<groupId>test</groupId>" +
@@ -656,8 +669,8 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                            getModule("project"),
-                                                            new IdeModifiableModelsProviderImpl(myProject)));
+                                                                                                getModule("project"),
+                                                                                                new IdeModifiableModelsProviderImpl(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });
@@ -688,6 +701,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     }
   }
 
+  @Test
   public void testDoNotAddGroovySpecificGeneratedSourcesForGMaven_1_2() {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/xxx/yyy",
@@ -730,8 +744,8 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  public void testGrEclipseMavenPlugin(){
+  @Test
+  public void testGrEclipseMavenPlugin() {
 
   }
-
 }

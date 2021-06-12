@@ -1,8 +1,25 @@
 <html>
 <body>
-This inspection detects type errors in function call expressions.
-Due to dynamic dispatch and duck typing, this is possible in a limited but
-useful number of cases. Types of function parameters can be specified in
-docstrings or in Python 3 function annotations.
+<p>Reports type errors in function call expressions, targets, and return values. In a dynamically typed language, this is possible in a limited number of cases. </p>
+<p>Types of function parameters can be specified in
+  docstrings or in Python 3 function annotations.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def foo() -> int:
+    return "abc" # Expected int, got str
+
+
+a: str
+a = foo() # Expected str, got int
+</pre>
+<p>With the quick-fix, you can modify the problematic types:</p>
+<pre style="font-family: monospace">
+def foo() -> str:
+    return "abc"
+
+
+a: str
+a = foo()
+</pre>
 </body>
 </html>

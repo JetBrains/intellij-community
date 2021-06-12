@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.openapi.util.registry.Registry
@@ -16,9 +16,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isTrait
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExplicitRuntimeTypeArgument
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypePositionConstraint
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType
 
 fun findSingleAbstractMethod(clazz: PsiClass): PsiMethod? = findSingleAbstractSignatureCached(clazz)?.method
@@ -90,7 +92,7 @@ internal fun processSAMConversion(targetType: PsiType,
   val (sam, classResolveResult) = pair
 
   val groundClass = classResolveResult.element ?: return constraints
-  val groundType = groundTypeForClosure(sam, groundClass, closureType, context)
+  val groundType = groundTypeForClosure(sam, groundClass, closureType, classResolveResult.substitutor, context)
 
   if (groundType != null) {
     constraints.add(TypeConstraint(targetType, groundType, context))
@@ -115,6 +117,7 @@ private fun returnTypeConstraint(samReturnType: PsiType?,
 private fun groundTypeForClosure(sam: PsiMethod,
                                  groundClass: PsiClass,
                                  closureType: GroovyClosureType,
+                                 resultTypeSubstitutor : PsiSubstitutor,
                                  context: PsiElement): PsiClassType? {
   if (!Registry.`is`("groovy.use.explicitly.typed.closure.in.inference", true)) return null
 
@@ -136,9 +139,10 @@ private fun groundTypeForClosure(sam: PsiMethod,
 
   val samSession = GroovyInferenceSession(typeParameters, PsiSubstitutor.EMPTY, context, false)
   argumentMapping.expectedTypes.forEach { (expectedType, argument) ->
-    val leftType = samSession.substituteWithInferenceVariables(groundClassSubstitutor.substitute(expectedType))
+    val adjustedExpectedType = adjustUntypedParameter(argument, argumentMapping.targetParameter(argument), resultTypeSubstitutor) ?: expectedType
+    val leftType = samSession.substituteWithInferenceVariables(groundClassSubstitutor.substitute(adjustedExpectedType))
     samSession.addConstraint(
-      TypePositionConstraint(ExpectedType(leftType, GrTypeConverter.Position.METHOD_PARAMETER), argument.type, context))
+      TypePositionConstraint(ExpectedType(leftType, GrTypeConverter.Position.METHOD_PARAMETER), samSession.substituteWithInferenceVariables(argument.type), context))
   }
 
   val returnTypeConstraint = returnTypeConstraint(sam.returnType, closureType.returnType(arguments), context)
@@ -151,4 +155,13 @@ private fun groundTypeForClosure(sam: PsiMethod,
 
   val elementFactory = JavaPsiFacade.getElementFactory(context.project)
   return elementFactory.createType(groundClass, resultSubstitutor)
+}
+
+private fun adjustUntypedParameter(argument : Argument, parameter : CallParameter?, resultTypeSubstitutor: PsiSubstitutor) : PsiType? {
+  val psi = (parameter as? PsiCallParameter)?.psi?.takeIf { it.typeElement == null } ?: return null
+  return if (psi.typeElement == null) {
+    resultTypeSubstitutor.substitute(argument.type)
+  } else {
+    null
+  }
 }

@@ -60,7 +60,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     state = new State(descriptor, refresher, sortDirectories, sortArchives, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         invoker.invoke(() -> process(events));
       }
     });

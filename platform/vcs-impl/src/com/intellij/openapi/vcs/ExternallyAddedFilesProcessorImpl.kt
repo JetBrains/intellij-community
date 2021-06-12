@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -25,13 +25,15 @@ import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES" //NON-NLS
 
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
+/**
+ * Extend [VcsVFSListener] to automatically add/propose to add into VCS files that were created not by IDE (externally created).
+ */
 internal class ExternallyAddedFilesProcessorImpl(project: Project,
                                                  private val parentDisposable: Disposable,
                                                  private val vcs: AbstractVcs,
@@ -57,15 +59,15 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     }
   }
 
-  override fun changeListUpdateDone() {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (!upToDate) return
     if (!needProcessExternalFiles()) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
-
+    val files: Set<VirtualFile>
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.removeAll(files)
+      files = unprocessedFiles.toHashSet()
+      unprocessedFiles.clear()
     }
-
     if (files.isEmpty()) return
 
     if (needDoForCurrentProject()) {
@@ -120,11 +122,10 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   override val notificationDisplayId: String = VcsNotificationIdsHolder.EXTERNALLY_ADDED_FILES
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
-  override val doForCurrentProjectProperty: String? = null
+  override val doForCurrentProjectProperty: String get() = throw UnsupportedOperationException() // usages overridden
 
   override val showActionText: String = VcsBundle.message("external.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("external.files.add.notification.action.add")
-  override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.message("external.files.add.notification.action.mute")
 
   override val viewFilesDialogTitle: String? = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
@@ -137,8 +138,8 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     addChosenFiles(files)
   }
 
-  override fun rememberForCurrentProject() {
-    vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
+  override fun setForCurrentProject(isEnabled: Boolean) {
+    if (isEnabled) vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
     VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = true
   }
 
@@ -154,8 +155,6 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
       .filter { isUnder(parents, it) }
       .toSet()
   }
-
-  override fun rememberForAllProjects() {}
 
   private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 

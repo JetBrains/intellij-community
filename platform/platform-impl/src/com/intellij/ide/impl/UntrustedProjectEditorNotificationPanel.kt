@@ -9,7 +9,7 @@ import com.intellij.ui.EditorNotificationPanel
 
 class UntrustedProjectEditorNotificationPanel(project: Project,
                                               fileEditor: FileEditor,
-                                              onTrustProjectLinkClicked: () -> Unit) : EditorNotificationPanel() {
+                                              onTrustProjectLinkClicked: () -> Unit) : EditorNotificationPanel(fileEditor) {
   init {
     text = IdeBundle.message("untrusted.project.notification.description")
     createActionLabel(IdeBundle.message("untrusted.project.notification.trust.link"), {

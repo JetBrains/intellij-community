@@ -54,8 +54,8 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
         ConfigurationType configurationType = ContainerUtil.find(configurationTypes, type -> type.getId().equals(dashboardType));
         if (configurationType == null) continue;
 
-        List<EventPair> data = RunConfigurationTypeUsagesCollector.createFeatureUsageData(configurationType, null);
-        metricEvents.add(ADDED_RUN_CONFIGURATION.metric(data.toArray(new EventPair[0])));
+        List<EventPair<?>> data = RunConfigurationTypeUsagesCollector.createFeatureUsageData(configurationType, null);
+        metricEvents.add(ADDED_RUN_CONFIGURATION.metric(data));
       }
     }
     if (!removedDefaultType.isEmpty()) {
@@ -64,8 +64,8 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
         ConfigurationType configurationType = ContainerUtil.find(configurationTypes, type -> type.getId().equals(removedType));
         if (configurationType == null) continue;
 
-        List<EventPair> data = RunConfigurationTypeUsagesCollector.createFeatureUsageData(configurationType, null);
-        metricEvents.add(REMOVED_RUN_CONFIGURATION.metric(data.toArray(new EventPair[0])));
+        List<EventPair<?>> data = RunConfigurationTypeUsagesCollector.createFeatureUsageData(configurationType, null);
+        metricEvents.add(REMOVED_RUN_CONFIGURATION.metric(data));
       }
     }
     return metricEvents;

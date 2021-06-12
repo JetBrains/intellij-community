@@ -19,17 +19,19 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
-      e.presentation.isEnabled = false
+      e.presentation.isEnabledAndVisible = false
       return
     }
 
+    val componentController = project.service<GHPRToolWindowController>().getTabController()?.componentController
+    if (componentController == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isVisible = true
     val files = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>()
-    if (files.isEmpty()) {
-      e.presentation.isEnabled = false
-      return
-    }
-
-    e.presentation.isEnabled = true
+    e.presentation.isEnabled = files.isNotEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

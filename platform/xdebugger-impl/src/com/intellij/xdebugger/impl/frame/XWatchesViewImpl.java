@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.registry.Registry;
@@ -129,6 +130,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       XDebuggerTree tree = getTree();
       myEvaluateComboBox =
         new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+          @Override
+          protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
+            return new XDebuggerEmbeddedComboBox<>(model, width);
+          }
+
           @Override
           protected void prepareEditor(EditorEx editor) {
             super.prepareEditor(editor);

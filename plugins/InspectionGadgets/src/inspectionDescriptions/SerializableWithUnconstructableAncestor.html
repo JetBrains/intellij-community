@@ -1,9 +1,24 @@
 <html>
 <body>
-Reports <b>Serializable</b> classes whose closest non-serializable ancestor lacks
-a no-argument constructor. Such classes can not be deserialized.
-<!-- tooltip end -->
-<p>
+Reports <code>Serializable</code> classes whose closest non-serializable ancestor lacks
+a no-argument constructor. Such classes can not be deserialized, but will fail with an <code>InvalidClassException</code>.
+<p>Example:</p>
+<pre><code>
+  <b>class</b> Ancestor {
+    <b>private</b> String name;
+    Ancestor(String name) {
+      <b>this</b>.name = name;
+    }
+  }
+  // warning on this class because super class is not
+  // serializable, and its constructor takes arguments
+  <b>class</b> Descendant <b>extends</b> Ancestor <b>implements</b> Serializable {
 
+    Descendant() {
+      <b>super</b>("Bob");
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

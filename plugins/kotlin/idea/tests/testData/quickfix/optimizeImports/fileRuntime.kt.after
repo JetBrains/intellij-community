@@ -1,0 +1,6 @@
+// "Optimize imports" "true"
+// WITH_RUNTIME
+
+fun foo(list: ArrayList<String>) {
+    list.add("")
+}

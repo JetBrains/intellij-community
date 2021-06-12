@@ -8,7 +8,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -36,7 +36,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                                                 inlaysManager,
                                                                                 componentsFactory,
                                                                                 cumulative) { fileLine ->
-      val (end, start) = getCommentLinesRange(viewer.editor, fileLine)
+      val (start, end) = getCommentLinesRange(viewer.editor, fileLine)
 
       val (endIndices, side) = viewer.transferLineFromOneside(end)
       val endLine = side.select(endIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
@@ -44,7 +44,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
       val (startIndices, _) = viewer.transferLineFromOneside(start)
       val startLine = side.select(startIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 
-      GHPRCommentLocation(side, endLine, startLine, endLine + 1)
+      GHPRCommentLocation(side, endLine, startLine, endLine)
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)

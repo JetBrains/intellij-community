@@ -19,7 +19,6 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
-import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
@@ -63,7 +62,6 @@ private class GHRepositoryListLoader(private val project: Project) : RepositoryL
   }
 
   override fun enable(parentComponent: Component?): Boolean {
-    if (!GithubAccountsMigrationHelper.getInstance().migrate(project, parentComponent)) return false
     if (!authenticationManager.ensureHasAccounts(project, parentComponent)) return false
 
     var atLeastOneHasToken = false

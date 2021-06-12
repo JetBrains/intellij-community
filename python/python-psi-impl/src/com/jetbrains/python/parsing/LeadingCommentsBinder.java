@@ -21,9 +21,7 @@ import com.jetbrains.python.PyTokenTypes;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class LeadingCommentsBinder implements WhitespacesAndCommentsBinder {
   public static final LeadingCommentsBinder INSTANCE = new LeadingCommentsBinder();
 

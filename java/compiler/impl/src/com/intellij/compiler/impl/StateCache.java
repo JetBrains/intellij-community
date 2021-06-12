@@ -11,8 +11,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
 
 public abstract class StateCache<T> {
   private PersistentHashMap<String, T> myMap;
@@ -65,15 +63,6 @@ public abstract class StateCache<T> {
   public T getState(String url) throws IOException {
     return myMap.get(url);
   }
-
-  public Collection<String> getUrls() throws IOException {
-    return myMap.getAllKeysWithExistingMapping();
-  }
-
-  public Iterator<String> getUrlsIterator() throws IOException {
-    return myMap.getAllKeysWithExistingMapping().iterator();
-  }
-
 
   private PersistentHashMap<String, T> createMap(final File file) throws IOException {
     return new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<>() {

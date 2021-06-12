@@ -46,58 +46,62 @@ object KeymapUtil {
   private val KeyboardShortcut.isNumpadKey: Boolean
     get() = firstKeyStroke.keyCode in KeyEvent.VK_NUMPAD0..KeyEvent.VK_DIVIDE || firstKeyStroke.keyCode == KeyEvent.VK_NUM_LOCK
 
-  @NlsSafe
-  fun getKeyStrokeText(keyStroke: KeyStroke?): String {
-    if (keyStroke == null) return ""
-    val modifiers = getModifiersText(keyStroke.modifiers)
-    val key = if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyStroke.keyCode) else KeyEvent.getKeyText(keyStroke.keyCode)
-
-    return toCanonical(modifiers) + key
+  private fun specificKeyString(code: Int) = when (code) {
+    KeyEvent.VK_LEFT -> "←"
+    KeyEvent.VK_RIGHT -> "→"
+    KeyEvent.VK_UP -> "↑"
+    KeyEvent.VK_DOWN -> "↓"
+    else -> null
   }
 
-  fun getGotoActionText(@NonNls actionId: String): String =
-    (getKeyStrokeText(getShortcutByActionId("GotoAction")) + " → " +
-     ActionManager.getInstance().getAction(actionId).templatePresentation.text).replaceSpacesWithNonBreakSpace()
+  @NlsSafe
+  fun getKeyStrokeData(keyStroke: KeyStroke?): Pair<String, List<IntRange>> {
+    if (keyStroke == null) return Pair("", emptyList())
+    val modifiers = getModifiersText(keyStroke.modifiers)
+    val keyCode = keyStroke.keyCode
+    val key = specificKeyString(keyCode)
+              ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
+
+    val separator = "\u00A0\u00A0\u00A0"
+    val intervals = mutableListOf<IntRange>()
+    val builder = StringBuilder()
+
+    fun addPart(part: String) {
+      val start = builder.length
+      builder.append(part)
+      intervals.add(IntRange(start, builder.length - 1))
+    }
+
+    for (m in modifiers.getModifiers()) {
+      val part = if (SystemInfo.isMac) {
+        val modifierName = if (m.length == 1) getStringForMacSymbol(m[0]) else null
+        if (modifierName != null) m + modifierName else m
+      }
+      else m
+
+      addPart(part)
+      builder.append(separator)
+    }
+
+    addPart(key)
+    return Pair(builder.toString(), intervals)
+  }
+
+  fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+    val keyStroke = getShortcutByActionId("GotoAction")
+    val gotoAction = getKeyStrokeData(keyStroke)
+    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
+    val updated = ArrayList<IntRange>(gotoAction.second)
+    val start = gotoAction.first.length + 5
+    updated.add(IntRange(start, start + actionName.length - 1))
+    return Pair(gotoAction.first + "  →  " + actionName, updated)
+  }
 
   private fun getModifiersText(modifiers: Int): String {
     return KeyEvent.getKeyModifiersText(modifiers)
   }
 
-  /**
-   * Adding spaces to keyModifier text
-   * "shift+ctrl" -> "shift + ctrl"
-   * if it is Mac replace "+" from modifiers
-   */
-  private fun toCanonical(modifiersString: String): String {
-    if (modifiersString.isEmpty()) return ""
-
-    val result = StringBuilder()
-
-    if (SystemInfo.isMac) {
-      return if (modifiersString.contains("+")) {
-        for (modifier in modifiersString.getModifiers())
-          result.append(modifier)
-        result.toString()
-      }
-      else {
-        modifiersString
-      }
-    }
-    else {
-      return if (modifiersString.contains("+")) {
-        for (modifier in modifiersString.getModifiers())
-          result.append(modifier).append(" + ")
-        result.toString().replaceSpacesWithNonBreakSpace()
-      }
-      else {
-        ("$modifiersString + ").replaceSpacesWithNonBreakSpace()
-      }
-    }
-  }
-
   private fun String.getModifiers(): Array<String> = this.split("[ +]".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-  private fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")
 
   @NlsSafe
   fun decryptMacShortcut(shortcut: String): String {

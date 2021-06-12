@@ -1,23 +1,25 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels
 
-import com.intellij.openapi.util.NlsContexts.TabTitle
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-abstract class PackageSearchPanelBase(@TabTitle val title: String) {
+internal abstract class PackageSearchPanelBase(@Nls val title: String) {
 
-    private val _content = lazy { build() }
-    val content: JComponent
-        get() = _content.value
+    val content: JComponent by lazy { build() }
 
-    private val _toolbar = lazy { buildToolbar() }
-    val toolbar: JComponent?
-        get() = _toolbar.value
+    val toolbar: JComponent? by lazy { buildToolbar() }
 
-    private val _topToolbar = lazy { buildTopToolbar() }
-    val topToolbar: JComponent?
-        get() = _topToolbar.value
+    val topToolbar: JComponent? by lazy { buildTopToolbar() }
+
+    val gearActions: ActionGroup? by lazy { buildGearActions() }
+
+    val titleActions: Array<AnAction>? by lazy { buildTitleActions() }
 
     protected abstract fun build(): JComponent
     protected open fun buildToolbar(): JComponent? = null
     protected open fun buildTopToolbar(): JComponent? = null
+    protected open fun buildGearActions(): ActionGroup? = null
+    protected open fun buildTitleActions(): Array<AnAction>? = null
 }

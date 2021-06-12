@@ -7,8 +7,11 @@ import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DefaultChangeListOwner;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,15 +52,18 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   }
 
   @Override
-  protected boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode<?> dropNode) {
+  protected boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode) {
     Object attached = aEvent.getAttachedObject();
     if (attached instanceof ChangeListDragBean) {
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      dragBean.setTargetNode(dropNode);
-      return dragBean.getSourceComponent() == myTree && dropNode.canAcceptDrop(dragBean);
+      if (dropNode != null) {
+        final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+        dragBean.setTargetNode(dropNode);
+        return dragBean.getSourceComponent() == myTree && dropNode.canAcceptDrop(dragBean);
+      }
     }
     else if (attached instanceof ShelvedChangeListDragBean) {
-      return dropNode instanceof ChangesBrowserChangeListNode;
+      return dropNode == null ||
+             dropNode instanceof ChangesBrowserChangeListNode;
     }
     return false;
   }
@@ -66,7 +72,19 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   public void drop(DnDEvent aEvent) {
     Object attached = aEvent.getAttachedObject();
     if (attached instanceof ShelvedChangeListDragBean) {
-      unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attached, getDropRootNode(myTree, aEvent), !isCopyAction(aEvent));
+      ShelvedChangeListDragBean dragBean = (ShelvedChangeListDragBean)attached;
+      ChangesBrowserNode<?> dropRootNode = getDropRootNode(myTree, aEvent);
+      LocalChangeList targetChangeList;
+      if (dropRootNode != null) {
+        targetChangeList = TreeUtil.getUserObject(LocalChangeList.class, dropRootNode);
+      }
+      else {
+        ShelvedChangeList changeList = ContainerUtil.getFirstItem(dragBean.getShelvedChangelists());
+        String suggestedName = changeList != null ? changeList.getName() : VcsBundle.message("changes.new.changelist");
+        String listName = ChangeListUtil.createNameForChangeList(myProject, suggestedName);
+        targetChangeList = ChangeListManager.getInstance(myProject).addChangeList(listName, null);
+      }
+      unshelveSilentlyWithDnd(myProject, dragBean, targetChangeList, !isCopyAction(aEvent));
     }
     else if (attached instanceof ChangeListDragBean) {
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.openapi.actionSystem.ActionManager
 import training.statistic.FeatureUsageStatisticConsts.ACTION_ID
 
-class ActionIdRuleValidator : CustomValidationRule() {
+private class ActionIdRuleValidator : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = (ACTION_ID == ruleId)
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

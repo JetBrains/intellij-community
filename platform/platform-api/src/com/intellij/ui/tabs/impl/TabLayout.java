@@ -40,4 +40,8 @@ public abstract class TabLayout {
 
   @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public abstract int getDropSideFor(@NotNull Point point);
+
+  protected static int getMinTabWidth() {
+    return JBUI.scale(50);
+  }
 }

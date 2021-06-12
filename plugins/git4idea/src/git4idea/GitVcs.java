@@ -3,7 +3,6 @@ package git4idea;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -212,7 +211,8 @@ public final class GitVcs extends AbstractVcs {
     if (myVFSListener == null) {
       myVFSListener = GitVFSListener.createInstance(this);
     }
-    ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
+    // make sure to read the registry before opening commit dialog
+    myProject.getService(VcsUserRegistry.class);
 
     GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
 
@@ -319,7 +319,7 @@ public final class GitVcs extends AbstractVcs {
     new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        Collection<VcsRoot> roots = myProject.getService(VcsRootDetector.class).detect();
         new GitIntegrationEnabler(GitVcs.this).enable(roots);
       }
     }.queue();

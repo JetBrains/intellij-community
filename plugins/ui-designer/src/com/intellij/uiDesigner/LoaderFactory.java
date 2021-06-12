@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -43,7 +42,7 @@ public final class LoaderFactory implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
-    return ServiceManager.getService(project, LoaderFactory.class);
+    return project.getService(LoaderFactory.class);
   }
 
   public LoaderFactory(final Project project) {
@@ -135,7 +134,7 @@ public final class LoaderFactory implements Disposable {
   }
 
   private static final class DesignTimeClassLoader extends UrlClassLoader {
-    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+    private static final boolean isParallelCapable = registerAsParallelCapable();
 
     private final String myModuleName;
 

@@ -5,7 +5,6 @@ import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
@@ -42,10 +41,10 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache = new HashMap<>();
   private final ExceptionInfoCache myCache;
 
-  VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
-    myProject = scope.getProject();
+  VcsContentAnnotationExceptionFilter(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    myProject = project;
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
-    myCache = new ExceptionInfoCache(scope);
+    myCache = new ExceptionInfoCache(project, scope);
   }
 
   private static final class MyAdditionalHighlight extends AdditionalHighlight {

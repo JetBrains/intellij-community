@@ -3,6 +3,8 @@ package training.ui
 
 import com.intellij.util.ui.Animator
 import javax.swing.JScrollBar
+import kotlin.math.cos
+import kotlin.math.roundToInt
 
 internal class StepAnimator(val verticalScrollBar: JScrollBar, val messagePane: LessonMessagePane) {
   private var animator: Animator? = null
@@ -29,9 +31,9 @@ internal class StepAnimator(val verticalScrollBar: JScrollBar, val messagePane: 
       return
     }
     val needAdd = needScrollTo - start
-    animator = object : Animator("Scroll animation", needAdd, 5 * needAdd, false) {
+    animator = object : Animator("Scroll animation", needAdd, 200, false) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-        verticalScrollBar.value = start + frame
+        verticalScrollBar.value = start + (totalFrames * (1 - cos(Math.PI * (frame.toDouble()/totalFrames))) / 2).roundToInt() //0..1
       }
 
       override fun paintCycleEnd() {

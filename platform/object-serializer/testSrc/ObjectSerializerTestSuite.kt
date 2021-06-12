@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -10,9 +10,9 @@ import org.junit.ClassRule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
-import java.nio.file.Paths
+import java.nio.file.Path
 
-internal val testSnapshotDir = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
+internal val testSnapshotDir = Path.of(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
 
 internal val objectSerializer
   get() = ObjectSerializer.instance
@@ -33,7 +33,10 @@ class ObjectSerializerTestSuite {
 internal val defaultTestWriteConfiguration = WriteConfiguration(binary = false)
 
 // don't use serialization filter in tests to make sure that test are closer to production usage (e.g. not null arg was not caught by tests because of null filtration)
-internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: WriteConfiguration, readConfiguration: ReadConfiguration? = null): T {
+internal fun <T : Any> test(bean: T,
+                            testName: TestName,
+                            writeConfiguration: WriteConfiguration,
+                            readConfiguration: ReadConfiguration? = null): T {
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
@@ -46,7 +49,9 @@ internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: Wri
   val ionText = out.toString()
   out.reset()
 
-  val deserializedBean = objectSerializer.read(bean.javaClass, ionText, configuration = readConfiguration ?: ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
+  val deserializedBean = objectSerializer.read(objectClass = bean.javaClass,
+                                               text = ionText,
+                                               configuration = readConfiguration ?: ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
   objectSerializer.write(deserializedBean, out, writeConfiguration)
   assertThat(out.toString()).isEqualTo(ionText)
 

@@ -216,7 +216,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluatePrefix(node.operator, operandValue, operandInfo.state) }
-                 ?: UUndeterminedValue to operandInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to operandInfo.state storeResultFor node)
         }
       } to operandInfo.state storeResultFor node
     }
@@ -244,7 +244,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluatePostfix(node.operator, operandValue, operandInfo.state) }
-                 ?: UUndeterminedValue to operandInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to operandInfo.state storeResultFor node)
         }
       } storeResultFor node
     }
@@ -295,7 +295,7 @@ class TreeBasedEvaluator(
       }
 
       return node.evaluateViaExtensions { evaluateBinary(node, leftInfo.value, rightInfo.value, rightInfo.state) }
-             ?: UUndeterminedValue to rightInfo.state storeResultFor node
+             ?: (UUndeterminedValue to rightInfo.state storeResultFor node)
     }
 
     override fun visitPolyadicExpression(node: UPolyadicExpression, data: UEvaluationState): UEvaluationInfo {
@@ -386,8 +386,8 @@ class TreeBasedEvaluator(
         return operandInfo storeResultFor node
       }
       return when (node.operationKind) {
-        UastBinaryExpressionWithTypeKind.TYPE_CAST -> evaluateTypeCast(operandInfo, node.type)
-        UastBinaryExpressionWithTypeKind.INSTANCE_CHECK -> evaluateTypeCheck(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE -> evaluateTypeCast(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE -> evaluateTypeCheck(operandInfo, node.type)
         else -> UUndeterminedValue to operandInfo.state
       } storeResultFor node
     }
@@ -417,8 +417,8 @@ class TreeBasedEvaluator(
 
       return (node.evaluateViaExtensions {
         node.resolve()?.let { method -> evaluateMethodCall(method, argumentValues, currentInfo.state) }
-        ?: UUndeterminedValue to currentInfo.state
-      } ?: UCallResultValue(node, argumentValues) to currentInfo.state) storeResultFor node
+        ?: (UUndeterminedValue to currentInfo.state)
+      } ?: (UCallResultValue(node, argumentValues) to currentInfo.state)) storeResultFor node
     }
 
     override fun visitQualifiedReferenceExpression(
@@ -438,7 +438,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluateQualified(node.accessType, currentInfo, selectorInfo) }
-                 ?: UUndeterminedValue to selectorInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to selectorInfo.state storeResultFor node)
         }
       } storeResultFor node
     }
@@ -458,7 +458,7 @@ class TreeBasedEvaluator(
 
     override fun visitVariable(node: UVariable, data: UEvaluationState): UEvaluationInfo {
       val initializer = node.uastInitializer
-      val initializerInfo = initializer?.accept(chain, data) ?: UUndeterminedValue to data
+      val initializerInfo = initializer?.accept(chain, data) ?: (UUndeterminedValue to data)
       if (!initializerInfo.reachable) return initializerInfo
       return UUndeterminedValue to initializerInfo.state.assign(node, initializerInfo.value, node)
     }
@@ -501,7 +501,7 @@ class TreeBasedEvaluator(
 
     override fun visitSwitchExpression(node: USwitchExpression, data: UEvaluationState): UEvaluationInfo {
       storeState(node, data)
-      val subjectInfo = node.expression?.accept(chain, data) ?: UUndeterminedValue to data
+      val subjectInfo = node.expression?.accept(chain, data) ?: (UUndeterminedValue to data)
       if (!subjectInfo.reachable) return subjectInfo storeResultFor node
 
       var resultInfo: UEvaluationInfo? = null
@@ -583,7 +583,7 @@ class TreeBasedEvaluator(
 
       fun evaluateCondition(inputState: UEvaluationState): UEvaluationInfo =
         condition?.accept(chain, inputState)
-        ?: (if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState
+        ?: ((if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState)
 
       var resultInfo = UUndeterminedValue to inputState
       var iterationsAllowed = loopIterationLimit

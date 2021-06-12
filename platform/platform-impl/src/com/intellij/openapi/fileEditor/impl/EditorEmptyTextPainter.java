@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -31,7 +32,8 @@ import java.awt.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class EditorEmptyTextPainter {
-  public void paintEmptyText(@NotNull final JComponent splitters, @NotNull Graphics g) {
+  public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
+    if (!Registry.is("editor.paint.empty.text")) return;
     UISettings.setupAntialiasing(g);
     UIUtil.TextPainter painter = createTextPainter();
     advertiseActions(splitters, painter);

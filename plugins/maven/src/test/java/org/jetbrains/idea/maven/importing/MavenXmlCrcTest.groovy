@@ -18,12 +18,13 @@ package org.jetbrains.idea.maven.importing
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenXmlCrcTest extends TestCase {
-
+  @Test
   void testCrc() {
     same("""
 <project a="a" b="b">

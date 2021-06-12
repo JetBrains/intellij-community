@@ -278,7 +278,7 @@ internal class SchemeManagerTest {
     doReloadTest(RemoveScheme::class.java)
   }
 
-  private fun doReloadTest(kind: Class<out SchemeChangeEvent>) {
+  private fun doReloadTest(kind: Class<out SchemeChangeEvent<*,*>>) {
     val dir = fsRule.fs.getPath("/test").createDirectories()
     fun writeScheme(index: Int, value: String): TestScheme {
       val name = "s$index"
@@ -296,7 +296,7 @@ internal class SchemeManagerTest {
       return LightVirtualFile(fileName, null, file.readText(), Charsets.UTF_8, Files.getLastModifiedTime(file).toMillis())
     }
 
-    val schemeManager = createSchemeManager(dir)
+    val schemeManager: SchemeManagerImpl<TestScheme, TestScheme> = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
 
@@ -304,19 +304,19 @@ internal class SchemeManagerTest {
     s2 = writeScheme(2, "bar")
 
     @Suppress("UNCHECKED_CAST")
-    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager as SchemeManagerImpl<Any, Any>)
+    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
       schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
     }
     else {
       val sF2 = createVirtualFile(s2)
-      val updateEventS1 = UpdateScheme(createVirtualFile(s1))
-      val updateEventS2 = UpdateScheme(sF2)
+      val updateEventS1 = UpdateScheme<TestScheme,TestScheme>(createVirtualFile(s1))
+      val updateEventS2 = UpdateScheme<TestScheme,TestScheme>(sF2)
       val events = listOf(updateEventS1, RemoveScheme(sF2.name), updateEventS2)
 
       assertThat(sortSchemeChangeEvents(events)).containsExactly(updateEventS1, updateEventS2)
 
-      val removeAllSchemes = RemoveAllSchemes()
+      val removeAllSchemes = RemoveAllSchemes<TestScheme,TestScheme>()
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), updateEventS2, removeAllSchemes))).containsExactly(removeAllSchemes)
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), removeAllSchemes, updateEventS2))).containsExactly(removeAllSchemes, updateEventS2)
       assertThat(sortSchemeChangeEvents(listOf(removeAllSchemes, updateEventS2, RemoveScheme(sF2.name)))).containsExactly(removeAllSchemes, RemoveScheme(sF2.name))
@@ -545,7 +545,7 @@ internal class SchemeManagerTest {
     try {
       val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
         @Suppress("UNCHECKED_CAST")
-        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project)
+        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
         ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
       })
 

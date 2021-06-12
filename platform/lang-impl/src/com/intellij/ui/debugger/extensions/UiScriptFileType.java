@@ -31,7 +31,7 @@ public final class UiScriptFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return LangBundle.message("ui.script.file.type.description");
+    return LangBundle.message("filetype.ui.script.description");
   }
 
   public static final String myExtension = "ijs";

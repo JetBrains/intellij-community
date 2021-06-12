@@ -160,9 +160,4 @@ public class PyAugmentAssignmentInspection extends PyInspection {
       return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
   }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
 }

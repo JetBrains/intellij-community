@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.rename;
 
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -9,7 +9,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.ui.JBUI;
-import com.intellij.xml.util.XmlTagUtilBase;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ class ShRenameDialog extends RefactoringDialog {
     super(project, false);
     myRenamer = renamer;
     String nameLabelText = RefactoringBundle.message("rename.0.and.its.usages.to", "'" + renamer.getOldName() + "'");
-    myNameLabel = new JLabel(XmlTagUtilBase.escapeString(nameLabelText, false));
+    myNameLabel = new JLabel(XmlStringUtil.escapeString(nameLabelText, false));
     myNameSuggestionsField = new NameSuggestionsField(new String[] {renamer.getOldName()},
                                                       myProject, FileTypes.PLAIN_TEXT, renamer.getEditor()) {
       @Override

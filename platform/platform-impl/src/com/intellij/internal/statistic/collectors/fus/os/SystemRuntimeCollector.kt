@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.internal.DebugAttachDetector
@@ -68,14 +68,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     for (option in options) {
       result.add(JVM_OPTION.metric(option.key, option.value))
     }
-
-    for (clientProperty in knownClientProperties) {
-      val value = System.getProperty(clientProperty)
-      if (value != null) {
-        result.add(JVM_CLIENT_PROPERTIES.metric(clientProperty, value))
-      }
-    }
-
     result.add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
     return result
   }
@@ -106,12 +98,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "-Xms", "-Xmx", "-XX:SoftRefLRUPolicyMSPerMB", "-XX:ReservedCodeCacheSize"
     )
 
-    //No -D prefix is required here
-    private val knownClientProperties = arrayListOf(
-      "splash", "nosplash"
-    )
-
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 11)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 10)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
@@ -134,10 +121,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     private val JVM_OPTION: EventId2<String?, Long> = GROUP.registerEvent("jvm.option",
       EventFields.String("name", arrayListOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")),
       EventFields.Long("value")
-    )
-    private val JVM_CLIENT_PROPERTIES: EventId2<String?, String?> = GROUP.registerEvent("jvm.client.properties",
-      EventFields.String("name", knownClientProperties),
-      EventFields.String("value", listOf("true", "false"))
     )
 
     fun convertOptionToData(arg: String): Pair<String, Long>? {

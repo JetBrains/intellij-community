@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -385,6 +385,6 @@ public final class VcsLogUtil {
     vcsLogUi.jumpTo(row, (visiblePack, r) -> {
       if (visiblePack.getVisibleGraph().getVisibleCommitCount() <= r) return -1;
       return r;
-    }, SettableFuture.create(), silently);
+    }, SettableFuture.create(), silently, true);
   }
 }

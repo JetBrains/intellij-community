@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
@@ -50,7 +50,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
-    super(TRACE_CREATION && !ApplicationInfoImpl.isInStressTest());
+    super(TRACE_CREATION && !ApplicationManagerEx.isInStressTest());
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
     myListener = listener;

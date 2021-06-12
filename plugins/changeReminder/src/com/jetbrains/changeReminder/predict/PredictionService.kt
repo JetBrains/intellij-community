@@ -51,7 +51,7 @@ internal class PredictionService(val project: Project) : Disposable {
     }
   }) {
     override fun inProgressChanged(value: Boolean) {
-      changesViewManager.scheduleRefresh()
+      project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
     }
   }
 
@@ -211,7 +211,7 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun setPrediction(newPrediction: PredictionData) {
     predictionData = newPrediction
-    changesViewManager.scheduleRefresh()
+    project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
   }
 
   override fun dispose() {

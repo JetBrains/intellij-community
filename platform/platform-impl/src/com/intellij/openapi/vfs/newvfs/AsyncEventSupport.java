@@ -52,7 +52,7 @@ public final class AsyncEventSupport {
 
     app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (ourAsyncProcessedEvents.contains(events)) {
           return;
         }
@@ -62,7 +62,7 @@ public final class AsyncEventSupport {
       }
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (ourAsyncProcessedEvents.contains(events)) {
           return;
         }

@@ -5,6 +5,7 @@ import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -51,7 +52,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
         put(Location.DATA_KEY, locationProvider(clazz, method))
       }
 
-      ConfigurationContext.getFromContext(dataContext).configurationsFromContext
+      ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
         ?.filter { it.configuration is GradleRunConfiguration }
         ?.map { configurationFromContext -> configurationFromContext.configuration as GradleRunConfiguration }
       ?: emptyList()

@@ -95,13 +95,10 @@ public class RecentProjectPanel extends JPanel {
     myList.setCellRenderer(createRenderer(myPathShortener));
 
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
-      myChecker = new FilePathChecker(new Runnable() {
-        @Override
-        public void run() {
-          if (myList.isShowing()) {
-            myList.revalidate();
-            myList.repaint();
-          }
+      myChecker = new FilePathChecker(() -> {
+        if (myList.isShowing()) {
+          myList.revalidate();
+          myList.repaint();
         }
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
@@ -177,6 +174,7 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+    ProjectDetector.runDetectors((projects) -> RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(myList.getModel()));
   }
 
   public static Function<? super AnAction, String> createProjectNameFunction() {
@@ -204,10 +202,10 @@ public class RecentProjectPanel extends JPanel {
   @NotNull
   private AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
     String actionPlace = UIUtil.uiParents(myList, true).filter(FlatWelcomeFrame.class).isEmpty() ? ActionPlaces.POPUP : ActionPlaces.WELCOME_SCREEN;
-    AnActionEvent actionEvent = AnActionEvent
-      .createFromInputEvent(event, actionPlace, selection.getTemplatePresentation(),
-                            DataManager.getInstance().getDataContext(myList), false, false);
-    ActionUtil.performActionDumbAwareWithCallbacks(selection, actionEvent, actionEvent.getDataContext());
+    AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(
+      event, actionPlace, selection.getTemplatePresentation(),
+      DataManager.getInstance().getDataContext(myList), false, false);
+    ActionUtil.performActionDumbAwareWithCallbacks(selection, actionEvent);
     return selection;
   }
 

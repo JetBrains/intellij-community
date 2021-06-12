@@ -31,9 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordArgument> {
   public PyKeywordArgumentReference(@NotNull PyKeywordArgument element, TextRange textRange) {
     super(element, textRange, true);

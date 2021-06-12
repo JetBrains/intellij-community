@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,4 +25,8 @@ public interface ExceptionFilterFactory {
 
   @NotNull
   Filter create(@NotNull GlobalSearchScope searchScope);
+  
+  default Filter create(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    return create(searchScope);
+  }
 }

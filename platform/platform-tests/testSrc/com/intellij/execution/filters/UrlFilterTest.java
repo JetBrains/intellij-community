@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
+import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
       assertInstanceOf(actualItem.getHyperlinkInfo(), LazyFileHyperlinkInfo.class);
     }
     else {
-      assertInstanceOf(actualItem.getHyperlinkInfo(), BrowserHyperlinkInfo.class);
+      assertInstanceOf(actualItem.getHyperlinkInfo(), OpenUrlHyperlinkInfo.class);
     }
   }
 

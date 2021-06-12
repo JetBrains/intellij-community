@@ -61,7 +61,7 @@ final class PersistentFSConnection {
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull IntList freeRecords,
-                         boolean markDirty) {
+                         boolean markDirty) throws IOException {
     myRecords = records;
     myNames = names;
     myAttributes = attributes;
@@ -122,7 +122,7 @@ final class PersistentFSConnection {
     return myFreeRecords;
   }
 
-  long getTimestamp() {
+  long getTimestamp() throws IOException {
     return myRecords.getTimestamp();
   }
 
@@ -150,16 +150,16 @@ final class PersistentFSConnection {
     }  // No luck.
   }
 
-  int getPersistentModCount() {
+  int getPersistentModCount() throws IOException {
     return myRecords.getGlobalModCount();
   }
 
-  int incGlobalModCount() {
+  int incGlobalModCount() throws IOException {
     incLocalModCount();
     return myRecords.incGlobalModCount();
   }
 
-  void markDirty() {
+  void markDirty() throws IOException {
     assert FSRecords.lock.isWriteLocked();
     if (!myDirty) {
       myDirty = true;
@@ -167,7 +167,7 @@ final class PersistentFSConnection {
     }
   }
 
-  void incLocalModCount() {
+  void incLocalModCount() throws IOException {
     markDirty();
     //noinspection NonAtomicOperationOnVolatileField
     myLocalModificationCount++;
@@ -177,7 +177,7 @@ final class PersistentFSConnection {
     return myLocalModificationCount;
   }
 
-  void doForce() {
+  void doForce() throws IOException {
     // avoid NPE when close has already taken place
     if (myNames != null && myFlushingFuture != null) {
       myNames.force();
@@ -222,7 +222,7 @@ final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
-  public void incModCount(int fileId) {
+  public void incModCount(int fileId) throws IOException {
     int count = incGlobalModCount();
     getRecords().setModCount(fileId, count);
   }
@@ -254,7 +254,7 @@ final class PersistentFSConnection {
   }
 
   // either called from FlushingDaemon thread under read lock, or from handleError under write lock
-  void markClean() {
+  void markClean() throws IOException {
     assert FSRecords.lock.isWriteLocked() || FSRecords.lock.getReadHoldCount() != 0;
     if (myDirty) {
       myDirty = false;
@@ -275,13 +275,18 @@ final class PersistentFSConnection {
     assert FSRecords.lock.getReadHoldCount() == 0;
 
     // No need to forcibly mark VFS corrupted if it is already shut down
-    FSRecords.write(() -> {
-      if (!myCorrupted) {
-        createBrokenMarkerFile(e);
-        myCorrupted = true;
-        doForce();
-      }
-    });
+    try {
+      FSRecords.write(() -> {
+        if (!myCorrupted) {
+          createBrokenMarkerFile(e);
+          myCorrupted = true;
+          doForce();
+        }
+      });
+    }
+    catch (IOException ioException) {
+      LOG.error(ioException);
+    }
 
     ExceptionUtil.rethrow(e);
   }

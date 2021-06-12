@@ -94,7 +94,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !LanguageUtil.isInTemplateLanguageFile(file);
   }
 

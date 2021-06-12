@@ -7,4 +7,4 @@ def bar():
 
 
 def foo(a_new):
-    print a_new
+    print(a_new)

@@ -813,6 +813,6 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @Override
   @NonNls
   public String toString() {
-    return myText.toString();
+    return getClass().getName() + ": '" + myText.toString() + "'";
   }
 }

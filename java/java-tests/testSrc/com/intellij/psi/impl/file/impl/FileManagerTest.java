@@ -242,19 +242,19 @@ public class FileManagerTest extends JavaPsiTestCase {
     final VirtualFile file = createChildData(myPrjDir1, "aaa.txt");
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      FileTypeManagerImpl ftManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+      FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
       try {
         FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
         fileManager.findFile(file);
 
-        ftManager.removeAssociation(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.associate(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
+        fileTypeManager.removeAssociation(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"));
+        fileTypeManager.associate(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"));
 
         fileManager.checkConsistency();
       }
       finally {
-        ftManager.associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.removeAssociation(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
+        fileTypeManager.associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"));
+        fileTypeManager.removeAssociation(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"));
       }
     });
   }

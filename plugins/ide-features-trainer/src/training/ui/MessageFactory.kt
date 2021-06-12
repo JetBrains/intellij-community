@@ -14,8 +14,10 @@ import org.jdom.output.XMLOutputter
 import training.learn.CourseManager
 import training.util.KeymapUtil
 import training.util.openLinkInBrowser
+import java.util.regex.Pattern
+import javax.swing.KeyStroke
 
-object MessageFactory {
+internal object MessageFactory {
   private val LOG = Logger.getInstance(MessageFactory::class.java)
 
   fun setLinksHandlers(project: Project, messageParts: List<MessagePart>) {
@@ -66,13 +68,19 @@ object MessageFactory {
     val list: MutableList<MessagePart> = mutableListOf()
     for (content: Content in element.content) {
       if (content is Text) {
-        list.add(MessagePart(content.getValue(), MessagePart.MessageType.TEXT_REGULAR))
+        var text = content.getValue()
+        if (Pattern.matches(" *\\p{IsPunctuation}.*", text)) {
+          val indexOfFirst = text.indexOfFirst { it != ' ' }
+          text = "\u00A0".repeat(indexOfFirst) + text.substring(indexOfFirst)
+        }
+        list.add(MessagePart(text, MessagePart.MessageType.TEXT_REGULAR))
       }
       else if (content is Element) {
         val outputter = XMLOutputter()
         var type = MessagePart.MessageType.TEXT_REGULAR
         val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
         var textFn = { text }
+        var splitter: (() -> List<IntRange>)? = null
         var link: String? = null
         var runnable: Runnable? = null
         when (content.name) {
@@ -101,18 +109,29 @@ object MessageFactory {
           "action" -> {
             type = MessagePart.MessageType.SHORTCUT
             link = text
+            val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
+            val (visualText, split) = if (shortcutByActionId != null) {
+              KeymapUtil.getKeyStrokeData(shortcutByActionId)
+            }
+            else {
+              KeymapUtil.getGotoActionData(text)
+            }
             textFn = {
-              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
-              if (shortcutByActionId != null) {
-                KeymapUtil.getKeyStrokeText(shortcutByActionId)
-              }
-              else {
-                KeymapUtil.getGotoActionText(text)
-              }
+              visualText
+            }
+            splitter = {
+              split
             }
           }
-          "raw_action" -> {
+          "raw_shortcut" -> {
             type = MessagePart.MessageType.SHORTCUT
+            val (visualText, split) = KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
+            textFn = {
+              visualText
+            }
+            splitter = {
+              split
+            }
           }
           "ide" -> {
             type = MessagePart.MessageType.TEXT_REGULAR
@@ -120,6 +139,7 @@ object MessageFactory {
           }
         }
         val message = MessagePart(type, textFn)
+        splitter?.let { message.splitter = it }
         message.link = link
         message.runnable = runnable
         list.add(message)

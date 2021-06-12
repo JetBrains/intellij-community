@@ -5,7 +5,6 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.runMainActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.SaveAndSyncHandler
@@ -17,6 +16,8 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.ProgressResult
 import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.project.Project
@@ -46,13 +47,13 @@ import javax.swing.JComponent
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
+  open fun <T : Any> run(task: (indicator: ProgressIndicator?) -> T?): CompletableFuture<T?> {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       runBlocking {
         saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
       }
     }
-    return CompletableFuture.completedFuture(task())
+    return CompletableFuture.completedFuture(task(ProgressManager.getInstance().progressIndicator))
   }
 
   /**
@@ -75,7 +76,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   var cancelled = false
     private set
 
-  override fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
+  override fun <T : Any> run(task: (indicator: ProgressIndicator?) -> T?): CompletableFuture<T?> {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       invokeAndWaitIfNeeded {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
@@ -87,17 +88,17 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     val progress = (ApplicationManager.getApplication() as ApplicationImpl)
       .createProgressWindowAsyncIfNeeded(getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)
 
-    val progressRunner = ProgressRunner<T?>(Function {
+    val progressRunner = ProgressRunner<T?>(Function { indicator ->
       frameManager!!.init(this@ProjectUiFrameAllocator)
       try {
-        task()
+        task(indicator)
       }
       catch (e: ProcessCanceledException) {
         throw e
       }
       catch (e: Exception) {
         if (e is StartupAbortedException || e is PluginException) {
-          StartupAbortedException.logAndExit(e)
+          StartupAbortedException.logAndExit(e, null)
         }
         else {
           logger<ProjectFrameAllocator>().error(e)
@@ -106,7 +107,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         null
       }
     })
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .onThread(ProgressRunner.ThreadToUse.FJ)
       .modal()
       .withProgress(progress)
 
@@ -144,7 +145,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
       }
 
-      runMainActivity("create a frame") {
+      runActivity("create a frame") {
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
           if (options.frameManager is FrameInfo) {

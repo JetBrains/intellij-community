@@ -95,12 +95,13 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
       }
     }
 
-    private fun affectedFilesInStoreDir(events: List<VFileEvent>): Boolean =
-      events.asSequence()
+    private fun affectedFilesInStoreDir(events: List<VFileEvent>): Boolean {
+      val projectConfigDirPath = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
+      return events.asSequence()
         .mapNotNull(VFileEvent::getFile)
         .filter(VirtualFile::isInLocalFileSystem)
-        .any { file -> file.exists() && inStoreDir(file.path)}
-
+        .any { file -> file.exists() && inStoreDir(projectConfigDirPath, file.path) }
+    }
   }
 
   private fun generateGitignoreInStoreDirIfNeeded() {
@@ -194,11 +195,6 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
 
   private fun createGitignore(inDir: VirtualFile) =
     invokeAndWaitIfNeeded { runWriteAction { inDir.createChildData(inDir, GITIGNORE) } }
-
-  private fun inStoreDir(path: @SystemIndependent String): Boolean {
-    val storeDir = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
-    return inStoreDir(storeDir, path)
-  }
 
   private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, ignore: IgnoredFileDescriptor): Boolean {
     val path = ignore.path ?: return false

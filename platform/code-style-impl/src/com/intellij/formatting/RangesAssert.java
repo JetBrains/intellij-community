@@ -52,7 +52,7 @@ class RangesAssert {
       final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiFile root : roots) {
         buffer.append("Root ");
-        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true, true);
+        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, true, true, true, true);
       }
       buffer.append('\n');
     }

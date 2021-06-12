@@ -10,8 +10,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.MappingFailedException;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +51,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,6 +70,11 @@ public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
+  // CLASSPATH_INDEX_FILE_NAME cannot be used because IDEA on run creates CLASSPATH_INDEX_FILE_NAME only if some module class is loaded,
+  // so, not possible to distinguish case
+  // "classpath.index doesn't exist because deleted on module file change" vs "classpath.index doesn't exist because was not created"
+  private static final String UNMODIFIED_MARK_FILE_NAME = ".unmodified";
+
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
@@ -206,8 +213,7 @@ public final class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof MappingFailedException ||
-          cause instanceof IOException ||
+      if (cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
@@ -380,17 +386,33 @@ public final class IncProjectBuilder {
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
-    //Deletes class loader classpath index files for changed output roots
+    // deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        final Set<File> outputs = FileCollectionFactory.createCanonicalFileSet();
-        for (Pair<String, String> pair : event.getPaths()) {
-          outputs.add(new File(pair.getFirst()));
+        Collection<Pair<String, String>> paths = event.getPaths();
+        FileSystem fs = FileSystems.getDefault();
+        if (paths.size() == 1) {
+          deleteFiles(paths.iterator().next().first, fs);
+          return;
         }
-        for (File root : outputs) {
-          //noinspection ResultOfMethodCallIgnored
-          new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
+
+        Set<String> outputs = new HashSet<>();
+        for (Pair<String, String> pair : paths) {
+          String root = pair.getFirst();
+          if (outputs.add(root)) {
+            deleteFiles(root, fs);
+          }
+        }
+      }
+
+      private void deleteFiles(String rootPath, FileSystem fs) {
+        Path root = fs.getPath(rootPath);
+        try {
+          Files.deleteIfExists(root.resolve(CLASSPATH_INDEX_FILE_NAME));
+          Files.deleteIfExists(root.resolve(UNMODIFIED_MARK_FILE_NAME));
+        }
+        catch (IOException ignore) {
         }
       }
     });
@@ -726,7 +748,7 @@ public final class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = new THashSet<>(Arrays.asList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> _outRoot = FileCollectionFactory.createCanonicalFileSet(Collections.singletonList(outputRoot));
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;
@@ -908,7 +930,7 @@ public final class IncProjectBuilder {
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
-      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>(chunks.size());
+      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new HashMap<>(chunks.size());
       for (BuildTargetChunk chunk : chunks) {
         BuildChunkTask task = new BuildChunkTask(chunk);
         myTasks.add(task);
@@ -1225,7 +1247,6 @@ public final class IncProjectBuilder {
       });
     }
   }
-
 
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
     final BuildFSState fsState = myProjectDescriptor.fsState;

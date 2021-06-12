@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java;
 
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -31,6 +32,7 @@ import java.util.Set;
 * @author Eugene Zhuravlev
 */
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
+  private final FileFilter myFilterForExcludedPatterns;
   @NotNull
   public final File root;
   @NotNull
@@ -40,18 +42,33 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   private final String myPackagePrefix;
   private final Set<File> myExcludes;
 
+  /**
+   * @deprecated use {@link #JavaSourceRootDescriptor(File, ModuleBuildTarget, boolean, boolean, String, Set, FileFilter)} instead;
+   * this constructor method doesn't honor excluded patterns which may be specified for the module.
+   */
   public JavaSourceRootDescriptor(@NotNull File root,
                                   @NotNull ModuleBuildTarget target,
                                   boolean isGenerated,
                                   boolean isTemp,
                                   @NotNull String packagePrefix,
                                   @NotNull Set<File> excludes) {
+    this(root, target, isGenerated, isTemp, packagePrefix, excludes, FileFilters.EVERYTHING);
+  }
+
+  public JavaSourceRootDescriptor(@NotNull File root,
+                                  @NotNull ModuleBuildTarget target,
+                                  boolean isGenerated,
+                                  boolean isTemp,
+                                  @NotNull String packagePrefix,
+                                  @NotNull Set<File> excludes,
+                                  @NotNull FileFilter filterForExcludedPatterns) {
     this.root = root;
     this.target = target;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
     myPackagePrefix = packagePrefix;
     myExcludes = excludes;
+    myFilterForExcludedPatterns = filterForExcludedPatterns;
   }
 
   @Override
@@ -94,7 +111,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public FileFilter createFileFilter() {
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     final FileFilter baseFilter = BuilderRegistry.getInstance().getModuleBuilderFileFilter();
-    return file -> baseFilter.accept(file) && !excludes.isExcluded(file);
+    return file -> baseFilter.accept(file) && !excludes.isExcluded(file) && myFilterForExcludedPatterns.accept(file);
   }
 
   @Override

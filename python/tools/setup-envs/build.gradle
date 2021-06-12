@@ -32,7 +32,7 @@ envs {
 
   python "python27", "2.7.18"
   python "python36", "3.6.8"
-  python "python37", "3.7.8"
-  python "python38", "3.8.5"
-  python "python39", "3.9.0"
+  python "python37", "3.7.9"
+  python "python38", "3.8.10"
+  python "python39", "3.9.5"
 }

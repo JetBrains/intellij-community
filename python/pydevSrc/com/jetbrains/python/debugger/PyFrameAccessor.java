@@ -1,11 +1,14 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +22,9 @@ import java.util.List;
  * @author traff
  */
 public interface PyFrameAccessor {
+  @Nullable
+  default Project getProject() { return null; }
+
   PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException;
 
   /**
@@ -66,6 +72,9 @@ public interface PyFrameAccessor {
   default boolean isSimplifiedView() {
     return false;
   }
+
+  @Nullable
+  String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException;
 
   @Nullable
   default XCompositeNode getCurrentRootNode() {

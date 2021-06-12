@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public abstract class ProblemHighlightFilter {
   private static boolean shouldProcess(PsiFile psiFile, boolean onTheFly) {
     if (psiFile == null) return true;
 
-    return EP_NAME.getExtensionList().stream()
-      .noneMatch(filter -> onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile));
+    return !ContainerUtil
+      .exists(EP_NAME.getExtensionList(), filter -> onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile));
   }
 }

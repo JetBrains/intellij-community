@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -83,11 +82,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
     panel.add(label, BorderLayout.NORTH);
     label.setLabelFor(myDestinationFolderComboBox);
-    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<>() {
-      @Override
-      public void pass(String s) {
-      }
-    }, ((PackageNameReferenceEditorCombo)myPackageNameField).getChildComponent());
+    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, ((PackageNameReferenceEditorCombo)myPackageNameField).getChildComponent());
     panel.add(myDestinationFolderComboBox, BorderLayout.CENTER);
     return panel;
   }

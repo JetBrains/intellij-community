@@ -180,13 +180,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription)selected;
       if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
-        myModel.clearActions();           // release references to plugin actions so that the plugin can be unloaded successfully
+        myModel.clearCaches(); // release references to plugin actions so that the plugin can be unloaded successfully
         myProvider.clearIntentions();
       }
       option.setOptionState(!option.isOptionEnabled());
-      if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
-        myModel.rebuildActions();
-      }
       return false;
     }
 

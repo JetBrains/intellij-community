@@ -1,25 +1,40 @@
 <html>
 <body>
 Reports subtraction in
-<b>compareTo()</b> methods and methods implementing <b>java.util.Comparator.compare()</b>. While it is a common idiom to
-use the results of integer subtraction as the result of a <b>compareTo()</b>
+<code>compareTo()</code> methods and methods implementing <code>java.util.Comparator.compare()</code>. While it is a common idiom to
+use the results of integer subtraction as the result of a <code>compareTo()</code>
 method, this construct may cause subtle and difficult bugs in cases of integer overflow.
-Comparing the integer values directly and returning <b>-1</b>, <b>0</b>, or <b>1</b> is better practice in most cases.
+Comparing the integer values directly and returning <code>-1</code>, <code>0</code>, or <code>1</code> is better practice in most cases.
 <p>
   The subtraction on floating point values which is immediately cast to integral type is also warned as precision loss is possible due to
   rounding.
 </p>
 <p>
-The warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
-Additionally subtraction on <b>int</b> numbers greater than or equal to <b>0</b> will never overflow.
-Therefore this inspection tries not to warn in those cases.
+A warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
+Additionally, subtraction on <code>int</code> numbers greater than or equal to <code>0</code> will never overflow.
+Therefore, this inspection tries not to warn in those cases.
 Methods that always return zero or greater can be specified in this inspection's settings.
-<p>
+<p>Example:</p>
+<pre><code>class DoubleHolder implements Comparable&lt;DoubleHolder&gt; {
+    double d;
+    public int compareTo(DoubleHolder that) {
+        return (int)(this.d - that.d);
+    }
+}
+</code></pre>
+A no-warning example because <code>String.length()</code> is known to be non-negative:
+<pre><code>class A implements Comparable&lt;A&gt; {
+    final String s = "";
+    public int compareTo(A a) {
+        return s.length() - a.s.length();
+    }
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the table below to specify methods which are safe to use inside a subtraction.
-Methods are safe when they return an <b>int</b> value that is always greater than or equal to <b>0</b>.
-Alternatively you may use <b>javax.annotation.Nonnegative</b> annotation on such methods.
+Methods are safe when they return an <code>int</code> value that is always greater than or equal to <code>0</code>.
+Alternatively you may use <code>javax.annotation.Nonnegative</code> annotation on such methods.
 <p>
 
 </body>

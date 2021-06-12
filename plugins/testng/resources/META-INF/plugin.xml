@@ -76,14 +76,16 @@
       <stacktrace.fold substring="at org.testng.TestRunner."/>
       <stacktrace.fold substring="at org.testng.SuiteRunner."/>
       <stacktrace.fold substring="at org.testng.TestNG.run"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="TestNGDataProvider"
-                       implementationClass="com.theoryinpractice.testng.inspection.TestNGDataProviderInspection"
+      <localInspection groupPath="Java" language="JAVA" shortName="MalformedDataProvider"
+                       implementationClass="com.theoryinpractice.testng.inspection.MalformedDataProviderInspection"
                        groupBundle="messages.TestngBundle" groupKey="group.names.testng.issues" enabledByDefault="true" level="WARNING" key="inspection.testNG.data.provider.display.name"
                        bundle="messages.TestngBundle"/>
       <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
       <externalSystem.runConfigurationImporter implementation="com.theoryinpractice.testng.configuration.TestNGRunConfigurationImporter"/>
+
+      <dependencySupport kind="java" coordinate="org.testng:testng" displayName="TestNG"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="com.intellij.rt.testng.TestNGTestDiscoveryListener"/>

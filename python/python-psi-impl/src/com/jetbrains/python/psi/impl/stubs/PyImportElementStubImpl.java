@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyImportElementStubImpl extends StubBase<PyImportElement> implements PyImportElementStub {
   private final QualifiedName myImportedQName;
   private final String myAsName;

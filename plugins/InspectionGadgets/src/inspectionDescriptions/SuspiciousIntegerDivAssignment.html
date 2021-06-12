@@ -1,18 +1,28 @@
 <html>
 <body>
 Reports cases when the right side of the assignment is a division that shouldn't be truncated to integer.
+While occasionally intended, this construction is often buggy.
 <p>
-  For example, the following code doesn't change <b>x</b> because of the integer division result:
-<pre><code>
-  <b>int</b> x = 18;
+  For example, the following code doesn't change <code>x</code> because of the integer division result:
+<pre>
+  int x = 18;
   x *= 3/2;
-</code></pre>
+</pre>
 So, it should be replaced with:
-<pre><code>
-  <b>int</b> x = 18;
+<pre>
+  int x = 18;
   x *= 3.0/2;
-</code></pre>
+</pre>
 <!-- tooltip end -->
+<p>
+    Use the checkbox below to disable inspection in cases of suspicious but possibly exact divisions e.g., if dividend can't be calculated statically 
+<pre><code>
+  void calc(int d) {
+     int x = 18;
+     x *= d/2;
+  }
+</code></pre>
+
 <p>
   <small>New in 2019.2</small>
 </p>

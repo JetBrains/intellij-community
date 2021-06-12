@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
@@ -8,12 +8,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -64,8 +63,6 @@ import java.util.regex.Pattern;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
- *
- * @author yole
  */
 public final class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
@@ -409,14 +406,10 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage();
     }
 
-    Notifications.Bus.notify(
-      new Notification(
-        SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"),
-        notificationMessage,
-        NotificationType.WARNING,
-        notificationListener
-      )
-    );
+    Notification notification =
+      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage, NotificationType.WARNING);
+    if (notificationListener != null) notification.setListener(notificationListener);
+    notification.notify(null);
   }
 
   @NotNull
@@ -439,7 +432,7 @@ public final class PythonSdkType extends SdkType {
   public static List<String> getSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
     String working_dir = new File(sdk.getHomePath()).getParent();
     Application application = ApplicationManager.getApplication();
-    if (application != null && (!application.isUnitTestMode() || ApplicationInfoImpl.isInStressTest())) {
+    if (application != null && (!application.isUnitTestMode() || ApplicationManagerEx.isInStressTest())) {
       return getSysPathsFromScript(sdk);
     }
     else { // mock sdk

@@ -29,30 +29,34 @@ import java.awt.BorderLayout
 /**
  * @author vlan
  */
-class PyAddSystemWideInterpreterPanel(private val module: Module?,
+open class PyAddSystemWideInterpreterPanel(private val module: Module?,
                                       private val existingSdks: List<Sdk>,
                                       private val context: UserDataHolderBase) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
-  private val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
 
   init {
     layout = BorderLayout()
-    val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
     Runnable {
       permWarning.isVisible = sdkComboBox.selectedSdk?.adminPermissionsNeeded() ?: false
     }.apply {
       run()
       addChangeListener(this)
     }
+    layoutComponents()
+    addInterpretersAsync(sdkComboBox) {
+      detectSystemWideSdks(module, existingSdks, context).takeIf { it.isNotEmpty() || filterSystemWideSdks(existingSdks).isNotEmpty() }
+      ?: getSdksToInstall()
+    }
+  }
+
+  protected open fun layoutComponents() {
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
       .addComponentToRightColumn(permWarning)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(sdkComboBox) {
-      detectSystemWideSdks(module, existingSdks, context).takeIf { it.isNotEmpty() || filterSystemWideSdks(existingSdks).isNotEmpty() }
-      ?: getSdksToInstall()
-    }
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))

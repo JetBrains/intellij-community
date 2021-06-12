@@ -33,7 +33,7 @@ class ServiceModelFilter {
     if (items.isEmpty()) return items;
 
     List<ServiceViewFilter> filters = excludeTargetAndParents(targetFilter);
-    return ContainerUtil.filter(items, item -> filters.stream().noneMatch(filter -> filter.value(item)));
+    return ContainerUtil.filter(items, item -> !ContainerUtil.exists(filters, filter -> filter.value(item)));
   }
 
   private List<ServiceViewFilter> excludeTargetAndParents(@NotNull ServiceViewFilter targetFilter) {

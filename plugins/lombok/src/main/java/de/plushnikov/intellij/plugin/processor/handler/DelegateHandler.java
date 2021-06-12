@@ -22,10 +22,6 @@ import java.util.*;
  */
 public class DelegateHandler {
 
-  public DelegateHandler() {
-    // default constructor
-  }
-
   public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
@@ -235,7 +231,7 @@ public class DelegateHandler {
       psiElement.getName(),
       isMethodCall ? "()" : "",
       psiMethod.getName(),
-      paramString.toString());
+      paramString);
     return blockText;
   }
 

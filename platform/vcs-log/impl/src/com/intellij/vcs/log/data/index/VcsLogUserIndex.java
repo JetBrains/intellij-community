@@ -55,16 +55,16 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
   @Override
   protected @NotNull Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return new Pair<>(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true, false, storageLockContext),
-                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
+                      new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @NotNull
   private static PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
-                                                                         @Nullable StorageLockContext storageLockContext,
+                                                                     @Nullable StorageLockContext storageLockContext,
                                                                      @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
     return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, storageLockContext,
-                                           storageId.getVersion());
+                                      storageId.getVersion());
   }
 
   public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {

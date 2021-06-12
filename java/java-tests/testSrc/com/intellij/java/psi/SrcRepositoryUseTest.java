@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -24,8 +23,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -649,7 +648,7 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     TextRange classRange = aClass.getTextRange();
     String text = aClass.getText();
 
-    BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
+    BlockSupport blockSupport = myProject.getService(BlockSupport.class);
     final PsiFile psiFile = aClass.getContainingFile();
     ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), ""));
 

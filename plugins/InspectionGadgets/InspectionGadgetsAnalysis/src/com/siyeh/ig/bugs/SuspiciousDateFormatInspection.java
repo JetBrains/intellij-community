@@ -70,19 +70,21 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
         if (pattern == null) return;
         List<Token> tokens = new ArrayList<>();
         char lastChar = 0;
-        int countNonAlpha = 0;
+        int countNonFormat = 0;
         char[] array = pattern.toCharArray();
+        boolean inQuote = false;
         for (int pos = 0; pos < array.length; pos++) {
           char c = array[pos];
+          if (c == '\'') inQuote = !inQuote;
           if (c == lastChar) continue;
           lastChar = c;
-          if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z') {
-            countNonAlpha = 0;
+          if (!inQuote && (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')) {
+            countNonFormat = 0;
             tokens.add(new Token(pos, array));
             continue;
           }
-          countNonAlpha++;
-          if (countNonAlpha > 3) {
+          countNonFormat++;
+          if (countNonFormat > 3) {
             tokens.add(null);
           }
         }

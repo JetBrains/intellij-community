@@ -36,7 +36,7 @@ public final class JsonSchemaFileType extends LanguageFileType implements FileTy
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("json.schema.desc");
+    return JsonBundle.message("filetype.json.schema.description");
   }
 
   @NotNull

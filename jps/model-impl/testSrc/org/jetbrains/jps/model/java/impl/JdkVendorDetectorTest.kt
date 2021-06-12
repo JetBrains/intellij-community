@@ -29,6 +29,115 @@ class JdkVendorDetectorTest {
        |BUILD_TYPE="commercial"
     """.trimMargin()
 
+  private /*const*/ val RELEASE_ADOPT_HOTSPOT_1_8_0_282 =
+    """|JAVA_VERSION="1.8.0_282"
+       |OS_NAME="Darwin"
+       |OS_VERSION="11.2"
+       |OS_ARCH="x86_64"
+       |SOURCE=" .:OpenJDK: bece19ab82:"
+       |IMPLEMENTOR="AdoptOpenJDK"
+       |BUILD_SOURCE="git:10223734"
+       |FULL_VERSION="1.8.0_282-b08"
+       |SEMANTIC_VERSION="8.0.282+8"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Hotspot"
+       |JVM_VERSION="25.282-b08"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private /*const*/ val RELEASE_ADOPT_J9_1_8_0_282 =
+    """|JAVA_VERSION="1.8.0_282"
+       |OS_NAME="Darwin"
+       |OS_VERSION="11.2"
+       |OS_ARCH="x86_64"
+       |SOURCE="OpenJDK:ab07c6a8fd OpenJ9:345e1b09e OMR:741e94ea8"
+       |IMPLEMENTOR="AdoptOpenJDK"
+       |BUILD_SOURCE="git:10223734"
+       |FULL_VERSION="1.8.0_282-b08"
+       |SEMANTIC_VERSION="8.0.282+8"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.24.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private /*const*/ val RELEASE_ADOPT_HOTSPOT_11_0_10 =
+    """|IMPLEMENTOR="AdoptOpenJDK"
+       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
+       |JAVA_VERSION="11.0.10"
+       |JAVA_VERSION_DATE="2021-01-19"
+       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.ldap jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs"
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE=".:git:f16a065dd6d5"
+       |BUILD_SOURCE="git:10223734"
+       |FULL_VERSION="11.0.10+9"
+       |SEMANTIC_VERSION="11.0.10+9"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Hotspot"
+       |JVM_VERSION="11.0.10+9"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private /*const*/ val RELEASE_ADOPT_J9_11_0_10 =
+    """|IMPLEMENTOR="AdoptOpenJDK"
+       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
+       |JAVA_VERSION="11.0.10"
+       |JAVA_VERSION_DATE="2021-01-19"
+       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.httpserver jdk.internal.le jdk.internal.opt jdk.jartool jdk.javadoc jdk.jcmd jdk.management jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jlink jdk.jshell jdk.jsobject jdk.localedata jdk.naming.dns jdk.naming.ldap jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported jdk.unsupported.desktop jdk.xml.dom jdk.zipfs openj9.cuda openj9.dataaccess openj9.traceformat openj9.dtfj openj9.dtfjview openj9.gpu openj9.jvm openj9.sharedclasses openj9.zosconditionhandling"
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE="OpenJDK:0a86953833 OpenJ9:345e1b09e OMR:741e94ea8"
+       |BUILD_SOURCE="git:10223734"
+       |FULL_VERSION="11.0.10+9"
+       |SEMANTIC_VERSION="11.0.10+9"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.24.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private /*const*/ val RELEASE_ADOPT_HOTSPOT_16 =
+    """|IMPLEMENTOR="AdoptOpenJDK"
+       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
+       |JAVA_VERSION="16"
+       |JAVA_VERSION_DATE="2021-03-16"
+       |LIBC="default"
+       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.incubator.foreign jdk.incubator.vector jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jpackage jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.rmi jdk.net jdk.nio.mapmode jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs"
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE=".:git:cb2add2cb483"
+       |BUILD_SOURCE="git:8b51068"
+       |FULL_VERSION="16+36"
+       |SEMANTIC_VERSION="16+36"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Hotspot"
+       |JVM_VERSION="16+36"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private /*const*/ val RELEASE_ADOPT_J9_16 =
+    """|IMPLEMENTOR="AdoptOpenJDK"
+       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
+       |JAVA_VERSION="16"
+       |JAVA_VERSION_DATE="2021-03-16"
+       |LIBC="default"
+       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.httpserver jdk.incubator.foreign jdk.incubator.vector jdk.internal.le jdk.internal.opt jdk.jartool jdk.javadoc jdk.jcmd jdk.management jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jlink jdk.jpackage jdk.jshell jdk.jsobject jdk.localedata jdk.naming.dns jdk.naming.rmi jdk.net jdk.nio.mapmode jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported jdk.unsupported.desktop jdk.xml.dom jdk.zipfs openj9.cuda openj9.dataaccess openj9.traceformat openj9.dtfj openj9.dtfjview openj9.gpu openj9.jvm openj9.sharedclasses openj9.zosconditionhandling"
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE="OpenJDK:0c11227a21a OpenJ9:022d65424 OMR:09514431e"
+       |BUILD_SOURCE="git:8b51068"
+       |FULL_VERSION="16+36"
+       |SEMANTIC_VERSION="16+36"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.25.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
   private /*const*/ val RELEASE_CORRETTO_11_0_8_10_1 =
     """|IMPLEMENTOR="Amazon.com Inc."
        |IMPLEMENTOR_VERSION="Corretto-11.0.8.10.1"
@@ -87,13 +196,19 @@ class JdkVendorDetectorTest {
 
   // %formatter:off
 
-  @Test fun checkOracle07()   = checkVendor(RELEASE_ORACLE_1_7_0_40,      ORACLE)
-  @Test fun checkOracle08()   = checkVendor(RELEASE_ORACLE_1_8_0_102,     ORACLE)
-  @Test fun checkCorretto11() = checkVendor(RELEASE_CORRETTO_11_0_8_10_1, CORRETTO)
-  @Test fun checkLiberica11() = checkVendor(RELEASE_LIBRICA_11_0_8,       LIBERICA)
-  @Test fun checkSap11()      = checkVendor(RELEASE_SAP_11_0_8,           SAP)
-  @Test fun checkZulu11()     = checkVendor(RELEASE_ZULU_11_0_8,          AZUL)
-  @Test fun checkJbr11()      = checkVendor(RELEASE_JBR_11_0_10,          JBR)
+  @Test fun checkOracle07()   = checkVendor(RELEASE_ORACLE_1_7_0_40,         ORACLE)
+  @Test fun checkOracle08()   = checkVendor(RELEASE_ORACLE_1_8_0_102,        ORACLE)
+  @Test fun checkAdopt08hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_1_8_0_282, ADOPT_OPEN_HS)
+  @Test fun checkAdopt08j9()  = checkVendor(RELEASE_ADOPT_J9_1_8_0_282,      ADOPT_OPEN_J9)
+  @Test fun checkAdopt11hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_11_0_10,   ADOPT_OPEN_HS)
+  @Test fun checkAdopt11j9()  = checkVendor(RELEASE_ADOPT_J9_11_0_10,        ADOPT_OPEN_J9)
+  @Test fun checkAdopt16hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_16,        ADOPT_OPEN_HS)
+  @Test fun checkAdopt16j9()  = checkVendor(RELEASE_ADOPT_J9_16,             ADOPT_OPEN_J9)
+  @Test fun checkCorretto11() = checkVendor(RELEASE_CORRETTO_11_0_8_10_1,    CORRETTO)
+  @Test fun checkLiberica11() = checkVendor(RELEASE_LIBRICA_11_0_8,          LIBERICA)
+  @Test fun checkSap11()      = checkVendor(RELEASE_SAP_11_0_8,              SAP)
+  @Test fun checkZulu11()     = checkVendor(RELEASE_ZULU_11_0_8,             AZUL)
+  @Test fun checkJbr11()      = checkVendor(RELEASE_JBR_11_0_10,             JBR)
 
   // %formatter:on
 

@@ -1,4 +1,4 @@
-// "Replace the loop with Collection.removeIf" "true"
+// "Replace the loop with 'Collection.removeIf'" "true"
 import java.util.Iterator;
 import java.util.List;
 

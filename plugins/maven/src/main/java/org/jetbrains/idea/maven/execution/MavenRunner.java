@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -15,17 +15,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.text.MessageFormat;
 import java.util.List;
 
-@State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenRunner", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
 public final class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
-
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
   private final Project myProject;
 
   public static MavenRunner getInstance(Project project) {
-    return ServiceManager.getService(project, MavenRunner.class);
+    return project.getService(MavenRunner.class);
   }
 
   @Nullable

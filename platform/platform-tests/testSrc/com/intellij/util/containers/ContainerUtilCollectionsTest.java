@@ -150,6 +150,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftKeySoftValueMap(1, 1, 1));
   }
 
+  @SuppressWarnings("OverwrittenKey")
   private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
     Object key = new Object();
     class MyValue_ {}
@@ -572,6 +573,35 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertEquals(0, set.size());
     set.add(this);
     assertEquals(1, set.size());
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testWeakKeyMapsKeySetIsIterable() {
+    checkKeySetIterable(ContainerUtil.createWeakMap());
+    checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
+    checkKeySetIterable(ContainerUtil.createWeakKeyWeakValueMap());
+    checkKeySetIterable(ContainerUtil.createConcurrentWeakMap());
+  }
+
+  private static void checkKeySetIterable(@NotNull Map<Object, Object> map) {
+    for (int i=0; i<10; i++) {
+      for (int k=0;k<i;k++) {
+        map.put(new Object(), new Object());
+      }
+      checkKeySetIterable(map.keySet());
+    }
+  }
+
+  private static void checkKeySetIterable(@NotNull Set<Object> set) {
+    boolean found;
+    do {
+      found = false;
+      for (Object o : set) {
+        found = true;
+        assertNotNull(o);
+      }
+      GCUtil.tryGcSoftlyReachableObjects(()->set.isEmpty());
+    } while (found);
   }
 
   @Test(timeout = TIMEOUT)

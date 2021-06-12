@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,13 @@ public class PatchFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return VcsBundle.message("patch.file.type.description");
+    return VcsBundle.message("filetype.patch.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return VcsBundle.message("filetype.patch.display.name");
   }
 
   @Override

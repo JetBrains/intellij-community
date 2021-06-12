@@ -5,7 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.model.SymbolResolveResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -328,7 +328,7 @@ public final class IdempotenceChecker {
    * @return whether random checks are enabled and it makes sense to call a potentially expensive {@link #applyForRandomCheck} at all.
    */
   public static boolean areRandomChecksEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest();
+    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
   }
 
   /**

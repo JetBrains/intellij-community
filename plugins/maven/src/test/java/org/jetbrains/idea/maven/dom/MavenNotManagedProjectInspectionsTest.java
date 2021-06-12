@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
+import org.junit.Test;
 
 import java.io.File;
 
@@ -29,6 +30,7 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     setRepositoryPath(new File(myDir, "repo").getPath());
   }
 
+  @Test
   public void testWorkForNonMavenProjects() {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
@@ -53,6 +55,7 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     checkHighlighting(); // should not fail nor highlight errors
   }
 
+  @Test 
   public void testEnablingInspectionForNonMavenProjectsAfterImport() {
     if (ignore()) return;
     // can not reproduce in tests because of StartupManager.runWhenProjectIsInitialized

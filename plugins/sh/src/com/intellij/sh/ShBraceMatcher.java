@@ -11,9 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 final class ShBraceMatcher implements PairedBraceMatcher, ShTokenTypes {
   private static final BracePair[] PAIRS = new BracePair[]{
+      new BracePair(INPUT_PROCESS_SUBSTITUTION, RIGHT_PAREN, true),
+      new BracePair(OUTPUT_PROCESS_SUBSTITUTION, RIGHT_PAREN, true),
       new BracePair(LEFT_PAREN, RIGHT_PAREN, true),
       new BracePair(LEFT_SQUARE, RIGHT_SQUARE, false),
-      new BracePair(LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, true),
       new BracePair(LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET, false),
       new BracePair(EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT, false),
       new BracePair(HEREDOC_MARKER_START, HEREDOC_MARKER_END, false),

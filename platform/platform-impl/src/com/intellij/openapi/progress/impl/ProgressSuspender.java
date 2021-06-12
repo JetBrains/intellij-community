@@ -73,20 +73,20 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
     return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
   }
 
   public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
-    myProgressesInNonSuspendableSections.compute(indicator, ((__, number) -> (number == null ? 0 : number) + 1));
+    myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null ? 0 : number) + 1);
     try {
       runnable.run();
-    } finally {
-      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null || number <= 1 ? null : number - 1));
+    }
+    finally {
+      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> number == null || number <= 1 ? null : number - 1);
     }
   }
 
-  @Nullable
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
     return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
   }
@@ -179,10 +179,7 @@ public final class ProgressSuspender implements AutoCloseable {
     }
 
     ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
-    if (infos.length > 0 && infos[0].getLockedMonitors().length > 0) {
-      return true;
-    }
-    return false;
+    return infos.length > 0 && infos[0].getLockedMonitors().length > 0;
   }
 
   public interface SuspenderListener {

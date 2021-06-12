@@ -65,6 +65,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-19328
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     doMethodTest(
       "if (x > y) System.out.println(\"foo!\");",
@@ -158,6 +159,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
   public void testSimpleMethodsInOneLineEvenIfExceedsRightMargin() {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().RIGHT_MARGIN = 90;
+    getSettings().SPACE_WITHIN_BRACES = true;
     String text = "public class Repr2 {\n" +
                   "    public void start() { System.out.println(\"kfjsdkfjsdkfjskdjfslkdjfklsdjfklsdjfksjdfkljsdkfjsd!\"); }\n" +
                   "}";
@@ -166,6 +168,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testKeepSimpleBlocksInOneLine_OnIfStatementsThenBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
     String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); }";
 
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
@@ -177,6 +180,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testKeepSimpleBlocksInOneLine_OnIfStatementsElseBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "if (2 > 3) {\n" +
                     "    System.out.println(\"AA!\");\n" +
@@ -227,6 +231,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testIfElseBranchesKeepedInOneLine() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
     String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); } else { System.out.println(\"BBB!!\"); }";
@@ -392,6 +397,15 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "};", 
       "Runnable r = () -> {\n" +
       "};");
+  }
+
+  public void testIdea149711() {
+    getSettings().WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    doMethodTest(
+      "while (true);",
+
+      "while (true) ;"
+    );
   }
 
 }

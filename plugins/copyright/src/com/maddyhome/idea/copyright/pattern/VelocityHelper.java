@@ -15,6 +15,8 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -22,16 +24,21 @@ import java.util.Map;
 
 public final class VelocityHelper
 {
-    public static String evaluate(PsiFile file, Project project, Module module, String template)
-    {
-        VelocityEngine engine = getEngine();
+  public static String evaluate(@Nullable PsiFile file, @Nullable Project project, @Nullable Module module, @NotNull String template) {
+    return evaluate(file, project, module, template, null);
+  }
 
+  public static String evaluate(@Nullable PsiFile file, @Nullable Project project, @Nullable Module module, @NotNull String template, @Nullable String oldComment) {
+        VelocityEngine engine = getEngine();
+    
         VelocityContext vc = new VelocityContext();
         vc.put("today", new DateInfo());
         if (file != null) vc.put("file", new FileInfo(file));
         if (project != null) vc.put("project", new ProjectInfo(project));
         if (module != null) vc.put("module", new ModuleInfo(module));
         vc.put("username", System.getProperty("user.name"));
+   
+        vc.put("originalComment", new CommentInfo(oldComment));
 
         if (file != null) {
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);

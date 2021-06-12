@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ObjectUtils;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
@@ -17,21 +16,24 @@ import org.jetbrains.annotations.Nullable;
 public class JCEFHtmlPanel extends JBCefBrowser {
   private static final JBCefClient ourCefClient = JBCefApp.getInstance().createClient();
 
-  @NotNull
-  private final String myUrl;
-
   static {
     Disposer.register(ApplicationManager.getApplication(), ourCefClient);
   }
+
+  private final @NotNull String myUrl;
 
   public JCEFHtmlPanel(@Nullable String url) {
     this(ourCefClient, url);
   }
 
   public JCEFHtmlPanel(JBCefClient client, String url) {
-    super(client, null); // should no pass url to ctor
-    myUrl = ObjectUtils.notNull(url, "about:blank");
-    if (client != ourCefClient) {
+    this(false, client, url); // should no pass url to ctor
+  }
+
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable JBCefClient client, @Nullable String url) {
+    super(JBCefBrowser.createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url));
+    myUrl = getCefBrowser().getURL();
+    if (client != null && client != ourCefClient) {
       Disposer.register(this, client);
     }
   }
@@ -46,16 +48,14 @@ public class JCEFHtmlPanel extends JBCefBrowser {
         super.onBeforeContextMenu(browser, frame, params, model);
       }
     };
-
   }
 
   public void setHtml(@NotNull String html) {
-    final String htmlToRender = prepareHtml(html);
+    String htmlToRender = prepareHtml(html);
     loadHTML(htmlToRender, myUrl);
   }
 
-  @NotNull
-  protected String prepareHtml(@NotNull String html) {
+  protected @NotNull String prepareHtml(@NotNull String html) {
     return html;
   }
 }

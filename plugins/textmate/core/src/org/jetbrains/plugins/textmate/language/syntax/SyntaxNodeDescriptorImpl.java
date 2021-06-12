@@ -44,10 +44,20 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myCaptures.put(key, captures);
   }
 
+  @Override
+  public boolean hasBackReference(Constants.@NotNull StringKey key) {
+    return true;
+  }
+
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return myCaptures.get(key);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
+    return true;
   }
 
   @Override

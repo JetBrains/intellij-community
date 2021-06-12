@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
@@ -20,6 +19,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -36,15 +36,12 @@ import com.intellij.util.SingleAlarm
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashSet
 
-private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHashSet<StateStorage>>>("CHANGED_FILES_KEY")
-private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
+private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<StateStorage>>>("CHANGED_FILES_KEY")
+private val CHANGED_SCHEMES_KEY = Key<MutableMap<SchemeChangeApplicator<*,*>, MutableSet<SchemeChangeEvent<*,*>>>>("CHANGED_SCHEMES_KEY")
 
 @ApiStatus.Internal
 internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
@@ -59,7 +56,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
     val projectsToReload = HashSet<Project>()
     processOpenedProjects { project ->
-      val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
+      val changedSchemes: Map<SchemeChangeApplicator<*, *>, Set<SchemeChangeEvent<*, *>>>? = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
       if ((changedSchemes == null || changedSchemes.isEmpty()) && (changedStorages == null || changedStorages.isEmpty())
           && !mayHaveAdditionalConfigurations(project)) {
@@ -69,9 +66,9 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       runBatchUpdate(project) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          for ((tracker, files) in changedSchemes) {
+          for ((tracker: SchemeChangeApplicator<*, *>, files: Set<SchemeChangeEvent<*, *>>) in changedSchemes) {
             LOG.runAndLogException {
-              tracker.reload(files)
+              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
             }
           }
         }
@@ -133,7 +130,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }
 
   override fun blockReloadingProjectOnExternalChanges() {
-    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationInfoImpl.isInStressTest()) {
+    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationManagerEx.isInStressTest()) {
       blockStackTrace.set(Throwable())
     }
   }
@@ -212,7 +209,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     scheduleProcessingChangedFiles()
   }
 
-  internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeChangeApplicator, project: Project) {
+  internal fun <T : Scheme, M:T>registerChangedSchemes(events: List<SchemeChangeEvent<T,M>>, schemeFileTracker: SchemeChangeApplicator<T,M>, project: Project) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }

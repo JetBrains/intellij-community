@@ -47,14 +47,14 @@ public class DslErrorReporterImpl extends DslErrorReporter {
         HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))
       )
     ).toString();
-    NOTIFICATION_GROUP.createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR,
-                                          new NotificationListener() {
-                                            @Override
-                                            public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                        @NotNull HyperlinkEvent event) {
-                                              InvestigateFix.analyzeStackTrace(project, exceptionText);
-                                              notification.expire();
-                                            }
-                                          }).notify(project);
+    NOTIFICATION_GROUP.createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR)
+      .setListener(new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          InvestigateFix.analyzeStackTrace(project, exceptionText);
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 }

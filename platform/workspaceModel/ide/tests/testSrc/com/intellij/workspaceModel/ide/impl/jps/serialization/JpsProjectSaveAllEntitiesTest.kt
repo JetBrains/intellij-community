@@ -7,11 +7,11 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -75,6 +75,24 @@ class JpsProjectSaveAllEntitiesTest {
   fun `escape special symbols in library name`() {
     val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
     val serializers = createProjectSerializers(projectDir, virtualFileManager)
+    val builder = WorkspaceEntityStorageBuilder.create()
+    for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
+      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
+    }
+    val storage = builder.toStorage()
+    serializers.saveAllEntities(storage, projectDir)
+    val expectedDir = File(PathManagerEx.getCommunityHomePath(),
+                           "platform/workspaceModel/ide/tests/testData/serialization/specialSymbolsInLibraryName")
+    assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
+  }
+
+  @Test
+  fun `escape special symbols in library name2`() {
+    val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
+    val serializers = createProjectSerializers(projectDir, virtualFileManager)
+
+
     val builder = WorkspaceEntityStorageBuilder.create()
     for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
       val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))

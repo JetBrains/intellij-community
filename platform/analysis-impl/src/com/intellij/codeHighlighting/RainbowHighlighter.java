@@ -307,7 +307,7 @@ public class RainbowHighlighter {
     return new float[]{
       (float)((  0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])/256),
       (float)(( -0.169 * rgb[0] - 0.331 * rgb[1] + 0.500 * rgb[2])/256),
-      (float)(( +0.500 * rgb[0] - 0.419 * rgb[1] - 0.081 * rgb[2])/256)
+      (float)((  0.500 * rgb[0] - 0.419 * rgb[1] - 0.081 * rgb[2])/256)
     };
   } 
 

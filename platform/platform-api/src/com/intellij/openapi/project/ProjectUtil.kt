@@ -205,7 +205,7 @@ fun Project.getProjectDataPath(@NonNls dataDirName: String): Path {
   return getProjectDataPathRoot(this).resolve(dataDirName)
 }
 
-private val projectsDataDir: Path
+val projectsDataDir: Path
   get() = appSystemDir.resolve("projects")
 
 /**

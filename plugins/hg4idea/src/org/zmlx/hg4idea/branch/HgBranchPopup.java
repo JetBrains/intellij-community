@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -10,7 +10,6 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -54,7 +53,7 @@ public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository) {
 
     HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
-    HgProjectSettings hgProjectSettings = ServiceManager.getService(project, HgProjectSettings.class);
+    HgProjectSettings hgProjectSettings = project.getService(HgProjectSettings.class);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
     return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse());

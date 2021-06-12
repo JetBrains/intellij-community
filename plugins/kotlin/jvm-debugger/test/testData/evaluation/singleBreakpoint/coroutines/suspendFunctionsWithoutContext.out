@@ -1,0 +1,10 @@
+LineBreakpoint created at suspendFunctionsWithoutContext.kt:26
+Run Java
+Connected to the target VM
+suspendFunctionsWithoutContext.kt:26
+Compile bytecode for kotlinx.coroutines.runBlocking {
+    one() + two() + three()
+}
+Disconnected from the target VM
+
+Process finished with exit code 0

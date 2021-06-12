@@ -336,6 +336,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     }
 
     public void swap(int first, int second) {
+      if (second == -1) return;
       final Configuration one = myConfigurations.get(first);
       final Configuration two = myConfigurations.get(second);
       final int order = one.getOrder();

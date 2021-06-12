@@ -16,8 +16,10 @@ public interface JsonSchemaProviderFactory {
   ExtensionPointName<JsonSchemaProviderFactory> EP_NAME = ExtensionPointName.create("JavaScript.JsonSchema.ProviderFactory");
   Logger LOG = Logger.getInstance(JsonSchemaProviderFactory.class);
 
-  @NotNull
-  List<JsonSchemaFileProvider> getProviders(@NotNull Project project);
+  /**
+   * Called in smart mode by default. Implement {@link com.intellij.openapi.project.DumbAware} to be called in dumb mode.
+   */
+  @NotNull List<JsonSchemaFileProvider> getProviders(@NotNull Project project);
 
   /**
    * Finds a {@link VirtualFile} instance corresponding to a specified resource path (relative or absolute).

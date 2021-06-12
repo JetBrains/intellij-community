@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -55,8 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -82,13 +81,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
 
-  @Nullable private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
+  @NotNull private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi,
-                   boolean withDiffPreview,
+                   boolean withEditorDiffPreview,
                    @NotNull Disposable disposable) {
     myLogData = logData;
     myUiProperties = uiProperties;
@@ -112,7 +111,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
-    }, this);
+    }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -155,34 +154,23 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
-    if (withDiffPreview) {
-      myDiffPreview = new FrameDiffPreview<>(createDiffPreview(false, myChangesBrowser),
-                                             myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                             myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
-                                             0.7f) {
-        @Override
-        public void updatePreview(boolean state) {
-          getPreviewDiff().updatePreview(state);
-        }
-      };
-      add(myDiffPreview.getMainComponent());
-    }
-    else {
-      myDiffPreview = null;
-      add(myChangesBrowserSplitter);
-    }
+    VcsLogChangeProcessor processor = myChangesBrowser.createChangeProcessor(false);
+    processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
+    myDiffPreview = new FrameDiffPreview<>(processor,
+                                           myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                           myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
+                                           0.7f) {
+      @Override
+      public void updatePreview(boolean state) {
+        getPreviewDiff().updatePreview(state);
+      }
+    };
+    add(myDiffPreview.getMainComponent());
 
     Disposer.register(disposable, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
-  }
-
-  @NotNull
-  public VcsLogChangeProcessor createDiffPreview(boolean isInEditor, @NotNull Disposable parent) {
-    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, isInEditor, parent);
-    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
-    return processor;
   }
 
   public void setExplanationHtml(@Nullable @NlsContexts.LinkLabel String text) {
@@ -275,6 +263,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
       return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getDiffHandler();
+    }
+    else if (VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS.is(dataId)) {
+      return VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters());
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {

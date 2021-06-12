@@ -5,17 +5,21 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -24,20 +28,17 @@ final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
   private final Project myProject;
-  private final boolean myDoTraceForFilesToBeIndexed = FileBasedIndexImpl.LOG.isTraceEnabled();
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
-  private final boolean myRunExtensionsForFilesMarkedAsIndexed;
+  private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
 
   UnindexedFilesFinder(@NotNull Project project,
-                       @NotNull FileBasedIndexImpl fileBasedIndex,
-                       boolean runExtensionsForFilesMarkedAsIndexed) {
+                       @NotNull FileBasedIndexImpl fileBasedIndex) {
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
-    myRunExtensionsForFilesMarkedAsIndexed = runExtensionsForFilesMarkedAsIndexed;
 
     myStateProcessors = FileBasedIndexInfrastructureExtension
       .EP_NAME
@@ -47,10 +48,13 @@ final class UnindexedFilesFinder {
       .collect(Collectors.toList());
 
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
+
+    myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
   }
 
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
   public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
+    ProgressManager.checkCanceled(); // give a chance to suspend indexing
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return null;
@@ -62,11 +66,12 @@ final class UnindexedFilesFinder {
       AtomicLong timeIndexingWithoutContent = new AtomicLong();
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
-      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-        int inputId = FileBasedIndex.getFileId(file);
+      int inputId = FileBasedIndex.getFileId(file);
+      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject);
 
+      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
         boolean wasInvalidated = false;
-        if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
+        if (fileWereJustAdded) {
           List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
           for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
             for (ID<?, ?> id : ids) {
@@ -97,10 +102,12 @@ final class UnindexedFilesFinder {
 
       FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
         boolean isDirectory = file.isDirectory();
-        int inputId = FileBasedIndex.getFileId(file);
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
+            if (myFileBasedIndex.doTraceStubUpdates()) {
+              LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
+            }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndex.set(true);
           }
@@ -113,17 +120,16 @@ final class UnindexedFilesFinder {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   boolean indexInfrastructureExtensionInvalidated = false;
-                  if (fileIndexingState == FileIndexingState.UP_TO_DATE) {
-                    if (myShouldProcessUpToDateFiles) {
-                      for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                        long nowTime = System.nanoTime();
-                        try {
-                          if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
-                            indexInfrastructureExtensionInvalidated = true;
-                          }
-                        } finally {
-                          timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
+                  if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
+                      long nowTime = System.nanoTime();
+                      try {
+                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
+                          indexInfrastructureExtensionInvalidated = true;
                         }
+                      }
+                      finally {
+                        timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
                       }
                     }
                   }
@@ -131,8 +137,11 @@ final class UnindexedFilesFinder {
                     fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   }
                   if (fileIndexingState.updateRequired()) {
-                    if (myDoTraceForFilesToBeIndexed) {
-                      LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
+                    if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
+                                                  (indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+                                                  ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
+                                                  ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
 
                     long nowTime = System.nanoTime();
@@ -199,6 +208,9 @@ final class UnindexedFilesFinder {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+          LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
+        }
         return true;
       }
     }

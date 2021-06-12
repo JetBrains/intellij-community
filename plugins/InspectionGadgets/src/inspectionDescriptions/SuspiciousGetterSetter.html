@@ -1,12 +1,27 @@
 <html>
 <body>
-Reports suspicious getter or setter methods.
-A getter or setter is suspicious if it accesses a different field than would be expected by its name.
+Reports suspicious getter or setter methods. A getter or setter is suspicious
+if it accesses a different field than would be expected by its name.
+<p>In many cases it may be a copy-paste error.</p>
+<p>Example:</p>
+<pre><code>
+  <b>class</b> Point {
+    <b>private int</b> x;
+    <b>private int</b> y;
 
+    <b>public void</b> setX(<b>int</b> x) { // Warning: setter 'setX()' assigns field 'y'
+      <b>this</b>.y = x;
+    }
+
+    <b>public int</b> getY() { // Warning: getter 'getY()' returns field 'x'
+      <b>return</b> x;
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate the inspection should only warn when a field
-with a name matching the getter or setter name is present in the class.
+  Use the checkbox below to indicate the inspection should only warn when a field
+  with a name matching the getter or setter name is present in the class.
 <p>
 </body>
 </html>

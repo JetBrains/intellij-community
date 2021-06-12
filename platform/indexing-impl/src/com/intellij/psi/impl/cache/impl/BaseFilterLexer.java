@@ -19,6 +19,7 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.lexer.DelegateLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -97,6 +98,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
 
       try {
         while (matcher.find()) {
+          ProgressManager.checkCanceled();
           int start = matcher.start();
           if (start != matcher.end() && todoScanningState.myOccurrences.indexOf(start) == -1) {
             consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);

@@ -16,7 +16,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -94,7 +93,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
                                               logData.index)
-      val initialSortType = properties.get<PermanentGraph.SortType>(MainVcsLogUiProperties.BEK_SORT_TYPE)
+      val initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
 
       return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)
@@ -104,7 +103,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
   private class MyVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
                            uiProperties: MainVcsLogUiProperties, refresher: VisiblePackRefresher,
                            rangeFilter: VcsLogRangeFilter, rootFilter: VcsLogRootFilter?) :
-    VcsLogUiImpl(id, logData, colorManager, uiProperties, refresher, collection(rangeFilter, rootFilter)) {
+    VcsLogUiImpl(id, logData, colorManager, uiProperties, refresher, collection(rangeFilter, rootFilter), false) {
 
     override fun createFilterUi(filterConsumer: Consumer<VcsLogFilterCollection>,
                                 filters: VcsLogFilterCollection?,

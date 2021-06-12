@@ -25,7 +25,7 @@ class PyTypeHintFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.type.hint.file.type.description");
+    return PyPsiBundle.message("filetype.python.type.hint.description");
   }
 
   @NotNull

@@ -64,7 +64,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
-      configService, recorderId, version.toString(), EventLogNotificationProxy(writer, recorderId)
+      configService, recorderId, version.toString(), writer
     )
 
     val logger = StatisticsFileEventLogger(

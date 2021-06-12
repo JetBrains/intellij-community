@@ -31,10 +31,6 @@ public abstract class ExternalSystemSettingsListenerAdapter<S extends ExternalPr
   }
 
   @Override
-  public void onProjectsLoaded(@NotNull Collection<S> settings) {
-  }
-
-  @Override
   public void onProjectsLinked(@NotNull Collection<S> settings) {
   }
 

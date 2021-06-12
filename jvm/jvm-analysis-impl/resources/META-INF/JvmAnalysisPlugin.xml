@@ -44,6 +44,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.junit.rule.display.name"
                      implementationClass="com.intellij.codeInspection.JUnitRuleInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestOnlyProblems"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.testonly.display.name"
+                     implementationClass="com.intellij.codeInspection.TestOnlyInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

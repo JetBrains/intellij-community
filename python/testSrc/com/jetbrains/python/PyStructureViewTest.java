@@ -83,6 +83,9 @@ public class PyStructureViewTest extends PyTestCase {
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
+           "  __dir__(self)\n" +
+           "  __init_subclass__(cls)\n" +
+           "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
@@ -126,6 +129,9 @@ public class PyStructureViewTest extends PyTestCase {
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
+           "  __dir__(self)\n" +
+           "  __init_subclass__(cls)\n" +
+           "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +

@@ -1,0 +1,8 @@
+package one.two.three
+
+annotation class Annotation
+
+@one.two.three.Annotation
+fun test() {
+
+}

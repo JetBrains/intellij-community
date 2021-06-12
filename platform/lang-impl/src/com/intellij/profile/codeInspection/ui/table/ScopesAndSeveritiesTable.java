@@ -26,6 +26,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
             setText(namedScope.getPresentableName());
           }
           else {
-            setText((String)value);
+            if (LangBundle.message("scopes.table.everywhere.else").equals(value)) {
+              setText((String) value);
+            } else {
+              setText(LangBundle.message("scopes.table.missing.scope", value));
+              component.setForeground(UIUtil.getErrorForeground());
+            }
           }
         }
         return component;
@@ -366,9 +372,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       myScopeNames = myKeyNames.stream()
           .map(keyName -> myInspectionProfile.getNonDefaultTools(keyName, myProject))
           .flatMap(Collection::stream)
-          .map(state -> state.getScope(myProject))
-          .filter(Objects::nonNull)
-          .map(NamedScope::getScopeId)
+          .map(state -> state.getScopeName())
           .distinct()
           .sorted(myScopeComparator)
           .toArray(String[]::new);

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
@@ -27,6 +29,18 @@ final class ListResult {
   private ListResult(int modStamp, @NotNull List<? extends ChildInfo> children) {
     this.modStamp = modStamp;
     this.children = children;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || ApplicationManager.getApplication().isInternal()) {
+      assertSortedById(children);
+    }
+  }
+
+  private void assertSortedById(@NotNull List<? extends ChildInfo> children) {
+    for (int i = 1; i < children.size(); i++) {
+      ChildInfo info = children.get(i);
+      if (info.getId() < children.get(i - 1).getId()) {
+        throw new IllegalArgumentException("Unsorted list: " + this);
+      }
+    }
   }
 
   @Override
@@ -84,15 +98,15 @@ final class ListResult {
   // in case of name clash use id from the corresponding this list entry and name from the `otherList` entry (to avoid duplicating ids: preserve old id but supply new name)
   @Contract(pure=true)
   @NotNull
-  ListResult merge(@NotNull List<? extends ChildInfo> otherList, boolean isCaseSensitive) {
-    ListResult newList = new ListResult(otherList);
-    if (children.isEmpty()) return newList;
+  ListResult merge(@NotNull List<? extends ChildInfo> newChildren, boolean isCaseSensitive) {
     // assume list is sorted
-    List<? extends ChildInfo> newChildren = newList.children;
+    ListResult newList = new ListResult(newChildren);
+    if (children.isEmpty()) return newList;
     List<? extends ChildInfo> oldChildren = children;
     // both `newChildren` and `oldChildren` are sorted by id, but not nameId, so plain O(N) merge is not possible.
     // instead, try to eliminate entries with the same id from both lists first (since they have same nameId), and compare the rest by (slower) nameId.
-    // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
+    // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`,
+    // and `oldChildren` contains 5K+couple entries, these maps will contain just a couple of entries absent from each other, not thousands
 
     // name -> index in result
     Object2IntMap<CharSequence> nameToIndex =
@@ -100,7 +114,7 @@ final class ListResult {
       .getCharSequenceStrategy(isCaseSensitive));
     // distinguish between absence and the 0th index
     nameToIndex.defaultReturnValue(-1);
-
+    boolean needToSortResult = false;
     List<ChildInfo> result = new ArrayList<>(Math.max(oldChildren.size(), newChildren.size()));
     for (int i = 0, j = 0; i < newChildren.size() || j < oldChildren.size(); ) {
       ChildInfo newChild = i == newChildren.size() ? null : newChildren.get(i);
@@ -125,9 +139,10 @@ final class ListResult {
           // so replace just the name (the new name must have changed its case), leave id the same
           ChildInfo oldDup = result.get(dupI);
           int nameId = newChild.getNameId();
-          assert nameId > 0 : newList;
+          assert nameId > 0 : newChildren;
           ChildInfo replaced = ((ChildInfoImpl)oldDup).withNameId(nameId);
           result.set(dupI, replaced);
+          needToSortResult = true;
         }
         i++;
       }
@@ -147,12 +162,16 @@ final class ListResult {
           assert nameId > 0 : this;
           ChildInfo replaced = ((ChildInfoImpl)dup).withId(oldChild.getId());
           result.set(dupI, replaced);
+          needToSortResult = true;
         }
         j++;
       }
     }
-    ListResult newRes = nameToIndex.isEmpty() ? newList : new ListResult(result);
-    return new ListResult(modStamp, newRes.children);
+    if (needToSortResult) {
+      result.sort(ChildInfo.BY_ID);
+    }
+    List<? extends ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
+    return new ListResult(modStamp, newRes);
   }
 
   @Contract(pure=true)

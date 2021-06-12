@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Use {@code com.intellij.dom.fileMetaData} to register.
+ * Use {@code com.intellij.dom.fileMetaData} extension point to register.
  *
  * @author peter
  * @see MergingFileDescription
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DomFileDescription<T> {
 
   /**
-   * @deprecated use {@code com.intellij.dom.fileMetaData} extension instead
+   * @deprecated Register with {@code com.intellij.dom.fileMetaData} extension point instead.
    */
   @Deprecated
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");

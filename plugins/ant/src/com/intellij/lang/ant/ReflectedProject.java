@@ -5,12 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -26,10 +28,10 @@ public final class ReflectedProject {
   public static final String ANT_PROJECT_CLASS = "org.apache.tools.ant.Project";
 
   private final Object myProject;
-  private Hashtable myTaskDefinitions;
-  private Hashtable myDataTypeDefinitions;
-  private Hashtable myProperties;
-  private Class myTargetClass;
+  private Map<String, Class<?>> myTaskDefinitions;
+  private Map<String, Class<?>> myDataTypeDefinitions;
+  private Map<String, String> myProperties;
+  private Class<?> myTargetClass;
 
   public static ReflectedProject getProject(final ClassLoader classLoader) {
     ourProjectsLock.lock();
@@ -66,17 +68,20 @@ public final class ReflectedProject {
   ReflectedProject(final ClassLoader classLoader) {
     Object project = null;
     try {
-      final Class projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
+      final Class<?> projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
       if (projectClass != null) {
-        project = projectClass.newInstance();
+        project = projectClass.getConstructor().newInstance();
         Method method = projectClass.getMethod("init");
         method.invoke(project);
-        method = ReflectionUtil.getMethod(projectClass, "getTaskDefinitions");
-        myTaskDefinitions = (Hashtable)method.invoke(project);
-        method = ReflectionUtil.getMethod(projectClass, "getDataTypeDefinitions");
-        myDataTypeDefinitions = (Hashtable)method.invoke(project);
-        method = ReflectionUtil.getMethod(projectClass, "getProperties");
-        myProperties = (Hashtable)method.invoke(project);
+        method = projectClass.getMethod("getTaskDefinitions");
+        //noinspection unchecked
+        myTaskDefinitions = (Map<String, Class<?>>)method.invoke(project);
+        method = projectClass.getMethod( "getDataTypeDefinitions");
+        //noinspection unchecked
+        myDataTypeDefinitions = (Map<String, Class<?>>)method.invoke(project);
+        method = projectClass.getMethod( "getProperties");
+        //noinspection unchecked
+        myProperties = (Map<String, String>)method.invoke(project);
         myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
       }
     }
@@ -105,7 +110,7 @@ public final class ReflectedProject {
     return myDataTypeDefinitions;
   }
 
-  public Hashtable getProperties() {
+  public Map<String, String> getProperties() {
     return myProperties;
   }
 

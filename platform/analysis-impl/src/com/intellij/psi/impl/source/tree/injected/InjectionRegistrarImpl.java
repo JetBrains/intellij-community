@@ -7,6 +7,8 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -130,7 +132,8 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
       throw new IllegalStateException("Seems you haven't called startInjecting()");
     }
     if (!host.isValidHost()) {
-      throw new IllegalArgumentException(host + ".isValidHost() in " + host.getClass() + " returned false so you mustn't inject here.");
+      throw new RuntimeExceptionWithAttachments(host + ".isValidHost() in " + host.getClass() + " returned false so you mustn't inject here.",
+                                                new Attachment("host.txt", host.getText()));
     }
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile, myLanguage,

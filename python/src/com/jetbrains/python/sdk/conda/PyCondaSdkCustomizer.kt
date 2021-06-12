@@ -9,7 +9,7 @@ interface PyCondaSdkCustomizer {
   val preferCondaEnvironments: Boolean
     get() = false
 
-  val detectEnvironmentsOutsideEnvsFolder: Boolean
+  val detectBaseEnvironment: Boolean
     get() = false
 
   val preferExistingEnvironments: Boolean
@@ -19,9 +19,6 @@ interface PyCondaSdkCustomizer {
     get() = false
 
   val suggestSharedCondaEnvironments: Boolean
-    get() = false
-
-  val disableEnvsSorting: Boolean
     get() = false
 
   companion object {

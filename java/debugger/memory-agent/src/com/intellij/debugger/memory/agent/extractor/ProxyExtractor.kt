@@ -5,6 +5,6 @@ import org.apache.commons.io.IOUtils
 
 class ProxyExtractor {
   fun extractProxy(): ByteArray {
-    return IOUtils.toByteArray(ProxyExtractor::class.java.classLoader.getResourceAsStream("proxy/IdeaNativeAgentProxy.class"))
+    return IOUtils.toByteArray(ProxyExtractor::class.java.classLoader.getResourceAsStream("com/intellij/memory/agent/IdeaNativeAgentProxy.class"))
   }
 }

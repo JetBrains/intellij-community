@@ -204,7 +204,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
     if (list == null) {
       return CachedValuesManager.getCachedValue(this, () -> {
-        final LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage());
+        final LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage()) {
+          @Override
+          public String getText() {
+            return null;
+          }
+        };
         PsiClass aClass = this.getContainingClass();
         if (aClass != null) {
           PsiRecordComponent[] recordComponents = aClass.getRecordComponents();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -29,7 +15,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -56,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class JavaTypedHandler extends TypedHandlerDelegate {
   static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE);
   private boolean myJavaLTTyped;
@@ -158,7 +142,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
 
-      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
       while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
       }
@@ -181,7 +165,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
 
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null && !shouldInsertPairedBrace(leaf)) {
-        EditorModificationUtil.insertStringAtCaret(editor, "{");
+        EditorModificationUtilEx.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
       }
@@ -201,7 +185,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char prevChar = doc.getCharsSequence().charAt(offsetBefore - 1);
     if (prevChar != '=' && prevChar != '!') return false;
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore - 1);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore - 1);
     IElementType curToken = it.getTokenType();
     if (curToken != JavaTokenType.EQ && curToken != JavaTokenType.EXCL) return false;
     int lineStart = doc.getLineStartOffset(doc.getLineNumber(offsetBefore));
@@ -265,7 +249,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
    */
   private static boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore);
     if (it.atEnd()) return false;
     IElementType curToken = it.getTokenType();
     if (UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
@@ -366,7 +350,27 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     else if (c == ',' && handleAnnotationParameter(project, editor, file)) {
       return Result.STOP;
     }
+    else if (c == '.') {
+      if (handleDotTyped(project, editor, file)) {
+        return Result.STOP;
+      }
+    }
     return Result.CONTINUE;
+  }
+
+  private static boolean handleDotTyped(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = editor.getCaretModel().getOffset() - 1;
+    if (offset >= 0) {
+      Document document = editor.getDocument();
+      int line = document.getLineNumber(offset);
+      int lineStart = document.getLineStartOffset(line);
+      if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -403,7 +407,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   private static boolean mightBeInsideDefaultAnnotationAttribute(@NotNull Editor editor, int offset) {
     if (offset < 0) return false;
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     int parenCount = 0;
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
@@ -432,7 +436,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
 
-    HighlighterIterator hi = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator hi = editor.getHighlighter().createIterator(offset);
     if (hi.atEnd() || hi.getTokenType() != JavaTokenType.SEMICOLON) return false;
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
@@ -449,7 +453,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
+    HighlighterIterator it = editor.getHighlighter().createIterator(caretOffset);
     int afterLastParenOffset = -1;
 
     while (!it.atEnd()) {

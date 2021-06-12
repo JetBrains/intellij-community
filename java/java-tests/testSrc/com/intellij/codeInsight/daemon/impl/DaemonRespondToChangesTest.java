@@ -46,7 +46,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -113,10 +112,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1718,14 +1714,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
         runHeavyProcessing = true;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
-          try {
+          HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "my own heavy op", ()-> {
             while (runHeavyProcessing) {
             }
-          }
-          finally {
-            token.finish();
-          }
+          });
         });
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
@@ -1748,6 +1740,65 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testDaemonDoesNotDisableItselfDuringVFSRefresh() {
+    executeWithReparseDelay(0, () -> {
+      runHeavyProcessing = false;
+      try {
+        final Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
+        final Set<Editor> collected = Collections.synchronizedSet(new HashSet<>());
+        registerFakePass(applied, collected);
+
+        configureByText(PlainTextFileType.INSTANCE, "");
+        Editor editor = getEditor();
+        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        while (HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        type("xxx"); // restart daemon
+        assertTrue(editorTracker.getActiveEditors().contains(editor));
+        assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
+
+
+        // wait for first pass to complete
+        long start = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
+          UIUtil.dispatchAllInvocationEvents();
+          if (System.currentTimeMillis() - start > 1000000) {
+            fail("Too long waiting for daemon");
+          }
+        }
+
+        runHeavyProcessing = true;
+        Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, "my own vfs refresh", () -> {
+            while (runHeavyProcessing);
+          });
+        });
+        while (!HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        applied.clear();
+        collected.clear();
+
+        type("xxx"); // try to restart daemon
+
+        doHighlighting();
+        assertNotEmpty(applied);  // it should restart
+        assertNotEmpty(collected);
+        runHeavyProcessing = false;
+        try {
+          future.get();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      finally {
+        runHeavyProcessing = false;
+      }
+    });
+  }
 
   public void testModificationInsideCodeBlockDoesNotRehighlightWholeFile() {
     configureByText(JavaFileType.INSTANCE, "class X { int f = \"error\"; int f() { int gg<caret> = 11; return 0;} }");
@@ -2006,10 +2057,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testChangingSettingsHasImmediateEffectOnOpenedEditor() {
     executeWithReparseDelay(0, () -> {
-      configureByText(JavaFileType.INSTANCE, "class C { \n" +
-                                         "  void m() {\n" +
-                                         "  } \n" +
-                                         "}");
+      @Language("JAVA")
+      String text = "class C { \n" +
+                    "  void m() {\n" +
+                    "  } \n" +
+                    "}";
+      configureByText(JavaFileType.INSTANCE, text);
       CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
       waitForDaemon();
       checkFoldingState("[FoldRegion -(22:27), placeholder='{}']");

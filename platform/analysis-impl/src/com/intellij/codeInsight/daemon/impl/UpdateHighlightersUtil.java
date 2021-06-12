@@ -156,7 +156,7 @@ public final class UpdateHighlightersUtil {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (psiFile != null) {
-      codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+      codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
     }
 
     assertMarkupConsistent(markup, project);
@@ -192,7 +192,7 @@ public final class UpdateHighlightersUtil {
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (startOffset == 0 && endOffset == document.getTextLength()) {
-      codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+      codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
     }
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
@@ -231,7 +231,7 @@ public final class UpdateHighlightersUtil {
       if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
       if (info.isFileLevelAnnotation()) {
-        codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
+        codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
         changed[0] = true;
         return true;
       }
@@ -294,7 +294,7 @@ public final class UpdateHighlightersUtil {
         return true;
       }
       if (info.isFileLevelAnnotation() && psiFile != null) {
-        codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
+        codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
         changed[0] = true;
         return true;
       }

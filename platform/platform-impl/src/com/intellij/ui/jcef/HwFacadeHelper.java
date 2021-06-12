@@ -64,16 +64,18 @@ public class HwFacadeHelper {
     }
 
     @NotNull
-    public static List<CefBrowser> getBrowsers() {
+    public static List<CefBrowser> getHwBrowsers() {
       List<CefBrowser> list = new LinkedList<>();
-      if (getCefApp() != null && clientsField.isAvailable() && browsersField.isAvailable()) {
-        Set<CefClient> clients = clientsField.get(ourCefApp);
-        if (clients != null) {
-          for (CefClient client : clients) {
-            HashMap<?, CefBrowser> browsers = browsersField.get(client);
-            if (browsers != null) {
-              list.addAll(browsers.values());
-            }
+      if (getCefApp() == null || !clientsField.isAvailable() || !browsersField.isAvailable()) return list;
+      Set<CefClient> clients = clientsField.get(ourCefApp);
+      if (clients == null) return list;
+      for (CefClient client : clients) {
+        HashMap<?, CefBrowser> browsers = browsersField.get(client);
+        if (browsers == null) return list;
+        for (CefBrowser browser : browsers.values()) {
+          JBCefBrowserBase jbCefBrowser = JBCefBrowserBase.getJBCefBrowser(browser);
+          if (jbCefBrowser != null && !jbCefBrowser.isOffScreenRendering()) {
+            list.add(browser);
           }
         }
       }
@@ -90,7 +92,7 @@ public class HwFacadeHelper {
   }
 
   private static boolean isCefAppActive() {
-    return JCEFAccessor.getCefApp() != null && !JBCefApp.isOffScreenRenderingMode();
+    return JCEFAccessor.getCefApp() != null;
   }
 
   private void onShowing() {
@@ -106,7 +108,7 @@ public class HwFacadeHelper {
           myHwFacade.setSize(myTarget.getSize());
         }
         else {
-          activateIfNeeded(JCEFAccessor.getBrowsers());
+          activateIfNeeded(JCEFAccessor.getHwBrowsers());
         }
       }
       @Override
@@ -115,12 +117,12 @@ public class HwFacadeHelper {
           if (myHwFacade.isVisible()) myHwFacade.setLocation(myTarget.getLocationOnScreen());
         }
         else {
-          activateIfNeeded(JCEFAccessor.getBrowsers());
+          activateIfNeeded(JCEFAccessor.getHwBrowsers());
         }
       }
     });
 
-    activateIfNeeded(JCEFAccessor.getBrowsers());
+    activateIfNeeded(JCEFAccessor.getHwBrowsers());
   }
 
   private void activateIfNeeded(@NotNull List<CefBrowser> browsers) {

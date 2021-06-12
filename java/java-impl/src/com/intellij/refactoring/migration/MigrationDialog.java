@@ -3,6 +3,7 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
@@ -26,8 +27,8 @@ public class MigrationDialog extends DialogWrapper {
   private final Project myProject;
   private final MigrationMapSet myMigrationMapSet;
   private JLabel promptLabel;
-  private JSeparator mySeparator;
   private JScrollPane myDescriptionScroll;
+  private JButton myCopyButton;
 
   public MigrationDialog(Project project, MigrationMapSet migrationMapSet) {
     super(project, true);
@@ -88,6 +89,15 @@ public class MigrationDialog extends DialogWrapper {
         }
       }
     );
+    
+    myCopyButton.addActionListener(
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          copyMap();
+        }
+      }
+    );
 
     myRemoveMapButton.addActionListener(
       new ActionListener() {
@@ -136,6 +146,9 @@ public class MigrationDialog extends DialogWrapper {
       return;
     }
     myDescriptionTextArea.setText(map.getDescription());
+    boolean predefined = MigrationMapSet.isPredefined(map.getFileName());
+    myEditMapButton.setEnabled(!predefined);
+    myRemoveMapButton.setEnabled(!predefined);
   }
 
   private void editMap() {
@@ -170,7 +183,16 @@ public class MigrationDialog extends DialogWrapper {
   }
 
   private void addNewMap() {
-    MigrationMap migrationMap = new MigrationMap();
+    editNewMap(new MigrationMap());
+  }
+  private void copyMap() {
+    MigrationMap map = getMigrationMap().cloneMap();
+    map.setName(KeyMapBundle.message("new.keymap.name", map.getName()));
+    map.setFileName(null);
+    editNewMap(map);
+  }
+
+  private void editNewMap(MigrationMap migrationMap) {
     if (editMap(migrationMap)) {
       myMigrationMapSet.addMap(migrationMap);
       initMapCombobox();

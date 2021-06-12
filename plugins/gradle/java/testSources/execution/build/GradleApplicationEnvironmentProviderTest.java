@@ -19,7 +19,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx;
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,22 +50,23 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     createProjectSubFile("src/main/java/my/App.java", appClass);
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withIdeaPlugin()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin()
         .addImport("org.jetbrains.gradle.ext.*")
-        .addPostfix("idea {\n" +
-                    "  project.settings {\n" +
-                    "    runConfigurations {\n" +
-                    "       MyApp(Application) {\n" +
-                    "           mainClass = 'my.App'\n" +
-                    "           programParameters = 'foo --bar baz'\n" +
-                    "           moduleName = 'moduleName.main'\n" +
-                    "       }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           programParameters = 'foo --bar baz'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
         .generate()
     );
 
@@ -134,10 +134,10 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withIdeaPlugin()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin()
         .addImport("org.jetbrains.gradle.ext.*")
         .addPostfix(
           "idea {",

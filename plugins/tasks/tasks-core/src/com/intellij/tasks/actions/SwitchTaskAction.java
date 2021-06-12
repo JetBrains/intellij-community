@@ -50,7 +50,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     return new ComboBoxButton(presentation) {
       @Override
-      protected JBPopup createPopup(Runnable onDispose) {
+      protected @NotNull JBPopup createPopup(Runnable onDispose) {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
       }
     };

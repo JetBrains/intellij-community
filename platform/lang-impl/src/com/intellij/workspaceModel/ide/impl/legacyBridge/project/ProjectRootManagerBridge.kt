@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
+import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -17,21 +18,24 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_L
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 @Suppress("ComponentNotRegistered")
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"
+
+    @JvmStatic
+    private val LOG = logger<ProjectRootManagerBridge>()
   }
 
-  private val LOG = Logger.getInstance(javaClass)
   private val globalLibraryTableListener = GlobalLibraryTableListener()
   private val jdkChangeListener = JdkChangeListener()
 
@@ -77,6 +81,10 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     unsubscribeListeners()
   }
 
+  override fun getOrderRootsCache(project: Project): OrderRootsCache {
+    return OrderRootsCacheBridge(project, project)
+  }
+
   fun isFiringEvent(): Boolean = isFiringEvent
 
   private fun unsubscribeListeners() {
@@ -97,7 +105,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   fun setupTrackedLibrariesAndJdks() {
     val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
-      addTrackedLibraryAndJdkFromEntity(moduleEntity);
+      addTrackedLibraryAndJdkFromEntity(moduleEntity)
     }
   }
 

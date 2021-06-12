@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.associations;
 
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -48,6 +47,6 @@ public abstract class FileAssociationsManager extends SimpleModificationTracker 
     public abstract PsiFile[] getAssociationsFor(PsiFile file, FileType... fileTypes);
 
     public static FileAssociationsManager getInstance(Project project) {
-        return ServiceManager.getService(project, FileAssociationsManager.class);
+      return project.getService(FileAssociationsManager.class);
     }
 }

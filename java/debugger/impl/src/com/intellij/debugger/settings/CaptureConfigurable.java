@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -267,7 +267,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
         });
         try {
-          JDOMUtil.write(rootElement, wrapper.getFile());
+          JDOMUtil.write(rootElement, wrapper.getFile().toPath());
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();

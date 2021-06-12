@@ -16,10 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps;
-  private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
+  private final List<Pair<ModuleWizardStep, Predicate<Set<String>>>> myCommonFinishingSteps = new ArrayList<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificFinishingSteps = new MultiMap<>();
   @NonNls private final List<String> myTypes = new ArrayList<>();
@@ -36,7 +37,11 @@ public class StepSequence {
   }
 
   public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @Nullable Set<String> suitableTypes) {
-    myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
+    addCommonFinishingStep(step, types -> suitableTypes == null || ContainerUtil.intersects(types, suitableTypes));
+  }
+
+  public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @Nullable Predicate<Set<String>> suitableTypesPredicate) {
+    myCommonFinishingSteps.add(Pair.create(step, suitableTypesPredicate));
   }
 
   public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder,
@@ -63,9 +68,9 @@ public class StepSequence {
         Collection<ModuleWizardStep> steps = mySpecificSteps.get(type);
         mySelectedSteps.addAll(steps);
       }
-      for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
-        Set<String> types = pair.getSecond();
-        if (types == null || ContainerUtil.intersects(myTypes, types)) {
+      for (Pair<ModuleWizardStep, Predicate<Set<String>>> pair : myCommonFinishingSteps) {
+        Predicate<Set<String>> types = pair.getSecond();
+        if (types == null || types.test(new HashSet<>(myTypes))) {
           mySelectedSteps.add(pair.getFirst());
         }
       }
@@ -119,7 +124,7 @@ public class StepSequence {
     final List<ModuleWizardStep> result = new ArrayList<>();
     result.addAll(myCommonSteps);
     result.addAll(mySpecificSteps.values());
-    for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
+    for (Pair<ModuleWizardStep, Predicate<Set<String>>> pair : myCommonFinishingSteps) {
       result.add(pair.getFirst());
     }
     result.addAll(mySpecificFinishingSteps.values());

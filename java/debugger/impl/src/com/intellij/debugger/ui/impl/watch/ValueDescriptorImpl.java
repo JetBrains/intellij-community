@@ -522,7 +522,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       .thenCompose(type -> getRenderer(type, debugProcess));
   }
 
-  private CompletableFuture<NodeRenderer> getRenderer(Type type, DebugProcessImpl debugProcess) {
+  protected final CompletableFuture<NodeRenderer> getRenderer(Type type, DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     CompletableFuture<Boolean> customCheck = CompletableFuture.completedFuture(false);
     if (type != null && myRenderer != null) {

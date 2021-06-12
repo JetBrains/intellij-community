@@ -43,7 +43,6 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.*;
-import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -518,7 +517,7 @@ public final class GitUtil {
   @NotNull
   public static String unescapePath(@NotNull @NonNls String path) throws VcsException {
     try {
-      return VcsFileUtil.unescapeGitPath(path, GitConfigUtil.getFileNameEncoding());
+      return VcsFileUtil.unescapeGitPath(path);
     }
     catch (IllegalStateException e) {
       throw new VcsException(e);

@@ -29,8 +29,6 @@ import java.util.List;
 /**
  * Reference to the import source in a 'from ... import' statement:<br/>
  * <code>from <u>foo</u> import name</code>
-
- * @author yole
  */
 public class PyFromImportSourceReference extends PyImportReference {
   private final PyFromImportStatement myStatement;

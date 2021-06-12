@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -67,10 +66,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
-    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.builder()
-            .add(CommonDataKeys.PROJECT, project)
-            .add(PlatformDataKeys.CONTEXT_COMPONENT, IdeFocusManager.getInstance(project).getFocusOwner())
-            .build(),
+    super(title, createBranchSpeedSearchActionGroup(actions),
+          DataManager.getInstance().getDataContext(IdeFocusManager.getInstance(project).getFocusOwner()),
           preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
@@ -127,6 +124,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myToolbarActions.add(settingsGroup);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(BRANCH_POPUP, actionGroup, true);
+    toolbar.setTargetComponent(getList());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setOpaque(false);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
@@ -389,10 +387,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
 
       CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
-      if (actionWithIconProvider != null) {
-        myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        myTextLabel.setIcon(actionWithIconProvider.getRightIcon());
-      }
+      myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+      myTextLabel.setIcon(actionWithIconProvider != null ? actionWithIconProvider.getRightIcon() : null);
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }
@@ -503,7 +499,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware {
+  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware, AlwaysVisibleActionGroup {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {

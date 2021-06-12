@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLRUMap;
-import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,11 +52,10 @@ public final class FileNameCache {
       FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
 
-    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfPossible(name);
     IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      return cache.cacheEntry(id, rawName);
+      return cache.cacheEntry(id, name);
     }
   }
 

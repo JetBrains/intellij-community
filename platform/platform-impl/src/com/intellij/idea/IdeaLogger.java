@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtilImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -79,13 +79,17 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    super.warn(message, checkException(t));
+    super.warn(message, ensureNotControlFlow(t));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    error(true, message, t, details);
+  }
+
+  void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, checkException(t));
+      myLogger.error(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
     }
 
@@ -101,7 +105,9 @@ public final class IdeaLogger extends Log4jBasedLogger {
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
     myLogger.error(message + detailString, t);
-    logErrorHeader(t);
+    if (addErrorHeader) {
+      logErrorHeader(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {
@@ -121,8 +127,8 @@ public final class IdeaLogger extends Log4jBasedLogger {
       }
     }
 
-    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.getComponentCreated() && !application.isDisposed()) {
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    if (application != null && application.isComponentCreated() && !application.isDisposed()) {
       String lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         myLogger.error("Last Action: " + lastPreformedActionId);

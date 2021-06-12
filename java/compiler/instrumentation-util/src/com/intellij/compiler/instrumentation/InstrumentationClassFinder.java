@@ -446,17 +446,12 @@ public class InstrumentationClassFinder {
   }
 
   static class ClassFinderClasspath {
-
-    private final Stack<URL> myUrls = new Stack<URL>();
+    private final Queue<URL> myUrls;
     private final List<Loader> myLoaders = new ArrayList<Loader>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
 
     ClassFinderClasspath(URL[] urls) {
-      if (urls.length > 0) {
-        for (int i = urls.length - 1; i >= 0; i--) {
-          myUrls.push(urls[i]);
-        }
-      }
+      myUrls = new ArrayDeque<URL>(Arrays.asList(urls));
     }
 
     public Resource getResource(String s) {
@@ -481,12 +476,9 @@ public class InstrumentationClassFinder {
 
     private synchronized Loader getLoader(int i) {
       while (myLoaders.size() < i + 1) {
-        URL url;
-        synchronized (myUrls) {
-          if (myUrls.empty()) {
-            return null;
-          }
-          url = myUrls.pop();
+        URL url = myUrls.poll();
+        if (url == null) {
+          return null;
         }
 
         if (myLoadersMap.containsKey(url)) {

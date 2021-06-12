@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -92,8 +94,19 @@ public class GitMergeHandler {
       }
     }
     finally {
-      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ContainerUtil.map(conflicts, GitConflict::getFilePath), null);
+      List<FilePath> filePaths = ContainerUtil.map(conflicts, GitConflict::getFilePath);
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(filePaths, null);
+
+      List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(filePaths, GitMergeHandler::getExistingFileOrParent);
+      VfsUtil.markDirtyAndRefresh(true, false, true, VfsUtilCore.toVirtualFileArray(virtualFiles));
     }
+  }
+
+  @Nullable
+  private static VirtualFile getExistingFileOrParent(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+    if (file != null) return file;
+    return filePath.getVirtualFileParent();
   }
 
   @NotNull

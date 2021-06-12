@@ -21,7 +21,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle.message
@@ -32,7 +34,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Font
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.math.min
@@ -309,10 +310,10 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
       if (results == null || results!!.any { !it.success() }) {
         val errorDetails =
           if (results == null) message("remotes.operation.not.executed.message")
-          else results!!.joinToString(separator = "\n") { it.errorOutputAsJoinedString }
+          else results!!.joinToString(separator = UIUtil.BR) { it.errorOutputAsHtmlString }
         val message = message("remotes.operation.error.message", errorMessage, repository, errorDetails)
         LOG.warn(message)
-        showErrorDialog(myProject, message, errorTitle)
+        showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), errorTitle)
       }
     }
   })

@@ -14,7 +14,6 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
@@ -24,16 +23,18 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
-class GradleDependencyModificator(val myProject: Project) : ExternalDependencyModificator {
-  override fun supports(module: Module): Boolean {
-    return ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == SYSTEM_ID.id
-  }
+// Note: this code assumes that UnifiedCoordinates are never code references, only "hardcoded" values.
+// If you ever wanted to support code references here, you'd need to make UnifiedCoordinates aware of
+// the difference.
+class GradleDependencyModificator(private val myProject: Project) : ExternalDependencyModificator {
+  override fun supports(module: Module): Boolean =
+    ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == SYSTEM_ID.id
 
   override fun addDependency(module: Module, descriptor: UnifiedDependency) {
-    checkDescriptor(descriptor);
+    checkDescriptor(descriptor)
     val artifactSpec = ArtifactDependencySpec.create(descriptor.coordinates.artifactId!!, descriptor.coordinates.groupId,
                                                      descriptor.coordinates.version)
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     val configurationName = getConfigurationName(descriptor)
     val dependencies: DependenciesModel = model.dependencies()
     dependencies.addArtifact(configurationName, artifactSpec)
@@ -41,32 +42,40 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   private fun checkDescriptor(descriptor: UnifiedDependency) {
-    requireNotNull(descriptor.coordinates.artifactId){GradleBundle.message("gradle.dsl.artifactid.is.null")}
-    requireNotNull(descriptor.coordinates.groupId){GradleBundle.message("gradle.dsl.groupid.is.null")}
-    requireNotNull(descriptor.coordinates.version){GradleBundle.message("gradle.dsl.version.is.null")}
+    requireNotNull(descriptor.coordinates.artifactId) { GradleBundle.message("gradle.dsl.artifactid.is.null") }
+    requireNotNull(descriptor.coordinates.groupId) { GradleBundle.message("gradle.dsl.groupid.is.null") }
+    requireNotNull(descriptor.coordinates.version) { GradleBundle.message("gradle.dsl.version.is.null") }
+    requireNotNull(descriptor.scope) { GradleBundle.message("gradle.dsl.scope.is.null") }
   }
 
-  private fun getConfigurationName(descriptor: UnifiedDependency): String {
-    return descriptor.scope ?: "implementation"
-  }
+  private fun getConfigurationName(descriptor: UnifiedDependency): String = descriptor.scope ?: "implementation"
 
   override fun updateDependency(module: Module,
                                 oldDescriptor: UnifiedDependency,
                                 newDescriptor: UnifiedDependency) {
-    checkDescriptor(newDescriptor);
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
-    val dependencies: DependenciesModel = model.dependencies()
-    for (artifactModel in dependencies.artifacts()) {
-      if (artifactModel.group().valueAsString() == oldDescriptor.coordinates.groupId
-          && artifactModel.name().valueAsString() == oldDescriptor.coordinates.artifactId
-          && artifactModel.version().valueAsString() == oldDescriptor.coordinates.version
-      ) {
-        updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
-        updateVariableOrValue(artifactModel.name(), newDescriptor.coordinates.artifactId!!)
-        updateVariableOrValue(artifactModel.version(), newDescriptor.coordinates.version!!)
-      }
+    checkDescriptor(newDescriptor)
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
+    val artifactModel = model.dependencies().artifacts().find {
+      it.group().valueAsString() == oldDescriptor.coordinates.groupId
+      && it.name().valueAsString() == oldDescriptor.coordinates.artifactId
+      && it.version().valueAsString() == oldDescriptor.coordinates.version
+      && it.configurationName() == oldDescriptor.scope
+    } ?: return
+
+    if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {
+      updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
     }
-    return applyChanges(model)
+    if (oldDescriptor.coordinates.artifactId != newDescriptor.coordinates.artifactId) {
+      updateVariableOrValue(artifactModel.name(), newDescriptor.coordinates.artifactId!!)
+    }
+    if (oldDescriptor.coordinates.version != newDescriptor.coordinates.version) {
+      updateVariableOrValue(artifactModel.version(), newDescriptor.coordinates.version!!)
+    }
+    if (oldDescriptor.scope != newDescriptor.scope && newDescriptor.scope != null) {
+      artifactModel.setConfigurationName(newDescriptor.scope!!)
+    }
+
+    applyChanges(model)
   }
 
   private fun updateVariableOrValue(model: ResolvedPropertyModel, value: String) {
@@ -77,7 +86,7 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
           dependencyPropertyModel.propertyType == PropertyType.PROPERTIES_FILE
       ) {
         if (dependencyPropertyModel.valueAsString().equals(model.valueAsString())) { // not partial injection, like "${version}-SNAPSHOT"
-          dependencyPropertyModel.setValue(value);
+          dependencyPropertyModel.setValue(value)
           return
         }
       }
@@ -86,8 +95,8 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun removeDependency(module: Module, descriptor: UnifiedDependency) {
-    checkDescriptor(descriptor);
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    checkDescriptor(descriptor)
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     val dependencies: DependenciesModel = model.dependencies()
     for (artifactModel in dependencies.artifacts()) {
       if (artifactModel.group().valueAsString() == descriptor.coordinates.groupId
@@ -102,14 +111,14 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   override fun addRepository(module: Module, repository: UnifiedDependencyRepository) {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     val repositoryModel = model.repositories()
-    val trimmedUrl = repository.url.trimLastSlash()
-    if (repositoryModel.containsMavenRepositoryByUrl(trimmedUrl)) {
+    val trimmedUrl = repository.url?.trimLastSlash()
+    if (trimmedUrl == null || repositoryModel.containsMavenRepositoryByUrl(trimmedUrl)) {
       return
     }
 
-    val methodName = methodsByRepo[trimmedUrl]
+    val methodName = RepositoriesWithShorthandMethods.findByUrlLenient(trimmedUrl)?.methodName
     if (methodName != null) {
       if (repositoryModel.containsMethodCall(methodName)) {
         return
@@ -117,42 +126,41 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
       repositoryModel.addRepositoryByMethodName(methodName)
     }
     else {
-      repositoryModel.addMavenRepositoryByUrl(repository.url, repository.name)
+      repositoryModel.addMavenRepositoryByUrl(trimmedUrl, repository.name)
     }
     applyChanges(model)
   }
 
   override fun deleteRepository(module: Module, repository: UnifiedDependencyRepository) {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     val repositoryModel = model.repositories()
-    repositoryModel.removeRepositoryByUrl(repository.url)
-    repositoryModel.removeRepositoryByUrl(repository.url.trimLastSlash())
+    val repositoryUrl = repository.url ?: return
+    repositoryModel.removeRepositoryByUrl(repositoryUrl)
+    repositoryModel.removeRepositoryByUrl(repositoryUrl.trimLastSlash())
     applyChanges(model)
   }
 
   override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     return model.dependencies().artifacts().map {
-      val dataContext = object: DataContext {
-        override fun getData(dataId: String): Any? {
-          if(CommonDataKeys.PSI_ELEMENT.`is`(dataId)){
-            return it.psiElement
-          }
-          return null
-        }
+      val dataContext = DataContext { dataId ->
+        if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) it.psiElement else null
       }
-      DeclaredDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName(),
-                         dataContext)
+      DeclaredDependency(groupId = it.group().valueAsString(), artifactId = it.name().valueAsString(),
+                         version = it.version().valueAsString(), configuration = it.configurationName(),
+                         dataContext = dataContext)
     }
   }
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     return model.repositories().repositories()
       .mapNotNull { it as? UrlBasedRepositoryModelImpl }
       .mapNotNull { m ->
         m.url().valueAsString()?.let {
-          UnifiedDependencyRepository(m.name().valueAsString(), m.name().valueAsString(), it)
+          UnifiedDependencyRepository(id = RepositoriesWithShorthandMethods.findByRepoType(m.type)?.repositoryId,
+                                      name = m.name().valueAsString(),
+                                      url = it)
         }
       }
   }
@@ -167,13 +175,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
     }
   }
 
-  companion object {
-    val reposByMethod = mapOf("mavenCentral" to "https://repo1.maven.org/maven2", "jcenter" to "https://jcenter.bintray.com")
-    val methodsByRepo = reposByMethod.map { it.value to it.key }.toMap()
-  }
-
-  private fun String.trimLastSlash(): String {
-    return this.trimEnd { it == '/' }
-  }
+  private fun String.trimLastSlash(): String = this.trimEnd { it == '/' }
 
 }

@@ -1,11 +1,26 @@
 <html>
 <body>
-Reports on any uses of the non-short-circuit forms of boolean 'and' and 'or' (<b>&</b>
-and <b>|</b>). The non-short-circuit versions are occasionally useful, but
-their presence is often due to typos of the short-circuit forms (<b>&&</b>
-and <b>||</b>), and may lead to subtle bugs.
-<!-- tooltip end -->
 <p>
-
+  Reports on any uses of the non-short-circuit forms of boolean 'and' and 'or' (<code>&amp;</code>
+  and <b>|</b>). The non-short-circuit versions are occasionally useful, but
+  their presence is often due to typos of the short-circuit forms (<code>&amp;&amp;</code>
+  and <code>||</code>), and may lead to subtle bugs.
+</p>
+<p>
+  Apply the quick-fix to use the short-circuit versions.
+</p>
+<p>Example:</p>
+<pre><code>
+  void foo(boolean x, boolean y) {
+    if (x | y) { /**/ }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  void foo(boolean x, boolean y) {
+    if (x || y) { /**/ }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

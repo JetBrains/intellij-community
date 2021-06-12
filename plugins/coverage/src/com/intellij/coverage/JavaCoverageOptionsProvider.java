@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -28,7 +32,7 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
   }
 
   public static JavaCoverageOptionsProvider getInstance(Project project) {
-    return ServiceManager.getService(project, JavaCoverageOptionsProvider.class);
+    return project.getService(JavaCoverageOptionsProvider.class);
   }
 
   public void setIgnoreImplicitConstructors(boolean state) {
@@ -44,9 +48,10 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
   }
 
   public boolean isGeneratedConstructor(String qualifiedName, String methodSignature) {
-    if (myState.myIgnoreImplicitConstructors || myState.myIgnoreEmptyPrivateConstructors) {
-      PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(myProject), qualifiedName));
-      return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, methodSignature, myState.myIgnoreImplicitConstructors, myState.myIgnoreEmptyPrivateConstructors);
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (myState.myIgnoreImplicitConstructors) {
+      PsiClass psiClass = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(myProject), qualifiedName));
+      return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, methodSignature);
     }
     return false;
   }

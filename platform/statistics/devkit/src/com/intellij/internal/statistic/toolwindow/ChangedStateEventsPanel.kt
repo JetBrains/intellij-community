@@ -18,7 +18,7 @@ internal class ChangedStateEventsPanel(val project: Project,
     setContent(consoleLog.component)
     val messageBuilder = StatisticsEventLogMessageBuilder()
     for (logEvent in difference) {
-      consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent))
+      consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent, null, null))
     }
     Disposer.register(parentDisposable, consoleLog)
   }

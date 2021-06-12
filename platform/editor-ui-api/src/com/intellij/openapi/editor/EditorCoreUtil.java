@@ -1,8 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class EditorCoreUtil {
   public static boolean isTrueSmoothScrollingEnabled() {
@@ -96,6 +103,40 @@ public final class EditorCoreUtil {
     }
 
     return newCaretOffset;
+  }
+
+  public static EditorHighlighter createEmptyHighlighter(@Nullable Project project, @NotNull Document document) {
+    EditorHighlighter highlighter = new EmptyEditorHighlighter(new TextAttributes()) {
+      @Override
+      public @NotNull HighlighterIterator createIterator(int startOffset) {
+        setText(document.getImmutableCharSequence());
+        return super.createIterator(startOffset);
+      }
+
+      @Override
+      public void setAttributes(TextAttributes attributes) {
+      }
+
+      @Override
+      public void setColorScheme(@NotNull EditorColorsScheme scheme) {
+      }
+    };
+    highlighter.setEditor(new HighlighterClient() {
+      @Override
+      public Project getProject() {
+        return project;
+      }
+
+      @Override
+      public void repaint(int start, int end) {
+      }
+
+      @Override
+      public Document getDocument() {
+        return document;
+      }
+    });
+    return highlighter;
   }
 
   private static int getSpaceWidthInColumns(CharSequence seq, int startOffset, int endOffset, int tabSize) {

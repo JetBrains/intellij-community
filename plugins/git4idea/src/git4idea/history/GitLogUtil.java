@@ -2,7 +2,6 @@
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -226,7 +225,7 @@ public final class GitLogUtil {
   public static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
     return ReadAction.compute(() -> {
       if (!project.isDisposed()) {
-        return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+        return project.getService(VcsLogObjectsFactory.class);
       }
       return null;
     });

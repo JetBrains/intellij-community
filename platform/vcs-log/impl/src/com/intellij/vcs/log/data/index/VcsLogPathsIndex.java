@@ -173,7 +173,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     @NotNull
     @Override
     public Map<Integer, List<ChangeKind>> map(@NotNull VcsLogIndexer.CompressedDetails inputData) {
-      Int2ObjectMap<List<ChangeKind>> result=new Int2ObjectOpenHashMap<>();
+      Int2ObjectMap<List<ChangeKind>> result = new Int2ObjectOpenHashMap<>();
 
       // its not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
@@ -210,9 +210,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                                               int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
-        changeDataList = new SmartList<>();
-        for (int i = 0; i < parentsCount; i++) {
-          changeDataList.add(ChangeKind.NOT_CHANGED);
+        if (parentsCount == 1) {
+          changeDataList = new SmartList<>(ChangeKind.NOT_CHANGED);
+        }
+        else {
+          changeDataList = new ArrayList<>(parentsCount);
+          for (int i = 0; i < parentsCount; i++) {
+            changeDataList.add(ChangeKind.NOT_CHANGED);
+          }
         }
         pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }

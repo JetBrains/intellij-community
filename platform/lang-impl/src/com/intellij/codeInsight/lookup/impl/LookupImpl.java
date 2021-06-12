@@ -382,7 +382,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     ScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
-  void truncatePrefix(boolean preserveSelection, int hideOffset) {
+  public void truncatePrefix(boolean preserveSelection, int hideOffset) {
     if (!myOffsets.truncatePrefix()) {
       myArranger.prefixTruncated(this, hideOffset);
       return;
@@ -732,8 +732,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private void delegateActionToEditor(@NotNull String actionID, @Nullable Supplier<? extends AnAction> delegateActionSupplier, @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
-    DumbAwareAction.create(
-      e -> ActionUtil.performActionDumbAware(delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
+    DumbAwareAction.create(e -> ActionUtil.performActionDumbAwareWithCallbacks(
+      delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
     ).registerCustomShortcutSet(action.getShortcutSet(), myList);
   }
 
@@ -1050,7 +1050,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myList.getLastVisibleIndex();
   }
 
-  List<LookupElement> getVisibleItems() {
+  public List<LookupElement> getVisibleItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     var itemsCount = myList.getItemsCount();

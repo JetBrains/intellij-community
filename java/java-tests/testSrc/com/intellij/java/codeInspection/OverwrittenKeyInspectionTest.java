@@ -14,6 +14,9 @@ public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
   public void testOverwrittenKey() {
     doTest();
   }
+  public void testOverwrittenKeyArray() {
+    doTest();
+  }
 
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.google.common.collect.HashBiMap
@@ -160,7 +160,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
     var errorMessage: String? = null
-    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, object : ErrorReporter {
+    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
         errorMessage = message
       }
@@ -174,8 +174,8 @@ internal class ModifiableModuleModelBridgeImpl(
       throw IOException("Failed to load module from $filePath")
     }
 
-    val moduleFilePath = ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity)!!
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFilePath)
+    val moduleFileUrl = ModuleManagerComponentBridge.getInstance(project).getModuleVirtualFileUrl(moduleEntity)!!
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFileUrl.toPath())
     return createModuleInstance(moduleEntity, false)
   }
 

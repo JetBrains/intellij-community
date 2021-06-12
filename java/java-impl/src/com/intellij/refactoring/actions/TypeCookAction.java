@@ -37,7 +37,7 @@ public class TypeCookAction extends BaseJavaRefactoringAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place)) {
+    if (ActionPlaces.isPopupPlace(place) && !place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
       return element instanceof PsiClass || element instanceof PsiJavaFile;
     }
     return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);

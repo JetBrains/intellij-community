@@ -17,10 +17,12 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -260,6 +262,9 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       else if (PsiTreeUtil.isAncestor(mySuperClass, targetClass, false)) {
         conflicts.putValue(targetClass, JavaRefactoringBundle.message("inline.super.no.inner.class", targetClass.getName()));
       }
+      else if (!targetClass.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        conflicts.putValue(targetClass, JavaRefactoringBundle.message("inline.superclass.foreign.language.conflict.message", targetClass.getLanguage().getDisplayName()));
+      }
       else {
         for (MemberInfo info : myMemberInfos) {
           final PsiMember member = info.getMember();
@@ -268,7 +273,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             Set<PsiMember> movedMembers = new HashSet<>(pushDownConflicts.getMovedMembers());
             movedMembers.addAll(Arrays.asList(mySuperClass.getConstructors()));
             RefactoringConflictsUtil
-              .analyzeAccessibilityConflicts(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers());
+              .analyzeAccessibilityConflicts(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers(),
+                                             Conditions.alwaysTrue());
           }
         }
       }

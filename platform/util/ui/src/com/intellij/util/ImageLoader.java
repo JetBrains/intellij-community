@@ -284,7 +284,7 @@ public final class ImageLoader {
   }
 
   static @Nullable InputStream getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader) {
-    assert resourceClass != null || classLoader != null;
+    assert resourceClass != null || classLoader != null || path.startsWith("file://");
 
     if (classLoader != null) {
       InputStream stream = classLoader.getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);

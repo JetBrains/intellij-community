@@ -7,21 +7,21 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.refactoring.rename.api.TextReplacement
+import com.intellij.refactoring.rename.api.UsageTextByName
 
-internal class InplaceRenameUsageExpression(
-  private val textReplacement: TextReplacement
+internal open class InplaceRenameUsageExpression(
+  private val usageTextByName: UsageTextByName
 ) : Expression() {
 
-  override fun requiresCommittedPSI(): Boolean = false
+  final override fun requiresCommittedPSI(): Boolean = false
 
-  override fun calculateLookupItems(context: ExpressionContext?): Array<LookupElement> = LookupElement.EMPTY_ARRAY
+  final override fun calculateLookupItems(context: ExpressionContext?): Array<LookupElement> = LookupElement.EMPTY_ARRAY
 
   override fun calculateResult(context: ExpressionContext): Result? {
     val editor = context.editor ?: return null
     val state = TemplateManagerImpl.getTemplateState(editor) ?: return null
     val newName = state.getNewName()
-    val newText = textReplacement(newName) ?: ""
+    val newText = usageTextByName(newName) ?: ""
     return TextResult(newText)
   }
 }

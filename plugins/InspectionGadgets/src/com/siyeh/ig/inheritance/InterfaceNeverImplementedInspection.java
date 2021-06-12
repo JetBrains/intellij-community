@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 Bas Leijdekkers
+ * Copyright 2006-2021 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,7 +30,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class InterfaceNeverImplementedInspection extends BaseInspection {
 
@@ -54,25 +53,12 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message("interface.never.implemented.option"), this,
-                                           "ignoreInterfacesThatOnlyDeclareConstants");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(annotationsPanel, constraints);
-
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(checkBox, constraints);
+    panel.add(annotationsPanel, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("interface.never.implemented.option"), "ignoreInterfacesThatOnlyDeclareConstants");
 
     return panel;
   }

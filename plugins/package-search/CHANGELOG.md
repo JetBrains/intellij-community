@@ -2,8 +2,25 @@
 
 ## NEW VERSION
 
- * Feature: Repositories tab in package search tool window shows indexed repositories
- * Feature: Multiple repositories can be searched and filtered (when indexed)
+ * Bug: unsupported dependencies formats in the buildscript can crash the plugin
+   ([PKGS-610](https://youtrack.jetbrains.com/issue/PKGS-610),
+   [PKGS-611](https://youtrack.jetbrains.com/issue/PKGS-611))
+
+## Version 1.0.1428-eap (29 Jan 2021)
+
+* Compatible with IDEA 2020.1—2021.1 EAP (note: full compatibility with 2021.1 EAPs is a work in progress)
+* Bug: some UI elements render incorrectly on IntelliJ 2020.3.x
+  ([PKGS-618](https://youtrack.jetbrains.com/issue/PKGS-618))
+
+## Version 1.0.1385-eap (14 Dec 2020)
+
+* Bug: unsupported dependencies formats in the buildscript can crash the plugin
+  ([PKGS-610](https://youtrack.jetbrains.com/issue/PKGS-610),
+  [PKGS-611](https://youtrack.jetbrains.com/issue/PKGS-611))
+
+## Version 1.0.1353-eap (30 Nov 2020)
+
+ * Compatible with IDEA 2020.1—2020.3
 
 ## Version 1.0.1191-eap (28 Aug 2020)
 
@@ -11,9 +28,9 @@
 
 ## Version 1.0.1174-eap (6 Aug 2020)
 
- * Cosmetics: package operation confirmation dialog has been removed
- * Cosmetics: improve inspections names and description
- * Bug: the update package quick fix would not work correctly sometimes in Maven POMs (PKGS-489)
+* Cosmetics: package operation confirmation dialog has been removed
+* Cosmetics: improve inspections names and description
+* Bug: the update package quick fix would not work correctly sometimes in Maven POMs (PKGS-489)
 
 ## Version 1.0.1145-eap (18 Jun 2020)
 

@@ -41,15 +41,15 @@ import javax.swing.Icon
 /**
  * @author vlan
  */
-class PyAddExistingCondaEnvPanel(private val project: Project?,
-                                 private val module: Module?,
-                                 private val existingSdks: List<Sdk>,
-                                 override var newProjectPath: String?,
-                                 context: UserDataHolder) : PyAddSdkPanel() {
+open class PyAddExistingCondaEnvPanel(private val project: Project?,
+                                      private val module: Module?,
+                                      private val existingSdks: List<Sdk>,
+                                      override var newProjectPath: String?,
+                                      context: UserDataHolder) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
-  private val sdkComboBox = PySdkPathChoosingComboBox()
-  private val condaPathField = TextFieldWithBrowseButton().apply {
+  protected val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     if (path != null) {
       text = path
@@ -72,6 +72,15 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       makeSharedField.isSelected = true
     }
 
+    @Suppress("LeakingThis")
+    layoutComponents()
+
+    addInterpretersAsync(sdkComboBox) {
+      detectCondaEnvs(module, existingSdks, context)
+    }
+  }
+
+  protected open fun layoutComponents() {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
@@ -79,9 +88,6 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(sdkComboBox) {
-      detectCondaEnvs(module, existingSdks, context)
-    }
   }
 
   override fun validateAll(): List<ValidationInfo> {

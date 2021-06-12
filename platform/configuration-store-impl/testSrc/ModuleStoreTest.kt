@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
+import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
@@ -26,6 +27,7 @@ import com.intellij.util.io.systemIndependentPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -81,8 +83,8 @@ class ModuleStoreTest {
 
   @Test
   fun `must be empty if classpath storage`() {
-    //todo saving in eclipse format isn't supported in workspace model (WM-T-46)
-    ProjectModelRule.ignoreTestUnderWorkspaceModel()
+    Assume.assumeTrue("eclipse plugin is not found in classpath",
+                      ClasspathStorageProvider.EXTENSION_POINT_NAME.extensions().anyMatch { it.id == "eclipse" })
     runBlocking<Unit> {
       // we must not use VFS here, file must not be created
       val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")

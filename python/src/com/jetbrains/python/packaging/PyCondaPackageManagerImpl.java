@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,10 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @Nullable private volatile List<PyPackage> mySideCache = null;
@@ -105,19 +101,18 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
    * @return packages installed using 'conda' manager only.
    * Use 'useConda' flag to retrieve 'pip' packages
    */
-  @NotNull
   @Override
-  protected List<PyPackage> collectPackages() throws ExecutionException {
+  protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
     final List<PyPackage> pipPackages = super.collectPackages();
-    final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-    final Set<PyPackage> condaPackages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+    final ProcessOutput output = getCondaOutput("list", List.of("-e"));
+    List<PyPackage> condaPackages = parseCondaToolOutput(output.getStdout());
 
     if (useConda) {
       mySideCache = pipPackages;
-      return Lists.newArrayList(condaPackages);
+      return condaPackages;
     }
     else {
-      mySideCache = Lists.newArrayList(condaPackages);
+      mySideCache = condaPackages;
       return super.collectPackages();
     }
   }
@@ -127,29 +122,21 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return useConda || super.hasManagement();
   }
 
-  @NotNull
-  private List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
-    final String[] lines = StringUtil.splitByLines(s);
-    final List<PyPackage> packages = new ArrayList<>();
-    for (String line : lines) {
+  private @NotNull List<PyPackage> parseCondaToolOutput(@NotNull String output) throws PyExecutionException {
+    Set<PyPackage> packages = new HashSet<>();
+    for (String line : StringUtil.splitByLines(output)) {
       if (line.startsWith("#")) continue;
-      final List<String> fields = StringUtil.split(line, "=");
-      if (fields.size() < 3) {
-        throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.invalid.conda.output.format"), "conda", Collections.emptyList());
-      }
-      final String name = fields.get(0);
-      final String version = fields.get(1);
-      final List<PyRequirement> requirements = new ArrayList<>();
-      if (fields.size() >= 4) {
-        final String requiresLine = fields.get(3);
-        final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(parseRequirements(requiresSpec));
-      }
-      if (!"Python".equals(name)) {
-        packages.add(new PyPackage(name, version, "", requirements));
+
+      PyPackage pkg = parsePackaging(line,
+                                     "=",
+                                     false,
+                                     PySdkBundle.message("python.sdk.conda.dialog.invalid.conda.output.format"),
+                                     "conda");
+      if (pkg != null) {
+        packages.add(pkg);
       }
     }
-    return packages;
+    return new ArrayList<>(packages);
   }
 
   @NotNull

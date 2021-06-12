@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.membersManager;
 
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -65,7 +66,7 @@ final class TypeSafeMovingStrategy<T extends PyElement> {
 
     // Restore references to add appropriate imports
     for (final PyElement element : newElements) {
-      PyClassRefactoringUtil.restoreNamedReferences(element);
+      PyClassRefactoringUtil.restoreNamedReferences(element, null, references.toArray(PsiElement.EMPTY_ARRAY));
     }
   }
 }

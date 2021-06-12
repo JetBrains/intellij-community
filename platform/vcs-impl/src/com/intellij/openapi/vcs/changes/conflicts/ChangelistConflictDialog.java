@@ -101,7 +101,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     return new Action[] { new AbstractAction(VcsBundle.message("changes.configure")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(myProject));
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ChangelistConflictConfigurable.class);
       }
     }};
   }

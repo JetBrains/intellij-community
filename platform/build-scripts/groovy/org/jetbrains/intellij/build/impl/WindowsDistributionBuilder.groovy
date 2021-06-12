@@ -11,31 +11,23 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final Path ideaProperties
-  private final Path patchedApplicationInfo
+  private final String patchedApplicationInfo
   private final Path icoFile
 
-  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, Path ideaProperties, Path patchedApplicationInfo) {
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, Path ideaProperties, String patchedApplicationInfo) {
     super(buildContext)
     this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
@@ -66,7 +58,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     def pty4jNativeDir = BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
-    BuildTasksImpl.copyResourceFiles(buildContext, winDistPath)
+    BuildTasksImpl.copyDistFiles(buildContext, winDistPath)
 
     Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 
@@ -324,22 +316,23 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
    * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
    * //todo[nik] pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
    */
-  private Path generateApplicationInfoForLauncher(@NotNull Path appInfoFile, @NotNull Path icoFilesDirectory) {
+  private Path generateApplicationInfoForLauncher(@NotNull String appInfo, @NotNull Path icoFilesDirectory) {
+    Path patchedFile = buildContext.paths.tempDir.resolve("win-launcher-application-info.xml")
     if (icoFile == null) {
-      return appInfoFile
+      Files.writeString(patchedFile, appInfo)
+      return patchedFile
     }
 
     Files.createDirectories(icoFilesDirectory)
     Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
-    Element root = JDOMUtil.load(appInfoFile)
+    Element root = JDOMUtil.load(appInfo)
     // do not use getChild - maybe null due to namespace
     Element iconElement = (Element)root.getContent().stream()
       .filter({ it instanceof Element && ((Element)it).getName() == "icon" })
       .findFirst()
-      .orElseThrow({ new RuntimeException("`icon` element not found in $appInfoFile:\n${Files.readString(appInfoFile)}") })
+      .orElseThrow({ new RuntimeException("`icon` element not found in $appInfo:\n${appInfo}") })
 
     iconElement.setAttribute("ico", icoFile.fileName.toString())
-    Path patchedFile = buildContext.paths.tempDir.resolve("win-launcher-application-info.xml")
     JDOMUtil.write(root, patchedFile)
     return patchedFile
   }

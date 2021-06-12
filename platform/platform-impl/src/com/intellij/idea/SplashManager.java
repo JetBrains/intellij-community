@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -31,15 +32,8 @@ public final class SplashManager {
   private static JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static void show(String @NotNull [] args, boolean visible) {
-    for (String arg : args) {
-      if (CommandLineArgs.NO_SPLASH.equals(arg)) {
-        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
-        return;
-      }
-    }
-
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization");
+  public static void scheduleShow() {
+    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.DEFAULT);
     try {
       PROJECT_FRAME = createFrameIfPossible();
     }
@@ -56,13 +50,15 @@ public final class SplashManager {
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization");
+    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.DEFAULT);
     SPLASH_WINDOW = new Splash(appInfo);
+    Activity queueActivity = activity.startChild("splash initialization (in queue)");
     EventQueue.invokeLater(() -> {
+      queueActivity.end();
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
       if (splash != null) {
-        splash.initAndShow(visible);
+        splash.initAndShow(true);
       }
       activity.end();
     });

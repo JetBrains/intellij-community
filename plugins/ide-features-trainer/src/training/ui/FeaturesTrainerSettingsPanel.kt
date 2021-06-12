@@ -11,7 +11,7 @@ import training.learn.LearnBundle
 import training.util.resetPrimaryLanguage
 import javax.swing.DefaultComboBoxModel
 
-class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
+private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
   override fun createPanel(): DialogPanel = panel {
     val languagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }
     if (languagesExtensions.isNotEmpty()) {

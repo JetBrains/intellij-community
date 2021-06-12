@@ -1,5 +1,15 @@
 <html>
 <body>
-This inspection highlights situations, where argument passed to function is equal to default parameter value
+<p>Reports a problem when an argument
+  passed to the function is equal to the default parameter value.</p>
+<p>This inspection is disabled by default to avoid performance degradation.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def my_function(a: int = 2):
+    print(a)
+
+
+my_function(2)
+</pre>
 </body>
 </html>

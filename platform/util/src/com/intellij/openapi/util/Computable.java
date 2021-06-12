@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 /**
- * Use {@link Supplier} instead.
+ * Deprecated. Use {@link Supplier} instead.
  */
 public interface Computable<T> extends Supplier<T> {
   T compute();

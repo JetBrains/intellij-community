@@ -34,7 +34,7 @@ public final class HgTestUtil {
   public static void printToFile(@NotNull VirtualFile file, String content) throws FileNotFoundException {
     PrintStream centralPrinter = null;
     try {
-      centralPrinter = new PrintStream(new FileOutputStream(new File(file.getPath())));
+      centralPrinter = new PrintStream(new FileOutputStream(file.getPath()));
       centralPrinter.print(content);
       centralPrinter.close();
     }

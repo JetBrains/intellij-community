@@ -6,7 +6,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import training.learn.OpenLessonActivities
 import training.util.learningToolWindow
 
-class OpenLearnPanel : DumbAwareAction() {
+private class OpenLearnPanel : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {

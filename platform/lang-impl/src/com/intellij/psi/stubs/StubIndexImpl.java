@@ -28,9 +28,9 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
-import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -39,6 +39,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,13 +51,12 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class StubIndexImpl extends StubIndexEx {
-  private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
   private static final class AsyncState {
@@ -71,6 +71,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
+
+  private final AtomicBoolean myForcedClean = new AtomicBoolean();
   private volatile CompletableFuture<AsyncState> myStateFuture;
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
@@ -84,13 +86,6 @@ public final class StubIndexImpl extends StubIndexEx {
     }, null);
   }
 
-  static @Nullable StubIndexImpl getInstanceOrInvalidate() {
-    if (ourForcedClean.compareAndSet(null, Boolean.TRUE)) {
-      return null;
-    }
-    return (StubIndexImpl)getInstance();
-  }
-
   private AsyncState getAsyncState() {
     AsyncState state = myState; // memory barrier
     if (state == null) {
@@ -100,6 +95,12 @@ public final class StubIndexImpl extends StubIndexEx {
       myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
     }
     return state;
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public void waitUntilStubIndexedInitialized() {
+    getAsyncState();
   }
 
   public void initializationFailed(@NotNull Throwable error) {
@@ -527,17 +528,22 @@ public final class StubIndexImpl extends StubIndexEx {
 
   void initializeStubIndexes() {
     assert !myInitialized;
-    // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
-    FileBasedIndex.getInstance();
-    myStateFuture = new CompletableFuture<>();
-    Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
 
-    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-      try {
-        future.get();
-      }
-      catch (Throwable t) {
-        LOG.error(t);
+    // might be called on the same thread twice if initialization has been failed
+    if (myStateFuture == null) {
+      // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
+      FileBasedIndex.getInstance();
+
+      myStateFuture = new CompletableFuture<>();
+      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
+
+      if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
+        try {
+          future.get();
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
       }
     }
   }
@@ -584,7 +590,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   void clearAllIndices() {
     if (!myInitialized) {
-      LOG.error("stub index cleaning called when index is not yet initialized");
+      myForcedClean.set(true);
       return;
     }
     for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
@@ -724,7 +730,7 @@ public final class StubIndexImpl extends StubIndexEx {
         extensionsIterator = Collections.emptyIterator();
       }
 
-      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+      boolean forceClean = Boolean.TRUE == myForcedClean.getAndSet(false);
       List<ThrowableRunnable<?>> tasks = new ArrayList<>();
       while (extensionsIterator.hasNext()) {
         StubIndexExtension<?, ?> extension = extensionsIterator.next();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.BundleBase
@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -78,7 +77,6 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -267,7 +265,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       })
 
       connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-        override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
           process { manager ->
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
@@ -454,10 +452,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun ExtensionPointImpl<RegisterToolWindowTaskProvider>.computeExtraToolWindowBeans(): List<RegisterToolWindowTask> {
     val list = mutableListOf<RegisterToolWindowTask>()
     this.processImplementations(true) { supplier, epPluginDescriptor ->
-      if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID)
-        for (bean in supplier.get().getTasks(project)) {
+      if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
+        for (bean in (supplier.get() ?: return@processImplementations).getTasks(project)) {
           list.addIfNotNull(beanToTask(bean))
         }
+      }
       else {
         LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $epPluginDescriptor")
       }
@@ -751,17 +750,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
   override val lastActiveToolWindowId: String?
-    get() = getLastActiveToolWindow(condition = null)?.id
+    get() = getLastActiveToolWindows().firstOrNull()?.id
 
-  override fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow? {
+  fun getLastActiveToolWindows(): Iterable<ToolWindow> {
     EDT.assertIsEdt()
-    for (i in 0 until activeStack.persistentSize) {
-      val toolWindow = activeStack.peekPersistent(i).toolWindow
-      if (toolWindow.isAvailable && (condition == null || condition.test(toolWindow.component))) {
-        return toolWindow
-      }
-    }
-    return null
+    return (0 until activeStack.persistentSize).asSequence()
+      .map { activeStack.peekPersistent(it).toolWindow }
+      .filter { it.isAvailable }
+      .asIterable()
   }
 
   /**
@@ -1085,10 +1081,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
-    val comparator = Comparator<ToolWindow> { o1, o2 ->
-      windowInfoComparator.compare((o1 as? ToolWindowImpl)?.windowInfo, (o2 as? ToolWindowImpl)?.windowInfo)
+
+    if (Registry.`is`("ide.new.stripes.ui")) {
+      toolWindow.largeStripeAnchor = if (toolWindow.largeStripeAnchor == ToolWindowAnchor.NONE) task.anchor else toolWindow.largeStripeAnchor
     }
-    toolWindowPane.onStripeButtonAdded(project, button.toolWindow, button.toolWindow.largeStripeAnchor, comparator)
+
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
     // mode. But if tool window was active but its mode doesn't allow to activate it again
@@ -1117,6 +1114,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     LOG.debug { "enter: unregisterToolWindow($id)" }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
+    ActivateToolWindowAction.unregister(id)
 
     val entry = idToEntry.remove(id) ?: return
     val toolWindow = entry.toolWindow
@@ -1511,10 +1509,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireStateChanged()
   }
 
-  fun setLargeStripeAnchor(id: String, largeStripeAnchor: ToolWindowAnchor) {
-    val info = getRegisteredMutableInfoOrLogError(id)
-    info.largeStripeAnchor = largeStripeAnchor
-    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+  fun setLargeStripeAnchor(id: String, anchor: ToolWindowAnchor) {
+    val entry = idToEntry[id]!!
+
+    val info = entry.readOnlyWindowInfo
+
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    setToolWindowLargeAnchorImpl(entry, info, getRegisteredMutableInfoOrLogError(id), anchor)
+    toolWindowPane!!.validateAndRepaint()
     fireStateChanged()
   }
 
@@ -1564,6 +1566,47 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val stripe = toolWindowPane.getStripeFor(anchor)
     addStripeButton(entry.stripeButton, stripe)
     stripe.revalidate()
+  }
+
+  private fun setToolWindowLargeAnchorImpl(entry: ToolWindowEntry,
+                                           currentInfo: WindowInfo,
+                                           layoutInfo: WindowInfoImpl,
+                                           anchor: ToolWindowAnchor) {
+    val toolWindowPane = toolWindowPane!!
+    if (!currentInfo.isVisible || anchor == currentInfo.largeStripeAnchor || currentInfo.type == ToolWindowType.FLOATING || currentInfo.type == ToolWindowType.WINDOWED) {
+      doSetLargeAnchor(entry, layoutInfo, anchor)
+    }
+    else {
+      val wasFocused = entry.toolWindow.isActive
+      // for docked and sliding windows we have to move buttons and window's decorators
+      layoutInfo.isVisible = false
+      toolWindowPane.removeDecorator(currentInfo, entry.toolWindow.decoratorComponent, true, this)
+
+      doSetLargeAnchor(entry, layoutInfo, anchor)
+
+      showToolWindowImpl(entry, layoutInfo, false)
+      if (wasFocused) {
+        entry.toolWindow.requestFocusInToolWindow()
+      }
+    }
+  }
+
+  private fun doSetLargeAnchor(entry: ToolWindowEntry, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor) {
+    toolWindowPane!!.onStripeButtonAdded(project, entry.toolWindow, anchor, layoutInfo)
+    layout.setAnchor(layoutInfo, anchor, -1)
+
+    // update infos for all window. Actually we have to update only infos affected by setAnchor method
+    for (otherEntry in idToEntry.values) {
+      val otherInfo = layout.getInfo(otherEntry.id)?.copy() ?: continue
+      otherEntry.applyWindowInfo(otherInfo)
+    }
+  }
+
+  fun setOrderOnLargeStripe(id: String, order: Int) {
+    val info = getRegisteredMutableInfoOrLogError(id)
+    info.orderOnLargeStripe = order
+    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+    fireStateChanged()
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
@@ -2268,5 +2311,6 @@ enum class ToolWindowEventSource {
   ToolWindowsWidget, RemoveStripeButtonAction,
   HideOnShowOther, HideSide, CloseFromSwitcher,
   ActivateActionMenu, ActivateActionKeyboardShortcut, ActivateActionGotoAction, ActivateActionOther,
-  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction, ToolWindowSwitcher
+  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction, ToolWindowSwitcher,
+  InspectionsWidget
 }

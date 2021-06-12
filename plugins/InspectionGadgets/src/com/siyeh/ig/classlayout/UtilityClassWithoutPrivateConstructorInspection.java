@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -27,7 +28,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,13 +54,11 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.add(annotationsPanel, BorderLayout.CENTER);
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"),
-                                           this, "ignoreClassesWithOnlyMain");
-    panel.add(checkBox, BorderLayout.SOUTH);
+    panel.add(annotationsPanel, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"), "ignoreClassesWithOnlyMain");
     return panel;
   }
 

@@ -1,15 +1,16 @@
 <html>
 <body>
-Reports repeated test problems:
+Reports problems with JUnit 5 <code>@RepeatedTest</code>:
 <ul>
   <li>
-    @Test and @RepeatedTest on the same method
+    <code>@Test</code> and <code>@RepeatedTest</code> on the same method (even though it is allowed, they have no additional effect together).
   </li>
   <li>
-    RepetitionInfo parameter is used in @BeforeAll/@AfterAll methods
+    <code>RepetitionInfo</code> parameter is used in <code>@BeforeAll</code>/<code>@AfterAll</code> methods (it is not injected in these methods).
   </li>
   <li>
-    RepetitionInfo parameter is used in @BeforeEach/@AfterEach methods in classes with @Test methods
+    <code>RepetitionInfo</code> parameter is used in <code>@BeforeEach</code>/<code>@AfterEach</code> methods in classes with <code>@Test</code>
+    methods (in this case, it won't be injected for <code>@Test</code> methods).
   </li>
 </ul>
 <!-- tooltip end -->

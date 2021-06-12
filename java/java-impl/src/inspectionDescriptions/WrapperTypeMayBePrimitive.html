@@ -1,21 +1,39 @@
 <html>
 <body>
 Reports local variable of wrapper type which has most of its usages primitive.
-<!-- tooltip end -->
 <p>In some cases, boxing can be source of significant performance penalty, especially in loops.</p>
+Some heuristics are applied to estimate the number of boxing operations, for example, conversions inside the loop considered
+as much more common.
+
 <p>Example:</p>
-<pre>
+<pre><code>
   public void example() {
-    Long l = 12L;
-    needBox(l);
-    for (int i = 0; i < 10; i++) {
-      needPrimitive(l); // Loops usages considered as more often
+    Integer value = 12;
+    needBox(value);
+    for (int i = 0; i &lt; 10; i++) {
+      // Loop usages considered as happening more often
+      needPrimitive(value);
     }
   }
 
-  void needPrimitive(long l) {}
-  void needBox(Long l) {}
-</pre>
+  void needPrimitive(int value) {}
+  void needBox(Integer value) {}
+</code></pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre><code>
+  public void example() {
+    int value = 12;
+    needBox(value);
+    for (int i = 0; i &lt; 10; i++) {
+      // Loop usages considered as happening more often
+      needPrimitive(value);
+    }
+  }
+
+  void needPrimitive(int value) {}
+  void needBox(Integer value) {}
+</code></pre>
+<!-- tooltip end -->
 <p>
   <small>New in 2018.2</small>
 </p>

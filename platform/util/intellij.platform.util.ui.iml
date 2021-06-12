@@ -22,5 +22,6 @@
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
   </component>
 </module>

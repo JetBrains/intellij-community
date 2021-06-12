@@ -14,6 +14,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
@@ -72,10 +73,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     mySessionId = sessionId;
     myChannel = channel;
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Starting build with ordinal " + (delta == null ? null : delta.getOrdinal()));
-    }
-
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
@@ -113,6 +110,23 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     if (myPreloadedData != null) {
       JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.buildSessionInitialized(myPreloadedData));
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Starting build:");
+      LOG.debug(" initial delta = " + (delta == null ? null : "FSEvent(ordinal = " + delta.getOrdinal() + ", changed = " + showFirstItemIfAny(delta.getChangedPathsList()) + ", deleted = " + delta.getDeletedPathsList() + ")"));
+      LOG.debug(" forceModelLoading = " + myForceModelLoading);
+      LOG.debug(" loadUnloadedModules = " + myLoadUnloadedModules);
+      LOG.debug(" preloadedData = " + myPreloadedData);
+      LOG.debug(" buildType = " + myBuildType);
+    }
+  }
+
+  private static @NonNls String showFirstItemIfAny(List<String> list) {
+    switch (list.size()) {
+      case 0: return "[]";
+      case 1: return "[" + list.get(0) + "]";
+      default: return "[" + list.get(0) + " and " + (list.size() - 1) + " more]";
     }
   }
 
@@ -212,6 +226,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (storageFilesAbsent) {
       // invoked the very first time for this project
       myBuildRunner.setForceCleanCaches(true);
+      LOG.debug("Storage files are absent");
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
     final DataInputStream fsStateStream =
@@ -220,6 +235,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
       final boolean hasWorkFlag = fsStateStream != null? fsStateStream.readBoolean() : myPreloadedData.hasWorkToDo();
+      LOG.debug("hasWorkFlag = " + hasWorkFlag);
       final boolean hasWorkToDoWithModules = hasWorkFlag || myInitialFSDelta == null;
       if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
           && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
@@ -245,6 +261,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
     }
+    LOG.debug("Fast up-to-date check didn't work, continue to regular build");
 
     final BuildFSState fsState = preloadedProject != null? preloadedProject.fsState : new BuildFSState(false);
     try {
@@ -309,7 +326,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   private static boolean scopeContainsModulesOnlyForIncrementalMake(List<TargetTypeBuildScope> scopes) {
     TargetTypeRegistry typeRegistry = null;
     for (TargetTypeBuildScope scope : scopes) {
-      if (scope.getForceBuild()) return false;
+      if (scope.getForceBuild()) {
+        LOG.debug("Build scope forces compilation for targets of type " + scope.getTypeId());
+        return false;
+      }
       final String typeId = scope.getTypeId();
       if (isJavaModuleBuildType(typeId)) { // fast check
         continue;
@@ -320,6 +340,9 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       final BuildTargetType<?> targetType = typeRegistry.getTargetType(typeId);
       if (targetType != null && !(targetType instanceof ModuleInducedTargetType)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Build scope contains target of type " + targetType + " which isn't eligible for fast up-to-date check");
+        }
         return false;
       }
     }
@@ -482,6 +505,9 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (JpsModule module : pd.getProject().getModules()) {
       for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
         if (!pd.getBuildTargetIndex().isDummy(target) && state.hasWorkToDo(target)) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Has work to do in " + target);
+          }
           return true;
         }
       }

@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.util.NlsContexts.Button;
-import static com.intellij.openapi.util.NlsContexts.DialogMessage;
-import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+import static com.intellij.openapi.util.NlsContexts.*;
 
 /**
  * Use {@link DialogManager#show(DialogWrapper) DialogManager.show(DialogWrapper)} instead of {@link DialogWrapper#show()}

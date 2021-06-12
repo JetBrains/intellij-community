@@ -113,7 +113,7 @@ class ActionButton extends IconButton implements ActionListener {
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(e);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event);
     }
   }
 
@@ -128,7 +128,7 @@ class ActionButton extends IconButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
+    DataContext context = DataManager.getInstance().getDataContext(myButton);
     return new AnActionEvent(inputEvent, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
                              ActionManager.getInstance(), modifiers);
   }

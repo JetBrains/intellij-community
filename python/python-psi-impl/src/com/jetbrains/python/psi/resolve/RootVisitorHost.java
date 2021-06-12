@@ -32,9 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class RootVisitorHost {
   public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
     // real search

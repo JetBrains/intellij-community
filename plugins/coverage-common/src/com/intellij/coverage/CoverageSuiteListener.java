@@ -16,7 +16,28 @@
 
 package com.intellij.coverage;
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Listener of process' coverage lifecycle
+ */
 public interface CoverageSuiteListener {
+  /**
+   * Called <b>once</b> when the coverage process has ended
+   *
+   * @param suite the new suite corresponding to this coverage
+   */
+  @RequiresBackgroundThread
+  default void coverageGathered(@NotNull CoverageSuite suite) {}
+
+  /**
+   * Called <b>each time</b> before a coverage suite is opened, added to existing, selected, closed
+   */
   void beforeSuiteChosen();
+
+  /**
+   * Called <b>each time</b> after a coverage suite is opened, added to existing, selected, closed
+   */
   void afterSuiteChosen();
 }

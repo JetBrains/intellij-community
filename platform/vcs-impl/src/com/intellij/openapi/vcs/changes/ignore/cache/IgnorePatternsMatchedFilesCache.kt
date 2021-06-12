@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -121,7 +120,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
       ProgressManager.checkCanceled()
       val name = fileOrDir.name
       if (RegexUtil.matchAnyPart(parts, name)) {
-        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(project, name, projectScope) }) {
+        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(name, projectScope) }) {
           if (file.isValid && RegexUtil.matchAllParts(parts, file.path)) {
             files.add(file)
           }
@@ -135,7 +134,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
   companion object {
     @JvmStatic
     fun getInstance(project: Project): IgnorePatternsMatchedFilesCache {
-      return ServiceManager.getService(project, IgnorePatternsMatchedFilesCache::class.java)
+      return project.getService(IgnorePatternsMatchedFilesCache::class.java)
     }
   }
 }

@@ -6,7 +6,11 @@ import com.intellij.psi.search.SearchScope
 import org.jetbrains.plugins.groovy.intentions.style.inference.search.searchForInnerReferences
 import org.jetbrains.plugins.groovy.intentions.style.inference.search.searchForOuterReferences
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 data class SignatureInferenceOptions(val shouldUseReducedScope : Boolean,
@@ -37,13 +41,30 @@ open class SignatureInferenceContext(val ignored: List<GrMethod>) {
     }
   }
 
+  /**
+   * Computes type of expression that is written in code. Avoids invocation of complex inference
+   */
+  fun GrExpression.staticType(): PsiType? {
+    return when (this) {
+      is GrMethodCall -> {
+        val resolveResults = multiResolve(false)
+        val types = resolveResults.mapNotNull { getStaticReturnType(it as? GroovyMethodResult, this) }
+        if (types.isEmpty()) {
+          return type
+        }
+        TypesUtil.getLeastUpperBoundNullable(types, this.manager)
+      }
+      else -> type
+    }
+  }
+
   open fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
     return SignatureInferenceContext(listOf(method, *ignored.toTypedArray()))
   }
 
-  open val allowedToProcessReturnType : Boolean = true
+  open val allowedToProcessReturnType: Boolean = true
 
-  open val allowedToResolveOperators : Boolean = true
+  open val allowedToResolveOperators: Boolean = true
 }
 
 object DefaultInferenceContext : SignatureInferenceContext(emptyList())
@@ -73,4 +94,11 @@ class ClosureIgnoringInferenceContext(private val manager: PsiManager, ignored: 
   override val allowedToProcessReturnType: Boolean = false
 
   override val allowedToResolveOperators: Boolean = false
+}
+
+private fun getStaticReturnType(result: GroovyMethodResult?, context: GrExpression): PsiType? {
+  result ?: return null
+  val unprocessedReturnType = result.candidate?.method?.returnType
+  val substitutor = result.substitutor
+  return TypesUtil.substituteAndNormalizeType(unprocessedReturnType, substitutor, result.spreadState, context)
 }

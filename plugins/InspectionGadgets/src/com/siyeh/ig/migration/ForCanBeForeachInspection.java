@@ -477,7 +477,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
@@ -496,7 +496,9 @@ public class ForCanBeForeachInspection extends BaseInspection {
                                   PsiVariable iterator, PsiType contentType, PsiElement childToSkip,
                                   CommentTracker commentTracker, StringBuilder out) {
     if (isIteratorNext(element, iterator, contentType)) {
-      out.append(contentVariableName);
+      if (!(element.getParent() instanceof PsiExpressionStatement)) {
+        out.append(contentVariableName);
+      }
     }
     else {
       final PsiElement[] children = element.getChildren();

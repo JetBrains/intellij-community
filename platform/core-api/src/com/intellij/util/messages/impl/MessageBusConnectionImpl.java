@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.util.Disposer;
@@ -7,6 +7,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class MessageBusConnectionImpl extends BaseBusConnection implements MessageBusConnection {
   private MessageHandler defaultHandler;
@@ -60,18 +61,28 @@ final class MessageBusConnectionImpl extends BaseBusConnection implements Messag
     bus.deliverImmediately(this);
   }
 
-  static boolean removeHandlersFromJob(@NotNull Message<?> job, Object @NotNull [] topicAndHandlerPairs) {
-    return job.handlers.removeIf(handler -> {
+  /**
+   * Returns true if no more handlers.
+   */
+  static boolean nullizeHandlersFromMessage(@NotNull Message message, @Nullable Object @NotNull [] topicAndHandlerPairs) {
+    int nullElementCount = 0;
+    for (int messageIndex = 0; messageIndex < message.handlers.length; messageIndex++) {
+      Object handler = message.handlers[messageIndex];
+      if (handler == null) {
+        nullElementCount++;
+      }
+
       for (int i = 0; i < topicAndHandlerPairs.length; i +=2) {
-        if (job.topic == topicAndHandlerPairs[i] && handler == topicAndHandlerPairs[i + 1]) {
-          return true;
+        if (message.topic == topicAndHandlerPairs[i] && handler == topicAndHandlerPairs[i + 1]) {
+          message.handlers[messageIndex] = null;
+          nullElementCount++;
         }
       }
-      return false;
-    });
+    }
+    return nullElementCount == message.handlers.length;
   }
 
-  <L> boolean isMyHandler(@NotNull Topic<L> topic, @NotNull L handler) {
+  boolean isMyHandler(@NotNull Topic<?> topic, @NotNull Object handler) {
     if (defaultHandler == handler) {
       return true;
     }

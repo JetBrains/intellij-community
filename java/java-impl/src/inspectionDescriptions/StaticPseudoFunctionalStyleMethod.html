@@ -1,17 +1,22 @@
 <html>
 <body>
-Inspection detects usages of pseudo-functional code if Java Stream API is available.
-<br/>
-Consider cases when monad behaviour is emulated by static method call:
-<br/>
+Reports usages of pseudo-functional code if <code>Java Stream API</code> is available. 
+Though <code>guava Iterable API</code> provides functionality similar to <code>Java Streams API</code>, it's slightly different and may miss some features.
+Especially, primitive-specialized stream variants like <code>IntStream</code> are more performant than generic variants.
+<p><b>Example:</b></p>
 <code>
-List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);
+List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);//warning: Pseudo functional style code
 </code>
+<p>After the quickfix the code would look like: 
+  <code>List&lt;String&gt; transformedIterable = someList.stream().map(someTransformFunction).collect(Collectors.toList());</code></p>
 <br>
-Note, that code semantic could be changed, for example: guava's <b>Iterable.transform</b> produce lazy-evaluated iterable
-but replacement produced by quick fix will be eager-evaluated.
+<b>Note:</b> code semantic could be changed e.g., guava's <code>Iterable.transform</code> produces lazy-evaluated iterable, but the replacement is eager-evaluated.
 <br>
 <!-- tooltip end -->
+<p>
+  Use the table below to configure static method calls which should be translated to the <code>stream API</code>.
+</p>
+
 <p>This inspection only reports if the language level of the project or module is 8 or higher</p>
 </body>
 </html>

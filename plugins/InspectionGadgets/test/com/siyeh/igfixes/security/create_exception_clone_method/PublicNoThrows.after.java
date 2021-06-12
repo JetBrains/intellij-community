@@ -8,6 +8,6 @@ class PublicNoThrows extends Parent {
 class Parent implements Cloneable {
 
   public Parent clone() {
-    retur null;
+    return null;
   }
 }

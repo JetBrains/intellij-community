@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.util.*
 import java.util.concurrent.CompletableFuture
 
 class GHIOExecutorLoadingModel<T>(parentDisposable: Disposable)
@@ -37,7 +41,7 @@ class GHIOExecutorLoadingModel<T>(parentDisposable: Disposable)
         resultAvailable = true
         it
       }.errorOnEdt {
-        if (progressIndicator.isCanceled || GithubAsyncUtil.isCancellation(it)) return@errorOnEdt
+        if (progressIndicator.isCanceled || CompletableFutureUtil.isCancellation(it)) return@errorOnEdt
         error = it
         resultAvailable = false
       }.completionOnEdt {

@@ -261,8 +261,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return null;
     }
 
-    myManager.getProject().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT));
-    Activity restoringEditors = StartUpMeasurer.startMainActivity(Activities.EDITOR_RESTORING);
+    myManager.getProject().putUserData(OPEN_FILES_ACTIVITY,
+                                       StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT, ActivityCategory.DEFAULT));
+    Activity restoringEditors = StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING);
     JPanel component = myUIBuilder.process(element, getTopPanel());
     if (component != null) {
       component.setFocusable(false);
@@ -289,6 +290,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         if (!result.contains(editor)) {
           result.add(editor);
         }
+      }
+    }
+  }
+
+  public void closeAllFiles() {
+    ArrayList<EditorWindow> windows = new ArrayList<>(myWindows);
+    clear();
+    for (EditorWindow window : windows) {
+      for (VirtualFile file : window.getFiles()) {
+        window.closeFile(file, false, false);
       }
     }
   }
@@ -428,11 +439,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
+      LOG.assertTrue(composite != null);
       int index = window.findEditorIndex(composite);
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
       TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
-      if (composite != null && composite.isPreview()) {
+      if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
         attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
       }

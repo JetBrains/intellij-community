@@ -5,4 +5,4 @@ def bar():
 
 def foo():
     a = 1
-    print a
+    print(a)

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.Messages
@@ -46,8 +45,6 @@ class ChangeModuleNamesAction : DumbAwareAction(JavaUiBundle.message("action.tex
         }
         return null
       }
-
-      override fun checkInput(inputString: String) = getErrorText(inputString) == null
 
       override fun canClose(inputString: String) = getErrorText(inputString) == null
     }

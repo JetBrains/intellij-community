@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.DeferredIconImpl;
@@ -26,9 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public final class NativeIconProvider extends IconProvider implements DumbAware {
   private final Map<Ext, Icon> myIconCache = new HashMap<>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
@@ -54,6 +53,10 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
 
   private @Nullable Icon doGetIcon(@NotNull VirtualFile virtualFile, int flags) {
     if (!isNativeFileType(virtualFile)) {
+      return null;
+    }
+
+    if (virtualFile instanceof VirtualFileWithoutContent) {
       return null;
     }
 

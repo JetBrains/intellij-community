@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -13,21 +12,12 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
@@ -35,21 +25,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
-import javax.swing.event.HyperlinkEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenServerCMDState extends CommandLineState {
-
   private static boolean setupThrowMainClass = false;
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
@@ -82,7 +64,7 @@ public class MavenServerCMDState extends CommandLineState {
     params.setWorkingDirectory(getWorkingDirectory());
 
 
-    Map<String, String> defs = new THashMap<>();
+    Map<String, String> defs = new HashMap<>();
     defs.putAll(getMavenOpts());
 
     configureSslRelatedOptions(defs);
@@ -120,9 +102,11 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    final List<String> classPath = collectRTLibraries(myDistribution.getVersion());
+    Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
-    params.getClassPath().addAll(classPath);
+    for (String s : classPath) {
+      params.getClassPath().add(s);
+    }
     params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
@@ -170,10 +154,8 @@ public class MavenServerCMDState extends CommandLineState {
     return PathManager.getBinPath();
   }
 
-
-  @NotNull
-  protected List<String> collectRTLibraries(String mavenVersion) {
-    final List<String> classPath = new ArrayList<>();
+  protected @NotNull Collection<String> collectRTLibraries(String mavenVersion) {
+    Set<String> classPath = new LinkedHashSet<>();
     classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger.class));
@@ -185,7 +167,10 @@ public class MavenServerCMDState extends CommandLineState {
     classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
     classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
 
-    ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
+    String element = PathManager.getJarPathForClass(Query.class);
+    if (element != null) {
+      (classPath).add(element);
+    }
     return classPath;
   }
 

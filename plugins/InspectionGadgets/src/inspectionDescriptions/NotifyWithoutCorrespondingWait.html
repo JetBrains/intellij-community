@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports on any call to <b>Object.notify()</b>
-or <b>Object.notifyAll()</b>
-for which no call to a corresponding <b>Object.wait()</b>
-can be found. Only calls which target fields of the current class are reported by this inspection.
+Reports on any call to <code>Object.notify()</code> or <code>Object.notifyAll()</code> for which no call to a corresponding
+<code>Object.wait()</code> can be found. Only calls which target fields of the current class are reported by this inspection.
+<p>Example(where <code>synList.wait()</code> is never declared):</p>
+<pre>
+  synchronized (synList) {
+    synList.notify();
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

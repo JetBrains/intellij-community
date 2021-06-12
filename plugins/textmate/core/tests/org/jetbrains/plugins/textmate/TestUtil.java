@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.bundles.BundleFactory;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 
 import java.io.File;
@@ -17,6 +19,7 @@ public class TestUtil {
   @NonNls public static final String CHEF = "chef";
   @NonNls public static final String HTML = "html";
   @NonNls public static final String HTML_VSC = "html_vsc";
+  @NonNls public static final String CSS_VSC = "css_vsc";
   @NonNls public static final String DOCKER = "docker";
   @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
   @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";
@@ -33,6 +36,7 @@ public class TestUtil {
   @NonNls public static final String PYTHON = "python";
   @NonNls public static final String RUBY = "ruby";
   @NonNls public static final String PHP = "php";
+  @NonNls public static final String PHP_VSC = "php_vsc";
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
 
@@ -46,5 +50,13 @@ public class TestUtil {
 
   public static Bundle getBundle(String bundleName) throws IOException {
     return new BundleFactory(new CompositePlistReader()).fromDirectory(getBundleDirectory(bundleName));
+  }
+
+  public static TextMateScope scopeFromString(String scopeString) {
+    TextMateScope scope = TextMateScope.EMPTY;
+    for (String scopeName : StringUtil.split(scopeString, " ")) {
+      scope = scope.add(scopeName);
+    }
+    return scope;
   }
 }

@@ -3,6 +3,13 @@
 Reports methods named "main" which do not have signature
 public static void main(String[]). Such methods may be confusing, as methods named "main"
 are expected to be application entry points.
+<p><b>Example:</b></p>
+<pre><code>
+  class Main {
+    void main(String[] args) {} //a warning here because there are no "public static" modifiers
+  }
+</code></pre>
+<p>The quick-fix to rename the method is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>
 

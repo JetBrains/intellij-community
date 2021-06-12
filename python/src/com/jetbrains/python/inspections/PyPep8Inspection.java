@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
@@ -27,8 +13,6 @@ import java.util.List;
 /**
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
  * Pep8ExternalAnnotator.
- *
- * @author yole
  */
 public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
   public List<String> ignoredErrors = new ArrayList<>();
@@ -36,7 +20,7 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), ignoredErrors);
+    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), PyBundle.message("INSP.settings.pep8.ignore.errors.label"), ignoredErrors);
     return form.getContentPanel();
   }
 

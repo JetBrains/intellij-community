@@ -3,6 +3,24 @@
 Reports parameters that have different names from the corresponding
 parameters in the methods they override. While legal in Java, such inconsistent names may be confusing,
 and lessen the documentation benefits of good naming practices.
+<p><b>Example:</b>
+  <pre><code>
+  class Person {
+    Person(String fullName) {}
+  }
+  class Child extends Person {
+    Child(String name) { super(name); }
+  }
+</code></pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre><code>
+  class Person {
+    Person(String fullName) {}
+  }
+  class Child extends Person {
+    Child(String fullName) { super(fullName); }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkboxes below to indicate whether overridden parameter names which are only

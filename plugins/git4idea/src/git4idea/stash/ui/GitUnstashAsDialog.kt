@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
 import com.intellij.openapi.project.Project
@@ -8,6 +8,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
+import com.intellij.vcs.branch.BranchPresentation
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.ui.StashInfo
@@ -47,7 +48,7 @@ internal class GitUnstashAsDialog(private val project: Project, val stashInfo: S
   override fun createCenterPanel(): JComponent {
     return panel {
       row(GitBundle.message("stash.unstash.changes.current.branch.label")) {
-        label(CurrentBranchComponent.getCurrentBranch(project, stashInfo.root)?.let { CurrentBranchComponent.getPresentableText(it) } ?: "")
+        label(CurrentBranchComponent.getCurrentBranch(project, stashInfo.root)?.let { BranchPresentation.getPresentableText(it) } ?: "")
       }
       row(GitBundle.message("unstash.branch.label")) {
         branchTextField().withBinding(JBTextField::getText, JBTextField::setText,

@@ -22,9 +22,7 @@ import com.jetbrains.python.psi.resolve.PyCanonicalPathProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.*
 
-/**
- * @author yole
- */
+
 class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
   override fun getCanonicalPath(symbol: PsiElement?, qName: QualifiedName, foothold: PsiElement?): QualifiedName? {
     val virtualFile = PsiUtilCore.getVirtualFile(symbol)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file: JvmName("SuggestUsingRunDashBoardUtil")
 package com.intellij.execution
 
@@ -32,18 +32,17 @@ private const val suggestRunDashboardId = "Suggest Run Dashboard"
 
 private class SuggestDashboardNotification(
   private val project: Project,
-  private val types: Set<ConfigurationType>,
+  types: Set<ConfigurationType>,
   toolWindowId: String
 ) : Notification(
   suggestRunDashboardId,
-  AllIcons.RunConfigurations.TestState.Run,
   LangBundle.message("notification.title.use.toolwindow", toolWindowId),
-  null,
-  LangBundle.message("notification.suggest.dashboard", toolWindowId, toolWindowId, types.joinToString(prefix = "<b>", postfix = "</b>", separator = "<br>") { it.configurationTypeDescription }),
-  NotificationType.INFORMATION,
-  { _, _ -> }
+  LangBundle.message("notification.suggest.dashboard", toolWindowId, toolWindowId,
+                     types.joinToString(prefix = "<b>", postfix = "</b>", separator = "<br>") { it.configurationTypeDescription }),
+  NotificationType.INFORMATION
 ) {
   init {
+    icon = AllIcons.RunConfigurations.TestState.Run
     addAction(NotificationAction.create(CommonBundle.message("button.without.mnemonic.yes")) { _ ->
       ApplicationManager.getApplication().invokeLater {
         runWriteAction {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -14,9 +14,17 @@ import org.jetbrains.annotations.Nullable;
  * "groupId" and "version" fields are deprecated.
  */
 public final class CounterUsageCollectorEP {
+  /**
+   * @deprecated Please use {@link CounterUsageCollectorEP#implementationClass} and {@link CounterUsagesCollector#getGroup()}.
+   */
+  @Deprecated
   @Attribute("groupId")
   public String groupID;
 
+  /**
+   * @deprecated Please use {@link CounterUsageCollectorEP#implementationClass} and {@link CounterUsagesCollector#getGroup()}.
+   */
+  @Deprecated
   @Attribute("version")
   public int version = 1;
 

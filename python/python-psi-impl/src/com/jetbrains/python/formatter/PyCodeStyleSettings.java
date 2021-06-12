@@ -8,9 +8,7 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.jetbrains.python.PyPsiBundle;
 import org.intellij.lang.annotations.MagicConstant;
 
-/**
- * @author yole
- */
+
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public enum DictAlignment {

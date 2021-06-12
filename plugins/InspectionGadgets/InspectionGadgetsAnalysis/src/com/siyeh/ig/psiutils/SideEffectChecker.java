@@ -19,8 +19,8 @@ import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -277,9 +277,9 @@ public final class SideEffectChecker {
       // See com.intellij.codeInsight.DefaultInferredAnnotationProvider#getHardcodedContractAnnotation
       return true;
     }
-    return JavaMethodContractUtil.getMethodCallContracts(method, null).stream()
-                                 .filter(mc -> mc.getConditions().stream().noneMatch(ContractValue::isBoundCheckingCondition))
-                                 .anyMatch(mc -> mc.getReturnValue().isFail());
+    return ContainerUtil.exists(JavaMethodContractUtil.getMethodCallContracts(method, null),
+                                mc -> !ContainerUtil.exists(mc.getConditions(), ContractValue::isBoundCheckingCondition)
+                                      && mc.getReturnValue().isFail());
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {

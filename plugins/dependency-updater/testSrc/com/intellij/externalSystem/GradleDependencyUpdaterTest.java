@@ -33,7 +33,7 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
     importProjectFromTemplate();
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.addDependency(getModule("project"),
-                                    new UnifiedDependency("group", "artifact", "1.0", null));
+                                    new UnifiedDependency("group", "artifact", "1.0", "implementation"));
 
     importProject();
     assertScriptChanged();
@@ -46,8 +46,8 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.updateDependency(getModule("project"),
-                             new UnifiedDependency("group", "artifact", "1.0", null),
-                             new UnifiedDependency("group", "artifact", "2.0", null));
+                             new UnifiedDependency("group", "artifact", "1.0", "implementation"),
+                             new UnifiedDependency("group", "artifact", "2.0", "implementation"));
 
     importProject();
     assertScriptChanged();
@@ -60,8 +60,8 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.updateDependency(getModule("project"),
-                             new UnifiedDependency("group", "artifact", "1.0", null),
-                             new UnifiedDependency("group", "artifact", "2.0", null));
+                             new UnifiedDependency("group", "artifact", "1.0", "implementation"),
+                             new UnifiedDependency("group", "artifact", "2.0", "implementation"));
 
     importProject();
     assertScriptChanged();
@@ -74,7 +74,7 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.removeDependency(getModule("project"),
-                             new UnifiedDependency("group", "artifact", "1.0", null));
+                             new UnifiedDependency("group", "artifact", "1.0", "implementation"));
 
     importProject();
     assertScriptChanged();
@@ -87,8 +87,8 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.updateDependency(getModule("project"),
-                             new UnifiedDependency("group", "artifact", "1.0", null),
-                             new UnifiedDependency("group", "artifact", "2.0", null));
+                             new UnifiedDependency("group", "artifact", "1.0", "implementation"),
+                             new UnifiedDependency("group", "artifact", "2.0", "implementation"));
 
     importProject();
     assertScriptChanged();
@@ -100,8 +100,8 @@ public class GradleDependencyUpdaterTest extends GradleDependencyUpdaterTestBase
 
     assertTrue(myModifierService.supports(getModule("project")));
     myModifierService.updateDependency(getModule("project"),
-                             new UnifiedDependency("group", "artifact", "1.0", null),
-                             new UnifiedDependency("group", "artifact", "2.0", null));
+                             new UnifiedDependency("group", "artifact", "1.0", "implementation"),
+                             new UnifiedDependency("group", "artifact", "2.0", "implementation"));
 
     importProject();
     assertScriptChanged();

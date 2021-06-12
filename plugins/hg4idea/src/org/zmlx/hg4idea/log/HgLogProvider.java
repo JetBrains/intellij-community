@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -51,7 +50,7 @@ public final class HgLogProvider implements VcsLogProvider {
   public HgLogProvider(@NotNull Project project) {
     myProject = project;
     myRefSorter = new HgRefManager(project, getHgRepoManager(project));
-    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -324,7 +323,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   private static HgRepositoryManager getHgRepoManager(@NotNull Project project) {
-    return ServiceManager.getService(project, HgRepositoryManager.class);
+    return project.getService(HgRepositoryManager.class);
   }
 
   @Nullable

@@ -4,12 +4,22 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.storage.EntitySource;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public ArtifactRootElementImpl() {
@@ -65,5 +75,21 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   @Override
   public String toString() {
     return "<root>";
+  }
+
+  @Override
+  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+                                        @NotNull EntitySource source,
+                                        @NotNull Project project) {
+    WorkspaceEntity existingEntity = getExistingEntity(diff);
+    if (existingEntity != null) return existingEntity;
+
+    List<PackagingElementEntity> children = ContainerUtil.map(this.getChildren(), o -> {
+      return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
+    });
+
+    ArtifactRootElementEntity entity = BridgeModelModifiableEntitiesKt.addArtifactRootElementEntity(diff, children, source);
+    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    return entity;
   }
 }

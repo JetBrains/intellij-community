@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -29,7 +29,6 @@ public class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
-  private Reference<ResourceBundle.Control> myControl;
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
   private final @NonNls String myPathToBundle;
@@ -142,33 +141,13 @@ public class AbstractBundle {
 
   private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     try {
-      ResourceBundle.Control control = getResourceBundleControl();
-      return findBundle(pathToBundle, loader, control);
+      return findBundle(pathToBundle, loader, MyResourceControl.INSTANCE);
     }
     catch (MissingResourceException e) {
       LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
       ResourceBundle.clearCache(loader);
       return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
     }
-  }
-  //we need return UTF-8 control for java <= 1.8
-  //Before java9 ISO-8859-1 was used, in java 9 and above UTF-8
-  //see https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
-  //https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html
-  //for more details
-  @ReviseWhenPortedToJDK("9")
-  private ResourceBundle.Control getResourceBundleControl() {
-    ResourceBundle.Control control = com.intellij.reference.SoftReference.dereference(myControl);
-    if (control == null) {
-      if (JavaVersion.current().feature >= 9) {
-        control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
-      }
-      else {
-        control = Utf8ResourceControl.INSTANCE;
-      }
-      myControl = new com.intellij.reference.SoftReference<>(control);
-    }
-    return control;
   }
 
   protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
@@ -182,6 +161,44 @@ public class AbstractBundle {
   public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
+    }
+  }
+
+  // UTF-8 control for Java <= 1.8.
+  // Before java9 ISO-8859-1 was used, in java 9 and above UTF-8.
+  // See https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
+  // https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html for more details
+
+  // For all Java version - use getResourceAsStream instead of "getResource -> openConnection" for performance reasons
+  private final static class MyResourceControl extends ResourceBundle.Control {
+    final static MyResourceControl INSTANCE = new MyResourceControl();
+
+    @Override
+    public List<String> getFormats(String baseName) {
+      return FORMAT_PROPERTIES;
+    }
+
+    @Override
+    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
+      throws IOException {
+      String bundleName = toBundleName(baseName, locale);
+      // application protocol check
+      String resourceName = bundleName.contains("://") ? null : toResourceName(bundleName, "properties");
+      if (resourceName == null) {
+        return null;
+      }
+
+      InputStream stream = loader.getResourceAsStream(resourceName);
+      if (stream == null) {
+        return null;
+      }
+
+      try {
+        return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
+      }
+      finally {
+        stream.close();
+      }
     }
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,6 +21,7 @@ import org.jdesktop.swingx.graphics.ShadowRenderer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,6 +42,7 @@ public final class SheetController implements Disposable {
   private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
+  private final @Nullable JButton myHelpButton;
   private boolean myDoNotAskResult;
 
   private BufferedImage myShadowImage;
@@ -57,7 +60,7 @@ public final class SheetController implements Disposable {
   private final static int TOP_SHEET_PADDING = 20;
   private final static int GAP_BETWEEN_LINES = 10;
 
-  private final static int LEFT_SHEET_PADDING = 35;
+  private final static int LEFT_SHEET_PADDING = 20;
   private final static int LEFT_SHEET_OFFSET = 120;
 
   private static final int GAP_BETWEEN_BUTTONS = 5;
@@ -92,10 +95,14 @@ public final class SheetController implements Disposable {
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
                   final DialogWrapper.DoNotAskOption doNotAskOption,
-                  final String focusedButtonTitle) {
+                  final String focusedButtonTitle,
+                  @Nullable String helpId) {
     if (icon != null) {
       myIcon = icon;
     }
+    myHelpButton = helpId != null
+                   ? DialogWrapper.createHelpButton(new DialogWrapper.HelpAction(() -> HelpManager.getInstance().invokeHelp(helpId)))
+                   : null;
 
     myDoNotAskOption = doNotAskOption;
     myDoNotAskResult = (doNotAskOption != null) && !doNotAskOption.isToBeShown();
@@ -445,6 +452,15 @@ public final class SheetController implements Disposable {
     SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
 
     int buttonShift = RIGHT_OFFSET;
+
+    if (myHelpButton != null) {
+      myHelpButton.repaint();
+      Dimension size = myHelpButton.getPreferredSize();
+      myHelpButton.setSize(size);
+
+      myHelpButton.setBounds(LEFT_SHEET_PADDING, SHEET_HEIGHT, size.width, size.height);
+      panel.add(myHelpButton);
+    }
 
     for (JButton button : buttons) {
       Dimension size = button.getSize();

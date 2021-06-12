@@ -41,7 +41,8 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
         if (failOnMissedKeys) {
           LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
                     "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
-                    "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
+                    "can have stubs = " + StubUpdatingIndex.canHaveStub(file) + ", " +
+                    "actual stub count = " + data.size());
           onInternalError(file);
         }
         return null;

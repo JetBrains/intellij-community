@@ -499,13 +499,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
             if (address instanceof InetSocketAddress) {
               InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
               if (Proxy.Type.SOCKS.equals(proxy.type())) {
-                result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));
               }
               else {
-                result.add(pair(JavaProxyProperty.HTTP_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.HTTP_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.HTTP_PORT, String.valueOf(inetSocketAddress.getPort())));
-                result.add(pair(JavaProxyProperty.HTTPS_HOST, inetSocketAddress.getHostName()));
+                result.add(pair(JavaProxyProperty.HTTPS_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(inetSocketAddress.getPort())));
               }
             }

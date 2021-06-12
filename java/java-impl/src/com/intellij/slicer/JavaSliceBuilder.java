@@ -2,7 +2,7 @@
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -64,7 +64,7 @@ final class JavaSliceBuilder {
   @Contract(pure = true)
   @NotNull JavaSliceBuilder dropNesting() {
     if (myIndexNesting == 0) return this;
-    return new JavaSliceBuilder(myParent, mySubstitutor, 0, mySyntheticField, myFilter.withType(DfTypes.TOP));
+    return new JavaSliceBuilder(myParent, mySubstitutor, 0, mySyntheticField, myFilter.withType(DfType.TOP));
   }
 
   boolean process(PsiElement element, Processor<? super SliceUsage> processor) {

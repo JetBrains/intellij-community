@@ -136,6 +136,10 @@ public final class ParametersList implements Cloneable {
     addAt(0, parameter);
   }
 
+  public void prepend(@Nullable CompositeParameterTargetedValue parameterTargetedValue) {
+    myParameters.add(0, parameterTargetedValue);
+  }
+
   public void prependAll(@NonNls String @NotNull ... parameter) {
     addAll(parameter);
     Collections.rotate(myParameters, parameter.length);

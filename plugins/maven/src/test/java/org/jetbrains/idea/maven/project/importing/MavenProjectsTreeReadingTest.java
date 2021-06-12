@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
+  @Test 
   public void testTwoRootProjects() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -55,6 +57,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, roots.get(1).getFile());
   }
 
+  @Test 
   public void testModulesWithWhiteSpaces() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -84,6 +87,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testDoNotImportChildAsRootProject() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -109,6 +113,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test
   public void testDoNotImportSameRootProjectTwice() {
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
@@ -133,6 +138,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: m1 m2 deleted: <none> ", listener.log);
   }
 
+  @Test 
   public void testRereadingChildIfParentWasReadAfterIt() {
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
@@ -169,6 +175,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: m2 m1 deleted: <none> ", listener.log);
   }
 
+  @Test 
   public void testSameProjectAsModuleOfSeveralProjects() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
@@ -208,6 +215,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(1)).size());
   }
 
+  @Test 
   public void testSameProjectAsModuleOfSeveralProjectsInHierarchy() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -245,6 +253,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testRemovingChildProjectFromRootProjects() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -273,6 +282,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testSendingNotificationsWhenAggregationChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -320,6 +330,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m2 deleted: <none> ", listener.log);
   }
 
+  @Test 
   public void testUpdatingWholeModel() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -372,6 +383,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m1", childNode1.getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testForceUpdatingWholeModel() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -402,6 +414,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project m deleted: <none> ", l.log);
   }
 
+  @Test 
   public void testForceUpdatingSingleProject() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -433,6 +446,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     l.log = "";
   }
 
+  @Test 
   public void testUpdatingModelWithNewProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -483,6 +497,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testUpdatingParticularProject() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -510,6 +525,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m1", n.getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testUpdatingInheritance() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -546,6 +562,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child2", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testUpdatingInheritanceHierarhically() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -594,6 +611,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("subChild2", myTree.findProject(subChild).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testSendingNotificationAfterProjectIsAddedInToHierarchy() {
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
@@ -606,6 +624,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: m1 deleted: <none> ", listener.log);
   }
 
+  @Test 
   public void testSendingNotificationsWhenResolveFailed() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -647,6 +666,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertNull(nativeProject.get(0));
   }
 
+  @Test 
   public void testDoNotUpdateChildAfterParentWasResolved() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -700,6 +720,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
+  @Test 
   public void testAddingInheritanceParent() {
     VirtualFile child = createModulePom("child",
                                         "<groupId>test</groupId>" +
@@ -729,6 +750,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testAddingInheritanceChild() {
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
@@ -757,6 +779,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testAddingInheritanceChildOnParentUpdate() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -788,6 +811,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testDoNotReAddInheritanceChildOnParentModulesRemoval() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -827,6 +851,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(0)).size());
   }
 
+  @Test 
   public void testChangingInheritance() {
     VirtualFile parent1 = createModulePom("parent1",
                                           "<groupId>test</groupId>" +
@@ -875,6 +900,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child2", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testChangingInheritanceParentId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -911,6 +937,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("${childName}", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testHandlingSelfInheritance() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -931,6 +958,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom); // shouldn't hang
   }
 
+  @Test 
   public void testHandlingRecursiveInheritance() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -969,6 +997,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom, child); // shouldn't hang
   }
 
+  @Test 
   public void testDeletingInheritanceParent() {
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
@@ -999,6 +1028,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("${childName}", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testDeletingInheritanceChild() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -1037,6 +1067,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("${subChildName}", myTree.findProject(subChild).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testRecursiveInheritanceAndAggregation() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -1062,6 +1093,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(child); // should not recurse
   }
 
+  @Test 
   public void testUpdatingAddsModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1098,6 +1130,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testUpdatingUpdatesModulesIfProjectIsChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1136,6 +1169,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m2", myTree.findProject(m).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testUpdatingDoesNotUpdateModulesIfProjectIsNotChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1165,6 +1199,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m", myTree.findProject(m).getMavenId().getArtifactId());
   }
 
+  @Test 
   public void testAddingProjectAsModuleToExistingOne() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1194,6 +1229,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testAddingProjectAsAggregatorForExistingOne() {
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -1225,6 +1261,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testAddingProjectWithModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1262,6 +1299,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, myTree.getModules(roots.get(1)).get(0).getFile());
   }
 
+  @Test 
   public void testUpdatingAddsModulesFromRootProjects() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1300,6 +1338,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
+  @Test 
   public void testMovingModuleToRootsWhenAggregationChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1333,6 +1372,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertTrue(myTree.getModules(roots.get(1)).isEmpty());
   }
 
+  @Test 
   public void testDeletingProject() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1361,6 +1401,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(0)).size());
   }
 
+  @Test 
   public void testDeletingProjectWithModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1401,6 +1442,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(0)).size());
   }
 
+  @Test 
   public void testSendingNotificationsWhenProjectDeleted() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1436,6 +1478,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: <none> deleted: m2 m1 ", listener.log);
   }
 
+  @Test 
   public void testReconnectModuleOfDeletedProjectIfModuleIsManaged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1483,6 +1526,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: m2 deleted: m1 ", listener.log);
   }
 
+  @Test 
   public void testAddingProjectsOnUpdateAllWhenManagedFilesChanged() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -1503,6 +1547,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(3, myTree.getRootProjects().size());
   }
 
+  @Test 
   public void testDeletingProjectsOnUpdateAllWhenManagedFilesChanged() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -1523,6 +1568,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(2, myTree.getRootProjects().size());
   }
 
+  @Test 
   public void testSendingNotificationsWhenAddingOrDeletingManagedFiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -1558,6 +1604,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
   }
 
+  @Test 
   public void testUpdatingModelWhenActiveProfilesChange() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1618,6 +1665,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
+  @Test 
   public void testUpdatingModelWhenProfilesXmlChange() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1660,6 +1708,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedPathsAreEqual(project.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
   }
 
+  @Test 
   public void testUpdatingModelWhenParentProfilesXmlChange() {
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
@@ -1715,6 +1764,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
+  @Test 
   public void testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1769,6 +1819,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
+  @Test 
   public void testDoNotUpdateModelWhenAggregatorProfilesXmlChange() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1816,6 +1867,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("updated: project deleted: <none> ", l.log);
   }
 
+  @Test 
   public void testSaveLoad() throws Exception {
     //todo: move to resolver test
     createProjectPom("<groupId>test</groupId>" +
@@ -1889,6 +1941,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(rootProject, read.findAggregator(read.findProject(m2)));
   }
 
+  @Test 
   public void testCollectingProfilesFromSettingsXmlAndPluginsXml() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1913,6 +1966,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
   }
 
+  @Test 
   public void testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1952,6 +2006,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
   }
 
+  @Test 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
@@ -2067,6 +2122,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     "settings");
   }
 
+  @Test 
   public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -2113,6 +2169,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
   }
 
+  @Test 
   public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -2165,6 +2222,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
   }
 
+  @Test 
   public void testFindRootWithMultiLevelAggregator() {
     VirtualFile p1 = createModulePom("project1", "<groupId>test</groupId>" +
                                                  "<artifactId>project1</artifactId>" +
@@ -2213,6 +2271,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(mProject).size());
   }
 
+  @Test 
   public void testOutputPathsAreBasedOnTargetPathWhenResolving() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

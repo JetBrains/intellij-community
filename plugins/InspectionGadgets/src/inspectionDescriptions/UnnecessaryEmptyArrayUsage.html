@@ -1,8 +1,28 @@
 <html>
 <body>
-Reports on allocations of arrays with known lengths of zero when there is a constant for that in the class of array's type.
+Reports on allocations of arrays with known lengths of zero when there is a constant for that in the class of array's element type.
+As zero-length arrays as immutable, you may save memory reusing the same array instance.
+<p>Example:</p>
+<pre>
+  class Item {
+    // Public zero-length array constant that can be reused 
+    public static final Item[] EMPTY_ARRAY = new Item[0];
+  }
+  class EmptyNode {
+    Item[] getChildren() {
+      // Unnecessary zero-length array creation
+      return new Item[0];
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  class EmptyNode {
+    Item[] getChildren() {
+      return Item.EMPTY_ARRAY;
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

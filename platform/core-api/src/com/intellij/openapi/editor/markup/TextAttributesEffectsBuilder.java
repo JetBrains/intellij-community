@@ -8,10 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.editor.markup.EffectType.*;
@@ -156,8 +153,8 @@ public final class TextAttributesEffectsBuilder {
         targetAttributes.setAdditionalEffects(Collections.singletonMap(additionalEffect.effectType, additionalEffect.effectColor));
       }
       else {
-        Map<EffectType, Color> effectsMap = new HashMap<>(effectsLeft);
-        effectsIterator.forEachRemaining(it -> effectsMap.put(it.effectType, it.effectColor));
+        Map<EffectType, Color> effectsMap = new EnumMap<>(EffectType.class);
+        effectsIterator.forEachRemaining(descriptor -> effectsMap.put(descriptor.effectType, descriptor.effectColor));
         targetAttributes.setAdditionalEffects(effectsMap);
       }
     }

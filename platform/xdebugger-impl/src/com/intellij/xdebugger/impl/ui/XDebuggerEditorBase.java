@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
@@ -34,6 +36,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -76,8 +79,6 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   private Runnable myExpandHandler;
 
-  private WeakReference<ListPopup> myPopup;
-
   protected XDebuggerEditorBase(final Project project,
                                 @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
                                 @NotNull EvaluationMode mode,
@@ -88,25 +89,6 @@ public abstract class XDebuggerEditorBase implements Expandable {
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
-
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (myLanguageChooser.isEnabled()) {
-          ListPopup oldPopup = SoftReference.dereference(myPopup);
-          if (oldPopup != null && !oldPopup.isDisposed()) {
-            oldPopup.cancel();
-            myPopup = null;
-            return true;
-          }
-          ListPopup popup = createLanguagePopup();
-          popup.showUnderneathOf(myLanguageChooser);
-          myPopup = new WeakReference<>(popup);
-          return true;
-        }
-        return false;
-      }
-    }.installOn(myLanguageChooser);
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
@@ -131,26 +113,6 @@ public abstract class XDebuggerEditorBase implements Expandable {
         myExpandButton.setIcon(AllIcons.General.ExpandComponent);
       }
     });
-  }
-
-  private ListPopup createLanguagePopup() {
-    DefaultActionGroup actions = new DefaultActionGroup();
-    for (Language language : getSupportedLanguages()) {
-      //noinspection ConstantConditions
-      actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          XExpression currentExpression = getExpression();
-          setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
-          requestFocusInEditor();
-        }
-      });
-    }
-
-    DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup(XDebuggerBundle.message("debugger.editor.choose.language"), actions, dataContext,
-                                                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                               false);
   }
 
   @NotNull
@@ -265,18 +227,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), text.getMode());
     }
 
-    Collection<Language> languages = getSupportedLanguages();
-    boolean many = languages.size() > 1;
-
-    if (language != null) {
-      myLanguageChooser.setVisible(many);
-    }
-    myLanguageChooser.setVisible(myLanguageChooser.isVisible() || many);
-    //myChooseFactory.setEnabled(many && languages.contains(language));
-
-    if (language != null && language.getAssociatedFileType() != null) {
-      myLanguageChooser.setText(language.getDisplayName());
-    }
+    myLanguageChooser.requestUpdate(language);
 
     doSetText(text);
   }
@@ -551,10 +502,13 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return myExpandedPopup != null;
   }
 
-  private static class LanguageChooser extends JLabel {
+  private class LanguageChooser extends JLabel {
     @SuppressWarnings("UseJBColor")
-    static final Color ENABLED_COLOR = new Color(0x787878);
-    static final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
+    final Color ENABLED_COLOR = new Color(0x787878);
+    final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
+
+    private Collection<Language> myLanguages = Collections.emptyList();
+    private WeakReference<ListPopup> myPopup;
 
     LanguageChooser() {
       setHorizontalTextPosition(SwingConstants.LEFT);
@@ -569,11 +523,71 @@ public abstract class XDebuggerEditorBase implements Expandable {
       icon.setIcon(dropdownIcon, 0, 0, -5);
       setIcon(icon);
       setDisabledIcon(IconLoader.getDisabledIcon(icon));
+
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (isEnabled()) {
+            ListPopup oldPopup = SoftReference.dereference(myPopup);
+            if (oldPopup != null && !oldPopup.isDisposed()) {
+              oldPopup.cancel();
+              myPopup = null;
+              return true;
+            }
+            ListPopup popup = createLanguagePopup();
+            popup.showUnderneathOf(LanguageChooser.this);
+            myPopup = new WeakReference<>(popup);
+            return true;
+          }
+          return false;
+        }
+      }.installOn(this);
     }
 
     @Override
     public Color getForeground() {
       return isEnabled() ? ENABLED_COLOR : DISABLED_COLOR;
+    }
+
+    ListPopup createLanguagePopup() {
+      DefaultActionGroup actions = new DefaultActionGroup();
+      for (Language language : myLanguages) {
+        //noinspection ConstantConditions
+        actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            XExpression currentExpression = getExpression();
+            setExpression(new XExpressionImpl(currentExpression.getExpression(), language, currentExpression.getCustomInfo()));
+            requestFocusInEditor();
+          }
+        });
+      }
+
+      DataContext dataContext = DataManager.getInstance().getDataContext(XDebuggerEditorBase.this.getComponent());
+      return JBPopupFactory.getInstance()
+        .createActionGroupPopup(XDebuggerBundle.message("debugger.editor.choose.language"), actions, dataContext,
+                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                false);
+    }
+
+    void requestUpdate(Language currentLanguage) {
+      ReadAction.nonBlocking(() -> getSupportedLanguages())
+        .inSmartMode(myProject)
+        .finishOnUiThread(ModalityState.defaultModalityState(), languages -> {
+          boolean many = languages.size() > 1;
+          myLanguages = languages;
+
+          if (currentLanguage != null) {
+            setVisible(many);
+          }
+          setVisible(isVisible() || many);
+
+          if (currentLanguage != null && currentLanguage.getAssociatedFileType() != null) {
+            setText(currentLanguage.getDisplayName());
+          }
+        })
+        .coalesceBy(this)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

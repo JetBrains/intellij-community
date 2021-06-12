@@ -21,13 +21,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -63,7 +63,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -74,8 +77,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,7 @@ import java.util.stream.Collectors;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static com.intellij.util.ui.UIUtil.runWhenHidden;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
@@ -143,7 +145,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   public static int getUsagesPageSize() {
-    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+    return Math.max(1, AdvancedSettings.getInt("ide.usages.page.size"));
   }
 
   @Override
@@ -657,16 +659,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     };
     DefaultActionGroup pinGroup = new DefaultActionGroup();
-    ActiveComponent pin = createPinButton(project, popup, pinGroup, actionHandler::findUsages);
+    ActiveComponent pin = createPinButton(project, popup, pinGroup, table, actionHandler::findUsages);
     builder.setCommandButton(new CompositeActiveComponent(statusComponent, settingsButton, pin));
 
     DefaultActionGroup toolbar = new DefaultActionGroup();
     usageView.addFilteringActions(toolbar);
 
     toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, toolbar, true);
-    actionToolbar.setTargetComponent(table);
-    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    ActionToolbar actionToolbar = createActionToolbar(table, toolbar);
     JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
@@ -702,9 +702,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   @NotNull
+  private static ActionToolbar createActionToolbar(@NotNull JTable table, @NotNull DefaultActionGroup group) {
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, group, true);
+    actionToolbar.setTargetComponent(table);
+    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    return actionToolbar;
+  }
+
+  @NotNull
   private static ActiveComponent createPinButton(@NotNull Project project,
                                                  JBPopup @NotNull [] popup,
                                                  @NotNull DefaultActionGroup pinGroup,
+                                                 @NotNull JTable table,
                                                  @NotNull Runnable findUsagesRunnable) {
     Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
     AnAction pinAction =
@@ -723,8 +732,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
       };
     pinGroup.add(pinAction);
-    ActionToolbar pinToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, pinGroup, true);
-    pinToolbar.setReservePlaceAutoPopupIcon(false);
+    ActionToolbar pinToolbar = createActionToolbar(table, pinGroup);
     JComponent pinToolBar = pinToolbar.getComponent();
     pinToolBar.setBorder(null);
     pinToolBar.setOpaque(false);
@@ -1114,29 +1122,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   @NotNull
   private static ShowUsagesActionState getState(@NotNull Project project) {
-    return ServiceManager.getService(project, ShowUsagesActionState.class);
-  }
-
-  private static void runWhenHidden(@NotNull Component c, @NotNull Runnable r) {
-    c.addHierarchyListener(runWhenHidden(r));
-  }
-
-  @NotNull
-  private static HierarchyListener runWhenHidden(@NotNull Runnable r) {
-    return new HierarchyListener() {
-      @Override
-      public void hierarchyChanged(HierarchyEvent e) {
-        if (!BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
-          return;
-        }
-        Component component = e.getComponent();
-        if (component.isDisplayable()) {
-          return;
-        }
-        r.run();
-        component.removeHierarchyListener(this);
-      }
-    };
+    return project.getService(ShowUsagesActionState.class);
   }
 
   /**

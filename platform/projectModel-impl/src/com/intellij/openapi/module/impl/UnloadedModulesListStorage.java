@@ -1,22 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThreeState;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @State(name = "UnloadedModulesList", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))
-public class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
-  private List<String> myModuleNames = new ArrayList<>();
+public final class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
+  @Property(surroundWithTag = false)
+  @XCollection(elementName = "module", valueAttributeName = "name")
+  private final Set<String> moduleNames = new HashSet<>();
 
   // Do not call directly. Use ModuleManager
   @ApiStatus.Internal
@@ -24,24 +29,28 @@ public class UnloadedModulesListStorage implements PersistentStateComponent<Unlo
     return project.getService(UnloadedModulesListStorage.class);
   }
 
-  @Property(surroundWithTag = false)
-  @XCollection(elementName = "module", valueAttributeName = "name")
-  public List<String> getUnloadedModuleNames() {
-    return myModuleNames;
+  @Transient
+  public @NotNull Set<String> getUnloadedModuleNames() {
+    return moduleNames;
   }
 
-  public void setUnloadedModuleNames(List<String> moduleNames) {
-    myModuleNames = moduleNames;
+  public void setUnloadedModuleNames(@NotNull Collection<String> value) {
+    this.moduleNames.clear();
+    this.moduleNames.addAll(value);
   }
 
-  @Nullable
+  public void addUnloadedModuleNames(@NotNull Collection<String> value) {
+    this.moduleNames.addAll(value);
+  }
+
   @Override
-  public UnloadedModulesListStorage getState() {
+  public @NotNull UnloadedModulesListStorage getState() {
     return this;
   }
 
   @Override
   public void loadState(@NotNull UnloadedModulesListStorage state) {
-    XmlSerializerUtil.copyBean(state, this);
+    moduleNames.clear();
+    moduleNames.addAll(state.moduleNames);
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
@@ -279,7 +278,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                 .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(c -> {
                   PsiFile file = c.getContainingFile();
-                  return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+                  return file instanceof PsiClassOwner ? ((PsiClassOwner)file).getPackageName() : "";
                 }))
       .toArray(PsiClass.EMPTY_ARRAY);
   }
@@ -368,11 +367,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
     }
     return true;
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return isValid();
   }
 
   @Override

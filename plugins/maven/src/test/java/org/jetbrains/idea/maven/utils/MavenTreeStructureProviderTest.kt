@@ -7,11 +7,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.junit.Test
 import javax.swing.JTree
 
-class MavenTreeStructureProviderTest : MavenImportingTestCase() {
+class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myStructure: TestProjectTreeStructure
 
   @Throws(Exception::class)
@@ -33,6 +34,7 @@ class MavenTreeStructureProviderTest : MavenImportingTestCase() {
     }
   }
 
+  @Test
   fun testShouldCreateSpecialNode() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -65,7 +67,7 @@ class MavenTreeStructureProviderTest : MavenImportingTestCase() {
 
   }
 
-  fun testShouldMarkNodeAsIgnored() {
+  @Test fun testShouldMarkNodeAsIgnored() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

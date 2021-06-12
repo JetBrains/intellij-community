@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.jsp;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.BaseJspFile;
@@ -15,7 +14,7 @@ import java.util.HashSet;
 public abstract class JspContextManager {
 
   public static JspContextManager getInstance(Project project) {
-    return ServiceManager.getService(project, JspContextManager.class);
+    return project.getService(JspContextManager.class);
   }
 
   public abstract BaseJspFile[] getSuitableContextFiles(@NotNull PsiFile file);

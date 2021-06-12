@@ -1,8 +1,19 @@
 <html>
 <body>
-Reports calls to <b>java.lang.Thread.sleep()</b> that occur inside loops. Such calls
+Reports calls to <code>java.lang.Thread.sleep()</code> that occur inside loops. Such calls
 are indicative of "busy-waiting". Busy-waiting is often inefficient, and may result in unexpected deadlocks
 as busy-waiting threads do not release locked resources.
+<p><b>Example:</b></p>
+<pre>
+  class X {
+     volatile int x;
+     public void waitX() throws Exception {
+      while (x &gt; 0) {
+        Thread.sleep(10);//warning: Call to 'Thread.sleep()' in a loop, probably busy-waiting
+      }
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

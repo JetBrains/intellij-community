@@ -6,7 +6,26 @@ import com.intellij.execution.target.value.TargetValue
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A request for target environment.
+ * A request for creating [target environment][TargetEnvironment] for given
+ * [target configuration][TargetEnvironmentConfiguration].
+ *
+ * A request of a particular [TargetEnvironmentType] can be created
+ * with [TargetEnvironmentType.createEnvironmentRequest] method.
+ * As a shortcut for retrieving the request for an environment with particular configuration [TargetEnvironmentConfiguration.createEnvironmentRequest]
+ * can be used
+ *
+ * The request should be used for preparing target environment.
+ *
+ * Usually, the client will look like this:
+ * ```
+ * val request = config.createEnvironmentRequest(project)
+ * val commandLine = new TargetedCommandLine()
+ * commandLine.setExePath("/bin/cat")
+ * commandLine.addParameter(request.createUpload("/tmp/localInputFile.txt"))
+ * request.prepareEnvironment(progressIndicator).createProcess(commandLine, progressIndicator)
+ * ```
+ *
+ * See the [implementation for local machine][com.intellij.execution.target.local.LocalTargetEnvironmentRequest]
  *
  * Can be filled with the requirements for target environment like files to upload,
  * ports to bind and locations to imported from another environments.
@@ -17,9 +36,13 @@ import org.jetbrains.annotations.ApiStatus
 interface TargetEnvironmentRequest {
   /**
    * @return a platform of the environment to be prepared.
-   * The result heavily depends on the [TargetEnvironmentFactory.getTargetPlatform]
    */
   val targetPlatform: TargetPlatform
+
+  /**
+   * Returns the configuration from which the request was created.
+   */
+  val configuration: TargetEnvironmentConfiguration?
 
   /**
    * Set of required upload roots.
@@ -130,4 +153,17 @@ interface TargetEnvironmentRequest {
      */
     fun createDownload(rootRelativePath: String): TargetValue<String>
   }
+
+  /**
+   * Prepares the actual environment.
+   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed [progressIndicator].
+   * Throw localised exception to notify that preparation failed, and execution should not be proceeded.
+   * The request should not be modified after this method has been called.
+   */
+  fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment
+
+  /**
+   * Requests a callback to be called when a target environment has been created from this request.
+   */
+  fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) -> Unit)
 }

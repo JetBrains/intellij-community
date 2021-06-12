@@ -155,5 +155,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

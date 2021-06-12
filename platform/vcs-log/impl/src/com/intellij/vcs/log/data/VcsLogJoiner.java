@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

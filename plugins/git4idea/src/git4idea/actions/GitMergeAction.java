@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -45,7 +45,6 @@ import git4idea.update.GitUpdatedRanges;
 import git4idea.update.HashRange;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -205,16 +204,15 @@ abstract class GitMergeAction extends GitRepositoryAction {
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
-          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null,
-                                                                              "git.files.updated.after.merge");
-          notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
-            "action.NotificationAction.GitMergeAction.text.view.commits"),
-                                                                 notificationData.getViewCommitAction()));
+          notification = VcsNotifier.STANDARD_NOTIFICATION
+            .createNotification(title, content, INFORMATION)
+            .setDisplayId("git.files.updated.after.merge")
+            .addAction(NotificationAction.createSimple(GitBundle.message("action.NotificationAction.GitMergeAction.text.view.commits"), notificationData.getViewCommitAction()));
         }
         else {
-          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"),
-                                                                              "", INFORMATION, null,
-                                                                              "git.all.files.are.up.to.date");
+          notification = VcsNotifier.STANDARD_NOTIFICATION
+            .createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"), INFORMATION)
+            .setDisplayId("git.all.files.are.up.to.date");
         }
         VcsNotifier.getInstance(project).notify(notification);
       }
@@ -234,7 +232,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       VcsNotifier.getInstance(project)
         .notifyError(getNotificationErrorDisplayId(),
                      GitBundle.message("merge.action.operation.failed", getActionName()),
-                     result.getErrorOutputAsJoinedString());
+                     result.getErrorOutputAsHtmlString());
       repository.update();
     }
   }

@@ -152,8 +152,8 @@ public final class MVStore implements AutoCloseable {
      */
     static final int BLOCK_SIZE = 4 * 1024;
 
-    private static final byte FORMAT_WRITE = 2;
-    private static final byte FORMAT_READ = 2;
+    private static final byte FORMAT_WRITE = 3;
+    private static final byte FORMAT_READ = 3;
 
     // first 4 numbers reserved for internal maps
     private static final int MIN_USER_MAP_ID = 5;
@@ -214,7 +214,7 @@ public final class MVStore implements AutoCloseable {
      * sequential number within containing chunk into byte position
      * within chunk's image. Cache keyed by chunk id.
      */
-    private final Cache<Integer, LongArrayList> chunksToC;
+    private final Cache<Integer, LongArrayList> chunkIdToToC;
 
     /**
      * The newest chunk. If nothing was stored yet, this field is not set.
@@ -415,7 +415,7 @@ public final class MVStore implements AutoCloseable {
             if (config.recordCacheStats) {
                 chunksToCacheBuilder.recordStats();
             }
-            chunksToC = chunksToCacheBuilder.build();
+          chunkIdToToC = chunksToCacheBuilder.build();
 
             // make sure pages will fit into cache
             nonLeafPageSplitSize = Math.min(maxNonLeafWeight, config.pageSplitSize);
@@ -424,7 +424,7 @@ public final class MVStore implements AutoCloseable {
         else {
             nonLeafPageCache = null;
             leafPageCache = null;
-            chunksToC = null;
+          chunkIdToToC = null;
             nonLeafPageSplitSize = Long.MAX_VALUE;
             leafPageSplitSize = Long.MAX_VALUE;
         }
@@ -1373,18 +1373,24 @@ public final class MVStore implements AutoCloseable {
      * @return the chunk
      */
     private Chunk getChunk(int chunkId) {
-        return chunks.computeIfAbsent(chunkId, id -> {
-            checkOpen();
-            byte[] metadata = chunkIdToChunkMetadata.get(chunkId);
-            if (metadata == null) {
-                throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " not found");
-            }
-            Chunk chunk = Chunk.readMetadata(chunkId, Unpooled.wrappedBuffer(metadata));
-            if (!chunk.isSaved()) {
-                throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " is invalid");
-            }
-            return chunk;
-        });
+      // computeIfAbsent cannot be used - recursive update
+      Chunk chunk = chunks.get(chunkId);
+      if (chunk != null) {
+        return chunk;
+      }
+
+      checkOpen();
+      byte[] metadata = chunkIdToChunkMetadata.get(chunkId);
+      if (metadata == null) {
+          throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " not found");
+      }
+
+      chunk = Chunk.readMetadata(chunkId, Unpooled.wrappedBuffer(metadata));
+      if (!chunk.isSaved()) {
+          throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " is invalid");
+      }
+      Chunk prev = chunks.putIfAbsent(chunkId, chunk);
+      return prev == null ? chunk : prev;
     }
 
     private void setWriteVersion(long version) {
@@ -1759,7 +1765,7 @@ public final class MVStore implements AutoCloseable {
                 ++nonLeafCount;
             }
         }
-        chunksToC.put(chunk.id, toc);
+        chunkIdToToC.put(chunk.id, toc);
     }
 
     private void storeBuffer(Chunk chunk, ByteBuf buf, Collection<Page<?, ?>> changed) {
@@ -2059,9 +2065,6 @@ public final class MVStore implements AutoCloseable {
                 // similarly, all task submissions to bufferSaveExecutor
                 // are done under serializationLock, and upon waitAllTasksExecuted()
                 // it will be no pending / in-progress task here
-                //if (bufferSaveExecutor != null) {
-                //    bufferSaveExecutor.waitAllTasksExecuted(10, TimeUnit.MINUTES);
-                //}
                 saveChunkLock.lock();
                 try {
                     if (lastChunk != null && reuseSpace && getFillRate() <= targetFillRate) {
@@ -2603,7 +2606,7 @@ public final class MVStore implements AutoCloseable {
                 throw new MVStoreException(MVStoreException.ERROR_FILE_CORRUPT, "Page is not saved yet");
             }
 
-            Cache<Long, Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
+            Cache<@NotNull Long, @NotNull Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
             Chunk chunk = getChunk(DataUtil.getPageChunkId(pageInfo));
             if (cache == null) {
                 return doReadPage(map, pageInfo, chunk);
@@ -2644,8 +2647,7 @@ public final class MVStore implements AutoCloseable {
 
     private @NotNull LongArrayList getToC(Chunk chunk) {
         assert chunk.tocPos != 0;
-        LongArrayList toc = chunksToC.get(chunk.id, __ -> chunk.readToC(fileStore));
-        assert toc != null;
+        LongArrayList toc = chunkIdToToC.get(chunk.id, __ -> chunk.readToC(fileStore));
         assert toc.size() == chunk.pageCount : toc.size() + " != " + chunk.pageCount;
         return toc;
     }
@@ -3086,7 +3088,7 @@ public final class MVStore implements AutoCloseable {
         if (nonLeafPageCache != null) {
             nonLeafPageCache.invalidateAll();
             leafPageCache.invalidateAll();
-            chunksToC.invalidateAll();
+            chunkIdToToC.invalidateAll();
         }
     }
 
@@ -3252,11 +3254,6 @@ public final class MVStore implements AutoCloseable {
         }
         return null;
     }
-
-    //private int getMapId(String name) {
-    //    Integer m = mapNameToMetadata.get(name);
-    //    return m == null ? -1 : m;
-    //}
 
     public void triggerAutoSave() {
         triggerAutoSave(false);
@@ -3448,34 +3445,6 @@ public final class MVStore implements AutoCloseable {
         }
     }
 
-    ///**
-    // * Get the amount of memory used for caching, in MB.
-    // * Note that this does not include the page chunk references cache, which is
-    // * 25% of the size of the page cache.
-    // *
-    // * @return the amount of memory used for caching
-    // */
-    //public int getCacheSizeUsed() {
-    //    if (cache == null) {
-    //        return 0;
-    //    }
-    //    return (int) (cache.stats().>> 20);
-    //}
-
-    ///**
-    // * Get the maximum cache size, in MB.
-    // * Note that this does not include the page chunk references cache, which is
-    // * 25% of the size of the page cache.
-    // *
-    // * @return the cache size
-    // */
-    //public int getCacheSize() {
-    //    if (cache == null) {
-    //        return 0;
-    //    }
-    //    return (int) (cache.getMaxMemory() >> 20);
-    //}
-
     /**
      * Get the cache.
      *
@@ -3493,18 +3462,6 @@ public final class MVStore implements AutoCloseable {
     public boolean isReadOnly() {
         return fileStore != null && fileStore.isReadOnly();
     }
-
-    //public int getTocCacheHitRatio() {
-    //    return getCacheHitRatio(chunksToC);
-    //}
-
-    //private static int getCacheHitRatio(CacheLongKeyLIRS<?> cache) {
-    //    if (cache == null) {
-    //        return 0;
-    //    }
-    //    long hits = cache.getHits();
-    //    return (int) (100 * hits / (hits + cache.getMisses() + 1));
-    //}
 
     public int getLeafRatio() {
         return (int)(leafCount * 100 / Math.max(1, leafCount + nonLeafCount));
@@ -3617,9 +3574,9 @@ public final class MVStore implements AutoCloseable {
                     continue;
                 }
                 // purge dead pages from cache
-                LongArrayList toc = chunksToC == null ? null : chunksToC.getIfPresent(chunk.id);
+                LongArrayList toc = chunkIdToToC == null ? null : chunkIdToToC.getIfPresent(chunk.id);
                 if (toc != null) {
-                    chunksToC.invalidate(chunk);
+                    chunkIdToToC.invalidate(chunk.id);
                     for (LongListIterator iterator = toc.iterator(); iterator.hasNext(); ) {
                         long tocElement = iterator.nextLong();
                         long pagePos = DataUtil.getPageInfo(chunk.id, tocElement);

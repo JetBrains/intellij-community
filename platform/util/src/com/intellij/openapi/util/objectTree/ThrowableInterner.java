@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +25,12 @@ import java.util.Objects;
  * The available method Throwable.getStackTrace() unfortunately can't be used for that because it's
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
-@ReviseWhenPortedToJDK("11")
 @ApiStatus.Internal
 public final class ThrowableInterner {
-  private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
+  private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new HashingStrategy<Throwable>() {
     @Override
-    public int computeHashCode(Throwable throwable) {
-      return ThrowableInterner.computeHashCode(throwable);
+    public int hashCode(Throwable throwable) {
+      return computeHashCode(throwable);
     }
 
     @Override
@@ -53,7 +50,7 @@ public final class ThrowableInterner {
     }
   });
 
-  public static int computeHashCode(@NotNull Throwable throwable) {
+  private static int computeHashCode(@NotNull Throwable throwable) {
     String message = throwable.getMessage();
     if (message != null) {
       return message.hashCode();
@@ -63,11 +60,25 @@ public final class ThrowableInterner {
 
   public static int computeTraceHashCode(@NotNull Throwable throwable) {
     Object[] backtrace = getBacktrace(throwable);
-    if (backtrace != null) {
-      Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
-      return Arrays.hashCode(stack);
+    if (backtrace == null) {
+      return Arrays.hashCode(throwable.getStackTrace());
     }
-    return Arrays.hashCode(throwable.getStackTrace());
+
+    for (Object element : backtrace) {
+      if (element instanceof Object[]) {
+        return Arrays.hashCode((Object[])element);
+      }
+    }
+    return 0;
+  }
+
+  // more accurate hash code (different for different line numbers inside same method) but more expensive than computeTraceHashCode
+  public static int computeAccurateTraceHashCode(@NotNull Throwable throwable) {
+    Object[] backtrace = getBacktrace(throwable);
+    if (backtrace == null) {
+      return Arrays.hashCode(throwable.getStackTrace());
+    }
+    return Arrays.deepHashCode(backtrace);
   }
 
   private static final Field BACKTRACE_FIELD;
@@ -77,7 +88,7 @@ public final class ThrowableInterner {
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
-    // the JVM blocks access to Throwable.backtrace via reflection
+    // the JVM blocks access to Throwable.backtrace via reflection sometimes
     Object backtrace;
     try {
       backtrace = BACKTRACE_FIELD != null ? BACKTRACE_FIELD.get(throwable) : null;

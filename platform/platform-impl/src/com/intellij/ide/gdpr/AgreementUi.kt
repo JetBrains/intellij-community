@@ -3,21 +3,19 @@ package com.intellij.ide.gdpr
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.Main
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.event.ActionListener
@@ -28,7 +26,13 @@ import javax.swing.border.CompoundBorder
 import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
 
-class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean, val useRtfPane: Boolean = true) {
+class AgreementUi private constructor(@NlsSafe val htmlText: String, val exitOnCancel: Boolean, val useRtfPane: Boolean = true) {
+  companion object {
+    @JvmStatic
+    fun create(htmlText: String = "", exitOnCancel: Boolean = true, useRtfPane: Boolean = true): AgreementUi {
+      return AgreementUi(htmlText, exitOnCancel, useRtfPane).createDialog()
+    }
+  }
 
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
@@ -48,7 +52,6 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
   private fun createDialog(): AgreementUi {
     val dialogWrapper = object : DialogWrapper(true) {
-
       init {
         init()
       }
@@ -61,7 +64,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
         return buttonsPanel
       }
 
-      override fun createCenterPanel(): JComponent? {
+      override fun createCenterPanel(): JComponent {
         val centerPanel = JPanel(BorderLayout(0, 0))
         if (useRtfPane) {
           htmlRtfPane = HtmlRtfPane()
@@ -130,12 +133,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     return JTextPane().apply {
       contentType = "text/html"
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-
-      //use Darcula styles for JEditorPane until IDEA-256700 is fixed
-      val kit = JBHtmlEditorKit(false)
-      val resource = DarculaLaf::class.java.getResource(if (JBUIScale.isUsrHiDPI()) "darcula@2x.css" else "darcula.css")
-      kit.styleSheet.addStyleSheet(UIUtil.loadStyleSheet(resource))
-      editorKit = kit
+      editorKit = JBHtmlEditorKit(false)
       text = htmlText
 
       val styleSheet = (document as HTMLDocument).styleSheet
@@ -257,11 +255,4 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     dialog!!.isModal = true
     return dialog!!
   }
-
-  companion object {
-    fun create(htmlText: String = "", exitOnCancel: Boolean = true, useRtfPane: Boolean = true): AgreementUi {
-      return AgreementUi(htmlText, exitOnCancel, useRtfPane).createDialog()
-    }
-  }
-
 }

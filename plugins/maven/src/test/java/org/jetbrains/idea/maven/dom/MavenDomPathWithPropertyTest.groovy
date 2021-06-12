@@ -16,12 +16,14 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.psi.PsiManager
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 
+  @Test
   void testRename() {
     importProject("""
 <groupId>test</groupId>
@@ -91,6 +93,7 @@ class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 """)
   }
 
+  @Test
   void testCompletionDirectoriesOnly() {
     createProjectPom("""
     <groupId>test</groupId>

@@ -1,9 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,11 +9,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   @NotNull
   @Override
@@ -238,17 +231,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-21302
   public void testInitializingNewType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-21302
   public void testNewTypeAsParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-21302
   public void testNewTypeInheritance() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-24287
@@ -266,12 +259,12 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-24194
   // PY-24789
   public void testTypingSupports() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-25994
   public void testUnresolvedReceiverGeneric() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   public void testMatchingOpenFunctionCallTypesPy3() {
@@ -279,17 +272,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   public void testChainedComparisonsGenericMatching() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-27398
   public void testInitializingDataclass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+    doMultiFileTest();
   }
 
   // PY-28442
   public void testDataclassClsCallType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+    doMultiFileTest();
   }
 
   // PY-26354
@@ -328,7 +321,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-28957
   public void testDataclassesReplace() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+    doMultiFileTest();
   }
 
   // PY-28127 PY-31424
@@ -368,33 +361,30 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-35235
   public void testTypingLiteralStrings() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing_extensions import Literal\n" +
-                         "\n" +
-                         "a: Literal[\"abc\"] = undefined\n" +
-                         "b: Literal[b\"abc\"] = undefined\n" +
-                         "\n" +
-                         "def foo1(p1: Literal[\"abc\"]):\n" +
-                         "    pass\n" +
-                         "foo1(a)\n" +
-                         "foo1(<warning descr=\"Expected type 'Literal[\\\"abc\\\"]', got 'Literal[b\\\"abc\\\"]' instead\">b</warning>)\n" +
-                         "\n" +
-                         "def foo2(p1: Literal[b\"abc\"]):\n" +
-                         "    pass\n" +
-                         "foo2(<warning descr=\"Expected type 'Literal[b\\\"abc\\\"]', got 'Literal[\\\"abc\\\"]' instead\">a</warning>)\n" +
-                         "foo2(b)\n" +
-                         "\n" +
-                         "def foo3(p1: str):\n" +
-                         "    pass\n" +
-                         "foo3(a)\n" +
-                         "foo3(<warning descr=\"Expected type 'str', got 'Literal[b\\\"abc\\\"]' instead\">b</warning>)\n" +
-                         "\n" +
-                         "def foo4(p1: bytes):\n" +
-                         "    pass\n" +
-                         "foo4(<warning descr=\"Expected type 'bytes', got 'Literal[\\\"abc\\\"]' instead\">a</warning>)\n" +
-                         "foo4(b)\n")
-    );
+    doTestByText("from typing_extensions import Literal\n" +
+                 "\n" +
+                 "a: Literal[\"abc\"] = undefined\n" +
+                 "b: Literal[b\"abc\"] = undefined\n" +
+                 "\n" +
+                 "def foo1(p1: Literal[\"abc\"]):\n" +
+                 "    pass\n" +
+                 "foo1(a)\n" +
+                 "foo1(<warning descr=\"Expected type 'Literal[\\\"abc\\\"]', got 'Literal[b\\\"abc\\\"]' instead\">b</warning>)\n" +
+                 "\n" +
+                 "def foo2(p1: Literal[b\"abc\"]):\n" +
+                 "    pass\n" +
+                 "foo2(<warning descr=\"Expected type 'Literal[b\\\"abc\\\"]', got 'Literal[\\\"abc\\\"]' instead\">a</warning>)\n" +
+                 "foo2(b)\n" +
+                 "\n" +
+                 "def foo3(p1: str):\n" +
+                 "    pass\n" +
+                 "foo3(a)\n" +
+                 "foo3(<warning descr=\"Expected type 'str', got 'Literal[b\\\"abc\\\"]' instead\">b</warning>)\n" +
+                 "\n" +
+                 "def foo4(p1: bytes):\n" +
+                 "    pass\n" +
+                 "foo4(<warning descr=\"Expected type 'bytes', got 'Literal[\\\"abc\\\"]' instead\">a</warning>)\n" +
+                 "foo4(b)\n");
   }
 
   // PY-42418

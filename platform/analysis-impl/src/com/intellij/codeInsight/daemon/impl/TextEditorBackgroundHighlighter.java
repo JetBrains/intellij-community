@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,10 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   List<TextEditorHighlightingPass> getPasses(int @NotNull [] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
 
-    LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    if (!documentManager.isCommitted(myDocument)) {
+      LOG.error(myDocument + "; " + documentManager.someDocumentDebugInfo(myDocument));
+    }
 
     PsiFile file = renewFile();
     if (file == null) return Collections.emptyList();

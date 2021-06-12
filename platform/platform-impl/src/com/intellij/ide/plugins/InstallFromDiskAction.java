@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 public class InstallFromDiskAction extends DumbAwareAction {
 
   public InstallFromDiskAction() {
@@ -18,10 +16,9 @@ public class InstallFromDiskAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PluginInstaller.chooseAndInstall(
-      new InstalledPluginsTableModel(e.getProject()),
-      null,
-      PluginInstallCallbackDataKt::installPluginFromCallbackData
-    );
+    Project project = e.getProject();
+    PluginInstaller.chooseAndInstall(project,
+                                     null,
+                                     (file, __) -> PluginInstaller.installFromDisk(project, file));
   }
 }

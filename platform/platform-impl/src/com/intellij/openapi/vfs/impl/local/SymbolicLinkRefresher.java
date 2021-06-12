@@ -37,7 +37,7 @@ final class SymbolicLinkRefresher {
     mySystem = system;
     ApplicationManager.getApplication().getMessageBus().connect(system).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         analyzeEvents(events);
       }
     });

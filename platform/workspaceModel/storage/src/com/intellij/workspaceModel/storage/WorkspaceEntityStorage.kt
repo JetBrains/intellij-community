@@ -25,6 +25,7 @@ import kotlin.reflect.KProperty1
  * * [VirtualFileUrl];
  * * [WorkspaceEntity] or [PersistentEntityId];
  * * [List] of another allowed type;
+ * * [Array] of another allowed type;
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
  * * sealed abstract class where all implementations satisfy these requirements.
  *
@@ -138,6 +139,7 @@ interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
  */
 interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
+  fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?

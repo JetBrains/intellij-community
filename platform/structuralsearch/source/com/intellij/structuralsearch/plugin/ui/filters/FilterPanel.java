@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
@@ -64,8 +64,6 @@ public class FilterPanel implements FilterTable {
       myFilters.add(filterAction);
       filterAction.setTable(this);
     }
-    myFilters.add(myScriptFilter);
-    myScriptFilter.setTable(this);
 
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable
@@ -144,15 +142,16 @@ public class FilterPanel implements FilterTable {
 
   final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.checkApplicable(nodes, completePattern, target)) {
-      if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
+      if (filter.isActive() && !myTableModel.getItems().contains(filter)) {
         if (myTableModel.getRowCount() == 0) {
           myTableModel.addRow(myHeader);
         }
         myTableModel.addRow(filter);
       }
     }
-    else {
+    else if (filter.hasFilter()) {
       filter.clearFilter();
+      myConstraintChangedCallback.run();
     }
   }
 
@@ -172,11 +171,9 @@ public class FilterPanel implements FilterTable {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public StructuralSearchProfile getProfile() {
-    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType);
-    assert fileType != null;
-    return fileType;
+    return StructuralSearchUtil.getProfileByFileType(myFileType);
   }
 
   @Override
@@ -191,8 +188,8 @@ public class FilterPanel implements FilterTable {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
-                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
-                                                                                  null);
+                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, false,
+                                                                                  ActionPlaces.getPopupPlace("StructuralSearchFilterPanel"));
       popup.show(point);
     }
     else {
@@ -205,7 +202,7 @@ public class FilterPanel implements FilterTable {
     return myFilterPanel;
   }
 
-  public void setFileType(@NotNull LanguageFileType fileType) {
+  public void setFileType(@Nullable LanguageFileType fileType) {
     myFileType = fileType;
   }
 
@@ -223,11 +220,18 @@ public class FilterPanel implements FilterTable {
       return;
     }
     myConstraint = constraint;
+    resetFilters();
     showFilters();
   }
 
   public boolean hasVisibleFilter() {
     return myTableModel.getRowCount() > 0;
+  }
+
+  private void resetFilters() {
+    for (FilterAction filter : myFilters) {
+      filter.reset();
+    }
   }
 
   private void showFilters() {

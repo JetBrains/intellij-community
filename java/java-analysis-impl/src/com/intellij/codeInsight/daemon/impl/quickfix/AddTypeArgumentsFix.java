@@ -54,6 +54,11 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   @Nullable
   public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+    return addTypeArguments(expression, toType, true);
+  }
+
+  @Nullable
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
     if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
     PsiExpression orig = expression;
@@ -109,7 +114,10 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
             methodExpression.setQualifierExpression(qualifierExpression);
           }
 
-          PsiExpression result = (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
+          PsiExpression result = withShortening
+                                 ? (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy)
+                                 : copy;
+
           if (orig != expression) {
             PsiExpression parenthesized = (PsiExpression)orig.copy();
             Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(parenthesized)).replace(result);

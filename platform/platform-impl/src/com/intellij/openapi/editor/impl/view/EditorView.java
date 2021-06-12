@@ -4,6 +4,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -577,11 +578,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
                                            contextToSet.getAntiAliasingHint(), contextToSet.getFractionalMetricsHint());
     }
 
-    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue
+    Object fmHint = UISettings.getEditorFractionalMetricsHint();
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == fmHint
                           ? contextToSet
                           : new FontRenderContext(contextToSet.getTransform(), 
                                                   contextToSet.getAntiAliasingHint(), 
-                                                  myEditor.myFractionalMetricsHintValue);
+                                                  fmHint);
     return true;
   }
 

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Sergey Simonchik
- */
 public abstract class PackageManagementServiceEx extends PackageManagementService {
 
   public abstract void updatePackage(@NotNull InstalledPackage installedPackage,

@@ -86,9 +86,10 @@ final class AnnotationContext {
     }
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
-      PsiMethod method = ObjectUtils.tryCast(parameter.getDeclarationScope(), PsiMethod.class);
-      if (method != null) {
-        int index = method.getParameterList().getParameterIndex(parameter);
+      PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
+      PsiMethod method = parameterList == null ? null : ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
+      if (parameterList != null && method != null) {
+        int index = parameterList.getParameterIndex(parameter);
         if (index >= 0) {
           Supplier<Stream<PsiModifierListOwner>> supplier = () -> {
             HashSet<PsiMethod> visited = new HashSet<>();

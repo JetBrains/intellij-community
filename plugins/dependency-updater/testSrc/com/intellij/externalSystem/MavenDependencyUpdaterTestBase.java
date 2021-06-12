@@ -2,22 +2,29 @@ package com.intellij.externalSystem;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.VfsTestUtil;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 
 abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestCase {
   protected File myTestDataDir;
@@ -44,7 +51,7 @@ abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestC
   }
 
   protected XmlTag findDependencyTag(String group, String artifact, String version) {
-    PsiFile pom = PsiUtilBase.getPsiFile(myProject, myProjectPom);
+    PsiFile pom = PsiUtilCore.getPsiFile(myProject, myProjectPom);
     return findDependencyTag(group, artifact, version, pom);
   }
 
@@ -73,9 +80,40 @@ abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestC
           fail("File " + file + " not found in actual dir");
         }
         String value = new String(actual.contentsToByteArray(), actual.getCharset());
-        assertSameLinesWithFile(expectedFile.getPath(), value, true);
+        assertFilesAreIdenticalLineByLineIgnoringIndent(expectedFile.getPath(), value);
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  private static void assertFilesAreIdenticalLineByLineIgnoringIndent(String expectedFilePath, String actualText) {
+    String expectedText;
+    try {
+      if (OVERWRITE_TESTDATA) {
+        VfsTestUtil.overwriteTestData(expectedFilePath, actualText);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("File " + expectedFilePath + " created.");
+      }
+      expectedText = FileUtil.loadFile(new File(expectedFilePath), StandardCharsets.UTF_8);
+    }
+    catch (FileNotFoundException e) {
+      VfsTestUtil.overwriteTestData(expectedFilePath, actualText);
+      throw new AssertionFailedError("No output text found. File " + expectedFilePath + " created.");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    var expectedLines = Arrays.stream(StringUtil.splitByLines(expectedText.trim(), true))
+      .map(s -> s.stripLeading())
+      .toArray();
+    var actualLines = Arrays.stream(StringUtil.splitByLines(actualText.trim(), true))
+      .map(s -> s.stripLeading())
+      .toArray();
+
+    if (!Arrays.equals(expectedLines, actualLines)) {
+      throw new FileComparisonFailure(null, StringUtil.convertLineSeparators(expectedText.trim()),
+                                      StringUtil.convertLineSeparators(actualText.trim()), expectedFilePath);
+    }
   }
 }

@@ -2,9 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformTarget
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformType
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Platform
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import org.apache.commons.lang3.StringUtils
 
 @Suppress("unused", "TooGenericExceptionCaught") // T is used to get the logger
@@ -19,21 +17,7 @@ inline fun <reified T> T.tryDoing(a: () -> Unit) = try {
     }
 }
 
-fun looksLikeGradleVariable(version: String) = version.startsWith("$")
-
-fun List<StandardV2Platform>.asListOfTags(): List<String> = this
-    .filter { it.type != null && it.type != PlatformType.UNSUPPORTED }
-    .sortedBy { it.type }
-    .flatMap { platform ->
-        val targetPlatforms = platform.targets?.filter { it != PlatformTarget.UNSUPPORTED }
-            ?.map { it.toString() }
-
-        if (!targetPlatforms.isNullOrEmpty()) {
-            targetPlatforms
-        } else {
-            listOf(platform.type.toString())
-        }
-    }
+internal fun looksLikeGradleVariable(version: PackageVersion) = version.versionName.startsWith("$")
 
 /**
  * Delegates to [org.apache.commons.lang3.StringUtils#normalizeSpace], but annotates the result

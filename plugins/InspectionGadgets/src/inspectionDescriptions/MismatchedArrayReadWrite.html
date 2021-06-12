@@ -4,6 +4,11 @@ Reports any array fields or variables whose contents are read but not written,
 or written but not read. Such mismatched reads and writes are pointless, and probably indicate
 dead, incomplete or erroneous code.
 <!-- tooltip end -->
+<p>Sample of the code that will be reported:</p>
+<pre>
+  final int[] bar = new int[3];
+  bar[2] = 3;
+</pre>
 <p>
 
 </body>

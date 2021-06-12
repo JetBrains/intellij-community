@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -31,6 +32,7 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class Decompressor {
@@ -72,10 +74,10 @@ public abstract class Decompressor {
       TarArchiveEntry te;
       while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
-      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName());
+      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getSize(), te.getLinkName());
       // Unix permissions are ignored on Windows
-      if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName());
-      return new Entry(te.getName(), te.isDirectory());
+      if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getSize(), te.getLinkName());
+      return new Entry(te.getName(), te.isDirectory() ? Entry.Type.DIR : Entry.Type.FILE, 0, te.getSize(), null);
     }
 
     private static Entry.Type type(TarArchiveEntry te) {
@@ -182,21 +184,21 @@ public abstract class Decompressor {
         if (SystemInfo.isWindows) {
           // Unix permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
-            return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), 0, myEntry.getSize(), myZip.getUnixSymlink(myEntry));
           }
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
-            return new Entry(myEntry.getName(), type(myEntry), (int)(myEntry.getExternalAttributes()), null);
+            return new Entry(myEntry.getName(), type(myEntry), (int)(myEntry.getExternalAttributes()), myEntry.getSize(), null);
           }
         }
         else {
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
-            return new Entry(myEntry.getName(), type(myEntry), myEntry.getUnixMode(), myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), myEntry.getUnixMode(), myEntry.getSize(), myZip.getUnixSymlink(myEntry));
           }
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
             // DOS attributes are converted into Unix permissions
             long attributes = myEntry.getExternalAttributes();
             @SuppressWarnings("OctalInteger") int unixMode = isSet(attributes, Entry.DOS_READ_ONLY) ? 0444 : 0644;
-            return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), unixMode, myEntry.getSize(), myZip.getUnixSymlink(myEntry));
           }
         }
         return new Entry(myEntry.getName(), myEntry.isDirectory());
@@ -228,7 +230,8 @@ public abstract class Decompressor {
   private @Nullable Predicate<? super String> myFilter = null;
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
-  private @Nullable Consumer<? super Path> myPostProcessor;
+  private boolean myAllowEscapingSymlinks = true;
+  private @Nullable Consumer<Pair<EntryInfo, Path>> myPostProcessor;
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -241,7 +244,17 @@ public abstract class Decompressor {
     return this;
   }
 
+  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
+    myAllowEscapingSymlinks = allowEscapingSymlinks;
+    return this;
+  }
+
   public Decompressor postProcessor(@Nullable Consumer<? super Path> consumer) {
+    myPostProcessor = consumer != null ? pair -> consumer.accept(pair.second) : null;
+    return this;
+  }
+
+  public Decompressor postProcessorWithEntry(@Nullable Consumer<Pair<EntryInfo, Path>> consumer) {
     myPostProcessor = consumer;
     return this;
   }
@@ -310,6 +323,11 @@ public abstract class Decompressor {
             if (Strings.isEmpty(entry.linkTarget)) {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
+
+            if (!myAllowEscapingSymlinks) {
+              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            }
+
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
                 Path outputTarget = Paths.get(entry.linkTarget);
@@ -325,12 +343,29 @@ public abstract class Decompressor {
         }
 
         if (myPostProcessor != null) {
-          myPostProcessor.accept(outputFile);
+          myPostProcessor.accept(pair(entry, outputFile));
         }
       }
     }
     finally {
       closeStream();
+    }
+  }
+
+  private static void verifySymlinkTarget(String entryName, @NotNull String linkTarget, Path outputDir, Path outputFile) throws IOException {
+    try {
+      Path outputTarget = Paths.get(linkTarget);
+      if (outputTarget.isAbsolute()) {
+        throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
+      }
+
+      Path linkTargetNormalized = outputFile.getParent().resolve(linkTarget).normalize();
+      if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
+        throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+      }
+    }
+    catch (InvalidPathException e) {
+      throw new IOException("Failed to verify symlink entry scope: " + entryName + " -> " + linkTarget, e);
     }
   }
 
@@ -340,7 +375,7 @@ public abstract class Decompressor {
       return null;
     }
     String newName = String.join("/", ourPathSplit.subList(prefix.size(), ourPathSplit.size()));
-    return new Entry(newName, e.type, e.mode, e.linkTarget);
+    return new Entry(newName, e.type, e.mode, e.size, e.linkTarget);
   }
 
   private static List<String> normalizePathAndSplit(String path) throws IOException {
@@ -379,26 +414,61 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  protected static final class Entry {
+  public interface EntryInfo {
     enum Type {FILE, DIR, SYMLINK}
 
+    String getName();
+    @Nullable String getLinkTarget();
+    Type getType();
+    int getMode();
+    long getSize();
+  }
+
+  protected static final class Entry implements EntryInfo {
     static final int DOS_READ_ONLY = 0b01;
     static final int DOS_HIDDEN = 0b010;
 
     public final String name;
     public final @Nullable String linkTarget;
-    final Type type;
-    final int mode;
+    public final Type type;
+    public final int mode;
+    public final long size;
 
     Entry(String name, boolean isDirectory) {
-      this(name, isDirectory ? Type.DIR : Type.FILE, 0, null);
+      this(name, isDirectory ? Type.DIR : Type.FILE, 0, 0L, null);
     }
 
-    Entry(String name, Type type, int mode, @Nullable String linkTarget) {
+    Entry(String name, Type type, int mode, long size, @Nullable String linkTarget) {
       this.name = name;
       this.type = type;
       this.mode = mode;
+      this.size = size;
       this.linkTarget = linkTarget;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public @Nullable String getLinkTarget() {
+      return linkTarget;
+    }
+
+    @Override
+    public Type getType() {
+      return type;
+    }
+
+    @Override
+    public int getMode() {
+      return mode;
+    }
+
+    @Override
+    public long getSize() {
+      return size;
     }
   }
 

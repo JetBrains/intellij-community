@@ -8,8 +8,6 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
-import com.intellij.psi.ReferenceRange
 import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -22,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   val (declaredData, referencedData) = declaredReferencedData(file, offset)
+                                       ?: return emptyList()
   val data = referencedData
              ?: declaredData
              ?: return emptyList()
@@ -33,16 +32,14 @@ fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
  */
 @Experimental
 fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Collection<Symbol>, Collection<Symbol>> {
-  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return Pair(emptyList(), emptyList())
   return (declaredData?.targets?.map { it.symbol } ?: emptyList()) to (referencedData?.targets?.map { it.symbol } ?: emptyList())
 }
 
-private val emptyData = DeclaredReferencedData(null, null)
-
-internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {
+internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData? {
   val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
-    return emptyData
+    return null
   }
 
   val withMinimalRanges: Collection<DeclarationOrReference> = chooseByRange(
@@ -51,7 +48,6 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
 
   var declaration: PsiSymbolDeclaration? = null
   val references: MutableList<PsiSymbolReference> = ArrayList()
-  var evaluatorData: TargetData.Evaluator? = null
 
   for (dr in withMinimalRanges) {
     when (dr) {
@@ -72,16 +68,12 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
       is DeclarationOrReference.Reference -> {
         references.add(dr.reference)
       }
-      is DeclarationOrReference.Evaluator -> {
-        LOG.assertTrue(evaluatorData == null)
-        evaluatorData = dr.evaluatorData
-      }
     }
   }
 
   return DeclaredReferencedData(
     declaredData = declaration?.let(TargetData::Declared),
-    referencedData = evaluatorData ?: references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
+    referencedData = references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
   )
 }
 
@@ -90,26 +82,31 @@ private sealed class DeclarationOrReference {
   abstract val rangeWithOffset: TextRange
 
   class Declaration(val declaration: PsiSymbolDeclaration) : DeclarationOrReference() {
+
     override val rangeWithOffset: TextRange get() = declaration.absoluteRange
+
+    override fun toString(): String = declaration.toString()
   }
 
-  class Reference(val reference: PsiSymbolReference) : DeclarationOrReference() {
-    override val rangeWithOffset: TextRange get() = reference.absoluteRange
-  }
+  class Reference(val reference: PsiSymbolReference, private val offset: Int) : DeclarationOrReference() {
 
-  class Evaluator(private val offset: Int, val evaluatorData: TargetData.Evaluator) : DeclarationOrReference() {
     override val rangeWithOffset: TextRange by lazy(LazyThreadSafetyMode.NONE) {
-      when (val origin: PsiOrigin = evaluatorData.origin) {
-        is PsiOrigin.Reference -> findRangeWithOffset(origin.reference)
-        is PsiOrigin.Leaf -> origin.leaf.textRange
-      }
+      referenceRanges(reference).find {
+        it.containsOffset(offset)
+      } ?: error("One of the ranges must contain offset at this point")
     }
 
-    private fun findRangeWithOffset(reference: PsiReference): TextRange {
-      return ReferenceRange.getAbsoluteRanges(reference).find {
-        it.containsOffset(offset)
-      } ?: error("One of the reference ranges must contain offset at this point")
-    }
+    override fun toString(): String = reference.toString()
+  }
+}
+
+internal fun referenceRanges(it: PsiSymbolReference): List<TextRange> {
+  return if (it is EvaluatorReference) {
+    it.origin.absoluteRanges
+  }
+  else {
+    // Symbol references don't support multi-ranges yet.
+    listOf(it.absoluteRange)
   }
 }
 
@@ -135,15 +132,15 @@ private fun declarationsOrReferences(file: PsiFile, offset: Int): List<Declarati
 
   val allReferences = file.allReferencesAround(offset)
   if (allReferences.isEmpty()) {
-    fromTargetEvaluator(file, offset)?.let { evaluatorData ->
-      if (foundNamedElement != null && evaluatorData.targetElements.singleOrNull() === foundNamedElement) {
+    fromTargetEvaluator(file, offset)?.let { evaluatorReference ->
+      if (foundNamedElement != null && evaluatorReference.targetElements.singleOrNull() === foundNamedElement) {
         return@let // treat self-reference as a declaration
       }
-      result += DeclarationOrReference.Evaluator(offset, evaluatorData)
+      result += DeclarationOrReference.Reference(evaluatorReference, offset)
     }
   }
   else {
-    allReferences.mapTo(result, DeclarationOrReference::Reference)
+    allReferences.mapTo(result) { DeclarationOrReference.Reference(it, offset) }
   }
 
   return result
@@ -161,7 +158,7 @@ private fun namedElement(file: PsiFile, offset: Int): NamedElementAndLeaf? {
   return null
 }
 
-private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluator? {
+private fun fromTargetEvaluator(file: PsiFile, offset: Int): EvaluatorReference? {
   val editor = mockEditor(file) ?: return null
   val flags = TargetElementUtil.getInstance().allAccepted and
     TargetElementUtil.ELEMENT_NAME_ACCEPTED.inv() and
@@ -183,5 +180,5 @@ private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluato
   if (targetElements.isEmpty()) {
     return null
   }
-  return TargetData.Evaluator(origin, targetElements)
+  return EvaluatorReference(origin, targetElements)
 }

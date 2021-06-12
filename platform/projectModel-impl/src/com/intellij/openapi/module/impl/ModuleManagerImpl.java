@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
@@ -169,7 +169,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   private void loadState(@NotNull Set<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = modulePaths;
-    Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
+    Set<String> unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames();
     Iterator<ModulePath> iterator = myModulePathsToLoad.iterator();
     List<ModulePath> unloadedModulePaths = new ArrayList<>();
     while (iterator.hasNext()) {
@@ -222,10 +222,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     ApplicationManager.getApplication().runWriteAction(model::commit);
     // clear only if successfully loaded
     myModulePathsToLoad.clear();
-  }
-
-  @Override
-  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 
   @NotNull

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties;
@@ -31,6 +30,6 @@ public abstract class VcsLogUiPropertiesWithSharedRecentFilters<S extends VcsLog
 
   @NotNull
   private VcsLogProjectTabsProperties.State getCommonState() {
-    return ServiceManager.getService(myProject, VcsLogProjectTabsProperties.class).getState();
+    return myProject.getService(VcsLogProjectTabsProperties.class).getState();
   }
 }

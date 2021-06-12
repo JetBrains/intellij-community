@@ -107,7 +107,7 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
   @ApiStatus.Internal
-  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
+  public abstract void processEvents(@NotNull List<? extends @NotNull VFileEvent> events);
 
   public static @NotNull NewVirtualFileSystem replaceWithNativeFS(final @NotNull NewVirtualFileSystem fs) {
     if (SystemInfo.isWindows &&

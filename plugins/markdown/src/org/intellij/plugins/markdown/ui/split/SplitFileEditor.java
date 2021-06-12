@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -31,8 +30,10 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.fileEditor.TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE;
-
+/**
+ * @deprecated Use {@link TextEditorWithPreview}
+ */
+@Deprecated
 public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEditor> extends UserDataHolderBase implements FileEditor {
   public static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 
@@ -45,7 +46,7 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   @NotNull
   private final JComponent myComponent;
   @NotNull
-  private SplitEditorLayout mySplitEditorLayout =
+  private TextEditorWithPreview.Layout mySplitEditorLayout =
     MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().getSplitEditorLayout();
 
   private boolean myVerticalSplitOption = MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isVerticalSplit();
@@ -73,7 +74,7 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
       new MarkdownApplicationSettings.SettingsChangedListener() {
         @Override
         public void beforeSettingsChanged(@NotNull MarkdownApplicationSettings newSettings) {
-          SplitEditorLayout oldSplitEditorLayout =
+          TextEditorWithPreview.Layout oldSplitEditorLayout =
             MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().getSplitEditorLayout();
 
           boolean oldVerticalSplitOption =
@@ -96,36 +97,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   }
 
   private void adjustDefaultLayout(E1 editor) {
-    TextEditorWithPreview.Layout layout = getAndResetPredefinedLayoutForEditor(editor);
-    if (layout != null) {
-      switch (layout) {
-        case SHOW_EDITOR:
-          mySplitEditorLayout = SplitEditorLayout.FIRST;
-          break;
-        case SHOW_PREVIEW:
-          mySplitEditorLayout = SplitEditorLayout.SECOND;
-          break;
-        case SHOW_EDITOR_AND_PREVIEW:
-          mySplitEditorLayout = SplitEditorLayout.SPLIT;
-          break;
-      }
-    }
-  }
-
-  //todo: Refactor Markdown editor and make it a subclass of TextEditorWithPreview.
-  //      Move this method to TextEditorWithPreview.
-  @Nullable
-  private static TextEditorWithPreview.Layout getAndResetPredefinedLayoutForEditor(FileEditor editor) {
-    VirtualFile file = editor.getFile();
-    if (file != null) {
-      TextEditorWithPreview.Layout layout = file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
-      if (layout != null) {
-        file.putUserData(DEFAULT_LAYOUT_FOR_FILE, null); //burn after reading
-        return layout;
-      }
-    }
-
-    return null;
   }
 
   private void triggerSplitOrientationChange(boolean isVerticalSplit) {
@@ -187,26 +158,13 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     return editorToolbar;
   }
 
-  public void triggerLayoutChange() {
-    final int oldValue = mySplitEditorLayout.ordinal();
-    final int N = SplitEditorLayout.values().length;
-    final int newValue = (oldValue + N - 1) % N;
-
-    triggerLayoutChange(SplitEditorLayout.values()[newValue], true);
-  }
-
-  public void triggerLayoutChange(@NotNull SplitEditorLayout newLayout, boolean requestFocus) {
+  public void triggerLayoutChange(@NotNull TextEditorWithPreview.Layout newLayout, boolean requestFocus) {
     if (mySplitEditorLayout == newLayout) {
       return;
     }
 
     mySplitEditorLayout = newLayout;
     invalidateLayout(requestFocus);
-  }
-
-  @NotNull
-  public SplitEditorLayout getCurrentEditorLayout() {
-    return mySplitEditorLayout;
   }
 
   private void invalidateLayout(boolean requestFocus) {
@@ -223,8 +181,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   }
 
   private void adjustEditorsVisibility() {
-    myMainEditor.getComponent().setVisible(mySplitEditorLayout.showFirst);
-    mySecondEditor.getComponent().setVisible(mySplitEditorLayout.showSecond);
   }
 
   @NotNull
@@ -246,8 +202,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (mySplitEditorLayout.showFirst) return myMainEditor.getPreferredFocusedComponent();
-    if (mySplitEditorLayout.showSecond) return mySecondEditor.getPreferredFocusedComponent();
     return null;
   }
 
@@ -259,19 +213,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MyFileEditorState) {
-      final MyFileEditorState compositeState = (MyFileEditorState)state;
-      if (compositeState.getFirstState() != null) {
-        myMainEditor.setState(compositeState.getFirstState());
-      }
-      if (compositeState.getSecondState() != null) {
-        mySecondEditor.setState(compositeState.getSecondState());
-      }
-      if (compositeState.getSplitLayout() != null) {
-        mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
-        invalidateLayout(true);
-      }
-    }
   }
 
   @Override
@@ -426,6 +367,10 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     }
   }
 
+  /**
+   * @deprecated Use {@link TextEditorWithPreview.Layout}
+   */
+  @Deprecated
   public enum SplitEditorLayout {
     FIRST(true, false, MarkdownBundle.message("markdown.layout.editor.only")),
     SECOND(false, true, MarkdownBundle.message("markdown.layout.preview.only")),

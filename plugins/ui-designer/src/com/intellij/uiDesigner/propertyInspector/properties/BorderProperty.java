@@ -37,6 +37,9 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private final Project myProject;
   private final Property[] myChildren;
 
+  // Converting this anonymous class to lambda causes javac 11 failure (should compile fine in later javac)
+  // suppression can be removed when we migrate to newer Java
+  @SuppressWarnings("Convert2Lambda")
   private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
     new Supplier<>() {
       @Override

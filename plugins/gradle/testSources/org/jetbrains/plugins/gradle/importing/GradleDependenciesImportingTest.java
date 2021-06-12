@@ -947,7 +947,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
     createProjectSubFile("project1/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
@@ -970,7 +970,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     createProjectSubFile("project2/build.gradle",
-                         new GradleBuildScriptBuilderEx().withJavaPlugin().addPostfix(
+                         createBuildScriptBuilder().withJavaPlugin().addPostfix(
                            "dependencies {",
                            "  compile project(':project1')",
                            "}"
@@ -1722,9 +1722,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesJavadocAttachmentFromGradleCache() throws Exception {
-    importProject(new GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
-                    .withJUnit("4.12") // download classes and sources - the default import settings
+                    .withJUnit4() // download classes and sources - the default import settings
                     .generate());
     assertModules("project", "project.main", "project.test");
 
@@ -1734,14 +1734,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> library.getTable().removeLibrary(library));
     });
 
-    importProject(new GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
                     .withIdeaPlugin()
-                    .withJUnit("4.12")
-                    .addPrefix("idea.module {\n" +
-                               "  downloadJavadoc = true\n" +
-                               "  downloadSources = false\n" + // should be already available in Gradle cache
-                               "}")
+                    .withJUnit4()
+                    .addPrefix(
+                      "idea.module {",
+                      "  downloadJavadoc = true",
+                      "  downloadSources = false", // should be already available in Gradle cache
+                      "}")
                     .generate());
 
     assertModules("project", "project.main", "project.test");
@@ -1823,22 +1824,23 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                          "    delete new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')\n" +
                          "    followSymlinks = true" +
                          "}");
-    importProject(new GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .generate());
     assertModules("project",
                   "project.aLib", "project.aLib.main", "project.aLib.test");
 
     runTask(":aLib:moveALibToGradleUserHome");
     try {
-      importProject(new GradleBuildScriptBuilderEx()
+      importProject(createBuildScriptBuilder()
                       .withJavaPlugin()
                       .withIdeaPlugin()
                       .addRepository(" maven { url new File(gradle.gradleUserHomeDir, 'caches/ij_test_repo')} ")
                       .addDependency("implementation 'test:aLib:1.0-SNAPSHOT-1'")
-                      .addPrefix("idea.module {\n" +
-                                 "  downloadJavadoc = true\n" +
-                                 "  downloadSources = false\n" +
-                                 "}")
+                      .addPrefix(
+                        "idea.module {",
+                        "  downloadJavadoc = true",
+                        "  downloadSources = false",
+                        "}")
                       .generate());
     }
     finally {
@@ -1889,7 +1891,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   public void testCompilationTaskClasspathDependencies() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .addPostfix(
           "  configurations {",

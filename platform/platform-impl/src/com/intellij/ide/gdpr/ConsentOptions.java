@@ -11,9 +11,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,12 +34,13 @@ public final class ConsentOptions {
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance;
     static {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      Path commonDataPath = PathManager.getCommonDataPath();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final Path DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath()
+        private final Path DEFAULT_CONSENTS_FILE = commonDataPath
           .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
           .resolve("consentOptions/cached");
-        private final Path CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted");
+        private final Path CONFIRMED_CONSENTS_FILE = commonDataPath.resolve("consentOptions/accepted");
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override
@@ -58,7 +56,16 @@ public final class ConsentOptions {
 
         @Override
         public @NotNull String readBundledConsents() {
-          return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH));
+          InputStream stream = ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH);
+          if (stream != null) {
+            try (InputStream inputStream = stream) {
+              return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          }
+          return "";
         }
 
         @Override
@@ -70,18 +77,6 @@ public final class ConsentOptions {
         @Override
         public @NotNull String readConfirmedConsents() throws IOException {
           return Files.readString(CONFIRMED_CONSENTS_FILE);
-        }
-
-        private @NotNull String loadText(InputStream stream) {
-          if (stream != null) {
-            try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
-              return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
-          }
-          return "";
         }
       }, appInfo.isEAP() && appInfo.isVendorJetBrains());
     }
@@ -141,19 +136,19 @@ public final class ConsentOptions {
   public @Nullable String getConfirmedConsentsString() {
     final Map<String, Consent> defaults = loadDefaultConsents();
     if (!defaults.isEmpty()) {
-      final String str = confirmedConsentToExternalString(
+      String str = confirmedConsentToExternalString(
         loadConfirmedConsents().values().stream().filter(c -> {
           final Consent def = defaults.get(c.getId());
           return def != null && !def.isDeleted();
         })
       );
-      return StringUtilRt.isEmptyOrSpaces(str)? null : str;
+      return str.isBlank() ? null : str;
     }
     return null;
   }
 
   public void applyServerUpdates(@Nullable String json) {
-    if (StringUtilRt.isEmptyOrSpaces(json)) {
+    if (json == null || json.isBlank()) {
       return;
     }
 
@@ -175,14 +170,14 @@ public final class ConsentOptions {
     }
   }
 
-  public @NotNull Pair<List<Consent>, Boolean> getConsents() {
+  public @NotNull Map.Entry<List<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (myIsEAP) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
     }
     if (allDefaults.isEmpty()) {
-      return new Pair<>(Collections.emptyList(), Boolean.FALSE);
+      return Map.entry(Collections.emptyList(), Boolean.FALSE);
     }
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
@@ -195,7 +190,7 @@ public final class ConsentOptions {
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
     boolean confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
-    return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
+    return Map.entry(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
   public void setConsents(@NotNull Collection<Consent> confirmedByUser) {
@@ -291,7 +286,7 @@ public final class ConsentOptions {
   }
 
   private static @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
-    if (StringUtilRt.isEmptyOrSpaces(json)) {
+    if (json == null || json.isBlank()) {
       return Collections.emptyList();
     }
 

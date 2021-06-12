@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -97,20 +97,16 @@ public final class StartUpMeasurer {
     addActivity(activity);
   }
 
-  public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
-    return startActivity(name, ActivityCategory.APP_INIT);
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, category);
   }
 
-  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
-    return startActivity(name, category, null);
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
-  }
-
-  public static @NotNull Activity startMainActivity(@NonNls @NotNull String name) {
-    return new ActivityImpl(name, getCurrentTime(), null, null);
   }
 
   /**

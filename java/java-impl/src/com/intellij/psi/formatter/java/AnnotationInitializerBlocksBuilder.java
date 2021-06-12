@@ -24,7 +24,9 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -63,8 +65,17 @@ public class AnnotationInitializerBlocksBuilder {
         PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(node.getPsi());
         if (prev == null) return false;
         return prev instanceof PsiNameValuePair && !PsiTreeUtil.hasErrorElements(prev);
-      });
+      })
+      .setNoAlignmentIf(JavaElementType.NAME_VALUE_PAIR, AnnotationInitializerBlocksBuilder::isSingleNameValuePair);
 
     return config.createBuilder().buildNodeChildBlocks(myNode, myFactory);
+  }
+
+  private static boolean isSingleNameValuePair(@NotNull ASTNode pairNode) {
+    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(pairNode.getPsi());
+    if (prev != null && prev.getNode().getElementType() != JavaTokenType.LPARENTH) return false;
+    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(pairNode.getPsi());
+    if (next != null && next.getNode().getElementType() != JavaTokenType.RPARENTH) return false;
+    return true;
   }
 }

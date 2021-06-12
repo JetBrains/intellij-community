@@ -25,6 +25,7 @@ public final class WSLCommandLineOptions {
   private final List<String> myInitShellCommands = new ArrayList<>();
   private boolean myExecuteCommandInDefaultShell = false;
   private @Nls @NotNull String myShellPath = DEFAULT_SHELL;
+  private double mySleepTimeoutSec = 0;
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -151,6 +152,19 @@ public final class WSLCommandLineOptions {
 
   public @NotNull List<String> getInitShellCommands() {
     return myInitShellCommands;
+  }
+
+  public double getSleepTimeoutSec() {
+    return mySleepTimeoutSec;
+  }
+
+  /**
+   * Allows to workaround WSL1 problem
+   * <a href="https://github.com/microsoft/WSL/issues/4082">Output from WSL command pipeline is randomly truncated</a>
+   */
+  public @NotNull WSLCommandLineOptions setSleepTimeoutSec(double sleepTimeoutSec) {
+    mySleepTimeoutSec = sleepTimeoutSec;
+    return this;
   }
 
   /**

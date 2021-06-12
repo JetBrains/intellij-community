@@ -70,6 +70,7 @@
                    integerNullable="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
                    intPropertyForClass="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
                    forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+                   class="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
         <myService serviceImplementation="foo.MyRunnable"

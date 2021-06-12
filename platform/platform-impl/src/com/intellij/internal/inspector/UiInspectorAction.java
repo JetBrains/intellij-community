@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -83,10 +84,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
@@ -95,7 +93,7 @@ import java.util.function.Supplier;
 import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
-public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible {
+public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String ACTION_ID = "UiInspector";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
@@ -151,9 +149,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
-    if (event != null) {
-      event.consume();
-    }
+    if (event != null) event.consume();
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     Project project = e.getProject();
@@ -169,6 +165,18 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     assert component != null;
     new UiInspector(project).showInspector(project, component);
+  }
+
+  @Override
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
+                                @NotNull DataContext context) {
+
+    ArrayList<AnAction> sorted = new ArrayList<>(actions);
+    if (context.getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
+      sorted.remove(this);
+      sorted.add(this);
+    }
+    return sorted;
   }
 
   private static void closeAllInspectorWindows() {
@@ -346,16 +354,21 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         try {
           String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
           PluginId pluginId = PluginManager.getPluginByClassName(javaPsiFacadeFqn);
+          Class<?> facade = null;
           if (pluginId != null) {
             IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
             if (plugin != null) {
-              Class<?> facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
-              Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-              Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-              Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
-              if (result instanceof PsiElement) {
-                PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
-              }
+              facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+            }
+          } else {
+            facade = Class.forName(javaPsiFacadeFqn);
+          }
+          if (facade != null) {
+            Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+            Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+            Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
+            if (result instanceof PsiElement) {
+              PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
             }
           }
         }
@@ -617,7 +630,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             return Pair.create(entry.getValue(), field.getName());
           }
         }
-        catch (Exception e) {
+        catch (IllegalAccessException | InaccessibleObjectException e) {
           //skip
         }
       }
@@ -923,8 +936,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     StripeTable myTable;
 
     private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
-      myModel = new InspectorTableModel(clickInfo);
-      init(null);
+       myModel = new InspectorTableModel(clickInfo);
+       init(null);
     }
     private InspectorTable(@NotNull final Component component) {
 
@@ -982,7 +995,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           int column = myTable.columnAtPoint(event.getPoint());
           if (row >=0 && row < myTable.getRowCount() && column >= 0 && column < myTable.getColumnCount()) {
             Component renderer = myTable.getCellRenderer(row, column)
-              .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
+                                        .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
@@ -1192,7 +1205,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static Renderer<Object> getRenderer(Class<?> clazz) {
       if (clazz == null) return null;
 
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings("unchecked") 
       Renderer<Object> renderer = (Renderer<Object>)RENDERERS.get(clazz);
       if (renderer != null) return renderer;
 
@@ -2162,7 +2175,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       List<PropertyBean> clickInfo = new ArrayList<>();
       //clickInfo.add(new PropertyBean("Click point", me.getPoint()));
       if (component instanceof JList) {
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") 
         JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
@@ -2194,10 +2207,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         if (path != null) {
           Object object = path.getLastPathComponent();
           Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
-            tree, object, tree.getSelectionModel().isPathSelected(path),
-            tree.isExpanded(path),
-            tree.getModel().isLeaf(object),
-            tree.getRowForPath(path), tree.hasFocus());
+              tree, object, tree.getSelectionModel().isPathSelected(path),
+              tree.isExpanded(path),
+              tree.getModel().isLeaf(object),
+              tree.getRowForPath(path), tree.hasFocus());
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;

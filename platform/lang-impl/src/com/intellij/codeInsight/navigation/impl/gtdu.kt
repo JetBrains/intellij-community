@@ -6,14 +6,13 @@ import com.intellij.find.actions.PsiTargetVariant
 import com.intellij.find.actions.SearchTargetVariant
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.usages.impl.symbolSearchTarget
-import com.intellij.find.usages.impl.symbolSearchTargets
-import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.SmartList
 
 internal fun gotoDeclarationOrUsages(file: PsiFile, offset: Int): GTDUActionData? {
   return processInjectionThenHost(file, offset, ::gotoDeclarationOrUsagesInner)
@@ -55,7 +54,7 @@ private fun gotoDeclarationOrUsagesInner(file: PsiFile, offset: Int): GTDUAction
 }
 
 private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
-  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return null
   return referencedData?.toGTDActionData(file.project)?.toGTDUActionData() // GTD of referenced symbols
          ?: (referencedData)?.let { ShowUsagesGTDUActionData(file.project, it) } // SU of referenced symbols if nowhere to navigate
          ?: declaredData?.let { ShowUsagesGTDUActionData(file.project, it) } // SU of declared symbols
@@ -84,22 +83,13 @@ private class ShowUsagesGTDUActionData(private val project: Project, private val
 }
 
 private fun searchTargetVariants(project: Project, data: TargetData): List<TargetVariant> {
-  return when (data) {
-    is TargetData.Declared -> {
-      val symbol: Symbol = data.declaration.symbol
-      val psi: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
-      if (psi == null) {
-        listOfNotNull(symbolSearchTarget(project, symbol)?.let(::SearchTargetVariant))
-      }
-      else {
-        listOf(PsiTargetVariant(psi))
-      }
+  return data.targets.mapNotNullTo(SmartList()) { (symbol, _) ->
+    val psi: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+    if (psi == null) {
+      symbolSearchTarget(project, symbol)?.let(::SearchTargetVariant)
     }
-    is TargetData.Referenced -> {
-      symbolSearchTargets(project, data.targets.map { it.symbol }).map(::SearchTargetVariant)
-    }
-    is TargetData.Evaluator -> {
-      data.targetElements.map(::PsiTargetVariant)
+    else {
+      PsiTargetVariant(psi)
     }
   }
 }

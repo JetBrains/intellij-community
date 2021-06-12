@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -30,7 +30,6 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.Icon
 
 object L {
@@ -183,20 +182,20 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
       }
       // Update all current branches in the selection
       if (currentBranchesMap.isNotEmpty()) {
-        GitUpdateExecutionProcess(myProject,
+        GitUpdateExecutionProcess(project,
                                   repositories,
                                   currentBranchesMap,
-                                  GitVcsSettings.getInstance(myProject).updateMethod,
+                                  GitVcsSettings.getInstance(project).updateMethod,
                                   false).execute()
       }
     }
 
     override fun onSuccess() {
       if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(myProject).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
-                                                         GitBundle.message("branches.selected.branches.updated.title",
-                                                                           successfullyUpdated.size,
-                                                                           successfullyUpdated.joinToString("\n")))
+        VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
+                                                       GitBundle.message("branches.selected.branches.updated.title",
+                                                                         successfullyUpdated.size,
+                                                                         successfullyUpdated.joinToString("\n")))
       }
     }
   })
@@ -214,7 +213,7 @@ internal fun hasRemotes(project: Project): Boolean {
 internal abstract class BranchGroupingAction(private val key: GroupingKey,
                                              icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
 
-  abstract fun setSelected(key: GroupingKey, state: Boolean)
+  abstract fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean)
 
   override fun isSelected(e: AnActionEvent) =
     e.project?.let { GitVcsSettings.getInstance(it).branchSettings.isGroupingEnabled(key) } ?: false
@@ -223,6 +222,6 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
     val project = e.project ?: return
     val branchSettings = GitVcsSettings.getInstance(project).branchSettings
     branchSettings.setGrouping(key, state)
-    setSelected(key, state)
+    setSelected(e, key, state)
   }
 }

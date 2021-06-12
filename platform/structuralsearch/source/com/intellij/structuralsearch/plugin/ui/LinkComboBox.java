@@ -73,7 +73,7 @@ class LinkComboBox extends JBComboBoxLabel {
     if (!isEnabled()) return;
     final BaseListPopupStep<String> list = new BaseListPopupStep<>(null, myItems) {
       @Override
-      public PopupStep onChosen(@NlsContexts.Label String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(@NlsContexts.Label String selectedValue, boolean finalChoice) {
         setSelectedItem(selectedValue);
         if (myConsumer != null) myConsumer.consume(selectedValue);
         return super.onChosen(selectedValue, finalChoice);

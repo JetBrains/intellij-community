@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -69,6 +70,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -339,7 +341,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
         PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope));
-        if (junit4RunnerClass != null) { //vintage engine would not detect tests for old junit versions, let's warn about them though
+        if (junit4RunnerClass != null && isAcceptableVintageVersion()) {
           String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
                            ? jupiterVersion
                            : "4.12." + StringUtil.getShortName(launcherVersion);
@@ -354,6 +356,26 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final PathsList targetList = isModularized ? javaParameters.getModulePath() : javaParameters.getClassPath();
     for (int i = additionalDependencies.size() - 1; i >= 0; i--) {
       targetList.addFirst(additionalDependencies.get(i));
+    }
+  }
+
+  /**
+   * junit 4.12+ must be on the classpath for vintage engine to work correctly.
+   * Don't add engine when it will fail to detect tests anyway.
+   * 
+   * Reflection is needed for the case when no sources is attached
+   */
+  private boolean isAcceptableVintageVersion() {
+    ClassLoader loader = TestClassCollector.createUsersClassLoader(myConfiguration);
+    try {
+      Class<?> aClass = loader.loadClass("junit.runner.Version");
+      Method id = aClass.getDeclaredMethod("id");
+      Object result = id.invoke(null);
+      return result instanceof String && VersionComparatorUtil.compare("4.12", (String)result) <= 0;
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+      return false;
     }
   }
 

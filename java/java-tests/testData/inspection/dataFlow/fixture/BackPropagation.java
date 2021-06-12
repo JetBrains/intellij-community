@@ -112,7 +112,7 @@ public class BackPropagation {
       if (x - y > -1 && x <= y) {}
       if (x - y < -1 && x <= y) {}
       if (x - y == y && x == y) {}
-      if (x - y < y && (x == y || x < y)) {}
+      if (x - y < y && (<warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning> || x < y)) {}
     }
   }
 

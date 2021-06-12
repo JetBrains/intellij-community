@@ -123,7 +123,7 @@ public final class MVStoreTool {
                 // or file system issues.
                 // So we should skip the broken block at end of the DB file.
                 try {
-                    DataUtil.readFully(file, position, 4096, block);
+                    DataUtil.readFully(file, position, 4096, block, dbFile);
                 } catch (MVStoreException e) {
                     position += blockSize;
                     printer.printf("ERROR illegal position %d%n", position);
@@ -138,7 +138,7 @@ public final class MVStoreTool {
                     block.readerIndex(block.readerIndex() - 2);
                     MVStore.StoreHeader storeHeader = new MVStore.StoreHeader();
                     storeHeader.read(block);
-                    printer.println(storeHeader.toString());
+                    printer.println(storeHeader);
                     position += blockSize;
                     continue;
                 }
@@ -163,7 +163,7 @@ public final class MVStoreTool {
                 int length = chunk.blockCount * MVStore.BLOCK_SIZE;
                 printer.printf("%n%0" + len + "x chunkHeader %s%n", position, chunk.toString());
                 ByteBuf chunkBuf = UnpooledByteBufAllocator.DEFAULT.heapBuffer(length);
-                DataUtil.readFully(file, position, length, chunkBuf);
+                DataUtil.readFully(file, position, length, chunkBuf, dbFile);
                 int p = block.readerIndex();
                 position += length;
                 int remaining = chunk.pageCount;
@@ -587,7 +587,7 @@ public final class MVStoreTool {
             Chunk newestChunk = null;
             for (long pos = 0; pos < fileSize;) {
                 //block.rewind();
-                DataUtil.readFully(file, pos, 4096, block);
+                DataUtil.readFully(file, pos, 4096, block, dbFile);
                 //block.rewind();
                 int headerType = block.readByte();
                 if (headerType == 'H') {
@@ -615,7 +615,7 @@ public final class MVStoreTool {
                 int length = c.blockCount * MVStore.BLOCK_SIZE;
                 ByteBuf buf = PooledByteBufAllocator.DEFAULT.ioBuffer(length);
                 try {
-                    DataUtil.readFully(file, pos, length, buf);
+                    DataUtil.readFully(file, pos, length, buf, dbFile);
                     if (c.version > targetVersion) {
                         // newer than the requested version
                         pos += length;
@@ -635,7 +635,7 @@ public final class MVStoreTool {
             int length = newestChunk.blockCount * MVStore.BLOCK_SIZE;
             ByteBuf chunk = PooledByteBufAllocator.DEFAULT.ioBuffer(length);
             try {
-                DataUtil.readFully(file, newestChunk.block * MVStore.BLOCK_SIZE, length, chunk);
+                DataUtil.readFully(file, newestChunk.block * MVStore.BLOCK_SIZE, length, chunk, dbFile);
                 chunk.readBytes(target, fileSize, length);
             }
             finally {
@@ -662,13 +662,6 @@ public final class MVStoreTool {
         }
         pw.flush();
         return newestVersion;
-    }
-
-    @SuppressWarnings({"rawtypes","unchecked"})
-    private static MVMap.Builder<Object,Object> getGenericMapBuilder() {
-        return (MVMap.Builder)new MVMap.Builder<byte[],byte[]>().
-                keyType(GenericDataType.INSTANCE).
-                valueType(GenericDataType.INSTANCE);
     }
 
     /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -230,14 +230,6 @@ public interface Configurable extends UnnamedConfigurable {
 
   default <T> boolean isModified(@NotNull ComboBox<T> comboBox, T value) {
     return !Comparing.equal(comboBox.getSelectedItem(), value);
-  }
-
-  /**
-   * @return component which should be focused when the dialog appears
-   *         on the screen.
-   */
-  default JComponent getPreferredFocusedComponent() {
-    return null;
   }
 
   interface TopComponentController {

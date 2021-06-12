@@ -1,9 +1,23 @@
 <html>
 <body>
-Reports method calls whose target is another
-method call.
+Reports method calls whose target is another method call.
+<p>Example:</p>
+<pre>
+  class X { Y foo() { return new Y(); } }
+  class Y { X bar() { return new X(); } }
+
+  void foo() {
+    Y y = new X().foo(); // Chained method call
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
+  Use the first checkbox below to allow chained method calls in field initializers,
+  for instance <code>private Y y = new X().foo();</code>.
+</p>
+<p>
+  Use the second checkbox below to allow chained method calls operating on a unique type,
+  for instance <code>new StringBuilder().append("x: ").append(new X()).append("y: ").append(new Y()).toString();</code>.
+</p>
 </body>
 </html>

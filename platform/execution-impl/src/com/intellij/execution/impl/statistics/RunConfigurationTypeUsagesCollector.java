@@ -74,7 +74,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
 
       final ConfigurationType configurationType = configurationFactory.getType();
-      List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
+      List<EventPair<?>> pairs = createFeatureUsageData(configurationType, configurationFactory);
       pairs.addAll(getSettings(settings, runConfiguration));
       final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
       addOrIncrement(templates, template);
@@ -140,7 +140,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             continue;
           }
           if (featureUsed) {
-            List<EventPair> pairs = new ArrayList<>();
+            List<EventPair<?>> pairs = new ArrayList<>();
             pairs.add(ID_FIELD.with(runConfiguration.getType().getId()));
             pairs.add(EventFields.PluginInfo.with(info));
             pairs.add(FEATURE_NAME_FIELD.with(name));
@@ -151,9 +151,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static @NotNull List<EventPair> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
+  public static @NotNull List<EventPair<?>> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
-    List<EventPair> pairs = new ArrayList<>();
+    List<EventPair<?>> pairs = new ArrayList<>();
     pairs.add(ID_FIELD.with(id));
     if (factory != null && configuration.getConfigurationFactories().length > 1) {
       pairs.add(FACTORY_FIELD.with(factory.getId()));
@@ -172,10 +172,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
 
   private static final class Template {
     private final VarargEventId myEventId;
-    private final List<? super EventPair> myEventPairs;
+    private final List<EventPair<?>> myEventPairs;
 
     private Template(VarargEventId id,
-                     List<? super EventPair> pairs) {
+                     List<EventPair<?>> pairs) {
       myEventId = id;
       myEventPairs = pairs;
     }
@@ -183,7 +183,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     @NotNull
     private MetricEvent createMetricEvent(int count) {
       myEventPairs.add(COUNT_FIELD.with(count));
-      return myEventId.metric(myEventPairs.toArray(new EventPair[0]));
+      return myEventId.metric(myEventPairs);
     }
 
     @Override

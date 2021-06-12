@@ -1,11 +1,18 @@
 <html>
 <body>
-Reports <b>Serializable</b> classes whose <b>serialPersistentFields</b> field.
-is not declared <b>private static final ObjectStreamField[]</b>.
-If the <b>serialPersistentFields</b> field does not have these modifiers,
-the serialization behavior will be as if the field were not declared at all.
-<!-- tooltip end -->
+Reports <code>Serializable</code> classes whose <code>serialPersistentFields</code> field
+is not declared as <code>private static final ObjectStreamField[]</code>.
 <p>
+  If a <code>serialPersistentFields</code> field is not declared with those modifiers,
+  the serialization behavior will be as if the field was not declared at all.
+</p>
+<p>Example:</p>
+<pre>
+  class Main implements Serializable {
+    ObjectStreamField[] serialPersistentFields;
+  }
+</pre>
+<!-- tooltip end -->
 
 </body>
 </html>

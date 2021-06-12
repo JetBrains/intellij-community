@@ -2,7 +2,6 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.mac.foundation.Foundation;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -17,12 +16,11 @@ public class TouchbarTest {
   }
 
   private static void _createFrame() {
-    Foundation.init();
-    NST.loadLibrary();
+    NST.loadLibraryImpl();
 
     final TouchBar testTB = _createTestScrubberTouchbar();
     testTB.selectVisibleItemsToShow();
-    NST.setTouchBar(testTB);
+    NST.setTouchBar(null, testTB);
 
     final JFrame f = new JFrame();
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -32,13 +30,13 @@ public class TouchbarTest {
 
   private static TouchBar _createTestButtonsTouchbar() {
     final int configPopoverWidth = 143;
-    final TouchBar testTB = new TouchBar("test", false);
-    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false, null);
-    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false, null);
-    testTB.addButton().setText("test3 with suff").setAction(createPrintTextCallback("pressed test2 button"), false, null);
-    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false, null);
-    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very-very-very-very long suffix").setWidth(configPopoverWidth).setAction(createPrintTextCallback("pressed image-text button"), false, null);
-    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very long suffix").setWidth(configPopoverWidth + 69).setAction(createPrintTextCallback("pressed image-text 2 button"), false, null).setToggle(true);
+    final TouchBar testTB = new TouchBar("test");
+    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false);
+    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false);
+    testTB.addButton().setText("test3 with suff").setAction(createPrintTextCallback("pressed test2 button"), false);
+    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false);
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very-very-very-very long suffix").setWidth(configPopoverWidth).setAction(createPrintTextCallback("pressed image-text button"), false);
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very long suffix").setWidth(configPopoverWidth + 69).setAction(createPrintTextCallback("pressed image-text 2 button"), false).setToggle();
     return testTB;
   }
 
@@ -75,7 +73,7 @@ public class TouchbarTest {
   private static boolean ourVisible = true;
   private static boolean ourEnabled = true;
   private static TouchBar _createTestScrubberTouchbar() {
-    final TouchBar testTB = new TouchBar("test", false);
+    final TouchBar testTB = new TouchBar("test");
     testTB.addSpacing(true);
 
     final TBItemScrubber scrubber = testTB.addScrubber();
@@ -90,13 +88,13 @@ public class TouchbarTest {
         txt = "show";
         action = ()->SwingUtilities.invokeLater(()->{
           ourVisible = !ourVisible;
-          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible, false);
+          NST.showScrubberItem(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourVisible, false);
         });
       } else if (c == 2) {
         txt = "enable";
         action = ()->SwingUtilities.invokeLater(()->{
           ourEnabled = !ourEnabled;
-          NST.enableScrubberItems(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
+          NST.enableScrubberItems(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourEnabled);
         });
       }
 
@@ -107,12 +105,12 @@ public class TouchbarTest {
   }
 
   private static TouchBar _createTestAllTouchbar() {
-    final TouchBar testTB = new TouchBar("test", false);
+    final TouchBar testTB = new TouchBar("test");
     testTB.addSpacing(true);
-    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false, null);
-    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false, null);
+    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false);
+    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false);
     testTB.addSpacing(false);
-    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false, null);
+    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false);
 
     return testTB;
   }

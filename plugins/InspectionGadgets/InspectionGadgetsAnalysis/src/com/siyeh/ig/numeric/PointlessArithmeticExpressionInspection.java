@@ -99,7 +99,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     final String result =
       prefix + expressions.stream().map(e -> ct == null ? e.getText() : ct.textWithComments(e)).collect(Collectors.joining(delimiter));
     final boolean castToLongNeeded = ct != null && TypeConversionUtil.isLongType(type) &&
-                                     expressions.stream().noneMatch(x -> TypeConversionUtil.isLongType(x.getType()));
+                                     !ContainerUtil.exists(expressions, x -> TypeConversionUtil.isLongType(x.getType()));
     return castToLongNeeded ? "(long)" + result : result;
   }
 

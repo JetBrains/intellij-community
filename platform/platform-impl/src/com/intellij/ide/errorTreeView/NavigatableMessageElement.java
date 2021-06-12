@@ -43,7 +43,7 @@ public class NavigatableMessageElement extends ErrorTreeElement implements Navig
 
   @Override
   public Object getData() {
-    return myParent.getData();
+    return myParent == null ? null : myParent.getData();
   }
 
   @Nullable

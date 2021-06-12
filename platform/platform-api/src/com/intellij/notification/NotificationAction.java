@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,11 +18,12 @@ import static com.intellij.openapi.util.NlsContexts.NotificationContent;
  * @see Notification#addAction(AnAction)
  */
 public abstract class NotificationAction extends DumbAwareAction {
+  @SuppressWarnings("DialogTitleCapitalization")
   public NotificationAction(@Nullable @NotificationContent String text) {
     super(text);
   }
 
-  public NotificationAction(@NotNull Supplier<String> dynamicText) {
+  public NotificationAction(@NotNull Supplier<@NotificationContent String> dynamicText) {
     super(dynamicText);
   }
 
@@ -32,56 +34,68 @@ public abstract class NotificationAction extends DumbAwareAction {
 
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
 
-  @NotNull
-  public static NotificationAction create(@NotNull @NotificationContent String text,
-                                          @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
-    return create(() -> text, performAction);
+  public static @NotNull NotificationAction create(@NotNull @NotificationContent String text,
+                                                   @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action) {
+    return new Simple(text, action, false, action);
   }
 
-  @NotNull
-  public static NotificationAction create(@NotNull Supplier<String> dynamicText,
-                                          @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
-    return new Simple(dynamicText, performAction, performAction);
+  public static @NotNull NotificationAction create(@NotNull Supplier<@NotificationContent String> dynamicText,
+                                                   @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action) {
+    return new Simple(dynamicText, action, false, action);
   }
 
-  @NotNull
-  public static NotificationAction createSimple(@NotNull Supplier<String> dynamicText, @NotNull Runnable performAction) {
-    return new Simple(dynamicText, (event, notification) -> performAction.run(), performAction);
+  public static @NotNull NotificationAction createExpiring(@NotNull @NotificationContent String text,
+                                                           @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action) {
+    return new Simple(text, action, true, action);
   }
 
-  @NotNull
-  public static NotificationAction createSimple(@NotNull @NotificationContent String text,
-                                                @NotNull Runnable performAction) {
-    return new Simple(() -> text, (event, notification) -> performAction.run(), performAction);
+  public static @NotNull NotificationAction createSimple(@NotNull @NotificationContent String text, @NotNull Runnable action) {
+    return new Simple(text, (event, notification) -> action.run(), false, action);
   }
 
-  @NotNull
-  public static NotificationAction createSimpleExpiring(@NotNull @NotificationContent String text,
-                                                        @NotNull Runnable performAction) {
-    return new Simple(() -> text, (event, notification) -> {
-      performAction.run();
-      notification.expire();
-    }, performAction);
+  public static @NotNull NotificationAction createSimple(@NotNull Supplier<@NotificationContent String> dynamicText, @NotNull Runnable action) {
+    return new Simple(dynamicText, (event, notification) -> action.run(), false, action);
   }
 
+  public static @NotNull NotificationAction createSimpleExpiring(@NotNull @NotificationContent String text, @NotNull Runnable action) {
+    return new Simple(text, (event, notification) -> action.run(), true, action);
+  }
+
+  @ApiStatus.Internal
   public static final class Simple extends NotificationAction {
-    private @NotNull final BiConsumer<? super AnActionEvent, ? super Notification> myPerformAction;
-    private @NotNull final Object myActionInstance; // for FUS
+    private final BiConsumer<? super AnActionEvent, ? super Notification> myAction;
+    private final boolean myExpire;
+    private final Object myActionInstance;  // for FUS
 
-    public Simple(@NotNull Supplier<String> dynamicText,
-                  @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction,
-                  @NotNull Object actionInstance) {
+    private Simple(@NotificationContent String text,
+                   BiConsumer<? super AnActionEvent, ? super Notification> action,
+                   boolean expire,
+                   Object actionInstance) {
+      super(text);
+      myAction = action;
+      myExpire = expire;
+      myActionInstance = actionInstance;
+    }
+
+    private Simple(Supplier<@NotificationContent String> dynamicText,
+                   BiConsumer<? super AnActionEvent, ? super Notification> action,
+                   boolean expire,
+                   Object actionInstance) {
       super(dynamicText);
-      myPerformAction = performAction;
+      myAction = action;
+      myExpire = expire;
       myActionInstance = actionInstance;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      myPerformAction.accept(e, notification);
+      if (myExpire) {
+        notification.expire();
+      }
+      myAction.accept(e, notification);
     }
 
-    public Object getActionInstance() {
+    public @NotNull Object getActionInstance() {
       return myActionInstance;
     }
   }

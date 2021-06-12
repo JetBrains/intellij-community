@@ -111,7 +111,6 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         }
       }
 
-      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
       val authManager = service<GithubAuthenticationManager>()
       val progressManager = service<ProgressManager>()
       val requestExecutorManager = service<GithubApiRequestExecutorManager>()

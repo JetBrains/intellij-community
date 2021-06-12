@@ -90,4 +90,10 @@ public class WidenPlusInLoop {
 
     return sections;
   }
+
+  void infiniteLoop() {
+    for (int i = 1; <warning descr="Condition 'i != 10' is always 'true'">i != 10</warning>; i += 2) {
+      // ...
+    }
+  }
 }

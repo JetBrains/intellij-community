@@ -252,9 +252,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (super.canRepresent(element)) return true;
     PsiDirectory directory = getValue();
     Object owner = getParentValue();
-    if (file == null || directory == null || !(owner instanceof PsiDirectory)) return false;
-    return ProjectViewDirectoryHelper.getInstance(getProject())
-      .canRepresent(file, directory, (PsiDirectory)owner, getSettings());
+    if (file == null || directory == null) return false;
+    ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(directory.getProject());
+    return helper.canRepresent(file, directory) ||
+    owner instanceof PsiDirectory && helper.canRepresent(file, directory, (PsiDirectory)owner, getSettings());
   }
 
   @Override

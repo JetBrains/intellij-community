@@ -38,8 +38,7 @@
     <keyboard-shortcut first-keystroke="control shift alt N"/>
   </action>
   <action id="GotoImplementation">
-    <keyboard-shortcut first-keystroke="control alt b" />
-    <mouse-shortcut keystroke="ctrl alt button1"/>
+    <keyboard-shortcut first-keystroke="control alt B" />
   </action>
   <action id="GotoRelated">
     <keyboard-shortcut first-keystroke="ctrl shift alt G"/>

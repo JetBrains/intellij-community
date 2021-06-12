@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ignore
 
 import com.intellij.CommonBundle
@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
@@ -17,6 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -29,6 +33,10 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FilesProcessorImpl
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.IGNORED_TO_EXCLUDE_NOT_FOUND
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
@@ -44,11 +52,14 @@ private val excludeAction = object : MarkExcludeRootAction() {
   fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
 }
 
+/**
+ * Shows [EditorNotifications] in .ignore files with suggestion to exclude ignored directories.
+ * Silently excludes them if [VcsConfiguration.MARK_IGNORED_AS_EXCLUDED] is enabled.
+ *
+ * Not internal service. Can be used directly in related modules.
+ */
 @Service
-class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateListener, FilesProcessorImpl(project, project) {
-
-  override val askedBeforeProperty = ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
-  override val doForCurrentProjectProperty: String? = null
+class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
 
   init {
     project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
@@ -62,19 +73,21 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
     // in case if the project roots changed (e.g. by build tools) then the directories shown in notification can be outdated.
     // filter directories which excluded or containing source roots and expire notification if needed.
 
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    val sourceRoots = getProjectSourceRoots()
+    ChangeListManager.getInstance(project).invokeAfterUpdate(false) {
+      val fileIndex = ProjectFileIndex.getInstance(project)
+      val sourceRoots = getProjectSourceRoots(project)
 
-    val acquiredFiles = acquireValidFiles()
-    LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
-    val filesToRemove = acquiredFiles
-      .asSequence()
-      .filter { file -> fileIndex.isExcluded(file) || sourceRoots.contains(file) }
-      .toList()
-    LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
+      val acquiredFiles = selectValidFiles()
+      LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
+      val filesToRemove = acquiredFiles
+        .asSequence()
+        .filter { file -> runReadAction { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
+        .toList()
+      LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
 
-    if (removeFiles(filesToRemove)) {
-      EditorNotifications.getInstance(project).updateAllNotifications()
+      if (removeFiles(filesToRemove)) {
+        EditorNotifications.getInstance(project).updateAllNotifications()
+      }
     }
   }
 
@@ -82,11 +95,12 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
 
   fun clearFiles(files: Collection<VirtualFile>) = removeFiles(files)
 
-  fun getValidFiles() = acquireValidFiles()
+  fun getValidFiles() = with(ChangeListManager.getInstance(project)) { selectValidFiles().filter(this::isIgnoredFile) }
+
+  private fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, false)
 
   fun muteForCurrentProject() {
-    setForCurrentProject(false)
-    PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
+    PropertiesComponent.getInstance(project).setValue(ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, true)
     clearFiles()
   }
 
@@ -95,47 +109,26 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
     if (files.isEmpty()) return
 
-    markIgnoredAsExcluded(files)
+    markIgnoredAsExcluded(project, files)
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>) = files.filter(VirtualFile::isValid)
 
-  override fun rememberForAllProjects() {}
-
-  override fun rememberForCurrentProject() {
-    VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
-  }
-
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
-  override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) {
+  fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
     if (synchronizationTurnOff()) return
-    if (!isFullRescan) return
-    if (!VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED && wasAskedBefore()) return
+    if (mutedForCurrentProject()) return
 
     processIgnored(ignoredPaths)
   }
 
   private fun processIgnored(ignoredPaths: Collection<FilePath>) {
-    val sourceRoots = getProjectSourceRoots()
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    val shelfPath = ShelveChangesManager.getShelfPath(project)
-
     val ignoredDirs =
-      ignoredPaths
-        .asSequence()
-        .filter(FilePath::isDirectory)
-        //shelf directory usually contains in project and excluding it prevents local history to work on it
-        .filterNot { containsShelfDirectoryOrUnderIt(it, shelfPath) }
-        .mapNotNull(FilePath::getVirtualFile)
-        .filterNot { runReadAction { fileIndex.isExcluded(it) } }
-        //do not propose to exclude if there is a source root inside
-        .filterNot { ignored -> sourceRoots.contains(ignored) }
-        .toList()
+      determineIgnoredDirsToExclude(project, ignoredPaths)
 
     if (allowShowNotification()) {
-      clearFiles()
       processFiles(ignoredDirs)
       val editorNotifications = EditorNotifications.getInstance(project)
       FileEditorManager.getInstance(project).openFiles
@@ -149,27 +142,50 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
       doActionOnChosenFiles(doFilterFiles(ignoredDirs))
     }
   }
+}
 
-  fun markIgnoredAsExcluded(files: Collection<VirtualFile>) {
-    val ignoredDirsByModule =
-      files
-        .asSequence()
-        .groupBy { ModuleUtil.findModuleForFile(it, project) }
-        //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
-        .filterKeys(Objects::nonNull)
+private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
+  val ignoredDirsByModule =
+    files
+      .groupBy { ModuleUtil.findModuleForFile(it, project) }
+      //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
+      .filterKeys(Objects::nonNull)
 
-    for ((module, ignoredDirs) in ignoredDirsByModule) {
-      excludeAction.exclude(module!!, ignoredDirs)
-    }
+  for ((module, ignoredDirs) in ignoredDirsByModule) {
+    excludeAction.exclude(module!!, ignoredDirs)
   }
+}
 
-  private fun getProjectSourceRoots(): Set<VirtualFile> = runReadAction {
-    OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().sources().usingCache().roots.toHashSet()
-  }
+private fun getProjectSourceRoots(project: Project): Set<VirtualFile> = runReadAction {
+  OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().sources().usingCache().roots.toHashSet()
+}
 
-  private fun containsShelfDirectoryOrUnderIt(filePath: FilePath, shelfPath: String) =
-    FileUtil.isAncestor(shelfPath, filePath.path, false) ||
-    FileUtil.isAncestor(filePath.path, shelfPath, false)
+private fun containsShelfDirectoryOrUnderIt(filePath: FilePath, shelfPath: String) =
+  FileUtil.isAncestor(shelfPath, filePath.path, false) ||
+  FileUtil.isAncestor(filePath.path, shelfPath, false)
+
+private fun determineIgnoredDirsToExclude(project: Project, ignoredPaths: Collection<FilePath>): List<VirtualFile> {
+  val sourceRoots = getProjectSourceRoots(project)
+  val fileIndex = ProjectFileIndex.getInstance(project)
+  val shelfPath = ShelveChangesManager.getShelfPath(project)
+  
+  return ignoredPaths
+    .asSequence()
+    .filter(FilePath::isDirectory)
+    //shelf directory usually contains in project and excluding it prevents local history to work on it
+    .filterNot { containsShelfDirectoryOrUnderIt(it, shelfPath) }
+    .mapNotNull(FilePath::getVirtualFile)
+    .filterNot { runReadAction { fileIndex.isExcluded(it) } }
+    //do not propose to exclude if there is a source root inside
+    .filterNot { ignored -> sourceRoots.contains(ignored) }
+    .toList()
+}
+
+private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile>): Collection<VirtualFile> {
+  val dialog = IgnoredToExcludeSelectDirectoriesDialog(project, ignoredDirs)
+  if (!dialog.showAndGet()) return emptyList()
+
+  return dialog.selectedFiles
 }
 
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
@@ -196,14 +212,11 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
     val allFiles = project.service<IgnoredToExcludedSynchronizer>().getValidFiles()
     if (allFiles.isEmpty()) return
 
-    val dialog = IgnoredToExcludeSelectDirectoriesDialog(project, allFiles)
-    if (!dialog.showAndGet()) return
-
-    val userSelectedFiles = dialog.selectedFiles
+    val userSelectedFiles = selectFilesToExclude(project, allFiles)
     if (userSelectedFiles.isEmpty()) return
 
     with(project.service<IgnoredToExcludedSynchronizer>()) {
-      markIgnoredAsExcluded(userSelectedFiles)
+      markIgnoredAsExcluded(project, userSelectedFiles)
       clearFiles(userSelectedFiles)
     }
   }
@@ -216,13 +229,40 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (!canCreateNotification(project, file)) return null
 
-    return EditorNotificationPanel().apply {
+    return EditorNotificationPanel(fileEditor).apply {
       icon(AllIcons.General.Information)
       text = message("ignore.to.exclude.notification.message")
       createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }
       createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
       createActionLabel(message("ignore.to.exclude.notification.action.details")) {
         BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories") }
+    }
+  }
+}
+
+internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.project != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project!!
+
+    runModalTask(ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress"), project, true) {
+      VcsIgnoreManagerImpl.getInstanceImpl(project).awaitRefreshQueue()
+      val ignoredFilePaths = ChangeListManager.getInstance(project).ignoredFilePaths
+      val dirsToExclude = determineIgnoredDirsToExclude(project, ignoredFilePaths)
+      if (dirsToExclude.isEmpty()) {
+        VcsNotifier.getInstance(project)
+          .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
+      }
+      else {
+        val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
+        if (userSelectedFiles.isNotEmpty()) {
+          markIgnoredAsExcluded(project, userSelectedFiles)
+        }
+      }
     }
   }
 }

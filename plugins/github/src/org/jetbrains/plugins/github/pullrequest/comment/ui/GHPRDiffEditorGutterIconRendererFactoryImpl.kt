@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
-import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
-import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
+import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.ui.util.GHUIUtil

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.*;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,9 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
 
   private final AtomicReference<ServerChannel> serverChannel = new AtomicReference<>();
-  private final Set<Channel> clientChannels = ContainerUtil.newConcurrentSet();
+  // don't use ContainerUtil here!
+  @SuppressWarnings("SSBasedInspection")
+  private final Set<Channel> clientChannels = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private boolean isEventLoopGroupOwner;
 

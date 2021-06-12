@@ -1,7 +1,11 @@
 <html>
 <body>
-Reports unchecked exception classes (i.e. subclasses of <b>RuntimeException</b>).
+Reports unchecked exception classes (i.e. subclasses of <code>java.lang.RuntimeException</code>).
 Certain coding standards require that all user-defined exception classes be checked.
+<p><b>Example:</b></p>
+<pre>
+  class EnigmaException extends RuntimeException {} // warning: Unchecked exception class 'EnigmaException'
+</pre>
 <!-- tooltip end -->
 <p>
 

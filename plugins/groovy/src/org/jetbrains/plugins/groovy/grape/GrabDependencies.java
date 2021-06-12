@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -183,7 +183,7 @@ public class GrabDependencies implements IntentionAction {
       catch (CantRunException e) {
         String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
         //noinspection HardCodedStringLiteral
-        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR).notify(project);
         return;
       }
     }
@@ -214,7 +214,7 @@ public class GrabDependencies implements IntentionAction {
         }
 
         final String title = GroovyBundle.message("grab.result.title", totalJarCount);
-        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION, null).notify(project);
+        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION).notify(project);
       }
     });
   }

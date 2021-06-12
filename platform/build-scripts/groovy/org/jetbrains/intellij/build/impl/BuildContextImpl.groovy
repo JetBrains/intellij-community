@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -32,7 +33,7 @@ final class BuildContextImpl extends BuildContext {
   private final CompilationContextImpl compilationContext
 
   // thread-safe - forkForParallelTask pass it to child context
-  private final ConcurrentLinkedQueue<Path> resourceFiles
+  private final ConcurrentLinkedQueue<Pair<Path, String>> distFiles
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
@@ -52,11 +53,11 @@ final class BuildContextImpl extends BuildContext {
                            LinuxDistributionCustomizer linuxDistributionCustomizer,
                            MacDistributionCustomizer macDistributionCustomizer,
                            ProprietaryBuildTools proprietaryBuildTools,
-                           @NotNull ConcurrentLinkedQueue<Path> resourceFiles) {
+                           @NotNull ConcurrentLinkedQueue<Pair<Path, String>> distFiles) {
     this.compilationContext = compilationContext
     this.global = compilationContext.global
     this.productProperties = productProperties
-    this.resourceFiles = resourceFiles
+    this.distFiles = distFiles
     this.proprietaryBuildTools = proprietaryBuildTools == null ? ProprietaryBuildTools.DUMMY : proprietaryBuildTools
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
@@ -75,27 +76,27 @@ final class BuildContextImpl extends BuildContext {
     // Android Studio: modified by Change Idc07b110 / commit f20681e
     bundledJreManager = new AndroidStudioBundledJreManager(this, compilationContext.paths.communityHome)
 
-    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
+    buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
+    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
   @Override
-  void addResourceFile(@NotNull Path file) {
+  void addDistFile(@NotNull Pair<Path, String> file) {
     messages.debug("$file requested to be added to app resources")
-    resourceFiles.add(file)
+    distFiles.add(file)
   }
 
-  @NotNull Collection<Path> getResourceFiles() {
-    return List.copyOf(resourceFiles)
+  @NotNull Collection<Pair<Path, String>> getDistFiles() {
+    return List.copyOf(distFiles)
   }
 
-  private String readSnapshotBuildNumber() {
-    return Files.readString(paths.communityHomeDir.resolve("build.txt")).trim()
+  static String readSnapshotBuildNumber(Path communityHome) {
+    return Files.readString(communityHome.resolve("build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
@@ -166,6 +167,16 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  KotlinBinaries getKotlinBinaries() {
+    return compilationContext.kotlinBinaries
+  }
+
+  @Override
+  File getProjectOutputDirectory() {
+    return compilationContext.projectOutputDirectory
+  }
+
+  @Override
   JpsModule findRequiredModule(String name) {
     return compilationContext.findRequiredModule(name)
   }
@@ -212,9 +223,11 @@ final class BuildContextImpl extends BuildContext {
   @Override
   @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
     for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
-      Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
-      if (Files.exists(result)) {
-        return result
+      if (relativePath.startsWith(info.second)) {
+        Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+        if (Files.exists(result)) {
+          return result
+        }
       }
     }
     return null
@@ -289,7 +302,7 @@ final class BuildContextImpl extends BuildContext {
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools, resourceFiles)
+                                    proprietaryBuildTools, distFiles)
     copy.paths.artifacts = paths.artifacts
     return copy
   }
@@ -306,7 +319,7 @@ final class BuildContextImpl extends BuildContext {
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools, new ConcurrentLinkedQueue<Path>())
+                                    proprietaryBuildTools, new ConcurrentLinkedQueue<>())
     copy.paths.artifacts = paths.artifacts
     copy.compilationContext.prepareForBuild()
     return copy

@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,7 +18,7 @@ public final class JreHiDpiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the graphics configuration represents a HiDPI device.
-   * (analogue of {@link UIUtil#isRetina(Graphics2D)} on macOS)
+   * (analogue of {@link com.intellij.util.ui.UIUtil#isRetina(Graphics2D)} on macOS)
    */
   public static boolean isJreHiDPI(@Nullable GraphicsConfiguration gc) {
     return isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(gc));
@@ -28,7 +26,7 @@ public final class JreHiDpiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the graphics represents a HiDPI device.
-   * (analogue of {@link UIUtil#isRetina(Graphics2D)} on macOS)
+   * (analogue of {@link com.intellij.util.ui.UIUtil#isRetina(Graphics2D)} on macOS)
    */
   public static boolean isJreHiDPI(@Nullable Graphics2D g) {
     return isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(g));
@@ -41,6 +39,10 @@ public final class JreHiDpiUtil {
    * @see ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
+    if (SystemInfoRt.isMac) {
+      return true;
+    }
+
     Boolean value = jreHiDPI.get();
     if (value != null) {
       return value;
@@ -53,27 +55,22 @@ public final class JreHiDpiUtil {
       }
 
       value = false;
-      if (SystemProperties.getBooleanProperty("hidpi", true)) {
-        if (SystemInfo.isJetBrainsJvm) {
-          try {
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            Class<?> sunGraphicsEnvironmentClass = Class.forName("sun.java2d.SunGraphicsEnvironment");
-            if (sunGraphicsEnvironmentClass.isInstance(ge)) {
-              try {
-                Method method = sunGraphicsEnvironmentClass.getDeclaredMethod("isUIScaleEnabled");
-                method.setAccessible(true);
-                value = (Boolean)method.invoke(ge);
-              }
-              catch (NoSuchMethodException e) {
-                value = false;
-              }
+      if (Boolean.parseBoolean(System.getProperty("hidpi", "true")) && SystemInfo.isJetBrainsJvm) {
+        try {
+          GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+          Class<?> sunGraphicsEnvironmentClass = Class.forName("sun.java2d.SunGraphicsEnvironment");
+          if (sunGraphicsEnvironmentClass.isInstance(ge)) {
+            try {
+              Method method = sunGraphicsEnvironmentClass.getDeclaredMethod("isUIScaleEnabled");
+              method.setAccessible(true);
+              value = (Boolean)method.invoke(ge);
+            }
+            catch (NoSuchMethodException e) {
+              value = false;
             }
           }
-          catch (Throwable ignore) {
-          }
         }
-        if (SystemInfoRt.isMac) {
-          value = true;
+        catch (Throwable ignore) {
         }
       }
       jreHiDPI.set(value);

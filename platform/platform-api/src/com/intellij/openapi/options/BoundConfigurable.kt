@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
 import com.intellij.openapi.Disposable
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 /**
- * @author yole
+ * @see DialogPanelConfigurableBase
  */
 abstract class BoundConfigurable(
   @NlsContexts.ConfigurableName private val displayName: String,
@@ -18,11 +18,11 @@ abstract class BoundConfigurable(
 ) : DslConfigurableBase(), Configurable {
   override fun getDisplayName(): String = displayName
   override fun getHelpTopic(): String? = helpTopic
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return super<DslConfigurableBase>.getPreferredFocusedComponent()
-  }
 }
 
+/**
+ * @see DialogPanelUnnamedConfigurableBase
+ */
 abstract class DslConfigurableBase : UnnamedConfigurable {
   protected var disposable: Disposable? = null
     private set
@@ -52,7 +52,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
     panel.value.apply()
   }
 
-  open fun getPreferredFocusedComponent(): JComponent? {
+  override fun getPreferredFocusedComponent(): JComponent? {
     return panel.value.preferredFocusedComponent
   }
 

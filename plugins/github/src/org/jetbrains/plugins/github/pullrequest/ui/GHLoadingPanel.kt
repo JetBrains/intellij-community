@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
@@ -20,6 +19,7 @@ import org.jetbrains.plugins.github.ui.util.getName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
+import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -36,8 +36,8 @@ constructor(model: GHLoadingModel,
 
   companion object {
 
-    private fun createDecorator(parentDisposable: Disposable): NotNullFunction<JPanel, LoadingDecorator> {
-      return NotNullFunction<JPanel, LoadingDecorator> {
+    private fun createDecorator(parentDisposable: Disposable): Function<JPanel, LoadingDecorator> {
+      return Function<JPanel, LoadingDecorator> {
         object : LoadingDecorator(it, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
           override fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
             parent.layout = GridBagLayout()

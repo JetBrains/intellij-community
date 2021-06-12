@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -20,7 +20,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.configLocation
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import kotlinx.coroutines.coroutineScope
@@ -34,7 +34,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
-  protected val moduleSavingCustomizer: ModuleSavingCustomizer? = if (WorkspaceModel.isEnabled) ProjectStoreBridge(project) else null
+  protected val moduleSavingCustomizer: ModuleSavingCustomizer = ProjectStoreBridge(project)
 
   init {
     assert(!project.isDefault)
@@ -139,7 +139,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   }
 
   final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return moduleSavingCustomizer?.createSaveSessionProducerManager() ?: ProjectSaveSessionProducerManager(project)
+    return moduleSavingCustomizer.createSaveSessionProducerManager()
   }
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
@@ -163,7 +163,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
   final override suspend fun saveModules(errors: MutableList<Throwable>,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
-    moduleSavingCustomizer?.saveModules(projectSaveSessionManager, this)
+    moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (modules.isEmpty()) {
       return emptyList()
@@ -185,14 +185,14 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
-    return StorageJpsConfigurationReader(project, project.configLocation!!.baseDirectoryUrlString)
+    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!.baseDirectoryUrlString)
   }
 
   private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
                                      projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
                                      errors: MutableList<Throwable>) {
     moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
-    moduleSavingCustomizer?.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
+    moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
   }
 }
 

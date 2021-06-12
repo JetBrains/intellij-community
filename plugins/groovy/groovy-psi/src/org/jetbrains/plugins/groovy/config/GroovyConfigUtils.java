@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -35,6 +35,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe public static final String GROOVY2_1 = "2.1";
   @NlsSafe public static final String GROOVY2_2 = "2.2";
   @NlsSafe public static final String GROOVY2_2_2 = "2.2.2";
+  @NlsSafe public static final String GROOVY2_5_2 = "2.5.2";
   @NlsSafe public static final String GROOVY2_3 = "2.3";
   @NlsSafe public static final String GROOVY2_4 = "2.4";
   @NlsSafe public static final String GROOVY2_5 = "2.5";
@@ -102,7 +103,40 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     if (module == null) return unknownResult;
     final String sdkVersion = getSDKVersion(module);
     if (sdkVersion == null) return unknownResult;
-    return sdkVersion.compareTo(version) >= 0;
+    return compareSdkVersions(sdkVersion, version) >= 0;
+  }
+
+  private static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
+    String[] leftVersionParts = leftVersion.split("[.-]");
+    String[] rightVersionParts = rightVersion.split("[.-]");
+    int sizes = Math.max(leftVersionParts.length, rightVersionParts.length);
+    for (int i = 0; i < sizes; ++i) {
+      int leftNumber = getVersionPart(leftVersionParts, i);
+      int rightNumber = getVersionPart(rightVersionParts, i);
+      if (leftNumber < rightNumber) {
+        return -1;
+      } else if (leftNumber > rightNumber) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  private static int getVersionPart(String[] parts, int index) {
+    String part = index < parts.length ? parts[index] : "0";
+    int partNumber;
+    if (part.equals("alpha")) {
+      partNumber = -3;
+    } else if (part.equals("beta")) {
+      partNumber = -2;
+    } else if (part.equals("rc")) {
+      partNumber = -1;
+    } else try {
+      partNumber = Integer.parseInt(part);
+    } catch (NumberFormatException __) {
+      partNumber = -4;
+    }
+    return partNumber;
   }
 
   @NotNull

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,7 +98,11 @@ public final class GenericsHighlightUtil {
       if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
         if (!typeParameterListOwner.hasTypeParameters()) {
           final String description = JavaErrorBundle.message("generics.diamond.not.applicable");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description).create();
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description)
+              .create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(referenceParameterList));
+          return info;
         }
         inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
         final String errorMessage = inferenceResult.getErrorMessage();
@@ -162,7 +167,8 @@ public final class GenericsHighlightUtil {
             PsiElement variable = grandParent.getParent();
             if (variable instanceof PsiVariable) {
               if (targetParametersNum == 0) {
-                QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createRemoveTypeArgumentsFix(variable));
+                QuickFixAction.registerQuickFixAction(highlightInfo, PriorityIntentionActionWrapper
+                  .highPriority(QUICK_FIX_FACTORY.createDeleteFix(referenceParameterList)));
               }
               registerVariableParameterizedTypeFixes(highlightInfo, (PsiVariable)variable, referenceParameterList, javaSdkVersion);
             }
@@ -437,7 +443,7 @@ public final class GenericsHighlightUtil {
    */
   @Nullable
   public static @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
-                                                                                    @NotNull Collection<PsiMethod> overrideEquivalentSuperMethods,
+                                                                                    @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods,
                                                                                     boolean skipMethodInSelf) {
     if (overrideEquivalentSuperMethods.size() <= 1) return null;
     final boolean isInterface = aClass.isInterface();
@@ -537,7 +543,7 @@ public final class GenericsHighlightUtil {
   }
 
   private static boolean hasNotOverriddenAbstract(@NotNull List<? extends PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
-    return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
+    return !ContainerUtil.exists(defaultContainingClasses, containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
   private static @Nls String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
@@ -1215,7 +1221,8 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList) {
+  static HighlightInfo checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList,
+                                            LanguageLevel languageLevel) {
     JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
     PsiElement qualifier = null;
@@ -1237,13 +1244,10 @@ public final class GenericsHighlightUtil {
       if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiTypeParameter) return null;
       PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
-        if ((parent instanceof PsiCallExpression || parent instanceof PsiMethodReferenceExpression) && PsiUtil.isLanguageLevel7OrHigher(parent)) {
-          return null;
-        }
-
         if (element instanceof PsiMethod) {
+          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return null;
           if (((PsiMethod)element).findSuperMethods().length > 0) return null;
-          if (qualifier instanceof PsiReferenceExpression){
+          if (qualifier instanceof PsiReferenceExpression) {
             final PsiType type = ((PsiReferenceExpression)qualifier).getType();
             final boolean isJavac7 = JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7);
             if (type instanceof PsiClassType && isJavac7 && ((PsiClassType)type).isRaw()) return null;

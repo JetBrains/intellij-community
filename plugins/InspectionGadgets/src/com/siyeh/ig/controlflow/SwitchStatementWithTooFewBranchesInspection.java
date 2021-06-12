@@ -70,10 +70,10 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new SwitchStatementWithTooFewBranchesVisitor();
+    return new MinimumSwitchBranchesVisitor();
   }
 
-  private class SwitchStatementWithTooFewBranchesVisitor extends BaseInspectionVisitor {
+  private class MinimumSwitchBranchesVisitor extends BaseInspectionVisitor {
     @Override
     public void visitSwitchExpression(PsiSwitchExpression expression) {
       Object[] infos = processSwitch(expression);

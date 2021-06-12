@@ -63,6 +63,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         createLabel()
         panel.add(myTextLabel, BorderLayout.CENTER)
         myTextLabel.border = JBUI.Borders.emptyTop(1)
+        myIconBar = createIconBar()
 
         val bt = createButton()
         rightPane.add(bt, BorderLayout.CENTER)
@@ -76,6 +77,15 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         panel.add(rightPane, BorderLayout.EAST)
         rightPane.border = JBUI.Borders.emptyLeft(5)
         return layoutComponent(panel)
+      }
+
+      override fun createLabel() {
+        super.createLabel()
+        myIconLabel.border = JBUI.Borders.empty(1, 0, 0, JBUI.CurrentTheme.ActionsList.elementIconGap())
+      }
+
+      override fun createIconBar(): JComponent {
+        return myIconLabel
       }
 
       private fun createButton(): JComponent {

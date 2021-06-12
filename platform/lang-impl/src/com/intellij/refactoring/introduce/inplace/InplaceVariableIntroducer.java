@@ -169,7 +169,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return createLookupItems(myName, context.getEditor(), getElement());
+      return createLookupItems(myName, context, getElement());
     }
 
     @Nullable
@@ -177,11 +177,9 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       return myPointer.getElement();
     }
 
-    private LookupElement @Nullable [] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
-      TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    private LookupElement @Nullable [] createLookupItems(String name, ExpressionContext context, PsiNamedElement psiVariable) {
       if (psiVariable != null) {
-        final TextResult insertedValue =
-          templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
+        final TextResult insertedValue = context.getVariableValue(PRIMARY_VARIABLE_NAME);
         if (insertedValue != null) {
           final String text = insertedValue.getText();
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {

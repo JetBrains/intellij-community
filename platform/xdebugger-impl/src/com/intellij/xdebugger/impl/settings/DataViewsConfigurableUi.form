@@ -85,7 +85,7 @@
             <properties>
               <componentStyle value="REGULAR"/>
               <enabled value="false"/>
-              <text resource-bundle="messages/XDebuggerBundle" key="settings.tooltip.label"/>
+              <text value=""/>
             </properties>
           </component>
         </children>

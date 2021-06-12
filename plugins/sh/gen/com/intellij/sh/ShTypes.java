@@ -13,17 +13,24 @@ import com.intellij.sh.psi.impl.*;
 public interface ShTypes {
 
   IElementType ADD_EXPRESSION = new ShCompositeElementType("ADD_EXPRESSION");
+  IElementType ADD_OPERATION = new ShCompositeElementType("ADD_OPERATION");
   IElementType ARITHMETIC_EXPANSION = new ShCompositeElementType("ARITHMETIC_EXPANSION");
   IElementType ARRAY_ASSIGNMENT = new ShCompositeElementType("ARRAY_ASSIGNMENT");
   IElementType ARRAY_EXPRESSION = new ShCompositeElementType("ARRAY_EXPRESSION");
+  IElementType ARRAY_OPERATION = new ShCompositeElementType("ARRAY_OPERATION");
   IElementType ASSIGNMENT_COMMAND = new ShCompositeElementType("ASSIGNMENT_COMMAND");
   IElementType ASSIGNMENT_CONDITION = new ShCompositeElementType("ASSIGNMENT_CONDITION");
   IElementType ASSIGNMENT_EXPRESSION = new ShCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_LIST = new ShCompositeElementType("ASSIGNMENT_LIST");
+  IElementType ASSIGNMENT_OPERATION = new ShCompositeElementType("ASSIGNMENT_OPERATION");
   IElementType BITWISE_AND_EXPRESSION = new ShCompositeElementType("BITWISE_AND_EXPRESSION");
+  IElementType BITWISE_AND_OPERATION = new ShCompositeElementType("BITWISE_AND_OPERATION");
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
+  IElementType BITWISE_EXCLUSIVE_OR_OPERATION = new ShCompositeElementType("BITWISE_EXCLUSIVE_OR_OPERATION");
   IElementType BITWISE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_OR_EXPRESSION");
+  IElementType BITWISE_OR_OPERATION = new ShCompositeElementType("BITWISE_OR_OPERATION");
   IElementType BITWISE_SHIFT_EXPRESSION = new ShCompositeElementType("BITWISE_SHIFT_EXPRESSION");
+  IElementType BITWISE_SHIFT_OPERATION = new ShCompositeElementType("BITWISE_SHIFT_OPERATION");
   IElementType BLOCK = new ShLazyBlockElementType("BLOCK");
   IElementType BRACE_EXPANSION = new ShCompositeElementType("BRACE_EXPANSION");
   IElementType CASE_CLAUSE = new ShCompositeElementType("CASE_CLAUSE");
@@ -32,20 +39,25 @@ public interface ShTypes {
   IElementType COMMANDS_LIST = new ShCompositeElementType("COMMANDS_LIST");
   IElementType COMMAND_SUBSTITUTION_COMMAND = new ShCompositeElementType("COMMAND_SUBSTITUTION_COMMAND");
   IElementType COMMA_EXPRESSION = new ShCompositeElementType("COMMA_EXPRESSION");
+  IElementType COMMA_OPERATION = new ShCompositeElementType("COMMA_OPERATION");
   IElementType COMPARISON_CONDITION = new ShCompositeElementType("COMPARISON_CONDITION");
   IElementType COMPARISON_EXPRESSION = new ShCompositeElementType("COMPARISON_EXPRESSION");
+  IElementType COMPARISON_OPERATION = new ShCompositeElementType("COMPARISON_OPERATION");
   IElementType COMPOUND_LIST = new ShCompositeElementType("COMPOUND_LIST");
   IElementType CONDITION = new ShCompositeElementType("CONDITION");
   IElementType CONDITIONAL_COMMAND = new ShCompositeElementType("CONDITIONAL_COMMAND");
   IElementType CONDITIONAL_EXPRESSION = new ShCompositeElementType("CONDITIONAL_EXPRESSION");
+  IElementType CONDITIONAL_OPERATION = new ShCompositeElementType("CONDITIONAL_OPERATION");
   IElementType DO_BLOCK = new ShLazyDoBlockElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new ShCompositeElementType("ELIF_CLAUSE");
   IElementType ELSE_CLAUSE = new ShCompositeElementType("ELSE_CLAUSE");
   IElementType EQUALITY_CONDITION = new ShCompositeElementType("EQUALITY_CONDITION");
   IElementType EQUALITY_EXPRESSION = new ShCompositeElementType("EQUALITY_EXPRESSION");
+  IElementType EQUALITY_OPERATION = new ShCompositeElementType("EQUALITY_OPERATION");
   IElementType EVAL_COMMAND = new ShCompositeElementType("EVAL_COMMAND");
   IElementType EXPRESSION = new ShCompositeElementType("EXPRESSION");
   IElementType EXP_EXPRESSION = new ShCompositeElementType("EXP_EXPRESSION");
+  IElementType EXP_OPERATION = new ShCompositeElementType("EXP_OPERATION");
   IElementType FOR_CLAUSE = new ShCompositeElementType("FOR_CLAUSE");
   IElementType FOR_COMMAND = new ShCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEFINITION = new ShCompositeElementType("FUNCTION_DEFINITION");
@@ -55,27 +67,37 @@ public interface ShTypes {
   IElementType INCLUDE_COMMAND = new ShCompositeElementType("INCLUDE_COMMAND");
   IElementType INCLUDE_DIRECTIVE = new ShCompositeElementType("INCLUDE_DIRECTIVE");
   IElementType INDEX_EXPRESSION = new ShCompositeElementType("INDEX_EXPRESSION");
+  IElementType INDEX_OPERATION = new ShCompositeElementType("INDEX_OPERATION");
   IElementType LET_COMMAND = new ShCompositeElementType("LET_COMMAND");
   IElementType LIST_TERMINATOR = new ShCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL = new ShCompositeElementType("LITERAL");
   IElementType LITERAL_CONDITION = new ShCompositeElementType("LITERAL_CONDITION");
   IElementType LITERAL_EXPRESSION = new ShCompositeElementType("LITERAL_EXPRESSION");
+  IElementType LITERAL_OPERATION = new ShCompositeElementType("LITERAL_OPERATION");
   IElementType LOGICAL_AND_CONDITION = new ShCompositeElementType("LOGICAL_AND_CONDITION");
   IElementType LOGICAL_AND_EXPRESSION = new ShCompositeElementType("LOGICAL_AND_EXPRESSION");
+  IElementType LOGICAL_AND_OPERATION = new ShCompositeElementType("LOGICAL_AND_OPERATION");
   IElementType LOGICAL_BITWISE_CONDITION = new ShCompositeElementType("LOGICAL_BITWISE_CONDITION");
   IElementType LOGICAL_BITWISE_NEGATION_EXPRESSION = new ShCompositeElementType("LOGICAL_BITWISE_NEGATION_EXPRESSION");
+  IElementType LOGICAL_BITWISE_NEGATION_OPERATION = new ShCompositeElementType("LOGICAL_BITWISE_NEGATION_OPERATION");
   IElementType LOGICAL_OR_CONDITION = new ShCompositeElementType("LOGICAL_OR_CONDITION");
   IElementType LOGICAL_OR_EXPRESSION = new ShCompositeElementType("LOGICAL_OR_EXPRESSION");
+  IElementType LOGICAL_OR_OPERATION = new ShCompositeElementType("LOGICAL_OR_OPERATION");
   IElementType MUL_EXPRESSION = new ShCompositeElementType("MUL_EXPRESSION");
+  IElementType MUL_OPERATION = new ShCompositeElementType("MUL_OPERATION");
   IElementType NUMBER = new ShCompositeElementType("NUMBER");
   IElementType OLD_ARITHMETIC_EXPANSION = new ShCompositeElementType("OLD_ARITHMETIC_EXPANSION");
+  IElementType OPERATION = new ShCompositeElementType("OPERATION");
   IElementType PARENTHESES_BLOCK = new ShCompositeElementType("PARENTHESES_BLOCK");
   IElementType PARENTHESES_CONDITION = new ShCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new ShCompositeElementType("PARENTHESES_EXPRESSION");
+  IElementType PARENTHESES_OPERATION = new ShCompositeElementType("PARENTHESES_OPERATION");
   IElementType PATTERN = new ShCompositeElementType("PATTERN");
   IElementType PIPELINE_COMMAND = new ShCompositeElementType("PIPELINE_COMMAND");
   IElementType POST_EXPRESSION = new ShCompositeElementType("POST_EXPRESSION");
+  IElementType POST_OPERATION = new ShCompositeElementType("POST_OPERATION");
   IElementType PRE_EXPRESSION = new ShCompositeElementType("PRE_EXPRESSION");
+  IElementType PRE_OPERATION = new ShCompositeElementType("PRE_OPERATION");
   IElementType PROCESS_SUBSTITUTION = new ShCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new ShCompositeElementType("REDIRECTION");
   IElementType REGEX_CONDITION = new ShCompositeElementType("REGEX_CONDITION");
@@ -90,6 +112,7 @@ public interface ShTypes {
   IElementType TEST_COMMAND = new ShCompositeElementType("TEST_COMMAND");
   IElementType THEN_CLAUSE = new ShCompositeElementType("THEN_CLAUSE");
   IElementType UNARY_EXPRESSION = new ShCompositeElementType("UNARY_EXPRESSION");
+  IElementType UNARY_OPERATION = new ShCompositeElementType("UNARY_OPERATION");
   IElementType UNTIL_COMMAND = new ShCompositeElementType("UNTIL_COMMAND");
   IElementType VARIABLE = new ShCompositeElementType("VARIABLE");
   IElementType WHILE_COMMAND = new ShCompositeElementType("WHILE_COMMAND");
@@ -143,7 +166,6 @@ public interface ShTypes {
   IElementType LE = new ShTokenType("<=");
   IElementType LEFT_CURLY = new ShTokenType("{");
   IElementType LEFT_DOUBLE_BRACKET = new ShTokenType("[[");
-  IElementType LEFT_DOUBLE_PAREN = new ShTokenType("((");
   IElementType LEFT_PAREN = new ShTokenType("(");
   IElementType LEFT_SQUARE = new ShTokenType("[");
   IElementType LET = new ShTokenType("let");
@@ -180,7 +202,6 @@ public interface ShTypes {
   IElementType REGEXP = new ShTokenType("=~");
   IElementType RIGHT_CURLY = new ShTokenType("}");
   IElementType RIGHT_DOUBLE_BRACKET = new ShTokenType("]]");
-  IElementType RIGHT_DOUBLE_PAREN = new ShTokenType("))");
   IElementType RIGHT_PAREN = new ShTokenType(")");
   IElementType RIGHT_SQUARE = new ShTokenType("]");
   IElementType SELECT = new ShTokenType("select");
@@ -205,6 +226,9 @@ public interface ShTypes {
       if (type == ADD_EXPRESSION) {
         return new ShAddExpressionImpl(node);
       }
+      else if (type == ADD_OPERATION) {
+        return new ShAddOperationImpl(node);
+      }
       else if (type == ARITHMETIC_EXPANSION) {
         return new ShArithmeticExpansionImpl(node);
       }
@@ -213,6 +237,9 @@ public interface ShTypes {
       }
       else if (type == ARRAY_EXPRESSION) {
         return new ShArrayExpressionImpl(node);
+      }
+      else if (type == ARRAY_OPERATION) {
+        return new ShArrayOperationImpl(node);
       }
       else if (type == ASSIGNMENT_COMMAND) {
         return new ShAssignmentCommandImpl(node);
@@ -226,17 +253,32 @@ public interface ShTypes {
       else if (type == ASSIGNMENT_LIST) {
         return new ShAssignmentListImpl(node);
       }
+      else if (type == ASSIGNMENT_OPERATION) {
+        return new ShAssignmentOperationImpl(node);
+      }
       else if (type == BITWISE_AND_EXPRESSION) {
         return new ShBitwiseAndExpressionImpl(node);
+      }
+      else if (type == BITWISE_AND_OPERATION) {
+        return new ShBitwiseAndOperationImpl(node);
       }
       else if (type == BITWISE_EXCLUSIVE_OR_EXPRESSION) {
         return new ShBitwiseExclusiveOrExpressionImpl(node);
       }
+      else if (type == BITWISE_EXCLUSIVE_OR_OPERATION) {
+        return new ShBitwiseExclusiveOrOperationImpl(node);
+      }
       else if (type == BITWISE_OR_EXPRESSION) {
         return new ShBitwiseOrExpressionImpl(node);
       }
+      else if (type == BITWISE_OR_OPERATION) {
+        return new ShBitwiseOrOperationImpl(node);
+      }
       else if (type == BITWISE_SHIFT_EXPRESSION) {
         return new ShBitwiseShiftExpressionImpl(node);
+      }
+      else if (type == BITWISE_SHIFT_OPERATION) {
+        return new ShBitwiseShiftOperationImpl(node);
       }
       else if (type == BLOCK) {
         return new ShBlockImpl(node);
@@ -262,11 +304,17 @@ public interface ShTypes {
       else if (type == COMMA_EXPRESSION) {
         return new ShCommaExpressionImpl(node);
       }
+      else if (type == COMMA_OPERATION) {
+        return new ShCommaOperationImpl(node);
+      }
       else if (type == COMPARISON_CONDITION) {
         return new ShComparisonConditionImpl(node);
       }
       else if (type == COMPARISON_EXPRESSION) {
         return new ShComparisonExpressionImpl(node);
+      }
+      else if (type == COMPARISON_OPERATION) {
+        return new ShComparisonOperationImpl(node);
       }
       else if (type == COMPOUND_LIST) {
         return new ShCompoundListImpl(node);
@@ -276,6 +324,9 @@ public interface ShTypes {
       }
       else if (type == CONDITIONAL_EXPRESSION) {
         return new ShConditionalExpressionImpl(node);
+      }
+      else if (type == CONDITIONAL_OPERATION) {
+        return new ShConditionalOperationImpl(node);
       }
       else if (type == DO_BLOCK) {
         return new ShDoBlockImpl(node);
@@ -292,11 +343,17 @@ public interface ShTypes {
       else if (type == EQUALITY_EXPRESSION) {
         return new ShEqualityExpressionImpl(node);
       }
+      else if (type == EQUALITY_OPERATION) {
+        return new ShEqualityOperationImpl(node);
+      }
       else if (type == EVAL_COMMAND) {
         return new ShEvalCommandImpl(node);
       }
       else if (type == EXP_EXPRESSION) {
         return new ShExpExpressionImpl(node);
+      }
+      else if (type == EXP_OPERATION) {
+        return new ShExpOperationImpl(node);
       }
       else if (type == FOR_CLAUSE) {
         return new ShForClauseImpl(node);
@@ -325,6 +382,9 @@ public interface ShTypes {
       else if (type == INDEX_EXPRESSION) {
         return new ShIndexExpressionImpl(node);
       }
+      else if (type == INDEX_OPERATION) {
+        return new ShIndexOperationImpl(node);
+      }
       else if (type == LET_COMMAND) {
         return new ShLetCommandImpl(node);
       }
@@ -340,11 +400,17 @@ public interface ShTypes {
       else if (type == LITERAL_EXPRESSION) {
         return new ShLiteralExpressionImpl(node);
       }
+      else if (type == LITERAL_OPERATION) {
+        return new ShLiteralOperationImpl(node);
+      }
       else if (type == LOGICAL_AND_CONDITION) {
         return new ShLogicalAndConditionImpl(node);
       }
       else if (type == LOGICAL_AND_EXPRESSION) {
         return new ShLogicalAndExpressionImpl(node);
+      }
+      else if (type == LOGICAL_AND_OPERATION) {
+        return new ShLogicalAndOperationImpl(node);
       }
       else if (type == LOGICAL_BITWISE_CONDITION) {
         return new ShLogicalBitwiseConditionImpl(node);
@@ -352,14 +418,23 @@ public interface ShTypes {
       else if (type == LOGICAL_BITWISE_NEGATION_EXPRESSION) {
         return new ShLogicalBitwiseNegationExpressionImpl(node);
       }
+      else if (type == LOGICAL_BITWISE_NEGATION_OPERATION) {
+        return new ShLogicalBitwiseNegationOperationImpl(node);
+      }
       else if (type == LOGICAL_OR_CONDITION) {
         return new ShLogicalOrConditionImpl(node);
       }
       else if (type == LOGICAL_OR_EXPRESSION) {
         return new ShLogicalOrExpressionImpl(node);
       }
+      else if (type == LOGICAL_OR_OPERATION) {
+        return new ShLogicalOrOperationImpl(node);
+      }
       else if (type == MUL_EXPRESSION) {
         return new ShMulExpressionImpl(node);
+      }
+      else if (type == MUL_OPERATION) {
+        return new ShMulOperationImpl(node);
       }
       else if (type == NUMBER) {
         return new ShNumberImpl(node);
@@ -376,6 +451,9 @@ public interface ShTypes {
       else if (type == PARENTHESES_EXPRESSION) {
         return new ShParenthesesExpressionImpl(node);
       }
+      else if (type == PARENTHESES_OPERATION) {
+        return new ShParenthesesOperationImpl(node);
+      }
       else if (type == PATTERN) {
         return new ShPatternImpl(node);
       }
@@ -385,8 +463,14 @@ public interface ShTypes {
       else if (type == POST_EXPRESSION) {
         return new ShPostExpressionImpl(node);
       }
+      else if (type == POST_OPERATION) {
+        return new ShPostOperationImpl(node);
+      }
       else if (type == PRE_EXPRESSION) {
         return new ShPreExpressionImpl(node);
+      }
+      else if (type == PRE_OPERATION) {
+        return new ShPreOperationImpl(node);
       }
       else if (type == PROCESS_SUBSTITUTION) {
         return new ShProcessSubstitutionImpl(node);
@@ -429,6 +513,9 @@ public interface ShTypes {
       }
       else if (type == UNARY_EXPRESSION) {
         return new ShUnaryExpressionImpl(node);
+      }
+      else if (type == UNARY_OPERATION) {
+        return new ShUnaryOperationImpl(node);
       }
       else if (type == UNTIL_COMMAND) {
         return new ShUntilCommandImpl(node);

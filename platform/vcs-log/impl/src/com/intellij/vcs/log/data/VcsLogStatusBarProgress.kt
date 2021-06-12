@@ -24,7 +24,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
-  private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
@@ -106,5 +105,9 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip", vcsName.capitalize())
 
     override fun isCancellable(): Boolean = true
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   }
 }

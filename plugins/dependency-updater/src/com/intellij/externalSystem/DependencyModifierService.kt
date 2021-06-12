@@ -11,55 +11,53 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class DependencyModifierService(private val myProject: Project) {
 
-  fun addRepository(module: Module, repository: UnifiedDependencyRepository) = modify(module) {
+  fun addRepository(module: Module, repository: UnifiedDependencyRepository) = module.modify {
     it.addRepository(module, repository)
   }
 
-  fun deleteRepository(module: Module, repository: UnifiedDependencyRepository) = modify(module) {
+  fun deleteRepository(module: Module, repository: UnifiedDependencyRepository) = module.modify {
     it.deleteRepository(module, repository)
   }
 
   fun declaredDependencies(module: Module): List<DeclaredDependency> = read(module) {
-    it.declaredDependencies(module);
+    it.declaredDependencies(module)
   }
 
-  fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> = read(module)  {
-    it.declaredRepositories(module);
+  fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> = read(module) {
+    it.declaredRepositories(module)
   }
 
-  fun supports(module: Module): Boolean {
-    return ExternalDependencyModificator.EP_NAME.getExtensionList(myProject).any { it.supports(module) }
-  }
+  fun supports(module: Module): Boolean =
+    ExternalDependencyModificator.EP_NAME.getExtensionList(myProject)
+      .any { it.supports(module) }
 
-  fun addDependency(module: Module, descriptor: UnifiedDependency) = modify(module) {
+  fun addDependency(module: Module, descriptor: UnifiedDependency) = module.modify {
     it.addDependency(module, descriptor)
   }
 
   fun updateDependency(module: Module,
-             oldDescriptor: UnifiedDependency,
-             newDescriptor: UnifiedDependency) = modify(module) {
+                       oldDescriptor: UnifiedDependency,
+                       newDescriptor: UnifiedDependency) = module.modify {
     it.updateDependency(module, oldDescriptor, newDescriptor)
   }
 
-  fun removeDependency(module: Module, descriptor: UnifiedDependency) = modify(module) {
+  fun removeDependency(module: Module, descriptor: UnifiedDependency) = module.modify {
     it.removeDependency(module, descriptor)
   }
 
-  private fun modify(module: Module, modifier: (ExternalDependencyModificator) -> Unit) {
-    return ExternalDependencyModificator.EP_NAME.getExtensionList(myProject).firstOrNull { it.supports(module) }?.let(modifier)
-           ?: throw IllegalArgumentException(DependencyUpdaterBundle.message("cannot.modify.module", module.name))
-  }
+  private fun Module.modify(modifier: (ExternalDependencyModificator) -> Unit) =
+    ExternalDependencyModificator.EP_NAME.getExtensionList(myProject)
+      .firstOrNull { it.supports(this) }
+      ?.let(modifier)
+    ?: error(DependencyUpdaterBundle.message("cannot.modify.module", name))
 
-  private fun <T> read(module: Module, reader: (ExternalDependencyModificator) -> List<T>): List<T> {
-    return ExternalDependencyModificator.EP_NAME.getExtensionList(myProject)
-      .filter{ it.supports(module)}
+  private fun <T> read(module: Module, reader: (ExternalDependencyModificator) -> List<T>): List<T> =
+    ExternalDependencyModificator.EP_NAME.getExtensionList(myProject)
+      .filter { it.supports(module) }
       .flatMap { reader(it) }
-  }
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): DependencyModifierService {
-      return project.getService(DependencyModifierService::class.java)
-    }
+    fun getInstance(project: Project): DependencyModifierService = project.getService(DependencyModifierService::class.java)
   }
 }

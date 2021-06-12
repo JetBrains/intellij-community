@@ -19,6 +19,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -619,7 +620,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
     mySuite.addChild(mySimpleTest);
     for (int i = 0; i < 550; i++) {
-      String message = "line" + i + "\n";
+      String message = "line" + i + "\u0000\n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
     mySimpleTest.setFinished();
@@ -675,7 +676,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
 
       String savedText = FileUtil.loadFile(output);
-      assertTrue(savedText.endsWith("<count name=\"total\" value=\"1\"/>\n" +
+      assertTrue(StringUtil.convertLineSeparators(savedText)
+                   .endsWith("<count name=\"total\" value=\"1\"/>\n" +
                                     "    <count name=\"failed\" value=\"1\"/>\n" +
                                     "    <config configId=\"MockRuntimeConfiguration\" name=\"\">\n" +
                                     "        <method v=\"2\"/>\n" +
@@ -705,7 +707,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
                    "Actual   :actual\n" +
                    "\n" +
                    "\n" +
-                   "localizedstacktrace", mockPrinter.getAllOut().trim());
+                   "localizedstacktrace", StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
     }
     finally {
       FileUtil.delete(output);

@@ -117,7 +117,7 @@ public class GroovyIntroduceParameterObjectDelegate
     final GrParameter parameter = overridingMethod.getParameterList().getParameters()[oldIndex];
     final ReadWriteAccessDetector.Access[] accessors = new ReadWriteAccessDetector.Access[1];
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
-    final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
+    final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod, ReadWriteAccessDetector.Access.Read);
     ReferencesSearch.search(parameter, new LocalSearchScope(overridingMethod)).forEach(reference -> {
       final PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression) {

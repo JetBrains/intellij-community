@@ -19,12 +19,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * An extension for setting up additional VM options for external java compiler.
  */
 public interface ExternalJavacOptionsProvider {
+  /**
+   * @deprecated Use {@link #getOptions(JavaCompilingTool, int)}
+   */
+  @Deprecated
   @NotNull
-  Collection<String> getOptions(@NotNull JavaCompilingTool tool);
+  default Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  default Collection<String> getOptions(@NotNull JavaCompilingTool tool, int compilerSdkVersion) {
+    return getOptions(tool);
+  }
 }
 

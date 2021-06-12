@@ -3,6 +3,7 @@ package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
@@ -10,10 +11,8 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.function.Consumer;
 
 @ApiStatus.NonExtendable
 @ApiStatus.Internal
@@ -88,6 +87,13 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
+  /**
+   * Created for UI tests. {@code {translationConsumerList}} is used from robot-server plugin to collect `text` to `key` pairs
+   * which are useful when writing UI tests for different locales, not to depend on language specific texts.
+   */
+  @TestOnly
+  public static final List<Consumer<Pair<String, String>>> translationConsumerList = Collections.synchronizedList(new ArrayList<>());
+
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
                                              @Nullable @Nls String defaultValue,
@@ -106,6 +112,10 @@ public abstract class BundleBase {
     }
 
     String result = postprocessValue(bundle, value, params);
+
+    if (!translationConsumerList.isEmpty()) {
+      translationConsumerList.forEach((consumer -> consumer.accept(new Pair<>(key, result))));
+    }
 
     if (!resourceFound) {
       return result;
@@ -160,7 +170,8 @@ public abstract class BundleBase {
     }
 
     if (assertOnMissedKeys) {
-      LOG.error("'" + key + "' is not found in " + bundle);
+      String bundleName = bundle != null ? "(" + bundle.getBaseBundleName() + ")" : "";
+      LOG.error("'" + key + "' is not found in " + bundle + bundleName);
     }
 
     return "!" + key + "!";

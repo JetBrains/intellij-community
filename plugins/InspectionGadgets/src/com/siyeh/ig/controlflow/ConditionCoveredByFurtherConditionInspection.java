@@ -4,14 +4,25 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -29,10 +40,8 @@ import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
@@ -131,59 +140,16 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
-      @NotNull
-      @Override
-      protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                         @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                         @NotNull ControlFlow flow) {
-        List<DfaInstructionState> states = super.createInitialInstructionStates(psiBlock, memStates, flow);
-        List<DfaVariableValue> vars = flow.accessedVariables()
-          .filter(var -> {
-            if (!(var.getInherentType() instanceof DfReferenceType) ||
-                ((DfReferenceType)var.getInherentType()).getNullability() == DfaNullability.UNKNOWN) {
-              return false;
-            }
-            PsiVariable psi = ObjectUtils.tryCast(var.getPsiVariable(), PsiVariable.class);
-            if (psi instanceof PsiPatternVariable) return true;
-            if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
-              PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
-              return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);
-            }
-            return true;
-          })
-          .collect(Collectors.toList());
-        if (!vars.isEmpty()) {
-          for (DfaInstructionState state : states) {
-            for (DfaVariableValue var : vars) {
-              state.getMemoryState().setVarValue(var, getFactory().fromDfType(((DfReferenceType)var.getInherentType()).dropNullability()));
-            }
-          }
-        }
-        return states;
-      }
-    };
-    Map<PsiExpression, ThreeState> values = new HashMap<>();
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
-      @Override
-      protected ThreeState checkNotNullable(DfaMemoryState state,
-                                         @NotNull DfaValue value,
-                                         @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-        if (value instanceof DfaVariableValue) {
-          DfType dfType = state.getDfType(value);
-          if (dfType instanceof DfReferenceType) {
-            state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
-          }
-        }
-        return ThreeState.YES;
-      }
+    DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject());
+    ControlFlow flow = ControlFlowAnalyzer.buildFlow(expressionToAnalyze, factory, true);
+    if (flow == null) return Map.of();
+    var interceptor = new JavaDfaListener() {
+      final Map<PsiExpression, ThreeState> values = new HashMap<>();
 
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        super.beforeExpressionPush(value, expression, range, state);
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @NotNull DfaMemoryState state) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
@@ -195,7 +161,50 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
     };
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
-    return result == RunnerResult.OK ? values : Collections.emptyMap();
+    var runner = new StandardDataFlowInterpreter(flow, interceptor) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        Instruction instruction = instructionState.getInstruction();
+        if (instruction instanceof CheckNotNullInstruction) {
+          DfaMemoryState state = instructionState.getMemoryState();
+          DfaValue value = state.peek();
+          if (value instanceof DfaVariableValue) {
+            DfType dfType = state.getDfType(value);
+            if (dfType instanceof DfReferenceType) {
+              state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
+              return instructionState.nextStates(this);
+            }
+          }
+        }
+        return super.acceptInstruction(instructionState);
+      }
+    };
+    RunnerResult result = runner.interpret(createMemoryState(factory));
+    return result == RunnerResult.OK ? interceptor.values : Collections.emptyMap();
+  }
+
+  @NotNull
+  private static DfaMemoryState createMemoryState(DfaValueFactory factory) {
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
+    List<DfaVariableValue> vars = StreamEx.of(factory.getValues())
+      .select(DfaVariableValue.class)
+      .filter(var -> {
+        if (!(var.getInherentType() instanceof DfReferenceType) ||
+            ((DfReferenceType)var.getInherentType()).getNullability() == DfaNullability.UNKNOWN) {
+          return false;
+        }
+        PsiVariable psi = ObjectUtils.tryCast(var.getPsiVariable(), PsiVariable.class);
+        if (psi instanceof PsiPatternVariable) return true;
+        if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
+          PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
+          return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);
+        }
+        return true;
+      })
+      .toList();
+    for (DfaVariableValue var : vars) {
+      state.setVarValue(var, factory.fromDfType(((DfReferenceType)var.getInherentType()).dropNullability()));
+    }
+    return state;
   }
 }

@@ -85,6 +85,10 @@ public interface ToolWindow extends BusyObject {
 
   void setVisibleOnLargeStripe(boolean visible);
 
+  void setOrderOnLargeStripe(int order);
+
+  int getOrderOnLargeStripe();
+
   @NotNull
   ToolWindowAnchor getLargeStripeAnchor();
 

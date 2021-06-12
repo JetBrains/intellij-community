@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
@@ -30,13 +29,12 @@ import org.w3c.dom.NodeList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 @ApiStatus.Internal
@@ -61,11 +59,10 @@ public final class SVGLoader {
           String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
           if (!"false".equals(dbPath)) {
             if (dbPath == null || dbPath.isEmpty()) {
-              Path distDir = Paths.get(PathManager.getHomePath());
-              dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("icons.db");
+              dbFile = Path.of(PathManager.getBinPath() + "/icons.db");
             }
             else {
-              dbFile = Paths.get(dbPath);
+              dbFile = Path.of(dbPath);
             }
           }
         }
@@ -81,7 +78,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v2.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v3.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
@@ -311,8 +308,8 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        String string = new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
-        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, new StringReader(string)));
+        ByteArrayInputStream input = new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size());
+        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, input));
       }
     }
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
@@ -325,7 +322,7 @@ public final class SVGLoader {
   }
 
   private static @NotNull Document createDocument(@Nullable String url, @NotNull InputStream inputStream) {
-    Document document = SvgDocumentFactoryKt.createSvgDocument(url, new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    Document document = SvgDocumentFactoryKt.createSvgDocument(url, inputStream);
     patchColors(url, document);
     return document;
   }
@@ -429,40 +426,6 @@ public final class SVGLoader {
     return s;
   }
 
-  /**
-   * @deprecated use {@link #setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void setColorPatcher(@Nullable final SvgColorPatcher colorPatcher) {
-    if (colorPatcher == null) {
-      setColorPatcherProvider(null);
-      return;
-    }
-
-    setColorPatcherProvider(new SvgElementColorPatcherProvider() {
-      @Override
-      public SvgElementColorPatcher forPath(@Nullable String path) {
-        return new SvgElementColorPatcher() {
-          @Override
-          public void patchColors(@NotNull Element svg) {
-            try {
-              colorPatcher.patchColors(path == null ? null : new URL("jar", "icons", path), svg);
-            }
-            catch (MalformedURLException e) {
-              colorPatcher.patchColors(null, svg);
-            }
-          }
-
-          @Override
-          public byte @Nullable [] digest() {
-            return null;
-          }
-        };
-      }
-    });
-  }
-
   public static void setColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
@@ -510,17 +473,6 @@ public final class SVGLoader {
 
     default @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
       return forURL(null);
-    }
-  }
-
-  /**
-   * @deprecated use {@link SvgElementColorPatcherProvider instead}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public interface SvgColorPatcher {
-
-    default void patchColors(@Nullable @SuppressWarnings("unused") URL url, @NotNull Element svg) {
     }
   }
 }

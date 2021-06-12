@@ -8,7 +8,6 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -21,6 +20,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -34,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -153,8 +152,7 @@ class ContentTabLabel extends BaseLabel {
         for (AnAction action : myLayout.myDoubleClickActions) {
           AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, dataContext, event);
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
       }
@@ -245,10 +243,10 @@ class ContentTabLabel extends BaseLabel {
         repaint();
       }
 
-      Optional<AdditionalIcon> first = myAdditionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
+      AdditionalIcon first = ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
 
-      if (first.isPresent()) {
-        showTooltip(first.get());
+      if (first != null) {
+        showTooltip(first);
         return;
       }
     }

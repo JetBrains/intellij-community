@@ -11,7 +11,6 @@ import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager.LOCAL_BRANCH
 import git4idea.repo.GitRepository
-import java.util.*
 
 internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
 

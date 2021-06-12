@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +61,7 @@ public class EditorConfigPreviewManager implements PersistentStateComponent<Elem
   }
 
   public static EditorConfigPreviewManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, EditorConfigPreviewManager.class);
+    return project.getService(EditorConfigPreviewManager.class);
   }
 
   @NotNull

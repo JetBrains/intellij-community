@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +25,7 @@ object GlobalActionRecorder {
     private set
 
   private val globalActionListener = object : AnActionListener {
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       if (event.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       EventDispatcher.processActionEvent(action, event)
       LOG.info("IDEA is going to perform action ${action.templatePresentation.text}")
@@ -34,7 +35,7 @@ object GlobalActionRecorder {
       LOG.info("IDEA typing detected: ${c}")
     }
 
-    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       if (event.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       LOG.info("IDEA action performed ${action.templatePresentation.text}")
     }

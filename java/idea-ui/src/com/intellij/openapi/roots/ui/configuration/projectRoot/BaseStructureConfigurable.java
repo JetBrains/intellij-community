@@ -309,23 +309,20 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   final class MyRemoveAction extends MyDeleteAction {
     MyRemoveAction() {
-      super(new Predicate<>() {
-        @Override
-        public boolean test(final Object[] objects) {
-          List<MyNode> nodes = new ArrayList<>();
-          for (Object object : objects) {
-            if (!(object instanceof MyNode)) return false;
-            nodes.add((MyNode)object);
-          }
-          MultiMap<RemoveConfigurableHandler, MyNode> map = groupNodes(nodes);
-          for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : map.entrySet()) {
-            //noinspection unchecked
-            if (!entry.getKey().canBeRemoved(getEditableObjects(entry.getValue()))) {
-              return false;
-            }
-          }
-          return true;
+      super((Predicate<Object[]>)objects -> {
+        List<MyNode> nodes = new ArrayList<>();
+        for (Object object : objects) {
+          if (!(object instanceof MyNode)) return false;
+          nodes.add((MyNode)object);
         }
+        MultiMap<RemoveConfigurableHandler, MyNode> map = groupNodes(nodes);
+        for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : map.entrySet()) {
+          //noinspection unchecked
+          if (!entry.getKey().canBeRemoved(getEditableObjects(entry.getValue()))) {
+            return false;
+          }
+        }
+        return true;
       });
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
@@ -6,8 +6,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,17 @@ class ShelvedWrapper {
   @NlsSafe
   public String getRequestName() {
     return FileUtil.toSystemDependentName(getPath());
+  }
+
+  @NlsSafe
+  @RequiresEdt
+  @NotNull
+  public String getPresentableName() {
+    if (myShelvedChange == null) {
+      return getRequestName();
+    }
+
+    return ChangesUtil.getFilePath(myShelvedChange.getChange()).getName();
   }
 
   String getBeforePath() {

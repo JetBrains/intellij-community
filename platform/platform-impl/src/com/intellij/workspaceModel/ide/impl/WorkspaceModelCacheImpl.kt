@@ -6,12 +6,12 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.clearCachesForAllProjects
 import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
@@ -20,6 +20,7 @@ import com.intellij.util.io.lastModified
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
@@ -32,13 +33,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable, WorkspaceModelCache {
   private val cacheFile: Path
   private val invalidateProjectCacheMarkerFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -81,12 +83,24 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      saveCache(storage)
+      val processedStorage = cachePreProcess(storage)
+      saveCache(processedStorage)
     }
 
     if (cachesInvalidated.get()) {
       FileUtil.delete(cacheFile)
     }
+  }
+
+  private fun cachePreProcess(storage: WorkspaceEntityStorage): WorkspaceEntityStorage {
+    val builder = WorkspaceEntityStorageBuilder.from(storage)
+    val nonPersistentModules = builder.entities(ModuleEntity::class.java)
+      .filter { it.entitySource == NonPersistentEntitySource }
+      .toList()
+    nonPersistentModules.forEach {
+      builder.removeEntity(it)
+    }
+    return builder.toStorage()
   }
 
   override fun dispose() = Unit
@@ -165,19 +179,20 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
         plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
       }
 
+      if (name.startsWith("[")) return Class.forName(name)
       return classloader.loadClass(name)
     }
   }
 
   companion object {
     private val LOG = logger<WorkspaceModelCacheImpl>()
-    private const val DATA_DIR_NAME = "project-model-cache"
+    internal const val DATA_DIR_NAME = "project-model-cache"
 
     @TestOnly
     var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
-    private val invalidateCachesMarkerFile = File(appSystemDir.resolve("projectModelCache").toFile(), ".invalidate")
+    internal val invalidateCachesMarkerFile = File(projectsDataDir.toFile(), ".invalidate")
 
     fun invalidateCaches() {
       LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
@@ -191,10 +206,14 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       catch (t: Throwable) {
         LOG.warn("Cannot update the invalidation marker file", t)
       }
+    }
 
-      ApplicationManager.getApplication().executeOnPooledThread {
-        clearCachesForAllProjects(DATA_DIR_NAME)
-      }
+    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
+
+    fun collectExternalCacheVersions(): Map<String, String> {
+      return WORKSPACE_MODEL_CACHE_VERSION_EP
+        .extensions()
+        .collect(Collectors.toMap(WorkspaceModelCacheVersion::getId, WorkspaceModelCacheVersion::getVersion))
     }
   }
 }

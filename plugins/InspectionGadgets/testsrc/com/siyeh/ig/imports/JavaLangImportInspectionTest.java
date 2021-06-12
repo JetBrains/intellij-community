@@ -36,7 +36,7 @@ public class JavaLangImportInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("package a;" +
-           "/*Unnecessary import from package 'java.lang'*/import java.lang.String;/**/" +
+           "/*Unnecessary import from the 'java.lang' package*/import java.lang.String;/**/" +
            "class X {{" +
            "  String s;" +
            "}}");

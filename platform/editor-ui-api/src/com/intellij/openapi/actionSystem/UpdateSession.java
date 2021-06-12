@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * An interface to the current session of {@link ActionGroup} expansion
  * for postprocessing and recursive expansion.
@@ -14,7 +16,9 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface UpdateSession {
 
-  @NotNull Iterable<? extends AnAction> children(@NotNull ActionGroup actionGroup);
+  @NotNull Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup);
+
+  @NotNull List<? extends AnAction> children(@NotNull ActionGroup actionGroup);
 
   @NotNull Presentation presentation(@NotNull AnAction action);
 }

@@ -50,9 +50,13 @@ public class CodeStyleStatusBarWidgetFactory extends StatusBarEditorBasedWidgetF
       event -> {
         Configurable configurable = findCodeStyleConfigurableId(psiFile.getProject(), langName);
         if (configurable instanceof CodeStyleConfigurableWrapper) {
-          ShowSettingsUtil.getInstance().editConfigurable(event.getProject(), configurable,
-                                                          () -> ((CodeStyleConfigurableWrapper)configurable)
-                                                            .selectTab(ApplicationBundle.message("title.tabs.and.indents")));
+          ShowSettingsUtil.getInstance().editConfigurable(
+            event.getProject(), configurable,
+            () -> {
+              CodeStyleConfigurableWrapper configurableWrapper = (CodeStyleConfigurableWrapper)configurable;
+              configurableWrapper.setSchemesPanelVisible(false);
+              configurableWrapper.selectTab(ApplicationBundle.message("title.tabs.and.indents"));
+            });
         }
       }
     );

@@ -42,7 +42,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     Application application = ApplicationManager.getApplication();
     if (application.isWriteThread()) {
-      AccessToken token = start(getClass());
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         result.run();
       }
@@ -57,7 +57,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     WriteThread.invokeAndWait(() -> {
-      AccessToken token = start(getClass());
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         result.run();
       }
@@ -81,19 +81,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
-    return start(callerClass);
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  private static AccessToken start(@NotNull Class<?> clazz) {
-    return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+    return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);
   }
 
   /**

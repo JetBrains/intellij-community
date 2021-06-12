@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
@@ -237,7 +237,7 @@ class PathPrefixTreeMapTest : UsefulTestCase() {
                        "C://path/to/my/dir3" to 30,
                        "C://path/to/my/dir4" to 10,
                        "C://path/to/my" to 43),
-                 map.getAllDescendantPairs("C://path/to/my"))
+                 getAllDescendantPairs(map, "C://path/to/my"))
     assertEquals(setOf("C://path/to/my/dir1" to 10,
                        "C://path/to/my/dir2" to 20,
                        "C://path/to/my/dir3" to 30,
@@ -247,7 +247,7 @@ class PathPrefixTreeMapTest : UsefulTestCase() {
                        "C://path/to/dir3" to 30,
                        "C://path/to/dir4" to 11,
                        "C://path/to/my" to 43),
-                 map.getAllDescendantPairs("C://path/to"))
+                 getAllDescendantPairs(map, "C://path/to"))
     assertEquals(setOf("C://path/to/my/dir1" to 10,
                        "C://path/to/my/dir2" to 20,
                        "C://path/to/my/dir3" to 30,
@@ -258,7 +258,7 @@ class PathPrefixTreeMapTest : UsefulTestCase() {
                        "C://path/to/dir4" to 11,
                        "C://path/to/my" to 43,
                        "C://path" to 13),
-                 map.getAllDescendantPairs("C://path"))
+                 getAllDescendantPairs(map, "C://path"))
     assertEquals(setOf("C://path/to/my/dir1" to 10,
                        "C://path/to/my/dir2" to 20,
                        "C://path/to/my/dir3" to 30,
@@ -269,7 +269,7 @@ class PathPrefixTreeMapTest : UsefulTestCase() {
                        "C://path/to/dir4" to 11,
                        "C://path/to/my" to 43,
                        "C://path" to 13),
-                 map.getAllDescendantPairs("C:/"))
+                 getAllDescendantPairs(map, "C:/"))
   }
 
   @Test
@@ -328,19 +328,21 @@ class PathPrefixTreeMapTest : UsefulTestCase() {
     map["C://path/to/my"] = 43
     map["C://path"] = 13
     assertEquals(listOf("C://path" to 13, "C://path/to/my" to 43, "C://path/to/my/dir1" to 10),
-                 map.getAllAncestorPairs("C://path/to/my/dir1/loc"))
+                 getAllAncestorPairs(map, "C://path/to/my/dir1/loc"))
     assertEquals(listOf("C://path" to 13, "C://path/to/my" to 43, "C://path/to/my/dir1" to 10),
-                 map.getAllAncestorPairs("C://path/to/my/dir1"))
-    assertEquals(listOf("C://path" to 13, "C://path/to/my" to 43), map.getAllAncestorPairs("C://path/to/my"))
-    assertEquals(listOf("C://path" to 13), map.getAllAncestorPairs("C://path/to"))
-    assertEquals(listOf("C://path" to 13), map.getAllAncestorPairs("C://path/to/"))
-    assertEquals(listOf("C://path" to 13), map.getAllAncestorPairs("C://path"))
-    assertEquals(emptyList<Any>(), map.getAllAncestorPairs("C:/"))
+                 getAllAncestorPairs(map, "C://path/to/my/dir1"))
+    assertEquals(listOf("C://path" to 13, "C://path/to/my" to 43), getAllAncestorPairs(map, "C://path/to/my"))
+    assertEquals(listOf("C://path" to 13), getAllAncestorPairs(map, "C://path/to"))
+    assertEquals(listOf("C://path" to 13), getAllAncestorPairs(map, "C://path/to/"))
+    assertEquals(listOf("C://path" to 13), getAllAncestorPairs(map, "C://path"))
+    assertEquals(emptyList<Any>(), getAllAncestorPairs(map, "C:/"))
   }
 
-  private fun <T> PathPrefixTreeMap<T>.getAllDescendantPairs(key: String) =
-    getAllDescendants(key).map { (k, v) -> k to v }.toSet()
+  private fun <T> getAllDescendantPairs(pathPrefixTreeMap: PathPrefixTreeMap<T>, key: String): Set<Pair<String, T>> {
+    return pathPrefixTreeMap.getAllDescendants(key).map { (k, v) -> k to v }.toSet()
+  }
 
-  private fun <T> PathPrefixTreeMap<T>.getAllAncestorPairs(key: String) =
-    getAllAncestors(key).map { (k, v) -> k to v }
+  private fun <T> getAllAncestorPairs(pathPrefixTreeMap: PathPrefixTreeMap<T>, key: String): List<Pair<String, T>> {
+    return pathPrefixTreeMap.getAllAncestors(key).map { (k, v) -> k to v }
+  }
 }

@@ -1,5 +1,20 @@
 <html>
 <body>
-This inspection warns if a protected member is accessed outside the class, a descendant of the class where it&#39;s defined or a module.
+<p>Reports cases when a protected member is accessed outside the class,
+  a descendant of the class where it is defined, or a module.</p>
+<pre style="font-family: monospace">
+class Foo:
+    def _protected_method(self):
+        pass
+
+
+class Bar(Foo):
+    def public_method(self):
+        self._protected_method()
+
+
+foo = Foo()
+foo._protected_method() # Access to a protected method
+</pre>
 </body>
 </html>

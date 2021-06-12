@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,20 +37,21 @@ public class Bootstrap {
   private static void mainNoExceptionsCatch(String[] args) throws Exception {
     if (args.length != 1) throw new Exception("Expected one argument: path to application installation");
 
-    String path = args[0].endsWith("\\") || args[0].endsWith("/") ? args[0] : args[0] + File.separator;
-    if (isMac() && path.endsWith(".app/")) {
-      File file = new File(path + "Contents");
-      if (file.exists() && file.isDirectory()) {
-        path += "Contents/";
+    Path target = Paths.get(args[0]);
+    if (isMac() && target.getFileName().toString().endsWith(".app")) {
+      Path inner = target.resolve("Contents");
+      if (Files.isDirectory(inner)) {
+        target = inner;
       }
     }
+    if (!Files.isDirectory(target)) throw new Exception("Not a directory: " + target);
 
     ClassLoader cl = Bootstrap.class.getClassLoader();
     URL dependenciesTxt = cl.getResource("dependencies.txt");
     if (dependenciesTxt == null) throw new Exception("Missing dependencies.txt file in classpath");
 
     Map<String, byte[]> classes = new HashMap<>();
-    for (File dependencyFile : readDependenciesTxt(path, dependenciesTxt)) {
+    for (Path dependencyFile : readDependenciesTxt(target, dependenciesTxt)) {
       // Load dependency JARs in memory not to lock them on disk
       collectClassesFromJar(dependencyFile, classes);
     }
@@ -71,11 +76,10 @@ public class Bootstrap {
     }
   }
 
-  private static void collectClassesFromJar(File jarFile, Map<String, byte[]> classes) throws IOException {
+  private static void collectClassesFromJar(Path jarFile, Map<String, byte[]> classes) throws IOException {
     byte[] buffer = new byte[1024];
 
-    try (InputStream fileInputStream = new FileInputStream(jarFile);
-         JarInputStream is = new JarInputStream(fileInputStream)) {
+    try (JarInputStream is = new JarInputStream(Files.newInputStream(jarFile))) {
       JarEntry nextEntry;
       while ((nextEntry = is.getNextJarEntry()) != null) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(Math.max((int)nextEntry.getSize(), 1024));
@@ -85,7 +89,7 @@ public class Bootstrap {
           outputStream.write(buffer, 0, len);
         }
 
-        classes.put("/" + nextEntry.getName(), outputStream.toByteArray());
+        classes.put('/' + nextEntry.getName(), outputStream.toByteArray());
       }
     }
   }
@@ -94,15 +98,12 @@ public class Bootstrap {
     return new URL("x-in-memory", null, -1, "/", new URLStreamHandler() {
       @Override
       protected URLConnection openConnection(URL u) throws IOException {
-        final byte[] data = classes.get(u.getFile());
-        if (data == null) {
-          throw new FileNotFoundException(u.getFile());
-        }
+        byte[] data = classes.get(u.getFile());
+        if (data == null) throw new FileNotFoundException(u.getFile());
 
         return new URLConnection(u) {
           @Override
-          public void connect() {
-          }
+          public void connect() { }
 
           @Override
           public InputStream getInputStream() {
@@ -113,15 +114,14 @@ public class Bootstrap {
     });
   }
 
-  private static List<File> readDependenciesTxt(String basePath, URL dependenciesTxtUrl) throws Exception {
-    List<File> files = new ArrayList<>();
+  private static List<Path> readDependenciesTxt(Path basePath, URL dependenciesTxtUrl) throws Exception {
+    List<Path> files = new ArrayList<>();
 
     try (BufferedReader br = new BufferedReader(new InputStreamReader(dependenciesTxtUrl.openStream(), StandardCharsets.UTF_8))) {
       String line;
       while ((line = br.readLine()) != null) {
-        File file = new File(basePath + line);
-        if (!file.exists()) throw new Exception("File from dependencies.txt is not found: " + file);
-
+        Path file = Stream.of(line.split(":")).map(basePath::resolve).filter(Files::exists).findFirst().orElse(null);
+        if (file == null) throw new Exception("Cannot find dependency '" + line + "' in " + basePath);
         files.add(file);
       }
     }

@@ -10,6 +10,7 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean isHeldExclusively()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -35,16 +36,19 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryAcquire(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryRelease(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryReleaseShared(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -53,6 +57,7 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer int tryAcquireShared(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -295,6 +300,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock java.util.concurrent.locks.Condition newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

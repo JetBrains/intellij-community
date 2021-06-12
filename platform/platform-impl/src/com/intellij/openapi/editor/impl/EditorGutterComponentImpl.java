@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -123,6 +124,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -827,11 +829,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
 
+    int marginFromSettings = AdvancedSettings.getInt(DISTRACTION_FREE_MARGIN);
+    if (marginFromSettings != -1) {
+      myTextAnnotationExtraSize = marginFromSettings;
+      return;
+    }
+
     Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorComposite.isEditorComposite(c));
     if (outerContainer == null) return;
 
     EditorSettings settings = myEditor.getSettings();
-    int rightMargin = settings.getRightMargin(myEditor.getProject());
+    Project project = myEditor.getProject();
+    if (project != null && project.isDisposed()) return;
+    int rightMargin = settings.getRightMargin(project);
     if (rightMargin <= 0) return;
 
     JComponent editorComponent = myEditor.getComponent();
@@ -1757,7 +1767,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       TooltipRenderer tr =
         ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip);
       HintHint hint =
-        new HintHint(this, location).setAwtTooltip(true).setPreferredPosition(relativePosition).setRequestFocus(ScreenReader.isActive());
+        new HintHint(this, location)
+          .setAwtTooltip(true)
+          .setPreferredPosition(relativePosition)
+          .setRequestFocus(ScreenReader.isActive());
       if (myEditor.getComponent().getRootPane() != null) {
         controller.showTooltipByMouseMove(myEditor, showPoint, tr, false, GUTTER_TOOLTIP_GROUP, hint);
       }
@@ -1920,7 +1933,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isDumbMode() {
     Project project = myEditor.getProject();
-    return project != null && DumbService.isDumb(project);
+    return project != null && !project.isDisposed() && DumbService.isDumb(project);
   }
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
@@ -1942,9 +1955,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
-    action.update(actionEvent);
-    if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
     }
   }
 
@@ -2130,32 +2142,32 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       if (!addActions.isEmpty()) {
+        e.consume();
         DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }
         JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
-        e.consume();
       }
     }
     else {
       if (info != null) {
         AnAction rightButtonAction = info.renderer.getRightButtonClickAction();
         if (rightButtonAction != null) {
-          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
           e.consume();
+          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
         }
         else {
           ActionGroup actionGroup = info.renderer.getPopupMenuActions();
           if (actionGroup != null) {
+            e.consume();
             if (checkDumbAware(actionGroup)) {
               actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent().show(this, e.getX(), e.getY());
             }
             else {
               notifyNotDumbAware();
             }
-            e.consume();
           }
         }
       }
@@ -2165,10 +2177,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
         }
         if (group != null) {
+          e.consume();
           ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
         }
-        e.consume();
       }
     }
   }

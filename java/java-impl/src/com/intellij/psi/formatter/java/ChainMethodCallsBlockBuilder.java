@@ -72,32 +72,32 @@ class ChainMethodCallsBlockBuilder {
   private List<Block> buildBlocksFrom(List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
 
-    Wrap wrap = null;
-    Wrap builderMethodWrap = Wrap.createWrap(WrapType.ALWAYS, mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN);
+    Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), true);
+    Wrap builderMethodWrap = Wrap.createWrap(WrapType.ALWAYS, true);
     Alignment chainedCallsAlignment = null;
 
     List<Block> blocks = new ArrayList<>();
 
     int commonIndentSize = mySettings.KEEP_BUILDER_METHODS_INDENTS ? getCommonIndentSize(methodCall) : -1;
 
+    CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk) || isComment(currentCallChunk)) {
-        if (wrap == null) {
-          wrap = createCallChunkWrap(i, methodCall, mySettings.METHOD_CALL_CHAIN_WRAP);
-        }
         if (chainedCallsAlignment == null) {
           chainedCallsAlignment = createCallChunkAlignment(i, methodCall);
         }
       }
       else {
-        wrap = null;
         chainedCallsAlignment = null;
       }
 
-      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
+      Wrap currWrap = isMethodCall(currentCallChunk) && canWrap(i, methodCall)
+                      ? isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap
+                      : null;
+
       blocks.add(builder.create(currentCallChunk.nodes,
-                                isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap, chainedCallsAlignment,
+                                currWrap, chainedCallsAlignment,
                                 getRelativeIndentSize(commonIndentSize, currentCallChunk)));
     }
 
@@ -145,15 +145,18 @@ class ChainMethodCallsBlockBuilder {
     return identifier != null && mySettings.isBuilderMethod(identifier);
   }
 
-  private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<? extends ChainedCallChunk> methodCall, int wrapSetting) {
-    if (mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN) {
-      ChainedCallChunk next = chunkIndex + 1 < methodCall.size() ? methodCall.get(chunkIndex + 1) : null;
-      if (next != null && isMethodCall(next)) {
-        return Wrap.createWrap(getWrapType(wrapSetting), true);
+  private boolean canWrap(int chunkIndex, @NotNull List<? extends ChainedCallChunk> methodCall) {
+    if (chunkIndex <= 0) return false;
+    ChainedCallChunk prev = methodCall.get(chunkIndex - 1);
+    boolean isFirst = !isMethodCall(prev) || chunkIndex == 1;
+    if (isFirst) {
+      if (mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN) {
+        ChainedCallChunk next = chunkIndex + 1 < methodCall.size() ? methodCall.get(chunkIndex + 1) : null;
+        return next != null && isMethodCall(next);
       }
+      return false;
     }
-
-    return Wrap.createWrap(getWrapType(wrapSetting), false);
+    return true;
   }
 
   private boolean shouldAlignMethod(ChainedCallChunk currentMethodChunk, List<ChainedCallChunk> methodCall) {
@@ -167,12 +170,12 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
     for (ASTNode node : nodes) {
-      if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
+      if (JavaFormatterUtil.isStartOfCallChunk(mySettings, node) || node.getPsi() instanceof PsiComment) {
         if (!current.isEmpty()) {
           result.add(new ChainedCallChunk(current));
         }

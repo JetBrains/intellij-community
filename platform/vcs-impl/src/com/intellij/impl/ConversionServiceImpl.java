@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.impl;
 
 import com.intellij.conversion.*;
@@ -143,9 +143,12 @@ public final class ConversionServiceImpl extends ConversionService {
       point.processIdentifiableImplementations((supplier, id) -> {
         String providerId = getProviderId(supplier, id);
         if (!performedConversionIds.contains(providerId)) {
-          ConversionRunner runner = new ConversionRunner(providerId, supplier.get(), context);
-          if (runner.isConversionNeeded()) {
-            runners.add(runner);
+          ConverterProvider provider = supplier.get();
+          if (provider != null) {
+            ConversionRunner runner = new ConversionRunner(providerId, provider, context);
+            if (runner.isConversionNeeded()) {
+              runners.add(runner);
+            }
           }
         }
       });
@@ -182,9 +185,12 @@ public final class ConversionServiceImpl extends ConversionService {
     try {
       ExtensionPointImpl<ConverterProvider> point = (ExtensionPointImpl<ConverterProvider>)ConverterProvider.EP_NAME.getPoint();
       point.processIdentifiableImplementations((supplier, id) -> {
-        ConversionRunner runner = new ConversionRunner(getProviderId(supplier, id), supplier.get(), context);
-        if (runner.isModuleConversionNeeded(moduleFile)) {
-          runners.add(runner);
+        ConverterProvider provider = supplier.get();
+        if (provider != null) {
+          ConversionRunner runner = new ConversionRunner(getProviderId(supplier, id), provider, context);
+          if (runner.isModuleConversionNeeded(moduleFile)) {
+            runners.add(runner);
+          }
         }
       });
     }

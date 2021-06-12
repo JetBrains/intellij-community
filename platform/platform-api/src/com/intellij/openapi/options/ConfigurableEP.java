@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.BundleBase;
@@ -383,7 +383,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    * Returns the type of configurable to create or {@code null},
    * if it cannot be determined.
    *
-   * @return the the configurable's type or {@code null}
+   * @return the configurable's type or {@code null}
    */
   @Nullable
   public Class<?> getConfigurableType() {

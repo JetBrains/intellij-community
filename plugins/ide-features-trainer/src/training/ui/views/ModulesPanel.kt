@@ -2,6 +2,7 @@
 package training.ui.views
 
 import com.intellij.lang.Language
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import training.lang.LangManager
@@ -17,8 +18,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.MatteBorder
 
-class ModulesPanel : JPanel() {
-  private val modulesPanel = LearningItems()
+class ModulesPanel(project: Project) : JPanel() {
+  private val modulesPanel = LearningItems(project)
 
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)

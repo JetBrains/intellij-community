@@ -30,12 +30,12 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   public void testNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-1235
   public void testTupleUnpacking() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
+    doTest();
   }
 
   // PY-959
@@ -45,7 +45,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-9778
   public void testUnusedCoroutine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMultiFileTest("b.py"));
+    doMultiFileTest("b.py");
   }
 
   // PY-19491
@@ -55,12 +55,12 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-20805
   public void testFStringReferences() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-22087
   public void testFStringReferencesInComprehensions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-8219
@@ -70,17 +70,17 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-23057
   public void testParameterInMethodWithEllipsis() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testSingleUnderscore() {
@@ -100,7 +100,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-28017
   public void testModuleGetAttr() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
   }
 
   // PY-27435
@@ -185,22 +185,22 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
   // PY-22204
   public void testForwardTypeDeclaration() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-22204
   public void testTypeDeclarationFollowsTargetBeforeItsFirstUsage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-44102
   public void testUnusedMultiAssignmentTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-44102
   public void testUnusedAssignmentExpression() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   @NotNull

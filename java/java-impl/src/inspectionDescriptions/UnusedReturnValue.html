@@ -2,5 +2,45 @@
 <body>
 Reports methods whose return values are never used when called.
 The return type of such methods can be made <code>void</code>.
+Methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.
+The quick-fix updates the method signature and removes <code>return</code> statements from inside the method.
+<p><b>Example:</b></p>
+<pre>
+  // reported if visibility setting is Protected or Public
+  protected String myToUpperCase(String s) {
+    return s.toUpperCase();
+  }
+
+  // simple setter, reporting depends on setting
+  public String setStr(String str) {
+    myStr = str;
+    return myStr;
+  }
+
+  void test() {
+    setStr("value");          // return value is unused
+    myToUpperCase("result");  // return value is unused
+  }
+</pre>
+<p>After the quickfix is applied to both methods the result looks like:</p>
+<pre>
+    protected void myToUpperCase(String s) {
+      // 'return' removed completely
+      // as 's.toUpperCase()' has no side effect
+    }
+
+    public void setStr(String str) {
+      myStr = str;
+      // 'return' removed
+    }
+  ...
+</pre>
+<p>
+  <b>NOTE:</b> Some methods might not be reported during in-editor highlighting, due to performance reasons.
+  To see all results, please run the inspection using Analyze | Inspect Code... or Analyze | Run Inspection by Name...
+</p>
+<!-- tooltip end -->
+<p>Use the checkbox below to ignore unused return values from simple setter calls.</p>
+<p>Use second option to control the maximum visibility of methods to be reported.</p>
 </body>
 </html>

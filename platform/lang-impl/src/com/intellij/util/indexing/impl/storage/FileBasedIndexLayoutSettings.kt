@@ -5,6 +5,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -51,7 +53,7 @@ internal object FileBasedIndexLayoutSettings {
       }
 
       // scan for exact layout id & version match
-      for (bean in FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList) {
+      for (bean in DefaultIndexStorageLayout.availableLayouts) {
         if (bean.id == id && bean.version == version) {
           currentLayout = Ref.create(bean)
           return false
@@ -59,7 +61,7 @@ internal object FileBasedIndexLayoutSettings {
       }
 
       // scan only matched id
-      for (bean in FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList) {
+      for (bean in DefaultIndexStorageLayout.availableLayouts) {
         if (bean.id == id) {
           setUsedLayout(bean)
           currentLayout = Ref.create(bean)

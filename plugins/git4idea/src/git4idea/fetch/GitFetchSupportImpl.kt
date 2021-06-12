@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
-import com.intellij.internal.statistic.IdeActivity
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
@@ -99,7 +99,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     try {
       fetchRequestCounter.incrementAndGet()
       return withIndicator {
-        val activity = IdeActivity.started(project, "vcs", "fetch")
+        val activity = VcsStatisticsCollector.FETCH_ACTIVITY.started(project)
 
         val tasks = fetchInParallel(arguments)
         val results = waitForFetchTasks(tasks)
@@ -296,7 +296,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     private fun doShowNotification(failureTitle: @Nls String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification("", message, type, null)
+      val notification = STANDARD_NOTIFICATION.createNotification(message, type)
       vcsNotifier.notify(notification)
     }
 

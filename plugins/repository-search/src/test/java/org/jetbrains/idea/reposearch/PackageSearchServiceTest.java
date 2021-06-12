@@ -48,7 +48,6 @@ public class PackageSearchServiceTest {
   public void testSuggestTextSearch() {
     Ref<Map<String, String>> params = new Ref<>();
 
-
     myServer.createContext(suggestEndPoint, ex -> {
       try {
         params.set(getQueryMap(ex.getRequestURI()));

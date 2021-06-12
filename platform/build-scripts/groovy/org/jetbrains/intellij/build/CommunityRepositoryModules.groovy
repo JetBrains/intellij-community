@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
@@ -14,88 +13,6 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
 @CompileStatic
 final class CommunityRepositoryModules {
-  /**
-   * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs. Build scripts of IDEs aren't supposed to use this
-   * property directly, it's used by the build scripts internally.
-   */
-  @ApiStatus.Internal
-  static List<String> PLATFORM_API_MODULES = [
-    "intellij.platform.analysis",
-    "intellij.platform.builtInServer",
-    "intellij.platform.core",
-    "intellij.platform.diff",
-    "intellij.platform.vcs.dvcs",
-    "intellij.platform.editor",
-    "intellij.platform.externalSystem",
-    "intellij.platform.codeStyle",
-    "intellij.platform.indexing",
-    "intellij.platform.jps.model",
-    "intellij.platform.lang",
-    "intellij.platform.lvcs",
-    "intellij.platform.ide",
-    "intellij.platform.projectModel",
-    "intellij.platform.remoteServers.agent.rt",
-    "intellij.platform.remoteServers",
-    "intellij.platform.tasks",
-    "intellij.platform.usageView",
-    "intellij.platform.vcs.core",
-    "intellij.platform.vcs",
-    "intellij.platform.vcs.log",
-    "intellij.platform.vcs.log.graph",
-    "intellij.platform.debugger",
-    "intellij.xml.analysis",
-    "intellij.xml",
-    "intellij.xml.psi",
-    "intellij.xml.structureView",
-    "intellij.platform.concurrency",
-  ]
-
-  /**
-   * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs. Build scripts of IDEs aren't supposed to use this
-   * property directly, it's used by the build scripts internally.
-   */
-  @ApiStatus.Internal
-  static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
-    "intellij.platform.analysis.impl",
-    "intellij.platform.builtInServer.impl",
-    "intellij.platform.core.impl",
-    "intellij.platform.diff.impl",
-    "intellij.platform.editor.ex",
-    "intellij.platform.codeStyle.impl",
-    "intellij.platform.indexing.impl",
-    "intellij.platform.elevation",
-    "intellij.platform.elevation.client",
-    "intellij.platform.elevation.common",
-    "intellij.platform.elevation.daemon",
-    "intellij.platform.execution.impl",
-    "intellij.platform.inspect",
-    "intellij.platform.lang.impl",
-    "intellij.platform.workspaceModel.storage",
-    "intellij.platform.workspaceModel.ide",
-    "intellij.platform.lvcs.impl",
-    "intellij.platform.ide.impl",
-    "intellij.platform.projectModel.impl",
-    "intellij.platform.externalSystem.impl",
-    "intellij.platform.scriptDebugger.protocolReaderRuntime",
-    "intellij.regexp",
-    "intellij.platform.remoteServers.impl",
-    "intellij.platform.scriptDebugger.backend",
-    "intellij.platform.scriptDebugger.ui",
-    "intellij.platform.smRunner",
-    "intellij.platform.structureView.impl",
-    "intellij.platform.tasks.impl",
-    "intellij.platform.testRunner",
-    "intellij.platform.debugger.impl",
-    "intellij.platform.configurationStore.impl",
-    "intellij.platform.serviceContainer",
-    "intellij.platform.objectSerializer",
-    "intellij.platform.diagnostic",
-    "intellij.platform.core.ui",
-    "intellij.platform.credentialStore",
-    "intellij.platform.rd.community",
-    "intellij.platform.ml.impl"
-  ]
-
   /**
    * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
    */
@@ -194,6 +111,7 @@ final class CommunityRepositoryModules {
       withProjectLibrary("Gradle")
     },
 /* Android Studio: exclude dependencyUpdater
+    plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
 Android Studio: exclude dependencyUpdater */
@@ -307,6 +225,12 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.gauge"),
+    plugin("intellij.protoeditor") {
+      withModule("intellij.protoeditor.core")
+      withModule("intellij.protoeditor.go")
+      withModule("intellij.protoeditor.jvm")
+      withModule("intellij.protoeditor.python")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
@@ -360,6 +284,7 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
       withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
@@ -482,6 +407,7 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
       withModule("intellij.javaFX.common")
+      withModule("intellij.javaFX.properties")
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
   }

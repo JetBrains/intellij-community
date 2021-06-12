@@ -335,7 +335,7 @@ public final class TypeConversionUtil {
   /**
    * Check if sealed class can be narrowed down to a given class.
    * Check performed only if sealed class or class that it should be narrowed down to is an interface.
-   *
+   * 
    * Sealed class can be narrowed down to an interface in one of the following cases:
    * <ul>
    *  <li>sealed class implements interface
@@ -358,7 +358,7 @@ public final class TypeConversionUtil {
     LOG.assertTrue(sealedClass.isInterface() || psiClass.isInterface());
     return canConvertSealedTo(sealedClass, psiClass, new HashSet<>());
   }
-
+  
   private static boolean canConvertSealedTo(@NotNull PsiClass sealedClass,
                                             @NotNull PsiClass psiClass,
                                             @NotNull Set<PsiClass> visited) {
@@ -1412,11 +1412,6 @@ public final class TypeConversionUtil {
       @Override
       public PsiType visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType;
-      }
-
-      @Override
-      public PsiType visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
-        return visitArrayType(ellipsisType);
       }
 
       @Override

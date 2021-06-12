@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -7,19 +7,17 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.immutableList;
-import static java.awt.AlphaComposite.SrcAtop;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import java.util.concurrent.TimeUnit;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -50,7 +48,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = immutableList(
+    public static final List<Icon> ICONS = List.of(
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
       AllIcons.Process.Step_3,
@@ -69,7 +67,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = immutableList(
+    public static final List<Icon> ICONS = List.of(
       AllIcons.Process.Big.Step_1,
       AllIcons.Process.Big.Step_2,
       AllIcons.Process.Big.Step_3,
@@ -78,15 +76,17 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Big.Step_6,
       AllIcons.Process.Big.Step_7,
       AllIcons.Process.Big.Step_8);
+
+    public static final AnimatedIcon INSTANCE = new Big();
   }
 
-  public static class Recording extends AnimatedIcon {
+  public static final class Recording extends AnimatedIcon {
     public Recording() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
 
     public static final int DELAY = 250;
-    public static final List<Icon> ICONS = immutableList(
+    public static final List<Icon> ICONS = List.of(
       AllIcons.Ide.Macro.Recording_1,
       AllIcons.Ide.Macro.Recording_2,
       AllIcons.Ide.Macro.Recording_3,
@@ -94,13 +94,13 @@ public class AnimatedIcon implements Icon {
   }
 
   @ApiStatus.Internal
-  public static class FS extends AnimatedIcon {
+  public static final class FS extends AnimatedIcon {
     public FS() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
 
     public static final int DELAY = 50;
-    public static final List<Icon> ICONS = immutableList(
+    public static final List<Icon> ICONS = List.of(
       AllIcons.Process.FS.Step_1,
       AllIcons.Process.FS.Step_2,
       AllIcons.Process.FS.Step_3,
@@ -122,7 +122,7 @@ public class AnimatedIcon implements Icon {
   }
 
   @ApiStatus.Internal
-  public static class Blinking extends AnimatedIcon {
+  public static final class Blinking extends AnimatedIcon {
     public Blinking(@NotNull Icon icon) {
       this(1000, icon);
     }
@@ -133,7 +133,7 @@ public class AnimatedIcon implements Icon {
   }
 
   @ApiStatus.Internal
-  public static class Fading extends AnimatedIcon {
+  public static final class Fading extends AnimatedIcon {
     public Fading(@NotNull Icon icon) {
       this(1000, icon);
     }
@@ -161,7 +161,7 @@ public class AnimatedIcon implements Icon {
             if (alpha < 1 && g instanceof Graphics2D) {
               Graphics2D g2d = (Graphics2D)g.create();
               try {
-                g2d.setComposite(SrcAtop.derive(alpha));
+                g2d.setComposite(AlphaComposite.SrcAtop.derive(alpha));
                 icon.paintIcon(c, g2d, x, y);
               }
               finally {
@@ -179,7 +179,7 @@ public class AnimatedIcon implements Icon {
 
 
   private final Frame[] frames;
-  private final Set<Component> requested = new ReferenceOpenHashSet<>();
+  private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
 
@@ -237,21 +237,23 @@ public class AnimatedIcon implements Icon {
   }
 
   private void requestRefresh(@Nullable Component c) {
-    if (c != null && !requested.contains(c) && canRefresh(c)) {
-      Frame frame = frames[index];
-      int delay = frame.getDelay();
-      if (delay > 0) {
-        requested.add(c);
-        EdtScheduledExecutorService.getInstance().schedule(() -> {
-          requested.remove(c);
-          if (canRefresh(c)) {
-            doRefresh(c);
-          }
-        }, delay, MILLISECONDS);
-      }
-      else {
-        doRefresh(c);
-      }
+    if (c == null || requested.contains(c) || !canRefresh(c)) {
+      return;
+    }
+
+    Frame frame = frames[index];
+    int delay = frame.getDelay();
+    if (delay > 0) {
+      requested.add(c);
+      EdtScheduledExecutorService.getInstance().schedule(() -> {
+        requested.remove(c);
+        if (canRefresh(c)) {
+          doRefresh(c);
+        }
+      }, delay, TimeUnit.MILLISECONDS);
+    }
+    else {
+      doRefresh(c);
     }
   }
 
@@ -283,12 +285,12 @@ public class AnimatedIcon implements Icon {
   }
 
   protected void doRefresh(@NotNull Component component) {
-    Runnable delegate = UIUtil.getClientProperty(component, REFRESH_DELEGATE);
-    if (delegate != null) {
-      delegate.run();
+    Runnable delegate = component instanceof JComponent ? (Runnable)((JComponent)component).getClientProperty(REFRESH_DELEGATE) : null;
+    if (delegate == null) {
+      component.repaint();
     }
     else {
-      component.repaint();
+      delegate.run();
     }
   }
 

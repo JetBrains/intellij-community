@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,15 +18,20 @@ import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +79,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private final SoftWrapsStorage                   myStorage;
   private       SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
-  private       EditorTextRepresentationHelper     myEditorTextRepresentationHelper;
 
   @NotNull
   private final EditorImpl myEditor;
@@ -112,7 +119,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myEditor = editor;
     myStorage = new SoftWrapsStorage();
     myPainter = new CompositeSoftWrapPainter(editor);
-    myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
     myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
 
@@ -144,9 +150,21 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();
     VirtualFile file = myEditor.getVirtualFile();
-    if (project != null && file != null) {
-      EditorNotifications.getInstance(project).updateNotifications(file);
+    if (project != null) {
+      if (file != null) {
+        EditorNotifications.getInstance(project).updateNotifications(file);
+      } else {
+        if (Boolean.TRUE == EditorImpl.INITIALIZED.get(myEditor) && ComponentUtil.getParentOfType(ConsoleView.class, myEditor.getComponent()) != null) {
+          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myEditor.getComponent()), decorator -> {
+            ToolWindowManager.getInstance(project).notifyByBalloon(decorator.getToolWindowId(), MessageType.WARNING, ApplicationBundle
+              .message("console.forced.soft.wrap.message"));
+          });
+        }
+      }
     }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActivityTracker.getInstance().inc();
+    });
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -154,13 +172,16 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private boolean shouldSoftWrapsBeForced(@Nullable DocumentEvent event) {
+    if (Boolean.FALSE.equals(myEditor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))) {
+      return false;
+    }
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
     if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
       // Disable checking for files in intermediate states - e.g. for files during refactoring.
       return false;
     }
-    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
+    int lineWidthLimit = AdvancedSettings.getInt("editor.soft.wrap.force.limit");
     int startLine = event == null ? 0 : document.getLineNumber(event.getOffset());
     int endLine = event == null ? document.getLineCount() - 1 : document.getLineNumber(event.getOffset() + event.getNewLength());
     for (int i = startLine; i <= endLine; i++) {
@@ -186,11 +207,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myTabWidth = EditorUtil.getTabSize(myEditor);
 
     boolean fontsChanged = false;
-    if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())
-        && myEditorTextRepresentationHelper instanceof DefaultEditorTextRepresentationHelper) {
+    if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())) {
       fontsChanged = true;
       myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
-      ((DefaultEditorTextRepresentationHelper)myEditorTextRepresentationHelper).clearSymbolWidthCache();
       myPainter.reinit();
     }
 
@@ -604,12 +623,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myApplianceManager.setSoftWrapPainter(painter);
   }
 
-  @TestOnly
-  public void setEditorTextRepresentationHelper(EditorTextRepresentationHelper editorTextRepresentationHelper) {
-    myEditorTextRepresentationHelper = editorTextRepresentationHelper;
-    myApplianceManager.reset();
-  }
-
   @NotNull
   @NonNls
   @Override
@@ -618,7 +631,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
                          "update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s" +
                          "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress,
-                         myDirty, myDeferredFoldRegions.toString(),
+                         myDirty, myDeferredFoldRegions,
                          myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());
   }
 

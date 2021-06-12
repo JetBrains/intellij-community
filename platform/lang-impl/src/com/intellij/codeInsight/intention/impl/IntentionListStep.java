@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.Component;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -125,18 +123,16 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         return;
       }
 
-      Component focusable = myEditor == null ? null : myEditor.getContentComponent();
-      if (focusable != null) {
-        focusable.requestFocus();
-      }
-      // hack until doWhenFocusSettlesDown will work as expected
-      ApplicationManager.getApplication().invokeLater(() -> {
-        IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() ->
-          ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject));
-      });
+      chooseActionAndInvoke(cachedAction, file, myProject, myEditor);
     };
   }
 
+  protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                       @NotNull PsiFile file,
+                                       @NotNull Project project,
+                                       @Nullable Editor editor) {
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), project);
+  }
 
   @NotNull
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final @NlsContexts.PopupTitle String title) {
@@ -156,6 +152,14 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       @Override
       public String getTitle() {
         return title;
+      }
+
+      @Override
+      protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                           @NotNull PsiFile file,
+                                           @NotNull Project project,
+                                           @Nullable Editor editor) {
+        IntentionListStep.this.chooseActionAndInvoke(cachedAction, file, project, editor);
       }
     };
   }

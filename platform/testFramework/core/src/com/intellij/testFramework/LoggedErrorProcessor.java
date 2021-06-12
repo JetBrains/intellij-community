@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.diagnostic.DefaultLogger;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 public class LoggedErrorProcessor {
@@ -22,26 +20,23 @@ public class LoggedErrorProcessor {
     ourInstance = DEFAULT;
   }
 
-  public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-    logger.warn(message, t);
+  /**
+   * Should return {@code true} when the message should be logged by {@link TestLogger} as usual,
+   * or {@code false} to signal that the message is "intercepted" and should be ignored.
+   *
+   * @see TestLogger#warn
+   */
+  public boolean processWarn(@NotNull String category, String message, Throwable t) {
+    return true;
   }
 
-  public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
-    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && (details == null || details.length == 0)) {
-      throw (TestLoggerAssertionError)t;
-    }
-
-    message += DefaultLogger.attachmentsToString(t);
-    logger.info(message, t);
-
-    DefaultLogger.dumpExceptionsToStderr(message, t, details);
-
-    throw new TestLoggerAssertionError(message, t);
-  }
-
-  static final class TestLoggerAssertionError extends AssertionError {
-    private TestLoggerAssertionError(String message, Throwable cause) {
-      super(message, cause);
-    }
+  /**
+   * Should return {@code true} when the message should be logged by {@link TestLogger} as usual,
+   * or {@code false} to signal that the message is "intercepted" and should be ignored.
+   *
+   * @see TestLogger#warn
+   */
+  public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+    return true;
   }
 }

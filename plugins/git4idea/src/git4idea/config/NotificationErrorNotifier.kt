@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.notification.NotificationAction
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NotNull
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
@@ -28,9 +27,12 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   }
 
   private fun createNotification(text: String, description: String?): BadGitExecutableNotification {
-    return BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId, null,
-                                        getErrorTitle(text, description), null, getErrorMessage(text, description),
-                                        NotificationType.ERROR, NotificationListener.UrlOpeningListener(false))
+    val notification = BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+                                                    getErrorTitle(text, description),
+                                                    getErrorMessage(text, description),
+                                                    NotificationType.ERROR)
+    notification.setListener(NotificationListener.UrlOpeningListener(false))
+    return notification
   }
 
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {

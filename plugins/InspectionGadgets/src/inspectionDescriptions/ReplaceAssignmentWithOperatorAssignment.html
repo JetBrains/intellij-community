@@ -1,13 +1,22 @@
 <html>
 <body>
 Reports assignment operations which can be replaced by operator-assignment. Code
-using operator assignment may be clearer, and theoretically more performant.
+using operator assignment is shorter and may be clearer.
+<p>
+Example:
+<pre>
+  x = x + 3;
+  x = x / 3;
+</pre>
+<p>After the quick fix is applied the result looks like:
+<pre>
+  x += 3;
+  x /= 3;
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore the conditional operators <b>&amp;&amp;</b>
-and <b>||</b>. Replacing conditional operators with operator
+Use the checkbox below to ignore the conditional operators <code>&amp;&amp;</code>
+and <code>||</code>. Replacing conditional operators with operator
 assignment modifies the semantics of the expression.
-<p>
-
 </body>
 </html>

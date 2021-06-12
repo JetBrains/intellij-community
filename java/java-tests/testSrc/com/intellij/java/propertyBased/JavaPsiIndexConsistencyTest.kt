@@ -50,9 +50,9 @@ class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
       listOf(AddImport, AddEnum, InvisiblePsiChange) + 
       listOf(true, false).map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) }
     ),
-      1, Generator.from { data -> TextChange(data.generate(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }),
-                                                   data.generate(Generator.booleans()),
-                                                   data.generate(Generator.booleans())) })
+      1, Generator.from { data -> JavaTextChange(data.generate(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }),
+                                                 data.generate(Generator.booleans()),
+                                                 data.generate(Generator.booleans())) })
     PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->
       PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
       true
@@ -111,21 +111,29 @@ class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  private data class TextChange(val newClassName: String, val viaDocument: Boolean, val withImport: Boolean): Action {
-    val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }"
-
-    override fun toString(): String = "TextChange(via=${if (viaDocument) "document" else "VFS"}, text=\"$newText\")"
+  open class TextChange(val text: String, val viaDocument: Boolean): Action {
+    override fun toString(): String = "TextChange(via=${if (viaDocument) "document" else "VFS"}, text=\"$text\")"
 
     override fun performAction(model: Model) {
-      model as JavaModel
       PostponedFormatting.performAction(model)
-      val counterBefore = PsiManager.getInstance(model.project).modificationTracker.modificationCount
-      model.docClassName = newClassName
       if (viaDocument) {
-        model.getDocument().setText(newText)
+        model.getDocument().setText(text)
       } else {
         Save.performAction(model)
-        VfsUtil.saveText(model.vFile, newText)
+        VfsUtil.saveText(model.vFile, text)
+      }
+    }
+  }
+
+  private class JavaTextChange(val newClassName: String, viaDocument: Boolean, withImport: Boolean):
+    TextChange((if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }", viaDocument) {
+
+    override fun performAction(model: Model) {
+      val counterBefore = PsiManager.getInstance(model.project).modificationTracker.modificationCount
+      super.performAction(model)
+      model as JavaModel
+      model.docClassName = newClassName
+      if (!viaDocument) {
         model.vfsClassName = newClassName
       }
 

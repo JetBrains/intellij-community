@@ -14,7 +14,7 @@ internal class GithubAccountsStatisticsCollector : ApplicationUsagesCollector() 
   override fun getVersion() = 2
 
   override fun getMetrics(): Set<MetricEvent> {
-    val accountManager = service<GithubAccountManager>()
+    val accountManager = service<GHAccountManager>()
     val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
       !StringUtil.equalsIgnoreCase(it.server.host, GithubServerPath.DEFAULT_HOST)
     }

@@ -2,11 +2,21 @@
 <body>
 Reports instance methods having the same name and the same number of parameters with the same or compatible types as
 a method in a superclass. In this case, the child method overloads the parent method, instead of overriding it.
-While that may be intended, if unintended it may result in latent bugs.
+If it is unintended, it may result in latent bugs.
+<p>Example:</p>
+<pre><code>
+  public class Foo {
+    void foo(int x) {}
+  }
+
+  public class Bar extends Foo {
+    void foo(Number x) {} // Method 'foo()' overloads a compatible method of a superclass,
+                          // when overriding might have been intended
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below also report even if the parameter types are not compatible.
+Use the checkbox below to report cases where parameter types are not compatible.
 <p>
-
 </body>
 </html>

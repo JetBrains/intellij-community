@@ -1,8 +1,18 @@
 <html>
 <body>
 Reports type parameters being named
-identically to visible types in the current scope. Such a parameter name may be confusing.
+identically to the visible types in the current scope. Such parameter name may be confusing.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  abstract class MyList&lt;T&gt; extends AbstractList&lt;T&gt; {
+    private List&lt;T&gt; elements;
+    // type parameter 'T' hides type parameter 'T'
+    public &lt;T&gt; T[] toArray(T[] array) {
+        return elements.toArray(array);
+    }
+}
+</pre>
 <p>
 
 </body>

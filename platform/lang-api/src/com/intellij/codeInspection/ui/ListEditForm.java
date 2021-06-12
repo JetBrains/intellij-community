@@ -15,12 +15,15 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.util.ui.UI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -34,8 +37,22 @@ public class ListEditForm {
   public ListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
 
-    contentPanel = ToolbarDecorator.createDecorator(table)
-      .setAddAction(new AnActionButtonRunnable() {
+    contentPanel = setupActions(ToolbarDecorator.createDecorator(table)).createPanel();
+  }
+
+  public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
+    table = new ListTable(new ListWrappingTableModel(stringList, title));
+    table.setTableHeader(null);
+
+    contentPanel = setupActions(ToolbarDecorator.createDecorator(table))
+      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .createPanel();
+    contentPanel = UI.PanelFactory.panel(contentPanel).withLabel(label).moveLabelOnTop().resizeY(true).createPanel();
+    contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
+  }
+
+  private @NotNull ToolbarDecorator setupActions(@NotNull ToolbarDecorator decorator) {
+    return decorator.setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final ListWrappingTableModel tableModel = table.getModel();
@@ -58,7 +75,7 @@ public class ListEditForm {
         }
       })
       .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
-      .disableUpDownActions().createPanel();
+      .disableUpDownActions();
   }
 
   public JComponent getContentPanel() {

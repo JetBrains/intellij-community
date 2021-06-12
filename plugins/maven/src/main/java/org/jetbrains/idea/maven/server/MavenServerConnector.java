@@ -54,7 +54,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected abstract MavenServer getServer();
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
-    return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    MavenServer server = getServer();
+    return server.createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
   }
 
   MavenServerIndexer createIndexer() throws RemoteException {
@@ -92,7 +93,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @ApiStatus.Internal
   public void shutdown(boolean wait) {
-    myManager.cleanUp(this);
+    myManager.unregisterConnector(this);
   }
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {

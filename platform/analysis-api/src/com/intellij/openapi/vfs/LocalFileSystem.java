@@ -59,10 +59,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /**
-   * See {@link #refreshIoFiles(Iterable, boolean, boolean, Runnable)}.
+   * See {@link #refreshNioFiles(Iterable, boolean, boolean, Runnable)}.
    */
   public final void refreshNioFiles(@NotNull Iterable<? extends Path> files) {
-    refreshIoFiles(ContainerUtil.map(files, Path::toFile), false, false, null);
+    refreshNioFiles(files, false, false, null);
   }
 
   /**
@@ -71,6 +71,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, File...)} instead.
    */
   public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+
+  public abstract void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.ide.DataManager
@@ -6,7 +6,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.AnActionButton
@@ -43,7 +43,6 @@ internal class AnActionOptionButton(
 ) : AnActionButton(), CustomComponentAction, DumbAware {
   private val optionButton = JBOptionButton(null, null).apply {
     action = AnActionWrapper(this@AnActionOptionButton.action, this)
-    isOkToProcessDefaultMnemonics = false
     setOptions(this@AnActionOptionButton.options)
     adjustForToolbar()
     mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().toInt()
@@ -69,7 +68,7 @@ internal class AnActionOptionButton(
     override fun actionPerformed(e: ActionEvent?) {
       val context = DataManager.getInstance().getDataContext(component)
       val event = AnActionEvent.createFromAnAction(action, null, GitInteractiveRebaseDialog.PLACE, context)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, context)
+      performActionDumbAwareWithCallbacks(action, event)
     }
   }
 }

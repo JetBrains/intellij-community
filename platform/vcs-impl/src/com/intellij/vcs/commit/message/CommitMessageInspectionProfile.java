@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   }
 
   public static @NotNull CommitMessageInspectionProfile getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CommitMessageInspectionProfile.class);
+    return project.getService(CommitMessageInspectionProfile.class);
   }
 
   public static @NotNull BodyLimitSettings getBodyLimitSettings(@NotNull Project project) {

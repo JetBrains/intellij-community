@@ -8,9 +8,7 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/testData")
 public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/anonymousToInner/";

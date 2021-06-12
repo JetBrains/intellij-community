@@ -59,11 +59,11 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
 
   @Attribute("default")
-  @Convert(value = AntDomDefaultTargetConverter.class)
+  @Convert(AntDomDefaultTargetConverter.class)
   public abstract GenericAttributeValue<TargetResolver.Result> getDefaultTarget();
 
   @Attribute("basedir")
-  @Convert(value = AntPathConverter.class)
+  @Convert(AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getBasedir();
 
   @Nullable
@@ -232,29 +232,13 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     return properties;
   }
 
-  @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  private Map<String, String> loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
+  private Map<String, String> loadPredefinedProperties(final Map<String, String> properties, final Map<String, String> externalProps) {
     final Map<String, String> destination = new HashMap<>();
     if (properties != null) {
-      final Enumeration props = properties.keys();
-      while (props.hasMoreElements()) {
-        final String name = (String)props.nextElement();
-        final String value = (String)properties.get(name);
-        appendProperty(destination, name, value);
-      }
+      properties.forEach((name, value) -> appendProperty(destination, name, value));
     }
-    //final Map<String, String> envMap = System.getenv();
-    //for (final String name : envMap.keySet()) {
-    //  if (name.length() > 0) {
-    //    final String value = envMap.get(name);
-    //    appendProperty(destination, DEFAULT_ENVIRONMENT_PREFIX + name, value);
-    //  }
-    //}
     if (externalProps != null) {
-      for (final String name : externalProps.keySet()) {
-        final String value = externalProps.get(name);
-        appendProperty(destination, name, value);
-      }
+      externalProps.forEach((name, value) -> appendProperty(destination, name, value));
     }
 
     String basedir = getProjectBasedirPath();
@@ -262,10 +246,10 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
       basedir = ".";
     }
     if (!FileUtil.isAbsolute(basedir)) {
-      final String containigFileDir = getContainingFileDir();
-      if (containigFileDir != null) {
+      final String containingFileDir = getContainingFileDir();
+      if (containingFileDir != null) {
         try {
-          basedir = new File(containigFileDir, basedir).getCanonicalPath();
+          basedir = new File(containingFileDir, basedir).getCanonicalPath();
         }
         catch (IOException ignored) {
         }
@@ -300,9 +284,6 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   private static void appendProperty(final Map<String, String> map, String name, String value) {
-    final String previous = map.put(name, value);
-    if (previous != null) {
-      map.put(name, previous);
-    }
+    map.putIfAbsent(name, value);
   }
 }

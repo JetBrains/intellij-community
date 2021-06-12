@@ -188,7 +188,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       if (!setUpstream.success()) {
         vcsNotifier.notifyError(GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_SET_TRACKING_BRANCH,
                                 GithubBundle.message("pull.request.branch.checkout.set.tracking.branch.failed"),
-                                setUpstream.errorOutputAsJoinedString)
+                                setUpstream.errorOutputAsHtmlString)
       }
     }
   }

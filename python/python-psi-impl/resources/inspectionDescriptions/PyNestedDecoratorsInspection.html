@@ -1,5 +1,24 @@
 <html>
 <body>
-This inspection looks for certain decorators that don&#39;t nest well.
+<p>Reports problems with nesting decorators. The inspection highlights the cases when <code>classmethod</code> or <code>staticmethod</code>
+  is applied before another decorator.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def innocent(f):
+    return f
+
+
+class A:
+    @innocent  # Decorator will not receive a callable it may expect
+    @classmethod
+    def f2(cls):
+        pass
+
+    @innocent  # Decorator will not receive a callable it may expect
+    @staticmethod
+    def f1():
+        pass
+</pre>
+<p>As a quick-fix, the IDE offers to remove the decorator.</p>
 </body>
 </html>

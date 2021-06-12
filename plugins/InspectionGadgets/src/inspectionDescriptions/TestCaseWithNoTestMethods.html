@@ -1,7 +1,17 @@
 <html>
 <body>
-Reports non-abstract test cases which do not
-contain any test methods. Such test cases usually indicate developer error.
+Reports non-<code>abstract</code> test cases which do not
+contain any test methods. Such test cases usually indicate unfinished code,
+or could be a refactoring leftover that should be removed.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> CrucialTest {
+    @Before
+    <b>public void</b> setUp() {
+      System.out.println("setting up");
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to specify that test cases which have super classes with

@@ -1,6 +1,9 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -33,6 +36,22 @@ public final class PythonTemplateRunner {
     }
     else {
       builder.runNonInteractively(false);
+    }
+  }
+
+  public static void runInlineTemplate(@NotNull Project project,
+                                       PsiElement element,
+                                       TemplateBuilderImpl builder, int offset) {
+    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    if (virtualFile == null) {
+      return;
+    }
+    Editor editor = PythonUiService.getInstance().openTextEditor(project, virtualFile, offset);
+    if (editor != null) {
+      Template template = builder.buildInlineTemplate();
+      TemplateManager.getInstance(project).startTemplate(editor, template);
+    } else {
+      builder.runNonInteractively(true);
     }
   }
 }

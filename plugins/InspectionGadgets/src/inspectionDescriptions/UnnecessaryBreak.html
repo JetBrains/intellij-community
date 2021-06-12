@@ -1,8 +1,20 @@
 <html>
 <body>
-Reports on any unnecessary <b>break</b> statements.
-An <b>break</b> statement is unnecessary when no other statements will be executed when it is removed.
+Reports on any unnecessary <code>break</code> statements.
+An <code>break</code> statement is unnecessary when no other statements will be executed when it is removed.
+<p><b>Example:</b></p>
+<pre>
+  switch (e) {
+    case A -&gt; {
+        System.out.println("A");
+        break; // reports 'break' statement is unnecessary
+    }
+    default -&gt; {
+        System.out.println("Default");
+        break; // reports 'break' statement is unnecessary
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

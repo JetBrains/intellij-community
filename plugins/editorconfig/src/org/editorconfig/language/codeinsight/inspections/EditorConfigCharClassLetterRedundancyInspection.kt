@@ -14,6 +14,7 @@ class EditorConfigCharClassLetterRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitCharClass(charClass: EditorConfigCharClass) {
       val letters = charClass.charClassLetterList
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.charclass.duplicate.message"]
 
       // Ranges are collected this way

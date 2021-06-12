@@ -32,27 +32,32 @@ import javax.swing.Icon
 /**
  * @author vlan
  */
-class PyAddExistingVirtualEnvPanel(private val project: Project?,
+open class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    private val module: Module?,
                                    private val existingSdks: List<Sdk>,
                                    override var newProjectPath: String?,
                                    context:UserDataHolder ) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val sdkComboBox = PySdkPathChoosingComboBox()
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
+    @Suppress("LeakingThis")
+    layoutComponents()
+    addInterpretersAsync(sdkComboBox) {
+      detectVirtualEnvs(module, existingSdks, context)
+        .filterNot { it.isAssociatedWithAnotherModule(module) }
+    }
+  }
+
+  protected open fun layoutComponents() {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(sdkComboBox) {
-      detectVirtualEnvs(module, existingSdks, context)
-        .filterNot { it.isAssociatedWithAnotherModule(module) }
-    }
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))

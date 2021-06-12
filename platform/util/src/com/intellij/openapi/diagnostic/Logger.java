@@ -8,6 +8,7 @@ import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
@@ -25,6 +26,8 @@ import java.util.function.Function;
  * In most non-performance tests, debug level is enabled by default, so that when a test fails the full contents of its log are printed to stdout.
  */
 public abstract class Logger {
+  private static boolean isUnitTestMode;
+
   public interface Factory {
     @NotNull Logger getLoggerInstance(@NotNull String category);
   }
@@ -123,6 +126,24 @@ public abstract class Logger {
     }
   }
 
+  public final void infoWithDebug(@NotNull Throwable t) {
+    infoWithDebug(t.toString(), t);
+  }
+
+  public final void infoWithDebug(@NotNull String message, @NotNull Throwable t) {
+    info(message);
+    debug(t);
+  }
+
+  public final void warnWithDebug(@NotNull Throwable t) {
+    warnWithDebug(t.toString(), t);
+  }
+
+  public final void warnWithDebug(@NotNull String message, @NotNull Throwable t) {
+    warn(message);
+    debug(t);
+  }
+
   public boolean isTraceEnabled() {
     return isDebugEnabled();
   }
@@ -208,10 +229,27 @@ public abstract class Logger {
 
   public abstract void setLevel(@NotNull Level level);
 
-  protected static Throwable checkException(@Nullable Throwable t) {
-    boolean pce = t instanceof ControlFlowException;
-    return pce ? new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
-                               "ignore for explicitly started processes or rethrow to handle on the outer process level", t) 
-               : t;
+  protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
+    return t instanceof ControlFlowException ?
+           new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
+                         "ignore for explicitly started processes or rethrow to handle on the outer process level", t) :
+           t;
+  }
+
+  @TestOnly
+  public static void setUnitTestMode() {
+    isUnitTestMode = true;
+  }
+
+  /**
+   * {@link #warn} in production, {@link #error} in tests
+   */
+  public void warnInProduction(@NotNull Throwable t) {
+    if (isUnitTestMode) {
+      error(t);
+    }
+    else {
+      warn(t);
+    }
   }
 }

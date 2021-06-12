@@ -4,15 +4,9 @@ from typing import Any, Optional, Tuple
 PY2: bool
 PY3: bool
 WIN: bool
-string_types: Tuple[
-    str,
-]
-integer_types: Tuple[
-    int,
-]
-class_types: Tuple[
-    type,
-]
+string_types: Tuple[str]
+integer_types: Tuple[int]
+class_types: Tuple[type]
 text_type = str
 binary_type = bytes
 long = int

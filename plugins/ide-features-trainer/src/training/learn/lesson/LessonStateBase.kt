@@ -9,7 +9,7 @@ import training.learn.course.Lesson
 import training.util.trainerPluginConfigName
 
 @State(name = "LessonStateBase", storages = [Storage(value = trainerPluginConfigName)])
-class LessonStateBase : PersistentStateComponent<LessonStateBase> {
+private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   override fun getState(): LessonStateBase = this
 
@@ -25,7 +25,7 @@ class LessonStateBase : PersistentStateComponent<LessonStateBase> {
   }
 }
 
-object LessonStateManager {
+internal object LessonStateManager {
 
   fun setPassed(lesson: Lesson) {
     LessonStateBase.instance.map[lesson.id.toLowerCase()] = LessonState.PASSED
@@ -37,5 +37,6 @@ object LessonStateManager {
     }
   }
 
-  fun getStateFromBase(lessonId: String): LessonState = LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase(), { LessonState.NOT_PASSED })
+  fun getStateFromBase(lessonId: String): LessonState =
+    LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }
 }

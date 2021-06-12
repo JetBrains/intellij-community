@@ -6,10 +6,10 @@ from typing import IO, AnyStr, Callable, Generic, List, Optional, Protocol, Text
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.hostkeys import HostKeys
 
-if sys.version_info < (3, 0):
-    from hashlib import _hash as _Hash
-else:
+if sys.version_info >= (3, 0):
     from hashlib import _Hash
+else:
+    from hashlib import _hash as _Hash
 
 class SupportsClose(Protocol):
     def close(self) -> None: ...

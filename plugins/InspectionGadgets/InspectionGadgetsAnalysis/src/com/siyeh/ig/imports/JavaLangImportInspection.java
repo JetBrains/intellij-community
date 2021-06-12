@@ -44,7 +44,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
   }
 

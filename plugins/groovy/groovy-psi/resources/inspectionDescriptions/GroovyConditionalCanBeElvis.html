@@ -1,6 +1,16 @@
 <html>
 <body>
-Reports ternary condition operators which can be replaced by the simpler
-"elvis" operator.
+<p>Reports ternary expressions which can be replaced by an elvis expression, for example:</p>
+<pre><code>
+def notNull(o, defaultValue) {
+  o != null ? o : defaultValue
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+def notNull(o, defaultValue) {
+  o ?: defaultValue
+}
+</code></pre>
 </body>
 </html>

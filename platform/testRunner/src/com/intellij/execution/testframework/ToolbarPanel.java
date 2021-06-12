@@ -15,10 +15,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
@@ -121,9 +118,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     properties.appendAdditionalActions(secondaryGroup, parent, properties);
     actionGroup.add(secondaryGroup);
 
-    add(ActionManager.getInstance().
-      createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
-      getComponent(), BorderLayout.CENTER);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true);
+    actionToolbar.setTargetComponent(parent);
+    add(actionToolbar.getComponent(), BorderLayout.CENTER);
   }
 
   public void setModel(final TestFrameworkRunningModel model) {

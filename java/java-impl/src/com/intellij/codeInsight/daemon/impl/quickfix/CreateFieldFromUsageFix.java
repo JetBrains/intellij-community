@@ -78,9 +78,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     assert fieldName != null;
 
     PsiField field = factory.createField(fieldName, PsiType.INT);
-    if (createConstantField()) {
-      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-    }
 
     if (createConstantField()) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);

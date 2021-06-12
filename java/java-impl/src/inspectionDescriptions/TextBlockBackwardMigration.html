@@ -1,7 +1,7 @@
 <html>
 <body>
-Suggests to replace text block with a regular string literal.
-<!-- tooltip end -->
+Suggests to replace text blocks with regular string literals.
+This could be part of an effort to migrate the code back to an earlier version of Java than 15.
 <p>Example:
 <pre><code>
   Object obj = engine.eval("""
@@ -12,7 +12,7 @@ Suggests to replace text block with a regular string literal.
                            hello();
                            """);
 </code></pre>
-<p>can be replaced with</p>
+<p>After the quick fix is applied the result looks like:
 <pre><code>
   Object obj = engine.eval("function hello() {\n" +
                            "  print('\"Hello, world\"');\n" +
@@ -20,6 +20,7 @@ Suggests to replace text block with a regular string literal.
                            "\n" +
                            "hello();\n");
 </code></pre>
+<!-- tooltip end -->
 <p>This inspection only reports if the configured language level is 15 or higher.</p>
 <p><small>New in 2019.3</small></p>
 </body>

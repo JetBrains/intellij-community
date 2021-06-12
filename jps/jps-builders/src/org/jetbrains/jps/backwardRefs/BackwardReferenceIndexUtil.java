@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
@@ -33,9 +32,9 @@ public final class BackwardReferenceIndexUtil {
 
       Map<CompilerRef, Void> definitions = new HashMap<>(defs.size());
       Map<CompilerRef, Collection<CompilerRef>> backwardHierarchyMap = new HashMap<>();
-      Map<SignatureData, Collection<CompilerRef>> signatureData = new THashMap<>();
-      Map<CompilerRef, Collection<CompilerRef>> castMap = new THashMap<>();
-      Map<CompilerRef, Void> implicitToStringMap = new THashMap<>();
+      Map<SignatureData, Collection<CompilerRef>> signatureData = new HashMap<>();
+      Map<CompilerRef, Collection<CompilerRef>> castMap = new HashMap<>();
+      Map<CompilerRef, Void> implicitToStringMap = new HashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -85,7 +84,7 @@ public final class BackwardReferenceIndexUtil {
         }
       }
 
-      Map<CompilerRef, Integer> convertedRefs = new THashMap<>();
+      Map<CompilerRef, Integer> convertedRefs = new HashMap<>();
       IOException[] exception = new IOException[]{null};
       refs.forEachEntry((ref, count) -> {
         final CompilerRef compilerRef;

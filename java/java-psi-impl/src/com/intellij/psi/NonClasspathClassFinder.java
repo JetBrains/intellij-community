@@ -52,7 +52,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     final MessageBusConnection connection = project.getMessageBus().connect(extensionDisposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         clearCache();
       }
     });

@@ -1,5 +1,41 @@
-# 27
+#34
 
+* Add `module cache loading`
+* `moduleLoading` split to `modules loading without cache` and `modules loading with cache`
+* Add `project files loading`, `serializers creation`, `unloaded modules loading`, `entities loading`, `project model changes saving (in queue)` and `project model changes saving`
+* Add `modules instantiation` and `project libraries loading`
+* Add `events sending after modules are loaded`, `events sending (in queue)` and `events sending`
+* Add `events modules added`
+
+# 33
+
+ * Rename `init JBUIScale` to `scale initialization`.
+ * Add `base LaF creation`, `base LaF initialization`, `base LaF defaults getting`.
+
+# 32
+
+ * `prepareAppInitActivities` is removed in favour if `items`.
+ * `totalDurationComputed` is removed.
+ * `totalDurationActual` is renamed to `totalDuration`.
+
+# 31
+
+ * Rename `add registry keys` to `registry keys adding`.
+
+# 30
+
+ * Add `preloading activity executing`.
+
+# 29
+ * Add `splash preparation (in queue)` and `splash initialization (in queue)`.
+ * Add `pre app class running`, `repaint manager set`, `linux wm set`. Existing`event queue replacing` doesn't include added metrics anymore.
+ * Remove `icon loader activation`.
+
+# 28
+* Add `platform plugin collecting`, `plugin from classpath loading`, `plugin from user dir loading`, `plugin from bundled dir loading`.
+* Add `appStarter set`, `appStarter start-up`, `appStarter about`.
+
+# 27
  * `classLoading` changed — `time` includes class define time, `defineTime` and `searchTime` added. `searchTime` it is property that computed for convenience, — not measured but computed as `time - defineTime`. 
  * `resourceLoading` with the same schema as `classLoading` added (except `searchTime`).
 

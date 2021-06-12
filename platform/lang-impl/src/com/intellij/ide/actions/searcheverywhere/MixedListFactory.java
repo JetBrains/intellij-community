@@ -6,7 +6,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -61,6 +60,8 @@ class MixedListFactory extends SEResultsListFactory {
   ListCellRenderer<Object> createListRenderer(SearchListModel model, SearchEverywhereHeader header) {
     return new ListCellRenderer<>() {
 
+      private final Map<String, ListCellRenderer<? super Object>> myRenderersCache = new HashMap<>();
+
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
@@ -69,15 +70,14 @@ class MixedListFactory extends SEResultsListFactory {
           return component;
         }
 
-        SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
         Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
+          SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
+          assert contributor != null : "Null contributor is not allowed here";
+          ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
           //noinspection ConstantConditions
-          ListCellRenderer<? super Object> renderer = contributor.getElementsRenderer();
-          component = SlowOperations.allowSlowOperations(
-            () -> renderer.getListCellRendererComponent(list, value, index, isSelected, true)
-          );
+          component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }
 
         if (component instanceof JComponent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.ide.IdeBundle;
@@ -84,36 +84,35 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
           for (LanguageLevel level : unacceptedLevels.keySet()) {
             NOTIFICATION_GROUP.createNotification(
-              JavaBundle.message("java.preview.features.alert.title"),
-              JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
-                                        "<br/><br/><a href='accept'>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
-              NotificationType.WARNING,
-              (notification, event) -> {
+                JavaBundle.message("java.preview.features.alert.title"),
+                JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
+                NotificationType.WARNING)
+              .setListener((notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                   if (event.getDescription().equals("accept")) {
                     acceptAndRestore(project, unacceptedLevels.get(level), level);
                   }
                   notification.expire();
                 }
-              }).notify(project);
+              })
+              .notify(project);
           }
         }
-        if (!previewLevels.isEmpty() &&
-            !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
-          Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
-          int previewFeature = languageLevel.get().toJavaVersion().feature;
-          Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
-            JavaBundle.message("java.preview.features.notification.title"),
-            JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
-            NotificationType.WARNING, null);
-          notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-              PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);
-              notification.expire();
-            }
-          });
-          notification.notify(project);
+        if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+          LanguageLevel languageLevel = previewLevels.first();
+          int previewFeature = languageLevel.toJavaVersion().feature;
+          PREVIEW_NOTIFICATION_GROUP.createNotification(
+              JavaBundle.message("java.preview.features.notification.title"),
+              JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+              NotificationType.WARNING)
+            .addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES, true);
+                notification.expire();
+              }
+            })
+            .notify(project);
         }
       }
     });

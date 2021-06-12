@@ -18,26 +18,26 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  */
 public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMaplet<K, V>{
-  private static final Collection NULL_COLLECTION = Collections.emptySet();
+  private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
-  private final SLRUCache<K, Collection> myCache;
+  private final SLRUCache<K, Collection<V>> myCache;
 
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final BuilderCollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<>(file, keyExternalizer,
-                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
+    myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
+    myCache = new SLRUCache<K, Collection<V>>(CACHE_SIZE, CACHE_SIZE * 3, keyExternalizer) {
       @NotNull
       @Override
-      public Collection createValue(K key) {
+      public Collection<V> createValue(K key) {
         try {
           final Collection<V> collection = myMap.get(key);
-          return collection == null? NULL_COLLECTION : collection;
+          //noinspection unchecked
+          return collection == null? (Collection<V>)NULL_COLLECTION : collection;
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -105,7 +105,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void removeAll(K key, Collection<V> values) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
@@ -114,7 +114,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -127,7 +127,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void removeFrom(final K key, final V value) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
@@ -136,7 +136,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }

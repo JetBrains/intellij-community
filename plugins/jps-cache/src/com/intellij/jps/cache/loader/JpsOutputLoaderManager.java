@@ -11,13 +11,10 @@ import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.model.BuildTargetState;
 import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -46,8 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.*;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
@@ -68,7 +64,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JpsOutputLoaderManager.class);
+    return project.getService(JpsOutputLoaderManager.class);
   }
 
   public JpsOutputLoaderManager(@NotNull Project project) {
@@ -83,11 +79,11 @@ public class JpsOutputLoaderManager implements Disposable {
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
-  public void load(boolean isForceUpdate) {
+  public void load(boolean isForceUpdate, boolean verbose) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, JpsCacheBundle.message("progress.title.updating.compiler.caches")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
+        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
         if (commitInfo != null) {
           // Drop JPS metadata to force plugin for downloading all compilation outputs
           if (isForceUpdate) {
@@ -112,7 +108,7 @@ public class JpsOutputLoaderManager implements Disposable {
   }
 
   public void notifyAboutNearestCache() {
-    Pair<String, Integer> commitInfo = getNearestCommit(false);
+    Pair<String, Integer> commitInfo = getNearestCommit(false, false);
     if (commitInfo == null) return;
 
     String notificationContent = commitInfo.second == 1
@@ -121,21 +117,15 @@ public class JpsOutputLoaderManager implements Disposable {
                                    .message("notification.content.caches.are.for.commit.commits.prior.to.yours", commitInfo.second - 1);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = STICKY_NOTIFICATION_GROUP.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent,
-        NotificationType.INFORMATION, null);
-      notification
-        .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
-          "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
-          notification.expire();
-          load(false);
-        }));
-      Notifications.Bus.notify(notification, myProject);
+      STANDARD
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent, NotificationType.INFORMATION)
+        .addAction(NotificationAction.createSimpleExpiring(JpsCacheBundle.message("action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> load(false, false)))
+        .notify(myProject);
     });
   }
 
   @Nullable
-  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
+  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myProject);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
@@ -152,15 +142,12 @@ public class JpsOutputLoaderManager implements Disposable {
         commitsBehind++;
       }
     }
-
+    var group = verbose ? STANDARD : EVENT_LOG;
     if (!availableCommitsForRemote.contains(commitId)) {
       String warning = JpsCacheBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(warning);
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = NONE_NOTIFICATION_GROUP.createNotification(
-          JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning,
-          NotificationType.WARNING, null);
-        Notifications.Bus.notify(notification, myProject);
+        group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning, NotificationType.WARNING).notify(myProject);
       });
       return null;
     }
@@ -168,10 +155,7 @@ public class JpsOutputLoaderManager implements Disposable {
       String info = JpsCacheBundle.message("notification.content.system.contains.up.to.date.caches");
       LOG.info(info);
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = NONE_NOTIFICATION_GROUP.createNotification(
-          JpsCacheBundle.message("notification.title.jps.caches.downloader"), info,
-          NotificationType.INFORMATION, null);
-        Notifications.Bus.notify(notification, myProject);
+        group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), info, NotificationType.INFORMATION).notify(myProject);
       });
       return null;
     }
@@ -314,11 +298,9 @@ public class JpsOutputLoaderManager implements Disposable {
     BuildManager.getInstance().clearState(myProject);
     long endTime = (System.currentTimeMillis() - startTime) / 1000;
     ApplicationManager.getApplication().invokeLater(() -> {
-      String message = JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime);
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.loader"), message,
-        NotificationType.INFORMATION, null);
-      Notifications.Bus.notify(notification, myProject);
+      STANDARD
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime), NotificationType.INFORMATION)
+        .notify(myProject);
     });
     LOG.info("Loading finished");
   }
@@ -353,11 +335,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   private void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.loader"),
-        JpsCacheBundle.message("notification.content.update.compiler.caches.failed"),
-        NotificationType.WARNING, null);
-      Notifications.Bus.notify(notification, myProject);
+      ATTENTION.createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.update.compiler.caches.failed"), NotificationType.WARNING).notify(myProject);
     });
   }
 }

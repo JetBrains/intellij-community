@@ -112,16 +112,6 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(file)
   }
 
-  void "test yield method is consistent"() {
-    def file = configureFile("class A{ void m() { Thread.yield();}}")
-    runCommand {
-      def statement = file.classes.first().methods.first().getBody().statements.first() as PsiExpressionStatement
-      def reference = statement.expression as PsiMethodCallExpression
-      reference.methodExpression.qualifier.delete()
-    }
-    PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(file)
-  }
-
   void testTextBlockLiteralValue() {
     def file = configureFile("""
         class C {

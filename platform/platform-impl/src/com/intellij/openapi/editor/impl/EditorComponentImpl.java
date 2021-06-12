@@ -38,7 +38,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
@@ -182,7 +181,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     super.setCursor(cursor);
     myEditor.myCursorSetExternally = true;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Mouse cursor set to " + cursor, new Throwable());
+      LOG.debug("Mouse cursor set to " + cursor + " in " + myEditor, new Throwable());
     }
   }
 
@@ -242,16 +241,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.measureTypingLatency();
 
     Graphics2D gg = (Graphics2D)g;
-    if (Registry.is("editor.legacy.compositing")) {
-      UIUtil.setupComposite(gg);
-    }
     if (myEditor.useEditorAntialiasing()) {
       EditorUIUtil.setupAntialiasing(gg);
     }
     else {
       UISettings.setupAntialiasing(gg);
     }
-    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
@@ -391,8 +387,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     setUI(new EditorAccessibilityTextUI());
     UISettings.setupEditorAntialiasing(this);
     // myEditor is null when updateUI() is called from parent's constructor
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, myEditor == null ? EditorImpl.calcFractionalMetricsHint()
-                                                                             : myEditor.myFractionalMetricsHintValue);
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     invalidate();
   }
 

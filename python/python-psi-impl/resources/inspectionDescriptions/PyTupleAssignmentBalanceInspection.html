@@ -1,5 +1,13 @@
 <html>
 <body>
-This inspection check that the number of expressions on right-hand side and targets on left-hand side are the same.
+<p>Reports cases when the number of expressions on the right-hand side
+  and targets on the left-hand side are not the same.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+t = ('red', 'blue', 'green', 'white')
+(c1, c2, c3) = t
+</pre>
+<p>As a quick-fix, you can modify the highlighted code fragment to restore the tuple
+  balance.</p>
 </body>
 </html>

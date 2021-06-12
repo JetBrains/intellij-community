@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +36,7 @@ public final class DeclarativeInsertHandler implements InsertHandler<LookupEleme
         model.moveToOffset(model.getOffset() + valueToInsert.length());
       }
       else {
-        EditorModificationUtil.insertStringAtCaret(editor, valueToInsert);
+        EditorModificationUtilEx.insertStringAtCaret(editor, valueToInsert);
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
       if (autoPopup) {

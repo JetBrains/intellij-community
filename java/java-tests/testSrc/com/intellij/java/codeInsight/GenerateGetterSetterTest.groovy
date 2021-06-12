@@ -19,7 +19,8 @@ import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable 
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
@@ -197,6 +198,7 @@ class Foo {
 
   void "test lombok generated fields without containing file"() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME, new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
+      @NotNull
       @Override
       Collection<EncapsulatableClassMember> fun(PsiClass dom) {
         final List<EncapsulatableClassMember> result = new ArrayList<>();

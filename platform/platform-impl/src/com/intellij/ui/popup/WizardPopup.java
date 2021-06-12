@@ -75,7 +75,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
     final JComponent content = createContent();
-
+    content.putClientProperty(KEY, this);
     JComponent popupComponent = createPopupComponent(content);
 
     init(project, popupComponent, getPreferredFocusableComponent(), true, true, true, null,

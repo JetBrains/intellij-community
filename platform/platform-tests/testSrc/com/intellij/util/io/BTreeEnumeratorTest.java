@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,8 +7,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
-import gnu.trove.THashMap;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +59,7 @@ public class BTreeEnumeratorTest {
 
   @Test
   public void testAddEqualStringsAndMuchGarbage() throws IOException {
-    Map<Integer, String> strings = new THashMap<>(10001);
+    Map<Integer, String> strings = new HashMap<>(10001);
     String s = "IntelliJ IDEA";
     int index = myEnumerator.enumerate(s);
     strings.put(index, s);
@@ -179,15 +181,12 @@ public class BTreeEnumeratorTest {
   @Test
   public void testPerformance() throws IOException {
     IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
-      @Override
-      public void objectRemoved(int key, Object value) {
-        try {
-          assertEquals(myEnumerator.enumerate((String)value), key);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    IntObjectCache.DeletedPairsListener<String> listener = (key, value) -> {
+      try {
+        assertEquals(myEnumerator.enumerate(value), key);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     };
 

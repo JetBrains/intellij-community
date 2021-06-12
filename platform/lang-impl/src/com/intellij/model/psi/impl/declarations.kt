@@ -28,6 +28,10 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
   return emptyList()
 }
 
+fun hasDeclarationsInElement(element: PsiElement, offsetInElement: Int): Boolean {
+  return declarationsInElement(element, offsetInElement).isNotEmpty()
+}
+
 private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {

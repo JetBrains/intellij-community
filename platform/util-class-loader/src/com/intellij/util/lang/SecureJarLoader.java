@@ -17,7 +17,7 @@ final class SecureJarLoader extends JarLoader {
   private final Object protectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
-    super(file, configuration, new JdkZipResourceFile(file, configuration.lockJars, configuration.preloadJarContents, true));
+    super(file, configuration, new JdkZipResourceFile(file, configuration.lockJars, true));
   }
 
   ProtectionDomain getProtectionDomain(@NotNull JarEntry entry, URL url) {

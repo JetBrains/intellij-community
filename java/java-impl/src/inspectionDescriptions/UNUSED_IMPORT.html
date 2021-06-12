@@ -1,6 +1,24 @@
 <html>
 <body>
-
-Reports redundant import statements.
+Reports redundant <code>import</code> statements.
+Regular <code>import</code> statements are unneeded when the classes and packages that are imported are not used in the source file.
+Similarly for <code>static</code> imports when the <code>static</code> fields and methods that are imported are not used in the source file.
+<p>Example:
+<pre>
+  <b>import</b> java.util.ArrayList;
+  <b>public class</b> Example {
+    <b>public static void</b> main(String[] args) {
+      System.out.println("Hello World!");
+    }
+  }
+</pre>
+<p>After the quick fix is applied the result looks like:
+<pre>
+  <b>public class</b> Example {
+    <b>public static void</b> main(String[] args) {
+      System.out.println("Hello World!");
+    }
+  }
+</pre>
 </body>
 </html>

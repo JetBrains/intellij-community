@@ -3,15 +3,33 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
 public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  public interface IgnoreAnnotationParamSupport {
+    ExtensionPointName<IgnoreAnnotationParamSupport> EP_NAME =
+      ExtensionPointName.create("com.intellij.lang.jvm.ignoreAnnotationParamSupport");
+
+    /**
+     * Allows to skip DefaultAnnotationParamInspection for specific annotations parameters
+     * @param annotationFQN full qualified name of the annotation
+     * @param annotationParameterName name of the annotation param
+     * @return true to skip inspection
+     */
+    default boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {
+      return false;
+    }
+  }
 
   @NotNull
   @Override
@@ -24,9 +42,20 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
         if (reference == null) return;
         PsiElement element = reference.resolve();
         if (!(element instanceof PsiAnnotationMethod)) return;
+
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)element).getDefaultValue();
         if (defaultValue == null) return;
+
         if (AnnotationUtil.equal(value, defaultValue)) {
+          PsiElement elementParent = element.getParent();
+          if (elementParent instanceof PsiClass) {
+            final String qualifiedName = ((PsiClass)elementParent).getQualifiedName();
+            final String name = ((PsiAnnotationMethod)element).getName();
+            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensions(),
+                                     ext -> ext.ignoreAnnotationParam(qualifiedName, name))) {
+              return;
+            }
+          }
           holder.registerProblem(value, JavaBundle.message("inspection.message.redundant.default.parameter.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  createRemoveParameterFix());
         }

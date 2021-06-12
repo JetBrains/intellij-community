@@ -2,13 +2,14 @@ package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import java.util.Locale
 
 // See the documentation at https://confluence.jetbrains.com/display/FUS/IntelliJ+Reporting+API
-object PackageSearchEventsLogger {
+internal object PackageSearchEventsLogger {
 
     private val loggerProvider by lazy { PackageSearchEventsLoggerProviderFactory.create() }
 
@@ -17,24 +18,24 @@ object PackageSearchEventsLogger {
     }
 
     fun onToolWindowClose(project: Project) = tryDoing {
-        logDialogEvent(project = project, event = "close", version = "1", extras = *arrayOf("ok" to true))
+        logDialogEvent(project = project, event = "close", version = "1", extras = arrayOf("ok" to true))
     }
 
     // TODO no longer in use - deprecate in FUS whitelist?
     fun onSearchDialogCancel(project: Project) = tryDoing {
-        logDialogEvent(project = project, event = "close-cancel", version = "1", extras = *arrayOf("ok" to false))
+        logDialogEvent(project = project, event = "close-cancel", version = "1", extras = arrayOf("ok" to false))
     }
 
     fun onSearchRequest(project: Project, query: String) = tryDoing {
-        logDialogEvent(project = project, event = "request", version = "1", extras = *queryStats(query))
+        logDialogEvent(project = project, event = "request", version = "1", extras = queryStats(query))
     }
 
     fun onProjectInfo(
         project: Project,
         ideaModules: Array<Module>,
-        modules: List<ProjectModule>
+        modules: Collection<ModuleModel>
     ) = tryDoing {
-        val countPerBuildSystem: Array<Pair<String, Int>> = modules
+        val countPerBuildSystem: Array<Pair<String, Int>> = modules.map { it.projectModule }
             .groupBy { it.buildSystemType.statisticsKey }
             .map { it.key to it.value.size }
             .toTypedArray()
@@ -43,11 +44,11 @@ object PackageSearchEventsLogger {
             project = project,
             event = "project-info",
             version = "1",
-            extras = *arrayOf("ij" to ideaModules.size, *countPerBuildSystem)
+            extras = arrayOf("ij" to ideaModules.size) + countPerBuildSystem
         )
     }
 
-    fun onSearchResponse(project: Project, query: String, items: List<StandardV2Package>) = tryDoing {
+    fun onSearchResponse(project: Project, query: String, items: List<ApiStandardPackage>) = tryDoing {
         val matchItems = "match-items" to items.size
         val matchGroups = "match-groups" to items.distinctBy { it.groupId.toLowerCase() }.size
 
@@ -55,7 +56,7 @@ object PackageSearchEventsLogger {
             project = project,
             event = "response",
             version = "1",
-            extras = *arrayOf(*queryStats(query), matchItems, matchGroups)
+            extras = queryStats(query) + matchItems + matchGroups
         )
     }
 
@@ -64,7 +65,7 @@ object PackageSearchEventsLogger {
             project = project,
             event = "response-failed",
             version = "1",
-            extras = *queryStats(query)
+            extras = queryStats(query)
         )
     }
 
@@ -91,17 +92,17 @@ object PackageSearchEventsLogger {
     fun onPackageInstallHit(
         project: Project,
         buildSystem: BuildSystemType,
-        dependency: StandardV2Package?,
-        items: List<StandardV2Package>
+        dependency: ApiStandardPackage?,
+        items: List<ApiStandardPackage>
     ) = tryDoing {
         logDialogEvent(
             project = project,
             event = "installed",
             version = "1",
-            extras = *arrayOf(
+            extras = arrayOf(
                 "build-system" to buildSystem.statisticsKey,
-                "hit-min-order" to (items.withIndex().firstOrNull { it.value === dependency }?.index ?: -1),
-                "match-groups" to items.distinctBy { it.groupId.toLowerCase() }.size,
+                "hit-min-order" to (items.withIndex().find { it.value === dependency }?.index ?: -1),
+                "match-groups" to items.distinctBy { it.groupId.toLowerCase(Locale.ROOT) }.size,
                 "match-items" to items.size
             )
         )

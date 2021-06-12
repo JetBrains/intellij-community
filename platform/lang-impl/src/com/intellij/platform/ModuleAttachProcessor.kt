@@ -10,11 +10,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.PrimaryModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modifyModules
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -33,13 +33,7 @@ private val LOG = logger<ModuleAttachProcessor>()
 class ModuleAttachProcessor : ProjectAttachProcessor() {
   companion object {
     @JvmStatic
-    fun findModuleInBaseDir(project: Project): Module? {
-      val baseDir = project.baseDir
-      return ModuleManager.getInstance(project).modules.firstOrNull { module -> module.rootManager.contentRoots.any { it == baseDir } }
-    }
-
-    @JvmStatic
-    fun getPrimaryModule(project: Project) = if (canAttachToProject()) findModuleInBaseDir(project) else null
+    fun getPrimaryModule(project: Project) = if (canAttachToProject()) PrimaryModuleManager.findPrimaryModule(project) else null
 
     @JvmStatic
     fun getSortedModules(project: Project): List<Module> {

@@ -21,9 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull

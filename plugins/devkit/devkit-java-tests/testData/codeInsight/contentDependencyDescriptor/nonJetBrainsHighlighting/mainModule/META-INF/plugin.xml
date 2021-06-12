@@ -1,0 +1,15 @@
+<idea-plugin <warning descr="Usage of API reserved for JetBrains internal use">package="mypackage"</warning>>
+  <id>com.intellij.myPlugin</id>
+  <vendor>Someone Else</vendor>
+  <version>1.0</version>
+
+  <warning descr="Usage of API reserved for JetBrains internal use"><dependencies>
+  </dependencies></warning>
+
+  <warning descr="Usage of API reserved for JetBrains internal use"><content>
+  </content></warning>
+
+  <actions>
+    <action class="wrongpackage.MyWrongPackageAction"/>
+  </actions>
+</idea-plugin>

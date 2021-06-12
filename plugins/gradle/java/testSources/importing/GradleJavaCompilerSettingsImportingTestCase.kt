@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.runners.Parameterized
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
@@ -17,11 +19,9 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
 
   fun createGradleSettingsFile(vararg moduleNames: String) {
     createSettingsFile(
-      GroovyBuilder.generate {
-        property("rootProject.name", "'project'")
-        for (moduleName in moduleNames) {
-          call("include", "'$moduleName'")
-        }
+      groovy {
+        assign("rootProject.name", "project")
+        call("include", *moduleNames)
       }
     )
   }
@@ -37,35 +37,34 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     testSourceCompatibilityEnablePreview: Boolean = false,
     testTargetCompatibility: String? = null
   ): VirtualFile {
-    val buildScript = GradleBuildScriptBuilderEx()
-      .withJavaPlugin()
-      .withPrefix {
-        propertyIfNotNull("sourceCompatibility", projectSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", projectTargetCompatibility)
-      }
-      .withTaskConfiguration("compileJava") {
-        propertyIfNotNull("sourceCompatibility", mainSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", mainTargetCompatibility)
-        if (mainSourceCompatibilityEnablePreview) {
-          call("options.compilerArgs.add", "'--enable-preview'")
-        }
-      }
-      .withTaskConfiguration("compileTestJava") {
-        propertyIfNotNull("sourceCompatibility", testSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", testTargetCompatibility)
-        if (testSourceCompatibilityEnablePreview) {
-          call("options.compilerArgs.add", "'--enable-preview'")
-        }
-      }
-      .generate()
     createProjectSubDir("$relativePath/src/main/java")
     createProjectSubDir("$relativePath/src/test/java")
-    return createProjectSubFile("$relativePath/build.gradle", buildScript)
+    return createProjectSubFile("$relativePath/build.gradle", buildscript {
+      withJavaPlugin()
+      withPrefix {
+        assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+        assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+        call("compileJava") {
+          assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
+          assignIfNotNull("targetCompatibility", mainTargetCompatibility)
+          if (mainSourceCompatibilityEnablePreview) {
+            call("options.compilerArgs.add", "--enable-preview")
+          }
+        }
+        call("compileTestJava") {
+          assignIfNotNull("sourceCompatibility", testSourceCompatibility)
+          assignIfNotNull("targetCompatibility", testTargetCompatibility)
+          if (testSourceCompatibilityEnablePreview) {
+            call("options.compilerArgs.add", "--enable-preview")
+          }
+        }
+      }
+    })
   }
 
   companion object {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests() = arrayListOf(*AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS, arrayOf("6.3"))
+    fun tests() = arrayListOf(*VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS, arrayOf("6.3"))
   }
 }

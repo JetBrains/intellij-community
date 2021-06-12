@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,20 +10,23 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
-import java.util.ServiceLoader;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public interface IconManager {
-  @NotNull
-  static IconManager getInstance() {
-    return IconManagerHelper.instance;
+  static @NotNull IconManager getInstance() {
+    IconManager result = IconManagerHelper.instance;
+    return result == null ? DummyIconManager.INSTANCE : result;
   }
 
   // Icon Loader is quite heavy, better to not instantiate class unless required
-  static void activate() {
-    IconManagerHelper.activate();
+  static void activate(@Nullable IconManager impl) throws Throwable {
+    IconManagerHelper.activate(impl);
   }
 
   @TestOnly
@@ -52,39 +54,31 @@ public interface IconManager {
     return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
   }
 
-  @NotNull
-  default Icon createEmptyIcon(@NotNull Icon icon) {
+  default @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
     return icon;
   }
 
-  @NotNull
-  default Icon createOffsetIcon(@NotNull Icon icon) {
+  default @NotNull Icon createOffsetIcon(@NotNull Icon icon) {
     return icon;
   }
 
-  @NotNull
-  Icon createLayered(Icon @NotNull ... icons);
+  @NotNull Icon createLayered(Icon @NotNull ... icons);
 
-  @NotNull
-  default Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
+  default @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
     return source;
   }
 
-  @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer);
 
-  @NotNull
-  RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
+  @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
 
-  @NotNull
-  default RowIcon createRowIcon(int iconCount) {
+  default @NotNull RowIcon createRowIcon(int iconCount) {
     return createRowIcon(iconCount, RowIcon.Alignment.TOP);
   }
 
-  @NotNull
-  RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment);
+  @NotNull RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment);
 
-  @NotNull
-  RowIcon createRowIcon(Icon @NotNull ... icons);
+  @NotNull RowIcon createRowIcon(Icon @NotNull ... icons);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 
@@ -93,22 +87,25 @@ public interface IconManager {
 
 final class IconManagerHelper {
   private static final AtomicBoolean isActivated = new AtomicBoolean();
-  static volatile IconManager instance = DummyIconManager.INSTANCE;
+  static volatile IconManager instance;
 
-  static void activate() {
+  static void activate(@Nullable IconManager impl) throws Throwable {
     if (!isActivated.compareAndSet(false, true)) {
       return;
     }
 
-    Iterator<IconManager> iterator = ServiceLoader.load(IconManager.class, IconManager.class.getClassLoader()).iterator();
-    if (iterator.hasNext()) {
-      instance = iterator.next();
+    if (impl == null) {
+      Class<?> implClass = IconManagerHelper.class.getClassLoader().loadClass("com.intellij.ui.CoreIconManager");
+      instance = (IconManager)MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(void.class)).invoke();
+    }
+    else {
+      instance = impl;
     }
   }
 
   static void deactivate() {
     if (isActivated.compareAndSet(true, false)) {
-      instance = DummyIconManager.INSTANCE;
+      instance = null;
     }
   }
 }
@@ -124,21 +121,21 @@ final class DummyIconManager implements IconManager {
     return DummyIcon.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return DummyIcon.INSTANCE;
+  public @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
+    return new DummyIcon(path);
   }
 
   @Override
   public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
-    return DummyIcon.INSTANCE;
+    return new DummyIcon(path);
   }
 
-  @NotNull
   @Override
-  public RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    return new DummyRowIcon();
+  public @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
+    Icon[] icons = new Icon[2];
+    icons[0] = icon;
+    return new DummyRowIcon(icons);
   }
 
   @Override
@@ -147,34 +144,36 @@ final class DummyIconManager implements IconManager {
 
   @Override
   public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
-    return new DummyIcon();
+    return icon;
   }
 
   @Override
-  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
+  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer) {
     return base;
   }
 
-  @NotNull
   @Override
-  public RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment) {
+  public @NotNull RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment) {
     return new DummyRowIcon(iconCount);
   }
 
-  @NotNull
   @Override
-  public Icon createLayered(Icon @NotNull ... icons) {
+  public @NotNull Icon createLayered(Icon @NotNull ... icons) {
     return new DummyRowIcon(icons);
   }
 
-  @NotNull
   @Override
-  public RowIcon createRowIcon(Icon @NotNull ... icons) {
+  public @NotNull RowIcon createRowIcon(Icon @NotNull ... icons) {
     return new DummyRowIcon(icons);
   }
 
   private static class DummyIcon implements Icon {
-    static final DummyIcon INSTANCE = new DummyIcon();
+    static final DummyIcon INSTANCE = new DummyIcon("<DummyIcon>");
+    private final String path;
+
+    private DummyIcon(@NotNull String path) {
+      this.path = path;
+    }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -192,27 +191,31 @@ final class DummyIconManager implements IconManager {
 
     @Override
     public int hashCode() {
-      return 0;
+      return path.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof DummyIcon;
+      return this == obj || (obj instanceof DummyIcon && ((DummyIcon)obj).path == path);
+    }
+
+    @Override
+    public String toString() {
+      return path;
     }
   }
 
-  private static class DummyRowIcon extends DummyIcon implements RowIcon {
+  private static final class DummyRowIcon extends DummyIcon implements RowIcon {
     private Icon[] icons;
 
     DummyRowIcon(int iconCount) {
+      super("<DummyRowIcon>");
       icons = new Icon[iconCount];
     }
 
     DummyRowIcon(Icon[] icons) {
+      super("<DummyRowIcon>");
       this.icons = icons;
-    }
-
-    DummyRowIcon() {
     }
 
     @Override
@@ -233,15 +236,38 @@ final class DummyIconManager implements IconManager {
       icons[i] = icon;
     }
 
-    @NotNull
     @Override
-    public Icon getDarkIcon(boolean isDark) {
+    public @NotNull Icon getDarkIcon(boolean isDark) {
       return this;
     }
 
     @Override
     public Icon @NotNull [] getAllIcons() {
-      return icons == null ? new Icon[0] : ContainerUtil.packNullables(icons).toArray(new Icon[0]);
+      List<Icon> list = new ArrayList<>();
+      for (Icon element : icons) {
+        if (element != null) {
+          list.add(element);
+        }
+      }
+      return list.toArray(new Icon[0]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      return o instanceof DummyRowIcon && Arrays.equals(icons, ((DummyRowIcon)o).icons);
+    }
+
+    @Override
+    public int hashCode() {
+      return icons.length > 0 ? icons[0].hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+      return "Row icon. myIcons=" + Arrays.asList(icons);
     }
   }
 }

@@ -1,8 +1,29 @@
 <html>
 <body>
-Reports methods containing multiple loop statements.
-<!-- tooltip end -->
-<p>
+Reports methods that contain more than one loop statement.
+<p>For example, this method contains two loops so it will be reported:</p>
+<pre><code>
+  void methodWithTwoLoops(int n1, int n2) {
+    for (int i = 0; i &lt; n1; i++) {
+      System.out.println(i);
+    }
 
+    int j = 0;
+    while (j &lt; n2) {
+      System.out.println(j);
+      j++;
+    }
+  }
+</code></pre>
+<p>This method will also be reported, since it contains a nested loop:</p>
+<pre><code>
+  void methodWithNestedLoop(int n1, int n2) {
+    for (int i = 0; i &lt; n1; i++) {
+      for (int j = 0; j &lt; n2; j++) {
+        System.out.println(i + j);
+      }
+  }
+}
+</code></pre>
 </body>
 </html>

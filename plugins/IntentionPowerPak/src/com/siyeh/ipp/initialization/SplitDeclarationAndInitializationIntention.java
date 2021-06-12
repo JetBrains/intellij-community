@@ -17,6 +17,7 @@ package com.siyeh.ipp.initialization;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -25,13 +26,12 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Predicate;
 
 public class SplitDeclarationAndInitializationIntention extends Intention {
 
@@ -75,12 +75,13 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
       }
       final boolean initializerIsStatic = existingClassInitializer.hasModifierProperty(PsiModifier.STATIC);
       if (initializerIsStatic == fieldIsStatic) {
-        Predicate<PsiReference> usedBeforeInitializer = ref -> {
+        Condition<PsiReference> usedBeforeInitializer = ref -> {
           PsiElement refElement = ref.getElement();
           TextRange textRange = refElement.getTextRange();
           return textRange == null || textRange.getStartOffset() < initializerOffset;
         };
-        if (ReferencesSearch.search(field, new LocalSearchScope(containingClass)).findAll().stream().noneMatch(usedBeforeInitializer)) {
+        if (!ContainerUtil
+          .exists(ReferencesSearch.search(field, new LocalSearchScope(containingClass)).findAll(), usedBeforeInitializer)) {
           classInitializer = existingClassInitializer;
           break;
         }

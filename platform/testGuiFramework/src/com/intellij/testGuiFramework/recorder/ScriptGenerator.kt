@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.recorder
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.FocusManagerImpl
@@ -68,10 +69,10 @@ object ScriptGenerator {
   }
 
   fun processMainMenuActionEvent(action: AnAction, event: AnActionEvent) {
-    val prohibitedPlaces = setOf("NavBarToolbar", "MainToolbar", "DebuggerToolbar")
+    val prohibitedPlaces = setOf(ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionPlaces.MAIN_TOOLBAR, ActionPlaces.DEBUGGER_TOOLBAR)
     val actionId: String? = ActionManager.getInstance().getId(action)
     if (actionId == null) return
-    if (event.place != "MainMenu") {
+    if (event.place != ActionPlaces.MAIN_MENU) {
       if (prohibitedPlaces.contains(event.place)) return
       addToScript("//invokeAction(\"$actionId\")")
       return

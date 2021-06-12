@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
@@ -38,7 +38,7 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   /**
    * Instantiates a new environment factory for given prepared [configuration][config].
    */
-  abstract fun createEnvironmentFactory(project: Project, config: C): TargetEnvironmentFactory
+  abstract fun createEnvironmentRequest(project: Project, config: C): TargetEnvironmentRequest
 
   abstract fun createConfigurable(project: Project,
                                   config: C,

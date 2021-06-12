@@ -1,12 +1,31 @@
 <html>
 <body>
 Reports inner class variables being named identically to member variables of a containing class.
-Such a variable name may be confusing.
+Such a variable name may be confusing, and can be renamed using the quick-fix
+<p>Example:</p>
+<pre><code>
+  <b>class</b> Chief {
+    <b>private</b> String name;
+
+    <b>class</b> Paramount {
+      <b>private</b> String name;
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>class</b> Chief {
+    <b>private</b> String name;
+
+    <b>class</b> Paramount {
+      <b>private</b> String identifier;
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below the indicate whether this inspection should report all name clashes, or only
 clashes with fields which are visible from the inner class.
-<p>
 
 </body>
 </html>

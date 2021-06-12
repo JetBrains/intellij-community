@@ -8,6 +8,7 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInf
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileScope;
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,6 +41,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -65,7 +68,9 @@ import java.util.stream.Collectors;
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
-public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService, ModificationTracker {
+public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService,
+                                                                                                         ModificationTracker,
+                                                                                                         Disposable {
   private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceBase.class);
 
   private final Set<FileType> myFileTypes;
@@ -96,7 +101,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       return;
     }
 
-    myDirtyScopeHolder.installVFSListener(project);
+    myDirtyScopeHolder.installVFSListener(this);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       CompilerManager compilerManager = CompilerManager.getInstance(project);
       boolean isUpToDate;
@@ -118,12 +123,12 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
         }
         else {
-          markAsOutdated(validIndexExists);
+          markAsOutdated();
         }
       });
     }
 
-    Disposer.register(project, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
   }
 
   @Nullable
@@ -406,23 +411,30 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected void openReaderIfNeeded(IndexOpenReason reason) {
+    // do not run read action inside myOpenCloseLock
+    List<Module> compiledModules = null;
+    if (reason == IndexOpenReason.COMPILATION_FINISHED) {
+      compiledModules = ReadAction.nonBlocking(() -> {
+        if (myProject.isDisposed()) {
+          return null;
+        }
+        final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        return ContainerUtil.map(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
+      }).executeSynchronously();
+    }
+
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      try {
-        switch (reason) {
-          case UP_TO_DATE_CACHE:
-            myDirtyScopeHolder.upToDateChecked(true);
-            break;
-          case COMPILATION_FINISHED:
-            myDirtyScopeHolder.compilerActivityFinished();
-        }
+      if (reason == IndexOpenReason.COMPILATION_FINISHED) {
+        myActiveBuilds--;
+        myDirtyScopeHolder.compilerActivityFinished(compiledModules);
       }
-      catch (RuntimeException e) {
-        --myActiveBuilds;
-        throw e;
+      else if (reason == IndexOpenReason.UP_TO_DATE_CACHE) {
+        myDirtyScopeHolder.upToDateCheckFinished(Module.EMPTY_ARRAY);
       }
-      if ((--myActiveBuilds == 0) && myProject.isOpen()) {
+
+      if (myActiveBuilds == 0 && myProject.isOpen()) {
         myReader = myReaderFactory.create(myProject);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
@@ -432,13 +444,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  private void markAsOutdated(boolean decrementBuildCount) {
+  private void markAsOutdated() {
+    Module[] modules = ReadAction.compute(() -> myProject.isDisposed()
+                                                ? null
+                                                : ModuleManager.getInstance(myProject).getModules());
     myOpenCloseLock.lock();
     try {
-      if (decrementBuildCount) {
-        --myActiveBuilds;
-      }
-      myDirtyScopeHolder.upToDateChecked(false);
+      if (modules == null) return;
+      myDirtyScopeHolder.upToDateCheckFinished(modules);
     } finally {
       myOpenCloseLock.unlock();
     }
@@ -599,6 +612,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       myReadDataLock.unlock();
     }
   }
+
+  @Override
+  public void dispose() { }
 
   @Nullable
   protected <T> T onException(@NotNull Exception e, @NotNull String actionName) {

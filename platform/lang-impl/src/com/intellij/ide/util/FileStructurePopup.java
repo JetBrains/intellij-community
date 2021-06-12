@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -50,8 +50,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -119,7 +117,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final Map<Class, JBCheckBox> myCheckBoxes = new HashMap<>();
   private final List<JBCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
-  private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private final List<Pair<String, JBCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
   private final TreeExpander myTreeExpander;
   private final CopyPasteDelegator myCopyPasteDelegator;
@@ -150,7 +147,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     //Stop code analyzer to speedup EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
-    IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt, "FileStructurePopup");
 
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
     myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);
@@ -246,13 +242,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     mySpeedSearch = new MyTreeSpeedSearch();
-    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
-      @NotNull
-      @Override
-      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
-      }
-    });
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true, " ()"));
 
     myTreeExpander = new DefaultTreeExpander(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
@@ -290,11 +280,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .createPopup();
 
     Disposer.register(myPopup, this);
-    Disposer.register(myPopup, () -> {
-      if (!myTreeHasBuilt.isDone()) {
-        myTreeHasBuilt.setRejected();
-      }
-    });
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myPopup.showCenteredInCurrentWindow(myProject);
 
@@ -304,7 +289,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      myTreeHasBuilt.setDone();
       installUpdater();
     }));
   }
@@ -572,7 +556,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         List<Navigatable> result = getSelectedElements().filter(Navigatable.class).toList();
-        return result.isEmpty() ? null : result.toArray(new Navigatable[0]);
+        return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
         return myPopup;

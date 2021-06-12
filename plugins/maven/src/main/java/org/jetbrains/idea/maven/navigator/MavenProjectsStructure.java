@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -27,8 +27,6 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +85,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final RootNode myRoot = new RootNode();
   private volatile boolean isUnloading = false;
 
-  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new THashMap<>();
+  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new HashMap<>();
 
   public MavenProjectsStructure(Project project,
                                 MavenProjectsManager projectsManager,
@@ -1433,7 +1431,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateRunConfigurations(MavenProject mavenProject) {
       boolean childChanged = false;
 
-      Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
+      Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
         RunManager.getInstance(myProject).getConfigurationSettingsList(MavenRunConfigurationType.getInstance()));
 
       for (Iterator<RunConfigurationNode> itr = myChildren.iterator(); itr.hasNext(); ) {

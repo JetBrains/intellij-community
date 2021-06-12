@@ -4,13 +4,22 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -79,12 +88,12 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         DfaVariableValue methodName = runner.myDfaMethodName;
         if (methodName == null) return;
         Map<String, Map<PsiExpression, DfType>> returnMap = new TreeMap<>();
-        RunnerResult result = runner.analyzeMethod(body, new StandardInstructionVisitor() {
+        RunnerResult result = runner.analyzeMethod(body, new JavaDfaListener() {
           @Override
-          protected void checkReturnValue(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @NotNull PsiParameterListOwner context,
-                                          @NotNull DfaMemoryState state) {
+          public void beforeValueReturn(@NotNull DfaValue value,
+                                        @Nullable PsiExpression expression,
+                                        @NotNull PsiElement context,
+                                        @NotNull DfaMemoryState state) {
             if (context != method) return;
             String name = state.getDfType(methodName).getConstantOfType(String.class);
             if (name == null) {
@@ -101,11 +110,11 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         if (result != RunnerResult.OK) return;
         Set<PsiExpression> reportedAnchors = new HashSet<>();
         returnMap.forEach((name, map) -> {
-          DfType reduced = map.values().stream().reduce(DfTypes.BOTTOM, DfType::join);
+          DfType reduced = map.values().stream().reduce(DfType.BOTTOM, DfType::join);
           PsiType wantedType = getWantedType(body, name);
           if (wantedType == null) return;
           TypeConstraint wantedConstraint = TypeConstraints.exact(wantedType);
-          if (reduced.meet(wantedConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)) != DfTypes.BOTTOM &&
+          if (reduced.meet(wantedConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)) != DfType.BOTTOM &&
               DfaNullability.fromDfType(reduced) != DfaNullability.NULLABLE) {
             return;
           }
@@ -146,7 +155,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
     };
   }
 
-  private static class InvocationHandlerAnalysisRunner extends DataFlowRunner {
+  private static class InvocationHandlerAnalysisRunner extends StandardDataFlowRunner {
     private final PsiElement myBody;
     private DfaVariableValue myDfaMethodName;
     private DfaVariableValue myDfaMethodDeclaringClass;
@@ -157,7 +166,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
     InvocationHandlerAnalysisRunner(@NotNull ProblemsHolder holder,
                                     PsiElement body,
                                     PsiParameter methodParameter) {
-      super(holder.getProject(), body);
+      super(holder.getProject());
       myBody = body;
       PsiClass methodClass = PsiUtil.resolveClassInClassTypeOnly(methodParameter.getType());
       if (methodClass == null) return;
@@ -174,10 +183,10 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
       myObjectType = PsiType.getJavaLangObject(methodClass.getManager(), methodClass.getResolveScope());
       if (myClassType == null || myStringType == null) return;
       DfaValueFactory factory = getFactory();
-      DfaVariableValue dfaMethod = factory.getVarFactory().createVariableValue(methodParameter);
-      myDfaMethodName = (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getNameMethod).createValue(factory, dfaMethod);
+      DfaVariableValue dfaMethod = PlainDescriptor.createVariableValue(factory, methodParameter);
+      myDfaMethodName = (DfaVariableValue)new GetterDescriptor(getNameMethod).createValue(factory, dfaMethod);
       myDfaMethodDeclaringClass =
-        (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getDeclaringClassMethod).createValue(factory, dfaMethod);
+        (DfaVariableValue)new GetterDescriptor(getDeclaringClassMethod).createValue(factory, dfaMethod);
     }
 
     @Override
@@ -188,7 +197,6 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         return super.createInitialInstructionStates(psiBlock, memStates, flow);
       }
       List<DfaInstructionState> result = new ArrayList<>();
-      DfaValueFactory factory = getFactory();
       Instruction instruction = flow.getInstruction(0);
       for (Instruction inst : flow.getInstructions()) {
         if (inst instanceof FinishElementInstruction) {
@@ -199,10 +207,10 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         }
       }
       for (DfaMemoryState state : memStates) {
-        state.applyCondition(myDfaMethodDeclaringClass.eq(factory.getConstant(myObjectType, myClassType)));
+        state.applyCondition(myDfaMethodDeclaringClass.eq(DfTypes.constant(myObjectType, myClassType)));
         for (String methodName : Arrays.asList("hashCode", "equals", "toString")) {
           DfaMemoryState methodSpecificState = state.createCopy();
-          methodSpecificState.applyCondition(myDfaMethodName.eq(factory.getConstant(methodName, myStringType)));
+          methodSpecificState.applyCondition(myDfaMethodName.eq(DfTypes.constant(methodName, myStringType)));
           result.add(new DfaInstructionState(instruction, methodSpecificState));
         }
       }

@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.project.MavenTestConsoleFilter;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;

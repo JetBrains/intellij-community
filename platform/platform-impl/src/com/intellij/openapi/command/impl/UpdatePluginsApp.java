@@ -41,8 +41,10 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
 
-    Collection<PluginDownloader> availableUpdates = UpdateChecker.getPluginUpdates();
-    if (availableUpdates == null) {
+    Collection<PluginDownloader> availableUpdates = UpdateChecker.getInternalPluginUpdates()
+      .getPluginUpdates()
+      .getAllEnabled();
+    if (availableUpdates.isEmpty()) {
       log("All plugins up to date.");
       System.exit(0);
       return;
@@ -56,7 +58,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
     log("Plugins to update:");
     availableUpdates.forEach(d -> log("\t" + d.getPluginName()));
 
-    if (UpdateInstaller.installPluginUpdates(availableUpdates, new EmptyProgressIndicator())) {
+    if (!UpdateInstaller.downloadPluginUpdates(availableUpdates, new EmptyProgressIndicator()).isEmpty()) {
       System.exit(0);
     }
     else {

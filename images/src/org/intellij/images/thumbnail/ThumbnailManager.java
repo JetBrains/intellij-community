@@ -15,9 +15,8 @@
  */
 package org.intellij.images.thumbnail;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Thumbnail manager.
@@ -27,7 +26,7 @@ import com.intellij.openapi.components.ServiceManager;
 public abstract class ThumbnailManager {
 
   public static ThumbnailManager getManager(final Project project) {
-    return ServiceManager.getService(project, ThumbnailManager.class);
+    return project.getService(ThumbnailManager.class);
   }
 
   /**

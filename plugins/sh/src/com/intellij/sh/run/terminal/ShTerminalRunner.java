@@ -42,7 +42,7 @@ final class ShTerminalRunner implements ShRunner {
     Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
     try {
       if (pair == null) {
-        terminalView.createLocalShellWidget(workingDirectory, title, activateToolWindow).executeCommand(command);
+        terminalView.createLocalShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow).executeCommand(command);
         return;
       }
       if (activateToolWindow) {

@@ -22,9 +22,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
 
-/**
- * @author yole
- */
+
 public class PyWithItemImpl extends PyElementImpl implements PyWithItem {
   public PyWithItemImpl(ASTNode astNode) {
     super(astNode);

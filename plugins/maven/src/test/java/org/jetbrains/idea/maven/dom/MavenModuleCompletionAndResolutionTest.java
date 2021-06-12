@@ -22,8 +22,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import org.junit.Test;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+  @Test
   public void testCompleteFromAllAvailableModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -84,6 +86,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(module2Pom, "..", "../m1", "m3");
   }
 
+  @Test 
   public void testDoesNotCompeteIfThereIsNoModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -103,6 +106,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Test 
   public void testIncludesAllThePomsAvailable() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -132,6 +136,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "subDir1", "subDir1/subDir2");
   }
 
+  @Test 
   public void testResolution() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -191,6 +196,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertUnresolved(myProjectPom, "unknownModule");
   }
 
+  @Test 
   public void testResolutionWithSlashes() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -231,6 +237,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(m), ".\\m");
   }
 
+  @Test 
   public void testResolutionWithProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -283,6 +290,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.dirName"));
   }
 
+  @Test 
   public void testCreatePomQuickFix() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -320,6 +328,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreatePomQuickFixCustomPomFileName() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -357,6 +366,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreatePomQuickFixInDotXmlFolder() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -395,6 +405,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -436,6 +447,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreatePomQuickFixWithProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -464,6 +476,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertNotNull(pom);
   }
 
+  @Test 
   public void testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -498,6 +511,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreateModuleWithParentQuickFix() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -540,6 +554,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreateModuleWithParentQuickFix2() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -583,6 +598,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testCreateModuleWithParentQuickFix3() {
     VirtualFile parentPom = createModulePom("parent",
                                          "<groupId>test</groupId>" +
@@ -629,6 +645,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  @Test 
   public void testDoesNotShowCreatePomQuickFixForEmptyModuleTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -648,6 +665,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertNull(getIntentionAtCaret(getCreateModuleIntention()));
   }
 
+  @Test 
   public void testDoesNotShowCreatePomQuickFixExistingModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

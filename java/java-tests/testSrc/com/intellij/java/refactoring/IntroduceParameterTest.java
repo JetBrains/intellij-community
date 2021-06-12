@@ -15,6 +15,7 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -162,6 +163,18 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
 
   public void testConflictingField() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false, false);
+  }
+
+  public void testRecordGetterImpl() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> 
+      doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false, 
+             "method <b><code>R.name()</code></b> will no longer be record component <b><code>name</code></b> getter"));
+  }
+
+  public void testCanonicalConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> 
+      doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false, 
+             "Constructor will no longer be canonical"));
   }
 
   public void testParameterInFor() {

@@ -38,7 +38,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see PsiBinaryFile
    * @see #isEventSystemEnabled()
    */
-  @Nullable
   Document getDocument();
 
   /**

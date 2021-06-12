@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
@@ -168,6 +169,12 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
+  }
+  
+  protected final void registerPossibleProblem(@Nullable PsiElement element) {
+    if (element != null) {
+      holder.registerPossibleProblem(element);
+    }
   }
 
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length, Object... infos) {

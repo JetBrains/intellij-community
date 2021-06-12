@@ -9,6 +9,7 @@ interface ExternalEntityMapping<T> {
   fun getEntities(data: T): List<WorkspaceEntity>
   fun getDataByEntity(entity: WorkspaceEntity): T?
   fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit)
+  fun size(): Int
 }
 
 interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {

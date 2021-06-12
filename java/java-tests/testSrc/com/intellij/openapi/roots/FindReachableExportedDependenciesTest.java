@@ -115,6 +115,6 @@ public class FindReachableExportedDependenciesTest extends JavaModuleTestCase {
 
   private Set<Map.Entry<OrderEntry, OrderEntry>> findReachableViaThisDependencyOnly(Module a, Module b) {
     ModulesProvider rootModelProvider = DefaultModulesProvider.createForProject(myProject);
-    return JavaProjectRootsUtil.findExportedDependenciesReachableViaThisDependencyOnly(a, b, rootModelProvider).entrySet();
+    return JavaProjectDependenciesAnalyzer.findExportedDependenciesReachableViaThisDependencyOnly(a, b, rootModelProvider).entrySet();
   }
 }

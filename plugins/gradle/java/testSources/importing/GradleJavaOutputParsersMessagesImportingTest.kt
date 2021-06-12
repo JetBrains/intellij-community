@@ -101,7 +101,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                          "public class AppTest {\n" +
                          "  public void testMethod() { }\n" +
                          "}")
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin()
+    val buildScript = createBuildScriptBuilder().withJavaPlugin()
 
     // get successfully imported project
     importProject(buildScript.generate())

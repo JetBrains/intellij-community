@@ -97,6 +97,7 @@ import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
@@ -477,7 +478,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
   private SimpleToolWindowPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
@@ -904,28 +904,33 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
       ex.addFocusChangeListener(new FocusChangeListener() {
         @Override
+        public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
+          myAutoScrollFromSourceHandler.cancelAllRequests();
+          myAutoScrollOnFocusEditor.set(true);
+        }
+
+        @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
-            FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
-            if (manager != null) {
-              JComponent component = editor.getComponent();
-              for (FileEditor fileEditor : manager.getAllEditors()) {
-                if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
-                  myAutoScrollFromSourceHandler.scrollFromSource(false);
-                  break;
+          if (isAutoscrollFromSourceAllowedHere()) {
+            myAutoScrollFromSourceHandler.addRequest(() -> {
+              FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
+              if (manager != null) {
+                JComponent component = editor.getComponent();
+                for (FileEditor fileEditor : manager.getAllEditors()) {
+                  if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
+                    myAutoScrollFromSourceHandler.scrollFromSource(false);
+                    break;
+                  }
                 }
               }
-            }
+            });
           }
         }
 
         private boolean isAutoscrollFromSourceAllowedHere() {
           if (!myAutoScrollOnFocusEditor.getAndSet(true)) return false;
           if (!Registry.is("ide.autoscroll.from.source.on.focus.gained")) return false;
-          if (!isAutoscrollFromSource(getCurrentViewId())) return false;
-          AbstractProjectViewPane pane = getCurrentProjectViewPane();
-          JTree tree = pane == null ? null : pane.getTree();
-          return tree != null && tree.isShowing();
+          return isAutoscrollFromSource(getCurrentViewId());
         }
       }, myProject);
     }
@@ -1090,7 +1095,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isCurrentSelectionObsolete(requestFocus)) return;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane != null) {
-      myAutoScrollOnFocusEditor.set(false);
+      myAutoScrollOnFocusEditor.set(!requestFocus);
       viewPane.select(element, file, requestFocus);
     }
   }
@@ -1101,7 +1106,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane instanceof AbstractProjectViewPSIPane) {
-      myAutoScrollOnFocusEditor.set(false);
+      myAutoScrollOnFocusEditor.set(!requestFocus);
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
@@ -1336,7 +1341,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         final Module[] modules = getSelectedModules();
         if (modules != null || !getSelectedUnloadedModules().isEmpty()) {
-          return myDeleteModuleProvider;
+          return ModuleDeleteProvider.getInstance();
         }
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
         if (orderEntry != null) {
@@ -1692,7 +1697,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
-    return myAutoscrollFromSource.isSelected() && myAutoscrollFromSource.isEnabled(paneId);
+    if (!myAutoscrollFromSource.isSelected()) return false;
+    if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
+    if (pane == null) return false;
+    JTree tree = pane.getTree();
+    if (tree == null || !tree.isShowing()) return false;
+    return !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
@@ -1890,6 +1901,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     private MyAutoScrollFromSourceHandler() {
       super(ProjectViewImpl.this.myProject, myViewContentPanel, ProjectViewImpl.this.myProject);
+    }
+
+    void cancelAllRequests() {
+      myAlarm.cancelAllRequests();
+    }
+
+    void addRequest(@NotNull Runnable request) {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(request, getAlarmDelay(), getModalityState());
     }
 
     @Override

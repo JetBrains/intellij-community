@@ -12,7 +12,7 @@ import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,12 +23,10 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiFile;
@@ -284,7 +282,7 @@ public final class NavBarListener
     }
   }
   @Override
-  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     if (shouldSkipAction(action)) return;
 
     if (myPanel.isInFloatingMode()) {
@@ -310,9 +308,6 @@ public final class NavBarListener
         return;
       }
 
-      final IdeFocusManager focusManager = IdeFocusManager.getInstance(myPanel.getProject());
-      final ActionCallback firstCharTyped = new ActionCallback();
-      focusManager.typeAheadUntil(firstCharTyped);
       myPanel.moveDown();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -325,9 +320,6 @@ public final class NavBarListener
           }
           robot.keyPress(code);
           robot.keyRelease(code);
-
-          //don't release Shift
-          firstCharTyped.setDone();
         }
         catch (AWTException ignored) {
         }

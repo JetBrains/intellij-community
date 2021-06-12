@@ -33,7 +33,7 @@ import java.util.List;
 
 public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int limit = 3;
 
   @Override

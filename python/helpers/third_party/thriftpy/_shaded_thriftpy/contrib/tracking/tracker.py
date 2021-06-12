@@ -10,6 +10,27 @@ import uuid
 ctx = threading.local()
 
 
+class VersionMixin(object):
+    """Mixin class to handle version compatibilities"""
+    DEFAULT_VERSION = 0  # support only request header
+    VERSION_SUPPORT_REQUEST_HEADER = 1  # add request header
+    VERSION_SUPPORT_RESPONSE_HEADER = 2  # add response header
+
+    CURRENT = VERSION_SUPPORT_RESPONSE_HEADER
+
+    def init_version_mixin(self):
+        self.current_version = self.DEFAULT_VERSION
+        self.is_upgraded = False
+
+    def check_version(self, feature_version):
+        return self.current_version >= feature_version
+
+    def upgrade_version(self, target_version):
+        self.is_upgraded = True
+        if VersionMixin.CURRENT >= target_version > self.current_version:
+            self.current_version = target_version
+
+
 class TrackerBase(object):
     def __init__(self, client=None, server=None):
         self.client = client
@@ -18,6 +39,9 @@ class TrackerBase(object):
     def handle(self, header):
         ctx.header = header
         ctx.counter = 0
+
+    def handle_response_header(self, response_header):
+        pass
 
     def gen_header(self, header):
         header.request_id = self.get_request_id()
@@ -37,6 +61,11 @@ class TrackerBase(object):
 
         if hasattr(ctx, "meta"):
             header.meta.update(ctx.meta)
+
+    def gen_response_header(self, response_header):
+        if hasattr(ctx, "response_meta"):
+            response_header.meta = ctx.response_meta
+            del ctx.response_meta
 
     def record(self, header, exception):
         pass
@@ -84,6 +113,16 @@ class TrackerBase(object):
                 yield ctx.meta
             finally:
                 del ctx.meta
+
+    @classmethod
+    def add_response_meta(cls, **kwds):
+        if hasattr(ctx, 'response_meta'):
+            ctx.response_meta.update(kwds)
+
+        else:
+            ctx.response_meta = kwds
+
+        return ctx.response_meta
 
     @property
     def meta(self):

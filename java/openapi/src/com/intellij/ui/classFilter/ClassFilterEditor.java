@@ -76,7 +76,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable);
     if (addPatternButtonVisible()) {
       DefaultActionGroup addGroup = new DefaultActionGroup(new AddClassFilterAction(), new AddPatternFilterAction());
-      addGroup.getTemplatePresentation().setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+      addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
       addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
       addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
       decorator.addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup));
@@ -205,6 +205,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
 
+    private boolean myEditEnabled = true;
+
     public final void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
@@ -285,13 +287,17 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return isEnabled();
+      return isEnabled() && myEditEnabled;
     }
 
     @Override
     public void removeRow(final int idx) {
       myFilters.remove(idx);
       fireTableRowsDeleted(idx, idx);
+    }
+
+    public void setEditEnabled(boolean editEnabled) {
+      myEditEnabled = editEnabled;
     }
   }
 

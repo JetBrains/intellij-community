@@ -37,6 +37,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,9 +46,7 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UND
 import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRanges;
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
-/**
- * @author yole
- */
+
 public class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 
@@ -90,6 +89,21 @@ public class IdentifierHighlighterPass {
 
     collectCodeBlockMarkerRanges();
     highlightReferencesAndDeclarations();
+  }
+
+  @ApiStatus.Internal
+  public Collection<TextRange> getReadAccessRange() {
+    return myReadAccessRanges;
+  }
+
+  @ApiStatus.Internal
+  public Collection<TextRange> getWriteAccessRange() {
+    return myWriteAccessRanges;
+  }
+
+  @ApiStatus.Internal
+  public Collection<TextRange> getCodeBlockMarkerRanges() {
+    return myCodeBlockMarkerRanges;
   }
 
   /**

@@ -5,7 +5,7 @@ class A:
         self.foo()
 
     def foo(self):
-        print 1
+        print(1)
 
     def bar(self):
         self.foo()

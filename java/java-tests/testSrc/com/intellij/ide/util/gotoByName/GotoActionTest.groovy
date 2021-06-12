@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -94,7 +94,6 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('invalidate caches', action) == MatchMode.NAME
     assert actionMatches('cache invalid', action) == MatchMode.NAME
     assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
-    assert actionMatches('restart', action) == (ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE)
     assert actionMatches('invcach', action) == MatchMode.NAME
   }
 
@@ -403,14 +402,16 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private def actionMatches(String pattern, AnAction action) {
     def matcher = GotoActionItemProvider.buildMatcher(pattern)
-    return new GotoActionModel(project, null, null).actionMatches(pattern, matcher, action)
+    def model = new GotoActionModel(project, null, null)
+    model.buildGroupMappings()
+    return model.actionMatches(pattern, matcher, action)
   }
 
   private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
   }
 
-  public static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
+  static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
     def wrapper = new ActionWrapper(action, null, mode, model) {
       @Override
@@ -468,10 +469,9 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    def res = new TestActionContributor(project, null, null)
+    TestActionContributor res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
     Disposer.register(parentDisposable, res)
-
     return res
   }
 

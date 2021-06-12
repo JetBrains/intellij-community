@@ -9,6 +9,8 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.util.indexing.FileBasedIndexSwitcher
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.ListCellRenderer
@@ -53,7 +55,7 @@ private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
 }
 
 private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
-  FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList.map {
+  DefaultIndexStorageLayout.availableLayouts.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }
 
@@ -67,6 +69,7 @@ private class IndexStorageDescriptorPopupContext(private val project: Project,
     return model
   }
 
+  @Suppress("HardCodedStringLiteral")
   override fun getRenderer(): ListCellRenderer<IndexStorageDescriptor> {
     return SimpleListCellRenderer.create { label, value, _ -> label.text = value.presentableName }
   }

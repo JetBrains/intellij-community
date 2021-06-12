@@ -17,14 +17,14 @@ interface ii {
   void f2();
 }
 
-<error descr="Duplicate class: 'a'">class a</error> {
+class <error descr="Duplicate class: 'a'">a</error> {
 }
 
 class Foo {
     void f() {
         class Bar {
         }
-        <error descr="Duplicate class: 'Bar'">class Bar</error> {
+        class <error descr="Duplicate class: 'Bar'">Bar</error> {
         }
     }
 }
@@ -33,7 +33,7 @@ class Foo {
 class c2 {
   class c3 {
     void f() {
-      <error descr="Duplicate class: 'c2'">class c2</error> {
+      class <error descr="Duplicate class: 'c2'">c2</error> {
       }
     }
   }
@@ -47,7 +47,7 @@ class cont {
             class B {
             }
         }
-        <error descr="Duplicate class: 'B'">class B</error> {
+        class <error descr="Duplicate class: 'B'">B</error> {
         }
 }
 class cont2 {

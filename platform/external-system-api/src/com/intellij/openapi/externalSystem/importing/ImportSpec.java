@@ -36,8 +36,6 @@ public interface ImportSpec {
   @NotNull
   ProgressExecutionMode getProgressExecutionMode();
 
-  boolean isForceWhenUptodate();
-
   @Nullable
   ExternalProjectRefreshCallback getCallback();
 

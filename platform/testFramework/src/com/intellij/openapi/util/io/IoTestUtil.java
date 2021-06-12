@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -152,6 +154,11 @@ public final class IoTestUtil {
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
+  }
+
+  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
+    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
+                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
   }
 
   @NotNull
@@ -375,7 +382,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression,SSBasedInspection
+            //noinspection RedundantSuppression
             Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
@@ -390,7 +397,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression,SSBasedInspection
+      //noinspection RedundantSuppression
       Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
@@ -443,7 +450,9 @@ public final class IoTestUtil {
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
     String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
     }
   }
 }

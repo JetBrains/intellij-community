@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -498,7 +497,7 @@ public final class GroovyCompletionUtil {
   public static int addRParenth(Editor editor, int oldTail, boolean space_within_cast_parentheses) {
     int offset = -1;
 
-    final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(oldTail);
+    final HighlighterIterator iterator = editor.getHighlighter().createIterator(oldTail);
     while (!iterator.atEnd()) {
       final IElementType tokenType = iterator.getTokenType();
       if (TokenSets.WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {

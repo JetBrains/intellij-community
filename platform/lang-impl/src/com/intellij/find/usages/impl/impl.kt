@@ -7,13 +7,16 @@ import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
+import com.intellij.model.search.impl.buildTextUsageQuery
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import com.intellij.usages.Usage as UVUsage
 
 @ApiStatus.Internal
@@ -80,8 +83,8 @@ internal fun <O> buildQuery(
   }
   queries += handler.buildSearchQuery(options, customOptions)
   if (textSearch == true) {
-    target.textSearchStrings.mapTo(queries) {
-      buildTextQuery(project, it, options.searchScope)
+    target.textSearchRequests.mapTo(queries) { searchRequest ->
+      buildTextUsageQuery(project, searchRequest, options.searchScope, textSearchContexts).mapping(::PlainTextUsage)
     }
   }
   return SearchService.getInstance().merge(queries)
@@ -97,3 +100,10 @@ private class DefaultUsageSearchParameters(
   override fun getProject(): Project = project
   override val target: SearchTarget get() = requireNotNull(pointer.dereference())
 }
+
+private val textSearchContexts: Set<SearchContext> = EnumSet.of(
+  SearchContext.IN_COMMENTS, SearchContext.IN_STRINGS,
+  SearchContext.IN_PLAIN_TEXT
+)
+
+internal fun SearchTarget.hasTextSearchStrings(): Boolean = textSearchRequests.isNotEmpty()

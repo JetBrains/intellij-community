@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +17,11 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-28243
   public void testTypeVarPlacement() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing import List, TypeVar\n" +
-                         "\n" +
-                         "T0 = TypeVar('T0')\n" +
-                         "a: List[T0]\n" +
-                         "b: List[<warning descr=\"A 'TypeVar()' expression must always directly be assigned to a variable\">TypeVar('T1')</warning>]")
-    );
+    doTestByText("from typing import List, TypeVar\n" +
+                 "\n" +
+                 "T0 = TypeVar('T0')\n" +
+                 "a: List[T0]\n" +
+                 "b: List[<warning descr=\"A 'TypeVar()' expression must always directly be assigned to a variable\">TypeVar('T1')</warning>]");
   }
 
   // PY-28243
@@ -524,25 +520,22 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-31788
   public void testInstanceAndClassChecksOnGenericParameter() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> doTestByText("from typing import List, Type, TypeVar\n" +
-                         "\n" +
-                         "T = TypeVar(\"T\")\n" +
-                         "\n" +
-                         "class A:\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "def foo(p1: T, p2: Type[T], p3: List[T]):\n" +
-                         "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
-                         "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
-                         "\n" +
-                         "    assert isinstance(A(), p2)\n" +
-                         "    assert issubclass(A, p2)\n" +
-                         "\n" +
-                         "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)\n" +
-                         "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)")
-    );
+    doTestByText("from typing import List, Type, TypeVar\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "def foo(p1: T, p2: Type[T], p3: List[T]):\n" +
+                 "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
+                 "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p1</error>)\n" +
+                 "\n" +
+                 "    assert isinstance(A(), p2)\n" +
+                 "    assert issubclass(A, p2)\n" +
+                 "\n" +
+                 "    assert isinstance(A(), <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)\n" +
+                 "    assert issubclass(A, <error descr=\"Type variables cannot be used with instance and class checks\">p3</error>)");
   }
 
   // PY-16853
@@ -646,22 +639,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-20530
   public void testSelf() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("class A:\n" +
-                         "    def method(self, i: int):\n" +
-                         "        v1: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
-                         "        v2 = None  # type: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
-                         "        print(self.B)\n" +
-                         "\n" +
-                         "    class B:\n" +
-                         "        pass\n" +
-                         "\n" +
-                         "class self:\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "v: self")
-    );
+    doTestByText("class A:\n" +
+                 "    def method(self, i: int):\n" +
+                 "        v1: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                 "        v2 = None  # type: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                 "        print(self.B)\n" +
+                 "\n" +
+                 "    class B:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "class self:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "v: self");
   }
 
   // PY-20530
@@ -677,27 +667,24 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-20530
   public void testAnnotationAndTypeComment() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText(
-        "a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning> = None  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
-        "\n" +
-        "def foo(a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning>  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
-        "        ,):\n" +
-        "    pass\n" +
-        "\n" +
-        "def <warning descr=\"Types specified both in a type comment and annotation\">bar</warning>(a: int) -> int:\n" +
-        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
-        "    pass\n" +
-        "    \n" +
-        "def <warning descr=\"Types specified both in a type comment and annotation\">baz1</warning>(a: int):\n" +
-        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
-        "    pass\n" +
-        "    \n" +
-        "def <warning descr=\"Types specified both in a type comment and annotation\">baz2</warning>(a) -> int:\n" +
-        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
-        "    pass"
-      )
+    doTestByText(
+      "a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning> = None  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
+      "\n" +
+      "def foo(a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning>  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
+      "        ,):\n" +
+      "    pass\n" +
+      "\n" +
+      "def <warning descr=\"Types specified both in a type comment and annotation\">bar</warning>(a: int) -> int:\n" +
+      "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
+      "    pass\n" +
+      "    \n" +
+      "def <warning descr=\"Types specified both in a type comment and annotation\">baz1</warning>(a: int):\n" +
+      "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
+      "    pass\n" +
+      "    \n" +
+      "def <warning descr=\"Types specified both in a type comment and annotation\">baz2</warning>(a) -> int:\n" +
+      "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
+      "    pass"
     );
   }
 
@@ -856,92 +843,74 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-20530
   public void testTypingMemberParameters() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText(
-        "from typing import Callable, List\n" +
-        "\n" +
-        "foo1: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int]</error>] = None\n" +
-        "foo2: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int, str]</error>] = None\n" +
-        "foo3: List[<error descr=\"Parameters to generic types must be types\">[int]</error>]\n" +
-        "foo4: List[<error descr=\"Parameters to generic types must be types\">[int, str]</error>]\n" +
-        "\n" +
-        "l1 = [int]\n" +
-        "l2 = [int, str]\n" +
-        "\n" +
-        "foo5: Callable[[int], <error descr=\"Parameters to generic types must be types\">l1</error>] = None\n" +
-        "foo6: Callable[[int], <error descr=\"Parameters to generic types must be types\">l2</error>] = None\n" +
-        "foo7: List[<error descr=\"Parameters to generic types must be types\">l1</error>]\n" +
-        "foo8: List[<error descr=\"Parameters to generic types must be types\">l2</error>]"
-      )
+    doTestByText(
+      "from typing import Callable, List\n" +
+      "\n" +
+      "foo1: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int]</error>] = None\n" +
+      "foo2: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int, str]</error>] = None\n" +
+      "foo3: List[<error descr=\"Parameters to generic types must be types\">[int]</error>]\n" +
+      "foo4: List[<error descr=\"Parameters to generic types must be types\">[int, str]</error>]\n" +
+      "\n" +
+      "l1 = [int]\n" +
+      "l2 = [int, str]\n" +
+      "\n" +
+      "foo5: Callable[[int], <error descr=\"Parameters to generic types must be types\">l1</error>] = None\n" +
+      "foo6: Callable[[int], <error descr=\"Parameters to generic types must be types\">l2</error>] = None\n" +
+      "foo7: List[<error descr=\"Parameters to generic types must be types\">l1</error>]\n" +
+      "foo8: List[<error descr=\"Parameters to generic types must be types\">l2</error>]"
     );
   }
 
   // PY-32530
   public void testAnnotationAndIgnoreComment() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("def foo(a: str):  # type: ignore\n" +
-                         "    pass\n" +
-                         "def bar(a: Unknown):  # type: ignore[no-untyped-def, name-defined]\n" +
-                         "    pass")
-    );
+    doTestByText("def foo(a: str):  # type: ignore\n" +
+                 "    pass\n" +
+                 "def bar(a: Unknown):  # type: ignore[no-untyped-def, name-defined]\n" +
+                 "    pass");
   }
 
   public void testAnnotatingNonSelfAttribute() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("class A:\n" +
-                         "    def method(self, b):\n" +
-                         "        <warning descr=\"Non-self attribute could not be type hinted\">b.a</warning>: int = 1\n" +
-                         "\n" +
-                         "class B:\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "<warning descr=\"Non-self attribute could not be type hinted\">B.a</warning>: str = \"2\"\n" +
-                         "\n" +
-                         "def func(a):\n" +
-                         "    <warning descr=\"Non-self attribute could not be type hinted\">a.xxx</warning>: str = \"2\"")
-    );
+    doTestByText("class A:\n" +
+                 "    def method(self, b):\n" +
+                 "        <warning descr=\"Non-self attribute could not be type hinted\">b.a</warning>: int = 1\n" +
+                 "\n" +
+                 "class B:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "<warning descr=\"Non-self attribute could not be type hinted\">B.a</warning>: str = \"2\"\n" +
+                 "\n" +
+                 "def func(a):\n" +
+                 "    <warning descr=\"Non-self attribute could not be type hinted\">a.xxx</warning>: str = \"2\"");
   }
 
   // PY-35235
   public void testLiteral() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing_extensions import Literal\n" +
-                         "\n" +
-                         "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">1 + 2</warning>]\n" +
-                         "b: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">4j</warning>]\n" +
-                         "c: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">3.14</warning>]\n" +
-                         "d: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">...</warning>]\n" +
-                         "\n" +
-                         "class A:\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "e: Literal[Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]]\n" +
-                         "f = Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]\n" +
-                         "g: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f</warning>]")
-    );
+    doTestByText("from typing_extensions import Literal\n" +
+                 "\n" +
+                 "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">1 + 2</warning>]\n" +
+                 "b: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">4j</warning>]\n" +
+                 "c: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">3.14</warning>]\n" +
+                 "d: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">...</warning>]\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "e: Literal[Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]]\n" +
+                 "f = Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">A</warning>]\n" +
+                 "g: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f</warning>]");
   }
 
   // PY-35235
   public void testLiteralWithoutArguments() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing import Literal\n" +
-                         "a: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning> = 1\n" +
-                         "b = 2  # type: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning>")
-    );
+    doTestByText("from typing import Literal\n" +
+                 "a: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning> = 1\n" +
+                 "b = 2  # type: <warning descr=\"'Literal' must have at least one parameter\">Literal</warning>");
   }
 
   // PY-35235
   public void testNonPlainStringAsTypingLiteralIndex() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing import Literal\n" +
-                         "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f\"1\"</warning>] = \"1\"")
-    );
+    doTestByText("from typing import Literal\n" +
+                 "a: Literal[<warning descr=\"'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types\">f\"1\"</warning>] = \"1\"");
   }
 
   public void testParameterizedBuiltinCollectionsBefore39() {
@@ -1040,10 +1009,5 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyTypeHintsInspection.class;
-  }
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 }

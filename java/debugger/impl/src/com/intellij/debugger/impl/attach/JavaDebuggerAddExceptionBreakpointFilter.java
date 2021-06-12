@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.JavaDebuggerActionsCollector;
 import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
 import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType;
 import com.intellij.execution.filters.Filter.ResultItem;
@@ -50,6 +51,7 @@ public class JavaDebuggerAddExceptionBreakpointFilter implements JvmExceptionOcc
       PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
       InlayPresentation presentation =
         factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Create breakpoint")), (event, point) -> {
+          JavaDebuggerActionsCollector.createExceptionBreakpointInlay.log();
           Project project = editor.getProject();
           Collection<? extends XBreakpoint<JavaExceptionBreakpointProperties>> exceptionBreakpoints =
             XDebuggerManager.getInstance(project).getBreakpointManager().getBreakpoints(JavaExceptionBreakpointType.class);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -255,7 +254,7 @@ public final class ExistingTemplatesComponent {
   }
 
   public static ExistingTemplatesComponent getInstance(Project project) {
-    final ExistingTemplatesComponent existingTemplatesComponent = ServiceManager.getService(project, ExistingTemplatesComponent.class);
+    final ExistingTemplatesComponent existingTemplatesComponent = project.getService(ExistingTemplatesComponent.class);
     existingTemplatesComponent.initialize();
     return existingTemplatesComponent;
   }

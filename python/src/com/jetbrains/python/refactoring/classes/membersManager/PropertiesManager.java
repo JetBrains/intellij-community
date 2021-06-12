@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * Plugin that moves class properties.
  * It represents property (whatever old or new) as one of its methods.
@@ -39,6 +41,27 @@ class PropertiesManager extends MembersManager<PyElement> {
     super(PyElement.class);
   }
 
+  @Override
+  protected Collection<? extends PyElement> getElementsToStoreReferences(@NotNull Collection<PyElement> elements) {
+    List<PyElement> result = new ArrayList<>();
+    for (PyElement element : elements) {
+      PyPossibleClassMember classMember = as(element, PyPossibleClassMember.class);
+      if (classMember == null) {
+        continue;
+      }
+      PyClass pyClass = classMember.getContainingClass();
+      if (pyClass == null) {
+        continue;
+      }
+      Property property = getProperty(pyClass, element);
+      result.addAll(getAllFunctions(property));
+      PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(property.getDefinitionSite(), PyAssignmentStatement.class);
+      if (assignment != null) {
+        result.add(assignment);
+      }
+    }
+    return result;
+  }
 
   @NotNull
   @Override
@@ -137,11 +160,11 @@ class PropertiesManager extends MembersManager<PyElement> {
     for (final PyElement element : elements) {
       final Property property = getProperty(from, element);
       final Collection<PyFunction> functions = getAllFunctions(property);
-      MethodsManager.moveMethods(from, functions, false, to);
+      result.addAll(MethodsManager.moveMethods(from, functions, false, to));
       final PyTargetExpression definitionSite = property.getDefinitionSite();
       if (definitionSite != null) {
         final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(definitionSite, PyAssignmentStatement.class);
-        ClassFieldsManager.moveAssignmentsImpl(from, Collections.singleton(assignmentStatement), to);
+        result.addAll(ClassFieldsManager.moveAssignmentsImpl(from, Collections.singleton(assignmentStatement), to));
       }
     }
     return result;

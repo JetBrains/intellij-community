@@ -98,7 +98,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
       TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
-        stringToSearch, true, (psiElement, textRange) -> {
+        stringToSearch, false, (psiElement, textRange) -> {
           if (psiElement.getContainingFile() == currentFile) {
             stringUsages.add(Pair.create(psiElement, textRange));
           }
@@ -171,7 +171,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   /**
    * @param selectedRange range which is relative to the {@code editor}
    */
-  static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+   public static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
     if (handleSelectionIntersection(editor, selectedRange)) {
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapBundle;
@@ -16,15 +16,16 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 
 public final class Main {
@@ -36,8 +37,8 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  public static final int OUT_OF_MEMORY = 9;
-  public static final int UNSUPPORTED_JAVA_VERSION = 10;
+  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
+  // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
@@ -47,12 +48,12 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 
-  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -79,52 +80,7 @@ public final class Main {
 
     setFlags(args);
 
-    if (!isHeadless() && !checkGraphics()) {
-      System.exit(NO_GRAPHICS);
-    }
-
     try {
-      if (Runtime.version().feature() < 11) {
-        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea")
-          .replace("AndroidStudio", "studio").replace("Edu", "");
-        if (baseName.startsWith("Py")) baseName = "pycharm";
-        else if (baseName.equals("Ruby")) baseName = "rubymine";
-
-        @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
-        int min = message.length();
-
-        String javaHome = System.getProperty("java.home");
-        if (javaHome.endsWith(File.separatorChar + "jre")) javaHome = javaHome.substring(0, javaHome.length() - 4);
-
-        boolean win = System.getProperty("os.name", "").startsWith("Windows"), x64 = "amd64".equals(System.getProperty("os.arch"));
-        String envVar = baseName.toUpperCase(Locale.ENGLISH) + "_JDK" + (win && x64 ? "_64" : "");
-        String envValue = System.getenv(envVar);
-        if (envValue != null && Files.isSameFile(Paths.get(envValue), Paths.get(javaHome))) {
-          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.env", envVar));
-        }
-        else {
-          String configPath = PathManager.getDefaultConfigPathFor(System.getProperty("idea.paths.selector", ""));
-          String suffix = win ? x64 ? "64.exe" : ".exe" : "";
-          Path file = Paths.get(configPath, baseName.toLowerCase(Locale.ENGLISH) + suffix + ".jdk");
-          try {
-            Path jdkPath = Paths.get(Files.readString(file));
-            if (Files.isSameFile(jdkPath, Paths.get(javaHome))) {
-              message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.file", file));
-            }
-          }
-          catch (IOException ignored) { }
-        }
-
-        if (message.length() == min) {
-          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other", supportUrl()));
-        }
-
-        message.append("\n\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
-
-        showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jre"), message.toString(), true);
-        System.exit(UNSUPPORTED_JAVA_VERSION);
-      }
-
       bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
@@ -207,7 +163,7 @@ public final class Main {
     for (String arg : args) {
       if (!arg.startsWith("-")) { // If not an option
         try {
-          Path path = Paths.get(arg);
+          Path path = Path.of(arg);
           return Files.isRegularFile(path) || !Files.exists(path);
         }
         catch (Throwable t) {
@@ -239,16 +195,6 @@ public final class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
-  }
-
-  private static boolean checkGraphics() {
-    if (GraphicsEnvironment.isHeadless()) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
-                  true);
-      return false;
-    }
-    return true;
   }
 
   // TODO: Use PlatformUtils#isAndroidStudio?
@@ -325,9 +271,8 @@ public final class Main {
       textPane.setText(message.replaceAll("\t", "    "));
       textPane.setBackground(UIManager.getColor("Panel.background"));
       textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(textPane,
-                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      JScrollPane scrollPane =
+        new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setBorder(null);
 
       int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;

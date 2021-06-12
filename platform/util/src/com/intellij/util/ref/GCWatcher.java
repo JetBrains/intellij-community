@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ref;
 
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.reference.SoftReference;
@@ -72,7 +73,8 @@ public final class GCWatcher {
   public boolean tryCollect(int timeoutMs) {
     return LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       long startTime = System.currentTimeMillis();
-      GCUtil.allocateTonsOfMemory(new StringBuilder(), () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
+      GCUtil.allocateTonsOfMemory(new StringBuilder(), EmptyRunnable.getInstance(),
+                                  () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
       return isEverythingCollected();
     });
   }
@@ -83,8 +85,16 @@ public final class GCWatcher {
    */
   @TestOnly
   public void ensureCollected() {
+    ensureCollected(EmptyRunnable.getInstance());
+  }
+  /**
+   * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
+   * this method gives up after some time.
+   */
+  @TestOnly
+  public void ensureCollected(@NotNull Runnable runWhileWaiting) {
     StringBuilder log = new StringBuilder();
-    if (GCUtil.allocateTonsOfMemory(log, this::isEverythingCollected)) {
+    if (GCUtil.allocateTonsOfMemory(log, runWhileWaiting, this::isEverythingCollected)) {
       return;
     }
 
@@ -104,7 +114,7 @@ public final class GCWatcher {
     if (isEverythingCollected()) {
       message += "\nEverything is collected after taking the heap dump.";
     }
-    message += "Log:\n" + log;
+    message += " Log:\n" + log;
     throw new IllegalStateException(message);
   }
 }

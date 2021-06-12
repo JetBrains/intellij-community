@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
@@ -110,28 +111,25 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     try {
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
-      NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> {
-        try {
-          if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
-            myIncompleteIndexUsageCallback.run();
-            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-              search();
-              return null;
-            });
-          } else {
-            search();
-          }
-        }
-        catch (ExecutionException e) {
-          ex[0] = e;
-        }
-      });
+      NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> performWithIncompleteIndex(this::search, ex));
       if (requiresSmartMode() && !myAllowIndexInDumbMode) {
         readAction = readAction.inSmartMode(myProject);
       }
       readAction.executeSynchronously();
       if (ex[0] != null) {
         logCantRunException(ex[0]);
+      }
+
+      ExecutionException[] onFoundEx = new ExecutionException[1];
+      Runnable runnable = () -> performWithIncompleteIndex(this::onFound, onFoundEx);
+      if (requiresSmartMode() && !myAllowIndexInDumbMode) {
+        DumbService.getInstance(getProject()).runReadActionInSmartMode(runnable);
+      }
+      else {
+        ReadAction.run(runnable::run);
+      }
+      if (onFoundEx[0] != null) {
+        throw onFoundEx[0];
       }
     }
     catch (ProcessCanceledException e) {
@@ -156,28 +154,29 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    Runnable runnable = () -> {
-      try {
-        if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
-          myIncompleteIndexUsageCallback.run();
-          DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-            onFound();
-            return null;
-          });
-        } else {
-          onFound();
-        }
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
-      finish();
-    };
+    Runnable runnable = this::finish;
     if (requiresSmartMode() && !myAllowIndexInDumbMode) {
       DumbService.getInstance(getProject()).runWhenSmart(runnable);
     }
     else {
       runnable.run();
+    }
+  }
+
+  private void performWithIncompleteIndex(ThrowableRunnable<ExecutionException> action, ExecutionException[] ex) {
+    try {
+      if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
+        myIncompleteIndexUsageCallback.run();
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+          action.run();
+          return null;
+        });
+      } else {
+        action.run();
+      }
+    }
+    catch (ExecutionException e) {
+      ex[0] = e;
     }
   }
 

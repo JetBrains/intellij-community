@@ -5,6 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -221,7 +224,9 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
     final Project project = oldBindingField.getProject();
     final PsiClass aClass = oldBindingField.getContainingClass();
-    if (isFieldUnreferenced(oldBindingField)) {
+    Boolean result = checkFieldReferences(fieldName, oldBindingField, project);
+    if (result == null) return;
+    if (result) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
         return;
       }
@@ -241,6 +246,24 @@ public final class BindingProperty extends Property<RadComponent, String> {
         )
       );
     }
+  }
+
+  private static Boolean checkFieldReferences(String fieldName, PsiField oldBindingField, Project project) {
+    Task.WithResult<Boolean, RuntimeException> task = new Task.WithResult<>(project, UIDesignerBundle.message("dialog.title.check.field.usages", fieldName), true) {
+      @Override
+      protected Boolean compute(@NotNull ProgressIndicator indicator) {
+        return isFieldUnreferenced(oldBindingField);
+      }
+    };
+    task.queue();
+    Boolean result;
+    try {
+      result = task.getResult();
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    return result;
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {

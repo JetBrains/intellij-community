@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class LanguageUtil {
   private LanguageUtil() {
@@ -54,7 +54,7 @@ public final class LanguageUtil {
     return l != null ? l : getFileTypeLanguage(file.getFileType());
   }
 
-  public static @Nullable Language getFileTypeLanguage(@Nullable FileType fileType) {
+  public static @Nullable Language getFileTypeLanguage(@NotNull FileType fileType) {
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
@@ -62,7 +62,8 @@ public final class LanguageUtil {
     return language == null ? null : language.getAssociatedFileType();
   }
 
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer) {
+  @NotNull
+  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left, @NotNull ASTNode right, @NotNull Lexer lexer) {
     String textStr = left.getText() + right.getText();
 
     lexer.start(textStr, 0, textStr.length());
@@ -82,16 +83,14 @@ public final class LanguageUtil {
     return result;
   }
 
-  private static void getAllDerivedLanguages(Language base, Set<? super Language> result) {
+  private static void getAllDerivedLanguages(@NotNull Language base, @NotNull Set<? super Language> result) {
     result.add(base);
     for (Language dialect : base.getDialects()) {
       getAllDerivedLanguages(dialect, result);
     }
   }
 
-  public static boolean isInTemplateLanguageFile(final @Nullable PsiElement element) {
-    if (element == null) return false;
-
+  public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if(psiFile == null) return false;
 
@@ -123,20 +122,20 @@ public final class LanguageUtil {
     if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
     LanguageFileType type = language.getAssociatedFileType();
-    if (type == null || StringUtil.isEmpty(type.getDefaultExtension())) return false;
-    return StringUtil.isNotEmpty(type.getDefaultExtension());
+    return type != null && !StringUtil.isEmpty(type.getDefaultExtension());
   }
 
   public static @NotNull List<Language> getFileLanguages() {
     return getLanguages((lang) -> isFileLanguage(lang));
   }
 
-  public static @NotNull List<Language> getLanguages(Function<? super Language, Boolean> filter) {
+  public static @NotNull List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {
     LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
-      if (!filter.apply(language)) continue;
-      result.add(language);
+      if (filter.test(language)) {
+        result.add(language);
+      }
     }
     result.sort(LANGUAGE_COMPARATOR);
     return result;

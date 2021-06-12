@@ -10,61 +10,93 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.IdeActivityDefinition;
+import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.createFeatureUsageData;
 
-public final class RunConfigurationUsageTriggerCollector {
-  public static final String GROUP = "run.configuration.exec";
-  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
+public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
+  public static final String GROUP_NAME = "run.configuration.exec";
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 62);
+  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
   private static final StringEventField TARGET =
     EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+  private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
+    EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  @NotNull
-  public static IdeActivity trigger(@NotNull Project project,
-                                    @NotNull ConfigurationFactory factory,
-                                    @NotNull Executor executor,
-                                    @Nullable RunConfiguration runConfiguration) {
-    final ConfigurationType configurationType = factory.getType();
-    return new IdeActivity(project, GROUP).startedWithData(data -> {
-      List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
-      ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
-      eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
-      if (runConfiguration instanceof FusAwareRunConfiguration) {
-        List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
-        ObjectEventData objectEventData = new ObjectEventData(additionalData);
-        eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
-      }
-      if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-        if (defaultTargetName != null) {
-          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-          if (target != null) {
-            eventPairs.add(TARGET.with(target.getTypeId()));
-          }
-        }
-      }
-      eventPairs.forEach(pair -> pair.addData(data));
-    });
+  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
+                                                                                        new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
+                                                                                          TARGET,
+                                                                                          RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
+                                                                                          RunConfigurationTypeUsagesCollector.ID_FIELD,
+                                                                                          EventFields.PluginInfo},
+                                                                                        new EventField<?>[]{FINISH_TYPE});
+
+  public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
-  public static void logProcessFinished(@Nullable IdeActivity activity,
+  @NotNull
+  public static StructuredIdeActivity trigger(@NotNull Project project,
+                                              @NotNull ConfigurationFactory factory,
+                                              @NotNull Executor executor,
+                                              @Nullable RunConfiguration runConfiguration) {
+    return ACTIVITY_GROUP
+      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance()));
+  }
+
+  private static @NotNull List<EventPair<?>> buildContext(@NotNull Project project,
+                                                          @NotNull ConfigurationFactory factory,
+                                                          @NotNull Executor executor,
+                                                          @Nullable RunConfiguration runConfiguration) {
+    final ConfigurationType configurationType = factory.getType();
+    List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
+    ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
+    eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
+    if (runConfiguration instanceof FusAwareRunConfiguration) {
+      List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+      ObjectEventData objectEventData = new ObjectEventData(additionalData);
+      eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
+    }
+    if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+      String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
+      if (defaultTargetName != null) {
+        TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
+        if (target != null) {
+          eventPairs.add(TARGET.with(target.getTypeId()));
+        }
+      }
+    }
+    return eventPairs;
+  }
+
+  public static void logProcessFinished(@Nullable StructuredIdeActivity activity,
                                         RunConfigurationFinishType finishType) {
     if (activity != null) {
-      activity.finished(data -> data.addData("finish_type", finishType.name()));
+      activity.finished(() -> Collections.singletonList(FINISH_TYPE.with(finishType)));
     }
   }
 

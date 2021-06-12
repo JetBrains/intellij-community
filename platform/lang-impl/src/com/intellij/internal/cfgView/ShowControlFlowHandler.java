@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -76,7 +76,10 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
       }
     }
     catch (FileNotFoundException e) {
-      NOTIFICATION_GROUP.createNotification("Show CFG:", e.getMessage(), NO_GRAPHVIZ_HELP, NotificationType.ERROR).notify(project);
+      NOTIFICATION_GROUP
+        .createNotification("Show CFG:", NO_GRAPHVIZ_HELP, NotificationType.ERROR)
+        .setSubtitle(e.getMessage())
+        .notify(project);
       LOGGER.warn(e);
     }
     catch (IOException | ExecutionException e) {

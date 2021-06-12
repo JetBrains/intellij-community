@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -112,7 +113,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return super.createSouthPanel();
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    int inset = isNewWizard() ? 15 : 0;
+    panel.setBorder(BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
 
@@ -126,7 +128,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       int index = 0;
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable()) {
+      if (ApplicationInfo.contextHelpAvailable() && !isNewWizard()) {
         leftPanel.add(myHelpButton);
         TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
@@ -511,8 +513,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {
     if (lastStep) {
       if (mySteps.size() > 1) {
-        myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.finish")));
-        myNextButton.setMnemonic('F');
+        myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message(isNewWizard() ? "button.create" : "button.finish")));
+        myNextButton.setMnemonic(isNewWizard() ? 'C' : 'F');
       }
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
@@ -529,6 +531,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   protected boolean isFirstStep() {

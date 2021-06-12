@@ -6,12 +6,11 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import icons.GithubIcons
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
 import org.intellij.lang.annotations.Language
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
@@ -170,9 +169,9 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
   private inner class StateEventComponentFactory : EventComponentFactory<GHPRTimelineEvent.State>() {
     override fun createComponent(event: GHPRTimelineEvent.State): Item {
       val icon = when (event.newState) {
-        GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
+        GHPullRequestState.CLOSED -> CollaborationToolsIcons.PullRequestClosed
         GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-        GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
+        GHPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
       }
 
       val text = when (event.newState) {
@@ -278,7 +277,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
 
       //language=HTML
       return """<span style='color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}'>
-                  &nbsp;<icon-inline src='GithubIcons.Branch'/>$name&nbsp;</span>"""
+                  &nbsp;<icon-inline src='org.jetbrains.plugins.github.GithubIcons.Branch'/>$name&nbsp;</span>"""
     }
 
     private fun StringBuilder.appendParagraph(text: String): StringBuilder {

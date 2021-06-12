@@ -23,11 +23,13 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
+/**
+ * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
+ */
 class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
@@ -46,19 +48,20 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     }
   }
 
-  override fun changeListUpdateDone() {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (!upToDate) return
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
+    val files: List<VirtualFile>
+    UNPROCESSED_FILES_LOCK.write {
+      files = unprocessedFiles.toList()
+      unprocessedFiles.clear()
+    }
     if (files.isEmpty()) return
 
     val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
     if (needProcessIgnoredFiles() && restFiles.isNotEmpty()) {
       processFiles(restFiles)
-    }
-
-    UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.clear()
     }
   }
 
@@ -103,7 +106,9 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
 
   override fun dispose() {
     super.dispose()
-    unprocessedFiles.clear()
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.clear()
+    }
   }
 
   private fun writeIgnores(project: Project, potentiallyIgnoredFiles: Collection<VirtualFile>) {
@@ -218,9 +223,9 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     event is VFileCopyEvent ||
     event is VFilePropertyChangeEvent && event.isRename -> {
       VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
-      }
+    }
     else -> null
   }
 
-  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation")
 }

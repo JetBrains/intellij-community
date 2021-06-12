@@ -90,7 +90,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof PsiFileSystemItem;
+    return target instanceof PsiFileSystemItem || target instanceof PsiDirectoryContainer;
   }
 
   protected boolean isPsiElementAccepted(PsiElement element) {

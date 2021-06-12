@@ -37,7 +37,6 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -584,6 +583,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       stripe.reset();
     }
 
+    if (Registry.is("ide.new.stripes.ui")) {
+      if (myLeftToolbar != null) myLeftToolbar.reset();
+      if (myRightToolbar != null) myRightToolbar.reset();
+    }
+
     state = new ToolWindowPaneState();
 
     revalidate();
@@ -593,8 +597,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (!isSquareStripeUI()) return;
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
-    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
-    toolWindow.setVisibleOnLargeStripe(false);
+    if (!toolWindow.isAvailable()) return;
+    toolWindow.setOrderOnLargeStripe(-1);
 
     ToolWindowAnchor anchor = toolWindow.getLargeStripeAnchor();
     if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
@@ -607,31 +611,37 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void onStripeButtonAdded(@NotNull Project project,
                            @NotNull ToolWindow toolWindow,
-                           @NotNull ToolWindowAnchor actualAnchor,
-                           @NotNull Comparator<ToolWindow> comparator) {
+                           @NotNull ToolWindowAnchor anchor,
+                           @NotNull WindowInfo windowInfo) {
     if (!isSquareStripeUI()) return;
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
     ensureDefaultInitialized(project);
 
-    ToolWindowAnchor toolWindowAnchor = toolWindow.getAnchor();
+    var largeStripeAnchor = setupDefaultLargeStripeAnchor(toolWindow, anchor);
+    if (largeStripeAnchor != null) anchor = largeStripeAnchor;
+
+    windowInfo.setLargeStripeAnchor(anchor);
+
+    if (!toolWindow.isAvailable() || !toolWindow.isVisibleOnLargeStripe()) return;
+
+    if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
+      myLeftToolbar.addStripeButton(project, anchor, toolWindow);
+    }
+    else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
+      myRightToolbar.addStripeButton(project, anchor, toolWindow);
+    }
+  }
+
+  @Nullable
+  private ToolWindowAnchor setupDefaultLargeStripeAnchor(@NotNull ToolWindow toolWindow, @NotNull ToolWindowAnchor toolWindowAnchor) {
     if (toolWindowAnchor == ToolWindowAnchor.LEFT && myDefaultLeftButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.RIGHT && myDefaultRightButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.BOTTOM && myDefaultBottomButtons.contains(toolWindow.getId())) {
       toolWindow.setVisibleOnLargeStripe(true);
-      actualAnchor = toolWindowAnchor;
+      return toolWindowAnchor;
     }
-
-    toolWindow.setLargeStripeAnchor(actualAnchor);
-
-    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null || !toolWindow.isVisibleOnLargeStripe()) return;
-
-    if (ToolWindowAnchor.LEFT.equals(actualAnchor) || ToolWindowAnchor.BOTTOM.equals(actualAnchor)) {
-      myLeftToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
-    }
-    else if (ToolWindowAnchor.RIGHT.equals(actualAnchor)) {
-      myRightToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
-    }
+    return null;
   }
 
   private void ensureDefaultInitialized(@NotNull Project project) {
@@ -640,9 +650,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       return;
     }
 
-    myDefaultLeftButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.LEFT);
-    myDefaultRightButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.RIGHT);
-    myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.BOTTOM);
+    myDefaultLeftButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.LEFT);
+    myDefaultRightButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.RIGHT);
+    myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.BOTTOM);
 
     PropertiesComponent.getInstance(project).setValue(key, true);
   }

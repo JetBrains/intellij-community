@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports String concatenation used as
-the argument to <b>StringBuffer.append()</b>,
-<b>StringBuilder.append()</b> or
-<b>Appendable.append()</b>. Such calls
-may profitably be turned into chained append calls on the existing
-<b>StringBuffer/Builder/Appendable</b>, saving the
-cost of an extra <b>StringBuffer/Builder</b>
-allocation.
-<p>
-This inspection ignores compile time evaluated String
-concatenations, which when converted to chained append calls would only
-worsen performance.
+Reports <code>String</code> concatenation used as the argument to <code>StringBuffer.append()</code>,
+<code>StringBuilder.append()</code> or <code>Appendable.append()</code>. 
+Such calls may profitably be turned into chained append calls on the existing <code>StringBuffer/Builder/Appendable</code> 
+saving the cost of an extra <code>StringBuffer/Builder</code> allocation.
+This inspection ignores compile time evaluated <code>String</code> concatenations, which when converted to chained append calls would only worsen performance.
+<p><b>Example:</b></p>
+<pre>
+  void bar(StringBuilder builder, String name) {
+    builder.append("Hello," + name);    //warning
+    builder.append("Hello," + "world"); //no warning
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

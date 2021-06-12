@@ -31,6 +31,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -140,6 +141,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    */
   public void close() {
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
+    notifySessionStopped();
     myCallbackHashMap.clear();
 
     new Task.Backgroundable(myProject, PyBundle.message("console.close.console.communication"), false) {
@@ -193,6 +195,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * Variables that control when we're expecting to give some input to the server or when we're
    * adding some line to be executed
    */
+
+  @Override
+  public @Nullable Project getProject() {
+    return myProject;
+  }
 
   /**
    * Helper to keep on busy loop.
@@ -331,6 +338,28 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  @Override
+  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      return executeBackgroundTask(
+        () -> {
+          try {
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name());
+          }
+          catch (PythonTableException e) {
+            throw new PyDebuggerException(e.message);
+          }
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.table.data")),
+        PyBundle.message("console.table.failed.to.load")
+      );
+    }
+    else {
+      return null;
+    }
+  }
+
   @TestOnly
   public List<PydevCompletionVariant> gerCompletionVariants(String text, String actTok) throws Exception {
     return doGetCompletions(text, actTok);
@@ -381,7 +410,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         return future.get();
       }
       catch (InterruptedException | ExecutionException e) {
-        throw new PyDebuggerException(errorLogMessage, e);
+        throw new PyDebuggerException(errorLogMessage + e.getMessage(), e);
       }
     }
     return null;
@@ -454,16 +483,17 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
           catch (PythonUnhandledException e) {
             LOG.error("Error in execInterpreter():" + e.traceback);
             nextResponse = new InterpreterResponse(false, false);
+            notifyCommandExecuted(true);
           }
           catch (Exception e) {
             nextResponse = new InterpreterResponse(false, false);
+            notifyCommandExecuted(true);
           }
           finally {
             InterpreterResponse response = nextResponse;
             if (response != null && response.more) {
               myNeedsMore = true;
             }
-            notifyCommandExecuted(true);
             onResponseReceived.fun(response);
           }
         }
@@ -660,7 +690,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             getPythonConsoleBackendClient().execDataViewerAction(
               builder.getVar().getName(),
               builder.getAction().name(),
-              builder.getArgs() == null? "" :String.join("\t", builder.getArgs())
+              builder.getArgs() == null ? "" : String.join("\t", builder.getArgs())
             );
 
             return DataViewerCommandResult.makeSuccessResult("Export successful");
@@ -722,6 +752,12 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     super.notifyCommandExecuted(more);
     for (PyFrameListener listener : myFrameListeners) {
       listener.frameChanged();
+    }
+  }
+
+  private void notifySessionStopped() {
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.sessionStopped();
     }
   }
 

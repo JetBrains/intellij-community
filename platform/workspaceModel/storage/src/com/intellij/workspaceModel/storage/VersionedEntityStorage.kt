@@ -10,6 +10,9 @@ interface VersionedEntityStorage {
   val version: Long
   val current: WorkspaceEntityStorage
 
+  // Return builder or storage that is base for this entity storage
+  val base: WorkspaceEntityStorage
+
   /**
    * Return cached result or evaluate it by calling [value::source] if it isn't evaluated for the current version of storage yet.
    */

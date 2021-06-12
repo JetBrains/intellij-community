@@ -2,10 +2,12 @@
 package com.intellij.util.ref;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.EmptyRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.Introspector;
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -24,28 +26,28 @@ public final class GCUtil {
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
+    tryGcSoftlyReachableObjects(()->false);
+  }
+
+  @TestOnly
+  public static void tryGcSoftlyReachableObjects(@NotNull BooleanSupplier stop) {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
-    ObjectUtils.reachabilityFence(ref.get());
 
     System.gc();
 
     StringBuilder log = new StringBuilder();
-    if (!allocateTonsOfMemory(log, () -> ref.isEnqueued())) {
+    if (!allocateTonsOfMemory(log, EmptyRunnable.getInstance(), () -> ref.isEnqueued() || ref.get() == null || stop.getAsBoolean())) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up. Log:\n" + log);
     }
-
-    // using ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
-    // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-    ObjectUtils.reachabilityFence(ref.get());
 
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "StringConcatenationInsideStringBufferAppend"})
-  static boolean allocateTonsOfMemory(StringBuilder log, BooleanSupplier until) {
+  static boolean allocateTonsOfMemory(@NotNull StringBuilder log, @NotNull Runnable runWhileWaiting, @NotNull BooleanSupplier until) {
     long freeMemory = Runtime.getRuntime().freeMemory();
     log.append("Free memory: " + freeMemory + "\n");
 
@@ -55,6 +57,7 @@ public final class GCUtil {
     List<SoftReference<?>> list = new ArrayList<>();
     try {
       for (int i = 0; i < 1000 && !until.getAsBoolean(); i++) {
+        runWhileWaiting.run();
         while (queue.poll() != null) {
           liveChunks--;
         }
@@ -82,9 +85,12 @@ public final class GCUtil {
       System.err.println("Log: " + log + "freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
       System.err.println(ThreadDumper.dumpThreadsToString());
       throw e;
-    } finally {
+    }
+    finally {
       // do not leave a chance for our created SoftReference's content to lie around until next full GC's
-      for(SoftReference createdReference:list) createdReference.clear();
+      for (Reference<?> createdReference : list) {
+        createdReference.clear();
+      }
     }
     return until.getAsBoolean();
   }

@@ -1,5 +1,21 @@
 <html>
 <body>
-<span>This inspection warns about known Javac issues, problems and incompatibilities.</span>
+Reports known Javac issues, performance problems, and incompatibilities.
+For example, type inference may be slow when it has to process many nested calls.
+<p>The following code triggers a warning, as vararg method call has 50+ poly arguments:</p>
+<pre><code>
+  Arrays.asList(
+      Arrays.asList("a", "b"),
+      ...
+      Arrays.asList("a100", "b100"));
+</code></pre>
+<p>The quick-fix adds explicit type arguments, which makes compilation and IDE processing much faster:</p>
+<pre><code>
+  //noinspection RedundantTypeArguments
+  Arrays.&lt;List&lt;String&gt;&gt;asList(
+      Arrays.asList("a", "b"),
+      ...
+      Arrays.asList("a100", "b100"));
+</code></pre>
 </body>
 </html>

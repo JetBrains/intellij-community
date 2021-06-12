@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
@@ -34,15 +36,25 @@ import org.jetbrains.annotations.Nullable;
 public abstract class Task implements TaskInfo, Progressive {
   private static final Logger LOG = Logger.getInstance(Task.class);
 
-  protected final Project myProject;
-  protected @NlsContexts.ProgressTitle String myTitle;
+  protected final @Nullable Project myProject;
+  protected final @Nullable JComponent myParentComponent;
+  /**
+   * @deprecated Please use {@link #getTitle()} property, to be defined private.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  protected @NlsContexts.ProgressTitle @NotNull String myTitle;
 
   private final boolean myCanBeCancelled;
   private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");
   private @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
-  private Task(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project,
+               @Nullable JComponent parentComponent,
+               @NlsContexts.ProgressTitle @NotNull String title,
+               boolean canBeCancelled) {
     myProject = project;
+    myParentComponent = parentComponent;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
   }
@@ -99,8 +111,13 @@ public abstract class Task implements TaskInfo, Progressive {
     return EdtReplacementThread.EDT_WITH_IW;
   }
 
+  @SuppressWarnings("NullableProblems")
   public final Project getProject() {
     return myProject;
+  }
+
+  public final @Nullable JComponent getParentComponent() {
+    return myParentComponent;
   }
 
   public final void queue() {
@@ -108,7 +125,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @Override
-  public final @NotNull String getTitle() {
+  public final @NlsContexts.ProgressTitle @NotNull String getTitle() {
     return myTitle;
   }
 
@@ -171,13 +188,17 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
+
     private final @NotNull PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title) {
+    public Backgroundable(@Nullable Project project,
+                          @NlsContexts.ProgressTitle @NotNull String title) {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+    public Backgroundable(@Nullable Project project,
+                          @NlsContexts.ProgressTitle @NotNull String title,
+                          boolean canBeCancelled) {
       this(project, title, canBeCancelled, ALWAYS_BACKGROUND);
     }
 
@@ -185,7 +206,15 @@ public abstract class Task implements TaskInfo, Progressive {
                           @NlsContexts.ProgressTitle @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
-      super(project, title, canBeCancelled);
+      this(project, null, title, canBeCancelled, backgroundOption);
+    }
+
+    public Backgroundable(@Nullable Project project,
+                          @Nullable JComponent parentComponent,
+                          @NlsContexts.ProgressTitle @NotNull String title,
+                          boolean canBeCancelled,
+                          @Nullable PerformInBackgroundOption backgroundOption) {
+      super(project, parentComponent, title, canBeCancelled);
       myBackgroundOption = ObjectUtils.notNull(backgroundOption, ALWAYS_BACKGROUND);
       if (StringUtil.isEmptyOrSpaces(title)) {
         LOG.warn("Empty title for backgroundable task.", new Throwable());
@@ -214,9 +243,19 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
+
+    public Modal(@Nullable Project project,
+                 @NlsContexts.DialogTitle @NotNull String title,
+                 boolean canBeCancelled) {
+      this(project, null, title, canBeCancelled);
+    }
+
+    public Modal(@Nullable Project project,
+                 @Nullable JComponent parentComponent,
+                 @NlsContexts.DialogTitle @NotNull String title,
+                 boolean canBeCancelled) {
       //noinspection DialogTitleCapitalization
-      super(project, title, canBeCancelled);
+      super(project, parentComponent, title, canBeCancelled);
     }
 
     @Override
@@ -226,11 +265,20 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class ConditionalModal extends Backgroundable {
+
     public ConditionalModal(@Nullable Project project,
                             @NlsContexts.ProgressTitle @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
-      super(project, title, canBeCancelled, backgroundOption);
+      this(project, null, title, canBeCancelled, backgroundOption);
+    }
+
+    public ConditionalModal(@Nullable Project project,
+                            @Nullable JComponent parentComponent,
+                            @NlsContexts.ProgressTitle @NotNull String title,
+                            boolean canBeCancelled,
+                            @NotNull PerformInBackgroundOption backgroundOption) {
+      super(project, parentComponent, title, canBeCancelled, backgroundOption);
     }
 
     @Override
@@ -282,8 +330,17 @@ public abstract class Task implements TaskInfo, Progressive {
     private volatile T myResult;
     private volatile Throwable myError;
 
-    public WithResult(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
-      super(project, title, canBeCancelled);
+    public WithResult(@Nullable Project project,
+                      @NlsContexts.DialogTitle @NotNull String title,
+                      boolean canBeCancelled) {
+      this(project, null, title, canBeCancelled);
+    }
+
+    public WithResult(@Nullable Project project,
+                      @Nullable JComponent component,
+                      @NlsContexts.DialogTitle @NotNull String title,
+                      boolean canBeCancelled) {
+      super(project, component, title, canBeCancelled);
     }
 
     @Override

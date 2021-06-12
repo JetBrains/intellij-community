@@ -26,7 +26,11 @@ public interface ObservableConsoleView  {
   void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent);
 
   interface ChangeListener {
-    void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types);
+    /**
+     * @deprecated Use {@link #textAdded(String, ConsoleViewContentType)} instead
+     */
+    @Deprecated
+    default void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types) {}
     default void textAdded(@NotNull String text, @NotNull ConsoleViewContentType type) {}
   }
 }

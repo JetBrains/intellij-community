@@ -31,8 +31,7 @@ public abstract class GradleDependencyUpdaterTestBase extends GradleImportingTes
   @Parameterized.Parameters(name = "{2}")
   public static Collection languageExtensions() {
     return Arrays.asList(new Object[][]{
-      {"6.5.1", ".gradle", GROOVY_LANGUAGE}
-      ,
+      {"6.5.1", ".gradle", GROOVY_LANGUAGE},
       {"6.5.1", ".gradle.kts", KOTLIN_LANGUAGE}
     });
   }

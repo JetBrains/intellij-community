@@ -1,6 +1,6 @@
 public class YoYo {
     static class YoYoYo {
-        private YoYo anObject;
+        private final YoYo anObject;
 
         public YoYoYo(YoYo anObject) {
             this.anObject = anObject;

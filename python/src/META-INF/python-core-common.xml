@@ -244,6 +244,7 @@
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
+    <internalFileTemplate name="Python Stub"/>
     <internalFileTemplate name="Python Unit Test"/>
     <internalFileTemplate name="Setup Script"/>
 
@@ -409,6 +410,8 @@
                 icon="PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
+
+    <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
   </extensions>
 
   <extensionPoints>
@@ -474,6 +477,12 @@
     <extensionPoint qualifiedName="Pythonid.dataViewPanelFactory"
                     interface="com.jetbrains.python.debugger.containerview.PyDataViewPanelFactory"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.executeCustomizer"
+                    interface="com.jetbrains.python.console.PyExecuteConsoleCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.tableViewCustomizer"
+                    interface="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizer"
+                    dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
@@ -510,7 +519,7 @@
     <documentationLinkProvider implementation="com.jetbrains.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
-    <visitorFilter language="PyDocstring" implementationClass="com.jetbrains.python.documentation.PyDocstringVisitorFilter"/>
+    <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDocstringVisitorFilter"/>
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
@@ -641,10 +650,14 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            use-shortcut-of="ForceStepInto">
-      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
+      <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="macOS System Shortcuts" first-keystroke="alt shift SEMICOLON" second-keystroke="alt shift F7" replace-all="true"/>
     </action>
 
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
@@ -668,6 +681,14 @@
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.console">
+    <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.debugger">
+    <tableViewCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizerDefault"/>
   </extensions>
 
   <applicationListeners>

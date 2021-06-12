@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
@@ -16,6 +16,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     scrambleMainJar = false
+    useSplash = true
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = ["intellij.platform.main"]
@@ -23,7 +24,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin([:]),

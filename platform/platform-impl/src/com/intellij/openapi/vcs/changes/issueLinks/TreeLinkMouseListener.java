@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -15,9 +15,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class TreeLinkMouseListener extends LinkMouseListenerBase {
   private final ColoredTreeCellRenderer myRenderer;
   protected WeakReference<TreeNode> myLastHitNode;

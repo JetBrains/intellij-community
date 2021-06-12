@@ -5,53 +5,50 @@ import org.gradle.api.Action
 import org.gradle.internal.UncheckedException
 import org.gradle.internal.concurrent.CompositeStoppable
 import org.gradle.internal.concurrent.DefaultExecutorFactory
-import org.gradle.internal.id.UUIDGenerator
-import org.gradle.internal.remote.Address
 import org.gradle.internal.remote.ConnectionAcceptor
 import org.gradle.internal.remote.internal.ConnectCompletion
 import org.gradle.internal.remote.internal.IncomingConnector
 import org.gradle.internal.remote.internal.KryoBackedMessageSerializer
 import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.InetAddressFactory
-import org.gradle.internal.remote.internal.inet.MultiChoiceAddress
 import org.gradle.internal.remote.internal.inet.SocketConnection
+import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.serialize.StatefulSerializer
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
-class TargetIncomingConnector() : IncomingConnector {
-  private val idGenerator = UUIDGenerator()
+class TargetIncomingConnector : IncomingConnector {
   private val addressFactory: InetAddressFactory = InetAddressFactory()
 
   private val executorFactory = DefaultExecutorFactory()
   override fun accept(action: Action<ConnectCompletion>, allowRemote: Boolean): ConnectionAcceptor {
-    val serverSocket: ServerSocketChannel
-    val bindingAddress = getBindingAddress()
-    val localPort: Int
+    val serverSocketChannel: ServerSocketChannel
+    val serverSocket: ServerSocket
     try {
       val bindingPort = getBindingPort()
-      serverSocket = ServerSocketChannel.open()
-      serverSocket.socket().bind(InetSocketAddress(bindingAddress, bindingPort))
-      localPort = serverSocket.socket().localPort
+      serverSocketChannel = ServerSocketChannel.open()
+      serverSocket = serverSocketChannel.socket()
+      val bindingAddress = getBindingAddress(allowRemote)
+      serverSocket.bind(InetSocketAddress(bindingAddress, bindingPort))
     }
     catch (e: Exception) {
       throw UncheckedException.throwAsUncheckedException(e)
     }
-    val id = idGenerator.generateId()
-    val addresses = listOf(bindingAddress)
-    val address: Address = MultiChoiceAddress(id, localPort, addresses)
+    val localPort = serverSocket.localPort
+    val address = SocketInetAddress(serverSocket.inetAddress, localPort)
     logger.debug("Listening on $address.")
     val executor = executorFactory.create("Incoming ${if (allowRemote) "remote" else "local"} TCP Connector on port $localPort")
-    executor.execute(Receiver(serverSocket, action, allowRemote))
+    executor.execute(Receiver(serverSocketChannel, action, allowRemote))
     return object : ConnectionAcceptor {
       override fun getAddress() = address
 
       override fun requestStop() {
-        CompositeStoppable.stoppable(serverSocket).stop()
+        CompositeStoppable.stoppable(serverSocketChannel).stop()
       }
 
       override fun stop() {
@@ -63,15 +60,15 @@ class TargetIncomingConnector() : IncomingConnector {
 
   private fun getBindingPort() = System.getenv("serverBindingPort")?.toIntOrNull() ?: 0
 
-  private fun getBindingAddress(): InetAddress {
+  private fun getBindingAddress(allowRemote: Boolean): InetAddress? {
     val bindingHost = System.getenv("serverBindingHost")
     if (bindingHost.isNullOrBlank()) {
-      return addressFactory.localBindingAddress
+      return if (allowRemote) null else addressFactory.localBindingAddress
     }
     else {
       val inetAddresses = InetAddresses()
       val inetAddress = inetAddresses.remote.find { it.hostName == bindingHost || it.hostAddress == bindingHost }
-      return inetAddress ?: addressFactory.localBindingAddress
+      return inetAddress ?: if (allowRemote) null else addressFactory.localBindingAddress
     }
   }
 

@@ -76,8 +76,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
 
-  public abstract @Nullable Project findOpenProjectByHash(@Nullable String locationHash);
-
   @ApiStatus.Internal
   public abstract @NotNull List<String> getAllExcludedUrls();
 }

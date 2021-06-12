@@ -13,7 +13,7 @@ import training.learn.CourseManager
 import training.learn.course.KLesson
 import java.awt.datatransfer.StringSelection
 
-class DumpFeaturesTrainerText : AnAction() {
+private class DumpFeaturesTrainerText : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val lessonsForModules = CourseManager.instance.lessonsForModules

@@ -7,17 +7,20 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.RepositoryLocation
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.ui.content.Content
-import com.intellij.util.NotNullFunction
+import java.util.function.Predicate
 import java.util.function.Supplier
 
-class IncomingChangesViewProvider(private val project: Project) : ChangesViewContentProvider {
+internal class IncomingChangesViewProvider(private val project: Project) : ChangesViewContentProvider {
   private var browser: CommittedChangesTreeBrowser? = null
 
   override fun initTabContent(content: Content) =
@@ -85,12 +88,13 @@ class IncomingChangesViewProvider(private val project: Project) : ChangesViewCon
       }
   }
 
-  class VisibilityPredicate : NotNullFunction<Project, Boolean> {
-    override fun `fun`(project: Project): Boolean =
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isIncomingChangesAvailable(it) }
+  internal class VisibilityPredicate : Predicate<Project> {
+    override fun test(project: Project): Boolean {
+      return ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isIncomingChangesAvailable(it) }
+    }
   }
 
-  class DisplayNameSupplier : Supplier<String> {
+  internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = message("incoming.changes.tab")
   }
 
