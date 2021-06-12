@@ -13,7 +13,7 @@ import java.util.List;
 public final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
   private static int ourGlobalCounter = 0;
   private final boolean mySoftWrappable;
-  final int myPriority;
+  public final int myPriority;
   final int myOrder;
 
   AfterLineEndInlayImpl(@NotNull EditorImpl editor,

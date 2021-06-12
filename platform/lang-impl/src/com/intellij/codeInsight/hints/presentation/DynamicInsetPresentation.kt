@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent
 @ApiStatus.Internal
 class DynamicInsetPresentation(
   presentation: InlayPresentation,
-  private val valueProvider: InsetValueProvider
+  val valueProvider: InsetValueProvider
 ) : StaticDelegatePresentation(presentation) {
   private var isPresentationUnderCursor = false
 
