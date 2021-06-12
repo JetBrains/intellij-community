@@ -95,6 +95,8 @@ esac
 export FONTCONFIG_PATH
 echo "FONTCONFIG_PATH=$FONTCONFIG_PATH"
 
+# fontconfig look for default fonts in "$XDG_DATA_HOME/fonts" path.
+# Set this variable to use self-contained default fonts in case no others exist.
 echo "> Setup Linux fonts home path prefix directory (XDG_DATA_HOME)"
 export XDG_DATA_HOME="$FONTS_CONFIGURATION_SOURCE_PATH"
 echo "XDG_DATA_HOME=$XDG_DATA_HOME"

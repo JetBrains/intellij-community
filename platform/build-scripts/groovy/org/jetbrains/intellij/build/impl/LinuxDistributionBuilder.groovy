@@ -355,6 +355,9 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       Files.copy(source, target)
   }
 
+  /**
+   * Note: libXext.so.6, libX11.so.6, libxcb.so.1, libXau.so.6 are required in CentOS7 (min supported self-contained version)
+   */
   private static void downloadSelfContainedLibrariesForRemoteDevelopment(BuildContext buildContext, @NotNull Path distDir) {
     ArrayList<LinuxLibraryDownloadInfo> failedDownloads = new ArrayList<>()
     ArrayList<LinuxLibraryDownloadInfo> downloadLibsInfo = new ArrayList<>()
@@ -368,7 +371,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       new LinuxLibraryDownloadInfo("libXrender", "0.9.8-2.1"),
       new LinuxLibraryDownloadInfo("libXtst", "1.2.2-2.1"),
       new LinuxLibraryDownloadInfo("fontconfig", "2.10.95-7", { Path source, Path target ->
-        // Copy so libraries
+        // Copy Linux .so libraries
         Path sourceLibDirectory = source.resolve("usr/lib64")
         Path targetLibsPath = Files.createDirectories(target.resolve("libs"))
         sourceLibDirectory.eachFileRecurse { Path libEntryPath ->
@@ -386,26 +389,21 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         // Copy fonts.config file
         Path sourceConfigFile = source.resolve("etc").resolve("fonts").resolve("fonts.conf")
         if (!Files.exists(sourceConfigFile))
-          throw new IllegalStateException("Source fonts config file not found: '$sourceConfigFile'")
+          buildContext.messages.error("Source fonts config file not found: '$sourceConfigFile'")
 
         Path targetConfigDirectory = Files.createDirectories(target.resolve("fontconfig"))
         Files.copy(sourceConfigFile, targetConfigDirectory.resolve(sourceConfigFile.fileName))
       }),
       new LinuxLibraryDownloadInfo("dejavu-lgc-sans-fonts", "2.33-6", "noarch", { Path source, Path target ->
-        Path sourceFontsDirectory = source.resolve("usr/share/fonts/dejavu")
-        Path targetDirectory = Files.createDirectories(target.resolve("fontconfig/fonts"))
-        sourceFontsDirectory.eachFileRecurse { entry ->
-          String entryName = entry.fileName.toString()
-          String entryExtension = ""
+        String fontName = "DejaVuLGCSans.ttf"
+        Path sourceFontPath = source.resolve("usr/share/fonts/dejavu").resolve(fontName)
+        if (Files.notExists(sourceFontPath))
+          buildContext.messages.error("Unable to find source font: '$sourceFontPath'".toString())
 
-          int extensionStartIndex = entryName.indexOf('.')
-          if (extensionStartIndex > 0)
-            entryExtension = entryName.substring(extensionStartIndex, entryName.length())
+        Path targetFontsDirectory = Files.createDirectories(target.resolve("fontconfig/fonts"))
+        Path targetFontPath = targetFontsDirectory.resolve(fontName)
 
-          if (Files.isRegularFile(entry) && entryExtension == ".ttf") {
-            copyFile(entry, targetDirectory.resolve(entryName))
-          }
-        }
+        copyFile(sourceFontPath, targetFontPath)
       })
     )
 
@@ -424,17 +422,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       if (!failedDownloads.isEmpty()) {
-        // TODO: temp fix for failed libraries
         String message = "Download has failed for ${failedDownloads.size()} lib(s): ${StringUtil.join(failedDownloads, { info -> "${info.libraryName}".toString() }, ", ")}"
-        buildContext.messages.warning(message)
+        buildContext.messages.error(message)
       }
 
       for (info in downloadLibsInfo) {
         Path downloadPath = info.downloadPath
         if (downloadPath == null) {
-          // TODO: temp fix for failed libraries
-          continue
-          //throw new IllegalStateException("Unable to get download path for a library: ${info.libraryName}")
+          buildContext.messages.error("Unable to get download path for a library: ${info.libraryName}")
         }
 
         String archiveName = downloadPath.fileName.toString()

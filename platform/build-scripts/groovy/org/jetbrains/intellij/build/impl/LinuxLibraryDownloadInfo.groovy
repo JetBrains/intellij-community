@@ -16,7 +16,7 @@ class LinuxLibraryDownloadInfo {
   public String architecture
   private Closure copyLibraryAction
 
-  private static String LINUX_LIB_URL_BASE = "https://vault.centos.org"
+  private static String LINUX_LIB_URL_BASE = "https://cache-redirector.jetbrains.com/archive.kernel.org/centos-vault"
   private static String LINUX_OS_VERSION = "7.0.1406"
   static String DEFAULT_ARCHITECTURE = "x86_64"
   static String DEFAULT_EXTENSION = "rpm"
