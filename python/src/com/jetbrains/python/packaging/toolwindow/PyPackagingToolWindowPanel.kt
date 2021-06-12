@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -89,8 +90,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
           val versions = listOf(latestText) + (currentPackageInfo?.availableVersions ?: emptyList())
           JBPopupFactory.getInstance().createListPopup(
             object : BaseListPopupStep<String>(null, versions) {
-              override fun onChosen(@NlsSafe selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
-                @Suppress("HardCodedStringLiteral")
+              override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
                 this@apply.text = selectedValue
                 return FINAL_CHOICE
               }

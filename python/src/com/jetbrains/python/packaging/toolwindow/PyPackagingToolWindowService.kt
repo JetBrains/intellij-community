@@ -130,10 +130,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
         val repository = PyPackageRepository(entry.key)
 
         val (packagesSeq, size) = when {
-          PyPIPackageUtil.isPyPIRepository(entry.key) -> {
-            val pypiPackages = PyPIPackageRanking.packageRank.asSequence().map { it.key }
-            Pair(pypiPackages, PyPIPackageCache.getInstance().packageNames.size)
-          }
+          PyPIPackageUtil.isPyPIRepository(entry.key) -> Pair(PyPIPackageRanking.names, PyPIPackageCache.getInstance().packageNames.size)
           else -> Pair(entry.value.asSequence().map { it.name }, entry.value.size)
         }
 
@@ -345,18 +342,19 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       // The number of items to skip might be more than the number of ranked packages we store,
       // so we need to include the remaining packages from pypi, filtering out those, that are already shown.
       if (PyPIPackageUtil.isPyPIRepository(repository.url)) {
-        val ranked = PyPIPackageRanking.packageRank.asSequence().map { it.key }
+        val ranked = PyPIPackageRanking.packageRank
+        val names = PyPIPackageRanking.names
         val rankedSize = PyPIPackageRanking.packageRank.size
         val pypiAdjusted = when {
           skipItems > rankedSize -> fromCurrentRepo.asSequence().drop(skipItems - rankedSize).map { it.name }
           skipItems + PACKAGES_LIMIT > rankedSize -> {
             val pypiRemaining = fromCurrentRepo.asSequence()
               .map { it.name }
-              .filterNot { it in PyPIPackageRanking.packageRank }
+              .filterNot { it in ranked }
 
-            ranked.asSequence().drop(skipItems) + pypiRemaining
+            names.drop(skipItems) + pypiRemaining
           }
-          else -> ranked.drop(skipItems)
+          else -> names.drop(skipItems)
         }
 
 
@@ -414,9 +412,10 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       }
 
       if (PyPIPackageUtil.isPyPIRepository(url)) {
+        val ranking = PyPIPackageRanking.packageRank
         return Comparator { p1, p2 ->
-          val rank1 = PyPIPackageRanking.packageRank[p1.name.toLowerCase()]
-          val rank2 = PyPIPackageRanking.packageRank[p2.name.toLowerCase()]
+          val rank1 = ranking[p1.name.toLowerCase()]
+          val rank2 = ranking[p2.name.toLowerCase()]
           return@Comparator when {
             rank1 != null && rank2 == null -> -1
             rank1 == null && rank2 != null -> 1

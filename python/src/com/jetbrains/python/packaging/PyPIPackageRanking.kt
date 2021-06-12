@@ -4,23 +4,34 @@ package com.jetbrains.python.packaging
 
 import com.google.common.io.Resources
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
+import com.intellij.openapi.application.ApplicationManager
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 object PyPIPackageRanking {
+  private val lock = ReentrantReadWriteLock()
+  private var myPackageRank: Map<String, Int> = LinkedHashMap()
+    get() = lock.read { field }
+    set(value) {
+      lock.write { field = value }
+    }
 
-  val packageRank = mutableMapOf<String, Int>()
+  val packageRank: Map<String, Int>
+    get() = myPackageRank
+  val names: Sequence<String>
+    get() = myPackageRank.asSequence().map { it.key }
 
   fun reload() {
-    packageRank.clear()
+    assert(!ApplicationManager.getApplication().isDispatchThread)
     val gson = Gson()
     val resource = PyPIPackageRanking::class.java.getResource("/packaging/pypi-ranking.json") ?: error("Python package ranking not found")
     val array = Resources.asCharSource(resource, Charsets.UTF_8).openBufferedStream().use {
-      gson.fromJson(it, Array<PyPackageRankingEntry>::class.java)
+      gson.fromJson(it, Array<Array<String>>::class.java)
     }
-    array.forEach {
-      packageRank[it.name.toLowerCase()] = it.downloads
-    }
+    val newRanked = array.asSequence()
+      .map { Pair(it[0].toLowerCase(), it[1].toInt()) }
+      .toMap(LinkedHashMap())
+    myPackageRank = newRanked
   }
-
-  class PyPackageRankingEntry(@SerializedName("project") val name: String, @SerializedName("download_count") val downloads: Int)
 }
