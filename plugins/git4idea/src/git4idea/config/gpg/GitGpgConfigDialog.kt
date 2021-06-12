@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.FontUtil
@@ -21,6 +22,7 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.*
 
@@ -41,6 +43,9 @@ class GitGpgConfigDialog(
   }
   private val errorLabel = JBLabel().apply {
     foreground = ERROR_FOREGROUND_COLOR
+    isVisible = false
+  }
+  private val docLinkLabel = BrowserLink(message("gpg.error.see.documentation.link.text"), message("gpg.jb.manual.link")).apply {
     isVisible = false
   }
 
@@ -72,6 +77,9 @@ class GitGpgConfigDialog(
       row {
         errorLabel()
       }
+      row {
+        docLinkLabel()
+      }
     }
 
   private fun initComboBox() {
@@ -90,8 +98,7 @@ class GitGpgConfigDialog(
       comboBoxModel.addAll(keys.keys)
 
       if (keys.keys.isEmpty()) {
-        errorLabel.text = message("settings.configure.sign.gpg.error.no.available.keys.found.text")
-        errorLabel.isVisible = true
+        reportError(message("settings.configure.sign.gpg.error.no.available.keys.found.text"))
       }
       else {
         isOKActionEnabled = true
@@ -121,7 +128,8 @@ class GitGpgConfigDialog(
         block()
       }
       catch (e: VcsException) {
-        reportError(e)
+        logger<GitGpgConfigDialog>().warn(e)
+        reportError(e.message)
       }
       finally {
         setLoading(false)
@@ -136,10 +144,10 @@ class GitGpgConfigDialog(
     comboBox.isEnabled = !isLoading
   }
 
-  private fun reportError(e: VcsException) {
-    logger<GitGpgConfigDialog>().warn(e)
-    errorLabel.text = e.message
+  private fun reportError(message: @Nls String) {
+    errorLabel.text = message
     errorLabel.isVisible = true
+    docLinkLabel.isVisible = true
   }
 
   @Throws(VcsException::class)
