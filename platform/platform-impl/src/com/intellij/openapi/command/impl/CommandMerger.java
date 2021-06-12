@@ -53,11 +53,28 @@ public final class CommandMerger {
 
   void addAction(@NotNull UndoableAction action) {
     myCurrentActions.add(action);
+    addActionToSharedStack(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {
       Collections.addAll(myAllAffectedDocuments, refs);
     }
     myForcedGlobal |= action.isGlobal();
+  }
+
+  private void addActionToSharedStack(@NotNull UndoableAction action) {
+    if (action instanceof AdjustableUndoableAction) {
+      AdjustableUndoableAction adjustable = (AdjustableUndoableAction)action;
+      DocumentReference[] affected = action.getAffectedDocuments();
+      if (affected == null) {
+        return;
+      }
+      for (DocumentReference reference : affected) {
+        for (ActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
+          myManager.getSharedUndoStacksHolder().addToStack(reference, changeRange);
+          myManager.getSharedRedoStacksHolder().addToStack(reference, changeRange.createIndependentCopy(true));
+        }
+      }
+    }
   }
 
   void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {

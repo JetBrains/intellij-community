@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 
 public class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   @Override
@@ -12,6 +16,14 @@ public class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
     DataManager dataManager = DataManager.getInstanceIfCreated();
     if (dataManager == null) return null;
     @SuppressWarnings("deprecation") DataContext context = dataManager.getDataContext();
-    return PlatformDataKeys.FILE_EDITOR.getData(context);
+    if (ClientId.isCurrentlyUnderLocalId()) {
+      return PlatformDataKeys.FILE_EDITOR.getData(context);
+    }
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return null;
+    }
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    return fileEditorManager.getSelectedEditor();
   }
 }
