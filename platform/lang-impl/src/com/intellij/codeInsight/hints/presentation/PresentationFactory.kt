@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.pom.Navigatable
@@ -42,11 +41,6 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
   }
-  init {
-    val attributes = editor.colorsScheme.getAttributes(REFERENCE_HYPERLINK_COLOR) ?: TextAttributes()
-    attributes.effectType = null
-    editor.colorsScheme.setAttributes(DefaultLanguageHighlighterColors.INLAY_REFERENCE_HYPERLINK_COLOR, attributes)
-  }
 
   @Contract(pure = true)
   override fun smallText(text: String): InlayPresentation {
@@ -56,7 +50,8 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   fun smallTextWithoutBackground(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
-    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor.colorsScheme, true)
+    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor.colorsScheme,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
   override fun container(
@@ -304,7 +299,8 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   }
 
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
-    return attributes(noHighlightReference, DefaultLanguageHighlighterColors.INLAY_REFERENCE_HYPERLINK_COLOR)
+    return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
+                      WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
   }
 
   @Contract(pure = true)
@@ -357,11 +353,14 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }
   }
 
-  private fun attributes(base: InlayPresentation, textAttributesKey: TextAttributesKey, isFallback: Boolean = false): WithAttributesPresentation =
-    WithAttributesPresentation(base, textAttributesKey, editor.colorsScheme, isFallback)
+  private fun attributes(base: InlayPresentation,
+                         textAttributesKey: TextAttributesKey,
+                         flags: WithAttributesPresentation.AttributesFlags = WithAttributesPresentation.AttributesFlags()): WithAttributesPresentation =
+    WithAttributesPresentation(base, textAttributesKey, editor.colorsScheme, flags)
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
-    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor.colorsScheme, true)
+    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor.colorsScheme,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown

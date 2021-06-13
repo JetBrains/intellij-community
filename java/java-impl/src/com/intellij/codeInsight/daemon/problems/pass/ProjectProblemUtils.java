@@ -64,7 +64,8 @@ public final class ProjectProblemUtils {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
-    InlayPresentation errorTextPresentation = new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor.getColorsScheme(), false);
+    InlayPresentation errorTextPresentation = new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor.getColorsScheme(),
+                                                                             new WithAttributesPresentation.AttributesFlags());
     InlayPresentation problemsPresentation =
       factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
 

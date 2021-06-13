@@ -9,12 +9,20 @@ import java.awt.Graphics2D
 class WithAttributesPresentation(presentation: InlayPresentation,
                                  val textAttributesKey: TextAttributesKey,
                                  private val scheme: TextAttributesScheme,
-                                 val isDefault: Boolean = false
+                                 val flags: AttributesFlags = AttributesFlags()
 ) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
-    if (!isDefault) super.paint(g, scheme.getAttributes(textAttributesKey) ?: TextAttributes())
+    val other = scheme.getAttributes(textAttributesKey) ?: TextAttributes()
+    if (flags.skipEffects) {
+      other.effectType = null
+    }
+    if (flags.skipBackground) {
+      other.backgroundColor = null
+    }
+    if (!flags.isDefault) {
+      super.paint(g, other)
+    }
     else {
-      val other = scheme.getAttributes(textAttributesKey) ?: TextAttributes()
       val result = attributes.clone()
       if (result.foregroundColor == null) {
         result.foregroundColor = other.foregroundColor
@@ -29,6 +37,27 @@ class WithAttributesPresentation(presentation: InlayPresentation,
         result.effectColor = other.effectColor
       }
       super.paint(g, result)
+    }
+  }
+
+  class AttributesFlags {
+    var skipEffects: Boolean = false
+    var skipBackground: Boolean = false
+    var isDefault: Boolean = false
+
+    fun withSkipEffects(skipEffects: Boolean): AttributesFlags {
+      this.skipEffects = skipEffects
+      return this
+    }
+
+    fun withSkipBackground(skipBackground: Boolean): AttributesFlags {
+      this.skipBackground = skipBackground
+      return this
+    }
+
+    fun withIsDefault(isDefault: Boolean): AttributesFlags {
+      this.isDefault = isDefault
+      return this
     }
   }
 }
