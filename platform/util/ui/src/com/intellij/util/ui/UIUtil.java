@@ -1801,7 +1801,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (component.hasFocus() || Boolean.getBoolean("java.awt.headless")) {
+    if (Boolean.getBoolean("java.awt.headless") || component.hasFocus()) {
       return true;
     }
 
@@ -3411,7 +3411,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (component.isShowing() || Boolean.getBoolean("java.awt.headless")) {
+    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
       return true;
     }
 
