@@ -1801,7 +1801,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (component.hasFocus() || GraphicsEnvironment.isHeadless()) {
+    if (component.hasFocus() || Boolean.getBoolean("java.awt.headless")) {
       return true;
     }
 
@@ -1815,7 +1815,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsFocused(@NotNull JComponent component, boolean value) {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (Boolean.getBoolean("java.awt.headless")) {
       return;
     }
     component.putClientProperty(HAS_FOCUS, value ? Boolean.TRUE : null);
@@ -3411,7 +3411,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (component.isShowing() || GraphicsEnvironment.isHeadless()) {
+    if (component.isShowing() || Boolean.getBoolean("java.awt.headless")) {
       return true;
     }
 
@@ -3432,7 +3432,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (Boolean.getBoolean("java.awt.headless")) {
       return;
     }
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
