@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionsOnSave;
 
+import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,11 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Allows adding UI (CheckBox, comment, ActionLink and more) to the 'Actions on Save' page in Settings (Preferences).<br/>
+ * <code>ActionOnSaveInfoProvider</code> and {@link ActionOnSaveInfo} are mostly about the UI / UX on the 'Actions on Save' page. They
+ * don't provide any engine that runs each particular 'action on save'. As an engine example, see {@link ActionsOnSaveFileDocumentManagerListener}
+ * or implement any custom engine that works the best for each specific 'action on save'.
+ * <br/><br/>
  * Please use `order` attribute when registering {@link ActionOnSaveInfoProvider}s and be as specific as possible. Some plugins may be
  * disabled, so it's recommended to use 'before' and 'after' anchors relative to all other known extensions. The order of the checkboxes
  * on the 'Actions on Save' page should reflect the real order of the performed actions.

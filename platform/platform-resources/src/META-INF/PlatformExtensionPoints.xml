@@ -428,6 +428,7 @@
     </extensionPoint>
     <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
     <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider" dynamic="true"/>
+    <extensionPoint name="actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>
 
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
   </extensionPoints>
