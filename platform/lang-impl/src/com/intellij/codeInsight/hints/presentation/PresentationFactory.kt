@@ -50,7 +50,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   fun smallTextWithoutBackground(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
-    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor.colorsScheme,
+    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor,
                                       WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
@@ -356,10 +356,10 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   private fun attributes(base: InlayPresentation,
                          textAttributesKey: TextAttributesKey,
                          flags: WithAttributesPresentation.AttributesFlags = WithAttributesPresentation.AttributesFlags()): WithAttributesPresentation =
-    WithAttributesPresentation(base, textAttributesKey, editor.colorsScheme, flags)
+    WithAttributesPresentation(base, textAttributesKey, editor, flags)
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
-    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor.colorsScheme,
+    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor,
                                       WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 

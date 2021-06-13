@@ -1,18 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.colors.TextAttributesScheme
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics2D
 
 class WithAttributesPresentation(presentation: InlayPresentation,
                                  val textAttributesKey: TextAttributesKey,
-                                 private val scheme: TextAttributesScheme,
+                                 private val editor: Editor,
                                  val flags: AttributesFlags = AttributesFlags()
 ) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
-    val other = scheme.getAttributes(textAttributesKey) ?: TextAttributes()
+    val other = editor.colorsScheme.getAttributes(textAttributesKey) ?: TextAttributes()
     if (flags.skipEffects) {
       other.effectType = null
     }
