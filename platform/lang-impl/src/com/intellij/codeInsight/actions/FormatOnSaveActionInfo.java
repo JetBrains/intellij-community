@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.application.options.GeneralCodeStylePanel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
@@ -8,9 +9,12 @@ import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +56,16 @@ public class FormatOnSaveActionInfo extends ActionOnSaveInfo {
   public boolean isActionOnSaveEnabled() {
     Boolean data = getContext().getUserData(FORMAT_ON_SAVE_KEY);
     return data != null ? data : isReformatOnSaveEnabled(getProject());
+  }
+
+  @Override
+  public @NotNull List<? extends ActionLink> getActionLinks() {
+    return List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        GeneralCodeStylePanel.selectFormatterTab(getSettings());
+      }
+    }));
   }
 
   @Override

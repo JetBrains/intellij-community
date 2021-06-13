@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.Objects;
@@ -128,6 +131,16 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myTabbedPane.addChangeListener(__ -> {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
+    });
+    myTabbedPane.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        // The 'Code Style' page has become visible, either the first time, or after switching to some other page in Settings (Preferences) and then back to this page.
+        if (ourSelectedTabIndex > 0 && myTabbedPane.getSelectedIndex() != ourSelectedTabIndex) {
+          // At the moment of writing this code, it's possible to get to this line of code only via selectFormatterTab(Settings) method.
+          myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
+        }
+      }
     });
     EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<>() {
@@ -388,5 +401,10 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private static @NlsContexts.ListItem String getMacintoshString() {
     return ApplicationBundle.message("combobox.crlf.mac");
+  }
+
+  public static void selectFormatterTab(@NotNull Settings settings) {
+    ourSelectedTabIndex = 1;
+    settings.select(settings.find(CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
   }
 }
