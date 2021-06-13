@@ -47,7 +47,7 @@ private val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
 internal fun getSdksToInstall(): List<PySdkToInstall> {
-  return if (SystemInfo.isWindows) listOf(getPy38ToInstallOnWindows(), getPy39ToInstallOnWindows())
+  return if (SystemInfo.isWindows) listOf(getPy39ToInstallOnWindows(), getPy38ToInstallOnWindows())
   else emptyList()
 }
 
@@ -69,11 +69,11 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.9.2/python-3.9.2-amd64.exe",
-    28287512,
-    "efb20aa1b648a2baddd949c142d6eb06",
+    "https://www.python.org/ftp/python/3.9.5/python-3.9.5-amd64.exe",
+    28377264,
+    "53a354a15baed952ea9519a7f4d87c3f",
     hashFunction,
-    "python-3.9.2-amd64.exe"
+    "python-3.9.5-amd64.exe"
   )
 }
 
@@ -85,11 +85,11 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.8.8/python-3.8.8-amd64.exe",
-    28217976,
-    "77a54a14239b6d7d0dcbe2e3a507d2f0",
+    "https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe",
+    28296784,
+    "62cf1a12a5276b0259e8761d4cf4fe42",
     hashFunction,
-    "python-3.8.8-amd64.exe"
+    "python-3.8.10-amd64.exe"
   )
 }
 
