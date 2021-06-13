@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.filters
 
+import com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+import com.intellij.structuralsearch.plugin.ui.filters.FilterProvider
 import org.jetbrains.kotlin.idea.KotlinBundle
+
+class KotlinFilterProvider : FilterProvider {
+    override fun getFilters(): List<FilterAction> = listOf(VarOnlyFilter(), ValOnlyFilter())
+}
 
 class VarOnlyFilter : OneStateFilter(
     KotlinBundle.lazyMessage("filter.match.only.vars"),

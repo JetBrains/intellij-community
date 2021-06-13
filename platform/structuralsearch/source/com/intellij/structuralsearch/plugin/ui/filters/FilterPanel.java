@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
@@ -52,7 +52,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
-  private final ScriptFilter myScriptFilter = new ScriptFilter();
+  private final ScriptFilter myScriptFilter;
   private final List<FilterAction> myFilters;
   private Runnable myConstraintChangedCallback;
 
@@ -60,10 +60,15 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     myProject = project;
     myFileType = fileType;
     myFilters = new SmartList<>();
-    for (FilterAction filterAction : FilterAction.EP_NAME.getExtensionList()) {
-      myFilters.add(filterAction);
-      filterAction.setTable(this);
+    for (FilterProvider provider : FilterProvider.EP_NAME.getExtensionList()) {
+      for (FilterAction filter : provider.getFilters()) {
+        myFilters.add(filter);
+        filter.setTable(this);
+      }
     }
+    myScriptFilter = new ScriptFilter(); // initialize last
+    myFilters.add(myScriptFilter);
+    myScriptFilter.setTable(this);
 
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable

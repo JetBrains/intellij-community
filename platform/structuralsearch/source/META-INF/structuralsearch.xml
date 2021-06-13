@@ -8,11 +8,13 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.filter"
                     interface="com.intellij.structuralsearch.plugin.ui.filters.FilterAction"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.filterProvider"
+                    interface="com.intellij.structuralsearch.plugin.ui.filters.FilterProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
+    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupKey="structural.search.group.name"
                      enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
                      implementationClass="com.intellij.structuralsearch.inspection.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
@@ -32,11 +34,7 @@
     <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
     <emptyInspectionTreeActionProvider implementation="com.intellij.structuralsearch.inspection.InspectionTreeAdvertiser"/>
 
-    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ContextFilter"/>
-    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.CountFilter"/>
-    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ReferenceFilter"/>
-    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TextFilter"/>
-    <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TypeFilter"/>
+    <structuralsearch.filterProvider implementation="com.intellij.structuralsearch.plugin.ui.filters.DefaultFilterProvider"/>
     <notificationGroup id="Structural Search" displayType="STICKY_BALLOON" toolWindowId="Find"
                        bundle="messages.SSRBundle" key="structural.search.title" isLogByDefault="true"/>
   </extensions>

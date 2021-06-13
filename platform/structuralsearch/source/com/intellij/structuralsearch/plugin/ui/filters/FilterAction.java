@@ -24,7 +24,7 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
    * This extension points causes memory leaks and other problems, because FilterActions have state.
    * @deprecated Please use {@link com.intellij.structuralsearch.plugin.ui.filters.FilterProvider} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
 
   private static final AtomicInteger myFilterCount = new AtomicInteger();
