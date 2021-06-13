@@ -55,8 +55,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class ChooseRunConfigurationPopup implements ExecutorProvider {
@@ -557,7 +555,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     private ConfigurationActionsStep(@NotNull final Project project,
                                      ChooseRunConfigurationPopup action,
                                      @NotNull final RunnerAndConfigurationSettings settings, final boolean dynamic) {
-      super(null, new LazyList<>(() -> Arrays.asList(buildActions(project, action, settings, dynamic))));
+      super(null, buildActions(project, action, settings, dynamic));
       myProject = project;
       mySettings = settings;
     }
@@ -1198,34 +1196,4 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
   }
-
-
-  private static class LazyList<T> extends AbstractList<T> {
-    final Supplier<? extends List<T>> initializer;
-    AtomicReference<List<T>> ref = new AtomicReference<>(null);
-
-    LazyList(Supplier<? extends List<T>> initializer) { this.initializer = initializer; }
-
-
-    @Override
-    public T get(int index) {
-      return getDelegate().get(index);
-    }
-
-    private List<T> getDelegate() {
-      return ref.updateAndGet(ts -> {
-        if (ts != null) {
-          return null;
-        } else {
-          return initializer.get();
-        }
-      });
-    }
-
-    @Override
-    public int size() {
-      return getDelegate().size();
-    }
-  }
-
 }
