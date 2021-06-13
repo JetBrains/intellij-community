@@ -12,6 +12,7 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
@@ -37,18 +38,40 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   private var myLastStripe = null as Stripe?
 
   private var myDialog = null as MyDialog?
-  private val myHighlighter = object:NonOpaquePanel() {
-    override fun paint(g: Graphics) {
-      g.color = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57)
-      g.fillRect(0, 0, width, height)
-    }
-  }
+  private val myHighlighter = createHighlighterComponent()
   private val myInitialOffset = Point()
   private var mySourceIsHeader = false
 
   companion object {
     const val THUMB_SIZE = 220
     const val THUMB_OPACITY = .85f
+
+    @Nullable
+    fun createDragImage(component: JComponent, thumbSize: Int = JBUI.scale(THUMB_SIZE)): BufferedImage {
+      val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TYPE_INT_RGB)
+      val graphics = image.graphics
+      graphics.color = UIUtil.getBgFillColor(component)
+      RectanglePainter.FILL.paint(graphics as @NotNull Graphics2D, 0, 0, component.width, component.height, null)
+      component.paint(graphics)
+      graphics.dispose()
+      val width: Double = image.getWidth(null).toDouble()
+      val height: Double = image.getHeight(null).toDouble()
+      if (thumbSize == -1 || width <= thumbSize && height <= thumbSize) return image
+      val ratio: Double = if (width > height) {
+        thumbSize / width
+      }
+      else {
+        thumbSize / height
+      }
+      return ImageUtil.scaleImage(image, (width * ratio).toInt(), (height * ratio).toInt()) as BufferedImage
+    }
+
+    fun createHighlighterComponent() = object: NonOpaquePanel() {
+      override fun paint(g: Graphics) {
+        g.color = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57)
+        g.fillRect(0, 0, width, height)
+      }
+    }
   }
 
   override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point): Boolean {
@@ -120,24 +143,6 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   override fun mouseReleased(e: MouseEvent?) {
     super.mouseReleased(e)
     stopDrag()
-  }
-
-  @Nullable
-  private fun createDragImage(component: JComponent): BufferedImage {
-    val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TYPE_INT_RGB)
-    val graphics = image.graphics
-    component.paint(graphics)
-    graphics.dispose()
-    val width: Double = image.getWidth(null).toDouble()
-    val height: Double = image.getHeight(null).toDouble()
-    if (width <= THUMB_SIZE && height <= THUMB_SIZE) return image
-    val ratio: Double = if (width > height) {
-      THUMB_SIZE / width
-    }
-    else {
-      THUMB_SIZE / height
-    }
-    return ImageUtil.scaleImage(image, (width * ratio).toInt(), (height * ratio).toInt()) as BufferedImage
   }
 
   override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
