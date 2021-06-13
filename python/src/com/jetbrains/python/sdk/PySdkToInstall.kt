@@ -64,7 +64,7 @@ fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>, cont
 private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   val version = "3.9"
   val name = "Python $version"
-  val hashFunction = Hashing.md5()
+  @Suppress("DEPRECATION") val hashFunction = Hashing.md5()
 
   return PySdkToInstallOnWindows(
     name,
@@ -80,7 +80,7 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
 private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
   val version = "3.8"
   val name = "Python $version"
-  val hashFunction = Hashing.md5()
+  @Suppress("DEPRECATION") val hashFunction = Hashing.md5()
 
   return PySdkToInstallOnWindows(
     name,
