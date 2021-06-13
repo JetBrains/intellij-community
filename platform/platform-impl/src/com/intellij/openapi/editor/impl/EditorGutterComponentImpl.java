@@ -405,6 +405,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
       paintLineNumbers(g, startVisualLine, endVisualLine);
       paintCurrentAccessibleLine(g);
+
+      if (ExperimentalUI.isNewUI()) {
+        g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+        LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+        paintCaretRowBackground(g, gutterSeparatorX + 1, getWidth() - gutterSeparatorX);
+      }
     }
     finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -576,7 +582,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     g.setColor(background);
     g.fillRect(x, clip.y, width, clip.height);
 
-    paintCaretRowBackground(g, x, width);
+    if (!ExperimentalUI.isNewUI()) {
+      paintCaretRowBackground(g, x, width);
+    }
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
