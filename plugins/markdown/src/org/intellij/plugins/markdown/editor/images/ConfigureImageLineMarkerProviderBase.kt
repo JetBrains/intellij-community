@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import icons.MarkdownIcons
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -55,7 +56,7 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
   private fun processFileName(filePath: String): String? {
     try {
       // Path can be eiter a URL or a system path
-      val uri = URI.create(filePath).path
+      val uri = URI.create(FileUtil.toSystemIndependentName(filePath)).path
       return Paths.get(uri).fileName?.toString()
     } catch (exception: IllegalArgumentException) {
       return null
