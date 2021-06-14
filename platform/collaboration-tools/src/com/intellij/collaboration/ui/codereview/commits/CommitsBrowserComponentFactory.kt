@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.changes
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.collaboration.ui.codereview.commits
 
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.*
@@ -15,32 +13,25 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 
-internal class GHPRCommitsBrowserComponentFactory(private val project: Project) {
-
-  fun create(commitsModel: SingleValueModel<List<VcsCommitMetadata>>, onCommitSelected: (VcsCommitMetadata?) -> Unit): JComponent {
+class CommitsBrowserComponentFactory (private val project: Project) {
+  fun create(commitsModel: SingleValueModel<List<VcsCommitMetadata>>, onCommitSelected: (VcsCommitMetadata?) -> Unit): CommitsBrowserComponent {
     val commitsListModel = CollectionListModel(commitsModel.value)
 
-    val actionManager = ActionManager.getInstance()
     val commitsList = JBList(commitsListModel).apply {
       selectionMode = ListSelectionModel.SINGLE_SELECTION
-      val renderer = GHPRCommitsListCellRenderer()
+      val renderer = CommitsListCellRenderer()
       cellRenderer = renderer
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
-      emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
     }.also {
       ScrollingUtil.installActions(it)
       ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
-      PopupHandler.installSelectionListPopup(
-        it,
-        DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
-        "GHPRCommitsPopup")
+
       ListSpeedSearch(it) { commit -> commit.subject }
     }
 
@@ -85,7 +76,7 @@ internal class GHPRCommitsBrowserComponentFactory(private val project: Project) 
       if (index != -1) ScrollingUtil.ensureRangeIsVisible(commitsList, index, index)
     }
 
-    return commitsBrowser
+    return CommitsBrowserComponent(commitsBrowser, commitsList)
   }
 
   private fun createCommitDetailsComponent(model: SingleValueModel<VcsCommitMetadata?>): JComponent {
@@ -129,3 +120,8 @@ internal class GHPRCommitsBrowserComponentFactory(private val project: Project) 
     val COMMITS_LIST_KEY = Key.create<JList<VcsCommitMetadata>>("COMMITS_LIST")
   }
 }
+
+data class CommitsBrowserComponent(
+  val commitBrowser: JComponent,
+  val commitList: JBList<VcsCommitMetadata>
+)

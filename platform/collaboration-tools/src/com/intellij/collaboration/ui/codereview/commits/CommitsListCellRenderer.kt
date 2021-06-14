@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.changes
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.collaboration.ui.codereview.commits
 
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.graph.DefaultColorGenerator
-import org.jetbrains.plugins.github.api.data.GHCommit
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class GHPRCommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata> {
+class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata> {
 
   private val nodeComponent = CommitNodeComponent().apply {
     foreground = DefaultColorGenerator().getColor(1)
