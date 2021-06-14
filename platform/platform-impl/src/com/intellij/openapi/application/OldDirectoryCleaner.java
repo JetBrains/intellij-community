@@ -271,7 +271,7 @@ public final class OldDirectoryCleaner {
       super(project, false);
       myModel = new MenuTableModel(groups);
       setTitle(message("old.dirs.dialog.title"));
-      setOKButtonText(message("old.dirs.dialog.delete.button", groups.size()));
+      updateOkButton();
       init();
     }
 
@@ -297,17 +297,19 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(2).setCellRenderer(renderer);
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
-      myModel.addTableModelListener(e -> {
-        int n = myModel.mySelected.cardinality();
-        setOKButtonText(message("old.dirs.dialog.delete.button", n));
-        setOKActionEnabled(n > 0);
-      });
+      myModel.addTableModelListener(e -> updateOkButton());
       JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
       panel.add(new MultiLineLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       JBScrollPane tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);
       return panel;
+    }
+
+    private void updateOkButton() {
+      int n = myModel.mySelected.cardinality();
+      setOKButtonText(message("old.dirs.dialog.delete.button", n));
+      setOKActionEnabled(n > 0);
     }
 
     private static class MenuTableModel extends AbstractTableModel {
