@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.actions;
+package com.intellij.codeInsight.actions.onSave;
 
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;

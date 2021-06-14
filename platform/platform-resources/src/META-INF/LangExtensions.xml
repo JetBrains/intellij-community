@@ -1416,9 +1416,9 @@
     <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor.tabs"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveActionProvider"
-                              implementation="com.intellij.codeInsight.actions.FormatOnSaveActionInfo$FormatOnSaveActionProvider"
+                              implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveActionProvider"
                               order="first"/>
-    <actionOnSave id="FormatOnSaveAction" implementation="com.intellij.codeInsight.actions.FormatOnSaveAction" order="first"/>
+    <actionOnSave id="FormatOnSaveAction" implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveAction" order="first"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
