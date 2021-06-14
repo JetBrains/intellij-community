@@ -17,13 +17,18 @@ package com.siyeh.ig.finalization;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class FinalizeNotProtectedInspection extends BaseInspection {
 
@@ -56,11 +61,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
-      assert method != null;
-      final PsiModifierList modifiers = method.getModifierList();
-      modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-      modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-      modifiers.setModifierProperty(PsiModifier.PROTECTED, true);
+      Objects.requireNonNull(method).getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
     }
   }
 

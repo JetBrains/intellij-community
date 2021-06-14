@@ -943,7 +943,7 @@
                      implementationClass="com.siyeh.ig.finalization.FinalizeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FinalizeNotProtected" bundle="messages.InspectionGadgetsBundle"
                      key="finalize.not.declared.protected.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.finalization.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.finalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.finalization.FinalizeNotProtectedInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="FinalizeCalledExplicitly" shortName="NoExplicitFinalizeCalls" bundle="messages.InspectionGadgetsBundle"
                      key="finalize.called.explicitly.display.name" groupBundle="messages.InspectionsBundle"
