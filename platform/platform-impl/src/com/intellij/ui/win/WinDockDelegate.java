@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.win;
 
 import com.intellij.ide.RecentProjectListActionProvider;
@@ -35,12 +35,12 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu() {
     final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
 
-    final @NotNull Task @NotNull [] tasks = convertToJumpTasks(recentProjectActions);
+    final @NotNull JumpTask @NotNull [] jumpTasks = convertToJumpTasks(recentProjectActions);
 
     try {
       wsi.postShellTask((@NotNull final WinShellIntegration.ShellContext ctx) -> {
         ctx.clearRecentTasksList();
-        ctx.setRecentTasksList(tasks);
+        ctx.setRecentTasksList(jumpTasks);
       }).get();
     }
     catch (final InterruptedException e) {
@@ -57,11 +57,11 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   }
 
 
-  private static @NotNull Task @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
+  private static @NotNull JumpTask @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
     final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + (CpuArch.isIntel64() ? "64" : "") + ".exe";
     final String launcherPath = Paths.get(PathManager.getBinPath(), launcherFileName).toString();
 
-    final @NotNull Task @NotNull [] result = new Task[actions.size()];
+    final @NotNull JumpTask @NotNull [] result = new JumpTask[actions.size()];
 
     int i = 0;
     for (final var action : actions) {
@@ -99,7 +99,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
       final String taskArgs = "\"" + projectPathSystem + "\"";
 
-      result[i++] = new Task(launcherPath, taskArgs, taskTitle);
+      result[i++] = new JumpTask(taskTitle, launcherPath, taskArgs);
     }
 
     if (i < result.length) {

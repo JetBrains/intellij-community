@@ -39,7 +39,7 @@ final class WinShellIntegration implements Disposable {
       parent.clearRecentTasksList();
     }
 
-    public void setRecentTasksList(@NotNull Task @NotNull [] recentTasks) {
+    public void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
       parent.setRecentTasksList(recentTasks);
     }
 
@@ -122,7 +122,7 @@ final class WinShellIntegration implements Disposable {
     bridge.clearRecentTasksListNative();
   }
 
-  private void setRecentTasksList(@NotNull Task @NotNull [] recentTasks) {
+  private void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
     bridge.ensureNativeIsInitialized();
     bridge.setRecentTasksListNative(recentTasks);
   }
@@ -146,7 +146,7 @@ final class WinShellIntegration implements Disposable {
 
     native private void initializeNative();
     native private void clearRecentTasksListNative();
-    native private void setRecentTasksListNative(@NotNull Task @NotNull [] recentTasks);
+    native private void setRecentTasksListNative(@NotNull JumpTask @NotNull [] recentTasks);
 
     static {
       Path lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");
