@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -89,9 +90,7 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
 
 
   private static @NotNull Set<MetricEvent> getNotBundledPlugins() {
-    return PluginManagerCore
-      .getLoadedPlugins()
-      .stream()
+    return Arrays.stream(PluginManagerCore.getPlugins())
       .filter(descriptor -> !descriptor.isBundled() && !PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor).isSafeToReport())
     // This will be validated by list of plugin ids from server
     // and ONLY provided ids will be reported
