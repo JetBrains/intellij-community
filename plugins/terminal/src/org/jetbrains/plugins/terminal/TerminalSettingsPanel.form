@@ -109,7 +109,7 @@
                       <text resource-bundle="messages/TerminalBundle" key="settings.shell.path"/>
                     </properties>
                   </component>
-                  <component id="aad87" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myShellPathField">
+                  <component id="aad87" class="com.intellij.ui.TextFieldWithHistoryWithBrowseButton" binding="myShellPathField" custom-create="true">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
