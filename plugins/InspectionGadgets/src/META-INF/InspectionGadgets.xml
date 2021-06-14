@@ -478,7 +478,7 @@
                      implementationClass="com.siyeh.ig.classlayout.PublicConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicConstructorInNonPublicClass" bundle="messages.InspectionGadgetsBundle"
                      key="public.constructor.in.non.public.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.visibility.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.PublicConstructorInNonPublicClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Singleton" bundle="messages.InspectionGadgetsBundle" key="singleton.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false" runForWholeFile="true"
