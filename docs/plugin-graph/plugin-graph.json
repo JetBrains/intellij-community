@@ -1602,7 +1602,7 @@
     "n": "i.ruby.java",
     "package": "org.jetbrains.plugins.ruby.java",
     "sourceModule": "intellij.ruby.java",
-    "descriptor": "ruby/ruby-java/src/intellij.ruby.java.xml",
+    "descriptor": "ruby/ruby-java/resources/intellij.ruby.java.xml",
     "parent": "c2K",
     "type": 0
   }
@@ -1771,6 +1771,18 @@
     "package": "com.intellij.profiler.ruby",
     "sourceModule": "intellij.profiler.ruby",
     "descriptor": "plugins/profiler/ruby/resources/intellij.profiler.ruby.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "m21",
+    "name": "intellij.ruby.plugin/watcher",
+    "n": "i.ruby.plugin/watcher",
+    "package": "org.jetbrains.plugins.ruby.watcher",
+    "sourceModule": "intellij.ruby.plugin",
+    "descriptor": "ruby/pluginResources/intellij.ruby.plugin.watcher.xml",
     "parent": "c2K",
     "type": 0
   }
@@ -2004,6 +2016,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "Kg",
+    "name": "intellij.spring.boot.core/mvc",
+    "n": "i.spring.boot.core/mvc",
+    "package": "com.intellij.spring.boot.mvc",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.mvc.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "c2Z",
     "n": "com.intellij.spring"
   }
@@ -2041,6 +2065,18 @@
     "package": "com.intellij.spring.el",
     "sourceModule": "intellij.spring.core",
     "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.el.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gi",
+    "name": "intellij.spring.core/aop-integration",
+    "n": "i.spring.core/aop-integration",
+    "package": "com.intellij.spring.aop",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.aop-integration.xml",
     "parent": "c2Z",
     "type": 0
   }
@@ -2460,7 +2496,7 @@
     "n": "i.copyright",
     "package": null,
     "sourceModule": "intellij.copyright",
-    "descriptor": "community/plugins/copyright/src/META-INF/plugin.xml",
+    "descriptor": "community/plugins/copyright/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.copyright",
     "type": 1
   }
@@ -2603,7 +2639,7 @@
     "n": "i.junit",
     "package": null,
     "sourceModule": "intellij.junit",
-    "descriptor": "community/plugins/junit/src/META-INF/plugin.xml",
+    "descriptor": "community/plugins/junit/resources/META-INF/plugin.xml",
     "pluginId": "JUnit",
     "type": 1
   }
@@ -2758,6 +2794,18 @@
     "sourceModule": "intellij.hibernate",
     "descriptor": "plugins/frameworks/hibernate/hibernate-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.hibernate",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "9d",
+    "name": "intellij.aopCommon",
+    "n": "i.aopCommon",
+    "package": null,
+    "sourceModule": "intellij.aopCommon",
+    "descriptor": "plugins/aop-common/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.aop",
     "type": 1
   }
 }, {
@@ -3359,6 +3407,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "2K_m21",
+    "source": "2K",
+    "target": "m21",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "tR_Ha",
     "source": "tR",
     "target": "Ha",
@@ -3431,6 +3487,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "LR_Kg",
+    "source": "LR",
+    "target": "Kg",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "2Z_6z",
     "source": "2Z",
     "target": "6z",
@@ -3442,6 +3506,14 @@
     "id": "2Z_wC",
     "source": "2Z",
     "target": "wC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_gi",
+    "source": "2Z",
+    "target": "gi",
     "type": 1
   }
 }, {
@@ -4479,6 +4551,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Pz1_Jp",
+    "source": "Pz1",
+    "target": "Jp",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "Pz1_oO",
     "source": "Pz1",
     "target": "oO",
@@ -4610,6 +4690,14 @@
     "id": "V3_TN",
     "source": "V3",
     "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "m21_uY",
+    "source": "m21",
+    "target": "uY",
     "type": 0
   }
 }, {
@@ -4759,6 +4847,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Kg_nx",
+    "source": "Kg",
+    "target": "nx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "6z_ep",
     "source": "6z",
     "target": "ep",
@@ -4770,6 +4866,14 @@
     "id": "wC_RM",
     "source": "wC",
     "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gi_9d",
+    "source": "gi",
+    "target": "9d",
     "type": 0
   }
 }, {

@@ -11,7 +11,6 @@
     To configure, open the <b>Settings / Preferences</b> dialog and select <b>Editor | Copyright</b>.
     ]]></description>
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="editor" groupWeight="110" dynamic="true"
