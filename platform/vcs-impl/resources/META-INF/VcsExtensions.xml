@@ -304,6 +304,9 @@
     <registryKey key="patch.context.line.count" defaultValue="3" description="Number of context lines for creating patches"/>
 
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.commit.tool.window" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.non.modal.commit.toggle.ui" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
