@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -121,13 +122,17 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         return;
       }
 
-      List<FileEditor> editors = ContainerUtil.filter(getEditors(file), fileEditor -> {
-        boolean visible = UIUtil.isShowing(fileEditor.getComponent());
-        if (!visible) {
-          fileEditor.putUserData(PENDING_UPDATE, Boolean.TRUE);
-        }
-        return visible;
-      });
+      List<FileEditor> editors = getEditors(file);
+
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        editors = ContainerUtil.filter(editors, fileEditor -> {
+          boolean visible = UIUtil.isShowing(fileEditor.getComponent());
+          if (!visible) {
+            fileEditor.putUserData(PENDING_UPDATE, Boolean.TRUE);
+          }
+          return visible;
+        });
+      }
 
       if (!editors.isEmpty()) updateEditors(file, editors);
     });
