@@ -39,6 +39,7 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EDT
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -228,7 +229,8 @@ private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>
   startApp(app, starter, initAppActivity, plugins, args)
 }
 
-fun createAppLocatorFile() {
+@VisibleForTesting
+internal fun createAppLocatorFile() {
   val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
   try {
     locatorFile.parent?.createDirectories()
