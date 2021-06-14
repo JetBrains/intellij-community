@@ -13,6 +13,7 @@ import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,12 +118,12 @@ public abstract class ActionOnSaveInfo {
    */
   public @NotNull List<? extends ActionLink> getActionLinks() { return Collections.emptyList(); }
 
-  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
+  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NonNls String configurableId) {
     return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
   }
 
   protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,
-                                                                   @NotNull String configurableId) {
+                                                                   @NotNull @NonNls String configurableId) {
     return new ActionLink(linkText, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
