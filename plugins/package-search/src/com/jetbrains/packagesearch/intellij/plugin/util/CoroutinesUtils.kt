@@ -9,9 +9,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 
 internal fun CoroutineScope.launchLoop(delay: Duration, function: suspend () -> Unit) = launch {
@@ -20,6 +23,12 @@ internal fun CoroutineScope.launchLoop(delay: Duration, function: suspend () -> 
         delay(delay)
     }
 }
+
+internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -> Unit) =
+    onEach { withContext(context) { action(it) } }
+
+internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -> R) =
+    map { withContext(context) { action(it) } }
 
 @Suppress("unused") // The receiver is technically unused
 internal val Dispatchers.AppUI

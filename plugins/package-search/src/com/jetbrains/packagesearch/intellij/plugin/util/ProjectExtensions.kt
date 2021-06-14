@@ -1,6 +1,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -71,3 +73,14 @@ internal val Project.dumbService: DumbService
 
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
+
+internal val Project.lookAndFeelFlow
+    get() = callbackFlow {
+        val connection = messageBus.simpleConnect()
+        send(LafManager.getInstance()!!)
+        connection.subscribe(
+            LafManagerListener.TOPIC,
+            LafManagerListener { offer(it) }
+        )
+        awaitClose { connection.disconnect() }
+    }
