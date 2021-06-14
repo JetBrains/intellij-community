@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
+import com.google.common.base.Predicates;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,8 +31,8 @@ public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
-  private static final String EAP_MARKETING_OPTION_ID = "eap";
-  private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_MARKETING_OPTION_ID);
+  private static final String EAP_FEEDBACK_OPTION_ID = "eap";
+  private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final boolean myIsEAP;
   @Nullable
   private String myProductCodeSuffix;
@@ -119,13 +121,21 @@ public final class ConsentOptions {
   }
 
   @Nullable
-  public Consent getUsageStatsConsent() {
+  public Consent getDefaultUsageStatsConsent() {
     return getDefaultConsent(STATISTICS_OPTION_ID);
   }
 
-  @Nullable
-  public Consent getEapMarketingConsent() {
-    return getDefaultConsent(EAP_MARKETING_OPTION_ID);
+  @NotNull
+  public static Predicate<Consent> condUsageStatsConsent() {
+    return consent -> STATISTICS_OPTION_ID.equals(consent.getId());
+  }
+
+  @NotNull
+  public static Predicate<Consent> condEAPFeedbackConsent() {
+    return consent -> {
+      final String id = consent.getId();
+      return id.startsWith(EAP_FEEDBACK_OPTION_ID) && (id.length() == EAP_FEEDBACK_OPTION_ID.length() || id.charAt(EAP_FEEDBACK_OPTION_ID.length()) == '.');
+    };
   }
 
   /**
@@ -144,12 +154,12 @@ public final class ConsentOptions {
     return setPermission(STATISTICS_OPTION_ID, allowed);
   }
 
-  public Permission isEAPMarketingAllowed() {
-    return getPermission(EAP_MARKETING_OPTION_ID);
+  public Permission isEAPFeedbackAllowed() {
+    return getPermission(EAP_FEEDBACK_OPTION_ID);
   }
 
-  public boolean setEAPMarketingAllowed(boolean allowed) {
-    return setPermission(EAP_MARKETING_OPTION_ID, allowed);
+  public boolean setEAPFeedbackAllowed(boolean allowed) {
+    return setPermission(EAP_FEEDBACK_OPTION_ID, allowed);
   }
 
   @NotNull
@@ -210,14 +220,31 @@ public final class ConsentOptions {
   }
 
   public @NotNull Pair<List<Consent>, Boolean> getConsents() {
+    return getConsents(Predicates.alwaysTrue());
+  }
+  
+  public @NotNull Pair<List<Consent>, Boolean> getConsents(Predicate<Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (myIsEAP) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
     }
+    else {
+      // EAP feedback consent is relevant to EA builds only
+      allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
+    }
+
+    for (Iterator<Map.Entry<String, Consent>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, Consent> entry = it.next();
+      if (!filter.test(entry.getValue())) {
+        it.remove();
+      }
+    }
+    
     if (allDefaults.isEmpty()) {
       return new Pair<>(Collections.emptyList(), Boolean.FALSE);
     }
+
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
     for (Map.Entry<String, Consent> entry : allDefaults.entrySet()) {

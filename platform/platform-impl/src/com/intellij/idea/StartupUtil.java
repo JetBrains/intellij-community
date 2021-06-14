@@ -571,7 +571,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (AppUIUtil.needToShowConsentsAgreement()){
+    else if (AppUIUtil.needToShowUsageStatsConsent()){
       Agreements.showDataSharingAgreement();
     }
     activity.end();

@@ -56,7 +56,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
     commonUserAgreement
       .setAcceptButton(bundle.getString("userAgreement.dialog.continue"), false) { dialogWrapper: DialogWrapper ->
         EndUserAgreement.setAccepted(agreement)
-        if (AppUIUtil.needToShowConsentsAgreement()) {
+        if (AppUIUtil.needToShowUsageStatsConsent()) {
           applyDataSharing(ui, bundle)
         }
         else {
@@ -68,10 +68,8 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
 }
 
 private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): AgreementUi {
-  val options = ConsentOptions.getInstance()
-  val usageConsentId = options.usageStatsConsent?.id
-  val dataSharingConsent = options.consents.first.find { it.id.equals(usageConsentId) }
-  ui.setText(prepareConsentsHtmlText(dataSharingConsent!!, bundle))
+  val dataSharingConsent = ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).first[0]
+  ui.setText(prepareConsentsHtmlText(dataSharingConsent, bundle))
     .setTitle(bundle.getString("dataSharing.dialog.title"))
     .clearBottomPanel()
     .focusToText()

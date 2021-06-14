@@ -6,6 +6,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.StatisticsNotificationManager;
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -53,7 +54,7 @@ final class StatisticsNotificationManagerImpl implements StatisticsNotificationM
   }
 
   private static void showNotification(@NotNull StatisticsService statisticsService) {
-    if (AppUIUtil.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManagerImpl.class))) {
+    if (AppUIUtil.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManagerImpl.class), ConsentOptions.condUsageStatsConsent())) {
       ApplicationManager.getApplication().executeOnPooledThread((Runnable)statisticsService::send);
       UsageStatisticsPersistenceComponent.getInstance().setShowNotification(false);
     }

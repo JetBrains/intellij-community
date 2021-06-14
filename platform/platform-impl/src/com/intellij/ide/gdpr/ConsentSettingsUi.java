@@ -109,8 +109,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
-        final Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
-        if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId())) {
+        if (ConsentOptions.condUsageStatsConsent().test(consent)) {
           checkBoxText = IdeBundle.message("gdpr.checkbox.when.using.eap.versions", checkBoxText);
         }
       }
