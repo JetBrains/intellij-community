@@ -16,7 +16,10 @@
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleModuleTransformer"/>
 
         <packagesearch.moduleChangesSignalProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleSyncSignalProvider"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.ExternalProjectSignalProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.SmartModeSignalProvider"/>
 
         <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleModuleLinkSignalProvider"/>

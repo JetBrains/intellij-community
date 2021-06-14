@@ -30,7 +30,7 @@ private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
 private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
     PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
 
-class GradleModuleTransformer(private val project: Project) : ModuleTransformer {
+class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
@@ -43,9 +43,9 @@ class GradleModuleTransformer(private val project: Project) : ModuleTransformer 
         }
     }
 
-    override fun transformModules(nativeModules: List<Module>): List<ProjectModule> {
+    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> {
         return nativeModules.mapNotNull { nativeModule ->
-            val externalRootProject = findExternalProjectOrNull(nativeModule) ?: return@mapNotNull null
+            val externalRootProject = findExternalProjectOrNull(project, nativeModule) ?: return@mapNotNull null
             val buildFile = externalRootProject.buildFile ?: return@mapNotNull null
             val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return@mapNotNull null
             val buildSystemType =
@@ -64,12 +64,12 @@ class GradleModuleTransformer(private val project: Project) : ModuleTransformer 
                 moduleType = GradleProjectModuleType,
                 navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
             )
-        }.flatMap { getAllSubmodules(it) }
+        }.flatMap { getAllSubmodules(project, it) }
             .distinctBy { it.buildFile }
     }
 
-    private fun getAllSubmodules(rootModule: ProjectModule): List<ProjectModule> {
-        val externalRootProject = findExternalProjectOrNull(rootModule.nativeModule) ?: return emptyList()
+    private fun getAllSubmodules(project: Project, rootModule: ProjectModule): List<ProjectModule> {
+        val externalRootProject = findExternalProjectOrNull(project, rootModule.nativeModule) ?: return emptyList()
 
         val modules = mutableListOf(rootModule)
         externalRootProject.addChildrenToListRecursive(modules, rootModule, project)
@@ -104,7 +104,7 @@ class GradleModuleTransformer(private val project: Project) : ModuleTransformer 
         }
     }
 
-    private fun findExternalProjectOrNull(module: Module): ExternalProject? {
+    private fun findExternalProjectOrNull(project: Project, module: Module): ExternalProject? {
         if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
             return null
         }

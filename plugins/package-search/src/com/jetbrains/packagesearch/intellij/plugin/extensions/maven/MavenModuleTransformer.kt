@@ -7,18 +7,17 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.NavigatableDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.util.mavenProjectsManager
 import com.jetbrains.packagesearch.intellij.plugin.util.tryFindProjectOrNull
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenModuleTransformer(private val project: Project) : ModuleTransformer {
+class MavenModuleTransformer : ModuleTransformer {
 
-    private val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-
-    override fun transformModules(nativeModules: List<Module>): List<ProjectModule> =
+    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.mapNotNull { nativeModule ->
-            mavenProjectsManager.tryFindProjectOrNull(nativeModule)?.let { mavenProject ->
+            project.mavenProjectsManager.tryFindProjectOrNull(nativeModule)?.let { mavenProject ->
                 ProjectModule(
                     name = mavenProject.name ?: nativeModule.name,
                     nativeModule = nativeModule,

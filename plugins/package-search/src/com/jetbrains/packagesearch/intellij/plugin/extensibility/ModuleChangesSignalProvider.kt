@@ -3,7 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensions.AbstractMessageBusModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleSyncSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.ExternalProjectSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenSyncSignalProvider
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -12,7 +12,7 @@ import java.util.function.Supplier
 import kotlin.streams.toList
 
 /**
- * Extension point that allows to listen to module changes. See [GradleSyncSignalProvider]
+ * Extension point that allows to listen to module changes. See [ExternalProjectSignalProvider]
  * and [MavenSyncSignalProvider] for implementation examples.
  */
 interface ModuleChangesSignalProvider {
