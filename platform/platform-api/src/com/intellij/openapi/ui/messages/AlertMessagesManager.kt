@@ -241,14 +241,12 @@ private class AlertDialog(project: Project?,
   }
 
   private fun configureMessageWidth(width: Int) {
-    val messageComponent = myMessageComponent!!
-    val messageParent = messageComponent.parent
-
-    if (messageParent is JScrollPane) {
-      messageParent.preferredSize = Dimension(width, messageParent.preferredSize.height)
+    val scrollPane = ComponentUtil.getScrollPane(myMessageComponent)
+    if (scrollPane == null) {
+      myMessageComponent!!.putClientProperty(PARENT_WIDTH_KEY, width)
     }
     else {
-      messageComponent.putClientProperty(PARENT_WIDTH_KEY, width)
+      scrollPane.preferredSize = Dimension(width, scrollPane.preferredSize.height)
     }
   }
 
