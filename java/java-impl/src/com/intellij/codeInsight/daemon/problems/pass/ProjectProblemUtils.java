@@ -50,6 +50,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ProjectProblemUtils {
 
+  public static final Key<Boolean> ourTestingProjectProblems = Key.create("TestingProjectProblems");
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
   private static final String RELATED_PROBLEMS_CLICKED_EVENT_ID = "related.problems.clicked";
