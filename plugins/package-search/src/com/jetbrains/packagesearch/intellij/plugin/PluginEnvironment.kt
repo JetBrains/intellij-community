@@ -4,7 +4,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 
-internal const val PACKAGE_SEARCH_NOTIFICATION_GROUP_ID = "PACKAGESEARCH.NOTIFICATION"
+internal const val PACKAGE_SEARCH_NOTIFICATION_GROUP_ID = "packagesearch.notification"
 
 internal class PluginEnvironment {
 

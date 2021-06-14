@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.application.runReadAction
@@ -143,12 +144,20 @@ internal class PackageSearchDataService(
     init {
         logDebug("PKGSDataService#Starting up the Package Search root model...")
 
+        checkNotificationsSetupIsCorrect()
+
         launchLoop(1.hours) {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
         }
 
         searchQueryState.onEach { performSearch(it, TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)) }
             .launchIn(this)
+    }
+
+    private fun checkNotificationsSetupIsCorrect() {
+        checkNotNull(NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)) {
+            "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not registered"
+        }
     }
 
     private suspend fun refreshKnownRepositories(traceInfo: TraceInfo) = coroutineScope {
@@ -556,11 +565,11 @@ internal class PackageSearchDataService(
         @Nls message: String
     ) {
         @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name
-        NotificationGroupManagerImpl().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
+        NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
-                PackageSearchBundle.message("packagesearch.title"),
-                message,
-                NotificationType.ERROR
+                title = PackageSearchBundle.message("packagesearch.title"),
+                content = message,
+                type = NotificationType.ERROR
             )
             .setSubtitle(subtitle)
             .notify(project)
