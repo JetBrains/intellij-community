@@ -48,7 +48,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
       return ValidationResultType.REJECTED;
     }
 
-    if (type == PluginType.PLATFORM || type == PluginType.FROM_SOURCES || hasPluginField(context)) {
+    if (type.isPlatformOrJvm() || type == PluginType.FROM_SOURCES || hasPluginField(context)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;
@@ -62,7 +62,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
       return ValidationResultType.REJECTED;
     }
 
-    if (type == PluginType.PLATFORM || hasPluginField(context)) {
+    if (type.isPlatformOrJvm() || type == PluginType.FROM_SOURCES || hasPluginField(context)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;

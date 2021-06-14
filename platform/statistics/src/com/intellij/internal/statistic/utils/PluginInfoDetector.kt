@@ -33,7 +33,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
 fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
       className.startsWith("kotlin.") || className.startsWith("groovy.")) {
-    return platformPlugin
+    return jvmCore
   }
 
   val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
@@ -87,7 +87,12 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 
 enum class PluginType {
   /**
-   * IntelliJ platform or JVM core libraries
+   * JVM core libraries
+   */
+  JVM_CORE,
+
+  /**
+   * IntelliJ platform
    */
   PLATFORM,
 
@@ -127,10 +132,17 @@ enum class PluginType {
   JB_UPDATED_BUNDLED;
 
   /**
+   * @return true if code is from IntelliJ platform or JVM
+   */
+  fun isPlatformOrJvm(): Boolean {
+    return this == JVM_CORE || this == PLATFORM
+  }
+
+  /**
    * @return true if code is from IntelliJ platform or JB bundled plugin.
    */
   fun isPlatformOrJetBrainsBundled(): Boolean {
-    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
+    return isPlatformOrJvm() || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
   /**
@@ -174,6 +186,7 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
                                             (PluginManagerCore.isUnitTestMode && type == PluginType.PLATFORM)
 }
 
+val jvmCore: PluginInfo = PluginInfo(PluginType.JVM_CORE, null, null)
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
 private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
