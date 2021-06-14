@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -135,7 +136,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
     boolean useSchannel = SystemInfo.isWindows &&
                           GitVersionSpecialty.CAN_USE_SCHANNEL.existsIn(myVersion) &&
-                          Registry.is("git.use.schannel.on.windows");
+                          AdvancedSettings.getBoolean("git.use.schannel.on.windows");
     if (useSchannel) {
       myHandler.overwriteConfig("http.sslBackend=schannel");
     }
