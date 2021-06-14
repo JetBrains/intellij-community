@@ -342,6 +342,8 @@
       <reference id="Vcs.MessageActionGroup"/>
     </group>
 
+    <action id="Vcs.RunCommitChecks" class="com.intellij.vcs.commit.RunCommitChecksAction"/>
+
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
 
     <group id="VcsToolbarActions">
@@ -441,6 +443,7 @@
       <reference ref="Vcs.ToggleAmendCommitMode"/>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>
+      <reference ref="Vcs.RunCommitChecks"/>
       <reference ref="ChangesView.ShowCommitOptions"/>
       <reference ref="UpdateFiles"/>
       <reference ref="CheckStatusForFiles"/>

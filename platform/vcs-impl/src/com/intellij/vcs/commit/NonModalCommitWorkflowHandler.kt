@@ -77,7 +77,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun vcsesChanged() {
     initCommitHandlers()
-    workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
+    workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses) + RunCommitChecksExecutor)
 
     updateDefaultCommitActionEnabled()
     updateDefaultCommitActionName()
@@ -159,14 +159,17 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     coroutineScope.launch {
       workflow.executeDefault {
-        if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
+        val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
+        commitContext.isOnlyRunCommitChecks = false
+
+        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) return@executeDefault ReturnResult.COMMIT
 
         val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
         indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
           override fun cancel() = this@launch.cancel()
         })
         try {
-          runAllHandlers(executor, indicator)
+          runAllHandlers(executor, indicator, isOnlyRunCommitChecks)
         }
         finally {
           indicator.stop()
@@ -177,7 +180,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return true
   }
 
-  private suspend fun runAllHandlers(executor: CommitExecutor?, indicator: ProgressIndicator): ReturnResult {
+  private suspend fun runAllHandlers(
+    executor: CommitExecutor?,
+    indicator: ProgressIndicator,
+    isOnlyRunCommitChecks: Boolean
+  ): ReturnResult {
     workflow.runMetaHandlers(indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
@@ -185,8 +192,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (handlersResult != ReturnResult.COMMIT) return handlersResult
 
     val checksResult = runCommitChecks(indicator)
-    if (checksResult != ReturnResult.COMMIT) isCommitChecksResultUpToDate = true
-    return checksResult
+    if (checksResult != ReturnResult.COMMIT || isOnlyRunCommitChecks) isCommitChecksResultUpToDate = true
+
+    return if (isOnlyRunCommitChecks) ReturnResult.CANCEL else checksResult
   }
 
   private suspend fun runCommitChecks(indicator: ProgressIndicator): ReturnResult {
