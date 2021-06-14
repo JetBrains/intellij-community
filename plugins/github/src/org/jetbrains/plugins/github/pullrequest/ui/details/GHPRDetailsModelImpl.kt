@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 
 class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullRequest>) : GHPRDetailsModel {
 

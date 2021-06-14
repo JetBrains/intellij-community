@@ -3,7 +3,7 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
-import com.intellij.collaboration.ui.codereview.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import java.awt.Image

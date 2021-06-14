@@ -30,7 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiff
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent

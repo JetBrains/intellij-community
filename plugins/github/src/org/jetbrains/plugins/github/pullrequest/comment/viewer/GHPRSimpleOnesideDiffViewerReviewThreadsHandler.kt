@@ -9,7 +9,7 @@ import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManage
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 
 class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
                                                       commentableRangesModel: SingleValueModel<List<Range>?>,

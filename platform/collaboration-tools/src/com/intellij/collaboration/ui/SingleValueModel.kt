@@ -1,16 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.ui.util
+package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.collaboration.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubUtil
 
-class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.codereview.SingleValueModel<T> {
+open class SingleValueModel<T>(initialValue: T) {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
+  var value: T = initialValue
+    set(value) {
+      field = value
+      changeEventDispatcher.multicaster.eventOccurred()
+    }
 
   @RequiresEdt
   fun addAndInvokeValueChangedListener(listener: () -> Unit) =
@@ -25,7 +28,7 @@ class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.coder
     SimpleEventListener.addListener(changeEventDispatcher, listener)
 
   @RequiresEdt
-  override fun addListener(listener: (newValue: T) -> Unit) {
+  fun addListener(listener: (newValue: T) -> Unit) {
     SimpleEventListener.addListener(changeEventDispatcher) {
       listener(value)
     }
@@ -38,4 +41,5 @@ class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.coder
     }
     return mappedModel
   }
+
 }

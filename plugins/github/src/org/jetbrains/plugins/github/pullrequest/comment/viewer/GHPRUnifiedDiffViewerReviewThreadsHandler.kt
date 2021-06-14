@@ -11,7 +11,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
 

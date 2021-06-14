@@ -12,7 +12,7 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import javax.swing.JComponent
 
 internal class GHPRViewTabsFactory(private val project: Project,

@@ -7,7 +7,7 @@ import com.intellij.diff.util.Range
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 
 abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(private val commentableRangesModel: SingleValueModel<List<Range>?>,
                                                                           private val reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
