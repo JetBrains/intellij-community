@@ -3,7 +3,6 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
@@ -165,6 +165,9 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
             1 -> getPossibleSourceTypes(uastTypes.single())
             else -> ClassSetsWrapper<PsiElement>(Array(uastTypes.size) { getPossibleSourceTypes(uastTypes[it]) })
         }
+
+    override val analysisPlugin: UastAnalysisPlugin?
+        get() = UastAnalysisPlugin.byLanguage(KotlinLanguage.INSTANCE)
 }
 
 internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
