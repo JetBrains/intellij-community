@@ -165,7 +165,7 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
             try {
                 FirLazyTransformerForIDE.enableDeepEnsure = true
                 TestRunner(configuration).runTest(path)
-            } catch (_: Exception) {
+            } finally {
                 FirLazyTransformerForIDE.enableDeepEnsure = oldEnableDeepEnsure
             }
         }
