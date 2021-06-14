@@ -31,7 +31,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             ?: convertPsiElement(element, givenParent, requiredTypes)
     }
 
-    internal fun convertDeclaration(
+    override fun convertDeclaration(
         element: PsiElement,
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
@@ -100,6 +100,10 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 // TODO: KtAnnotationEntry
                 // TODO: KtCallExpression (for nested annotation)
+
+                is KtDelegatedSuperTypeEntry -> el<KotlinSupertypeDelegationUExpression> {
+                    KotlinSupertypeDelegationUExpression(original, givenParent)
+                }
 
                 else -> null
             }
