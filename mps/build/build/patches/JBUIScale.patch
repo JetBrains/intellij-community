@@ -3,17 +3,16 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.java	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
-+++ community/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.java	(date 1616177305822)
-@@ -102,6 +102,11 @@
-       }
+--- community/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.java	(revision 9900ca50c9451db9b00ba7536220393b1345df53)
++++ community/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.java	(date 1623668760410)
+@@ -70,6 +70,10 @@
      }
 
+     Logger log = getLogger();
 +    if (font == null && SystemInfoRt.isLinux) {
-+      font = new Font(Font.SANS_SERIF, Font.PLAIN,15);
++      font = new Font(Font.SANS_SERIF, Font.PLAIN, 15);
 +      log.warn("Font was not loaded by Label.font key, fall back to SansSerif");
 +    }
-+
-     result = new Pair<>(font.getName(), font.getSize());
-     systemFontData = result;
+     boolean isScaleVerbose = SCALE_VERBOSE;
      if (isScaleVerbose) {
+       log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
