@@ -417,9 +417,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         // In Upsource, we create multiple instances of KotlinCacheService, which all access the same CachedValue instance (UP-8046)
         // This is so because class name of provider is used as a key when fetching cached value, see CachedValueManager.getKeyForClass.
         // To avoid race conditions, we can't use any local lock to access the cached value contents.
-        return synchronized(cachedValue) {
-            cachedValue.get(files)
-        }
+        return cachedValue.getOrCreateValue(files)
     }
 
     private val scriptsCacheProvider = CachedValueProvider {
@@ -437,10 +435,24 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val cachedValue: SLRUCache<Set<KtFile>, ProjectResolutionFacade> =
             CachedValuesManager.getManager(project).getCachedValue(project, scriptsCacheProvider)
 
-        return synchronized(cachedValue) {
-            cachedValue.get(files)
-        }
+        return cachedValue.getOrCreateValue(files)
     }
+
+    private fun <K, V> SLRUCache<K, V>.getOrCreateValue(key: K): V =
+        synchronized(this) {
+            this.getIfCached(key)
+        } ?: run {
+            // do actual value calculation out of any locks
+            // trade-off: several instances could be created, but only one would be used
+            val newValue = this.createValue(key)!!
+            synchronized(this) {
+                val cached = this.getIfCached(key)
+                cached ?: run {
+                    this.put(key, newValue)
+                    newValue
+                }
+            }
+        }
 
     private fun getFacadeToAnalyzeFiles(files: Collection<KtFile>, platform: TargetPlatform): ResolutionFacade {
         val file = files.first()
