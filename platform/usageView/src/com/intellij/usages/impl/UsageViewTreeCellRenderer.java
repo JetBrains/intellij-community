@@ -163,8 +163,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
   }
 
-  private void renderNode(UsageNode node) {
-    UsageNodePresentation presentation = node.getUsage().getPresentation().getCachedPresentation();
+  private void renderNode(Node node) {
+    UsageNodePresentation presentation = node.getCachedPresentation();
     if (presentation == null) {
       // either:
       //   1. the node was never updated yet

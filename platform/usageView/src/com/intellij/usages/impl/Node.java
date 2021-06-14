@@ -2,10 +2,12 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.usages.UsageNodePresentation;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -64,7 +66,11 @@ abstract class Node extends DefaultMutableTreeNode {
 
   protected abstract boolean isDataExcluded();
 
-  protected void updateCachedPresentation() {}
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return null;
+  }
+
+  protected void updateCachedPresentation() { }
 
   protected abstract @NotNull String getNodeText();
 
