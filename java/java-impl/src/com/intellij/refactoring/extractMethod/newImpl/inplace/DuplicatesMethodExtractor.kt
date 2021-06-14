@@ -62,25 +62,35 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val options = extractOptions ?: return
     val duplicates = finder.findDuplicates(method.containingClass ?: file)
       .filterNot { findParentMethod(it.candidate.first()) == method }
+    //TODO check same data output
+    //TODO check same flow output (+ same return values)
 
-    duplicates.forEach { duplicate ->
-      printDuplicate(project, duplicate)
-      val allParameters = createParametersFromExpressions(duplicate.changedExpressions)
+
+    val changes = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }.toSet()
+    fun isEquivalent(pattern: PsiElement, candidate: PsiElement) = pattern !in changes && finder.isEquivalent(pattern, candidate)
+
+    val duplicatesWithCommonChanges = duplicates.mapNotNull { finder.createDuplicate(it.pattern, it.candidate, ::isEquivalent) }
+    val firstDuplicate = duplicatesWithCommonChanges.firstOrNull() ?: return
+    val allParameters = createParametersFromExpressions(firstDuplicate.changedExpressions)
+    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
+    val replacedMethod = runWriteAction {
+      MethodExtractor().replace(calls, elementsToReplace.callElements)
+      method.replace(elementsToReplace.method) as PsiMethod
+    }
+
+    duplicatesWithCommonChanges.forEach { duplicate ->
       val duplicateOptions = findExtractOptions(duplicate.candidate)
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
       val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
-      val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
       val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
+      val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
+      val callElements = if (options.dataOutput is DataOutput.ExpressionOutput) {
+        builder.buildExpressionCall(call, duplicateOptions.dataOutput)
+      } else {
+        builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
+      }
       runWriteAction {
-        MethodExtractor().replace(calls, elementsToReplace.callElements)
-        val replacedMethod = method.replace(elementsToReplace.method) as PsiMethod
-        val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
-        val callElements = if (options.dataOutput is DataOutput.ExpressionOutput) {
-          builder.buildExpressionCall(call, duplicateOptions.dataOutput)
-        } else {
-          builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
-        }
         MethodExtractor().replace(duplicate.candidate, callElements)
       }
     }

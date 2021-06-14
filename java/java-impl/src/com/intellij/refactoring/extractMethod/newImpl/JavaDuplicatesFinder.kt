@@ -73,9 +73,11 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
       ?.copy(pattern = listOf(pattern), candidate = listOf(candidate))
   }
 
-  fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
+  fun createDuplicate(pattern: List<PsiElement>,
+                      candidate: List<PsiElement>,
+                      equivalenceComparator: (PsiElement, PsiElement) -> Boolean = ::isEquivalent): Duplicate? {
     val changedExpressions = ArrayList<ChangedExpression>()
-    if ( !canBeDuplicate(pattern, candidate, changedExpressions)) return null
+    if (!traverseAndCollectChanges(pattern, candidate, changedExpressions, equivalenceComparator)) return null
     return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
   }
 
@@ -95,20 +97,23 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
     return duplicate.copy(changedExpressions = changedExpressions)
   }
 
-  fun canBeDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>, changedExpressions: MutableList<ChangedExpression>): Boolean {
+  fun traverseAndCollectChanges(pattern: List<PsiElement>,
+                                candidate: List<PsiElement>,
+                                changedExpressions: MutableList<ChangedExpression>,
+                                equivalenceComparator: (PsiElement, PsiElement) -> Boolean): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
-      isEquivalent(pattern, candidate) && canBeDuplicate(childrenOf(pattern), childrenOf(candidate), changedExpressions)
+      equivalenceComparator(pattern, candidate) && traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions, equivalenceComparator)
     }
     if (notEqualElements.any { (pattern, candidate) -> ! canBeReplaced(pattern, candidate) }) return false
     changedExpressions += notEqualElements.map { (pattern, candidate) -> ChangedExpression(pattern as PsiExpression, candidate as PsiExpression) }
     return true
   }
 
-  private fun isEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
+  fun isEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
       pattern is PsiTypeElement && candidate is PsiTypeElement -> pattern.type.isAssignableFrom(candidate.type)
-      pattern is PsiReferenceExpression && candidate is PsiReferenceExpression -> pattern.resolve() == candidate.resolve()
+      pattern is PsiReferenceExpression && candidate is PsiReferenceExpression -> pattern.resolve() == candidate.resolve() //TODO check same if not same local variable
       pattern is PsiLiteralExpression && candidate is PsiLiteralExpression -> pattern.text == candidate.text
       pattern.node?.elementType == candidate.node?.elementType -> true
       else -> false
