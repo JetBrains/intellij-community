@@ -28,6 +28,8 @@ public class BrowserStarter {
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
   private final BooleanSupplier myOutdated;
+  private int myMaximumAttempt = 100;
+  private boolean myOpenOnMaximumAttempt = false;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
@@ -41,6 +43,16 @@ public class BrowserStarter {
                         @NotNull StartBrowserSettings settings,
                         @NotNull ProcessHandler serverProcessHandler) {
     this(runConfiguration, settings, () -> serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated());
+  }
+
+  public BrowserStarter setMaximumAttempts(int value) {
+    myMaximumAttempt = value;
+    return this;
+  }
+
+  public BrowserStarter setOpenOnMaximumAttempt(boolean value) {
+    myOpenOnMaximumAttempt = value;
+    return this;
   }
 
   public void start() {
@@ -83,10 +95,14 @@ public class BrowserStarter {
     else if (NetUtils.canConnectToRemoteSocket(hostAndPort.getHost(), hostAndPort.getPort())) {
       openPageNow();
     }
-    else if (attemptNumber < 100) {
+    else if (attemptNumber < myMaximumAttempt) {
       int delayMillis = getDelayMillis(attemptNumber);
       LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed, scheduling next check in " + delayMillis + "ms");
       checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
+    }
+    else if (attemptNumber == myMaximumAttempt && myOpenOnMaximumAttempt){
+      LOG.info("#" + attemptNumber + " maximum attempt is reached, page opening is forced");
+      openPageNow();
     }
     else {
       LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks. Failed to open " + hostAndPort);
