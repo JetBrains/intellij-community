@@ -3,8 +3,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GraphicsUtil
+import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.TableColors
-import icons.PackageSearchIcons
 import java.awt.Component
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole

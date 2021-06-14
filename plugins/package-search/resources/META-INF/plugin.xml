@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.jetbrains.packagesearch">
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
@@ -35,9 +35,12 @@ Supports Maven and Gradle projects.
 
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.externalSystem.dependencyUpdater</depends>
-    <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
-    <depends optional="true" config-file="plugin-withMaven.xml">org.jetbrains.idea.maven</depends>
+
+    <content>
+        <module name="intellij.packageSearch/gradle"/>
+        <module name="intellij.packageSearch/kotlin"/>
+        <module name="intellij.packageSearch/maven"/>
+    </content>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
