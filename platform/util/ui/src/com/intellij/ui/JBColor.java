@@ -70,7 +70,13 @@ public class JBColor extends Color {
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
       Color color = UIManager.getColor(propertyName);
-      return color == null ? defaultColor : color;
+      if (color != null) return color;
+      // *.background and others are handled by defaultColor. findPatternMatch is relevant for themes only.
+      if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        return defaultColor;
+      }
+      Color patternMatch = findPatternMatch(propertyName);
+      return patternMatch == null ? defaultColor : patternMatch;
     });
   }
 
