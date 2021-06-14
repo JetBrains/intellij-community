@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -200,7 +201,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   public RefParameter getParameterReference(UParameter param, int index, RefMethod refMethod) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
-    PsiElement psi = param.getSourcePsi();
+    PsiElement javaPsi = param.getJavaPsi();
+    PsiElement psi = javaPsi instanceof LightElement ? javaPsi.getNavigationElement() : javaPsi;
     LOG.assertTrue(psi != null, "UParameter param has null javaPsi");
     return myRefManager.getFromRefTableOrCache(psi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, psi, index, myRefManager, refMethod);
