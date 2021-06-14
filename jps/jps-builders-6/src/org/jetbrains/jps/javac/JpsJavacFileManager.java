@@ -337,7 +337,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   }
 
   @NotNull
-  protected StandardJavaFileManager getStdManager() {
+  StandardJavaFileManager getStdManager() {
     return fileManager;
   }
 

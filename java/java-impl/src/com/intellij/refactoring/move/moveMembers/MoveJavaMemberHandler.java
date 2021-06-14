@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -37,9 +37,9 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                                                             @NotNull Set<PsiMember> membersToMove,
                                                             @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
-    if (ref instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-      PsiExpression qualifier = refExpr.getQualifierExpression();
+    if (ref instanceof PsiJavaCodeReferenceElement) {
+      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)ref;
+      @Nullable PsiElement qualifier = refExpr.getQualifier();
       if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
         // both member and the reference to it will be in target class
         if (!RefactoringUtil.isInMovedElement(refExpr, membersToMove)) {

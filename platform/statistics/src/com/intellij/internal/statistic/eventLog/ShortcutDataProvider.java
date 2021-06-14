@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -51,7 +51,7 @@ public final class ShortcutDataProvider {
   }
 
   @Nullable
-  protected static String getKeyEventText(@Nullable KeyEvent key) {
+  static String getKeyEventText(@Nullable KeyEvent key) {
     if (key == null) return null;
 
     final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent(key);
@@ -59,7 +59,7 @@ public final class ShortcutDataProvider {
   }
 
   @Nullable
-  protected static String getMouseEventText(@Nullable MouseEvent event) {
+  static String getMouseEventText(@Nullable MouseEvent event) {
     if (event == null) return null;
 
     String res = getMouseButtonText(event.getButton());

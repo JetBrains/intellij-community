@@ -149,7 +149,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 
-  protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (hasOneOfMethodsDefined(psiClass)) {
       return Collections.emptyList();
     }

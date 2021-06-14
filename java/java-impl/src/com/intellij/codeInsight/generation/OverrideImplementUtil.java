@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -58,7 +58,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private OverrideImplementUtil() { }
 
   @NotNull
-  protected static List<MethodImplementor> getImplementors() {
+  static List<MethodImplementor> getImplementors() {
     return MethodImplementor.EXTENSION_POINT_NAME.getExtensionList();
   }
 

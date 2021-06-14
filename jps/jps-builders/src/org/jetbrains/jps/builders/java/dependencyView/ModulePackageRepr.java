@@ -28,7 +28,7 @@ public final class ModulePackageRepr extends Proto {
   };
   private final Set<Integer> myModuleNames = new HashSet<>();
 
-  protected ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
+  ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
     super(0, context.get(null), name, Collections.emptySet());
     for (String module : modules) {
       myModuleNames.add(context.get(module));

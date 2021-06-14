@@ -470,7 +470,7 @@
                      implementationClass="com.siyeh.ig.classlayout.NoopMethodInAbstractClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ProtectedMemberInFinalClass" bundle="messages.InspectionGadgetsBundle"
                      key="protected.member.in.final.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.ProtectedMemberInFinalClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicConstructor" bundle="messages.InspectionGadgetsBundle"
                      key="public.constructor.display.name" groupBundle="messages.InspectionsBundle"
