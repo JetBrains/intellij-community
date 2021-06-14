@@ -112,7 +112,9 @@ public final class TerminalView implements Disposable {
         public void actionPerformed(@NotNull AnActionEvent e) {
           newTab(toolWindow, null);
         }
-      });
+      },
+      new TerminalNewPredefinedSessionAction()
+    );
     toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
     toolWindow.setToHideOnEmptyContent(true);
 
