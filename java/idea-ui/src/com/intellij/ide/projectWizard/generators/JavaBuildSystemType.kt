@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.generators
 
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.ide.wizard.BuildSystemType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
+import java.nio.file.Paths
 
 abstract class JavaBuildSystemType<P>(override val name: String) : BuildSystemType<JavaSettings, P> {
   companion object {
@@ -48,7 +52,15 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSetti
     }
 
   override fun setupProject(project: Project, languageSettings: JavaSettings, settings: IntelliJBuildSystemSettings) {
-    TODO("Not yet implemented")
+    val builder = JavaModuleBuilder()
+    val moduleFile = Paths.get(settings.moduleFileLocation, settings.moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+
+    builder.name = settings.moduleName
+    builder.moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
+    builder.contentEntryPath = FileUtil.toSystemDependentName(settings.contentRoot)
+    builder.moduleJdk = languageSettings.sdk
+
+    builder.commit(project)
   }
 }
 
