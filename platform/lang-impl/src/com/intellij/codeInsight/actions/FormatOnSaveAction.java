@@ -24,6 +24,9 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
     }
 
     boolean onlyChangedLines = FormatOnSaveActionInfo.isReformatOnlyChangedLinesOnSave(project);
-    new ReformatCodeProcessor(project, files, null, onlyChangedLines).run();
+    ReformatCodeProcessor processor = new ReformatCodeProcessor(project, files, null, onlyChangedLines);
+    // This guarantees that per-file undo chain won't break and there won't be the "Following files affected by this action have been already changed" modal error dialog.
+    processor.setProcessAllFilesAsSingleUndoStep(false);
+    processor.run();
   }
 }

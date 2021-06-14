@@ -63,6 +63,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private final @NlsContexts.Command String myCommandName;
   private Runnable myPostRunnable;
   private boolean myProcessChangedTextOnly;
+  private boolean myProcessAllFilesAsSingleUndoStep = true;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<VirtualFileFilter> myFilters = new ArrayList<>();
@@ -172,6 +173,21 @@ public abstract class AbstractLayoutCodeProcessor {
 
   void setProcessChangedTextOnly(boolean value) {
     myProcessChangedTextOnly = value;
+  }
+
+  /**
+   * @param singleUndoStep <ul>
+   *                       <li>if <code>true</code> then it will be possible to Undo all files processing in one shot (at least right
+   *                       after the action, until any of the files edited further). The downside is that once user edits any of the
+   *                       files at all. The modal error dialog will appear: "Following files affected by this action have been already
+   *                       changed".</li>
+   *                       <li>if <code>false</code> then it won't be possible to Undo the action for all files in one shot, even right
+   *                       after the action. The advantage is that Undo chain for each individual file won't be broken, and it will be
+   *                       possible to undo this action and previous changes in each file regardless of the state of other processed files.</li>
+   *                       </ul>
+   */
+  public void setProcessAllFilesAsSingleUndoStep(boolean singleUndoStep) {
+    myProcessAllFilesAsSingleUndoStep = singleUndoStep;
   }
 
   /**
@@ -394,15 +410,25 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     private void performFileProcessing(@NotNull PsiFile file) {
-      String groupId = AbstractLayoutCodeProcessor.this.toString();
+      // Using the same groupId for several file-processing actions allows undoing [format + optimize imports + rearrange code + cleanup code] in one shot.
+      // Using the same groupId for *all* processed files makes this a single undoable action for all processed files.
+      // See docs for #setProcessAllFilesAsSingleUndoRedoCommand(boolean)
+      String groupId = myProcessAllFilesAsSingleUndoStep
+                       ? AbstractLayoutCodeProcessor.this.toString()
+                       : AbstractLayoutCodeProcessor.this.toString() + file.hashCode();
       for (AbstractLayoutCodeProcessor processor : myProcessors) {
         final FutureTask<Boolean> writeTask = ReadAction.nonBlocking(() -> processor.prepareTask(file, myProcessChangedTextOnly))
           .executeSynchronously();
 
         ProgressIndicatorProvider.checkCanceled();
 
-        ApplicationManager.getApplication().invokeAndWait(
-          () -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, groupId, writeTask));
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          WriteCommandAction.writeCommandAction(myProject)
+            .withName(myCommandName)
+            .withGroupId(groupId)
+            .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
+            .run(() -> writeTask.run());
+        });
 
         checkStop(writeTask, file);
       }
