@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * <code>ActionOnSave</code> object lifecycle is described in {@link ActionOnSaveInfoProvider#getActionOnSaveInfos(Project, ActionOnSaveContext)}.
+ * <code>ActionOnSave</code> object lifecycle is described in {@link ActionOnSaveInfoProvider#getActionOnSaveInfos(ActionOnSaveContext)}.
  * <br/><br/>
  * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in
  * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) must be
