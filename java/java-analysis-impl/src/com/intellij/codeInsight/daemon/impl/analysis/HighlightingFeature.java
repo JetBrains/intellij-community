@@ -62,7 +62,19 @@ public enum HighlightingFeature {
   },
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
-  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes"),
+  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel == LanguageLevel.JDK_15_PREVIEW || 
+             useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
+             useSiteLevel.isAtLeast(LanguageLevel.JDK_17);
+    }
+
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_17;
+    }
+  },
   LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
