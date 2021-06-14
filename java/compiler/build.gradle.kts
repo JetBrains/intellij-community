@@ -4,33 +4,24 @@
 
 plugins {
     kotlin("jvm")
+    `java-library` // Add `compileOnlyApi` configuration
     id("jps-compatible")
 }
 
 repositories {
     maven { setUrl("https://cache-redirector.jetbrains.com/maven-central") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/dekaf") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jcenter.bintray.com") }
+    maven { setUrl("https://cache-redirector.jetbrains.com/intellij-third-party-dependencies") }
+    maven { setUrl("https://cache-redirector.jetbrains.com/jcenter") }
     maven { setUrl("https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/repo.spring.io/milestone") }
     maven { setUrl("https://cache-redirector.jetbrains.com/repo.jenkins-ci.org/releases") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/test-discovery") }
+    maven { setUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/groovy/maven/") }
+    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/jediterm/") }
     maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/markdown") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/groovy/maven") }
     maven { setUrl("https://cache-redirector.jetbrains.com/www.myget.org/F/rd-snapshots/maven") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/www.myget.org/F/rd-model-snapshots/maven") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/jediterm") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-terraform") }
     maven { setUrl("https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/clojars.org/repo") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/space/maven") }
     maven { setUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies") }
     maven { setUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/skija/maven") }
     maven { setUrl("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service") }
-    maven { setUrl("https://cache-redirector.jetbrains.com/intellij-dependencies") }
     maven { setUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies") }
 }
 
@@ -39,7 +30,7 @@ dependencies {
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.COMPILE) // 'intellij.java.compiler.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("testFramework-java") }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-impl") }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("resources_en") }) // 'intellij.java.testFramework' dependency
@@ -57,7 +48,7 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:log4j:1.2.17.1", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("idea_rt") }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("testFramework.core") }) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.32", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
@@ -70,7 +61,7 @@ dependencies {
     jpsLikeJarDependency("org.assertj:assertj-core:3.19.0", JpsDepScope.TEST) // 'intellij.platform.testExtensions' dependency
     jpsLikeJarDependency("com.github.marschall:memoryfilesystem:2.1.0", JpsDepScope.TEST) // 'intellij.platform.testExtensions' dependency
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.TEST) // 'intellij.platform.jps.build.javac.rt' dependency
-    jpsLikeJarDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.2-6", JpsDepScope.COMPILE)
+    jpsLikeJarDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.2-6", JpsDepScope.COMPILE, { isTransitive = false })
 }
 
 configurations.all {
