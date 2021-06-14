@@ -57,6 +57,7 @@ public final class JavaPsiPatternUtil {
     if (pattern instanceof PsiTypeTestPattern) {
       PsiExpression operand = instanceOf.getOperand();
       PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
+      if (checkType == null) return null;
       if (checkType.getType().equals(operand.getType())) {
         return operand.getText();
       }

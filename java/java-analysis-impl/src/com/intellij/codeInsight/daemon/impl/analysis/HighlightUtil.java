@@ -1712,6 +1712,7 @@ public final class HighlightUtil {
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
     PsiTypeElement typeElement = pattern.getCheckType();
+    if (typeElement == null) return null;
     PsiType checkType = typeElement.getType();
     PsiType expressionType = expression.getOperand().getType();
     if (expressionType != null && checkType.isAssignableFrom(expressionType)) {

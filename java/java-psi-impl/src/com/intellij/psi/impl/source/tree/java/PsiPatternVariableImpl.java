@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
@@ -31,7 +33,12 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiIdentifier.class));
+    PsiIdentifier identifier = PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
+    if (identifier == null) {
+      PsiFile file = getContainingFile();
+      Logger.getInstance(PsiPatternVariableImpl.class).error("Pattern without identifier", new Attachment("File content", file.getText()));
+    }
+    return Objects.requireNonNull(identifier);
   }
 
   @Override

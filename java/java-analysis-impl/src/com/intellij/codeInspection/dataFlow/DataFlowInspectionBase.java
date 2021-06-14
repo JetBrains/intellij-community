@@ -917,7 +917,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
       PsiPattern pattern = ((PsiInstanceOfExpression)expression).getPattern();
       if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
-        if (((PsiTypeTestPattern)pattern).getCheckType().getType().isAssignableFrom(type)) {
+        PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
+        if (checkType != null && checkType.getType().isAssignableFrom(type)) {
           // Reported as compilation error
           return true;
         }

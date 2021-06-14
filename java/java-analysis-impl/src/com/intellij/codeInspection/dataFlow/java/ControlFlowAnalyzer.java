@@ -1593,47 +1593,58 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression operand = expression.getOperand();
     CFGBuilder builder = new CFGBuilder(this);
     PsiTypeElement checkType = expression.getCheckType();
-    if (pattern instanceof PsiTypeTestPattern) {
-      PsiType type = ((PsiTypeTestPattern)pattern).getCheckType().getType();
+    if (pattern instanceof PsiTypeTestPattern && checkType != null) {
+      PsiType type = checkType.getType();
       PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-      DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
-      DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-      if (expr instanceof DfaVariableValue) {
-        builder.push(expr);
-      }
-      else {
-        DfaVariableValue tmp = createTempVariable(operand.getType());
+      if (variable != null) {
+        DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
+        DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
+        if (expr instanceof DfaVariableValue) {
+          builder.push(expr);
+        }
+        else {
+          DfaVariableValue tmp = createTempVariable(operand.getType());
+          builder
+            .pushForWrite(tmp)
+            .pushExpression(operand)
+            .assign();
+        }
         builder
-          .pushForWrite(tmp)
-          .pushExpression(operand)
-          .assign();
+          .dup()
+          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+          .isInstance(expression, operand, type)
+          .ifConditionIs(false)
+          .pop()
+          .push(DfTypes.FALSE)
+          .elseBranch()
+          .pushForWrite(dfaVar)
+          .swap()
+          .assign()
+          .pop()
+          .push(DfTypes.TRUE)
+          .end();
+      } else {
+        buildSimpleInstanceof(builder, expression, operand, checkType);
       }
-      builder
-        .dup()
-        .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-        .isInstance(expression, operand, type)
-        .ifConditionIs(false)
-        .pop()
-        .push(DfTypes.FALSE)
-        .elseBranch()
-        .pushForWrite(dfaVar)
-        .swap()
-        .assign()
-        .pop()
-        .push(DfTypes.TRUE)
-        .end();
     }
     else if (checkType != null) {
-      PsiType type = checkType.getType();
-      builder
-        .pushExpression(operand)
-        .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-        .isInstance(expression, operand, type);
+      buildSimpleInstanceof(builder, expression, operand, checkType);
     }
     else {
       pushUnknown();
     }
     finishElement(expression);
+  }
+
+  private static void buildSimpleInstanceof(CFGBuilder builder,
+                                            PsiInstanceOfExpression expression,
+                                            PsiExpression operand,
+                                            PsiTypeElement checkType) {
+    PsiType type = checkType.getType();
+    builder
+      .pushExpression(operand)
+      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+      .isInstance(expression, operand, type);
   }
 
   void addMethodThrows(PsiMethod method) {
