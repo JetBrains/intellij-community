@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
 import com.intellij.openapi.Disposable;
@@ -23,7 +23,7 @@ import java.util.*;
 final class LibraryPresentationManagerImpl extends LibraryPresentationManager implements Disposable {
   private volatile Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
 
-  public LibraryPresentationManagerImpl() {
+  LibraryPresentationManagerImpl() {
     Runnable listener = () -> myPresentationProviders = null;
     LibraryType.EP_NAME.addChangeListener(listener, this);
     LibraryPresentationProvider.EP_NAME.addChangeListener(listener, this);

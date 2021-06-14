@@ -57,7 +57,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
   private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
 
-  public XmlLanguageInjector(@NotNull Project project) {
+  XmlLanguageInjector(@NotNull Project project) {
     myConfiguration = Configuration.getProjectInstance(project);
   }
 

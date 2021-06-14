@@ -1213,7 +1213,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static class EnumStaticFieldsFilter implements ElementFilter {
     private final PsiClass myEnumClass;
 
-    public EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
+    EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
 
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {
