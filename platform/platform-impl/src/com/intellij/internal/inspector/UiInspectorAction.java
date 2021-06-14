@@ -1646,7 +1646,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
       Class<?> clazz = component.getClass();
-      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()+"@"+System.identityHashCode(component)));
 
       if (clazz.isAnonymousClass()) {
         Class<?> superClass = clazz.getSuperclass();
