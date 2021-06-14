@@ -62,7 +62,7 @@ class PluginsUsagesCollector : ApplicationUsagesCollector() {
     .toSet()
 
   private fun getNotBundledPlugins() = PluginManagerCore
-    .getLoadedPlugins().asSequence()
+    .getPlugins().asSequence()
     .filter { !it.isBundled && !getPluginInfoByDescriptor(it).isSafeToReport() }
     // This will be validated by list of plugin ids from server
     // and ONLY provided ids will be reported
