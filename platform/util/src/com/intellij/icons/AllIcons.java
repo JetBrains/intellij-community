@@ -458,6 +458,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InlineAddHover = load("general/inlineAddHover.svg", -1274832203393211630L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopy = load("general/inlineCopy.svg", 4086041163192533867L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopyHover = load("general/inlineCopyHover.svg", -118377199179686277L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineRefresh = load("general/inlineRefresh.svg", 7057707416785730877L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineRefreshHover = load("general/inlineRefreshHover.svg", 6223569865014447242L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariables = load("general/inlineVariables.svg", -2890084193764829258L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("general/inlineVariablesHover.svg", 8274939683858428276L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("general/inspectionsError.svg", -7039855443562847008L, 0);
@@ -506,6 +508,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show_to_implement = load("general/show_to_implement.svg", 5820899675846215684L, 7);
     /** 16x16 */ public static final @NotNull Icon ShowInfos = load("general/showInfos.svg", -7836467967962681646L, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWarning = load("general/showWarning.svg", -880501858508231851L, 2);
+    /** 48x48 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", 7331118895885022616L, 0);
     /** 16x16 */ public static final @NotNull Icon TbHidden = load("general/tbHidden.svg", 2150059385419883630L, 2);
     /** 16x16 */ public static final @NotNull Icon TbShown = load("general/tbShown.svg", -2726647401251720005L, 2);
     /** 32x32 */ public static final @NotNull Icon Tip = load("general/tip.svg", 7483196027967641474L, 2);
@@ -519,7 +522,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", -4939622142106744579L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", 2405998040705208001L, 2);
     /** 32x32 */ public static final @NotNull Icon WarningDialog = load("general/warningDialog.svg", 6423980923993992189L, 0);
-    /** 32x32 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", 6423980923993992189L, 0);
     /** 16x16 */ public static final @NotNull Icon Web = load("general/web.svg", -2049562750565831010L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -7507719754184865831L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -1556237764441501987L, 2);
