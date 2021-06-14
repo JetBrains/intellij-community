@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,29 +82,5 @@ public final class TabsUtil {
     if (bottomShape.contains(point)) return BOTTOM;
     if (topShape.contains(point)) return TOP;
     return component.getBounds().contains(point) ? CENTER : -1;
-  }
-
-  @NotNull
-  public static Rectangle getDropArea(@NotNull JBTabs tabs) {
-    Rectangle r = new Rectangle(tabs.getComponent().getBounds());
-    if (tabs.getTabCount() > 0) {
-      Rectangle firstTabBounds = tabs.getTabLabel(tabs.getTabAt(0)).getBounds();
-      switch (tabs.getPresentation().getTabsPosition()) {
-        case top:
-          r.y += firstTabBounds.height;
-          r.height -= firstTabBounds.height;
-          break;
-        case left:
-          r.x += firstTabBounds.width;
-          r.width -= firstTabBounds.width;
-          break;
-        case bottom:
-          r.height -= firstTabBounds.height;
-          break;
-        case right:
-          r.width -= firstTabBounds.width;
-      }
-    }
-    return r;
   }
 }
