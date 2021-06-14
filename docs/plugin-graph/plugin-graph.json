@@ -707,6 +707,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cmS",
+    "n": "org.jetbrains.plugins.haml"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "mS",
     "name": "intellij.haml",
     "n": "i.haml",
@@ -714,7 +720,32 @@
     "sourceModule": "intellij.haml",
     "descriptor": "plugins/haml/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.haml",
-    "type": 1
+    "parent": "cmS",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "DZ",
+    "name": "intellij.haml/css",
+    "n": "i.haml/css",
+    "package": "org.jetbrains.plugins.haml.css",
+    "sourceModule": "intellij.haml",
+    "descriptor": "plugins/haml/resources/intellij.haml.css.xml",
+    "parent": "cmS",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "so",
+    "name": "intellij.haml/watcher",
+    "n": "i.haml/watcher",
+    "package": "org.jetbrains.plugins.haml.watcher",
+    "sourceModule": "intellij.haml",
+    "descriptor": "plugins/haml/resources/intellij.haml.watcher.xml",
+    "parent": "cmS",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2551,6 +2582,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "Pn",
+    "name": "intellij.css.impl",
+    "n": "i.css.impl",
+    "package": null,
+    "sourceModule": "intellij.css.impl",
+    "descriptor": "CSS/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.css",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "1t",
     "name": "intellij.indexing.shared",
     "n": "i.indexing.shared",
@@ -3066,6 +3109,22 @@
     "id": "49_Sw",
     "source": "49",
     "target": "Sw",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_DZ",
+    "source": "mS",
+    "target": "DZ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_so",
+    "source": "mS",
+    "target": "so",
     "type": 1
   }
 }, {
@@ -3914,6 +3973,38 @@
     "id": "Sw_cV",
     "source": "Sw",
     "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_Dx",
+    "source": "mS",
+    "target": "Dx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_wo",
+    "source": "mS",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "DZ_Pn",
+    "source": "DZ",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "so_uY",
+    "source": "so",
+    "target": "uY",
     "type": 0
   }
 }, {
