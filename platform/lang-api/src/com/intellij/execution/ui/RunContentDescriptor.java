@@ -23,6 +23,7 @@ import javax.swing.*;
 public class RunContentDescriptor implements Disposable {
   // Should be used in com.intellij.ui.content.Content
   public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
+  public static final Key<String> CONTENT_TOOL_WINDOW_ID_KEY = Key.create("ContentToolWindowId");
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
@@ -74,6 +75,9 @@ public class RunContentDescriptor implements Disposable {
     }
 
     myRestartActions = restartActions == null ? AnAction.EMPTY_ARRAY : restartActions;
+    if (processHandler != null) {
+      setContentToolWindowId(processHandler.getUserData(CONTENT_TOOL_WINDOW_ID_KEY));
+    }
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
