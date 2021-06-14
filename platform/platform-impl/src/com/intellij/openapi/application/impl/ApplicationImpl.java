@@ -1002,7 +1002,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access is allowed from event dispatch thread with IW lock only.");
+    throwThreadAccessException("Access is allowed from event dispatch thread only");
   }
 
   @Override
@@ -1230,6 +1230,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
   }
 
+  /**
+   * @deprecated use {@link #runReadAction(Runnable)} instead
+   */
   @Deprecated
   private final class ReadAccessToken extends AccessToken {
     private final ReadMostlyRWLock.Reader myReader;
