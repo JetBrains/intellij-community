@@ -1,17 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.newImpl.*
-import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
-import org.jetbrains.annotations.Nullable
+import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 
 class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
@@ -70,8 +69,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     fun isEquivalent(pattern: PsiElement, candidate: PsiElement) = pattern !in changes && finder.isEquivalent(pattern, candidate)
 
     val duplicatesWithCommonChanges = duplicates.mapNotNull { finder.createDuplicate(it.pattern, it.candidate, ::isEquivalent) }
-    val firstDuplicate = duplicatesWithCommonChanges.firstOrNull() ?: return
-    val allParameters = createParametersFromExpressions(firstDuplicate.changedExpressions)
+    val allParameters = duplicatesWithCommonChanges
+      .fold(options.inputParameters) { parameters, duplicate ->  updateParameters(parameters, duplicate.changedExpressions)}
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
     val replacedMethod = runWriteAction {
       MethodExtractor().replace(calls, elementsToReplace.callElements)
@@ -83,9 +82,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
       val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
+      //TODO extract duplicate
       val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
       val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
-      val callElements = if (options.dataOutput is DataOutput.ExpressionOutput) {
+      val callElements = if (options.elements.singleOrNull() is PsiExpression) {
         builder.buildExpressionCall(call, duplicateOptions.dataOutput)
       } else {
         builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
@@ -96,20 +96,48 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     }
   }
 
-  private fun createParametersFromExpressions(changedExpressions: List<ChangedExpression>): List<InputParameter> {
-    val parameters = changedExpressions.groupBy { "${it.pattern.text}:::${it.candidate.text}" }.values.map { InputParameter(it.map { it.pattern }, ExtractMethodHelper.guessName(it.first().pattern), it.first().pattern.type!!) }
-    return parameters.groupBy { it.name }.values.flatMap { params -> params.mapIndexed { index, parameter ->  parameter.copy(name = "${parameter.name}${if (index != 0) index else ""}") } }
+  private fun updateParameters(parameters: List<InputParameter>, changes: List<ChangedExpression>): List<InputParameter> {
+    val changeMap = changes.associate { (pattern, candidate) -> pattern to candidate }
+    val expressionGroups = groupEquivalentExpressions(changes.map(ChangedExpression::pattern))
+    val parametersGroupedByPatternExpressions = expressionGroups.map { expressionGroup ->
+      val parameter = parameters.firstOrNull { expressions -> isEqual(expressionGroup.first(), expressions.references.first()) }
+      parameter?.copy(references = expressionGroup) ?: InputParameter(expressionGroup, guessName(expressionGroup.first()), expressionGroup.first().type!!)
+    }
+    val splitParameters = parametersGroupedByPatternExpressions.flatMap { parameter -> splitByCandidateExpressions(parameter, parameter.references.map { changeMap[it]!! }) }
+    return fixNameConflicts(splitParameters)
   }
 
-  private fun printDuplicate(project: @Nullable Project, duplicate: Duplicate) {
-    val document = PsiDocumentManager.getInstance(project).getDocument(duplicate.candidate.first().containingFile)!!
-    println("Duplicate:")
-    println(document.getText(textRangeOf(duplicate.candidate)))
-    println()
-    println("Changes:")
-    duplicate.changedExpressions.forEach { (pattern, candidate) ->
-      println("${pattern.text} ::: ${candidate.text}")
+  private fun fixNameConflicts(parameters: List<InputParameter>): List<InputParameter> {
+    val reservedNames = mutableMapOf<String, Int>()
+    return parameters.map {
+      val nextIndex = reservedNames[it.name]
+      reservedNames[it.name] = (nextIndex ?: 0) + 1
+      val name = if (nextIndex == null) it.name else "${it.name}$nextIndex"
+      it.copy(name = name)
     }
+  }
+
+  private fun splitByCandidateExpressions(parameter: InputParameter, candidateExpressions: List<PsiExpression>): List<InputParameter> {
+    val map = candidateExpressions.zip(parameter.references).associate { it.first to it.second }
+    val expressionGroups = groupEquivalentExpressions(candidateExpressions)
+    return expressionGroups.map { expressionGroup -> parameter.copy(references = expressionGroup.map { map[it]!! }) }
+  }
+
+  private fun groupEquivalentExpressions(expressions: List<PsiExpression>): List<List<PsiExpression>> {
+    val groups = mutableListOf<MutableList<PsiExpression>>()
+    expressions.forEach { expression ->
+      val group = groups.firstOrNull { group -> isEqual(expression, group.first()) }
+      if (group != null) {
+        group.add(expression)
+      } else {
+        groups.add(mutableListOf(expression))
+      }
+    }
+    return groups
+  }
+
+  private fun isEqual(first: PsiExpression, second: PsiExpression): Boolean {
+    return PsiEquivalenceUtil.areElementsEquivalent(first, second) && !mayHaveSideEffects(first) && !mayHaveSideEffects(second)
   }
 
   private fun findParentMethod(element: PsiElement) = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java)
