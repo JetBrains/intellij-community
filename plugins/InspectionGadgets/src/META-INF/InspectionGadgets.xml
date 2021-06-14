@@ -1244,7 +1244,7 @@
                      implementationClass="com.siyeh.ig.migration.CollectionsFieldAccessReplaceableByMethodCallInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="BigDecimalLegacyMethod" bundle="messages.InspectionGadgetsBundle"
                      key="bigdecimal.legacy.method.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.BigDecimalLegacyMethodInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="EqualsReplaceableByObjectsCall" bundle="messages.InspectionGadgetsBundle"
                      key="equals.replaceable.by.objects.call.display.name" groupBundle="messages.InspectionsBundle"
