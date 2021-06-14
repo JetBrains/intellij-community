@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.intellij.diagnostic.LoadingState;
@@ -103,7 +103,7 @@ public final class MacOSApplicationProvider {
           submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
         }
         else {
-          IdeStarter.openFilesOnLoading(list);
+          IdeStarter.Companion.openFilesOnLoading(list);
         }
       });
 
@@ -212,7 +212,7 @@ public final class MacOSApplicationProvider {
 
           if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
             // handle paths like /file/foo\qwe
-            IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
+            IdeStarter.Companion.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
             return;
           }
 

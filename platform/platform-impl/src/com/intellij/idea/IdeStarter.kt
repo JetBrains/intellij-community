@@ -42,17 +42,13 @@ import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
   companion object {
-    @JvmStatic
     private var filesToLoad: List<Path> = Collections.emptyList()
-    @JvmStatic
     private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
-    @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    @JvmStatic
     fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
       wizardStepProvider = provider
     }

@@ -37,11 +37,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author anna
- */
 public final class PluginDownloader {
-
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private final @NotNull PluginId myPluginId;

@@ -1198,11 +1198,19 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
-    if (id != null) {
-      for (IdeaPluginDescriptor plugin : getPlugins()) {
-        if (id.equals(plugin.getPluginId())) {
-          return plugin;
-        }
+    if (id == null) {
+      return null;
+    }
+
+    PluginSet pluginSet = Objects.requireNonNull(PluginManagerCore.pluginSet);
+    IdeaPluginDescriptorImpl result = pluginSet.findEnabledPlugin(id);
+    if (result != null) {
+      return result;
+    }
+
+    for (IdeaPluginDescriptor plugin : pluginSet.allPlugins) {
+      if (id.equals(plugin.getPluginId())) {
+        return plugin;
       }
     }
     return null;
@@ -1217,9 +1225,22 @@ public final class PluginManagerCore {
     return null;
   }
 
-  public static boolean isPluginInstalled(PluginId id) {
-    if (pluginSet == null) return false;
-    return getPlugin(id) != null;
+  public static boolean isPluginInstalled(@NotNull PluginId id) {
+    PluginSet pluginSet = PluginManagerCore.pluginSet;
+    if (pluginSet == null) {
+      return false;
+    }
+
+    if (pluginSet.isPluginEnabled(id)) {
+      return true;
+    }
+
+    for (IdeaPluginDescriptor plugin : pluginSet.allPlugins) {
+      if (id.equals(plugin.getPluginId())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @ApiStatus.Internal
