@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -63,5 +63,9 @@ public enum PluginEnabledState {
     }
 
     throw new IllegalArgumentException("Target state not found: enabled='" + enabled + "', perProject='" + perProject + "'");
+  }
+
+  public static @NotNull PluginEnabledState globally(boolean enabled) {
+    return enabled ? ENABLED : DISABLED;
   }
 }

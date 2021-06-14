@@ -132,9 +132,12 @@ object DynamicPlugins {
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
     parentComponent: JComponent? = null,
-    options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true),
-  ): Boolean = updateDescriptorsWithoutRestart(descriptors, load = false) {
-    unloadPluginWithProgress(project, parentComponent, it, options)
+    options: UnloadPluginOptions? = null,
+  ): Boolean {
+    val nonNullOptions = options ?: UnloadPluginOptions().withDisable(true)
+    return updateDescriptorsWithoutRestart(descriptors, load = false) {
+      unloadPluginWithProgress(project, parentComponent, it, nonNullOptions)
+    }
   }
 
   private fun updateDescriptorsWithoutRestart(

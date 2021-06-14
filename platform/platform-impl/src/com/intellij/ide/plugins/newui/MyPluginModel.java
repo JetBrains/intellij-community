@@ -233,11 +233,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean result = true;
     ProjectPluginTrackerManager pluginTrackerManager = ProjectPluginTrackerManager.getInstance();
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      if (!pluginTrackerManager.updatePluginsState(entry.getValue(), entry.getKey(), getProject(), parentComponent)) {
+      if (!pluginTrackerManager.updatePluginsState(entry.getValue(),
+                                                   entry.getKey(),
+                                                   getProject(),
+                                                   parentComponent,
+                                                   getCustomUnloadOptions())) {
         result = false;
       }
     }
     return result;
+  }
+
+  protected @Nullable DynamicPlugins.UnloadPluginOptions getCustomUnloadOptions() {
+    return null;
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
@@ -788,11 +796,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   @NotNull ProjectDependentPluginEnabledState getProjectDependentState(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-    return new ProjectDependentPluginEnabledState(
-      pluginId,
-      getState(pluginId),
-      getProject()
-    );
+    return new ProjectDependentPluginEnabledState(pluginId,
+                                                  getState(pluginId),
+                                                  getProject());
   }
 
   /**
