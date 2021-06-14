@@ -200,7 +200,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   public RefParameter getParameterReference(UParameter param, int index, RefMethod refMethod) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
 
-    PsiElement psi = param.getJavaPsi();
+    PsiElement psi = param.getSourcePsi();
     LOG.assertTrue(psi != null, "UParameter param has null javaPsi");
     return myRefManager.getFromRefTableOrCache(psi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, psi, index, myRefManager, refMethod);
