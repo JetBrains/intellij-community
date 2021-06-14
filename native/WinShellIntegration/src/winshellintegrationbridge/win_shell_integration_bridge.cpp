@@ -295,6 +295,7 @@ namespace intellij::ui::win::jni
             auto jTaskClass = jEnv->GetObjectClass(jTask);
             ensureJNINoErrors(*jEnv);
 
+
             auto titleFieldId = jEnv->GetFieldID(jTaskClass, "title", "Ljava/lang/String;");
             ensureJNINoErrors(*jEnv);
 
@@ -303,6 +304,10 @@ namespace intellij::ui::win::jni
 
             auto argsFieldId = jEnv->GetFieldID(jTaskClass, "executableArgs", "Ljava/lang/String;");
             ensureJNINoErrors(*jEnv);
+
+            auto tooltipFieldId = jEnv->GetFieldID(jTaskClass, "tooltip", "Ljava/lang/String;");
+            ensureJNINoErrors(*jEnv);
+
 
             auto jTaskTitle  = static_cast<jstring>(jEnv->GetObjectField(jTask, titleFieldId));
             ensureJNINoErrors(*jEnv);
@@ -313,9 +318,14 @@ namespace intellij::ui::win::jni
             auto jTaskArgs  = static_cast<jstring>(jEnv->GetObjectField(jTask, argsFieldId));
             ensureJNINoErrors(*jEnv);
 
+            auto jTaskTooltip = static_cast<jstring>(jEnv->GetObjectField(jTask, tooltipFieldId));
+            ensureJNINoErrors(*jEnv);
+
+
             auto nativeTaskTitle = jStringToWideString(jEnv, jTaskTitle).value();
             auto nativeTaskPath = jStringToWideString(jEnv, jTaskPath).value();
             auto nativeTaskArgs = jStringToWideString(jEnv, jTaskArgs);
+            auto nativeTaskTooltip = jStringToWideString(jEnv, jTaskTooltip);
 
             // cleanup
 
@@ -337,6 +347,7 @@ namespace intellij::ui::win::jni
             nativeTasks.emplace_back(
                 JumpTask::startBuilding(std::move(nativeTaskPath), std::move(nativeTaskTitle))
                           .setApplicationArguments(std::move(nativeTaskArgs))
+                          .setDescription(std::move(nativeTaskTooltip))
                           .buildTask(COM_IS_INITIALIZED_IN_THIS_THREAD)
             );
         }

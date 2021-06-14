@@ -8,11 +8,13 @@ class JumpTask {
   final @NotNull String title;
   final @NotNull String executablePath;
   final @Nullable String executableArgs;
+  final @Nullable String tooltip;
 
 
-  JumpTask(@NotNull String title, @NotNull String executablePath, @Nullable String executableArgs) {
+  JumpTask(@NotNull String title, @NotNull String executablePath, @Nullable String executableArgs, @Nullable String tooltip) {
     this.title = title;
     this.executablePath = executablePath;
     this.executableArgs = executableArgs;
+    this.tooltip = tooltip;
   }
 }

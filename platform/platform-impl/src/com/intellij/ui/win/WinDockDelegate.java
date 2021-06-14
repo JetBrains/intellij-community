@@ -82,24 +82,28 @@ public final class WinDockDelegate implements SystemDock.Delegate {
       }
 
       final @NotNull String taskTitle;
+      final @NotNull String taskTooltip;
       {
         final @Nullable String presentationText;
         final @Nullable String projectName;
 
         if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getTemplatePresentation().getText())) {
           taskTitle = presentationText;
+          taskTooltip = presentationText + " (" + projectPathSystem + ")";
         }
         else if (!Strings.isEmptyOrSpaces(projectName = reopenProjectAction.getProjectNameToDisplay())) {
           taskTitle = projectName;
+          taskTooltip = projectName + " (" + projectPathSystem + ")";
         }
         else {
           taskTitle = projectPathSystem;
+          taskTooltip = projectPathSystem;
         }
       }
 
       final String taskArgs = "\"" + projectPathSystem + "\"";
 
-      result[i++] = new JumpTask(taskTitle, launcherPath, taskArgs);
+      result[i++] = new JumpTask(taskTitle, launcherPath, taskArgs, taskTooltip);
     }
 
     if (i < result.length) {
