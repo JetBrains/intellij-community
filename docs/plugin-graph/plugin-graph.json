@@ -209,6 +209,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cBv",
+    "n": "com.intellij.diagram"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Bv",
     "name": "intellij.diagram.impl",
     "n": "i.diagram.impl",
@@ -216,7 +222,44 @@
     "sourceModule": "intellij.diagram.impl",
     "descriptor": "plugins/uml/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.diagram",
-    "type": 1
+    "parent": "cBv",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "lR",
+    "name": "intellij.diagram.java",
+    "n": "i.diagram.java",
+    "package": "com.intellij.uml.java",
+    "sourceModule": "intellij.diagram.java",
+    "descriptor": "plugins/uml/java/resources/intellij.diagram.java.xml",
+    "parent": "cBv",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ns",
+    "name": "intellij.diagram.impl/vcs",
+    "n": "i.diagram.impl/vcs",
+    "package": "com.intellij.uml.diff",
+    "sourceModule": "intellij.diagram.impl",
+    "descriptor": "plugins/uml/resources/intellij.diagram.impl.vcs.xml",
+    "parent": "cBv",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Py",
+    "name": "intellij.diagram.properties",
+    "n": "i.diagram.properties",
+    "package": "com.intellij.uml.properties",
+    "sourceModule": "intellij.diagram.properties",
+    "descriptor": "plugins/uml/properties/resources/intellij.diagram.properties.xml",
+    "parent": "cBv",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -951,6 +994,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cXe",
+    "n": "com.intellij.javaee.ejb"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Xe",
     "name": "intellij.javaee.ejb.impl",
     "n": "i.javaee.ejb.impl",
@@ -958,7 +1007,20 @@
     "sourceModule": "intellij.javaee.ejb.impl",
     "descriptor": "plugins/javaee/ejb/ejb-impl/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.javaee.ejb",
-    "type": 1
+    "parent": "cXe",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "pA",
+    "name": "intellij.javaee.ejb.impl/diagram",
+    "n": "i.javaee.ejb.impl/diagram",
+    "package": "com.intellij.javaee.ejb.diagram",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.diagram.xml",
+    "parent": "cXe",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2476,6 +2538,17 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "KQ",
+    "name": "com.intellij.modules.vcs",
+    "n": "c.i.m.vcs",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "It",
     "name": "com.intellij.modules.xml",
     "n": "c.i.m.xml",
@@ -2601,6 +2674,18 @@
     "sourceModule": "intellij.indexing.shared",
     "descriptor": "plugins/shared-indexes/core/resources/META-INF/plugin.xml",
     "pluginId": "intellij.indexing.shared.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "MU",
+    "name": "intellij.java.i18n",
+    "n": "i.java.i18n",
+    "package": null,
+    "sourceModule": "intellij.java.i18n",
+    "descriptor": "community/plugins/java-i18n/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.java-i18n",
     "type": 1
   }
 }, {
@@ -2784,17 +2869,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "KQ",
-    "name": "com.intellij.modules.vcs",
-    "n": "c.i.m.vcs",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "43",
     "name": "com.intellij.modules.python",
     "n": "c.i.m.python",
@@ -2917,6 +2991,30 @@
     "id": "up_RP",
     "source": "up",
     "target": "RP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_lR",
+    "source": "Bv",
+    "target": "lR",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_Ns",
+    "source": "Bv",
+    "target": "Ns",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_Py",
+    "source": "Bv",
+    "target": "Py",
     "type": 1
   }
 }, {
@@ -3165,6 +3263,14 @@
     "id": "i7_1U",
     "source": "i7",
     "target": "1U",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_pA",
+    "source": "Xe",
+    "target": "pA",
     "type": 1
   }
 }, {
@@ -3746,6 +3852,38 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Bv_wo",
+    "source": "Bv",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "lR_S9",
+    "source": "lR",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ns_KQ",
+    "source": "Ns",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Py_3J",
+    "source": "Py",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "HS_S9",
     "source": "HS",
     "target": "S9",
@@ -4061,6 +4199,62 @@
     "id": "1U_Se",
     "source": "1U",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_S9",
+    "source": "Xe",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_MU",
+    "source": "Xe",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_3J",
+    "source": "Xe",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_Pn",
+    "source": "Xe",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_s7",
+    "source": "Xe",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_wo",
+    "source": "Xe",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "pA_Bv",
+    "source": "pA",
+    "target": "Bv",
     "type": 0
   }
 }, {
