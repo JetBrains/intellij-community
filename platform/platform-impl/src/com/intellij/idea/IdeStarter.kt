@@ -14,6 +14,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -105,6 +106,10 @@ open class IdeStarter : ApplicationStarter {
       @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
       return CompletableFuture.completedFuture(null)
+    }
+
+    if (ApplicationManager.getApplication().isInternal) {
+      UiInspectorAction.initGlobalInspector()
     }
 
     if (JetBrainsProtocolHandler.appStartedWithCommand()) {

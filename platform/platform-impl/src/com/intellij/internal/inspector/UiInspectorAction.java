@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
@@ -101,7 +100,18 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+  private static final String ADDED_AT_STACKTRACE = "uiInspector.addedAt";
   private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
+
+  private static boolean ourGlobalInstanceInitialized = false;
+  public static synchronized void initGlobalInspector() {
+    if (!ourGlobalInstanceInitialized) {
+      ourGlobalInstanceInitialized = true;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        new UiInspector(null);
+      });
+    }
+  }
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
@@ -131,9 +141,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
       }
     }, AWTEvent.MOUSE_EVENT_MASK);
-    if (Boolean.getBoolean("idea.ui.debug.mode") || Boolean.getBoolean("idea.ui.inspector")) {
-      ApplicationManager.getApplication().invokeLater(() -> new UiInspector(null));
-    }
   }
 
   private void updateMouseShortcuts() {
@@ -996,14 +1003,19 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         @Override
         protected boolean onDoubleClick(@NotNull MouseEvent event) {
           int row = myTable.rowAtPoint(event.getPoint());
-          int column = myTable.columnAtPoint(event.getPoint());
-          if (row >=0 && row < myTable.getRowCount() && column >= 0 && column < myTable.getColumnCount()) {
+          int column = 1;
+          if (row >=0 && row < myTable.getRowCount() && column < myTable.getColumnCount()) {
             Component renderer = myTable.getCellRenderer(row, column)
                                         .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
+              StringBuilder sb = new StringBuilder();
+              if (component != null) sb.append(getComponentName(component)).append(" ");
+              String value = StringUtil.trimStart(((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"), "at ");
+              sb.append("'").append(myModel.getValueAt(row, 0)).append("':");
+              sb.append(value.contains("\n") || value.length() > 100 ? "\n" : " ");
+              sb.append(value);
               //noinspection UseOfSystemOutOrSystemErr
-              System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
+              System.out.println(sb);
               return true;
             }
           }
@@ -1499,7 +1511,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           if (table instanceof Object[]) {
             Object[] arr = (Object[])table;
             for (int i = 0; i < arr.length; i += 2) {
-              if (arr[i].equals("uiInspector.addedAt")) continue;
+              if (arr[i].equals(ADDED_AT_STACKTRACE)) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(arr[i]).append("->").append(arr[i + 1]).append(']');
             }
@@ -1507,7 +1519,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           else if (table instanceof Map) {
             Map<?, ?> map = (Map<?, ?>)table;
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-              if (entry.getKey().equals("uiInspector.addedAt")) continue;
+              if (entry.getKey().equals(ADDED_AT_STACKTRACE)) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
             }
@@ -1602,7 +1614,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     void fillTable() {
       addProperties("", myComponent, PROPERTIES);
-      Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty("uiInspector.addedAt") : null;
+      Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty(ADDED_AT_STACKTRACE) : null;
       myProperties.add(new PropertyBean("added-at", addedAt, addedAt != null));
 
       // Add properties related to Accessibility support. This is useful for manually
@@ -2352,11 +2364,11 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
       if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
         String text = ExceptionUtil.getThrowableText(new Throwable());
-        int first = text.indexOf("at com.intellij", text.indexOf("at java.awt"));
+        int first = text.indexOf("at com.intellij", text.indexOf("at java."));
         int last = text.indexOf("at java.awt.EventQueue");
         if (last == -1) last = text.length();
         String val = last > first && first > 0 ? text.substring(first, last).trim() : null;
-        ((JComponent)child).putClientProperty("uiInspector.addedAt", val);
+        ((JComponent)child).putClientProperty(ADDED_AT_STACKTRACE, val);
       }
     }
   }
