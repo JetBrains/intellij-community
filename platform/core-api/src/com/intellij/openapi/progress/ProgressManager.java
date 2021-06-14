@@ -275,5 +275,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
    * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.
    */
+  @ApiStatus.Internal
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
 }
