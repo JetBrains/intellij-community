@@ -27,9 +27,9 @@ repositories {
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency("org.mockito:mockito-core:3.3.3", JpsDepScope.TEST)
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
     jpsLikeJarDependency(intellijPluginDep("gradle", forIde = true), JpsDepScope.TEST) // 'intellij.gradle' dependency

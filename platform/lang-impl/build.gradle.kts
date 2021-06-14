@@ -78,9 +78,9 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.32", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
-    jpsLikeJarDependency(files(rootDir.resolve("kotlin-ide/intellij/community/lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency("com.vladsch.flexmark:flexmark-all:0.62.2", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.intellij.platform.testExtensions", JpsDepScope.TEST) // 'intellij.platform.testExtensions' dependency
     jpsLikeJarDependency("org.assertj:assertj-core:3.19.0", JpsDepScope.TEST) // 'intellij.platform.testExtensions' dependency
