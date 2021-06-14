@@ -2,25 +2,21 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.tags.TagManager;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.TextChunk;
+import com.intellij.usages.UsageNodePresentation;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.FontUtil;
-import com.intellij.util.IconUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -121,15 +117,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
         }
         else {
-          UsageGroup group = node.getGroup();
-          PsiElement element = group instanceof DataProvider
-                               ? SlowOperations.allowSlowOperations(() -> CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group))
-                               : null;
-          var tagIconAndText = TagManager.getTagIconAndText(element);
-          setIcon(IconUtil.rowIcon(tagIconAndText.first, group.getIcon()));
-          append(tagIconAndText.second);
-          append(group.getPresentableGroupText(),
-                 patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
+          renderNode(node);
         }
 
         int count = node.getRecursiveUsageCount();
@@ -296,12 +284,6 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, original.getFgColor(), original.getWaveColor());
     }
     if (node instanceof GroupNode) {
-      UsageGroup group = ((GroupNode)node).getGroup();
-      FileStatus fileStatus = group != null ? group.getFileStatus() : null;
-      if (fileStatus != null && fileStatus != FileStatus.NOT_CHANGED) {
-        original = new SimpleTextAttributes(original.getStyle(), fileStatus.getColor(), original.getWaveColor());
-      }
-
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
       if (parent != null && parent.isRoot()) {
         original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_BOLD, original.getFgColor(), original.getWaveColor());

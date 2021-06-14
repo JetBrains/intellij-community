@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -671,7 +673,7 @@ public class UsageViewImpl implements UsageViewEx {
 
         treeState.invalidatePathBounds(eachPath);
         Object node = eachPath.getLastPathComponent();
-        if (node instanceof UsageNode) {
+        if (node instanceof UsageNode || node instanceof GroupNode) {
           toUpdate.add((Node)node);
         }
       }
@@ -865,6 +867,12 @@ public class UsageViewImpl implements UsageViewEx {
       }
       return value == null ? null : value.toString();
     }, true);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(new FileStatusListener() {
+      @Override
+      public void fileStatusesChanged() {
+        clearRendererCache();
+      }
+    }, this);
   }
 
   @NotNull

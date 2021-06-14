@@ -1,14 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.ide.tags.TagManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.ColoredText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageNodePresentation;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,10 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.lang.ref.Reference;
+import java.util.List;
 import java.util.*;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
@@ -412,6 +428,37 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       }
     }
     return list;
+  }
+
+  private volatile Reference<UsageNodePresentation> myCachedPresentation;
+
+  @Override
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return SoftReference.dereference(myCachedPresentation);
+  }
+
+  @Override
+  protected void updateCachedPresentation() {
+    UsageGroup group = getGroup();
+    if (group == null || !group.isValid()) {
+      return;
+    }
+    PsiElement element = group instanceof DataProvider
+                         ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group)
+                         : null;
+    FileStatus fileStatus = group.getFileStatus();
+    Color foregroundColor = fileStatus != null ? fileStatus.getColor() : null;
+    var tagIconAndText = TagManager.getTagIconAndText(element);
+    Icon icon = IconUtil.rowIcon(tagIconAndText.first, group.getIcon());
+    List<TextChunk> chunks = new ArrayList<>();
+    for (ColoredText.Fragment fragment : tagIconAndText.second.fragments()) {
+      chunks.add(new TextChunk(fragment.fragmentAttributes().toTextAttributes(), fragment.fragmentText()));
+    }
+    TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
+    attributes.setForegroundColor(foregroundColor);
+    chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));
+    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY));
+    myCachedPresentation = new SoftReference<>(presentation);
   }
 
   @NotNull
