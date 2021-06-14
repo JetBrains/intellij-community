@@ -85,7 +85,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     DefaultActionGroup group = new DefaultActionGroup();
     group.addAll(shells);
     group.addAll(wsl);
-    if (!wsl.isEmpty()) {
+    if (shells.size() + wsl.size() > 0) {
       group.addSeparator();
     }
     group.add(new TerminalSettingsAction());
@@ -104,14 +104,14 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
   private static @NotNull List<OpenShellAction> detectShells() {
     List<OpenShellAction> actions = new ArrayList<>();
     if (SystemInfo.isUnix) {
-      ContainerUtil.addIfNotNull(actions, create("/bin/bash", List.of(), "Bash"));
+      ContainerUtil.addIfNotNull(actions, create("/bin/bash", List.of(), "bash"));
       if (Files.exists(Path.of("/usr/local/bin/zsh"))) {
-        ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/zsh", List.of(), "Zsh"));
+        ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/zsh", List.of(), "zsh"));
       }
       else {
-        ContainerUtil.addIfNotNull(actions, create("/usr/bin/zsh", List.of(), "Zsh"));
+        ContainerUtil.addIfNotNull(actions, create("/usr/bin/zsh", List.of(), "zsh"));
       }
-      ContainerUtil.addIfNotNull(actions, create("/usr/bin/fish", List.of(), "Fish"));
+      ContainerUtil.addIfNotNull(actions, create("/usr/bin/fish", List.of(), "fish"));
     }
     else if (SystemInfo.isWindows) {
       File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");
