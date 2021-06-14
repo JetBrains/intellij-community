@@ -1,5 +1,6 @@
 <idea-plugin>
   <name>JUnit</name>
+  <id>JUnit</id>
   <description>
       <![CDATA[
       Supports <a href="https://github.com/junit-team/junit">JUnit tests</a>.
@@ -13,7 +14,7 @@
       ]]>
    </description>
   <category>Test Tools</category>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.JUnitBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
