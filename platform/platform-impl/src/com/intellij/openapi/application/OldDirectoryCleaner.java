@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -16,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -151,8 +152,9 @@ public final class OldDirectoryCleaner {
           Files.walkFileTree(directory, visitor);
           Path homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
           if (Files.exists(homeDir)) {
-            try (Reader reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName))) {
-              if (nameAndVersion.equals(JacksonUtil.readSingleField(reader, "dataDirectoryName"))) {
+            try (Reader reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
+                 JsonParser parser = new JsonFactory().createParser(reader)) {
+              if (nameAndVersion.equals(JacksonUtil.readSingleField(parser, "dataDirectoryName"))) {
                 isInstalled = true;
               }
             }
@@ -299,7 +301,7 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
       myModel.addTableModelListener(e -> updateOkButton());
       JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
-      panel.add(new MultiLineLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
+      panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       JBScrollPane tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);

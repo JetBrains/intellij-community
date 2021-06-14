@@ -4,6 +4,7 @@ package com.intellij.util.io.jackson
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
@@ -41,16 +42,15 @@ open class IntelliJPrettyPrinter : DefaultPrettyPrinter() {
 }
 
 @Throws(IOException::class)
-fun readSingleField(reader: Reader, name: String): String? =
-  JsonFactory().createParser(reader).use { parser ->
-    if (parser.nextToken() == JsonToken.START_OBJECT) {
-      while (parser.nextToken() != null) {
-        if (parser.currentName == name) {
-          parser.nextToken()
-          return@use parser.text
-        }
-        parser.skipChildren()
+fun readSingleField(parser: JsonParser, name: String): String? {
+  if (parser.nextToken() == JsonToken.START_OBJECT) {
+    while (parser.nextToken() != null) {
+      if (parser.currentName == name) {
+        parser.nextToken()
+        return parser.text
       }
+      parser.skipChildren()
     }
-    null
   }
+  return null
+}
