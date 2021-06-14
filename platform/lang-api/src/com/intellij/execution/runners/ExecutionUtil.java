@@ -24,12 +24,9 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +36,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
 import java.util.function.Function;
 
 import static com.intellij.openapi.projectRoots.JdkUtil.PROPERTY_DYNAMIC_CLASSPATH;
@@ -275,35 +271,6 @@ public final class ExecutionUtil {
 
   @NotNull
   public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
-    return new LayeredIcon(base, new Icon() {
-      @SuppressWarnings("UseJBColor")
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        int iSize = JBUIScale.scale(4);
-        Graphics2D g2d = (Graphics2D)g.create();
-        try {
-          GraphicsUtil.setupAAPainting(g2d);
-          g2d.setColor(color);
-          Ellipse2D.Double shape =
-            new Ellipse2D.Double(x + getIconWidth() - iSize, y + getIconHeight() - iSize, iSize, iSize);
-          g2d.fill(shape);
-          g2d.setColor(ColorUtil.withAlpha(Color.BLACK, .40));
-          g2d.draw(shape);
-        }
-        finally {
-          g2d.dispose();
-        }
-      }
-
-      @Override
-      public int getIconWidth() {
-        return base != null ? base.getIconWidth() : emptyIconWidth;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return base != null ? base.getIconHeight() : emptyIconHeight;
-      }
-    });
+    return new LayeredIcon(base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color));
   }
 }
