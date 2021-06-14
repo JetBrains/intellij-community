@@ -11,7 +11,20 @@ Reports an empty class body.
   }
 
   fun emptyC() {
-     object {} &lt;== anonymous object, it's ok (not reported)
+     object {} // &lt;== anonymous object, it's ok (not reported)
+  }
+</code></pre>
+
+<p>After the quick fix is applied:</p>
+<pre><code>
+  class EmptyA()
+
+  class EmptyB {
+      companion object
+  }
+
+  fun emptyC() {
+     object {}
   }
 </code></pre>
 </body>
