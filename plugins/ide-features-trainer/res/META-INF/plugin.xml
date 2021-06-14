@@ -96,9 +96,12 @@
     <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
 
     <!-- Help -->
-    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow">
-      <add-to-group group-id="HelpMenu" relative-to-action="ShowTips" anchor="after"/>
-    </action>
+    <group id="LearnGroup">
+      <separator/>
+      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"/>
+      <separator/>
+      <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
