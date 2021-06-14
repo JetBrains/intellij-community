@@ -81,7 +81,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
           startApp(app, IdeStarter(), initAppActivity, plugins, args)
         }
         else {
-          // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
+          // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
           findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
         }
 
@@ -117,7 +117,7 @@ private fun startApp(app: ApplicationImpl,
                      plugins: List<IdeaPluginDescriptorImpl>,
                      args: List<String>) {
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
-    // but it is ok because registry is not and should be not used
+    // but it is OK, because registry is not and should not be used.
     initConfigurationStore(app)
     val preloadSyncServiceFuture = preloadServices(plugins, app, activityPrefix = "")
 
@@ -331,7 +331,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
@@ -454,7 +454,7 @@ private fun executePreloadActivities(app: ApplicationImpl) {
     return
   }
 
-  // don't execute as one long task, make sure that other more important tasks maybe executed in between
+  // do not execute as a single long task, make sure that other more important tasks may slip in between
   ForkJoinPool.commonPool().execute(object : Runnable {
     private var index = 0
 
@@ -463,7 +463,7 @@ private fun executePreloadActivities(app: ApplicationImpl) {
         return
       }
 
-      val item = list.get(index++)
+      val item = list[index++]
       executePreloadActivity(item.first, item.second, app)
       if (index == list.size || app.isDisposed) {
         activity.end()

@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
- * A utility class providing pieces missing from {@link Files java.nio.file.Files}.
+ * A utility class that provides pieces missing from {@link Files java.nio.file.Files}.
  */
 public final class NioFiles {
   private NioFiles() { }
@@ -72,7 +72,7 @@ public final class NioFiles {
   }
 
   /**
-   * On POSIX file systems, sets "owner-exec" permission (if not already set); on others, does nothing.
+   * On POSIX file systems, sets "owner-exec" permission (if not yet set); on others, does nothing.
    */
   public static void setExecutable(@NotNull Path file) throws IOException {
     PosixFileAttributeView view = Files.getFileAttributeView(file, PosixFileAttributeView.class);

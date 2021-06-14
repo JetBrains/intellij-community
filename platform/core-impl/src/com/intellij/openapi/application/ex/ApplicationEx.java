@@ -51,7 +51,7 @@ public interface ApplicationEx extends Application {
   /**
    * Acquires IW lock if it's not acquired by the current thread.
    *
-   * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
+   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
    */
   @ApiStatus.Internal
   default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
@@ -76,8 +76,8 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
-   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   * @param force when {@code true}, no additional confirmations will be shown. The application is guaranteed to exit
+   * @param exitConfirmed when {@code true}, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
    */
   default void exit(boolean force, boolean exitConfirmed) {
@@ -92,7 +92,7 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   * @param exitConfirmed when {@code true}, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
    */
   void restart(boolean exitConfirmed);
@@ -176,9 +176,9 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
+   * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
    * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
+   * This method is used to implement higher-level API. Please do not use it directly.
    */
   @ApiStatus.Internal
   default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
@@ -186,12 +186,12 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
-   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
+   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
+   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
    * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
-   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to
-   * run code under Write Intent lock asynchronously.
+   * This method is used to implement higher-level API. Please do not use it directly.
+   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or
+   * {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to run code under the write-intent lock asynchronously.
    *
    * @param action the action to run
    */
