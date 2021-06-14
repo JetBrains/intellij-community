@@ -1257,6 +1257,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "caK",
+    "n": "com.intellij.micronaut"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "aK",
     "name": "intellij.micronaut",
     "n": "i.micronaut",
@@ -1264,7 +1270,51 @@
     "sourceModule": "intellij.micronaut",
     "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.micronaut",
-    "type": 1
+    "parent": "caK",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Zb",
+    "name": "intellij.micronaut/yaml",
+    "n": "i.micronaut/yaml",
+    "package": "com.intellij.micronaut.config.yaml",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.yaml.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cJI",
+    "n": "com.intellij.microservices.config"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JI",
+    "name": "intellij.microservices.config",
+    "n": "i.microservices.config",
+    "package": "com.intellij.microservices.config",
+    "sourceModule": "intellij.microservices.config",
+    "descriptor": "plugins/microservices/microservices-config/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.config",
+    "parent": "cJI",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "60",
+    "name": "intellij.microservices.config/yaml",
+    "n": "i.microservices.config/yaml",
+    "package": "com.intellij.microservices.config.yaml",
+    "sourceModule": "intellij.microservices.config",
+    "descriptor": "plugins/microservices/microservices-config/resources/intellij.microservices.config.yaml.xml",
+    "parent": "cJI",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2121,6 +2171,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "5v",
+    "name": "intellij.spring.boot.configYaml",
+    "n": "i.spring.boot.configYaml",
+    "package": "com.intellij.spring.boot.application.yaml",
+    "sourceModule": "intellij.spring.boot.configYaml",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-config-yaml/resources/intellij.spring.boot.configYaml.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "c2Z",
     "n": "com.intellij.spring"
   }
@@ -2834,18 +2896,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "JI",
-    "name": "intellij.microservices.config",
-    "n": "i.microservices.config",
-    "package": null,
-    "sourceModule": "intellij.microservices.config",
-    "descriptor": "plugins/microservices/microservices-config/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.microservices.config",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "Fa",
     "name": "com.intellij.modules.database",
     "n": "c.i.m.database",
@@ -3332,6 +3382,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "aK_Zb",
+    "source": "aK",
+    "target": "Zb",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_60",
+    "source": "JI",
+    "target": "60",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "s0_mH",
     "source": "s0",
     "target": "mH",
@@ -3655,6 +3721,14 @@
     "id": "LR_Kg",
     "source": "LR",
     "target": "Kg",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_5v",
+    "source": "LR",
+    "target": "5v",
     "type": 1
   }
 }, {
@@ -4391,6 +4465,54 @@
     "id": "wG_Se",
     "source": "wG",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zb_cV",
+    "source": "Zb",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zb_60",
+    "source": "Zb",
+    "target": "60",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_S9",
+    "source": "JI",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_wo",
+    "source": "JI",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_3J",
+    "source": "JI",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "60_cV",
+    "source": "60",
+    "target": "cV",
     "type": 0
   }
 }, {
@@ -5135,6 +5257,22 @@
     "id": "Kg_nx",
     "source": "Kg",
     "target": "nx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5v_60",
+    "source": "5v",
+    "target": "60",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5v_cV",
+    "source": "5v",
+    "target": "cV",
     "type": 0
   }
 }, {
