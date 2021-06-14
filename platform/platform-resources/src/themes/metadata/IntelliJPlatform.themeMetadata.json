@@ -1239,6 +1239,11 @@
       "key": "Lesson.Tooltip.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
       "since": "2021.2"
+    },
+    {
+      "key": "ProblemsView.projectAnalysisButtonBackground",
+      "description": "Background for Project-Wide analysis button when enabled",
+      "since": "2021.2"
     }
   ]
 }
