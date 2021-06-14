@@ -445,8 +445,6 @@
                  description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
-    <registryKey key="git.process.ignored" defaultValue="true"
-                 description="Process and highlight Git ignored files."/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
                  description="Show dedicated toolwindow for git merge conflicts"/>
     <registryKey key="git.update.project.info.as.log" defaultValue="true"

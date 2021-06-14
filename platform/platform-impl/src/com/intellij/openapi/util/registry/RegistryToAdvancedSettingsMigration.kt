@@ -22,6 +22,11 @@ class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
           continue
         }
 
+        if (setting.id == "vcs.process.ignored") {
+          migrateVcsIgnoreProcessing(userProperties, setting)
+          continue
+        }
+
         val userProperty = userProperties[setting.id] ?: continue
         try {
           AdvancedSettings.getInstance().setSetting(setting.id, setting.valueFromString(userProperty), setting.type())
@@ -48,5 +53,22 @@ class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
       return
     }
     AdvancedSettings.getInstance().setSetting(setting.id, mode, setting.type())
+  }
+
+  private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
+
+    if (userProperties["git.process.ignored"] == "false") {
+      userProperties.remove("git.process.ignored")
+    }
+    else if (userProperties["hg4idea.process.ignored"] == "false") {
+      userProperties.remove("hg4idea.process.ignored")
+    }
+    else if (userProperties["p4.process.ignored"] == "false") {
+      userProperties.remove("p4.process.ignored")
+    }
+    else {
+      return
+    }
+    AdvancedSettings.getInstance().setSetting(setting.id, false, setting.type())
   }
 }
