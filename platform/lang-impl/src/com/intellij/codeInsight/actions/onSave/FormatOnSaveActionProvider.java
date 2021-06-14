@@ -4,19 +4,22 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.PlatformUtils.*;
+
 public class FormatOnSaveActionProvider extends ActionOnSaveInfoProvider {
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
-    // TODO correct the supported IDE list.
-    if (PlatformUtils.isIntelliJ() || PlatformUtils.isWebStorm()) {
-      return List.of(new FormatOnSaveActionInfo(context));
+    if (isIntelliJ() || isWebStorm() || isPhpStorm() || isPyCharm() || isGoIde()) {
+      return List.of(new FormatOnSaveActionInfo(context),
+                     new OptimizeImportsOnSaveActionInfo(context),
+                     new RearrangeCodeOnSaveActionInfo(context),
+                     new CodeCleanupOnSaveActionInfo(context));
     }
     return Collections.emptyList();
   }

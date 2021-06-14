@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.concurrent.FutureTask;
@@ -25,6 +27,13 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
     super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
     mySelectionModel = selectionModel;
+  }
+
+  public CodeCleanupCodeProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @Nullable Runnable postRunnable,
+                                  boolean processChangedTextOnly) {
+    super(project, files, getProgressText(), CodeInsightBundle.message("command.cleanup.code"), postRunnable, processChangedTextOnly);
   }
 
 
