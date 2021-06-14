@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -18,12 +19,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.io.jackson.JacksonUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
@@ -37,10 +40,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.io.Reader;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -114,13 +115,15 @@ public final class OldDirectoryCleaner {
     private final long lastUpdated;
     private final long size;
     private final int entriesToDelete;
+    private final boolean isInstalled;
 
-    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete) {
+    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
       this.name = name;
       this.directories = directories;
       this.lastUpdated = lastUpdated;
       this.size = size;
       this.entriesToDelete = entriesToDelete;
+      this.isInstalled = isInstalled;
     }
 
     @Override
@@ -132,19 +135,34 @@ public final class OldDirectoryCleaner {
   private List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
     List<Path> configs = result.getPaths();
     List<DirectoryGroup> groups = new ArrayList<>(configs.size());
+    String productInfoFileName = SystemInfo.isMac ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
 
     for (Path config : configs) {
       List<Path> directories = result.findRelatedDirectories(config, myBestBefore != 0);
       if (directories.isEmpty()) continue;
 
+      String nameAndVersion = result.getNameAndVersion(config);
       long lastUpdated = 0, size = 0;
       int entriesToDelete = 0;
+      boolean isInstalled = false;
       for (Path directory : directories) {
         CollectingVisitor visitor = new CollectingVisitor(indicator);
         try {
           Files.walkFileTree(directory, visitor);
+          Path homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
+          if (Files.exists(homeDir)) {
+            try (Reader reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName))) {
+              if (nameAndVersion.equals(JacksonUtil.readSingleField(reader, "dataDirectoryName"))) {
+                isInstalled = true;
+              }
+            }
+            catch (NoSuchFileException e) {
+              myLogger.debug(e);
+              isInstalled = true;  // the file could be missing from a self-built installation
+            }
+          }
         }
-        catch (IOException e) {
+        catch (IOException | InvalidPathException e) {
           myLogger.debug(e);
         }
         lastUpdated = Math.max(lastUpdated, visitor.lastUpdated);
@@ -152,7 +170,7 @@ public final class OldDirectoryCleaner {
         entriesToDelete += visitor.entriesToDelete;
       }
       if (myBestBefore == 0 || lastUpdated <= myBestBefore) {
-        groups.add(new DirectoryGroup(result.getNameAndVersion(config), directories, lastUpdated, size, entriesToDelete));
+        groups.add(new DirectoryGroup(nameAndVersion, directories, lastUpdated, size, entriesToDelete, isInstalled));
       }
     }
 
@@ -301,7 +319,9 @@ public final class OldDirectoryCleaner {
 
       MenuTableModel(List<DirectoryGroup> groups) {
         myGroups = groups;
-        mySelected.set(0, myGroups.size());
+        for (int i = 0; i < groups.size(); i++) {
+          mySelected.set(i, !groups.get(i).isInstalled);
+        }
       }
 
       List<DirectoryGroup> getSelectedGroups() {

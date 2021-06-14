@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
+  String PRODUCT_INFO_FILE_NAME = "product-info.json";
+  String PRODUCT_INFO_FILE_NAME_MAC = "Resources/" + PRODUCT_INFO_FILE_NAME;
 
   int FORCE_EXIT = 0x01;
   int EXIT_CONFIRMED = 0x02;
