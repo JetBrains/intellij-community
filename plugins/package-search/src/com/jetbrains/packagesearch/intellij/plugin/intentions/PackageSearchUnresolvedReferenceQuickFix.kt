@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
-import icons.PackageSearchIcons
 import java.util.regex.Pattern
 
 class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {

@@ -3,9 +3,8 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenModuleTransformer
-import kotlin.streams.toList
+import com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.maven.MavenModuleTransformer
 
 /**
  * Extension point used to register [Module]s transformations to [ProjectModule]s.

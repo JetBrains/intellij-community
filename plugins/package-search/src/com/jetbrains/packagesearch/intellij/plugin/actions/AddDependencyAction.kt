@@ -10,14 +10,13 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
+import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
-import icons.PackageSearchIcons
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),

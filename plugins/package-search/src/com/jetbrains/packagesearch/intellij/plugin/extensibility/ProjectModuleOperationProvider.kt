@@ -7,8 +7,8 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.

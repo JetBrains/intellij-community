@@ -1,11 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -23,7 +21,6 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
-import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
@@ -66,9 +63,6 @@ import java.util.Locale
 import kotlin.time.hours
 import kotlin.time.milliseconds
 import kotlin.time.seconds
-
-private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
-    UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
 
 internal class PackageSearchDataService(
     override val project: Project
@@ -258,13 +252,11 @@ internal class PackageSearchDataService(
         return projectModules.toModuleModelsList()
     }
 
-    private fun List<ProjectModule>.toModuleModelsList() = map { moduleModelFrom(it) }
+    private fun List<ProjectModule>.toModuleModelsList() = map { ModuleModel(it, declaredRepositories(it)) }
 
-    private fun moduleModelFrom(projectModule: ProjectModule): ModuleModel {
-        val repositories = projectModule.declaredRepositories()
-            .map { repo -> RepositoryDeclaration(repo.id, repo.name, repo.url, projectModule) }
-        return ModuleModel(projectModule, repositories)
-    }
+    private fun declaredRepositories(projectModule: ProjectModule): List<RepositoryDeclaration> = runReadAction {
+        projectModule.moduleType.declaredRepositories(projectModule)
+    }.map { repo -> RepositoryDeclaration(repo.id, repo.name, repo.url, projectModule) }
 
     private suspend fun installedPackages(projectModules: List<ProjectModule>, traceInfo: TraceInfo): List<PackageModel.Installed> {
         val dependenciesByModule = fetchProjectDependencies(projectModules, traceInfo)
@@ -408,21 +400,6 @@ internal class PackageSearchDataService(
         }
 
         return PackagesToUpdate(updatesByModule)
-    }
-
-    private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
-        val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listRepositoriesInModule(this)
-            ?.toList()
-            ?: emptyList())
-
-        // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
-        if (moduleType == MavenProjectModuleType && declaredRepositories.none { it.id == "central" }) {
-            declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
-        } else {
-            declaredRepositories
-        }
-
     }
 
     private fun computeHeaderData(

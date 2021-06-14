@@ -9,12 +9,11 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import icons.PackageSearchIcons
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import java.util.function.Supplier
-import kotlin.time.ExperimentalTime
 
 class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
