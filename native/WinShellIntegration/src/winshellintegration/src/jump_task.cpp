@@ -81,7 +81,7 @@ namespace intellij::ui::win
     JumpTask::BuildSession& JumpTask::BuildSession::setDescription(
         std::optional<WideString> description) noexcept
     {
-        description = std::move(description);
+        description_ = std::move(description);
         return *this;
     }
 
