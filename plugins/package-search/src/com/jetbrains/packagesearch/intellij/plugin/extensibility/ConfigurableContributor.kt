@@ -3,11 +3,9 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.ui.GradleConfigurableContributorDriver
-import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.ui.MavenConfigurableContributorDriver
 
 /**
- * Provider interface for for creating [ConfigurableContributorDriver]s.
+ * Provider interface for creating [ConfigurableContributorDriver]s.
  */
 interface ConfigurableContributor {
 
@@ -31,7 +29,6 @@ interface ConfigurableContributor {
 
 /**
  * Provides an entrypoint to add custom UI to the settings panel under Package Search entry.
- * See [GradleConfigurableContributorDriver] and [MavenConfigurableContributorDriver] for examples.
  */
 interface ConfigurableContributorDriver {
 

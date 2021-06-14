@@ -18,7 +18,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import kotlin.streams.toList
 import kotlin.time.milliseconds
 
@@ -72,6 +71,3 @@ internal val Project.dumbService: DumbService
 
 internal val Project.moduleTransformers: List<ModuleTransformer>
     get() = ModuleTransformer.extensionPointName.extensions(this).toList()
-
-internal val Project.mavenProjectsManager: MavenProjectsManager
-    get() = MavenProjectsManager.getInstance(this)
