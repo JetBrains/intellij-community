@@ -110,7 +110,7 @@ class CommitModeManager(private val project: Project) {
     isForceNonModalCommit.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
     }, project)
-    getApplication().messageBus.connect().subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+    getApplication().messageBus.connect(project).subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == TOGGLE_COMMIT_UI) {
           updateCommitMode()

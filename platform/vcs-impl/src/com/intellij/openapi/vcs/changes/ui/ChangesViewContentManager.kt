@@ -66,13 +66,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
 
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-        if (id == COMMIT_TOOL_WINDOW) {
-         updateToolWindowMapping()
+    ApplicationManager.getApplication().messageBus.connect(project)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+          if (id == COMMIT_TOOL_WINDOW) {
+            updateToolWindowMapping()
+          }
         }
-      }
-    })
+      })
     project.messageBus.connect().subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() = updateToolWindowMapping()
     })
