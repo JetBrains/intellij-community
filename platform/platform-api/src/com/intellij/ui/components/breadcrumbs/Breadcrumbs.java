@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -135,11 +133,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     // this custom component does not have a corresponding UI,
     // so we should care of painting its background
     if (isOpaque()) {
-      if (ExperimentalUI.isNewEditorTabs()) {
-        g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-      } else {
-        g.setColor(getBackground());
-      }
+      g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
     if (g instanceof Graphics2D) {
