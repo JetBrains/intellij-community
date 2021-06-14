@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class SignatureSuggesterPreviewDialog extends DialogWrapper {
+public class SignatureSuggesterPreviewDialog extends DialogWrapper {
   private static final @NonNls String DIFF_PLACE = "ExtractSignature";
 
   private final PsiMethod myOldMethod;
@@ -46,7 +46,7 @@ class SignatureSuggesterPreviewDialog extends DialogWrapper {
   private final PsiMethodCallExpression myNewCall;
   private final int myDuplicatesNumber;
 
-  SignatureSuggesterPreviewDialog(PsiMethod oldMethod,
+  public SignatureSuggesterPreviewDialog(PsiMethod oldMethod,
                                   PsiMethod newMethod,
                                   PsiMethodCallExpression oldMethodCall,
                                   PsiMethodCallExpression newMethodCall,
