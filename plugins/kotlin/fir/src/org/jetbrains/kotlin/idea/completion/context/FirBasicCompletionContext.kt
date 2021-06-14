@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.fir.low.level.api.IndexHelper
+import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -25,7 +25,7 @@ internal class FirBasicCompletionContext(
     val fakeKtFile: KtFile,
     val project: Project,
     val targetPlatform: TargetPlatform,
-    val indexHelper: IndexHelper,
+    val indexHelper: HLIndexHelper,
     val lookupElementFactory: KotlinFirLookupElementFactory = KotlinFirLookupElementFactory(),
 ) {
     val visibleScope = KotlinSourceFilterScope.projectSourceAndClassFiles(originalKtFile.resolveScope, project)
@@ -52,7 +52,7 @@ internal class FirBasicCompletionContext(
             )
         }
 
-        private fun createIndexHelper(parameters: CompletionParameters) = IndexHelper(
+        private fun createIndexHelper(parameters: CompletionParameters) = HLIndexHelper(
             parameters.position.project,
             parameters.position.getModuleInfo().contentScope()
         )
