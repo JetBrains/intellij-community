@@ -13,10 +13,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,10 +75,10 @@ public final class PerformanceWatcher implements Disposable {
 
   private final JitWatcher myJitWatcher = new JitWatcher();
 
-  private RegistryValue mySamplingInterval;
-  private RegistryValue myMaxAttemptsCount;
-  private RegistryValue myUnresponsiveInterval;
-  private RegistryValue myMaxDumpDuration;
+  private final @NotNull RegistryValue mySamplingInterval;
+  private final @NotNull RegistryValue myMaxAttemptsCount;
+  private final @NotNull RegistryValue myUnresponsiveInterval;
+  private final @NotNull RegistryValue myMaxDumpDuration;
 
   @ApiStatus.Internal
   public static @Nullable PerformanceWatcher getInstanceOrNull() {
@@ -102,11 +102,19 @@ public final class PerformanceWatcher implements Disposable {
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private PerformanceWatcher() {
     Application application = ApplicationManager.getApplication();
-    if (application == null ||
-        application.isHeadlessEnvironment()) {
+    if (application == null) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
+    RegistryManager registryManager = application.getService(RegistryManager.class);
+    mySamplingInterval = registryManager.get("performance.watcher.sampling.interval.ms");
+    myMaxAttemptsCount = registryManager.get("performance.watcher.unresponsive.max.attempts.before.log");
+    myUnresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms");
+    myMaxDumpDuration = registryManager.get("performance.watcher.dump.duration.s");
+
+    if (application.isHeadlessEnvironment()) {
       return;
     }
-    application.getService(RegistryManager.class);
 
     RegistryValueListener cancelingListener = new RegistryValueListener() {
       @Override
@@ -129,14 +137,13 @@ public final class PerformanceWatcher implements Disposable {
       }
     };
 
-    for (RegistryValue value : List.of(getOrInitSamplingInterval(),
-                                       getOrInitMaxAttemptsCount(),
-                                       getOrInitUnresponsiveInterval())) {
+    for (RegistryValue value : List.of(mySamplingInterval,
+                                       myMaxAttemptsCount,
+                                       myUnresponsiveInterval)) {
       value.addListener(cancelingListener, this);
     }
-    getOrInitMaxDumpDuration();
 
-    RegistryValue ourReasonableThreadPoolSize = Registry.get("core.pooled.threads");
+    RegistryValue ourReasonableThreadPoolSize = registryManager.get("core.pooled.threads");
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener((thread, runnable) -> {
       if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize.asInteger() &&
@@ -329,56 +336,24 @@ public final class PerformanceWatcher implements Disposable {
     return trace.toString();
   }
 
-  private @NotNull RegistryValue getOrInitSamplingInterval() {
-    RegistryValue result = mySamplingInterval;
-    if (result == null) {
-      result = mySamplingInterval = Registry.get("performance.watcher.sampling.interval.ms");
-    }
-    return result;
-  }
-
   private int getSamplingInterval() {
-    return getOrInitSamplingInterval().asInteger();
-  }
-
-  private @NotNull RegistryValue getOrInitMaxAttemptsCount() {
-    RegistryValue result = myMaxAttemptsCount;
-    if (result == null) {
-      result = myMaxAttemptsCount = Registry.get("performance.watcher.unresponsive.max.attempts.before.log");
-    }
-    return result;
+    return mySamplingInterval.asInteger();
   }
 
   private int getMaxAttemptsCount() {
-    return getOrInitMaxAttemptsCount().asInteger();
+    return myMaxAttemptsCount.asInteger();
   }
 
   int getDumpInterval() {
     return getSamplingInterval() * getMaxAttemptsCount();
   }
 
-  private @NotNull RegistryValue getOrInitUnresponsiveInterval() {
-    RegistryValue result = myUnresponsiveInterval;
-    if (result == null) {
-      result = myUnresponsiveInterval = Registry.get("performance.watcher.unresponsive.interval.ms");
-    }
-    return result;
-  }
-
   int getUnresponsiveInterval() {
-    return getOrInitUnresponsiveInterval().asInteger();
-  }
-
-  private @NotNull RegistryValue getOrInitMaxDumpDuration() {
-    RegistryValue result = myMaxDumpDuration;
-    if (result == null) {
-      result = myMaxDumpDuration = Registry.get("performance.watcher.dump.duration.s");
-    }
-    return result;
+    return myUnresponsiveInterval.asInteger();
   }
 
   int getMaxDumpDuration() {
-    return getOrInitMaxDumpDuration().asInteger() * 1000;
+    return myMaxDumpDuration.asInteger() * 1000;
   }
 
   private static String buildName() {
