@@ -332,10 +332,10 @@ object KotlinConverter : BaseKotlinConverter {
         }
     }
 
-    internal fun convertDeclaration(
+    override fun convertDeclaration(
         element: PsiElement,
         givenParent: UElement?,
-        expectedTypes: Array<out Class<out UElement>>
+        requiredTypes: Array<out Class<out UElement>>
     ): UElement? {
         val original = element.originalElement
 
@@ -360,18 +360,18 @@ object KotlinConverter : BaseKotlinConverter {
             else
                 el<UField>(buildKtOpt(kotlinOrigin, ::KotlinUField))
 
-        return with(expectedTypes) {
+        return with(requiredTypes) {
             when (original) {
                 is KtLightMethod -> el<UMethod>(build(KotlinUMethod::create))
                 is UastFakeLightMethod -> el<UMethod> {
                     val ktFunction = original.original
                     if (ktFunction.isLocal)
-                        convertDeclaration(ktFunction, givenParent, expectedTypes)
+                        convertDeclaration(ktFunction, givenParent, requiredTypes)
                     else
                         KotlinUMethodWithFakeLightDelegate(ktFunction, original, givenParent)
                 }
                 is UastFakeLightPrimaryConstructor ->
-                    convertFakeLightConstructorAlternatives(original, givenParent, expectedTypes).firstOrNull()
+                    convertFakeLightConstructorAlternatives(original, givenParent, requiredTypes).firstOrNull()
                 is KtLightClass -> when (original.kotlinOrigin) {
                     is KtEnumEntry -> el<UEnumConstant> {
                         convertEnumEntry(original.kotlinOrigin as KtEnumEntry, givenParent)
@@ -411,7 +411,7 @@ object KotlinConverter : BaseKotlinConverter {
                         el<UMethod> {
                             val lightMethod = LightClassUtil.getLightClassMethod(original)
                             if (lightMethod != null)
-                                convertDeclaration(lightMethod, givenParent, expectedTypes)
+                                convertDeclaration(lightMethod, givenParent, requiredTypes)
                             else {
                                 val ktLightClass = getLightClassForFakeMethod(original) ?: return null
                                 KotlinUMethodWithFakeLightDelegate(original, ktLightClass, givenParent)
@@ -421,14 +421,14 @@ object KotlinConverter : BaseKotlinConverter {
 
                 is KtPropertyAccessor -> el<UMethod> {
                     val lightMethod = LightClassUtil.getLightClassAccessorMethod(original) ?: return null
-                    convertDeclaration(lightMethod, givenParent, expectedTypes)
+                    convertDeclaration(lightMethod, givenParent, requiredTypes)
                 }
 
                 is KtProperty ->
                     if (original.isLocal) {
-                        convertPsiElement(original, givenParent, expectedTypes)
+                        convertPsiElement(original, givenParent, requiredTypes)
                     } else {
-                        convertNonLocalProperty(original, givenParent, expectedTypes).firstOrNull()
+                        convertNonLocalProperty(original, givenParent, requiredTypes).firstOrNull()
                     }
 
                 is KtParameter -> convertParameter(original, givenParent, this).firstOrNull()
@@ -437,12 +437,12 @@ object KotlinConverter : BaseKotlinConverter {
                 is FakeFileForLightClass -> el<UFile> { KotlinUFile(original.navigationElement, kotlinUastPlugin) }
                 is KtAnnotationEntry -> el<UAnnotation>(build(::KotlinUAnnotation))
                 is KtCallExpression ->
-                    if (expectedTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
-                        !expectedTypes.isAssignableFrom(UCallExpression::class.java)
+                    if (requiredTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
+                        !requiredTypes.isAssignableFrom(UCallExpression::class.java)
                     ) {
                         el<UAnnotation> { KotlinUNestedAnnotation.tryCreate(original, givenParent) }
                     } else null
-                is KtLightAnnotationForSourceEntry -> convertDeclarationOrElement(original.kotlinOrigin, givenParent, expectedTypes)
+                is KtLightAnnotationForSourceEntry -> convertDeclarationOrElement(original.kotlinOrigin, givenParent, requiredTypes)
                 is KtDelegatedSuperTypeEntry -> el<KotlinSupertypeDelegationUExpression> {
                     KotlinSupertypeDelegationUExpression(original, givenParent)
                 }

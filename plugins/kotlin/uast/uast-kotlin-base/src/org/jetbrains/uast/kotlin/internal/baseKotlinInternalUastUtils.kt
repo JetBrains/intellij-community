@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
@@ -49,3 +51,6 @@ fun KtElement.canAnalyze(): Boolean {
     if (containingFile.doNotAnalyze != null) return false // To prevent exceptions during analysis
     return true
 }
+
+val PsiClass.isEnumEntryLightClass: Boolean
+    get() = (this as? KtLightClass)?.kotlinOrigin is KtEnumEntry

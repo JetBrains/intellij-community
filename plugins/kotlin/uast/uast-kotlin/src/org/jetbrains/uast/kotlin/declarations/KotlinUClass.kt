@@ -10,14 +10,12 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
-import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
 import org.jetbrains.uast.visitor.UastVisitor
 
 abstract class AbstractKotlinUClass(givenParent: UElement?) : KotlinAbstractUElement(givenParent), UClass, UAnchorOwner {
@@ -60,26 +58,6 @@ abstract class AbstractKotlinUClass(givenParent: UElement?) : KotlinAbstractUEle
 
 }
 
-class KotlinSupertypeDelegationUExpression(override val sourcePsi: KtDelegatedSuperTypeEntry, givenParent: UElement?) :
-    KotlinAbstractUExpression(givenParent), UExpressionList {
-
-    override val psi: PsiElement? get() = sourcePsi
-
-    val typeReference: UTypeReferenceExpression? by lazy {
-        sourcePsi.typeReference?.let { KotlinUTypeReferenceExpression(it, this) { it.toPsiType(this) } }
-    }
-
-    val delegateExpression: UExpression? by lazy {
-        sourcePsi.delegateExpression?.let { kotlinUastPlugin.convertElement(it, this, UExpression::class.java) as? UExpression }
-    }
-
-    override val expressions: List<UExpression>
-        get() = listOfNotNull(typeReference, delegateExpression)
-
-    override val kind: UastSpecialExpressionKind get() = KotlinSpecialExpressionKinds.SUPER_DELEGATION
-
-}
-
 open class KotlinUClass private constructor(
         psi: KtLightClass,
         givenParent: UElement?
@@ -113,9 +91,9 @@ open class KotlinUClass private constructor(
         // filter DefaultImpls to avoid processing same methods from original interface multiple times
         // filter Enum entry classes to avoid duplication with PsiEnumConstant initializer class
         return psi.innerClasses.filter {
-            it.name != JvmAbi.DEFAULT_IMPLS_CLASS_NAME && !it.isEnumEntryLightClass()
+            it.name != JvmAbi.DEFAULT_IMPLS_CLASS_NAME && !it.isEnumEntryLightClass
         }.mapNotNull {
-            getLanguagePlugin().convertOpt<UClass>(it, this)
+            languagePlugin?.convertOpt<UClass>(it, this)
         }.toTypedArray()
     }
 
@@ -135,7 +113,7 @@ open class KotlinUClass private constructor(
                 else
                     KotlinConstructorUMethod(ktClass, psiMethod, this)
             } else {
-                getLanguagePlugin().convertOpt(psiMethod, this) ?: reportConvertFailure(psiMethod)
+                languagePlugin?.convertOpt(psiMethod, this) ?: reportConvertFailure(psiMethod)
             }
         }
 
@@ -164,12 +142,12 @@ open class KotlinUClass private constructor(
 
         ktDeclarations.asSequence()
             .filterNot { handledKtDeclarations.contains(it) }
-            .mapNotNullTo(result) { KotlinConverter.convertDeclaration(it, this, arrayOf(UElement::class.java)) as? UMethod }
+            .mapNotNullTo(result) {
+                baseResolveProviderService.baseKotlinConverter.convertDeclaration(it, this, arrayOf(UElement::class.java)) as? UMethod
+            }
 
         return result.toTypedArray()
     }
-
-    private fun PsiClass.isEnumEntryLightClass() = (this as? KtLightClass)?.kotlinOrigin is KtEnumEntry
 
     companion object {
         fun create(psi: KtLightClass, containingElement: UElement?): UClass = when (psi) {
@@ -359,21 +337,4 @@ class KotlinInvalidUClass(
     override fun getSuperClass(): UClass? = null
 
     override fun getOriginalElement(): PsiElement? = null
-}
-
-private fun reportConvertFailure(psiMethod: PsiMethod): Nothing {
-    val isValid = psiMethod.isValid
-    val report = KotlinExceptionWithAttachments(
-        "cant convert $psiMethod of ${psiMethod.javaClass} to UMethod"
-                + if (!isValid) " (method is not valid)" else ""
-    )
-
-    if (isValid) {
-        report.withAttachment("method", psiMethod.text)
-        psiMethod.containingFile?.let {
-            report.withAttachment("file", it.text)
-        }
-    }
-
-    throw report
 }
