@@ -20,6 +20,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
     super(castExpression);
     assert !(castTo instanceof PsiPrimitiveType);
     myCasted = casted;
-    myCastTo = castTo;
+    myCastTo = TypeConversionUtil.erasure(castTo);
     myTransferValue = value;
   }
 
