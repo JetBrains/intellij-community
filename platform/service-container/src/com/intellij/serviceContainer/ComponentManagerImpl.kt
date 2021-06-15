@@ -90,7 +90,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
             continue
           }
           if (implementation == "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService") {
-            // requires read action
+            // requires a read action
             continue
           }
 
@@ -604,7 +604,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
     checkCanceledIfNotInClassInit()
 
-    // if container is fully disposed, all adapters maybe removed
+    // if the container is fully disposed, all adapters may be removed
     if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (!createIfNeeded) {
         return null
@@ -1115,8 +1115,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     Disposer.disposeChildren(this, null)
 
     val messageBus = messageBus
-    // There is a chance that someone will try to connect to message bus and will get NPE because of disposed connection disposable,
-    // because container state is not yet set to DISPOSE_IN_PROGRESS.
+    // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
+    // because the container state is not yet set to DISPOSE_IN_PROGRESS.
     // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
     messageBus?.disposeConnectionChildren()
 
@@ -1133,7 +1133,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
 
-    // release references to services instances
+    // release references to the service instances
     componentKeyToAdapter.clear()
     componentAdapters.clear()
     serviceInstanceHotCache.clear()
@@ -1141,7 +1141,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     val messageBus = messageBus
     if (messageBus != null) {
       // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
-      // For example, service ModuleManagerImpl disposes modules, each module, in turn, disposes module's message bus (child bus of application).
+      // For example, service ModuleManagerImpl disposes modules; each module, in turn, disposes module's message bus (child bus of application).
       Disposer.dispose(messageBus)
       this.messageBus = null
     }
@@ -1219,7 +1219,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
           adapter.getImplementationClass()
         }
         catch (e: Throwable) {
-          // well, component registered, but required jar is not added to classpath (community edition or junior IDE)
+          // well, the component is registered, but the required jar is not added to the classpath (community edition or junior IDE)
           LOG.warn(e)
           continue
         }
@@ -1313,7 +1313,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  // project level extensions requires Project as constructor argument, so, for now constructor injection is disabled only for app level
+  // project level extension requires Project as constructor argument, so, for now, constructor injection is disabled only for app level
   final override fun isInjectionForExtensionSupported() = parent != null
 
   internal fun getComponentAdapterOfType(componentType: Class<*>): ComponentAdapter? {
@@ -1331,7 +1331,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   final override fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T, PluginDescriptor) -> Unit) {
-    // we must use instances only from our adapter (could be service or something else)
+    // We must use instances only from our adapter (could be service or something else).
     // unsafeGetAdapters should be not used here as ProjectManagerImpl uses it to call projectOpened
     for (adapter in componentAdapters.getImmutableSet()) {
       if (adapter is MyComponentAdapter) {
@@ -1440,7 +1440,7 @@ private class LinkedHashSetWrapper<T : Any> {
       synchronized(lock) {
         result = immutableSet
         if (result == null) {
-          // Expose the same set as immutable. It should be never modified again. Next add/remove operations will copy synchronizedSet
+          // Expose the same set as immutable. It should never be modified again. Next add/remove operations will copy synchronizedSet
           result = Collections.unmodifiableSet(synchronizedSet)
           immutableSet = result
         }

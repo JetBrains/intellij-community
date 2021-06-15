@@ -93,7 +93,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     var result = cachedName
     if (result == null) {
       // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, project name is required on each load of configuration file.
-      // So, anyway name is computed very early.
+      // So the name is computed very early anyway.
       result = componentStore.projectName
       cachedName = result
     }
@@ -172,8 +172,8 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
-    // for light project preload only services that are essential
-    // (await means "project component loading activity is completed only when all such services are completed")
+    // for light projects, preload only services that are essential
+    // ("await" means "project component loading activity is completed only when all such services are completed")
     val servicePreloadingFuture = if (preloadServices) {
       preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
     }
@@ -213,9 +213,10 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     }
 
     // Must be not only on temporarilyDisposed = true, but also on temporarilyDisposed = false,
-    // because events fired for temporarilyDisposed project between project close and project open and it can lead to cache population.
-    // Message bus implementation can be complicated to add owner.isDisposed check before getting subscribers, but as bus is a very important subsystem,
-    // better to not add any non-production logic
+    // because events are fired for temporarilyDisposed project between project closing and project opening,
+    // and it can lead to cache population.
+    // Message bus implementation can be complicated to add "owner.isDisposed" check before getting subscribers,
+    // but as the bus is a very important subsystem, it's better to not add any non-production logic.
 
     // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
     // so, we clear subscriber cache. `isDisposed` for project returns `true` if `temporarilyDisposed`, so, handler will be not added.
@@ -257,7 +258,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   @Synchronized
   final override fun dispose() {
     val app = ApplicationManager.getApplication()
-    // dispose must be under write action
+    // dispose must be under a write action
     app.assertWriteAccessAllowed()
     val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
 
