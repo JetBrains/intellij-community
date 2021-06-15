@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports on any call to <code>Condition.signal()</code>
-or <code>Condition.signalAll()</code>
-for which no call to a corresponding <code>Condition.await()</code>
-can be found. Only calls which target fields of the current class are reported by this inspection.
+Reports calls to <code>Condition.signal()</code> or <code>Condition.signalAll()</code>
+for which no call to a corresponding <code>Condition.await()</code> can be found.
+<p>Only calls that target fields of the current class are reported by this inspection.</p>
 <p><b>Example:</b></p>
 <pre><code>
   class Queue {
@@ -23,7 +22,6 @@ can be found. Only calls which target fields of the current class are reported b
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

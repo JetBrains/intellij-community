@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports any calls to <code>notify()</code> or <code>notifyAll()</code> made on
+Reports calls to <code>notify()</code> or <code>notifyAll()</code> made on
 <code>java.util.concurrent.locks.Condition</code> object.
-This is probably a programming error, and some variant of the <code>signal()</code> or
-<code>signalAll()</code> method was intended instead, otherwise <code>IllegalMonitorStateException</code> may occur.
-<p>Example:</p>
-<pre>
+<p>
+  This is probably a programming error, and some variant of the <code>signal()</code> or
+  <code>signalAll()</code> method was intended instead, otherwise <code>IllegalMonitorStateException</code> may occur.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   class C {
     final Lock l = new ReentrantLock();
     final Condition c = l.newCondition();
@@ -19,8 +21,8 @@ This is probably a programming error, and some variant of the <code>signal()</co
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
+
 </body>
 </html>
