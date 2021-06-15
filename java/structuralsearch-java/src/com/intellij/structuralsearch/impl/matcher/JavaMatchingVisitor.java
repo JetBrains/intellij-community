@@ -1578,7 +1578,39 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getPattern(), other.getPattern()));
+    final PsiPattern pattern = expression.getPattern();
+    PsiPattern otherPattern = other.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      final PsiTypeTestPattern typeTestPattern = (PsiTypeTestPattern)pattern;
+      otherPattern = skipParenthesesDown(otherPattern);
+      if (otherPattern instanceof PsiTypeTestPattern) {
+        final PsiTypeTestPattern otherVariable = (PsiTypeTestPattern)otherPattern;
+        myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
+      }
+      else {
+        myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(typeTestPattern.getPatternVariable()));
+      }
+    }
+    else {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(pattern, otherPattern));
+    }
+  }
+
+  private PsiPattern skipParenthesesDown(PsiPattern pattern) {
+    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
+      return pattern;
+    }
+    while (pattern instanceof PsiParenthesizedPattern) {
+      final PsiParenthesizedPattern parenthesizedPattern = (PsiParenthesizedPattern)pattern;
+      pattern = parenthesizedPattern.getPattern();
+    }
+    return pattern;
+  }
+
+  @Override
+  public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
+    final PsiParenthesizedPattern other = myMatchingVisitor.getElement(PsiParenthesizedPattern.class);
+    myMatchingVisitor.setResult(other != null && myMatchingVisitor.match(pattern.getPattern(), other.getPattern()));
   }
 
   @Override

@@ -2692,6 +2692,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options, compilePattern("if (true) '_st{0,0};", true)));
     assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options, compilePattern("while (true) '_st+;", true)));
     assertNull(checkApplicableConstraints(options, compilePattern("class A { '_body* }", false)));
+    assertEquals("MINIMUM ZERO not applicable for var", checkApplicableConstraints(options, compilePattern("'_a instanceof ('_Type '_var{0,0})", true)));
   }
 
   private CompiledPattern compilePattern(String criteria, boolean checkForErrors) {
@@ -3510,7 +3511,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("find instanceof", 3, findMatchesCount(in, "'_operand instanceof '_Type"));
     assertEquals("find pattern matching instanceof", 2, findMatchesCount(in, "'_operand instanceof '_Type '_var"));
-    // TODO get back
-    //assertEquals("find plain instanceof", 1, findMatchesCount(in, "'_operand instanceof '_Type '_var{0,0}"));
+    assertEquals("find plain instanceof", 1, findMatchesCount(in, "'_operand instanceof '_Type '_var{0,0}"));
+    String in2 = "class X {" +
+                 "  void x(Object o) {" +
+                 "    if (0 instanceof String s) {}" +
+                 "    if (0 instanceof (String s)) {}" +
+                 "    if (0 instanceof (String s)) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("find parenthesized test pattern", 2, findMatchesCount(in2, "'_operand instanceof ('_Type '_var)"));
+    assertEquals("find all pattern variables", 3, findMatchesCount(in2, "'_operand instanceof '_Type '_var"));
   }
 }
