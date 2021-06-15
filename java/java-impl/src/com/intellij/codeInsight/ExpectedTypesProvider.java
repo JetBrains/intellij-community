@@ -652,8 +652,8 @@ public final class ExpectedTypesProvider {
     }
 
     @Override
-    public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
-      PsiElement parent = element.getParent();
+    public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+      PsiElement parent = list.getParent();
       if (parent instanceof PsiSwitchLabelStatementBase) {
         PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
         handleCaseElementList(switchBlock);

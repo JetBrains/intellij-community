@@ -1326,7 +1326,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
     if (myChild1.getElementType() == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
