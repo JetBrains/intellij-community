@@ -60,7 +60,7 @@ import kotlin.script.experimental.jvm.util.ClasspathExtractionException
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-class LoadScriptDefinitionsStartupActivity : StartupActivity {
+class LoadScriptDefinitionsStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
