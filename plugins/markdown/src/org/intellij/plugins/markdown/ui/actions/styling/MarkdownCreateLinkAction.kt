@@ -53,12 +53,16 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
       0 -> {
         e.presentation.isEnabled = !editor.isViewer
         e.presentation.text = wrapActionName
+        e.presentation.description = MarkdownBundle.message(
+          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.description")
         false
       }
 
       editor.caretModel.caretCount -> {
         e.presentation.isEnabled = !editor.isViewer
         e.presentation.text = unwrapActionName
+        e.presentation.description = MarkdownBundle.message(
+          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.description")
         true
       }
 
