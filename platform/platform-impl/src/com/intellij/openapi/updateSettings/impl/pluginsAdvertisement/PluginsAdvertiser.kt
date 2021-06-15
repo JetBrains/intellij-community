@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PluginsAdvertiser")
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
@@ -28,7 +28,7 @@ val LOG = Logger.getInstance("#PluginsAdvertiser")
 private val propertiesComponent
   get() = PropertiesComponent.getInstance()
 
-var isIgnoreUltimate: Boolean
+var isIgnoreIdeSuggestion: Boolean
   get() = propertiesComponent.isTrueValue(IGNORE_ULTIMATE_EDITION)
   set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -135,13 +135,13 @@ open class PluginAdvertiserService {
         ) to listOf(action, createIgnoreUnknownFeaturesNotification(project, plugins, disabledPlugins.values, unknownFeatures))
       }
       else if (bundledPlugin.isNotEmpty()
-               && !isIgnoreUltimate) {
+               && !isIgnoreIdeSuggestion) {
         IdeBundle.message(
           "plugins.advertiser.ultimate.features.detected",
           bundledPlugin.joinToString()
         ) to listOf(
-          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate")) {
-            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project)
+          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate", PluginAdvertiserEditorNotificationProvider.ideaUltimate.name)) {
+            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, PluginAdvertiserEditorNotificationProvider.ideaUltimate.downloadUrl)
           },
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
             FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)

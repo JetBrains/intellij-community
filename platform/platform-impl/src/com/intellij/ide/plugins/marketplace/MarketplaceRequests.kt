@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -23,9 +23,11 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import java.io.IOException
+import java.io.InputStream
 import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URLConnection
@@ -194,6 +196,9 @@ class MarketplaceRequests : PluginInfoProvider {
   private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
     "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
+  private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/files/IDE/extensions.json")
+    .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private fun createSearchUrl(query: String, count: Int): Url {
     return Urls.newFromEncoded("$PLUGIN_MANAGER_URL/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
@@ -422,22 +427,55 @@ class MarketplaceRequests : PluginInfoProvider {
       return
     }
 
-    jetBrainsPluginsIds = try {
+    try {
       HttpRequests
         .request(JETBRAINS_PLUGINS_URL)
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, object : TypeReference<List<MarketplaceSearchPluginData>>() {})
-            .asSequence()
-            .map(MarketplaceSearchPluginData::id)
-            .toCollection(HashSet())
+          deserializeJetBrainsPluginsIds(it.inputStream)
         }
     }
     catch (e: Exception) {
       logWarnOrPrintIfDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
-      null
+      jetBrainsPluginsIds = null
     }
+  }
+
+  @VisibleForTesting
+  fun deserializeJetBrainsPluginsIds(stream: InputStream) {
+    jetBrainsPluginsIds = objectMapper.readValue(stream, object : TypeReference<List<MarketplaceSearchPluginData>>() {})
+      .asSequence()
+      .map(MarketplaceSearchPluginData::id)
+      .toCollection(HashSet())
+  }
+
+  var extensionsForIdes: Map<String, List<String>>? = null
+    private set
+
+  fun loadExtensionsForIdes() {
+    if (extensionsForIdes != null) {
+      return
+    }
+
+    try {
+      HttpRequests
+        .request(IDE_EXTENSIONS_URL)
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          deserializeExtensionsForIdes(it.inputStream)
+        }
+    }
+    catch (e: Exception) {
+      logWarnOrPrintIfDebug("Can not get supported extensions from Marketplace", e)
+      extensionsForIdes = null
+    }
+  }
+
+  @VisibleForTesting
+  fun deserializeExtensionsForIdes(stream: InputStream) {
+    extensionsForIdes = objectMapper.readValue(stream, object : TypeReference<Map<String, List<String>>>() {})
   }
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<Set<PluginId>>() {})

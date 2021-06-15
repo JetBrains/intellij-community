@@ -8,15 +8,22 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType
+import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import com.intellij.ui.HyperlinkLabel
+import java.awt.BorderLayout
+import javax.swing.JLabel
 
 class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
   override fun getKey(): Key<EditorNotificationPanel> = KEY
@@ -25,15 +32,13 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
                                        fileEditor: FileEditor,
                                        project: Project): EditorNotificationPanel? {
     val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
-    val pluginAdvertiserExtensionsState = extensionsStateService.createExtensionDataProvider(project)
-    val extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(file)
-    val jbPluginsIds = MarketplaceRequests.Instance.jetBrainsPluginsIds
-
-    if (extensionsData == null || jbPluginsIds == null) {
+    val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
+    if (suggestionData == null) {
       ProcessIOExecutorService.INSTANCE.execute {
         MarketplaceRequests.Instance.loadJetBrainsPluginsIds()
+        MarketplaceRequests.Instance.loadExtensionsForIdes()
         var shouldUpdateNotifications = extensionsStateService.updateCache(file.name)
-        val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file)
+        val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file.name)
         if (fullExtension != null) {
           shouldUpdateNotifications = extensionsStateService.updateCache(fullExtension) || shouldUpdateNotifications
         }
@@ -49,17 +54,22 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
       return null
     }
 
-    val extensionOrFileName = extensionsData.extensionOrFileName
-    val dataSet = extensionsData.plugins
-    val panel = EditorNotificationPanel(fileEditor)
+    lateinit var label: JLabel
+    val panel = object : EditorNotificationPanel(fileEditor) {
+      init {
+        label = myLabel
+      }
+    }
+
+    val extensionOrFileName = suggestionData.extensionOrFileName
+    val pluginAdvertiserExtensionsState = extensionsStateService.createExtensionDataProvider(project)
     panel.text = IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName)
     val onPluginsInstalled = Runnable {
       pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
       updateAllNotifications(project)
     }
 
-    val pluginsToInstall = PluginsToInstall(dataSet, jbPluginsIds)
-    val disabledPlugin = pluginsToInstall.myDisabledPlugin
+    val disabledPlugin = suggestionData.myDisabledPlugin
     if (disabledPlugin != null) {
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin.name)) {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
@@ -68,25 +78,45 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
         PluginManagerConfigurable.showPluginConfigurableAndEnable(project, setOf(disabledPlugin))
       }
     }
-    else if (pluginsToInstall.myJbProduced.isNotEmpty()) {
-      createInstallActionLabel(panel, pluginsToInstall.myJbProduced, onPluginsInstalled)
+    else if (suggestionData.myJbProduced.isNotEmpty()) {
+      createInstallActionLabel(panel, suggestionData.myJbProduced, onPluginsInstalled)
     }
-    else if (!getBundledPluginToInstall(dataSet).isEmpty()) {
-      if (isIgnoreUltimate) {
-        return null
+    else if (suggestionData.suggestedIdes.isNotEmpty()) {
+      val suggestedIdes = suggestionData.suggestedIdes
+      if (suggestedIdes.size > 1) {
+        val parentPanel = label.parent
+        parentPanel.remove(label)
+        val hyperlinkLabel = HyperlinkLabel().apply {
+          setTextWithHyperlink(IdeBundle.message("plugins.advertiser.extensions.supported.in.ides", extensionOrFileName))
+          addHyperlinkListener { FUSEventSource.EDITOR.learnMoreAndLog(project) }
+        }
+        parentPanel.add(hyperlinkLabel, BorderLayout.CENTER)
       }
-      panel.text = IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extensionOrFileName)
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate")) {
-        pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
-        FUSEventSource.EDITOR.openDownloadPageAndLog(project)
+      else {
+        panel.text = IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extensionOrFileName, suggestedIdes.single().name)
       }
+
+      for (suggestedIde in suggestedIdes) {
+        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)) {
+          pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
+          FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedIde.downloadUrl)
+        }
+      }
+
+      if (suggestedIdes.size == 1) {
+        panel.createActionLabel(IdeBundle.message("plugins.advertiser.learn.more")) {
+          FUSEventSource.EDITOR.learnMoreAndLog(project)
+        }
+      }
+
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
         FUSEventSource.EDITOR.doIgnoreUltimateAndLog(project)
         updateAllNotifications(project)
       }
+      return panel    // Don't show the "Ignore extension" label
     }
-    else if (!pluginsToInstall.myThirdParty.isEmpty()) {
-      createInstallActionLabel(panel, pluginsToInstall.myThirdParty, onPluginsInstalled)
+    else if (!suggestionData.myThirdParty.isEmpty()) {
+      createInstallActionLabel(panel, suggestionData.myThirdParty, onPluginsInstalled)
     }
     else {
       return null
@@ -97,11 +127,13 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
       pluginAdvertiserExtensionsState.ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
       updateAllNotifications(project)
     }
+
     return panel
   }
 
-  private class PluginsToInstall(dataSet: Set<PluginData>,
-                                 jbPluginsIds: Set<String>) {
+  data class SuggestedIde(val name: String, val downloadUrl: String)
+
+  class AdvertiserSuggestion(val extensionOrFileName: String, dataSet: Set<PluginData>, jbPluginsIds: Set<String>, val suggestedIdes: List<SuggestedIde>) {
     var myDisabledPlugin: IdeaPluginDescriptor? = null
     val myJbProduced: MutableSet<PluginData> = HashSet()
     val myThirdParty: MutableSet<PluginData> = HashSet()
@@ -127,6 +159,57 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
     private val KEY = Key.create<EditorNotificationPanel>("file.type.associations.detected")
     private val LOG: Logger = Logger.getInstance(PluginAdvertiserEditorNotificationProvider::class.java)
 
+    fun getSuggestionData(project: Project, activeProductCode: String, fileName: String, fileType: FileType): AdvertiserSuggestion? {
+      val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
+      val pluginAdvertiserExtensionsState = extensionsStateService.createExtensionDataProvider(project)
+      val extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(fileName, fileType)
+      val jbPluginsIds = MarketplaceRequests.Instance.jetBrainsPluginsIds
+      val ideExtensions = MarketplaceRequests.Instance.extensionsForIdes
+
+      if (extensionsData == null || jbPluginsIds == null || ideExtensions == null) {
+        return null
+      }
+
+      val extensionOrFileName = extensionsData.extensionOrFileName
+      val dataSet = extensionsData.plugins
+
+      val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
+      val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
+        getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
+          if (hasBundledPlugin) listOf(ideaUltimate) else emptyList()
+        }
+      }
+      else
+        emptyList()
+
+      return AdvertiserSuggestion(extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
+    }
+
+    private fun getSuggestedIdes(activeProductCode: String, extensionOrFileName: String, ideExtensions: Map<String, List<String>>): List<SuggestedIde> {
+      if (isIgnoreIdeSuggestion) {
+        return emptyList()
+      }
+
+      val productCodes = ideExtensions[extensionOrFileName]
+      if (productCodes == null || productCodes.isEmpty()) {
+        return emptyList()
+      }
+
+      val suggestedIde = ides.entries.firstOrNull { it.key in productCodes }
+      val commercialVersionCode = when (activeProductCode) {
+        "IC", "IE" -> "IU"
+        "PC", "PE" -> "PY"
+        else -> null
+      }
+
+      if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode) {
+        return listOf(suggestedIde.value, ides[commercialVersionCode]!!)
+      }
+      else {
+        return suggestedIde?.value?.let { listOf(it) } ?: emptyList()
+      }
+    }
+
     private fun createInstallActionLabel(panel: EditorNotificationPanel,
                                          dataSet: Set<PluginData>,
                                          onSuccess: Runnable) {
@@ -140,5 +223,20 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
     private fun updateAllNotifications(project: Project) {
       EditorNotifications.getInstance(project).updateAllNotifications()
     }
+
+    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+    val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+
+    private val ides = linkedMapOf(
+      "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),
+      "RM" to SuggestedIde("RubyMine", "https://www.jetbrains.com/ruby/download/"),
+      "PY" to pyCharmProfessional,
+      "PS" to SuggestedIde("PhpStorm", "https://www.jetbrains.com/phpstorm/download/"),
+      "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
+      "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
+      "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
+      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
+      "IU" to ideaUltimate
+    )
   }
 }
