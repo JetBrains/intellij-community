@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,37 +16,32 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class KeyProcessorContext {
   private final List<AnAction> myActions = new ArrayList<>();
-  private WeakReference<JComponent> myFoundComponent;
-  private boolean myHasSecondStroke;
+  private final List<AnAction> mySecondStrokeActions = new ArrayList<>();
 
+  private WeakReference<JComponent> myFoundComponent;
   private DataContext myDataContext;
   private Project myProject;
   private boolean isModalContext;
   private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
 
-  @NotNull
-  List<AnAction> getActions() {
+  @NotNull List<AnAction> getActions() {
     return myActions;
   }
 
-  @Nullable
-  public JComponent getFoundComponent() {
+  @NotNull List<AnAction> getSecondStrokeActions() {
+    return mySecondStrokeActions;
+  }
+
+  public @Nullable JComponent getFoundComponent() {
     return SoftReference.dereference(myFoundComponent);
   }
 
   public void setFoundComponent(JComponent foundComponent) {
     myFoundComponent = new WeakReference<>(foundComponent);
-  }
-
-  public void setHasSecondStroke(boolean hasSecondStroke) {
-    myHasSecondStroke = hasSecondStroke;
-  }
-
-  public boolean isHasSecondStroke() {
-    return myHasSecondStroke;
   }
 
   public DataContext getDataContext() {
@@ -72,8 +68,7 @@ public final class KeyProcessorContext {
     isModalContext = modalContext;
   }
 
-  @Nullable
-  public Component getFocusOwner() {
+  public @Nullable Component getFocusOwner() {
     return SoftReference.dereference(myFocusOwner);
   }
 
@@ -92,6 +87,7 @@ public final class KeyProcessorContext {
   public void clear() {
     myInputEvent = null;
     myActions.clear();
+    mySecondStrokeActions.clear();
     myFocusOwner = null;
     myDataContext = null;
     myProject = null;
