@@ -15,7 +15,6 @@ open class KotlinUExpressionList(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UExpressionList, KotlinUElementWithType, KotlinEvaluatableUElement {
     override lateinit var expressions: List<UExpression>
-        internal set
 
     companion object {
         fun createClassBody(psi: PsiElement?, uastParent: UElement?): KotlinUExpressionList =
