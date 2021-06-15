@@ -261,6 +261,8 @@
 
     <buildProcess.parametersProvider implementation="de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider"/>
     <notificationGroup id="Lombok plugin" displayType="BALLOON"/>
+
+    <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
   </extensions>
   <applicationListeners>
     <listener class="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigChangeListener"
