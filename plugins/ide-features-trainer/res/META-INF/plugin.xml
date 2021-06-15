@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="training">
   <id>training</id>
   <name>IDE Features Trainer</name>
   <vendor>JetBrains</vendor>
@@ -13,7 +13,9 @@
     <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
     ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
 

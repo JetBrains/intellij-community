@@ -338,6 +338,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "dn",
+    "name": "intellij.featuresTrainer",
+    "n": "i.featuresTrainer",
+    "package": "training",
+    "sourceModule": "intellij.featuresTrainer",
+    "descriptor": "community/plugins/ide-features-trainer/res/META-INF/plugin.xml",
+    "pluginId": "training",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cuY",
     "n": "com.intellij.plugins.watcher"
   }
@@ -2777,18 +2789,6 @@
     "sourceModule": "intellij.copyright",
     "descriptor": "community/plugins/copyright/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.copyright",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "dn",
-    "name": "intellij.featuresTrainer",
-    "n": "i.featuresTrainer",
-    "package": null,
-    "sourceModule": "intellij.featuresTrainer",
-    "descriptor": "community/plugins/ide-features-trainer/res/META-INF/plugin.xml",
-    "pluginId": "training",
     "type": 1
   }
 }, {

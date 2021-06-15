@@ -8,8 +8,8 @@
   <depends>com.intellij.modules.pycharm.community</depends>
   <depends>com.intellij.modules.python</depends>
 
-  <xi:include href="/META-INF/pycharm-community-customization.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/tips-pycharm-community.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/pycharm-community-customization.xml"/>
+  <xi:include href="/META-INF/tips-pycharm-community.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.jetbrains.python.PyCharmCorePluginConfigurator"/>
