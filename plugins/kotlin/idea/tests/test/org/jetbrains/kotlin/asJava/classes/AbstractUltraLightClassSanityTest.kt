@@ -22,7 +22,7 @@ abstract class AbstractUltraLightClassSanityTest : KotlinLightCodeInsightFixture
             return
         }
 
-        val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
+        val file = myFixture.addFileToProject(ioFile.name, sourceText) as KtFile
 
         UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
 
