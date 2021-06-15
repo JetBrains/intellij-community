@@ -2006,13 +2006,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
     super.visitDefaultCaseLabelElement(element);
-    myHolder.add(checkFeature(element, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
   }
 
   @Override
   public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
     super.visitParenthesizedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
   }
 
   @Override
@@ -2035,7 +2035,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
     super.visitTypeTestPattern(pattern);
     if (pattern.getParent() instanceof PsiCaseLabelElementList) {
-      myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+      myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERNS_IN_SWITCH));
     }
   }
 
