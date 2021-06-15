@@ -39,7 +39,7 @@ import kotlin.math.min
 class AlertMessagesManager : MacMessages() {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", false)
+    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", true)
 
     @JvmStatic
     fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
@@ -54,7 +54,16 @@ class AlertMessagesManager : MacMessages() {
                                      doNotAskOption: DialogWrapper.DoNotAskOption?,
                                      icon: Icon?,
                                      helpId: String?): Int {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText, cancelText), 0, -1, icon, doNotAskOption, helpId)
+    val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
+                             helpId)
+    dialog.show()
+    val exitCode = when (dialog.exitCode) {
+      0 -> Messages.YES
+      2 -> Messages.NO
+      else -> Messages.CANCEL
+    }
+    doNotAskOption?.setToBeShown(dialog.toBeShown(), exitCode)
+    return exitCode
   }
 
   override fun showOkMessageDialog(title: String, message: String?, okText: String, window: Window?) {
@@ -69,7 +78,7 @@ class AlertMessagesManager : MacMessages() {
                                doNotAskDialogOption: DialogWrapper.DoNotAskOption?,
                                icon: Icon?,
                                helpId: String?): Boolean {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, null, doNotAskDialogOption,
+    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, icon, doNotAskDialogOption,
                              null) == Messages.YES
   }
 
@@ -131,14 +140,14 @@ private class AlertDialog(project: Project?,
                           val myOptions: Array<String>,
                           val myDefaultOptionIndex: Int,
                           val myFocusedOptionIndex: Int,
-                          val myIcon: Icon,
+                          icon: Icon,
                           doNotAskOption: DoNotAskOption?,
                           val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
   private val myRootLayout = RootLayout()
-  private val myIconComponent = JLabel(myIcon)
+  private val myIconComponent = JLabel(icon)
   private var myTitleComponent: JComponent? = null
   private var myMessageComponent: JComponent? = null
   private val mySouthPanel = JPanel(BorderLayout())
@@ -456,7 +465,13 @@ private class AlertDialog(project: Project?,
     }
 
     button.preferredSize = size
-    myButtons.add(button)
+
+    if (SystemInfoRt.isMac) {
+      myButtons.add(0, button)
+    }
+    else {
+      myButtons.add(button)
+    }
 
     return button
   }
@@ -476,4 +491,6 @@ private class AlertDialog(project: Project?,
   }
 
   override fun getHelpId(): String? = myHelpId
+
+  public override fun toBeShown(): Boolean = super.toBeShown()
 }
