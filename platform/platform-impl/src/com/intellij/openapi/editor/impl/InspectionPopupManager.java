@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
@@ -208,7 +209,12 @@ final class InspectionPopupManager {
       ActionButton menuButton = new ActionButton(new MenuAction(actions, compactViewAction),
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
-                                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+                                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        protected DataContext getDataContext() {
+          return ((EditorEx)myEditor).getDataContext();
+        }
+      };
 
       myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
     }
