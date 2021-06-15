@@ -22,36 +22,6 @@ class BuildDependenciesDownloader {
     println(message)
   }
 
-  static Path getCommunityRootFromWorkingDirectory() {
-    // This method assumes the current working directory is inside intellij-based product checkout root
-    Path workingDirectory = Paths.get(System.getProperty("user.dir"))
-
-    Path current = workingDirectory
-    while (current.parent != null) {
-      for (def pathCandidate : [".", "community", "ultimate/community"]) {
-        def probeFile = current.resolve(pathCandidate).resolve("intellij.idea.community.main.iml")
-        if (Files.exists(probeFile)) {
-          return probeFile.parent
-        }
-      }
-
-      current = current.parent
-    }
-
-    throw new IllegalStateException("IDEA Community root was not found from current working directory $workingDirectory")
-  }
-
-  // Only for manual running (e.g. from main()), use DependenciesProperties in build scripts
-  static Properties getDependenciesPropertiesFromWorkingDirectory() {
-    Path communityRoot = getCommunityRootFromWorkingDirectory()
-    Path propertiesFile = communityRoot.resolve("build").resolve("dependencies").resolve("gradle.properties")
-
-    println("Loading properties from $propertiesFile")
-    Properties properties = new Properties()
-    Files.newBufferedReader(propertiesFile).withCloseable { properties.load(it) }
-    return properties
-  }
-
   static void checkCommunityRoot(Path communityRoot) {
     if (communityRoot == null) {
       throw new IllegalStateException("passed community root is null")
