@@ -245,18 +245,15 @@ internal class PackageSearchDataService(
     private fun fetchProjectModuleModels(targetModules: TargetModules, traceInfo: TraceInfo, projectModules: List<ProjectModule>): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
+        val moduleModels = runReadAction {
+            projectModules.map { ModuleModel(it) }
+        }
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
-            setTargetModules(TargetModules.all(projectModules.toModuleModelsList()))
+            setTargetModules(TargetModules.all(moduleModels))
         }
-        return projectModules.toModuleModelsList()
+        return moduleModels
     }
-
-    private fun List<ProjectModule>.toModuleModelsList() = map { ModuleModel(it, declaredRepositories(it)) }
-
-    private fun declaredRepositories(projectModule: ProjectModule): List<RepositoryDeclaration> = runReadAction {
-        projectModule.moduleType.declaredRepositories(projectModule)
-    }.map { repo -> RepositoryDeclaration(repo.id, repo.name, repo.url, projectModule) }
 
     private suspend fun installedPackages(projectModules: List<ProjectModule>, traceInfo: TraceInfo): List<PackageModel.Installed> {
         val dependenciesByModule = fetchProjectDependencies(projectModules, traceInfo)
