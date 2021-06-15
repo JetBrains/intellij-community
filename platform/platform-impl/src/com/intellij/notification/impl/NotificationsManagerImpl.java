@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -73,6 +74,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(0x4E5052)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(0xCDB2B2B2, 0xCD565A5C));
+
+  private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
   private @Nullable List<Notification> myEarlyNotifications = new ArrayList<>();
 
@@ -141,12 +144,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (myEarlyNotifications != null) {
       List<Notification> copy = myEarlyNotifications;
       myEarlyNotifications = null;
+      if (LOG.isDebugEnabled()) LOG.debug("dispatching early notifications: " + copy);
       copy.forEach(early -> showNotification(early, null));
     }
   }
 
   @RequiresEdt
   private void showNotification(Notification notification, @Nullable Project project) {
+    if (LOG.isDebugEnabled()) LOG.debug("incoming: " + notification + ", project=" + project);
+
     if (myEarlyNotifications != null) {
       myEarlyNotifications.add(notification);
       return;
@@ -164,12 +170,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     switch (type) {
       case NONE:
+        if (LOG.isDebugEnabled()) LOG.debug("not shown (type=NONE): " + notification);
         return;
 
       case STICKY_BALLOON:
       case BALLOON:
       default:
         Balloon balloon = notifyByBalloon(notification, type, project);
+        if (balloon == null && LOG.isDebugEnabled()) LOG.debug ("not shown (no balloon): " + notification);
         if (project != null && !project.isDefault() && (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON)) {
           if (balloon == null) {
             notification.expire();
