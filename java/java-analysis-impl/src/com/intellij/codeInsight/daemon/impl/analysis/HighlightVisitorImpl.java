@@ -2028,6 +2028,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
+  @Override
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+    super.visitCaseLabelElementList(list);
+    for (PsiCaseLabelElement element : list.getElements()) {
+      PsiExpression expression = ObjectUtils.tryCast(element, PsiExpression.class);
+      if (ExpressionUtils.isNullLiteral(expression)) {
+        myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
+        break;
+      }
+    }
+  }
+
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull HighlightingFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }

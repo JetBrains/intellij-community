@@ -5,6 +5,7 @@ class X {
       case <error descr="Guarded and parenthesized patterns are not supported at language level '16'">Integer i && predicate()</error> -> 2;
       case <error descr="Patterns in switch are not supported at language level '16'">Integer i</error> -> 3;
       case <error descr="Patterns in switch are not supported at language level '16'">default</error> -> 4;
+      case <error descr="Patterns in switch are not supported at language level '16'">null</error> -> 10;
     };
   }
 
