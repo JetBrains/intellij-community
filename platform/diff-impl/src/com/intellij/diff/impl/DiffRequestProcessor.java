@@ -32,8 +32,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -64,7 +62,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
@@ -886,11 +883,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Iterate requests
 
   protected class MyNextChangeAction extends NextChangeAction {
-    public MyNextChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_NEXT_EDITOR_TAB);
-      }
-    }
+    public MyNextChangeAction() {}
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -917,11 +910,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected class MyPrevChangeAction extends PrevChangeAction {
-    public MyPrevChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_PREVIOUS_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
-      }
-    }
+    public MyPrevChangeAction() {}
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -945,26 +934,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       goToPrevChange(false);
     }
-  }
-
-  protected static void patchShortcutSet(@NotNull AnAction action,
-                                         @NotNull @NonNls String originalActionId,
-                                         @Nullable @NonNls String replacementActionId) {
-    //noinspection ConstantConditions
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);
-
-    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    Set<Shortcut> newShortcuts = ContainerUtil.set(shortcuts);
-    boolean hadOriginalShortcut = ContainerUtil.removeAll(newShortcuts, originalShortcuts);
-    if (!hadOriginalShortcut) return;
-
-    if (replacementActionId != null) {
-      Shortcut[] replacementShortcuts = keymap.getShortcuts(replacementActionId);
-      ContainerUtil.addAll(newShortcuts, replacementShortcuts);
-    }
-
-    action.registerCustomShortcutSet(new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY)), null);
   }
 
   //

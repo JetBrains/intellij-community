@@ -603,10 +603,10 @@
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Diff.FocusOppositePane">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
