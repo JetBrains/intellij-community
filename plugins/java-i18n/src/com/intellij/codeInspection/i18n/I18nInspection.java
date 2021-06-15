@@ -7,6 +7,7 @@ import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.sourceToSink.restriction.AnnotationContext;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -41,6 +42,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.intellij.codeInspection.sourceToSink.restriction.StringFlowUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
@@ -469,6 +471,60 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     };
   }
 
+  @Nullable
+  private static ULocalVariable getVariableToSearch(UExpression passThrough) {
+    UElement uastParent = passThrough.getUastParent();
+    ULocalVariable uVar = null;
+    if (uastParent instanceof ULocalVariable) {
+      uVar = (ULocalVariable)uastParent;
+    }
+    else if (uastParent instanceof UBinaryExpression &&
+             (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
+              ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
+             AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)) {
+      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
+      if (left instanceof UResolvable) {
+        PsiElement target = ((UResolvable)left).resolve();
+        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
+        if (uVar == null && target != null) {
+          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
+        }
+      }
+    }
+    return uVar;
+  }
+
+  @Nullable
+  private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
+    PsiElement psiVar = uVar.getSourcePsi();
+    PsiElement psi = passThrough.getSourcePsi();
+    if (psi != null && psiVar != null) {
+      if (psiVar instanceof PsiLocalVariable) {
+        // Java
+        PsiLocalVariable local = (PsiLocalVariable)psiVar;
+        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+        if (codeBlock instanceof PsiCodeBlock) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
+          return ContainerUtil.mapNotNull(
+            refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
+        }
+      }
+      else {
+        // Kotlin
+        Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
+        return ContainerUtil.mapNotNull(refs, ref -> {
+          UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
+          if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
+              AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
+            return null;
+          }
+          return expr;
+        });
+      }
+    }
+    return null;
+  }
+
   private final class StringI18nVisitor extends AbstractUastNonRecursiveVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
@@ -533,7 +589,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
       if (target instanceof PsiMethod &&
-          (NlsInfo.isStringProcessingMethod((PsiMethod)target) || NlsInfo.isPassthroughMethod((PsiMethod)target, null, null))) {
+          (StringFlowUtil.isStringProcessingMethod((PsiMethod)target, NlsInfo.builder()) || StringFlowUtil.isPassthroughMethod((PsiMethod)target, null, null, NlsInfo.builder()))) {
         return;
       }
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
@@ -645,50 +701,11 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   static List<UExpression> findIndirectUsages(UExpression expression, boolean allowStringModifications) {
-    UExpression passThrough = NlsInfo.goUp(expression, allowStringModifications);
-    UElement uastParent = passThrough.getUastParent();
-    ULocalVariable uVar = null;
-    if (uastParent instanceof ULocalVariable) {
-      uVar = (ULocalVariable)uastParent;
-    } else if (uastParent instanceof UBinaryExpression &&
-               (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
-                ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
-               AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
-      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
-      if (left instanceof UResolvable) {
-        PsiElement target = ((UResolvable)left).resolve();
-        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
-        if (uVar == null && target != null) {
-          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
-        }
-      }
-    }
+    UExpression passThrough = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfo.builder());
+    ULocalVariable uVar = getVariableToSearch(passThrough);
     if (uVar != null && NlsInfo.fromUVariable(uVar).getNlsStatus() == ThreeState.UNSURE) {
-      PsiElement psiVar = uVar.getSourcePsi();
-      PsiElement psi = passThrough.getSourcePsi();
-      if (psi != null && psiVar != null) {
-        if (psiVar instanceof PsiLocalVariable) {
-          // Java
-          PsiLocalVariable local = (PsiLocalVariable)psiVar;
-          PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-          if (codeBlock instanceof PsiCodeBlock) {
-            List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-            return ContainerUtil.mapNotNull(
-              refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-          }
-        } else {
-          // Kotlin
-          Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
-          return ContainerUtil.mapNotNull(refs, ref -> {
-            UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
-            if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
-                AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
-              return null;
-            }
-            return expr;
-          });
-        }
-      }
+      List<UExpression> usages = findUsages(passThrough, uVar);
+      if (usages != null) return usages;
     }
     return Collections.singletonList(passThrough);
   }
@@ -732,7 +749,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           if (!onTheFly) { //keep only potential annotation candidate
             nonNlsTargets.clear();
           }
-          ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
+          ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
         case NO:
@@ -859,8 +876,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                    final Set<? super PsiModifierListOwner> nonNlsTargets) {
     NlsInfo info = NlsInfo.forExpression(JavaI18nUtil.getTopLevelExpression(expression, false));
     if (info.getNlsStatus() == ThreeState.NO) return true;
-    if (info instanceof NlsInfo.Unspecified) {
-      PsiModifierListOwner candidate = ((NlsInfo.Unspecified)info).getAnnotationCandidate();
+    if (info instanceof NlsInfo.NlsUnspecified) {
+      PsiModifierListOwner candidate = ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate();
       if (candidate instanceof PsiVariable &&
           ignoreAssignedToConstants &&
           candidate.hasModifierProperty(PsiModifier.STATIC) &&

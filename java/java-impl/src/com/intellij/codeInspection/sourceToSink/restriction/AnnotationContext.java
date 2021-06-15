@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.i18n;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.sourceToSink.restriction;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  * Represents a context where annotations should be searched to augment expression type.
  * The context consists of PsiType and PsiModifierListOwner (either could be null).
  */
-final class AnnotationContext {
+public final class AnnotationContext {
   private static final AnnotationContext EMPTY = new AnnotationContext(null, null);
 
   private final @Nullable PsiModifierListOwner myOwner;
@@ -39,7 +39,7 @@ final class AnnotationContext {
     myNext = next;
   }
 
-  AnnotationContext withType(PsiType type) {
+  private AnnotationContext withType(PsiType type) {
     return new AnnotationContext(myOwner, type, myNext);
   }
 
@@ -75,7 +75,7 @@ final class AnnotationContext {
     return myType;
   }
 
-  static @NotNull AnnotationContext fromModifierListOwner(@Nullable PsiModifierListOwner owner) {
+  public static @NotNull AnnotationContext fromModifierListOwner(@Nullable PsiModifierListOwner owner) {
     if (owner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)owner;
       return new AnnotationContext(owner, (method).getReturnType(), () -> {
@@ -106,7 +106,7 @@ final class AnnotationContext {
     return EMPTY;
   }
 
-  static @NotNull AnnotationContext fromExpression(@NotNull UExpression expression) {
+  public static @NotNull AnnotationContext fromExpression(@NotNull UExpression expression) {
     AnnotationContext context = fromMethodReturn(expression);
     if (context != EMPTY) return context;
     context = fromArgument(expression);
@@ -175,7 +175,7 @@ final class AnnotationContext {
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
     if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
     // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
-    // (unless @get:Nls is used), so we have to navigate to the corresponding field.
+    // (unless @get:MyAnno is used), so we have to navigate to the corresponding field.
     UElement element = UastContextKt.toUElement(owner.getNavigationElement());
     if (element instanceof UField) {
       PsiElement javaPsi = element.getJavaPsi();
@@ -276,7 +276,7 @@ final class AnnotationContext {
   /**
    * @return true if expressions are the same after normalization
    */
-  static boolean expressionsAreEquivalent(@NotNull UExpression expr1, @NotNull UExpression expr2) {
+  public static boolean expressionsAreEquivalent(@NotNull UExpression expr1, @NotNull UExpression expr2) {
     return normalize(expr1).equals(normalize(expr2));
   }
 
@@ -300,7 +300,7 @@ final class AnnotationContext {
    * @param arg argument
    * @return parameter that corresponds to a given argument of a given call
    */
-  static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
+  public static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
     final PsiParameter[] params = method.getParameterList().getParameters();
     while (true) {
       UElement parent = arg.getUastParent();
