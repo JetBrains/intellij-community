@@ -348,7 +348,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private static void reportKeymapNotFoundWarning(@Nullable PluginId pluginId, @NotNull String keymapName) {
-    if (DefaultKeymap.isBundledKeymapHidden(keymapName)) {
+    if (DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)) {
       return;
     }
     String message = "keymap \"" + keymapName + "\" not found";
@@ -1066,8 +1066,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       reportKeymapNotFoundWarning(pluginId, keymapName);
       return;
     }
-    final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
-    processRemoveAndReplace(element, actionId, keymap, shortcut);
+    processRemoveAndReplace(element, actionId, keymap, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
   }
 
   private static void processRemoveAndReplace(@NotNull XmlElement element, String actionId, @NotNull Keymap keymap, @NotNull Shortcut shortcut) {
@@ -1348,7 +1347,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   /**
-   * Unregisters already registered action and prevents the action from being registered in future.
+   * Unregisters already registered action and prevents the action from being registered in the future.
    * Should be used only in IDE configuration
    */
   @ApiStatus.Internal
