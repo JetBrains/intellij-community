@@ -28,6 +28,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   }
 
   public void testSetScale() {
+    // noinspection BigDecimalLegacyMethod
     doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +
@@ -38,6 +39,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   }
 
   public void testDivide() {
+    // noinspection BigDecimalLegacyMethod
     doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +

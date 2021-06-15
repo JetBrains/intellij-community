@@ -47,6 +47,7 @@ public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTes
   }
 
   public void testSimple() {
+    // noinspection BigDecimalLegacyMethod, deprecation
     doTest(
       "import java.math.*;" +
       "class X {" +

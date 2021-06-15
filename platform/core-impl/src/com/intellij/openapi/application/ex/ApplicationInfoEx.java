@@ -58,11 +58,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @Nullable String getWelcomeScreenLogoUrl();
 
+  /**
+   * @deprecated because always returns null
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  /**
-   * Always returns null.
-   */
   public abstract @Nullable String getPackageCode();
 
   public abstract boolean showLicenseeInfo();
