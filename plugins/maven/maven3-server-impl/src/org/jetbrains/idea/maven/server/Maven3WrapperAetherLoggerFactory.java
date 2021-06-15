@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import org.eclipse.aether.spi.log.Logger;
@@ -7,7 +7,7 @@ import org.eclipse.aether.spi.log.LoggerFactory;
 class Maven3WrapperAetherLoggerFactory implements LoggerFactory {
   private Maven3ServerConsoleLogger myConsoleWrapper;
 
-  Maven3WrapperAetherLoggerFactory(final Maven3ServerConsoleLogger consoleWrapper) {this.myConsoleWrapper = consoleWrapper;}
+  public Maven3WrapperAetherLoggerFactory(final Maven3ServerConsoleLogger consoleWrapper) {this.myConsoleWrapper = consoleWrapper;}
 
   @Override
   public Logger getLogger(String s) {

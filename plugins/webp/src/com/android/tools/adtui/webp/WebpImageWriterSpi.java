@@ -99,7 +99,7 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
   }
 
   private static class WebpWriter extends ImageWriter {
-    WebpWriter(ImageWriterSpi originatingProvider) {
+    public WebpWriter(ImageWriterSpi originatingProvider) {
       super(originatingProvider);
     }
 

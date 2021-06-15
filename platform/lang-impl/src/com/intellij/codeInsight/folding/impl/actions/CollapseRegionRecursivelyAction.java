@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 final class CollapseRegionRecursivelyAction extends EditorAction {
-  CollapseRegionRecursivelyAction() {
+  public CollapseRegionRecursivelyAction() {
     super(new BaseFoldingHandler() {
       @Override
       public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {

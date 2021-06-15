@@ -22,7 +22,7 @@ class ChoosePathDialog extends DialogWrapper {
     private final String description;
     private TextFieldWithBrowseButton myPathField;
 
-    ChoosePathDialog(@Nullable Project project, @NotNull String title, @NotNull String defaultPath, @Nullable String description) {
+    public ChoosePathDialog(@Nullable Project project, @NotNull String title, @NotNull String defaultPath, @Nullable String description) {
         super(project);
         myProject = project;
         this.defaultPath = defaultPath;

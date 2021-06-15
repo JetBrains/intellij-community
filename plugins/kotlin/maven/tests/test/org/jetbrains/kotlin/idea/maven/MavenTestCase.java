@@ -554,7 +554,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
         private final Set<T> myDelegate;
 
-        SetWithToString(@NotNull Set<T> delegate) {
+        public SetWithToString(@NotNull Set<T> delegate) {
             myDelegate = delegate;
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl;
 
 import com.intellij.model.Symbol;
@@ -33,7 +33,7 @@ final class NamedReferenceProviders {
   private final Map<Class<?>, ByHostClass> myByHostClass = new ConcurrentHashMap<>(2);
   private final Map<Class<?>, Collection<PsiSymbolReferenceProvider>> myByTargetClass = new ConcurrentHashMap<>();
 
-  NamedReferenceProviders() {
+  public NamedReferenceProviders() {
     EP_NAME.addChangeListener(() -> myByHostClass.clear(), null);
     EP_NAME.addChangeListener(() -> myByTargetClass.clear(), null);
   }

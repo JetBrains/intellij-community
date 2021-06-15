@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
@@ -154,7 +154,7 @@ public class ExceptionInfo {
   private static class AfterExceptionRefiner implements ExceptionLineRefiner {
     private final ExceptionInfo myInfo;
 
-    AfterExceptionRefiner(ExceptionInfo info) {this.myInfo = info;}
+    public AfterExceptionRefiner(ExceptionInfo info) {this.myInfo = info;}
 
     @Override
     public PsiElement matchElement(@NotNull PsiElement element) {

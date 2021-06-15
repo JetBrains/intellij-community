@@ -28,7 +28,7 @@ public abstract class NodeAlignmentStrategy extends CommonAlignmentStrategy {
     private static class AlignmentStrategyWrapper extends NodeAlignmentStrategy {
         private final AlignmentStrategy internalStrategy;
 
-        AlignmentStrategyWrapper(@NotNull AlignmentStrategy internalStrategy) {
+        public AlignmentStrategyWrapper(@NotNull AlignmentStrategy internalStrategy) {
             this.internalStrategy = internalStrategy;
         }
 

@@ -218,7 +218,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
 
 
     private static class MoveKotlinNestedClassesToUpperLevelModelWithUIChooser extends MoveKotlinNestedClassesToUpperLevelModel {
-        MoveKotlinNestedClassesToUpperLevelModelWithUIChooser(
+        public MoveKotlinNestedClassesToUpperLevelModelWithUIChooser(
                 @NotNull Project project,
                 @NotNull KtClassOrObject innerClass,
                 @NotNull PsiElement target,
