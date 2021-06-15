@@ -5,7 +5,7 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.0.2</gradle.version>
+    <gradle.version>7.1</gradle.version>
     <junit.version>5.7.1</junit.version>
     <kotlin.version>1.4.32</kotlin.version>
     <jersey.version>2.33</jersey.version>
@@ -15,10 +15,10 @@
     <fx11.version>11.0.2</fx11.version>
     <fx12.version>12.0.2</fx12.version>
     <fx13.version>13.0.2</fx13.version>
-    <fx14.version>14.0.2</fx14.version>
+    <fx14.version>14.0.2.1</fx14.version>
     <fx15.version>15.0.1</fx15.version>
     <fx16.version>16</fx16.version>
-    <fx17.version>17-ea+9</fx17.version>
+    <fx17.version>17-ea+11</fx17.version>
   </properties>
 
   <dependencyManagement>
