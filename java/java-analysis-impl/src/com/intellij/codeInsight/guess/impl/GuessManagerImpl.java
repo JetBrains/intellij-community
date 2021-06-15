@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
@@ -227,10 +228,21 @@ public final class GuessManagerImpl extends GuessManager {
           else if (instruction instanceof InstanceofInstruction) {
             DfaValue dfaRight = memState.pop();
             DfaValue dfaLeft = memState.pop();
-            memState.push(adjustValue(dfaLeft, ((InstanceofInstruction)instruction).getLeft()));
+            memState.push(adjustValue(dfaLeft, getInstanceOfOperand(((InstanceofInstruction)instruction))));
             memState.push(dfaRight);
           }
           return super.acceptInstruction(instructionState);
+        }
+
+        @Nullable
+        private PsiExpression getInstanceOfOperand(InstanceofInstruction instruction) {
+          if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
+            PsiExpression expression = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
+            if (expression instanceof PsiInstanceOfExpression) {
+              return ((PsiInstanceOfExpression)expression).getOperand();
+            }
+          }
+          return null;
         }
 
         private DfaValue adjustValue(@NotNull DfaValue value, @Nullable PsiExpression expression) {

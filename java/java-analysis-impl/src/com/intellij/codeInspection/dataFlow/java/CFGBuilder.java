@@ -289,7 +289,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder isInstance(PsiMethodCallExpression anchor) {
-    return add(new InstanceofInstruction(anchor));
+    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), true));
   }
 
   /**
@@ -314,12 +314,10 @@ public class CFGBuilder {
    * Stack after: ... result
    *
    * @param anchor element to bind this instruction to
-   * @param operand operand expression (pushed before)
-   * @param castType cast type (pushed before)
    * @return this builder
    */
-  public CFGBuilder isInstance(PsiExpression anchor, @Nullable PsiExpression operand, @NotNull PsiType castType) {
-    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), operand, castType));
+  public CFGBuilder isInstance(PsiExpression anchor) {
+    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), false));
   }
 
   /**
@@ -818,7 +816,7 @@ public class CFGBuilder {
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
     push(DfTypes.typedObject(type, Nullability.NOT_NULL));
-    add(new InstanceofInstruction(new JavaMethodReferenceReturnAnchor(methodRef), null, type));
+    add(new InstanceofInstruction(new JavaMethodReferenceReturnAnchor(methodRef), false));
     return true;
   }
 

@@ -1612,7 +1612,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         builder
           .dup()
           .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-          .isInstance(expression, operand, type)
+          .isInstance(expression)
           .ifConditionIs(false)
           .pop()
           .push(DfTypes.FALSE)
@@ -1644,7 +1644,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     builder
       .pushExpression(operand)
       .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-      .isInstance(expression, operand, type);
+      .isInstance(expression);
   }
 
   void addMethodThrows(PsiMethod method) {

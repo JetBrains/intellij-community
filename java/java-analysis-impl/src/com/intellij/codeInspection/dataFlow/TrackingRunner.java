@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -1158,8 +1159,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.was.dereferenced", text), dereferenced);
         }
         if (factDef.myInstruction instanceof InstanceofInstruction) {
-          PsiExpression operand = ((InstanceofInstruction)factDef.myInstruction).getExpression();
-          return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.instanceof.implies.non.nullity"), operand);
+          DfaAnchor anchor = ((InstanceofInstruction)factDef.myInstruction).getDfaAnchor();
+          if (anchor instanceof JavaExpressionAnchor) {
+            PsiExpression operand = ((JavaExpressionAnchor)anchor).getExpression();
+            return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.instanceof.implies.non.nullity"), operand);
+          }
         }
       }
     }

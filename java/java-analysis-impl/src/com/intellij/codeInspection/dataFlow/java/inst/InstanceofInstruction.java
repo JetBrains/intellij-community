@@ -14,15 +14,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 
@@ -30,24 +25,16 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
  * @author peter
  */
 public class InstanceofInstruction extends ExpressionPushingInstruction {
-  @Nullable private final PsiExpression myLeft;
-  @Nullable private final PsiType myCastType;
-
-  public InstanceofInstruction(@NotNull DfaAnchor anchor, @Nullable PsiExpression left,
-                               @NotNull PsiType castType) {
-    super(anchor);
-    myLeft = left;
-    myCastType = castType;
-  }
+  private final boolean myClassObjectCheck;
 
   /**
-   * Construct a class object instanceof check (e.g. from Class.isInstance call); castType is not known
-   * @param psiAnchor anchor call
+   * @param anchor anchor to use
+   * @param classObjectCheck if true then the top-of-stack value is assumed to be a Class object (PsiType constant or not)
+   *                         instead of target DfType
    */
-  public InstanceofInstruction(@NotNull PsiMethodCallExpression psiAnchor) {
-    super(new JavaExpressionAnchor(psiAnchor));
-    myLeft = null;
-    myCastType = null;
+  public InstanceofInstruction(@NotNull DfaAnchor anchor, boolean classObjectCheck) {
+    super(anchor);
+    myClassObjectCheck = classObjectCheck;
   }
 
   @Override
@@ -57,7 +44,7 @@ public class InstanceofInstruction extends ExpressionPushingInstruction {
     DfaValueFactory factory = interpreter.getFactory();
     boolean unknownTargetType = false;
     DfaCondition condition = null;
-    if (isClassObjectCheck()) {
+    if (myClassObjectCheck) {
       PsiType type = stateBefore.getDfType(dfaRight).getConstantOfType(PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
@@ -98,34 +85,8 @@ public class InstanceofInstruction extends ExpressionPushingInstruction {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  /**
-   * @return instanceof operand or null if it's not applicable
-   * (e.g. instruction is emitted when inlining Xyz.class::isInstance method reference)
-   */
-  @Nullable
-  public PsiExpression getLeft() {
-    return myLeft;
-  }
-
-  public PsiExpression getExpression() {
-    return ((JavaExpressionAnchor)Objects.requireNonNull(getDfaAnchor())).getExpression();
-  }
-  
-  @Nullable
-  public PsiType getCastType() {
-    return myCastType;
-  }
-
-  /**
-   * @return true if this instanceof instruction checks against Class object (e.g. Class.isInstance() call). In this case
-   * class object is located on the stack and cast type is not known
-   */
-  public boolean isClassObjectCheck() {
-    return myCastType == null;
-  }
-
   @Override
   public String toString() {
-    return "INSTANCE_OF" + (myCastType == null ? "" : " " + myCastType.getCanonicalText()); 
+    return "INSTANCE_OF " + (myClassObjectCheck ? "" : "(CLASS)");
   }
 }
