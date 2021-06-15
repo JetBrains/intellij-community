@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KProperty
@@ -69,12 +70,30 @@ data class IntEventField(override val name: String) : PrimitiveEventField<Int>()
   }
 }
 
+data class RoundedIntEventField(override val name: String) : PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, StatisticsUtil.getNextPowerOfTwo(value))
+  }
+}
+
 data class LongEventField(override val name: String): PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
   override fun addData(fuData: FeatureUsageData, value: Long) {
     fuData.addData(name, value)
+  }
+}
+
+data class RoundedLongEventField(override val name: String): PrimitiveEventField<Long>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Long) {
+    fuData.addData(name, StatisticsUtil.getNextPowerOfTwo(value))
   }
 }
 

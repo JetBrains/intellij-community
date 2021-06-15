@@ -56,7 +56,13 @@ object EventFields {
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
   @JvmStatic
+  fun RoundedInt(@NonNls name: String): RoundedIntEventField = RoundedIntEventField(name)
+
+  @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
+
+  @JvmStatic
+  fun RoundedLong(@NonNls name: String): RoundedLongEventField = RoundedLongEventField(name)
 
   @JvmStatic
   fun Float(@NonNls name: String): FloatEventField = FloatEventField(name)
