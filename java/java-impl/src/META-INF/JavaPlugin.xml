@@ -268,7 +268,6 @@
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.starter.modulePreprocessor" interface="com.intellij.ide.starters.StarterModulePreprocessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.java" interface="com.intellij.ide.projectWizard.generators.JavaBuildSystemType" dynamic="true"/>
   </extensionPoints>
 
