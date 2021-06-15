@@ -213,7 +213,6 @@ object CacheForCompilerErrorMessages {
     }
   }
 
-
   private fun readFromBinaryFile(file: VirtualFile?): MessagePredicate? {
     if (file == null) return null
     try {
@@ -222,7 +221,7 @@ object CacheForCompilerErrorMessages {
       if (indexKey == -1) return null
       val startFrom = indexKey + key.size + 3;
       val endIndex = allBytes.findNextSOH(startFrom)
-      if (endIndex == -1) return null
+      if (endIndex == -1 || startFrom == endIndex) return null
       val message = String(allBytes, startFrom, endIndex - startFrom, StandardCharsets.UTF_8)
       return toMessagePredicate(message);
     }
@@ -230,7 +229,6 @@ object CacheForCompilerErrorMessages {
       MavenLog.LOG.warn(e);
       return null
     }
-
   }
 
   private fun toMessagePredicate(message: String): MessagePredicate? {
