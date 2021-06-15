@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.search.refIndex
 
+import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.ScopeWithReferencesOnCompilation
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
@@ -22,6 +23,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
@@ -29,15 +31,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.Processor
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
+import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -49,6 +55,7 @@ import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import org.jetbrains.kotlin.jps.incremental.KotlinDataContainerTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
@@ -213,14 +220,59 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
         LOG.warn("try to find $fqName")
 
-        if (PsiUtilCore.getVirtualFile(element)?.let { projectFileIndex.isInSource(it) && it !in dirtyScopeHolder } != true) return null
+        val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
+        if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
+        val fqNames: List<FqName> = listOf(fqName) + if (projectFileIndex.isInLibrary(virtualFile)) {
+            computeInLibraryScope { findHierarchyInLibrary(element) }
+        } else {
+            emptyList()
+        }
 
-        val name = fqName.shortName().asString()
-        val scope = fqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
-        return storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }.toSet()
+        LOG.warn("try to find $fqName [${fqNames.joinToString()}]")
+        return fqNames.flatMapTo(mutableSetOf()) { currentFqName ->
+            val name = currentFqName.shortName().asString()
+            val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
+            storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
+        }
     })
 
-    private fun isServiceEnabledFor(element: PsiElement): Boolean = storage != null && isEnabled &&
+    private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
+    private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
+        ?.safeAs<CompilerReferenceServiceBase<*>>()
+        ?.isInsideLibraryScope
+        ?: isInsideLibraryScopeThreadLocal.get()
+
+    private fun <T> computeInLibraryScope(action: () -> T): T = CompilerReferenceService.getInstanceIfEnabled(project)
+        ?.safeAs<CompilerReferenceServiceBase<*>>()
+        ?.computeInLibraryScope<T, Throwable>(action)
+        ?: run {
+            isInsideLibraryScopeThreadLocal.set(true)
+            try {
+                action()
+            } finally {
+                isInsideLibraryScopeThreadLocal.set(false)
+            }
+        }
+
+    private fun findHierarchyInLibrary(basePsiElement: PsiElement): List<FqName> {
+        val overridden = mutableListOf<FqName>()
+        val processor = Processor { clazz: PsiClass ->
+            clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
+                ?.let { runReadAction { it.qualifiedName } }
+                ?.let { overridden += FqName(it) }
+
+            true
+        }
+
+        HierarchySearchRequest(
+            originalElement = basePsiElement,
+            searchScope = LibraryScopeCache.getInstance(project).librariesOnlyScope,
+            searchDeeply = true,
+        ).searchInheritors().forEach(processor)
+        return overridden
+    }
+
+    private fun isServiceEnabledFor(element: PsiElement): Boolean = !isInsideLibraryScope() && storage != null && isEnabled &&
             runReadAction { element.containingFile }
                 ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
                 ?.not() == true

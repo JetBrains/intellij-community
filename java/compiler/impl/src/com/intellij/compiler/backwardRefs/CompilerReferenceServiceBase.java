@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -84,7 +85,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private int myActiveBuilds = 0;
 
   protected volatile Reader myReader;
-  private final ThreadLocal<Boolean> myIsInsideHierarchy = ThreadLocal.withInitial(() -> false);
+  private final ThreadLocal<Boolean> myIsInsideLibraryScope = ThreadLocal.withInitial(() -> false);
 
   public CompilerReferenceServiceBase(Project project,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
@@ -141,7 +142,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
-    if (!isServiceEnabledFor(element) || myIsInsideHierarchy.get()) return null;
+    if (!isServiceEnabledFor(element) || isInsideLibraryScope()) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
@@ -394,8 +395,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
-        myIsInsideHierarchy.set(true);
-        try {
+        return computeInLibraryScope(() -> {
           final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
                                                                                           psiElement,
                                                                                           myReader.getNameEnumerator(),
@@ -408,10 +408,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
             fullHierarchy[i++] = element;
           }
           return new CompilerElementInfo(place, fullHierarchy);
-        }
-        finally {
-          myIsInsideHierarchy.set(false);
-        }
+        });
       }
       else {
         return new CompilerElementInfo(place, ref);
@@ -422,6 +419,21 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     } finally {
       myReadDataLock.unlock();
     }
+  }
+
+  @NotNull
+  public <T, E extends Throwable> T computeInLibraryScope(ThrowableComputable<T, E> action) throws E {
+    myIsInsideLibraryScope.set(true);
+    try {
+      return action.compute();
+    }
+    finally {
+      myIsInsideLibraryScope.set(false);
+    }
+  }
+
+  public boolean isInsideLibraryScope() {
+    return myIsInsideLibraryScope.get();
   }
 
   protected void closeReaderIfNeeded(IndexCloseReason reason) {
