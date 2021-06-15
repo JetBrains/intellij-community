@@ -173,6 +173,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "c17",
+    "n": "org.coffeescript"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "17",
     "name": "intellij.coffeescript",
     "n": "i.coffeescript",
@@ -180,7 +186,20 @@
     "sourceModule": "intellij.coffeescript",
     "descriptor": "plugins/coffeescript/coffeescript-core/resources/META-INF/plugin.xml",
     "pluginId": "org.coffeescript",
-    "type": 1
+    "parent": "c17",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rP",
+    "name": "intellij.coffeescript/watcher",
+    "n": "i.coffeescript/watcher",
+    "package": "org.coffeescript.watcher",
+    "sourceModule": "intellij.coffeescript",
+    "descriptor": "plugins/coffeescript/coffeescript-core/resources/intellij.coffeescript.watcher.xml",
+    "parent": "c17",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2649,17 +2668,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Dx",
-    "name": "com.intellij.modules.lang",
-    "n": "c.i.m.lang",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "sk",
     "name": "com.intellij.modules.json",
     "n": "c.i.m.json",
@@ -3218,6 +3226,14 @@
     "id": "up_RP",
     "source": "up",
     "target": "RP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "17_rP",
+    "source": "17",
+    "target": "rP",
     "type": 1
   }
 }, {
@@ -4047,25 +4063,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Oc_Dx",
-    "source": "Oc",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "Oc_cV",
     "source": "Oc",
     "target": "cV",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "7x_Dx",
-    "source": "7x",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -4119,14 +4119,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "up_Dx",
-    "source": "up",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "up_sk",
     "source": "up",
     "target": "sk",
@@ -4151,9 +4143,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "ZY_Dx",
-    "source": "ZY",
-    "target": "Dx",
+    "id": "rP_uY",
+    "source": "rP",
+    "target": "uY",
     "type": 0
   }
 }, {
@@ -4178,14 +4170,6 @@
     "id": "Py_3J",
     "source": "Py",
     "target": "3J",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "e7_Dx",
-    "source": "e7",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -4250,14 +4234,6 @@
     "id": "vW_ae",
     "source": "vW",
     "target": "ae",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "ae_Dx",
-    "source": "ae",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -4370,14 +4346,6 @@
     "id": "hz_ae",
     "source": "hz",
     "target": "ae",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "Aa_Dx",
-    "source": "Aa",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -4530,14 +4498,6 @@
     "id": "6U_S9",
     "source": "6U",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "mS_Dx",
-    "source": "mS",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -5127,14 +5087,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "v4_Dx",
-    "source": "v4",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "wG_Se",
     "source": "wG",
     "target": "Se",
@@ -5295,14 +5247,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "T4_Dx",
-    "source": "T4",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "j0_S9",
     "source": "j0",
     "target": "S9",
@@ -5426,22 +5370,6 @@
     "id": "3J_It",
     "source": "3J",
     "target": "It",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "gk_Dx",
-    "source": "gk",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "45_Dx",
-    "source": "45",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -5927,14 +5855,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "v41_Dx",
-    "source": "v41",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "Ae_6X",
     "source": "Ae",
     "target": "6X",
@@ -5946,14 +5866,6 @@
     "id": "XQ_EG",
     "source": "XQ",
     "target": "EG",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "WL_Dx",
-    "source": "WL",
-    "target": "Dx",
     "type": 0
   }
 }, {
@@ -6479,14 +6391,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "IV_Dx",
-    "source": "IV",
-    "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "IV_JP",
     "source": "IV",
     "target": "JP",
@@ -6562,14 +6466,6 @@
     "id": "ZR_xs",
     "source": "ZR",
     "target": "xs",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "cV_Dx",
-    "source": "cV",
-    "target": "Dx",
     "type": 0
   }
 } ]

@@ -78,7 +78,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, parentId: String?) {
     assert(!nodeInfoToId.containsKey(item))
 
-    if (item.name == "com.intellij.modules.ultimate") {
+    if (isNodeSkipped(item)) {
       return
     }
 
@@ -132,8 +132,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: String) {
     for (ref in dependentInfo.dependencies) {
       val dep = ref.moduleInfo
-      // skip to simplify graph
-      if (dep.name == "com.intellij.modules.ultimate") {
+      if (isNodeSkipped(dep)) {
         continue
       }
 
@@ -172,6 +171,9 @@ private fun writeLinks(writer: JsonGenerator, links: Map<String, List<String>>, 
     }
   })
 }
+
+// skip to simplify graph
+private fun isNodeSkipped(dep: ModuleInfo) = dep.name == "com.intellij.modules.ultimate" || dep.name == "com.intellij.modules.lang"
 
 private fun getItemNodeType(item: ModuleInfo): Int {
   if (item.isPlugin) {
