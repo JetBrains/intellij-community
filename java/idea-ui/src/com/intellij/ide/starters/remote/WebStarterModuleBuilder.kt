@@ -11,9 +11,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
-import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.importModule
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.openSampleFiles
+import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.preprocessModuleCreated
+import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.preprocessModuleOpened
 import com.intellij.ide.starters.remote.wizard.WebStarterInitialStep
 import com.intellij.ide.starters.remote.wizard.WebStarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -203,6 +204,9 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, java.lang.Boolean.TRUE)
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
     }
+
+    preprocessModuleCreated(module, this, starterContext.frameworkVersion?.id)
+
     StartupManager.getInstance(project).runAfterOpened {
       // a hack to avoid "Assertion failed: Network shouldn't be accessed in EDT or inside read action"
       ApplicationManager.getApplication().invokeLater({ extractAndImport(module) },
@@ -247,7 +251,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
     LocalFileSystem.getInstance().refresh(false) // to avoid IDEA-232806
 
-    preprocessModule(module)
+    preprocessModuleOpened(module, this, starterContext.frameworkVersion?.id)
 
     if (isReformatAfterCreation(module.project)) {
       ReformatCodeProcessor(module.project, module, false).run()
@@ -257,10 +261,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     importModule(module)
 
     verifyIdePlugins(module.project)
-  }
-
-  private fun preprocessModule(module: Module) {
-    StarterModuleBuilder.preprocessModule(module, this, starterContext.frameworkVersion?.id)
   }
 
   private fun extractTemplate() {

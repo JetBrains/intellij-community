@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote.wizard
 
 import com.intellij.ide.starters.JavaStartersBundle
@@ -74,8 +75,8 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
   private val selectedLibrariesPanel: SelectedLibrariesPanel by lazy { createSelectedLibrariesPanel() }
   private val frameworkVersionsModel: DefaultComboBoxModel<WebStarterFrameworkVersion> = DefaultComboBoxModel()
 
-  private val propertyGraph: PropertyGraph = PropertyGraph()
-  private var frameworkVersionProperty: GraphProperty<WebStarterFrameworkVersion?> = propertyGraph.graphProperty { null }
+  protected val propertyGraph: PropertyGraph = PropertyGraph()
+  private val frameworkVersionProperty: GraphProperty<WebStarterFrameworkVersion?> = propertyGraph.graphProperty { null }
   private val selectedDependencies: MutableSet<WebStarterDependency> = mutableSetOf()
 
   private var currentSearchString: String = ""
@@ -265,6 +266,8 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     }
   }
 
+  protected open fun addFieldsAfter(layout: LayoutBuilder) {}
+
   private fun createComponent(): DialogPanel {
     val messages = starterSettings.customizedMessages
     selectedLibrariesPanel.emptyText.text = messages?.noDependenciesSelectedLabel
@@ -291,6 +294,8 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
           }
         }.largeGapAfter()
       }
+
+      addFieldsAfter(this)
 
       row {
         label(messages?.dependenciesLabel ?: JavaStartersBundle.message("title.project.dependencies.label"))

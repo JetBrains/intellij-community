@@ -4,7 +4,7 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
-import com.intellij.ide.starters.StarterModulePreprocessor
+import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
@@ -62,10 +62,6 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       ExtensionPointName.create("com.intellij.starter.moduleImporter")
 
     @JvmStatic
-    private val PREPROCESSOR_EP_NAME: ExtensionPointName<StarterModulePreprocessor> =
-      ExtensionPointName.create("com.intellij.starter.modulePreprocessor")
-
-    @JvmStatic
     fun getPackageName(group: String, artifact: String): String {
       val artifactSanitized = artifact.replace(VALID_PACKAGE_NAME_PATTERN, "_")
       val groupSanitized = group.replace("-", ".").replace(VALID_PACKAGE_NAME_PATTERN, "_")
@@ -81,10 +77,16 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       }
     }
 
-    fun preprocessModule(module: Module, builder: ModuleBuilder, frameworkVersion: String?) {
-      PREPROCESSOR_EP_NAME.forEachExtensionSafe {
-        it.process(module, builder, frameworkVersion)
-      }
+    fun preprocessModuleCreated(module: Module, builder: ModuleBuilder, frameworkVersion: String?) {
+      val project = module.project
+      project.messageBus.syncPublisher(StarterModuleProcessListener.TOPIC)
+        .moduleCreated(module, builder, frameworkVersion)
+    }
+
+    fun preprocessModuleOpened(module: Module, builder: ModuleBuilder, frameworkVersion: String?) {
+      val project = module.project
+      project.messageBus.syncPublisher(StarterModuleProcessListener.TOPIC)
+        .moduleOpened(module, builder, frameworkVersion)
     }
 
     internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
