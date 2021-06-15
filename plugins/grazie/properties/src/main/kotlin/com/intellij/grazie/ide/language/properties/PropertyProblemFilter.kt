@@ -5,5 +5,5 @@ import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextProblem
 
 class PropertyProblemFilter : ProblemFilter() {
-  override fun shouldIgnore(problem: TextProblem): Boolean = problem.fitsGroup(RuleGroup.CASING)
+  override fun shouldIgnore(problem: TextProblem): Boolean = problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)
 }
