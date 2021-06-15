@@ -236,6 +236,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+    if (!checkModifiers(event)) return;
     if (isDragJustStarted) {
       startDrag(event)
     }
