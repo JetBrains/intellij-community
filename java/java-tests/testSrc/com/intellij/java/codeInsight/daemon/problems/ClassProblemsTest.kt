@@ -16,11 +16,6 @@ import com.intellij.refactoring.openapi.impl.MoveInnerRefactoringImpl
 import com.intellij.testFramework.TestModeFlags
 
 internal class ClassProblemsTest : ProjectProblemsViewTest() {
-  override fun setUp() {
-    TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)
-    super.setUp()
-  }
-
   fun testRename() = doClassTest { psiClass, factory ->
     psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
   }
