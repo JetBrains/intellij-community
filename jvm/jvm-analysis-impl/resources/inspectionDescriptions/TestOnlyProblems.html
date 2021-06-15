@@ -1,22 +1,22 @@
 <html>
 <body>
-Reports usages of <code>@TestOnly</code> and <code>@VisibleForTesting</code> annotated methods and classes in production code. Also reports
+Reports the <code>@TestOnly</code>- and <code>@VisibleForTesting</code>-annotated methods and classes that are used in production code. Also reports
 usage of applying <code>@TestOnly</code> <code>@VisibleForTesting</code> to the same element.
-<br>
-The problems are not reported if such method or class is referenced from:
+
+<p>The problems are not reported if such method or class is referenced from:</p>
 <ul>
-  <li>Code under 'Test Sources' folder
-  <li>A test-class (JUnit/TestNG)
+  <li>Code under the <b>Test Sources</b> folder
+  <li>A test class (JUnit/TestNG)
   <li>Another <code>@TestOnly</code>-annotated method
 </ul>
-<p>Example (in production code):</p>
-<pre>
+<p><b>Example (in production code):</b></p>
+<pre><code>
   @TestOnly
   fun foo() { ... }
 
   fun main () {
     foo()
   }
-</pre>
+</code></pre>
 </body>
 </html>
