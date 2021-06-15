@@ -28,10 +28,6 @@ import javax.swing.*;
  */
 public interface ExternalSystemUiAware {
 
-  default @NotNull String getProjectNameDelimiter() {
-    return ":";
-  }
-
   @NotNull
   @Nls String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath);
 

@@ -49,7 +49,6 @@ class ExternalSystemProjectPathField(
   var projectName by projectNameProperty
 
   private val externalProjects = ArrayList<ExternalProject>()
-  private val projectNameDelimiter = ExternalSystemUiUtil.getUiAware(externalSystemId).projectNameDelimiter
 
   private var highlightTag: Any? = null
   private val highlightRecursionGuard =
@@ -65,7 +64,7 @@ class ExternalSystemProjectPathField(
     }
     projectNameProperty.dependsOn(textProperty) {
       when (mode) {
-        Mode.PATH -> resolveProjectNameByPath(text) ?: text
+        Mode.PATH -> resolveProjectNameByPath(getModelPath(text)) ?: text
         Mode.NAME -> text
       }
     }
@@ -78,7 +77,7 @@ class ExternalSystemProjectPathField(
     textProperty.dependsOn(projectUiPathProperty) {
       when (mode) {
         Mode.PATH -> projectUiPath
-        Mode.NAME -> resolveProjectNameByPath(projectUiPath) ?: projectUiPath
+        Mode.NAME -> resolveProjectNameByPath(projectPath) ?: projectUiPath
       }
     }
     textProperty.dependsOn(projectNameProperty) {
@@ -105,38 +104,36 @@ class ExternalSystemProjectPathField(
   }
 
   private fun resolveProjectPathByName(projectName: String) =
-    resolveValueByKey(projectName, externalProjects, { name }, { path }, projectNameDelimiter, "/")
+    resolveValueByKey(projectName, externalProjects, { name }, { path })
 
   private fun resolveProjectNameByPath(projectPath: String) =
-    resolveValueByKey(getModelPath(projectPath), externalProjects, { path }, { name }, "/", projectNameDelimiter)
+    resolveValueByKey(projectPath, externalProjects, { path }, { name })
 
   private fun <E> resolveValueByKey(
     key: String,
     entries: List<E>,
     getKey: E.() -> String,
-    getValue: E.() -> String,
-    keyDelimiter: String,
-    valueDelimiter: String
+    getValue: E.() -> String
   ): String? {
-    val entry = entries.asSequence()
-      .filter { it.getKey().startsWith(key) && key.isNotEmpty() }
-      .sortedBy { it.getKey().length }
-      .firstOrNull()
-    if (entry != null) {
-      val suffix = entry.getKey().removePrefix(key)
-        .replace(keyDelimiter, valueDelimiter)
-      if (entry.getValue().endsWith(suffix)) {
-        return entry.getValue().removeSuffix(suffix)
+    if (key.isNotEmpty()) {
+      val entry = entries.asSequence()
+        .filter { it.getKey().startsWith(key) }
+        .sortedBy { it.getKey().length }
+        .firstOrNull()
+      if (entry != null) {
+        val suffix = entry.getKey().removePrefix(key)
+        if (entry.getValue().endsWith(suffix)) {
+          return entry.getValue().removeSuffix(suffix)
+        }
       }
-    }
-    val parentEntry = entries.asSequence()
-      .filter { key.startsWith(it.getKey()) }
-      .sortedByDescending { it.getKey().length }
-      .firstOrNull()
-    if (parentEntry != null) {
-      val suffix = key.removePrefix(parentEntry.getKey())
-        .replace(keyDelimiter, valueDelimiter)
-      return parentEntry.getValue() + suffix
+      val parentEntry = entries.asSequence()
+        .filter { key.startsWith(it.getKey()) }
+        .sortedByDescending { it.getKey().length }
+        .firstOrNull()
+      if (parentEntry != null) {
+        val suffix = key.removePrefix(parentEntry.getKey())
+        return parentEntry.getValue() + suffix
+      }
     }
     return null
   }
