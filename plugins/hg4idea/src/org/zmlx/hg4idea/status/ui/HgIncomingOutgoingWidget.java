@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.repo.VcsRepositoryManager;
@@ -42,7 +42,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   private volatile @Nls String myTooltip = "";
   private Icon myCurrentIcon;
 
-  HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
+  public HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
     super(vcs.getProject());
     myIsIncoming = isIncoming;
     myVcs = vcs;

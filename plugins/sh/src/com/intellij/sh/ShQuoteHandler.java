@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import static com.intellij.sh.lexer.ShTokenTypes.*;
 
 final class ShQuoteHandler extends SimpleTokenSetQuoteHandler {
-  ShQuoteHandler() {
+  public ShQuoteHandler() {
     super(BAD_CHARACTER, RAW_STRING, OPEN_QUOTE, CLOSE_QUOTE, OPEN_BACKQUOTE, CLOSE_BACKQUOTE);
   }
 

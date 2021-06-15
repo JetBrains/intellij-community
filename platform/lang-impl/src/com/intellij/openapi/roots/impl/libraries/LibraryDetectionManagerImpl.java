@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +18,7 @@ import java.util.Map;
 final class LibraryDetectionManagerImpl extends LibraryDetectionManager implements Disposable {
   private final Map<List<? extends VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = Collections.synchronizedMap(new HashMap<>());
 
-  LibraryDetectionManagerImpl() {
+  public LibraryDetectionManagerImpl() {
     Runnable listener = myCache::clear;
     LibraryType.EP_NAME.addChangeListener(listener, this);
     LibraryPresentationProvider.EP_NAME.addChangeListener(listener, this);
