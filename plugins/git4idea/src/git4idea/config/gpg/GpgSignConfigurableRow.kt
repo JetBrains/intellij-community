@@ -151,8 +151,10 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
 
   private fun getStatusLabelText(): @Nls String {
     val keys = repoConfigs.values.map { it.value }
+    if (keys.isEmpty()) return message("settings.label.sign.gpg.commits.no.roots.text")
+
     val loadedKeys = keys.filterNotNull()
-    if (keys.isEmpty() || loadedKeys.size != keys.size) return ""
+    if (loadedKeys.size != keys.size) return ""
 
     val totalRepos = loadedKeys.count()
     val configuredRepos = loadedKeys.filter { it.key != null }
