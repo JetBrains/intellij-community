@@ -123,6 +123,7 @@ class AndroidStudioLibraryLicenses {
                        url: "https://github.com/square/javapoet"),
     new LibraryLicense(name: "Java Servlet API", libraryName: "javax.servlet-api-3.0.1.jar", license: "CDDL + GPLv2 w/ Classpath Exception",
                        licenseUrl: "https://glassfish.java.net/nonav/public/CDDL+GPL.html"),
+    new LibraryLicense(name: "JTS IO Common", libraryName: "jts-io-common", license: "Eclipse Public License 2.0"),
     // for juniversalchardet module library in db-compiler
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet", version: "1.0.3",
                        url: "https://code.google.com/archive/p/juniversalchardet",

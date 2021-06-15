@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jts-io-common" type="repository">
+    <properties maven-id="org.locationtech.jts.io:jts-io-common:1.17.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/locationtech/jts/io/jts-io-common/1.17.1/jts-io-common-1.17.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/locationtech/jts/jts-core/1.17.1/jts-core-1.17.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
