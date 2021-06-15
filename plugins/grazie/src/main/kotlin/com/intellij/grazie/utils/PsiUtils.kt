@@ -103,5 +103,5 @@ fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenS
     return result
   }
 
-  return element.process(false) + listOf(element) + element.process(true)
+  return element.process(false).reversed() + listOf(element) + element.process(true)
 }
