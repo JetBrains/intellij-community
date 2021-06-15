@@ -21,9 +21,21 @@ public enum ToolWindowExtractorMode {
   /**
    * Create a separate ToolWindow instance in a separate window that will be sent via projector to client
    */
-  PROJECTOR;
+  PROJECTOR_INSTANCING,
+  /**
+   * Steal content from host's toolwindow to share it using Projector
+   */
+  PROJECTOR_STEALING;
 
   public boolean isPerClientLike() {
-    return this == PER_CLIENT || this == PROJECTOR;
+    return this == PER_CLIENT || this == PROJECTOR_INSTANCING;
+  }
+
+  public boolean isMirrorLike() {
+    return this == MIRROR || this == PROJECTOR_STEALING;
+  }
+
+  public boolean isProjected() {
+    return this == PROJECTOR_INSTANCING || this == PROJECTOR_STEALING;
   }
 }
