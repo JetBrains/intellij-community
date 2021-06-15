@@ -85,6 +85,7 @@ import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -369,6 +370,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
+    AtomicBoolean manuallyResized = new AtomicBoolean();
+
     ShowUsagesTable table = new ShowUsagesTable(new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope), usageView);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
     TitlePanel statusPanel = new TitlePanel();
@@ -389,6 +392,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       usageView, table, itemChosenCallback, statusPanel,
       parameters, actionHandler
     );
+
+    popup.addResizeListener(() -> manuallyResized.set(true), popup);
+
     ProgressIndicator indicator = new ProgressIndicatorBase();
     if (!popup.isDisposed()) {
       Disposer.register(popup, usageView);
@@ -457,7 +463,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int totalCount = copy.size();
       int visibleCount = totalCount - filteredOutCount;
       statusPanel.setText(getStatusString(!processIcon.isDisposed(), hasMore, visibleCount, totalCount));
-      rebuildTable(usageView, data, table, popup, parameters.popupPosition, parameters.minWidth);
+      rebuildTable(usageView, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
     });
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
@@ -904,7 +910,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                    @NotNull ShowUsagesTable table,
                                    @Nullable AbstractPopup popup,
                                    @NotNull RelativePoint popupPosition,
-                                   @NotNull IntRef minWidth) {
+                                   @NotNull IntRef minWidth,
+                                   @NotNull AtomicBoolean manuallyResized) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     ShowUsagesTable.MyModel tableModel = table.setTableModel(data);
@@ -930,7 +937,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     ScrollingUtil.ensureIndexIsVisible(table, newSelection, 0);
 
     if (popup != null) {
-      setSizeAndDimensions(table, popup, popupPosition, minWidth, data);
+      if (manuallyResized.get()) {
+        calcMaxWidth(table); // compute column widths
+      }
+      else {
+        setPopupSize(table, popup, popupPosition, minWidth, data);
+      }
     }
   }
 
@@ -952,17 +964,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return selection;
   }
 
-  private static void setSizeAndDimensions(@NotNull JTable table,
-                                           @NotNull AbstractPopup popup,
-                                           @NotNull RelativePoint popupPosition,
-                                           @NotNull IntRef minWidth,
-                                           @NotNull List<? extends UsageNode> data) {
+  private static void setPopupSize(@NotNull JTable table,
+                                   @NotNull AbstractPopup popup,
+                                   @NotNull RelativePoint popupPosition,
+                                   @NotNull IntRef minWidth,
+                                   @NotNull List<? extends UsageNode> data) {
 
     if (isCodeWithMeClientInstance(popup)) return;
 
-    JComponent content = popup.getContent();
-    Window window = SwingUtilities.windowForComponent(content);
-    Dimension d = window.getSize();
+    Dimension d = popup.getSize();
+    Insets contentInsets = popup.getContent().getInsets();
+    d.width -= contentInsets.left + contentInsets.right;
 
     Component toolbarComponent = ((BorderLayout)popup.getContent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
@@ -977,25 +989,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     minWidth.set(newWidth);
 
-    Dimension footerSize = popup.getFooterPreferredSize();
-
-    int footer = footerSize.height;
-    int footerBorder = footer == 0 ? 0 : 1;
-    Insets insets = popup.getPopupBorder().getBorderInsets(content);
-    int minHeight = headerSize.height + toolbarSize.height + footer + footerBorder + insets.top + insets.bottom;
+    int minHeight = headerSize.height + toolbarSize.height;
 
     Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size());
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
 
-    if (WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY) == null) {
-      Dimension newDim = rectangle.getSize();
-      window.setBounds(rectangle);
-      window.setMaximumSize(newDim);
+    Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
+    if (savedSize != null) {
+      rectangle.height = Math.min(savedSize.height, rectangle.height);
+      rectangle.width = Math.min(savedSize.width, rectangle.width);
     }
 
-    window.validate();
-    window.repaint();
+    popup.setSize(rectangle.getSize());
   }
 
   private static boolean isCodeWithMeClientInstance(@NotNull JBPopup popup) {
