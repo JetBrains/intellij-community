@@ -192,8 +192,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
         paths.each { path ->
           tarfileset(dir: path, prefix: tarRoot) {
-            executableFilesPatterns.each {
-              exclude(name: it)
+            executableFilesPatterns.each {pattern ->
+              exclude(name: pattern)
             }
             if (hasPatchedClasspathTxt && path == buildContext.paths.distAll) {
               exclude(name: "lib/classpath.txt")
@@ -202,10 +202,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           }
         }
 
-        paths.each {
-          tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
-            executableFilesPatterns.each {
-              include(name: it)
+        paths.each { path ->
+          tarfileset(dir: path, prefix: tarRoot, filemode: "755") {
+            executableFilesPatterns.each { pattern ->
+              include(name: pattern)
             }
             type(type: "file")
           }
@@ -339,7 +339,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     downloadSelfContainedLibrariesForRemoteDevelopment(buildContext, selfContainedDirPath)
 
     // Copy launcher.sh script from sources into the distribution structure
-    Path launcherSourcePath = Path.of("${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/scripts/remotedevelopment/launcher.sh")
+    Path launcherSourcePath = Path.of("${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/remotedevelopment/launcher.sh")
     Path launcherTargetPath = remoteDevelopmentDirPath.resolve(launcherSourcePath.fileName)
     copyFile(launcherSourcePath, launcherTargetPath)
   }

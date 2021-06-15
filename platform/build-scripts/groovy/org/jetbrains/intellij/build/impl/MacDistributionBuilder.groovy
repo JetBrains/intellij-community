@@ -312,19 +312,19 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def executableFilePatterns = generateExecutableFilesPatterns(false)
       buildContext.ant.zip(zipfile: targetPath) {
-        allPaths.each {
-          zipfileset(dir: it, prefix: zipRoot) {
-            executableFilePatterns.each {
-              exclude(name: it)
+        allPaths.each {path ->
+          zipfileset(dir: path, prefix: zipRoot) {
+            executableFilePatterns.each { pattern ->
+              exclude(name: pattern)
             }
             exclude(name: "*.txt")
           }
         }
 
-        allPaths.each {
-          zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
-            executableFilePatterns.each {
-              include(name: it)
+        allPaths.each { path ->
+          zipfileset(dir: path, filemode: "755", prefix: zipRoot) {
+            executableFilePatterns.each { pattern ->
+              include(name: pattern)
             }
           }
         }
