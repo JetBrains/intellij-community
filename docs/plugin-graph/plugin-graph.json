@@ -726,6 +726,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cPH",
+    "n": "org.intellij.groovy"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "PH",
     "name": "intellij.groovy",
     "n": "i.groovy",
@@ -733,7 +739,32 @@
     "sourceModule": "intellij.groovy",
     "descriptor": "community/plugins/groovy/src/META-INF/plugin.xml",
     "pluginId": "org.intellij.groovy",
-    "type": 1
+    "parent": "cPH",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Y3",
+    "name": "intellij.groovy/ant",
+    "n": "i.groovy/ant",
+    "package": "org.jetbrains.plugins.groovy.gant.ant",
+    "sourceModule": "intellij.groovy",
+    "descriptor": "community/plugins/groovy/resources/intellij.groovy.ant.xml",
+    "parent": "cPH",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hV",
+    "name": "intellij.groovy/byte-code-viewer",
+    "n": "i.groovy/byte-code-viewer",
+    "package": "org.jetbrains.plugins.groovy.byteCodeViewer",
+    "sourceModule": "intellij.groovy",
+    "descriptor": "community/plugins/groovy/resources/intellij.groovy.byte-code-viewer.xml",
+    "parent": "cPH",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -891,6 +922,18 @@
     "sourceModule": "intellij.jade",
     "descriptor": "plugins/Jade/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.plugins.jade",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "F7",
+    "name": "intellij.java.byteCodeViewer",
+    "n": "i.java.byteCodeViewer",
+    "package": "com.intellij.byteCodeViewer",
+    "sourceModule": "intellij.java.byteCodeViewer",
+    "descriptor": "community/plugins/ByteCodeViewer/resources/META-INF/plugin.xml",
+    "pluginId": "ByteCodeViewer",
     "type": 1
   }
 }, {
@@ -2760,6 +2803,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "4E",
+    "name": "intellij.ant",
+    "n": "i.ant",
+    "package": null,
+    "sourceModule": "intellij.ant",
+    "descriptor": "community/plugins/ant/resources/META-INF/plugin.xml",
+    "pluginId": "AntSupport",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "J7",
     "name": "com.intellij.modules.microservices",
     "n": "c.i.m.microservices",
@@ -3360,6 +3415,22 @@
     "id": "49_Sw",
     "source": "49",
     "target": "Sw",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_Y3",
+    "source": "PH",
+    "target": "Y3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_hV",
+    "source": "PH",
+    "target": "hV",
     "type": 1
   }
 }, {
@@ -4389,6 +4460,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Y3_4E",
+    "source": "Y3",
+    "target": "4E",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hV_F7",
+    "source": "hV",
+    "target": "F7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "CF_J7",
     "source": "CF",
     "target": "J7",
@@ -4528,6 +4615,14 @@
     "id": "AL_PN",
     "source": "AL",
     "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "F7_S9",
+    "source": "F7",
+    "target": "S9",
     "type": 0
   }
 }, {
