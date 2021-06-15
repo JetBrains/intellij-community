@@ -28,6 +28,7 @@ import javax.swing.JLabel
 class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
   companion object {
     fun LayoutBuilder.createGpgSignRow(project: Project, disposable: Disposable) {
+      if (project.isDefault) return
       val panel = GpgSignConfigurableRow(project, disposable)
       with(panel) {
         createRow()
