@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -2004,26 +2005,26 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
     super.visitDefaultCaseLabelElement(element);
-    myHolder.add(checkFeature(element, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
   }
 
   @Override
   public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
     super.visitParenthesizedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
   }
 
   @Override
   public void visitGuardedPattern(PsiGuardedPattern pattern) {
     super.visitGuardedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
   }
 
   @Override
   public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
     super.visitTypeTestPattern(pattern);
     if (pattern.getParent() instanceof PsiCaseLabelElementList) {
-      myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+      myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERNS_IN_SWITCH));
     }
   }
 
