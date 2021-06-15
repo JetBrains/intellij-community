@@ -14,5 +14,5 @@
     </ul>
   ]]></description>
 
-  <xi:include href="/META-INF/common-javaFX-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/common-javaFX-plugin.xml"/>
 </idea-plugin>

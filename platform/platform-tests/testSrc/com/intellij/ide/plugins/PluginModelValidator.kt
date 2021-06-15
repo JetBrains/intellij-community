@@ -74,8 +74,16 @@ internal class PluginModelValidator {
     for (pluginInfo in pluginIdToInfo.values) {
       val descriptor = pluginInfo.descriptor
 
-      descriptor.getChild("dependencies")?.let { dependencies ->
-        checkDependencies(dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+      val dependenciesElements = descriptor.getChildren("dependencies")
+      if (dependenciesElements.size > 1) {
+        errors.add(PluginValidationError(
+          "The only `dependencies` tag is expected",
+          mapOf(
+            "descriptorFile" to pluginInfo.descriptorFile,
+          )))
+      }
+      else if (dependenciesElements.size == 1) {
+        checkDependencies(dependenciesElements.first(), pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
       }
 
       // in the end after processing content and dependencies
@@ -85,6 +93,18 @@ internal class PluginModelValidator {
                            " (pluginId=${pluginInfo.pluginId}, descriptor=${pathToShortString(pluginInfo.descriptorFile)})")
       }
 
+      if (pluginInfo.packageName != null) {
+        descriptor.children.firstOrNull { it.name == "depends" && it.getAttributeValue("optional") == null }?.let {
+          errors.add(PluginValidationError(
+            "Old format must be not used for a plugin with a specified package prefix but `depends` tag is used, use a new format, see " +
+            "(https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
+            mapOf(
+              "descriptorFile" to pluginInfo.descriptorFile,
+              "depends" to it,
+            )))
+        }
+      }
+
       for (contentModuleInfo in pluginInfo.content) {
         contentModuleInfo.descriptor.getChild("dependencies")?.let { dependencies ->
           checkDependencies(dependencies, contentModuleInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
@@ -92,7 +112,7 @@ internal class PluginModelValidator {
 
         contentModuleInfo.descriptor.getChild("depends")?.let {
           errors.add(PluginValidationError(
-            "Old format must be not used for a module: `depends` tag is used",
+            "Old format must be not used for a module but `depends` tag is used",
             mapOf(
               "descriptorFile" to contentModuleInfo.descriptorFile,
               "depends" to it,
@@ -153,13 +173,17 @@ internal class PluginModelValidator {
       if (child.name != "module") {
         if (child.name == "plugin") {
           // todo check that the referenced plugin exists
-          var id = child.getAttributeValue("id")
+          val id = child.getAttributeValue("id")
           if (id == null) {
             errors.add(PluginValidationError("Id is not specified for dependency on plugin", getErrorInfo()))
             continue
           }
           if (id == "com.intellij.modules.java") {
             errors.add(PluginValidationError("Use com.intellij.modules.java id instead of com.intellij.modules.java", getErrorInfo()))
+            continue
+          }
+          if (id == "com.intellij.modules.platform") {
+            errors.add(PluginValidationError("No need to specify dependency on $id", getErrorInfo()))
             continue
           }
           if (id == referencingPluginInfo.pluginId) {
@@ -173,10 +197,16 @@ internal class PluginModelValidator {
             continue
           }
 
-          val ref = Reference(name = id, isPlugin = true,
-                              moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
-                                                                    XmlElement("", Collections.emptyMap(), Collections.emptyList(), null)))
-          assert(!referencingModuleInfo.dependencies.contains(ref))
+          val ref = Reference(
+            name = id,
+            isPlugin = true,
+            moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
+                                                  XmlElement("", Collections.emptyMap(), Collections.emptyList(), null))
+          )
+          if (referencingModuleInfo.dependencies.contains(ref)) {
+            errors.add(PluginValidationError("Referencing module dependencies contains $id: $id", getErrorInfo()))
+            continue
+          }
           referencingModuleInfo.dependencies.add(ref)
           continue
         }
