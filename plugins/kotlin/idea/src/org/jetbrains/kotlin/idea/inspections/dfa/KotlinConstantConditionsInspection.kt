@@ -12,14 +12,14 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
@@ -63,24 +63,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        return resultIsUnused(expression)
-    }
-
-    private fun resultIsUnused(expression: KtExpression): Boolean {
-        return when (val parent = expression.parent) {
-            is KtBlockExpression -> parent.lastBlockStatementOrThis() != expression || resultIsUnused(parent)
-            is KtLoopExpression -> parent.body == expression
-            is KtIfExpression -> resultIsUnused(parent)
-            is KtWhenEntry -> {
-                val whenExpression = parent.parent as? KtWhenExpression
-                return whenExpression != null && resultIsUnused(whenExpression)
-            }
-            is KtFunction -> {
-                val type = parent.type()
-                return type != null && KotlinBuiltIns.isUnit(type)
-            }
-            else -> false
-        }
+        val context = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
+        return expression.isUsedAsStatement(context)
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = namedFunctionVisitor(fun(function) {
