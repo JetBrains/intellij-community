@@ -51,6 +51,14 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("Hello World #42!", extractText("a.properties", "#\t Hello World #42!", 4).toString());
   }
 
+  public void testProcessPropertyMessageFormat() {
+    assertEquals("Hello World '|'!", TextContentTest.unknownOffsets(extractText("a.properties", "a=Hello World ''{0}''!", 4)));
+  }
+
+  public void testExcludePropertyHtml() {
+    assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 4)));
+  }
+
   public void testJavadoc() {
     String docText = "/**\n" +
                      "* Hello {@link #foo},\n" +
