@@ -7902,6 +7902,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantExplicitType/interface.kt");
         }
 
+        @TestMetadata("interfaceWithCompanionObject.kt")
+        public void testInterfaceWithCompanionObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantExplicitType/interfaceWithCompanionObject.kt");
+        }
+
         @TestMetadata("long.kt")
         public void testLong() throws Exception {
             runTest("testData/inspectionsLocal/redundantExplicitType/long.kt");
