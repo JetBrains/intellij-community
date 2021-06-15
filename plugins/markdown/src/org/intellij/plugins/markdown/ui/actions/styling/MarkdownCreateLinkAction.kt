@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
@@ -119,9 +120,16 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
       when (Urls.parse(path, asLocalIfNoScheme = true)) {
         null -> false
         is LocalFileUrl -> {
+          val relativePath = try {
+            Path.of(path)
+          }
+          catch (e: InvalidPathException) {
+            return@takeIf false
+          }
+
           val dir = FileDocumentManager.getInstance().getFile(editor.document)?.parent
-          val relativePath = dir?.let { Path.of(it.path) }?.resolve(path)
-          relativePath?.exists() ?: false
+          val absolutePath = dir?.let { Path.of(it.path) }?.resolve(relativePath)
+          absolutePath?.exists() ?: false
         }
         else -> true
       }
