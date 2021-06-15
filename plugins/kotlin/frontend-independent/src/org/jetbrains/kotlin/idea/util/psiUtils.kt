@@ -128,3 +128,12 @@ val KtValVarKeywordOwner.jvmGetterName: String? get() = when (this) {
 
 fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
     valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)
+
+fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
+    is KtWhenExpression -> listOf(this) + entries.map { it.expression?.resultingWhens() ?: listOf() }.flatten()
+    is KtIfExpression -> (then?.resultingWhens() ?: listOf()) + (`else`?.resultingWhens() ?: listOf())
+    is KtBinaryExpression -> (left?.resultingWhens() ?: listOf()) + (right?.resultingWhens() ?: listOf())
+    is KtUnaryExpression -> this.baseExpression?.resultingWhens() ?: listOf()
+    is KtBlockExpression -> statements.lastOrNull()?.resultingWhens() ?: listOf()
+    else -> listOf()
+}
