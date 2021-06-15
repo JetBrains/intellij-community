@@ -233,11 +233,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean result = true;
     ProjectPluginTrackerManager pluginTrackerManager = ProjectPluginTrackerManager.getInstance();
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
+      PluginEnableDisableAction action = entry.getKey();
       if (!pluginTrackerManager.updatePluginsState(entry.getValue(),
-                                                   entry.getKey(),
+                                                   action,
                                                    getProject(),
                                                    parentComponent,
-                                                   getCustomUnloadOptions())) {
+                                                   action.isDisable() ? getCustomUnloadOptions() : null)) {
         result = false;
       }
     }
