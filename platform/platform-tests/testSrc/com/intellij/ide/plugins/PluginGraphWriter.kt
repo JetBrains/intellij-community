@@ -78,6 +78,10 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, parentId: String?) {
     assert(!nodeInfoToId.containsKey(item))
 
+    if (item.name == "com.intellij.modules.ultimate") {
+      return
+    }
+
     val nodeName = item.name ?: item.sourceModuleName
     val id = idGenerator.getId(nodeName)
     var compoundId: String? = null
@@ -128,6 +132,11 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: String) {
     for (ref in dependentInfo.dependencies) {
       val dep = ref.moduleInfo
+      // skip to simplify graph
+      if (dep.name == "com.intellij.modules.ultimate") {
+        continue
+      }
+
       if (!nodeInfoToId.containsKey(dep)) {
         writeModuleInfo(writer = writer, item = dep, parentId = null)
       }
