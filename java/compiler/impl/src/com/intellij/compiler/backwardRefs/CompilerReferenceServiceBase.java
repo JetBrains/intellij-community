@@ -93,8 +93,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
+    Set<FileType> affectedFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getAffectedFileTypes().stream()).collect(Collectors.toSet());
     myDirtyScopeHolder = new DirtyScopeHolder(project,
-                                              myFileTypes,
+                                              affectedFileTypes,
                                               myProjectFileIndex,
                                               this,
                                               this,
@@ -388,7 +389,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           return null;
         }
       }
-      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file);
+      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file, true);
       if (adapter == null) return null;
       final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
