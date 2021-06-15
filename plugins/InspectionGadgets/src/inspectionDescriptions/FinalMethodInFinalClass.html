@@ -5,7 +5,7 @@ Reports <code>final</code> methods in <code>final</code> classes.
   may be unnecessary and confusing.</p>
 <p><b>Example:</b></p>
 <pre><code>record Bar(int a, int b) {
-  public final sum() { 
+  public final int sum() { 
      return a + b;
   }
 }
@@ -13,7 +13,7 @@ Reports <code>final</code> methods in <code>final</code> classes.
 </pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>record Bar(int a, int b) {
-  public sum() { 
+  public int sum() { 
      return a + b;
   }
 }
