@@ -30,6 +30,7 @@ public final class ScratchFromSelectionIntention implements IntentionAction {
                              Editor editor,
                              PsiFile file) {
     if (editor == null) return false;
+    if (!EditorUtil.isRealFileEditor(editor)) return false;
     return !EditorUtil.getSelectionInAnyMode(editor).isEmpty();
   }
 
