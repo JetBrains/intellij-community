@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.arrangement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -105,5 +107,11 @@ public class HtmlRearranger extends XmlRearranger {
                  @NotNull TextRange range) {
       super(parent, range, StdArrangementTokens.EntryType.XML_TAG, null, null, false);
     }
+  }
+
+  @Override
+  public @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
+    String displayName = HTMLLanguage.INSTANCE.getDisplayName();
+    return List.of(new ArrangementTabInfo(AllIcons.FileTypes.Html, displayName, displayName));
   }
 }

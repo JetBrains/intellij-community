@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -474,5 +476,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   @Override
   public Color getBorderColor(@NotNull EditorColorsScheme scheme, boolean selected) {
     return null;
+  }
+
+  @Override
+  public @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
+    String displayName = ((Language)JavaLanguage.INSTANCE).getDisplayName();
+    return List.of(new ArrangementTabInfo(AllIcons.FileTypes.Java, displayName, displayName));
   }
 }
