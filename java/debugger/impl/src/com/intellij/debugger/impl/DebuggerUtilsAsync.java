@@ -464,6 +464,11 @@ public final class DebuggerUtilsAsync {
     return throwable instanceof CompletionException ? throwable.getCause() : throwable;
   }
 
+  public static <T> T logError(@Nullable Throwable throwable) {
+    DebuggerUtilsImpl.logError(unwrap(throwable));
+    return null;
+  }
+
   public static <T, E extends Exception> CompletableFuture<T> toCompletableFuture(ThrowableComputable<? extends T, E> provider) {
     try {
       return completedFuture(provider.compute());
