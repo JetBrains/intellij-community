@@ -2,6 +2,7 @@
 package git4idea.push
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
@@ -175,7 +176,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun `test force push without lease`() {
-    AdvancedSettings.setBoolean("git.use.push.force.with.lease", false)
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("git.use.push.force.with.lease", false, testRootDisposable)
 
     val broHash = pushCommitFromBro()
 
