@@ -1440,6 +1440,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myState == State.SHOWN) {
       LOG.debug("shown popup must be cancelled");
       cancel();
@@ -1461,8 +1462,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
 
     Disposer.dispose(this, false);
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myPopup != null) {
       cancel(myDisposeEvent);

@@ -8,6 +8,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -95,7 +96,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected void textChanged(@NotNull DocumentEvent e) {
         scheduleRevisionsUpdate(m -> {
           m.setFilter(field.getText());
-          field.addCurrentTextToHistory();
+          ApplicationManager.getApplication().invokeLater(()-> {
+            if (!isDisposed()) {
+              field.addCurrentTextToHistory();
+            }
+          });
         });
       }
     });
