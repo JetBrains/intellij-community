@@ -15,6 +15,7 @@
 
   <content>
     <module name="intellij.groovy/ant"/>
+    <module name="intellij.groovy/byte-code-viewer"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
@@ -23,7 +24,6 @@
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
   <!--suppress PluginXmlValidity -->
