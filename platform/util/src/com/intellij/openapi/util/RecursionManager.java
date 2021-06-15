@@ -70,7 +70,7 @@ public final class RecursionManager {
 
   /**
    * @param id just some string to separate different recursion prevention policies from each other
-   * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
+   * @return a helper object which allows you to perform reentrancy-safe computations and check whether caching will be safe.
    * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
   @NotNull
@@ -346,7 +346,7 @@ public final class RecursionManager {
      * The ultimate goal is to get rid of all of them.
      * So, each rule should be accompanied by a reference to a tracker issue.
      * Don't add rules here without discussing them with someone else.
-     * Don't add rules for situation where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
+     * Don't add rules for situations where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
      */
     boolean isCurrentNonCachingStillTolerated() {
       return isCurrentNonCachingStillTolerated(new Throwable()) ||
@@ -439,7 +439,7 @@ public final class RecursionManager {
 
   /**
    * Disables the effect of {@link #assertOnMissedCache}. Should be used as rarely as possible, ideally only in tests that check
-   * that stack isn't overflown on invalid code.
+   * that the stack isn't overflown on invalid code.
    */
   @TestOnly
   public static void disableMissedCacheAssertions(@NotNull Disposable parentDisposable) {
