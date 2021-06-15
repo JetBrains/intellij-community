@@ -7,7 +7,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -74,7 +73,7 @@ public class AnnotationsPanel {
                                            int column) {
         append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (value.equals(myDefaultAnnotation)) {
-          setIcon(AllIcons.Actions.Forward);
+          setIcon(AllIcons.Actions.SetDefault);
           append(" ");
           append(JavaBundle.message("annotations.panel.used.for.code.generation"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
@@ -91,18 +90,31 @@ public class AnnotationsPanel {
     if (!showInstrumentationOptions) myTable.setTableHeader(null);
     mySorter.sort();
 
-    // Double click listener
-    myTable.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         int row = myTable.getSelectedRow();
-        if (e.getClickCount() == 2 && row != -1) {
-          String annotation = (String) myTable.getValueAt(row, 0);
-          if (annotation != null) {
-            myDefaultAnnotation = annotation;
-            myTableModel.fireTableRowsUpdated(row, row);
-          }
+        String annotation = (String) myTable.getValueAt(row, 0);
+        if (annotation != null) {
+          myDefaultAnnotation = annotation;
+          myTableModel.fireTableRowsUpdated(row, row);
         }
+        return true;
+      }
+    }.installOn(myTable);
+
+    myTable.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final DefaultActionGroup group = new DefaultActionGroup();
+        group.add(new AnAction(JavaBundle.message("annotations.panel.use.for.code.generation")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            myDefaultAnnotation = getSelectedAnnotation();
+          }
+        });
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("", group);
+        popupMenu.getComponent().show(myTable, x, y);
       }
     });
 
