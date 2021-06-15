@@ -1126,7 +1126,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("intentions/specifyTypeExplicitly", pattern = pattern)
             model("intentions/importAllMembers", pattern = pattern)
             model("intentions/importMember", pattern = pattern)
-        }
+        model("intentions/convertToBlockBody", pattern = pattern)
+            }
 
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
