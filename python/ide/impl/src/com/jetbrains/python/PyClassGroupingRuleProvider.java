@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.findUsages;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -16,8 +16,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
-public class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvider {
+final class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvider {
   @Override
   public UsageGroupingRule getUsageGroupingRule(@NotNull Project project) {
     return new PyClassGroupingRule();
