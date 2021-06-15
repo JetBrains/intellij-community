@@ -7818,6 +7818,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToBlockBody/annotatedExpr2.kt");
         }
 
+        @TestMetadata("annotatedExprInParentheses.kt")
+        public void testAnnotatedExprInParentheses() throws Exception {
+            runTest("idea/testData/intentions/convertToBlockBody/annotatedExprInParentheses.kt");
+        }
+
         @TestMetadata("explicitlyNonUnitFun.kt")
         public void testExplicitlyNonUnitFun() throws Exception {
             runTest("testData/intentions/convertToBlockBody/explicitlyNonUnitFun.kt");
@@ -7883,6 +7888,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToBlockBody/implicitlyNonUnitFun.kt");
         }
 
+        @TestMetadata("implicitlyNonUnitFun2.kt")
+        public void testImplicitlyNonUnitFun2() throws Exception {
+            runTest("idea/testData/intentions/convertToBlockBody/implicitlyNonUnitFun2.kt");
+        }
+
         @TestMetadata("implicitlyTypedFunWithUnresolvedType.kt")
         public void testImplicitlyTypedFunWithUnresolvedType() throws Exception {
             runTest("testData/intentions/convertToBlockBody/implicitlyTypedFunWithUnresolvedType.kt");
@@ -7896,6 +7906,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("labeledExpr.kt")
         public void testLabeledExpr() throws Exception {
             runTest("testData/intentions/convertToBlockBody/labeledExpr.kt");
+        }
+
+        @TestMetadata("labeledExprInParentheses.kt")
+        public void testLabeledExprInParentheses() throws Exception {
+            runTest("idea/testData/intentions/convertToBlockBody/labeledExprInParentheses.kt");
         }
 
         @TestMetadata("nothingFun.kt")
