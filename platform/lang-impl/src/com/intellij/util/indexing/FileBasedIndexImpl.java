@@ -1078,9 +1078,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
           markFileIndexed(vFile, newFc);
           try {
-            ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc).compute();
-            });
+            Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc);
+            ProgressManager.getInstance().executeNonCancelableSection(update::compute);
           }
           finally {
             unmarkBeingIndexed();
@@ -1088,9 +1087,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
         else { // effectively wipe the data from the indices
-          ProgressManager.getInstance().executeNonCancelableSection(() -> {
-            getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null).compute();
-          });
+          Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null);
+          ProgressManager.getInstance().executeNonCancelableSection(update::compute);
         }
       }
 
