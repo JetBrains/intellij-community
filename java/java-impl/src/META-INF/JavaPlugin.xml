@@ -1921,7 +1921,7 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
@@ -2141,7 +2141,7 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.collections</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
