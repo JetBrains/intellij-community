@@ -2,11 +2,14 @@
   <id>com.intellij.properties</id>
   <name>Properties</name>
   <category>Languages</category>
-  <depends>com.intellij.modules.xml</depends>
   <description>
     Enables smart editing of .properties files.
   </description>
   <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
