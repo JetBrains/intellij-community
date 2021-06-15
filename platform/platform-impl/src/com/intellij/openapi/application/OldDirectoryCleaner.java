@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -307,7 +306,7 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
       myModel.addTableModelListener(e -> updateOkButton());
       JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
-      panel.add(new MultiLineLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
+      panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       JBScrollPane tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);
