@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
@@ -26,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
@@ -40,7 +42,6 @@ import org.jetbrains.kotlin.idea.versions.SuppressNotificationState
 import org.jetbrains.kotlin.idea.versions.hasKotlinJsKjsmFile
 import org.jetbrains.kotlin.idea.vfilefinder.IDEVirtualFileFinder
 import org.jetbrains.kotlin.resolve.jvm.modules.KOTLIN_STDLIB_MODULE_NAME
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
@@ -125,18 +126,23 @@ fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    return project.runReadActionInSmartMode {
-        val projectFileIndex = ProjectFileIndex.getInstance(project)
-        val modules = mutableSetOf<Module>()
-        val ktFileProcessor = { ktFile: VirtualFile ->
-            if (projectFileIndex.isInSourceContent(ktFile)) {
-                modules.addIfNotNull(projectFileIndex.getModuleForFile(ktFile))
-            }
-            true
-        }
-        FileTypeIndex.processFiles(KotlinFileType.INSTANCE, ktFileProcessor, GlobalSearchScope.projectScope(project))
-        modules
+    val disposable = KotlinPluginDisposable.getInstance(project)
+    val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
+        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
     }
+        .inSmartMode(project)
+        .expireWith(disposable)
+        .executeSynchronously()
+
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+        project.runReadActionInSmartMode {
+            if (projectFileIndex.isInSourceContent(ktFile)) {
+                projectFileIndex.getModuleForFile(ktFile)
+            } else null
+        }
+    }
+    return modules
 }
 
 /**
