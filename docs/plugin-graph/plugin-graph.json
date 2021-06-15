@@ -1257,6 +1257,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cPz",
+    "n": "com.intellij.jbpm"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Pz",
     "name": "intellij.jboss.jbpm",
     "n": "i.jboss.jbpm",
@@ -1264,7 +1270,20 @@
     "sourceModule": "intellij.jboss.jbpm",
     "descriptor": "plugins/frameworks/jboss/bpmn/jbpm/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.jbpm",
-    "type": 1
+    "parent": "cPz",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "UK",
+    "name": "intellij.jboss.jbpm/jsp",
+    "n": "i.jboss.jbpm/jsp",
+    "package": "com.intellij.jboss.bpmn.jpdl.el",
+    "sourceModule": "intellij.jboss.jbpm",
+    "descriptor": "plugins/frameworks/jboss/bpmn/jbpm/resources/intellij.jboss.jbpm.jsp.xml",
+    "parent": "cPz",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -3548,6 +3567,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Pz_UK",
+    "source": "Pz",
+    "target": "UK",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "2z_wG",
     "source": "2z",
     "target": "wG",
@@ -5079,6 +5106,14 @@
     "id": "Pz_Bv",
     "source": "Pz",
     "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "UK_RM",
+    "source": "UK",
+    "target": "RM",
     "type": 0
   }
 }, {
