@@ -4,6 +4,11 @@ import java.util.function.*;
 import java.io.Serializable;
 
 public class ArrayIntersectionType {
+  @SuppressWarnings("unchecked")
+  static <T extends Object & Comparable<? super T>> void test(Set<T> set) {
+    T[] arr = (T[])set.toArray();
+  }
+
   void test() {
     Comparable[] result = compute(() -> Math.random() > 0.5 ? longs() : strings());
     if (result == null) {}
