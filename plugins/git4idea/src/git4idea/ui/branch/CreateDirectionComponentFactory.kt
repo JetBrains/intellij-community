@@ -37,25 +37,6 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-interface CreateDirectionModel<RepoMapping> {
-  val baseRepo: RepoMapping
-  var baseBranch: GitRemoteBranch?
-  val headRepo: RepoMapping?
-  val headBranch: GitBranch?
-
-  var headSetByUser: Boolean
-
-  fun setHead(repo: RepoMapping?, branch: GitBranch?)
-
-  fun addAndInvokeDirectionChangesListener(listener: () -> Unit)
-
-  @Nls
-  fun getBaseRepoText(): String?
-
-  @Nls
-  fun getHeadRepoText(): String?
-}
-
 class CreateDirectionComponentFactory<RepoMapping>(
   private val knownHostsProvider: () -> List<RepoMapping>,
   private val model: CreateDirectionModel<RepoMapping>,
