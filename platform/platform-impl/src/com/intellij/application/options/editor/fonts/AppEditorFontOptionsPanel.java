@@ -16,8 +16,10 @@
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.AbstractFontOptionsPanel;
+import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -25,7 +27,13 @@ import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.impl.FontFamilyService;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AbstractFontCombo;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ObjectUtils;
@@ -35,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -150,10 +160,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       fixComboWidth(myBoldWeightCombo, JBUI.scale(FONT_WEIGHT_COMBO_WIDTH));
       internalPanel.add(myBoldWeightCombo, c);
       c.gridy ++;
-      JLabel boldHintLabel = new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight.hint"));
-      boldHintLabel.setFont(JBUI.Fonts.smallFont());
-      boldHintLabel.setForeground(UIUtil.getContextHelpForeground());
-      internalPanel.add(boldHintLabel, c);
+      internalPanel.add(createColorSchemeLinkPane(), c);
       c.gridy ++;
     }
     c.gridx = 0;
@@ -171,6 +178,53 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       }
     );
     return typographyPanel;
+  }
+
+  private JPanel createColorSchemeLinkPane() {
+    JPanel pane = new JPanel();
+    pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
+    String[] lines = ApplicationBundle.message("settings.editor.font.bold.weight.hint").split("\n");
+    for (@NlsSafe String line : lines) {
+      JComponent label;
+      if (line.contains("<hyperlink>")) {
+        HyperlinkLabel hyperlinkLabel = new HyperlinkLabel();
+        hyperlinkLabel.setTextWithHyperlink(line);
+        hyperlinkLabel.addHyperlinkListener(new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+            navigateToColorSchemeTextSettings();
+          }
+        });
+        label = hyperlinkLabel;
+      }
+      else {
+        label = new JLabel(line);
+      }
+      label.setFont(JBUI.Fonts.smallFont());
+      label.setForeground(UIUtil.getContextHelpForeground());
+      pane.add(label);
+    }
+    return pane;
+  }
+
+  private void navigateToColorSchemeTextSettings() {
+    String defaultTextOption = OptionsBundle.message("options.general.attribute.descriptor.default.text");
+    String separator = "//";
+    int separatorPos = defaultTextOption.lastIndexOf(separator);
+    if (separatorPos > 0) {
+      defaultTextOption = defaultTextOption.substring(separatorPos + separator.length());
+    }
+    Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(this));
+    if (allSettings != null) {
+      final Configurable colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID);
+      if (colorSchemeConfigurable instanceof ColorAndFontOptions) {
+        Configurable generalSettings =
+          ((ColorAndFontOptions)colorSchemeConfigurable).findSubConfigurable(GeneralColorsPage.getDisplayNameText());
+        if (generalSettings != null) {
+          allSettings.select(generalSettings, defaultTextOption);
+        }
+      }
+    }
   }
 
   private static void fixComboWidth(@NotNull FontWeightCombo combo, int width) {
