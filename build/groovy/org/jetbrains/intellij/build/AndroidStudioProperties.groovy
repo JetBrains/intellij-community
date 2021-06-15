@@ -169,7 +169,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
         def root = "$context.paths.communityHome/../.."
-        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/win") {
+        context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/win") {
           fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
         }
       }
@@ -193,11 +193,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       void copyAdditionalFiles(BuildContext context, Path targetDirectory) {
         def root = "$context.paths.communityHome/../.."
 
-        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/linux") {
+        context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/linux") {
           fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
         }
-        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clangd")
-        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clang-tidy")
+        extraExecutables.add("plugins/c-clangd/bin/clang/linux/clangd")
+        extraExecutables.add("plugins/c-clangd/bin/clang/linux/clang-tidy")
       }
     }
   }
@@ -225,11 +225,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     void copyAdditionalFiles(BuildContext context, String targetDirectory) {
       def root = "$context.paths.communityHome/../.."
 
-      context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/mac") {
+      context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/mac") {
         fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
       }
-      extraExecutables.add("plugins/c-plugin/bin/clang/mac/clangd")
-      extraExecutables.add("plugins/c-plugin/bin/clang/mac/clang-tidy")
+      extraExecutables.add("plugins/c-clangd/bin/clang/mac/clangd")
+      extraExecutables.add("plugins/c-clangd/bin/clang/mac/clang-tidy")
     }
   }
 
