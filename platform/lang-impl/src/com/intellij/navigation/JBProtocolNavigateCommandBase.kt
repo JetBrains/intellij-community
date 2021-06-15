@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -38,9 +37,7 @@ import java.nio.file.Path
 import java.util.regex.Pattern
 
 
-private val LOG = logger<JBProtocolNavigateCommandBase>()
-
-open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(command) {
+abstract class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(command) {
   companion object {
     const val NAVIGATE_COMMAND = "navigate"
     const val PROJECT_NAME_KEY = "project"
@@ -51,29 +48,22 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
     const val SELECTION = "selection"
   }
 
-  override fun perform(target: String, parameters: Map<String, String>) {
-    /**
-     * The handler parses the following 'navigate' command parameters:
-     *
-     * navigate/reference
-     * \\?project=(?<project>[\\w]+)
-     *   (&fqn[\\d]*=(?<fqn>[\\w.\\-#]+))*
-     *   (&path[\\d]*=(?<path>[\\w-_/\\\\.]+)
-     *     (:(?<lineNumber>[\\d]+))?
-     *     (:(?<columnNumber>[\\d]+))?)*
-     *   (&selection[\\d]*=
-     *     (?<line1>[\\d]+):(?<column1>[\\d]+)
-     *    -(?<line2>[\\d]+):(?<column2>[\\d]+))*
-     */
-
+  /**
+   * The handler parses the following 'navigate' command parameters:
+   *
+   * \\?project=(?<project>[\\w]+)
+   *   (&fqn[\\d]*=(?<fqn>[\\w.\\-#]+))*
+   *   (&path[\\d]*=(?<path>[\\w-_/\\\\.]+)
+   *     (:(?<lineNumber>[\\d]+))?
+   *     (:(?<columnNumber>[\\d]+))?)*
+   *   (&selection[\\d]*=
+   *     (?<line1>[\\d]+):(?<column1>[\\d]+)
+   *    -(?<line2>[\\d]+):(?<column2>[\\d]+))*
+   */
+  fun openProject(parameters: Map<String, String>, action: (Project) -> Unit) {
     val projectName = parameters[PROJECT_NAME_KEY]
     val originUrl = parameters[ORIGIN_URL_KEY]
     if (projectName.isNullOrEmpty() && originUrl.isNullOrEmpty()) {
-      return
-    }
-
-    if (target != REFERENCE_TARGET) {
-      LOG.warn("JB navigate action supports only reference target, got $target")
       return
     }
 
@@ -82,7 +72,7 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
     }
 
     ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }?.let {
-      findAndNavigateToReference(it, parameters)
+      action(it)
       return
     }
 
@@ -98,7 +88,7 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
           ApplicationManager.getApplication().invokeLater({
                                                             StartupManager.getInstance(project).runAfterOpened {
                                                               DumbService.getInstance(project).runWhenSmart {
-                                                                findAndNavigateToReference(project, parameters)
+                                                                action(project)
                                                               }
                                                             }
                                                           }, ModalityState.NON_MODAL, project.disposed)
@@ -106,7 +96,7 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
       }
   }
 
-  private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
+  fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
     for (it in parameters) {
       if (it.key.startsWith(FQN_KEY)) {
         navigateByFqn(project, parameters, it.value)
@@ -115,13 +105,9 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
 
     for (it in parameters) {
       if (it.key.startsWith(PATH_KEY)) {
-        navigateByPath(project, parameters, it.value)
+        PathNavigator(project, parameters, it.value).navigate()
       }
     }
-  }
-
-  open fun navigateByPath(project: Project, parameters: Map<String, String>, pathText: String) {
-    PathNavigator(project, parameters, pathText).navigate()
   }
 }
 
@@ -212,7 +198,7 @@ private fun parsePosition(range: String): LogicalPosition? {
   }
 }
 
-open class PathNavigator(val project: Project, val parameters: Map<String, String>, val pathText: String) {
+class PathNavigator(val project: Project, val parameters: Map<String, String>, val pathText: String) {
   fun navigate() {
     val matcher = PATH_WITH_LOCATION.matcher(pathText)
     if (!matcher.matches()) {
@@ -245,7 +231,7 @@ open class PathNavigator(val project: Project, val parameters: Map<String, Strin
     }
   }
 
-  open fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
+  fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
     val editor = textEditor.editor
     editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
     setSelections(parameters, project)
