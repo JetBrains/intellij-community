@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.filters
+
+package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.execution.filters.FileHyperlinkInfo
 import com.intellij.execution.filters.HyperlinkInfoBase
@@ -10,7 +11,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
-import org.jetbrains.kotlin.idea.KotlinBundle
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -26,7 +26,7 @@ class InlineFunctionHyperLinkInfo(
             OpenFileHyperlinkInfo(project, inlineInfo.first().file, inlineInfo.first().line).navigate(project)
         } else {
             val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(inlineInfo)
-                .setTitle(KotlinBundle.message("filters.title.navigate.to"))
+                .setTitle(KotlinDebuggerCoreBundle.message("filters.title.navigate.to"))
                 .setRenderer(InlineInfoCellRenderer())
                 .setItemChosenCallback { fileInfo ->
                     fileInfo?.let { OpenFileHyperlinkInfo(project, fileInfo.file, fileInfo.line).navigate(project) }
@@ -54,10 +54,10 @@ class InlineFunctionHyperLinkInfo(
 
     sealed class InlineInfo(val prefix: String, val file: VirtualFile, val line: Int) {
         class CallSiteInfo(file: VirtualFile, line: Int) :
-            InlineInfo(KotlinBundle.message("filters.text.inline.function.call.site"), file, line)
+            InlineInfo(KotlinDebuggerCoreBundle.message("filters.text.inline.function.call.site"), file, line)
 
         class InlineFunctionBodyInfo(file: VirtualFile, line: Int) :
-            InlineInfo(KotlinBundle.message("filters.text.inline.function.body"), file, line)
+            InlineInfo(KotlinDebuggerCoreBundle.message("filters.text.inline.function.body"), file, line)
     }
 
     private class InlineInfoCellRenderer : SimpleColoredComponent(), ListCellRenderer<InlineInfo> {

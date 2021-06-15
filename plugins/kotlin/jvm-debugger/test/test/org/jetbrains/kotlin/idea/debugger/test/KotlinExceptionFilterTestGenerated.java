@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.filters;
+package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/debugger/exceptionFilter")
+@TestMetadata("testData/exceptionFilter")
 public class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionFilterTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,116 +25,116 @@ public class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionF
 
     @TestMetadata("breakpointReachedAt")
     public void testBreakpointReachedAt() throws Exception {
-        runTest("testData/debugger/exceptionFilter/breakpointReachedAt/");
+        runTest("testData/exceptionFilter/breakpointReachedAt/");
     }
 
     @TestMetadata("inlineFunCallInLibrary")
     public void testInlineFunCallInLibrary() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallInLibrary/");
+        runTest("testData/exceptionFilter/inlineFunCallInLibrary/");
     }
 
     @TestMetadata("inlineFunCallSite")
     public void testInlineFunCallSite() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallSite/");
+        runTest("testData/exceptionFilter/inlineFunCallSite/");
     }
 
     @TestMetadata("inlineFunCallSiteInInlineLambda")
     public void testInlineFunCallSiteInInlineLambda() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallSiteInInlineLambda/");
+        runTest("testData/exceptionFilter/inlineFunCallSiteInInlineLambda/");
     }
 
     @TestMetadata("inlineFunCallSiteInLambdaInlinedIntoObject")
     public void testInlineFunCallSiteInLambdaInlinedIntoObject() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallSiteInLambdaInlinedIntoObject/");
+        runTest("testData/exceptionFilter/inlineFunCallSiteInLambdaInlinedIntoObject/");
     }
 
     @TestMetadata("inlineFunCallSiteInRegeneratedObject")
     public void testInlineFunCallSiteInRegeneratedObject() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallSiteInRegeneratedObject/");
+        runTest("testData/exceptionFilter/inlineFunCallSiteInRegeneratedObject/");
     }
 
     @TestMetadata("inlineFunCallSiteNewSmapSyntax")
     public void testInlineFunCallSiteNewSmapSyntax() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunCallSiteNewSmapSyntax/");
+        runTest("testData/exceptionFilter/inlineFunCallSiteNewSmapSyntax/");
     }
 
     @TestMetadata("inlineFunFromLibrary")
     public void testInlineFunFromLibrary() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunFromLibrary/");
+        runTest("testData/exceptionFilter/inlineFunFromLibrary/");
     }
 
     @TestMetadata("inlineFunInnerClassFromLibrary")
     public void testInlineFunInnerClassFromLibrary() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunInnerClassFromLibrary/");
+        runTest("testData/exceptionFilter/inlineFunInnerClassFromLibrary/");
     }
 
     @TestMetadata("inlineFunctionAnotherFile")
     public void testInlineFunctionAnotherFile() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunctionAnotherFile/");
+        runTest("testData/exceptionFilter/inlineFunctionAnotherFile/");
     }
 
     @TestMetadata("inlineFunctionAnotherFileWithSmapApplied")
     public void testInlineFunctionAnotherFileWithSmapApplied() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunctionAnotherFileWithSmapApplied/");
+        runTest("testData/exceptionFilter/inlineFunctionAnotherFileWithSmapApplied/");
     }
 
     @TestMetadata("inlineFunctionInnerClass")
     public void testInlineFunctionInnerClass() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunctionInnerClass/");
+        runTest("testData/exceptionFilter/inlineFunctionInnerClass/");
     }
 
     @TestMetadata("inlineFunctionObjectLiteral")
     public void testInlineFunctionObjectLiteral() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunctionObjectLiteral/");
+        runTest("testData/exceptionFilter/inlineFunctionObjectLiteral/");
     }
 
     @TestMetadata("inlineFunctionSameFile")
     public void testInlineFunctionSameFile() throws Exception {
-        runTest("testData/debugger/exceptionFilter/inlineFunctionSameFile/");
+        runTest("testData/exceptionFilter/inlineFunctionSameFile/");
     }
 
     @TestMetadata("kotlinClass")
     public void testKotlinClass() throws Exception {
-        runTest("testData/debugger/exceptionFilter/kotlinClass/");
+        runTest("testData/exceptionFilter/kotlinClass/");
     }
 
     @TestMetadata("kt2489")
     public void testKt2489() throws Exception {
-        runTest("testData/debugger/exceptionFilter/kt2489/");
+        runTest("testData/exceptionFilter/kt2489/");
     }
 
     @TestMetadata("kt2489_2")
     public void testKt2489_2() throws Exception {
-        runTest("testData/debugger/exceptionFilter/kt2489_2/");
+        runTest("testData/exceptionFilter/kt2489_2/");
     }
 
     @TestMetadata("librarySources1")
     public void testLibrarySources1() throws Exception {
-        runTest("testData/debugger/exceptionFilter/librarySources1/");
+        runTest("testData/exceptionFilter/librarySources1/");
     }
 
     @TestMetadata("librarySources2")
     public void testLibrarySources2() throws Exception {
-        runTest("testData/debugger/exceptionFilter/librarySources2/");
+        runTest("testData/exceptionFilter/librarySources2/");
     }
 
     @TestMetadata("librarySources3")
     public void testLibrarySources3() throws Exception {
-        runTest("testData/debugger/exceptionFilter/librarySources3/");
+        runTest("testData/exceptionFilter/librarySources3/");
     }
 
     @TestMetadata("librarySources4")
     public void testLibrarySources4() throws Exception {
-        runTest("testData/debugger/exceptionFilter/librarySources4/");
+        runTest("testData/exceptionFilter/librarySources4/");
     }
 
     @TestMetadata("multiSamePackage")
     public void testMultiSamePackage() throws Exception {
-        runTest("testData/debugger/exceptionFilter/multiSamePackage/");
+        runTest("testData/exceptionFilter/multiSamePackage/");
     }
 
     @TestMetadata("simple")
     public void testSimple() throws Exception {
-        runTest("testData/debugger/exceptionFilter/simple/");
+        runTest("testData/exceptionFilter/simple/");
     }
 }

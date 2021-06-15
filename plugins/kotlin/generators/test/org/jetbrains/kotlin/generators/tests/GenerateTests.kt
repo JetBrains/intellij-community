@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.idea.editor.AbstractMultiLineStringIndentTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
@@ -260,6 +259,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractClassNameCalculatorTest> {
             model("classNameCalculator")
+        }
+
+        testClass<AbstractKotlinExceptionFilterTest> {
+            model("exceptionFilter", pattern = """^([^\.]+)$""".toRegex(), isRecursive = false)
         }
     }
 
@@ -785,10 +788,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractJsOptimizeImportsTest> {
             model("editor/optimizeImports/js", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractKotlinExceptionFilterTest> {
-            model("debugger/exceptionFilter", pattern = """^([^\.]+)$""".toRegex(), isRecursive = false)
         }
 
         testClass<AbstractStubBuilderTest> {

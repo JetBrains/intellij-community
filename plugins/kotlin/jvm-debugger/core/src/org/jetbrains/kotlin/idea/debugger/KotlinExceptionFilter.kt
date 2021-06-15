@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.filters
+package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.execution.filters.*
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
@@ -10,13 +10,18 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.lang.Math.max
 import java.util.*
 import java.util.regex.Pattern
+
+class KotlinExceptionFilterFactory : ExceptionFilterFactory {
+    override fun create(searchScope: GlobalSearchScope): Filter {
+        return KotlinExceptionFilter(searchScope)
+    }
+}
 
 class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Filter {
     private val exceptionFilter = ExceptionFilter(searchScope)
@@ -32,7 +37,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Filter
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 
         return Filter.Result(result.resultItems.map {
-            Filter.ResultItem(it.getHighlightStartOffset(), it.getHighlightEndOffset(), newHyperlinkInfo, it.getHighlightAttributes())
+            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.getHighlightAttributes())
         })
     }
 
@@ -48,7 +53,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Filter
         // - bad line numbers for inline functions
         // - already applied smap for inline functions
 
-        val fileName = stackTraceElement.fileName
+        val fileName = stackTraceElement.fileName ?: return null
 
         if (!DebuggerUtils.isKotlinSourceFile(fileName)) return null
 

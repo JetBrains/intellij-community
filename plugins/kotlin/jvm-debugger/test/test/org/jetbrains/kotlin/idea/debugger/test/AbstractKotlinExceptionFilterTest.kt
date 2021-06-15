@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.filters
+package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.execution.filters.FileHyperlinkInfo
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -11,6 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.core.util.toVirtualFile
+import org.jetbrains.kotlin.idea.debugger.InlineFunctionHyperLinkInfo
+import org.jetbrains.kotlin.idea.debugger.KotlinExceptionFilterFactory
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
@@ -115,7 +117,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
 
     private fun getStackTraceElement(mainClass: String): StackTraceElement {
         val libraryRoots = ModuleRootManager.getInstance(module).orderEntries().runtimeOnly().withoutSdk()
-                .classesRoots.map { VfsUtilCore.virtualToIoFile(it).toURI().toURL() }
+            .classesRoots.map { VfsUtilCore.virtualToIoFile(it).toURI().toURL() }
 
         val classLoader = URLClassLoader(libraryRoots.toTypedArray(), ForTestCompileRuntime.runtimeJarClassLoader())
 

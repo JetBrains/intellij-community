@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.CallResolver
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
@@ -33,8 +34,10 @@ import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getDispatchReceiverWithSmartCast
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -191,3 +194,13 @@ fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: 
 
     return outerClass.declarations.any { it is KtEnumEntry && it.name == expectedName }
 }
+
+fun KtCallExpression.receiverValue(): ReceiverValue? {
+    val resolvedCall = getResolvedCall(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
+}
+
+fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
+
+fun KtExpression.resolveType(): KotlinType =
+    this.analyze(BodyResolveMode.PARTIAL).getType(this)!!
