@@ -62,8 +62,10 @@ public class XmlTextExtractor extends TextExtractor {
     return null;
   }
 
+  private static final Set<String> NON_TEXT_TAGS = Set.of("code", "pre");
+
   private static boolean isNonText(XmlTag tag) {
-    return tag instanceof HtmlTag && "code".equals(tag.getName());
+    return tag instanceof HtmlTag && NON_TEXT_TAGS.contains(tag.getName());
   }
 
   // We treat tag contents separately, even if they're inline and in fact concatenated.
