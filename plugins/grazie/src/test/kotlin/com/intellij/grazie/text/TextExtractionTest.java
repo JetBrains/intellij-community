@@ -41,6 +41,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
       "// \n" +
       "//   Third line.\n"
       , 4).toString());
+
+    text = "//1\n//2\n//3\n//4";
+    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("1")).toString());
+    assertEquals("1 2 3 4", extractText("a.java", text, text.indexOf("3")).toString());
   }
 
   public void testIgnorePropertyCommentStarts() {
