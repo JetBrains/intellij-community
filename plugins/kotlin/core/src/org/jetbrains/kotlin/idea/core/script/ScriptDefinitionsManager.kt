@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.caches.project.getScriptRelatedModuleInfo
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.core.util.withCheckCanceledLock
+import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -84,7 +84,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     private val failedContributorsHashes = HashSet<Int>()
 
-    private val scriptDefinitionsCacheLock = ReentrantLock()
+    private val scriptDefinitionsCacheLock = CheckCanceledLock()
     private val scriptDefinitionsCache = SLRUMap<String, ScriptDefinition>(10, 10)
 
     // cache service as it's getter is on the hot path
@@ -101,7 +101,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         if (!isReady()) return null
 
-        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
         val definition =
             if (isScratchFile(script)) {
@@ -111,7 +111,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 super.findDefinition(script) ?: return null
             }
 
-        scriptDefinitionsCacheLock.withCheckCanceledLock {
+        scriptDefinitionsCacheLock.withLock {
             scriptDefinitionsCache.put(locationId, definition)
         }
 
@@ -249,7 +249,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }.toSet()
 
         clearCache()
-        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.clear() }
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.clear() }
 
         return UpdateDefinitionsResult(project, newExtensions)
     }

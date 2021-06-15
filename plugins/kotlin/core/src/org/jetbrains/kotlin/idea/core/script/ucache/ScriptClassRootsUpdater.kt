@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
@@ -51,7 +52,7 @@ abstract class ScriptClassRootsUpdater(
     private var invalidated: Boolean = false
     private var syncUpdateRequired: Boolean = false
     private val concurrentUpdates = AtomicInteger()
-    private val lock = Any()
+    private val lock = CheckCanceledLock()
 
     abstract fun gatherRoots(builder: ScriptClassRootsBuilder)
 
@@ -80,7 +81,7 @@ abstract class ScriptClassRootsUpdater(
      */
     @Suppress("UNUSED_PARAMETER")
     fun invalidate(file: VirtualFile, synchronous: Boolean = false) {
-        synchronized(lock) {
+        lock.withLock {
             // todo: record invalided files for some optimisations in update
             invalidate(synchronous)
         }
@@ -90,7 +91,7 @@ abstract class ScriptClassRootsUpdater(
      * @param synchronous Used from legacy FS cache only, don't use
      */
     fun invalidate(synchronous: Boolean = false) {
-        synchronized(lock) {
+        lock.withLock {
             checkInTransaction()
             invalidated = true
             if (synchronous) {
@@ -129,7 +130,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun scheduleUpdateIfInvalid() {
-        synchronized(lock) {
+        lock.withLock {
             if (!invalidated) return
             invalidated = false
 
@@ -145,7 +146,7 @@ abstract class ScriptClassRootsUpdater(
     private var scheduledUpdate: ProgressIndicator? = null
 
     private fun ensureUpdateScheduled() {
-        synchronized(lock) {
+        lock.withLock {
             scheduledUpdate?.cancel()
             val disposable = KotlinPluginDisposable.getInstance(project)
             if (!Disposer.isDisposed(disposable)) {
@@ -157,7 +158,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun updateSynchronously() {
-        synchronized(lock) {
+        lock.withLock {
             scheduledUpdate?.cancel()
             doUpdate(false)
         }
