@@ -242,7 +242,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         val newExtensions = getKnownFilenameExtensions().toSet().filter {
             val fileTypeByExtension = fileTypeManager.getFileTypeByExtension(it)
             val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
-            if (!notKnown) {
+            if (notKnown) {
                 scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
             }
             notKnown
