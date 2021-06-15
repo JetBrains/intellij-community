@@ -191,6 +191,9 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
         return with(requiredTypes) {
             when (element) {
+                is KtClassBody -> {
+                    el<UExpressionList>(build(KotlinUExpressionList.Companion::createClassBody))
+                }
                 is KtExpression -> {
                     convertExpression(element, givenParent, requiredTypes)
                 }
