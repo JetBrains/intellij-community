@@ -155,16 +155,13 @@ public class AboutDialog extends DialogWrapper {
 
     //Print extra information from plugins
     ExtensionPointName<AboutPopupDescriptionProvider> ep = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
-    boolean needEmptyLine = false;
     for (AboutPopupDescriptionProvider aboutInfoProvider : ep.getExtensions()) {
       String description = aboutInfoProvider.getDescription(); //NON-NLS
       if (description != null) {
         addLineWithoutLog(lines, description);
-        needEmptyLine = true;
+        addEmptyLine(lines);
       }
     }
-
-    if (needEmptyLine) addEmptyLine(lines);
 
     //Link to open-source projects
     HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
