@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
@@ -7,6 +7,7 @@ import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 
 open class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile) : Root(panel) {
@@ -57,6 +58,8 @@ open class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile)
   override fun problemAppeared(problem: Problem) {
     if (problem !is HighlightingProblem || problem.file != file) return
     notify(problem, synchronized(problems) { SetUpdateState.add(problem, problems) })
+    if (Registry.`is`("wolf.the.problem.solver")) return
+    // start filling HighlightingErrorsProvider if WolfTheProblemSolver is disabled
     if (!ProblemsView.isProjectErrorsEnabled() || problem.severity < HighlightSeverity.ERROR.myVal) return
     HighlightingErrorsProviderBase.getInstance(problem.provider.project).problemsAppeared(file)
   }
