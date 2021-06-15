@@ -2496,6 +2496,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cE9",
+    "n": "org.jetbrains.plugins.vue"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "E9",
     "name": "intellij.vuejs",
     "n": "i.vuejs",
@@ -2503,7 +2509,32 @@
     "sourceModule": "intellij.vuejs",
     "descriptor": "contrib/vuejs/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.vue",
-    "type": 1
+    "parent": "cE9",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "df",
+    "name": "intellij.vuejs/prettier",
+    "n": "i.vuejs/prettier",
+    "package": "org.jetbrains.vuejs.libraries.prettier",
+    "sourceModule": "intellij.vuejs",
+    "descriptor": "contrib/vuejs/resources/intellij.vuejs.prettier.xml",
+    "parent": "cE9",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "BD",
+    "name": "intellij.vuejs/copyright",
+    "n": "i.vuejs/copyright",
+    "package": "org.jetbrains.vuejs.copyright",
+    "sourceModule": "intellij.vuejs",
+    "descriptor": "contrib/vuejs/resources/intellij.vuejs.copyright.xml",
+    "parent": "cE9",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2597,17 +2628,6 @@
     "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.java",
     "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "wo",
-    "name": "com.intellij.modules.ultimate",
-    "n": "c.i.m.ultimate",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
   }
 }, {
   "group": "nodes",
@@ -3056,6 +3076,18 @@
     "sourceModule": "intellij.tasks.core",
     "descriptor": "community/plugins/tasks/tasks-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.tasks",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "iE",
+    "name": "intellij.prettierJS",
+    "n": "i.prettierJS",
+    "package": null,
+    "sourceModule": "intellij.prettierJS",
+    "descriptor": "contrib/prettierJS/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.prettierJS",
     "type": 1
   }
 }, {
@@ -3877,6 +3909,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "E9_df",
+    "source": "E9",
+    "target": "df",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "E9_BD",
+    "source": "E9",
+    "target": "BD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "YE_Bv",
     "source": "YE",
     "target": "Bv",
@@ -3973,14 +4021,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "up_wo",
-    "source": "up",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "up_Dx",
     "source": "up",
     "target": "Dx",
@@ -4013,25 +4053,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "17_wo",
-    "source": "17",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "ZY_Dx",
     "source": "ZY",
     "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "Bv_wo",
-    "source": "Bv",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4125,14 +4149,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "gR_wo",
-    "source": "gR",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "vW_ae",
     "source": "vW",
     "target": "ae",
@@ -4144,14 +4160,6 @@
     "id": "ae_Dx",
     "source": "ae",
     "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "ae_wo",
-    "source": "ae",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4381,14 +4389,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "CF_wo",
-    "source": "CF",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "CF_J7",
     "source": "CF",
     "target": "J7",
@@ -4421,25 +4421,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "6U_wo",
-    "source": "6U",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "mS_Dx",
     "source": "mS",
     "target": "Dx",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "mS_wo",
-    "source": "mS",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4464,14 +4448,6 @@
     "id": "L2_S9",
     "source": "L2",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "L2_wo",
-    "source": "L2",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4533,14 +4509,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "M4_wo",
-    "source": "M4",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "AL_It",
     "source": "AL",
     "target": "It",
@@ -4565,25 +4533,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "ZX_wo",
-    "source": "ZX",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "QG_S9",
     "source": "QG",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "QG_wo",
-    "source": "QG",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4701,25 +4653,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Xe_wo",
-    "source": "Xe",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "pA_Bv",
     "source": "pA",
     "target": "Bv",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "X0_wo",
-    "source": "X0",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4784,14 +4720,6 @@
     "id": "GA_s7",
     "source": "GA",
     "target": "s7",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "GA_wo",
-    "source": "GA",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4880,14 +4808,6 @@
     "id": "oF_Pn",
     "source": "oF",
     "target": "Pn",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "oF_wo",
-    "source": "oF",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -4989,14 +4909,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "fx_wo",
-    "source": "fx",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "fx_J7",
     "source": "fx",
     "target": "J7",
@@ -5008,14 +4920,6 @@
     "id": "HW_Bv",
     "source": "HW",
     "target": "Bv",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "n5_wo",
-    "source": "n5",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5117,14 +5021,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "aK_wo",
-    "source": "aK",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "aK_J7",
     "source": "aK",
     "target": "J7",
@@ -5181,14 +5077,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "JI_wo",
-    "source": "JI",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "JI_3J",
     "source": "JI",
     "target": "3J",
@@ -5213,25 +5101,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "s0_wo",
-    "source": "s0",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "mH_Bv",
     "source": "mH",
     "target": "Bv",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "Nn_wo",
-    "source": "Nn",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5397,25 +5269,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "HX_wo",
-    "source": "HX",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "qt_Rm",
     "source": "qt",
     "target": "Rm",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "qt_wo",
-    "source": "qt",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5432,14 +5288,6 @@
     "id": "jH_PH",
     "source": "jH",
     "target": "PH",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "jH_wo",
-    "source": "jH",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5504,14 +5352,6 @@
     "id": "Ql_S9",
     "source": "Ql",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "Ql_wo",
-    "source": "Ql",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5600,22 +5440,6 @@
     "id": "py_S9",
     "source": "py",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "py_wo",
-    "source": "py",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "xs_wo",
-    "source": "xs",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -5885,14 +5709,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "tR_wo",
-    "source": "tR",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "tR_sk",
     "source": "tR",
     "target": "sk",
@@ -5936,14 +5752,6 @@
     "id": "Ha_S9",
     "source": "Ha",
     "target": "S9",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "Ha_wo",
-    "source": "Ha",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -6181,14 +5989,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "2Z_wo",
-    "source": "2Z",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "6z_ep",
     "source": "6z",
     "target": "ep",
@@ -6328,14 +6128,6 @@
     "id": "nx_RM",
     "source": "nx",
     "target": "RM",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "nx_wo",
-    "source": "nx",
-    "target": "wo",
     "type": 0
   }
 }, {
@@ -6485,14 +6277,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "nC_wo",
-    "source": "nC",
-    "target": "wo",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "nC_J7",
     "source": "nC",
     "target": "J7",
@@ -6613,6 +6397,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "df_iE",
+    "source": "df",
+    "target": "iE",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "BD_EG",
+    "source": "BD",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "IH_Pn",
     "source": "IH",
     "target": "Pn",
@@ -6624,14 +6424,6 @@
     "id": "IH_It",
     "source": "IH",
     "target": "It",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
-    "id": "ZR_wo",
-    "source": "ZR",
-    "target": "wo",
     "type": 0
   }
 }, {

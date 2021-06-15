@@ -13,6 +13,9 @@
   ]]></description>
   <vendor>JetBrains</vendor>
 
+  <content>
+    <module name="intellij.groovy/ant"/>
+  </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
@@ -20,7 +23,6 @@
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>

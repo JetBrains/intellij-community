@@ -8,7 +8,7 @@ specifiers:
   cytoscape-popper: ^2.0.0
   minisearch: ^3.0.2
   p-debounce: ^4.0.0
-  sass: ^1.34.1
+  sass: ^1.35.0
   tippy.js: ^6.3.1
   vite: ^2.3.7
 
@@ -23,7 +23,7 @@ dependencies:
   tippy.js: 6.3.1
 
 devDependencies:
-  sass: 1.34.1
+  sass: 1.35.0
   vite: 2.3.7
 
 packages:
@@ -251,8 +251,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /sass/1.34.1:
-    resolution: {integrity: sha512-scLA7EIZM+MmYlej6sdVr0HRbZX5caX5ofDT9asWnUJj21oqgsC+1LuNfm0eg+vM0fCTZHhwImTiCU0sx9h9CQ==}
+  /sass/1.35.0:
+    resolution: {integrity: sha512-9joxNu7CoIEdZTDZFnH67NoWE/1VTofGPYiSIntWSE391SfmPu6Kd2Y0ZclDu9WQhVvvPwvo8LHeb/8wHIj95Q==}
     engines: {node: '>=8.9.0'}
     hasBin: true
     dependencies:
