@@ -2,6 +2,7 @@
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -17,7 +18,15 @@ public class TestNGExpectedPatternsTest {
     assertEquals("foo", failure.getExpected());
     assertEquals("bar", failure.getActual());
   }
-
+  
+  @Test
+  public void testMultiplePatternsInOneAssertion() {
+    Assert.assertNull(createNotification("The following asserts failed:\n" +
+                                         "\texpected [2] but found [1],\n" +
+                                         "\texpected [4] but found [3],\n" +
+                                         "\texpected [6] but found [5]"));
+  }
+  
   private static ComparisonFailureData createNotification(String message) {
     return TestNGExpectedPatterns.createExceptionNotification(message);
   }
