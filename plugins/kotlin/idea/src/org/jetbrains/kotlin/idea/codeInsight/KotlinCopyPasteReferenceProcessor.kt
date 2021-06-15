@@ -168,30 +168,43 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 indicator?.checkCanceled()
                 file.elementsInRange(textRange).filter { it is KtElement || it is KDocElement }
             }
-        }
+        }.takeIf { it.isNotEmpty() } ?: return emptyList()
 
-        val allElementsToResolve = runReadAction {
-            elements.flatMap { it.collectDescendantsOfType<KtElement>() }
-        }
+        val smartPointerManager = SmartPointerManager.getInstance(file.project)
+        val allElementRefsToResolve = runReadAction {
+            elements.flatMap { it.collectDescendantsOfType<KtElement>() }.map {
+                smartPointerManager.createSmartPsiElementPointer(it, file)
+            }
+        }.takeIf { it.isNotEmpty() } ?: return emptyList()
 
         val project = file.project
 
-        // TODO: allowResolveInDispatchThread could be dropped as soon as
-        //  ConvertJavaCopyPasteProcessor will perform it on non UI thread
-        val bindingContext = project.runReadActionInSmartMode {
-            allowResolveInDispatchThread {
-                file.getResolutionFacade().analyze(allElementsToResolve, BodyResolveMode.PARTIAL)
+        val bindingContext =
+            ReadAction.nonBlocking<BindingContext> {
+                return@nonBlocking allowResolveInDispatchThread {
+                    file.getResolutionFacade().analyze(allElementRefsToResolve.mapNotNull { it.element }, BodyResolveMode.PARTIAL)
+                }
             }
-        }
+                .inSmartMode(project)
+                .expireWhen { val none = allElementRefsToResolve.none { it.element != null }
+                    none
+                }
+                .run {
+                    indicator?.let { this.wrapProgress(indicator) } ?: this
+                }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
+                .executeSynchronously()
 
         val result = mutableListOf<KotlinReferenceData>()
-        for (ktElement in allElementsToResolve) {
+        for (ktElementRef in allElementRefsToResolve) {
             project.runReadActionInSmartMode {
                 indicator?.checkCanceled()
-                result.addReferenceDataInsideElement(
-                    ktElement, file, ranges, bindingContext, fakePackageName = fakePackageName,
-                    sourcePackageName = sourcePackageName, targetPackageName = targetPackageName
-                )
+                ktElementRef.element?.let {
+                    result.addReferenceDataInsideElement(
+                        it, file, ranges, bindingContext, fakePackageName = fakePackageName,
+                        sourcePackageName = sourcePackageName, targetPackageName = targetPackageName
+                    )
+                }
             }
         }
         return result
