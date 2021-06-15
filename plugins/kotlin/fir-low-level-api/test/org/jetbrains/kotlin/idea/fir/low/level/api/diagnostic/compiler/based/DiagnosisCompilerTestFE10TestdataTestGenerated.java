@@ -10756,6 +10756,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                     runTest(compilerTestData("compiler/testData/diagnostics/tests/inference/capturedTypes/capturingFromArgumentOfFlexibleType.kt"));
                 }
 
+                @TestMetadata("dontCheckNewCapturedTypeSpecificChecksForOldOnes.kt")
+                public void testDontCheckNewCapturedTypeSpecificChecksForOldOnes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/dontCheckNewCapturedTypeSpecificChecksForOldOnes.kt");
+                }
+
                 @TestMetadata("expectedTypeMismatchWithInVariance.kt")
                 public void testExpectedTypeMismatchWithInVariance() throws Exception {
                     runTest(compilerTestData("compiler/testData/diagnostics/tests/inference/capturedTypes/expectedTypeMismatchWithInVariance.kt"));
