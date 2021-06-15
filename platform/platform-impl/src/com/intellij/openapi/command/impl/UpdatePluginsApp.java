@@ -67,6 +67,11 @@ final class UpdatePluginsApp implements ApplicationStarter {
     }
   }
 
+  @Override
+  public boolean canProcessExternalCommandLine() {
+    return true;
+  }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void log(String msg) {
     System.out.println(msg);
