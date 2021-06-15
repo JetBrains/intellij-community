@@ -109,6 +109,11 @@ public final class OldDirectoryCleaner {
         .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
         .notify(project);
     }
+    else {
+      UpdateChecker.getNotificationGroup()
+        .createNotification(message("old.dirs.not.found.notification.text"), NotificationType.INFORMATION)
+        .notify(project);
+    }
   }
 
   private static class DirectoryGroup {
