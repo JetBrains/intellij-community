@@ -34,12 +34,8 @@ class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayou
     SpeedSearchUtil.applySpeedSearchHighlighting(list, messageComponent, true, isSelected)
 
     val size = list.model.size
-    when {
-      size <= 1 -> nodeComponent.type = CommitNodeComponent.Type.SINGLE
-      index == 0 -> nodeComponent.type = CommitNodeComponent.Type.FIRST
-      index == size - 1 -> nodeComponent.type = CommitNodeComponent.Type.LAST
-      else -> nodeComponent.type = CommitNodeComponent.Type.MIDDLE
-    }
+    nodeComponent.type = CommitNodeComponent.typeForListItem(index, size)
+
     this.background = UIUtil.getListBackground(isSelected, cellHasFocus)
     return this
   }

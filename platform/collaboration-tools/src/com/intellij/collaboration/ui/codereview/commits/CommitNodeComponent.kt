@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.commits
 
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent.Type.*
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
@@ -13,9 +14,9 @@ import java.awt.geom.Ellipse2D
 import java.awt.geom.Rectangle2D
 import javax.swing.JComponent
 
-class CommitNodeComponent : JComponent() {
+open class CommitNodeComponent : JComponent() {
 
-  var type = Type.SINGLE
+  var type = SINGLE
 
   init {
     isOpaque = false
@@ -23,7 +24,7 @@ class CommitNodeComponent : JComponent() {
 
   override fun getPreferredSize() = JBDimension(
     PaintParameters.getNodeWidth(PaintParameters.ROW_HEIGHT),
-                                                PaintParameters.ROW_HEIGHT
+    PaintParameters.ROW_HEIGHT
   )
 
   override fun paintComponent(g: Graphics) {
@@ -43,19 +44,21 @@ class CommitNodeComponent : JComponent() {
 
     g2.color = foreground
     drawNode(g2, rect)
-    if (type == Type.LAST || type == Type.MIDDLE) {
+    if (type == LAST || type == MIDDLE) {
       drawEdgeUp(g2, rect)
     }
-    if (type == Type.FIRST || type == Type.MIDDLE) {
+    if (type == FIRST || type == MIDDLE) {
       drawEdgeDown(g2, rect)
     }
   }
 
   private fun drawNode(g: Graphics2D, rect: Rectangle) {
-    val radius = PaintParameters.getCircleRadius(rect.height)
+    val radius = calcRadius(rect)
     val circle = Ellipse2D.Double(rect.centerX - radius, rect.centerY - radius, radius * 2.0, radius * 2.0)
     g.fill(circle)
   }
+
+  protected open fun calcRadius(rect: Rectangle) = PaintParameters.getCircleRadius(rect.height)
 
   private fun drawEdgeUp(g: Graphics2D, rect: Rectangle) {
     val y1 = 0.0
@@ -71,12 +74,23 @@ class CommitNodeComponent : JComponent() {
 
   private fun drawEdge(g: Graphics2D, rect: Rectangle, y1: Double, y2: Double) {
     val x = rect.centerX
-    val width = PaintParameters.getLineThickness(rect.height)
+    val width = calcLineThickness(rect)
     val line = Rectangle2D.Double(x - width / 2, y1 - 0.5, width.toDouble(), y1 + y2 + 0.5)
     g.fill(line)
   }
 
+  protected open fun calcLineThickness(rect: Rectangle) = PaintParameters.getLineThickness(rect.height)
+
   enum class Type {
     SINGLE, FIRST, MIDDLE, LAST
+  }
+
+  companion object {
+    fun typeForListItem(itemIndex: Int, listSize: Int): Type = when {
+      listSize <= 1 -> SINGLE
+      itemIndex == 0 -> FIRST
+      itemIndex == listSize - 1 -> LAST
+      else -> MIDDLE
+    }
   }
 }
