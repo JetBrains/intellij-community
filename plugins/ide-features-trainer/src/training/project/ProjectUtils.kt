@@ -75,11 +75,11 @@ object ProjectUtils {
   }
 
   private fun getLearningProjectInstallationPath(langSupport: LangSupport): Path? {
-    val configPath = PathManager.getConfigPath()
+    val systemPath = PathManager.getSystemPath()
 
     val path = LangManager.getInstance().getLearningProjectPath(langSupport)
     val defaultDirectoryName = langSupport.defaultProjectName
-    val canonicalPlace = Paths.get(configPath, "demo", defaultDirectoryName)
+    val canonicalPlace = Paths.get(systemPath, "demo", defaultDirectoryName)
 
     var useCanonical = true
 
