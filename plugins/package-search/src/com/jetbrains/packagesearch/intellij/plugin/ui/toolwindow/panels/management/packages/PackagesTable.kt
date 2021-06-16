@@ -80,9 +80,8 @@ internal class PackagesTable(
     }
 
     private val actionsColumn = ActionsColumn(
-        operationExecutor = ::executeUpdateActionColumnOperations,
-        operationFactory = operationFactory,
-        table = this
+      operationExecutor = ::executeUpdateActionColumnOperations,
+      operationFactory = operationFactory
     )
 
     private val actionsColumnIndex: Int

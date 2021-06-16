@@ -85,12 +85,12 @@ internal class ModuleOperationExecutor {
         newScope: PackageScope? = null
     ) = DependencyOperationMetadata(
         module = projectModule,
-        groupId = dependency.coordinates.groupId ?: throw OperationException.InvalidPackage(dependency),
-        artifactId = dependency.coordinates.artifactId ?: throw OperationException.InvalidPackage(dependency),
-        currentVersion = dependency.coordinates.version,
-        currentScope = dependency.scope,
-        newVersion = newVersion?.versionName.nullIfBlank() ?: dependency.coordinates.version,
-        newScope = newScope?.scopeName.nullIfBlank() ?: dependency.scope
+        groupId = dependency.coordinates.groupId.nullIfBlank() ?: throw OperationException.InvalidPackage(dependency),
+        artifactId = dependency.coordinates.artifactId.nullIfBlank() ?: throw OperationException.InvalidPackage(dependency),
+        currentVersion = dependency.coordinates.version.nullIfBlank(),
+        currentScope = dependency.scope.nullIfBlank(),
+        newVersion = newVersion?.versionName.nullIfBlank() ?: dependency.coordinates.version.nullIfBlank(),
+        newScope = newScope?.scopeName.nullIfBlank() ?: dependency.scope.nullIfBlank()
     )
 
     private fun installRepository(operation: PackageSearchOperation.Repository.Install) {
