@@ -108,10 +108,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
     commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
-    commitPanel.includedRoots = _tree.getIncludedRoots()
+    commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
       override fun includedRootsChanged() {
-        commitPanel.includedRoots = _tree.getIncludedRoots()
+        commitPanel.setIncludedRoots(_tree.getIncludedRoots())
       }
     }, this)
     commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
@@ -194,7 +194,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       return
     }
     tree.rebuildTree()
-    commitPanel.state = state
+    commitPanel.setTrackerState(state)
     commitWorkflowHandler.state = state
   }
 
