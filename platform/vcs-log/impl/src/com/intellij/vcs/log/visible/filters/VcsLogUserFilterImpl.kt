@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -85,24 +86,33 @@ interface VcsLogUserResolver {
   fun resolveCurrentUser(root: VirtualFile): Set<VcsUser>
 }
 
-class SimpleVcsLogUserResolver(private val currentUsers: Map<VirtualFile, VcsUser>,
-                               allUsers: Set<VcsUser>) : VcsLogUserResolver {
-  private val allUsersByNames: MultiMap<String, VcsUser> = MultiMap.create()
-  private val allUsersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
+abstract class VcsLogUserResolverBase : VcsLogUserResolver {
+  abstract val currentUsers: Map<VirtualFile, VcsUser>
+  abstract val allUsers: Set<VcsUser>
 
-  init {
+  private val cachedUsers = ClearableLazyValue.createAtomic {
+    val usersByNames: MultiMap<String, VcsUser> = MultiMap.create()
+    val usersByEmails: MultiMap<String, VcsUser> = MultiMap.create()
+
     for (user in allUsers) {
       val name = user.name
       if (name.isNotEmpty()) {
-        allUsersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user)
+        usersByNames.putValue(VcsUserUtil.getNameInStandardForm(name), user)
       }
       val email = user.email
       val nameFromEmail = VcsUserUtil.getNameFromEmail(email)
       if (nameFromEmail != null) {
-        allUsersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user)
+        usersByEmails.putValue(VcsUserUtil.getNameInStandardForm(nameFromEmail), user)
       }
     }
+
+    return@createAtomic Pair(usersByNames, usersByEmails)
   }
+
+  private val allUsersByNames: MultiMap<String, VcsUser> get() = cachedUsers.value.first
+  private val allUsersByEmails: MultiMap<String, VcsUser> get() = cachedUsers.value.second
+
+  protected fun buildCache() = cachedUsers.value
 
   override fun resolveUserName(name: String): Set<VcsUser> {
     val standardName = VcsUserUtil.getNameInStandardForm(name)
@@ -131,6 +141,13 @@ class SimpleVcsLogUserResolver(private val currentUsers: Map<VirtualFile, VcsUse
   }
 
   companion object {
-    private val LOG = logger<SimpleVcsLogUserResolver>()
+    private val LOG = logger<VcsLogUserResolverBase>()
+  }
+}
+
+private class SimpleVcsLogUserResolver(override val currentUsers: Map<VirtualFile, VcsUser>,
+                                       override val allUsers: Set<VcsUser>) : VcsLogUserResolverBase() {
+  init {
+    buildCache()
   }
 }
