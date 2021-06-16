@@ -37,12 +37,12 @@ public class NullableNotNullDialog extends DialogWrapper {
     myNullablePanel = new AnnotationsPanel(project,
                                            "Nullable",
                                            manager.getDefaultNullable(),
-                                           manager.getNullables(), manager.getDefaultNullables(),
+                                           manager.getNullablesWithNickNames(), manager.getDefaultNullables(),
                                            Collections.emptySet(), false, true);
     myNotNullPanel = new AnnotationsPanel(project,
                                           "NotNull",
                                           manager.getDefaultNotNull(),
-                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
+                                          manager.getNotNullsWithNickNames(), manager.getDefaultNotNulls(),
                                           new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
 
     init();
