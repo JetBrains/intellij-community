@@ -125,14 +125,14 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     scope.launch(uiDispatcher + CoroutineName("GpgSignRowPanel - reload configs")) {
       val repoConfigs = repoConfigs.values
       for (config in repoConfigs) {
-        config.reload()
+        config.tryReload()
       }
     }
   }
 
   private fun reloadSecretKeys() {
     scope.launch(uiDispatcher + CoroutineName("GpgSignRowPanel - reload secret keys")) {
-      secretKeys.reload()
+      secretKeys.tryReload()
     }
   }
 
