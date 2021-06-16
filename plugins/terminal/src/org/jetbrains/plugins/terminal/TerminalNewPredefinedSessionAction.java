@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,8 +56,9 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<OpenShellAction> shells = detectShells();
       List<OpenShellAction> wsl = listOpenWslShellActions();
+      List<AnAction> customActions = OpenPredefinedTerminalActionProvider.collectAll(project);
       ApplicationManager.getApplication().invokeLater(() -> {
-        ListPopup popup = createPopup(shells, wsl, e.getDataContext());
+        ListPopup popup = createPopup(shells, wsl, customActions, e.getDataContext());
         if (popupPoint != null) {
           popup.show(popupPoint);
         }
@@ -64,7 +66,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
           popup.showInFocusCenter();
         }
         myPopupState.prepareToShow(popup);
-      });
+      }, project.getDisposed());
     });
   }
 
@@ -81,11 +83,13 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   private static @NotNull ListPopup createPopup(@NotNull List<OpenShellAction> shells,
                                                 @NotNull List<OpenShellAction> wsl,
+                                                @NotNull List<AnAction> customActions,
                                                 @NotNull DataContext dataContext) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.addAll(shells);
     group.addAll(wsl);
-    if (shells.size() + wsl.size() > 0) {
+    group.addAll(customActions);
+    if (shells.size() + wsl.size() + customActions.size() > 0) {
       group.addSeparator();
     }
     group.add(new TerminalSettingsAction());
