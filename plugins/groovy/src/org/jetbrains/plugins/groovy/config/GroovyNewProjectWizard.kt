@@ -9,13 +9,18 @@ import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
+import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
@@ -25,6 +30,7 @@ import java.awt.KeyboardFocusManager
 import java.nio.file.Path
 import java.util.*
 import javax.swing.DefaultComboBoxModel
+import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
@@ -57,12 +63,22 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         twoColumnRow(
           { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary) },
           {
-            // todo: color in red if selected path does not correspond to a groovy sdk home
-            textFieldWithBrowseButton(
-              settings::sdkPath,
-              GroovyBundle.message("dialog.title.select.groovy.sdk"),
-              fileChooserDescriptor = GroovyLibraryDescription().createFileChooserDescriptor()
-            ).enableIf(fromFilesystemCheckbox.selected)
+            // todo: color text field in red if selected path does not correspond to a groovy sdk home
+            val groovyLibraryDescription = GroovyLibraryDescription()
+            val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+            val textWithBrowse = TextFieldWithBrowseButton()
+            textWithBrowse.addActionListener(object : ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
+              GroovyBundle.message("dialog.title.select.groovy.sdk"), null, textWithBrowse, null, fileChooserDescriptor,
+              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+              override fun getInitialFile(): VirtualFile? {
+                return groovyLibraryDescription.findSystemGroovyHome()
+              }
+            })
+            FileChooserFactory.getInstance().installFileCompletion(textWithBrowse.textField, fileChooserDescriptor, true, null)
+            val wrappedComponent = component(textWithBrowse)
+            wrappedComponent.constraints(growX)
+              .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, settings::sdkPath.toBinding())
+              .enableIf(fromFilesystemCheckbox.selected)
           }
         )
         fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }

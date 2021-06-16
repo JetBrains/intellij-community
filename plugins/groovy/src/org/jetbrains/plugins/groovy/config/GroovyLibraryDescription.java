@@ -87,15 +87,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
-      if (SystemInfo.isLinux) {
-        initial = findFile("/usr/share/groovy");
-      }
-      else if (SystemInfo.isMac) {
-        initial = findFile("/usr/local/opt/groovy/libexec"); // homebrew
-      }
-    }
+    VirtualFile initial = findSystemGroovyHome();
 
     final FileChooserDescriptor descriptor = createFileChooserDescriptor();
     final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
@@ -105,7 +97,22 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return createLibraryConfiguration(parentComponent, dir);
   }
 
-  public @NotNull FileChooserDescriptor createFileChooserDescriptor() {
+  @Nullable
+  public VirtualFile findSystemGroovyHome() {
+    VirtualFile initial = findFile(System.getenv(myEnvVariable));
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
+      if (SystemInfo.isLinux) {
+        return findFile("/usr/share/groovy");
+      }
+      else if (SystemInfo.isMac) {
+        return findFile("/usr/local/opt/groovy/libexec"); // homebrew
+      }
+    }
+    return initial;
+  }
+
+  @NotNull
+  public FileChooserDescriptor createFileChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
