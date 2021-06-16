@@ -51,6 +51,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -2040,10 +2041,15 @@ public class UsageViewImpl implements UsageViewEx {
           .traverse()
           .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
                           o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile ? Collections.singletonList(((UsageInFile)o).getFile()) :
-                        o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
-                        o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
-                        Collections.emptyList())
+          .flatMap(o -> {
+            if (o instanceof UsageInFile) {
+              VirtualFile file = ((UsageInFile)o).getFile();
+              return file != null ? Collections.singletonList(file) : Collections.emptyList();
+            }
+            return o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
+                   o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
+                   Collections.emptyList();
+          })
           .filter(VirtualFile::isValid)
           .unique()
           .toArray(VirtualFile.EMPTY_ARRAY);
