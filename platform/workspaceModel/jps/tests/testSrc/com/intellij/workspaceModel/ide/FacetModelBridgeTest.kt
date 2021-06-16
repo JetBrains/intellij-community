@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
@@ -174,7 +174,7 @@ class FacetModelBridgeTest {
     val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
 
     val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
-    val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerComponentBridge).getModifiableModel(diff)
+    val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff)
     val modifiableFacetModel = (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(diff)
 
     var existingFacet = assertOneElement(modifiableFacetModel.allFacets)

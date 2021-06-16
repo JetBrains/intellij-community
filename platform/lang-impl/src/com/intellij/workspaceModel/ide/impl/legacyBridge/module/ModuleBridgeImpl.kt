@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -50,7 +50,7 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
+  override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
   }

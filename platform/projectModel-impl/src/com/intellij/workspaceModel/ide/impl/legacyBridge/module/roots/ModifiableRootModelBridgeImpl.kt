@@ -26,7 +26,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge

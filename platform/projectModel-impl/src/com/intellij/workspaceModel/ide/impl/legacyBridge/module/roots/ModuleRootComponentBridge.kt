@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage

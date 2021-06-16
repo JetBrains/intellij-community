@@ -16,9 +16,8 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -288,7 +287,7 @@ class ModuleLevelLibrariesInRootModelTest {
     addLibrary("b")
 
     val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
-    val moduleModel = (projectModel.moduleManager as ModuleManagerComponentBridge).getModifiableModel(builder)
+    val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     moduleModel.disposeModule(module)
     val newModule = projectModel.createModule("module", moduleModel)
     val rootModel = ModuleRootManagerEx.getInstanceEx(newModule).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
@@ -353,7 +352,7 @@ class ModuleLevelLibrariesInRootModelTest {
   private fun doTestMultiCommitForModuleLevelLibrary(newScope: DependencyScope) {
     addLibrary("a")
     val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
-    val moduleModel = (projectModel.moduleManager as ModuleManagerComponentBridge).getModifiableModel(builder)
+    val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     val rootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
     getSingleLibraryOrderEntry(rootModel).scope = newScope
     runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(rootModel), moduleModel) }
