@@ -45,12 +45,14 @@ class CourseManager internal constructor() : Disposable {
   }
 
   init {
-    COURSE_MODULES_EP.addChangeListener(Runnable {
-      clearModules()
-      for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
-        toolWindow.reinitViews()
-      }
-    }, this)
+    for (ep in listOf(COMMON_COURSE_MODULES_EP, COURSE_MODULES_EP)) {
+      ep.addChangeListener(Runnable {
+        clearModules()
+        for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+          toolWindow.reinitViews()
+        }
+      }, this)
+    }
   }
 
   fun clearModules() {
@@ -91,7 +93,7 @@ class CourseManager internal constructor() : Disposable {
     for (e in extensions) {
       val langSupport = LangManager.getInstance().getLangSupportById(e.language)
       if (langSupport != null) {
-        languageCourses.put(langSupport, e.instance.modules())
+        languageCourses.putValues(langSupport, e.instance.modules())
       }
     }
   }
