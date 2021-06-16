@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports nested <code>switch</code> statements/expressions. Nested <code>switch</code> statements
-may result in extremely confusing code. These statements may be extracted to a separate method.
+Reports nested <code>switch</code> statements or expressions.
+<p>Nested <code>switch</code> statements
+may result in extremely confusing code. These statements may be extracted to a separate method.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   int res = switch (i) {
             case 0 -> 0;
             default -> switch (i) {
@@ -11,7 +12,7 @@ may result in extremely confusing code. These statements may be extracted to a s
                 default -> i;
             };
         };
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 
