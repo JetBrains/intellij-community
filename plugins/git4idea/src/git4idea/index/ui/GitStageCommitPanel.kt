@@ -31,9 +31,8 @@ private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<C
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
 class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
-  private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
-
   private val progressPanel = GitStageCommitProgressPanel()
+  override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   var includedRoots: Collection<VirtualFile> by observable(emptySet()) { _, oldValue, newValue ->
     if (oldValue != newValue) {
@@ -59,6 +58,11 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     fireInclusionChanged()
   }
 
+  private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
+  override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
+    editedCommitListeners.forEach { it() }
+  }
+
   init {
     Disposer.register(this, commitMessage)
 
@@ -69,12 +73,6 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
       add(commitActionsPanel)
     }
     buildLayout()
-  }
-
-  override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
-
-  override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
-    editedCommitListeners.forEach { it() }
   }
 
   fun addEditedCommitListener(listener: () -> Unit, parent: Disposable) {
