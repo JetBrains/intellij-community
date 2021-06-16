@@ -131,7 +131,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     while (startUpdateLoop && updatesStarted < PRE_UPDATE_LOOP_BLOCK) {
       updatesStarted += 1
       startUpdateLoop = false
-      PRE_UPDATE_HANDLERS.extensions().forEach {
+      PRE_UPDATE_HANDLERS.extensionsIfPointIsRegistered.forEach {
         startUpdateLoop = startUpdateLoop or it.update(before, builder)
       }
     }

@@ -290,7 +290,7 @@ internal class SdkOrderEntryBridge(
   companion object {
     @JvmStatic
     internal fun findSdk(sdkName: String, sdkType: String): Sdk? {
-      for (finder in SdkFinder.EP_NAME.extensions) {
+      for (finder in SdkFinder.EP_NAME.extensionsIfPointIsRegistered) {
         val sdk = finder.findSdk(sdkName, sdkType)
         if (sdk != null) return sdk
       }
