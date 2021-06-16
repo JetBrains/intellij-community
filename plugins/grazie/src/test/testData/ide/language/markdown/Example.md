@@ -5,6 +5,7 @@ It is written completely OK.
 It has:
 * lists;
 * other lists;
+* [a link](../../bin/win/WinShellIntegrationBridge.dll);
 * even more lists;
 
 Of course, it has an `inline` fragment.

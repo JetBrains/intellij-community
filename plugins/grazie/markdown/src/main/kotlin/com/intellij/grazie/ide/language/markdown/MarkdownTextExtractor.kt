@@ -6,7 +6,8 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.elementType
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 class MarkdownTextExtractor : TextExtractor() {
@@ -16,10 +17,13 @@ class MarkdownTextExtractor : TextExtractor() {
       return TextContentBuilder.FromPsi
         .withUnknown { e ->
           e.node.isMarkdownCodeType() ||
-          e.firstChild == null && PsiUtilCore.getElementType(e) !== MarkdownTokenTypes.TEXT && e.parent.node.isMarkdownLinkType()
+          e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }
         .build(root, TextContent.TextDomain.PLAIN_TEXT)
     }
     return null
   }
+
+  private fun isLinkText(e: PsiElement) =
+    e.elementType == MarkdownTokenTypes.TEXT && e.parent.elementType == MarkdownElementTypes.LINK_TEXT
 }
