@@ -11,10 +11,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
@@ -385,9 +383,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       String externalProjectPath = getExternalProjectPath(module);
       if (externalProjectPath == null) continue;
 
-      DataNode<? extends ModuleData> moduleDataNode = CachedModuleDataFinder.getInstance(module.getProject()).findMainModuleData(module);
-      if (moduleDataNode == null) continue;
-      GradleModuleData gradleModuleData = new GradleModuleData(moduleDataNode);
+      GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+      if (gradleModuleData == null) continue;
 
       boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
       if (!isGradleProjectDirUsedToRunTasks) {
@@ -401,7 +398,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       String gradlePath = gradleModuleData.getGradlePath();
       List<TaskData> taskDataList =
-        ContainerUtil.mapNotNull(findAll(moduleDataNode, ProjectKeys.TASK), node -> node.getData().isInherited() ? null : node.getData());
+        ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
       if (projectTasks.isEmpty()) continue;
 
       String taskPathPrefix = trimEnd(gradleModuleData.getFullGradlePath(), ":") + ":";

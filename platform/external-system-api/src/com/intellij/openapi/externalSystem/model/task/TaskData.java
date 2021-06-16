@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Container for external system task information.
  */
-public class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
+public final class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
   @NotNull private final String name;
   @Nullable private final String description;
   @NotNull private final String linkedExternalProjectPath;
