@@ -50,7 +50,7 @@ internal sealed class PackageSearchOperation<T>(
         ) : Package(model, projectModule) {
 
             override fun toString() =
-                "Package.Change(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
+                "Package.ChangeInstalled(model='${model.displayName}', projectModule='${projectModule.getFullName()}', " +
                     "currentVersion='$currentVersion', currentScope='$currentScope', " +
                     "newVersion='$newVersion', newScope='$newScope')"
         }

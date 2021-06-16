@@ -15,6 +15,7 @@ import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -60,7 +61,12 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
       && it.name().valueAsString() == oldDescriptor.coordinates.artifactId
       && it.version().valueAsString() == oldDescriptor.coordinates.version
       && it.configurationName() == oldDescriptor.scope
-    } ?: return
+    }
+
+    if (artifactModel == null) {
+      logger<GradleDependencyModificator>().warn("Unable to update dependency '$oldDescriptor': not found in module ${module.name}")
+       return
+    }
 
     if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {
       updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
