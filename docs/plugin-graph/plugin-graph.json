@@ -228,6 +228,37 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cLX",
+    "n": "com.intellij.database"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "LX",
+    "name": "intellij.database.plugin",
+    "n": "i.database.plugin",
+    "package": null,
+    "sourceModule": "intellij.database.plugin",
+    "descriptor": "dbe/plugin/META-INF/plugin.xml",
+    "pluginId": "com.intellij.database",
+    "parent": "cLX",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Zu",
+    "name": "intellij.database.diagrams",
+    "n": "i.database.diagrams",
+    "package": "com.intellij.database.diagram",
+    "sourceModule": "intellij.database.diagrams",
+    "descriptor": "dbe/database/diagrams/resources/intellij.database.diagrams.xml",
+    "parent": "cLX",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cBv",
     "n": "com.intellij.diagram"
   }
@@ -2718,6 +2749,37 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cxc",
+    "n": "com.jetbrains.plugins.webDeployment"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xc",
+    "name": "intellij.webDeployment",
+    "n": "i.webDeployment",
+    "package": "com.jetbrains.plugins.webDeployment",
+    "sourceModule": "intellij.webDeployment",
+    "descriptor": "plugins/webDeployment/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.plugins.webDeployment",
+    "parent": "cxc",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ff",
+    "name": "intellij.webDeployment/phpStorm",
+    "n": "i.webDeployment/phpStorm",
+    "package": "com.jetbrains.plugins.webDeployment.phpStorm",
+    "sourceModule": "intellij.webDeployment",
+    "descriptor": "plugins/webDeployment/resources/intellij.webDeployment.phpStorm.xml",
+    "parent": "cxc",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "ZR",
     "name": "intellij.wsl",
     "n": "i.wsl",
@@ -2806,18 +2868,6 @@
     "sourceModule": "",
     "descriptor": "",
     "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "xc",
-    "name": "intellij.webDeployment",
-    "n": "i.webDeployment",
-    "package": null,
-    "sourceModule": "intellij.webDeployment",
-    "descriptor": "plugins/webDeployment/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.plugins.webDeployment",
-    "type": 1
   }
 }, {
   "group": "nodes",
@@ -3006,18 +3056,6 @@
     "sourceModule": "intellij.javaee.persistence.impl",
     "descriptor": "plugins/javaee/persistence/persistence-impl/META-INF/plugin.xml",
     "pluginId": "com.intellij.persistence",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "LX",
-    "name": "intellij.database.plugin",
-    "n": "i.database.plugin",
-    "package": null,
-    "sourceModule": "intellij.database.plugin",
-    "descriptor": "dbe/plugin/META-INF/plugin.xml",
-    "pluginId": "com.intellij.database",
     "type": 1
   }
 }, {
@@ -3259,6 +3297,28 @@
     "type": 1
   }
 }, {
+  "group": "nodes",
+  "data": {
+    "id": "Rw",
+    "name": "com.intellij.modules.ssh",
+    "n": "c.i.m.ssh",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uu1",
+    "name": "com.intellij.modules.phpstorm",
+    "n": "c.i.m.phpstorm",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
   "group": "edges",
   "data": {
     "id": "QZ_YE",
@@ -3320,6 +3380,14 @@
     "id": "17_rP",
     "source": "17",
     "target": "rP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LX_Zu",
+    "source": "LX",
+    "target": "Zu",
     "type": 1
   }
 }, {
@@ -4157,6 +4225,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "xc_Ff",
+    "source": "xc",
+    "target": "Ff",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "YE_Bv",
     "source": "YE",
     "target": "Bv",
@@ -4264,6 +4340,14 @@
     "id": "rP_uY",
     "source": "rP",
     "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zu_Bv",
+    "source": "Zu",
+    "target": "Bv",
     "type": 0
   }
 }, {
@@ -6624,6 +6708,38 @@
     "id": "IH_It",
     "source": "IH",
     "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_It",
+    "source": "xc",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_KQ",
+    "source": "xc",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_Rw",
+    "source": "xc",
+    "target": "Rw",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ff_uu1",
+    "source": "Ff",
+    "target": "uu1",
     "type": 0
   }
 }, {
