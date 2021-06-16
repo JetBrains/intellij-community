@@ -34,29 +34,10 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val progressPanel = GitStageCommitProgressPanel()
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
-  var includedRoots: Collection<VirtualFile> by observable(emptySet()) { _, oldValue, newValue ->
-    if (oldValue != newValue) {
-      stagedChanges.drop()
-      fireInclusionChanged()
-    }
-  }
-  val rootsToCommit get() = state.stagedRoots.intersect(includedRoots)
+  private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY)
 
-  private var staged: Set<GitFileStatus> = emptySet()
-  private val stagedChanges = ClearableLazyValue.create {
-    state.rootStates.filterKeys {
-      includedRoots.contains(it)
-    }.values.flatMap { it.getStagedChanges(project) }
-  }
-
-  var state: GitStageTracker.State by observable(GitStageTracker.State.EMPTY) { _, _, newValue ->
-    val newStaged = newValue.getStaged()
-    if (staged == newStaged) return@observable
-
-    staged = newStaged
-    stagedChanges.drop()
-    fireInclusionChanged()
-  }
+  val rootsToCommit get() = state.rootsToCommit
+  val includedRoots get() = state.includedRoots
 
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
   override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
@@ -75,6 +56,22 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     buildLayout()
   }
 
+  fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {
+    setState(includedRoots, state.trackerState)
+  }
+
+  fun setTrackerState(trackerState: GitStageTracker.State) {
+    setState(state.includedRoots, trackerState)
+  }
+
+  private fun setState(includedRoots: Collection<VirtualFile>, trackerState: GitStageTracker.State) {
+    val newState = InclusionState(includedRoots, trackerState)
+    if (state != newState) {
+      state = newState
+      fireInclusionChanged()
+    }
+  }
+
   fun addEditedCommitListener(listener: () -> Unit, parent: Disposable) {
     editedCommitListeners.add(listener, parent)
   }
@@ -83,11 +80,39 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun refreshData() = Unit
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
-  override fun getIncludedChanges(): List<Change> = stagedChanges.value
+  override fun getIncludedChanges(): List<Change> = state.stagedChanges
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
   override fun includeIntoCommit(items: Collection<*>) = Unit
+
+  private inner class InclusionState(val includedRoots: Collection<VirtualFile>, val trackerState: GitStageTracker.State) {
+    private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
+    val stagedChanges by lazy {
+      trackerState.rootStates.filterKeys {
+        includedRoots.contains(it)
+      }.values.flatMap { it.getStagedChanges(project) }
+    }
+    val rootsToCommit get() = trackerState.stagedRoots.intersect(includedRoots)
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as InclusionState
+
+      if (includedRoots != other.includedRoots) return false
+      if (stagedStatuses != other.stagedStatuses) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = includedRoots.hashCode()
+      result = 31 * result + stagedStatuses.hashCode()
+      return result
+    }
+  }
 }
 
 class GitStageCommitProgressPanel : CommitProgressPanel() {
