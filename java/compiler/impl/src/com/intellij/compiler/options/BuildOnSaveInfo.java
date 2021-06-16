@@ -13,16 +13,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class BuildOnSaveInfo extends ActionOnSaveBackedByOwnConfigurable<CompilerConfigurable> {
-
+  /**
+   * This provider returns {@link BuildOnSaveInfo} only if the 'Build project automatically' checkbox is available on the 'Compiler' page in
+   * Settings (Preferences). This may be not the case for Android projects (thanks to {@link com.android.tools.idea.gradle.project.build.compiler.HideCompilerOptions}).
+   * In Android Studio, the 'Build project automatically' checkbox is available on the {@link com.android.tools.idea.gradle.project.build.compiler.GradleCompilerSettingsConfigurable}
+   * page, and the 'Build project' check box will be contributed to the 'Action on Save' page by {@link com.android.tools.idea.gradle.project.build.compiler.GradleCompilerSettingsConfigurable.BuildOnSaveInfoProvider}.
+   */
   public static class BuildOnSaveInfoProvider extends ActionOnSaveInfoProvider {
     @Override
     protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
+      if (context.getSettings().find(CompilerConfigurable.CONFIGURABLE_ID) == null) {
+        // The standard 'Compiler' page may be absent in Android Studio
+        return Collections.emptyList();
+      }
+
       for (CompilerOptionsFilter filter : CompilerOptionsFilter.EP_NAME.getExtensionList()) {
         if (!filter.isAvailable(CompilerOptionsFilter.Setting.AUTO_MAKE, context.getProject()) ||
             !filter.isAvailable(CompilerOptionsFilter.Setting.EXTERNAL_BUILD, context.getProject()) &&
             CompilerUIConfigurable.EXTERNAL_BUILD_SETTINGS.contains(CompilerOptionsFilter.Setting.AUTO_MAKE)) {
-          // The option "Build project automatically" is not available in Android Studio on the CompilerConfigurable page.
-          // It is however available on the GradleCompilerSettingsConfigurable page.
           return Collections.emptyList();
         }
       }
