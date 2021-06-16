@@ -7,7 +7,7 @@
   <properties>
     <gradle.version>7.1</gradle.version>
     <junit.version>5.7.1</junit.version>
-    <kotlin.version>1.4.32</kotlin.version>
+    <kotlin.version>1.5.10</kotlin.version>
     <jersey.version>2.33</jersey.version>
 
     <!-- OpenJFX release trains -->
