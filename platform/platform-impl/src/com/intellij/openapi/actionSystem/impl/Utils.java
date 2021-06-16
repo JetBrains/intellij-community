@@ -280,7 +280,6 @@ public final class Utils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
-    final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -310,8 +309,7 @@ public final class Utils {
         children.add(menu);
       }
       else {
-        final ActionMenuItem each =
-          new ActionMenuItem(action, presentation, place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }
@@ -319,20 +317,11 @@ public final class Utils {
 
     if (list.isEmpty()) {
       ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER),
-                                               place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
+                                               place, context, enableMnemonics, true, checked, useDarkIcons);
       component.add(each);
       children.add(each);
     }
 
-    if (fixMacScreenMenu) {
-      SwingUtilities.invokeLater(() -> {
-        for (Component each : children) {
-          if (each.getParent() != null && each instanceof ActionMenuItem) {
-            ((ActionMenuItem)each).prepare();
-          }
-        }
-      });
-    }
     if (SystemInfo.isMacSystemMenu && isWindowMenu) {
       if (ActionMenu.isAligned()) {
         Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
