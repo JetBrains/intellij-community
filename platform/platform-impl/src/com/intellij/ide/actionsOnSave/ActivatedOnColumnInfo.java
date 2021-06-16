@@ -22,9 +22,18 @@ class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSave
 
   @Override
   protected @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info, boolean hovered) {
+    JComponent component = info.getActivatedOnComponent();
+    Dimension size = component.getPreferredSize();
+    int baseline = component.getBaseline(size.width, size.height);
+
+    JCheckBox anchorCheckBox = new JCheckBox(info.getActionOnSaveName());
+    Dimension cbSize = anchorCheckBox.getPreferredSize();
+
+    int baselineDelta = baseline < 0 ? 0 : anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - baseline;
+
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
-    panel.add(info.getActivatedOnComponent(), BorderLayout.NORTH);
+    panel.setBorder(JBUI.Borders.empty(ActionOnSaveColumnInfo.TOP_INSET + baselineDelta, 8, 0, 0));
+    panel.add(component, BorderLayout.NORTH);
     ActionOnSaveColumnInfo.setupTableCellBackground(panel, hovered);
 
     return panel;
