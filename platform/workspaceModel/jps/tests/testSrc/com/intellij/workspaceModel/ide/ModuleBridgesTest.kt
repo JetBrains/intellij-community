@@ -327,7 +327,7 @@ class ModuleBridgesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
         val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
-        it.addSourceRootEntity(contentRootEntity, virtualFileUrl, false, "",
+        it.addSourceRootEntity(contentRootEntity, virtualFileUrl, "",
                                JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
