@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.environment.Environment.Companion.getVariable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
@@ -47,12 +46,6 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
         GradleProcessOutputInterceptor.install(testRootDisposable)
-    }
-
-    override fun collectAllowedRoots(roots: MutableList<String>) {
-        super.collectAllowedRoots(roots)
-
-        getVariable("JAVA11_HOME")?.let(roots::add)
     }
 
     protected fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
