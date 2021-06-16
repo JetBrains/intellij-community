@@ -34,44 +34,39 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override fun settingsList(settings: GroovyModuleSettings): List<LabelAndComponent> {
     val panel = panel {
       row {
-        row {
-          label(GroovyBundle.message("label.groovy.library"))
-        }
-        row {
-          lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
-          lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
-          twoColumnRow(
-            { fromUrlCheckbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary) },
-            {
-              val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
-              val groovyLibraryDescription = downloadableType.libraryDescription
-              comboBox(DefaultComboBoxModel(emptyArray()),
-                       settings::version,
-                       SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>" })
-                .applyToComponent {
-                  groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
-                    override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-                      for (item in versions) {
-                        addItem(Optional.of(item))
-                      }
+        lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
+        lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
+        twoColumnRow(
+          { fromUrlCheckbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary) },
+          {
+            val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
+            val groovyLibraryDescription = downloadableType.libraryDescription
+            comboBox(DefaultComboBoxModel(emptyArray()),
+                     settings::version,
+                     SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>" })
+              .applyToComponent {
+                groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+                  override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+                    for (item in versions) {
+                      addItem(Optional.of(item))
                     }
-                  })
-                }.enableIf(fromUrlCheckbox.selected)
-            })
-          twoColumnRow(
-            { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary) },
-            {
-              // todo: color in red if selected path does not correspond to a groovy sdk home
-              textFieldWithBrowseButton(
-                settings::sdkPath,
-                GroovyBundle.message("dialog.title.select.groovy.sdk"),
-                fileChooserDescriptor = GroovyLibraryDescription().createFileChooserDescriptor()
-              ).enableIf(fromFilesystemCheckbox.selected)
-            }
-          )
-          fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }
-          fromUrlCheckbox.applyToComponent { addChangeListener { if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.applyToComponent { isSelected = false } } }
-        }
+                  }
+                })
+              }.enableIf(fromUrlCheckbox.selected)
+          })
+        twoColumnRow(
+          { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary) },
+          {
+            // todo: color in red if selected path does not correspond to a groovy sdk home
+            textFieldWithBrowseButton(
+              settings::sdkPath,
+              GroovyBundle.message("dialog.title.select.groovy.sdk"),
+              fileChooserDescriptor = GroovyLibraryDescription().createFileChooserDescriptor()
+            ).enableIf(fromFilesystemCheckbox.selected)
+          }
+        )
+        fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }
+        fromUrlCheckbox.applyToComponent { addChangeListener { if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.applyToComponent { isSelected = false } } }
       }
     }
     return listOf(LabelAndComponent(null, panel))
