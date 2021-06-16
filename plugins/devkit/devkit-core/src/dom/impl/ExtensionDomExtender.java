@@ -389,16 +389,23 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
       private String fromXmlName(@NotNull String name) {
         if (doNotTransformName()) return name;
+        if (enumLowerUnderscore()) return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_UNDERSCORE, name);
         return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
       }
 
       private String toXmlName(PsiEnumConstant constant) {
-        if (doNotTransformName()) return constant.getName();
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constant.getName());
+        String name = constant.getName();
+        if (doNotTransformName()) return name;
+        if (enumLowerUnderscore()) return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_UNDERSCORE, name);
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name);
       }
 
       private boolean doNotTransformName() {
         return LEGACY_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
+      }
+
+      private boolean enumLowerUnderscore() {
+        return LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
       }
     };
   }
@@ -408,5 +415,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
       "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
       "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+    );
+
+  private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
+    ContainerUtil.immutableSet(
+      "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
     );
 }
