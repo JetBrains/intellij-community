@@ -182,10 +182,11 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         ).getTargetDataRoot(KotlinDataContainerTarget)
 
     private fun openStorage() {
-        val basePath = project.basePath ?: error("Default project not supported")
+        val basePath = project.basePath ?: return
         val pathConverter = RelativeFileToPathConverter(File(basePath))
         val targetDataDir = kotlinDataContainer
         storage = LookupStorage(targetDataDir, pathConverter)
+        LOG.info("kotlin compiler references index is opened")
     }
 
     private fun closeStorage() {
@@ -218,8 +219,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             else -> null
         } ?: return null
 
-        LOG.warn("try to find $fqName")
-
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
         val fqNames: List<FqName> = listOf(fqName) + if (projectFileIndex.isInLibrary(virtualFile)) {
@@ -228,7 +227,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             emptyList()
         }
 
-        LOG.warn("try to find $fqName [${fqNames.joinToString()}]")
         return fqNames.flatMapTo(mutableSetOf()) { currentFqName ->
             val name = currentFqName.shortName().asString()
             val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
@@ -279,8 +277,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>?, element: PsiElement): GlobalSearchScope? {
         if (virtualFiles == null) return null
-
-        LOG.warn("build scope from ${virtualFiles.joinToString(prefix = "[", postfix = "]") { it.nameSequence }}")
 
         // knows everything
         val referencesScope = ScopeWithReferencesOnCompilation(virtualFiles, projectFileIndex)
