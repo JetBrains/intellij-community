@@ -19,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
+  static final int TOP_INSET = 5;
 
   ActionOnSaveColumnInfo() {
     super(IdeBundle.message("actions.on.save.table.column.name.action"));
@@ -27,7 +28,16 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
   @Override
   protected @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info, boolean hovered) {
     JPanel resultPanel = new JPanel(new GridBagLayout());
-    resultPanel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
+    resultPanel.setBorder(JBUI.Borders.empty(TOP_INSET, 8, 0, 0));
+
+    // This anchorCheckBox is not painted and doesn't appear in the UI component hierarchy. Its purpose is to make sure that the preferred
+    // size of the real checkBox is calculated correctly. The problem is that com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.getBorderInsets()
+    // returns different result for a checkbox that has CellRendererPane class as its UI ancestor. We need TableCellEditor and
+    // TableCellRenderer to look 100% identically.
+    // It's second goal is to normalize baseline of other components.
+    // The third use case is to calculate checkbox text horizontal offset - needed to align a label if label is used instead of a checkbox.
+    JCheckBox anchorCheckBox = new JCheckBox(info.getActionOnSaveName());
+    Dimension cbSize = anchorCheckBox.getPreferredSize();
 
     GridBagConstraints c = new GridBagConstraints();
     c.weightx = 1.0;
@@ -35,20 +45,26 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     c.anchor = GridBagConstraints.NORTHWEST;
     c.fill = GridBagConstraints.NONE;
 
-    resultPanel.add(createActionNamePanel(table, info), c);
+    resultPanel.add(createActionNamePanel(table, info, anchorCheckBox), c);
 
     c.weightx = 0.0;
     c.anchor = GridBagConstraints.NORTHEAST;
-    c.insets = JBUI.insets(0, 7);
 
     if (hovered) {
-      for (ActionLink actionLink : info.getActionLinks()) {
-        resultPanel.add(actionLink, c);
+      for (ActionLink link : info.getActionLinks()) {
+        Dimension linkSize = link.getPreferredSize();
+        int baselineDelta = anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - link.getBaseline(linkSize.width, linkSize.height);
+        c.insets = JBUI.insets(baselineDelta, 5, 0, 7);
+        resultPanel.add(link, c);
       }
     }
 
     DropDownLink<?> dropDownLink = info.getInPlaceConfigDropDownLink();
     if (dropDownLink != null) {
+      Dimension linkSize = dropDownLink.getPreferredSize();
+      int baselineDelta =
+        anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - dropDownLink.getBaseline(linkSize.width, linkSize.height);
+      c.insets = JBUI.insets(baselineDelta, 5, 0, 7);
       resultPanel.add(dropDownLink, c);
     }
 
@@ -56,14 +72,10 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     return resultPanel;
   }
 
-  private static @NotNull JPanel createActionNamePanel(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info) {
+  private static @NotNull JPanel createActionNamePanel(@NotNull TableView<?> table,
+                                                       @NotNull ActionOnSaveInfo info,
+                                                       @NotNull JCheckBox anchorCheckBox) {
     if (info.isSaveActionApplicable()) {
-      // This anchorCheckBox is not painted and doesn't appear in the UI component hierarchy. Its purpose is to make sure that the preferred
-      // size of the real checkBox is calculated correctly. The problem is that com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.getBorderInsets()
-      // returns different result for a checkbox that has CellRendererPane class as its UI ancestor. We need TableCellEditor and
-      // TableCellRenderer to look 100% identically.
-      JCheckBox anchorCheckBox = new JCheckBox(info.getActionOnSaveName());
-
       JBCheckBox checkBox = new JBCheckBox(info.getActionOnSaveName());
       checkBox.setAnchor(anchorCheckBox);
 
@@ -91,16 +103,20 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
       return builder.createPanel();
     }
 
-
     JPanel panel = new JPanel(new GridLayout(2, 1, 0, JBUI.scale(3)));
-
-    // The label should have the same indent as the checkbox text
-    int leftInsetScaled = UIUtil.getCheckBoxTextHorizontalOffset(new JCheckBox(info.getActionOnSaveName())); // already scaled
-    //noinspection UseDPIAwareBorders - already scaled
-    panel.setBorder(new EmptyBorder(0, leftInsetScaled, 0, 0));
-
     JBLabel label = new JBLabel(info.getActionOnSaveName());
-    // disabled label looks just the same as its comment on Windows, so `setEnabled(false)` is not called for this `label`
+    // `setEnabled(false)` is not called for this label because on Windows disabled label looks just the same as its comment
+
+    // The label should have the same indent and baseline as the checkbox text
+    int leftInsetScaled = UIUtil.getCheckBoxTextHorizontalOffset(anchorCheckBox); // already scaled
+
+    Dimension cbSize = anchorCheckBox.getPreferredSize();
+    Dimension labelSize = label.getPreferredSize();
+    int baselineDelta = anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - label.getBaseline(labelSize.width, labelSize.height);
+
+    //noinspection UseDPIAwareBorders - already scaled
+    panel.setBorder(new EmptyBorder(baselineDelta, leftInsetScaled, 0, 0));
+
     panel.add(label);
 
     ActionOnSaveComment comment = info.getComment();
