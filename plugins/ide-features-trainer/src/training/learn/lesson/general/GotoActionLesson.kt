@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
-import com.intellij.ide.actions.AboutPopup
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
@@ -10,14 +9,12 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.driver.ComponentDriver
 import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import java.awt.Component
 import java.awt.event.KeyEvent
-import javax.swing.JPanel
+import javax.swing.JDialog
 
 class GotoActionLesson(private val sample: LessonSample, private val firstLesson: Boolean = false) :
   KLesson("Actions", LessonsBundle.message("goto.action.lesson.name")) {
@@ -44,28 +41,23 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
         test { actions(it) }
       }
 
-      actionTask("About") {
+      task("About") {
         showWarningIfSearchPopupClosed()
-        LessonsBundle.message("goto.action.invoke.about.action",
-                              LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter())
+        text(LessonsBundle.message("goto.action.invoke.about.action",
+                              LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
+        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
+          dialog.title.contains("About")
+        }
+        test { actions(it) }
       }
 
       task {
         text(LessonsBundle.message("goto.action.to.return.to.the.editor", action("EditorEscape")))
-        var aboutHasBeenFocused = false
         stateCheck {
-          aboutHasBeenFocused = aboutHasBeenFocused || focusOwner is AboutPopup.PopupPanel
-          aboutHasBeenFocused && focusOwner is EditorComponentImpl
+          focusOwner is EditorComponentImpl
         }
-        test {
-          ideFrame {
-            waitComponent(JPanel::class.java, "InfoSurface")
-            // Note 1: it is editor from test IDE fixture
-            // Note 2: In order to pass this task without interference with later task I need to firstly focus lesson
-            // and only then press Escape
-            ComponentDriver<Component>(robot).focusAndWaitForFocusGain(editor.contentComponent)
-            invokeActionViaShortcut("ESCAPE")
-          }
+        test(waitEditorToBeReady = false) {
+          invokeActionViaShortcut("ESCAPE")
         }
       }
 
