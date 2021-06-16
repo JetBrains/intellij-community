@@ -90,9 +90,49 @@ internal class RecentProjectIconHelper {
 
     @JvmStatic
     fun projectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+
+    @JvmStatic
+    fun generateProjectIcon(path: @SystemIndependent String): Icon {
+      val projectManager = RecentProjectsManagerBase.instanceEx
+      val name = projectManager.getDisplayName(path) ?: projectManager.getProjectName(path)
+      return AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
+    }
+
+    private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
+      val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
+      else listOf("icon.svg", "icon.png")
+      val iconName = lookup.firstOrNull { getDotIdeaPath(path).resolve(it).exists() } ?: return null
+
+      val file = getDotIdeaPath(path).resolve(iconName)
+
+      val fileInfo = file.basicAttributesIfExists() ?: return null
+      val timestamp = fileInfo.lastModifiedTime().toMillis()
+
+      val recolor = isDark && !file.nameWithoutExtension.endsWith("_dark")
+      var iconWrapper = projectIcons[path]
+      if (iconWrapper != null && iconWrapper.timestamp == timestamp) {
+        return iconWrapper.icon
+      }
+
+      try {
+        var icon = createIcon(file) ?: return null
+        if (recolor) {
+          icon = IconLoader.getDarkIcon(icon, true)
+        }
+
+        iconWrapper = MyIcon(icon, timestamp)
+
+        projectIcons[path] = iconWrapper
+        return iconWrapper.icon
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+      return null
+    }
   }
 
-  fun getProjectIcon(path: @SystemIndependent String, isDark: Boolean, generateFromName: Boolean = false): Icon {
+  fun getProjectIcon(path: @SystemIndependent String, generateFromName: Boolean = false): Icon {
     val icon = projectIcons[path]
     if (icon != null) {
       return icon.icon
@@ -100,52 +140,17 @@ internal class RecentProjectIconHelper {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(projectIconSize())
     }
-    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isDark)) {
+    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, false)) {
       val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
       if (calculateIcon == null && generateFromName) {
-        val projectManager = RecentProjectsManagerBase.instanceEx
-        val name = projectManager.getDisplayName(path) ?: projectManager.getProjectName(path)
-        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
+        generateProjectIcon(path)
       }
       else calculateIcon
     }
   }
 
   fun getProjectOrAppIcon(path: @SystemIndependent String): Icon {
-    return getProjectIcon(path, StartupUiUtil.isUnderDarcula())
-  }
-
-  private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
-    val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
-                 else listOf("icon.svg", "icon.png")
-    val iconName = lookup.firstOrNull { getDotIdeaPath(path).resolve(it).exists() } ?: return null
-
-    val file = getDotIdeaPath(path).resolve(iconName)
-
-    val fileInfo = file.basicAttributesIfExists() ?: return null
-    val timestamp = fileInfo.lastModifiedTime().toMillis()
-
-    val recolor = isDark && !file.nameWithoutExtension.endsWith("_dark")
-    var iconWrapper = projectIcons[path]
-    if (iconWrapper != null && iconWrapper.timestamp == timestamp) {
-      return iconWrapper.icon
-    }
-
-    try {
-      var icon = createIcon(file) ?: return null
-      if (recolor) {
-        icon = IconLoader.getDarkIcon(icon, true)
-      }
-
-      iconWrapper = MyIcon(icon, timestamp)
-
-      projectIcons[path] = iconWrapper
-      return iconWrapper.icon
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-    return null
+    return getProjectIcon(path)
   }
 }
 

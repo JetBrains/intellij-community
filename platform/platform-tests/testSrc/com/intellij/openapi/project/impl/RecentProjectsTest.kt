@@ -103,7 +103,7 @@ class RecentProjectsTest {
     val projectDir = Paths.get("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
     val slnFile = projectDir.resolve("Povysh.sln")
 
-    val icon = (rpm.getProjectIcon(slnFile.toString(), false, false) as DeferredIconImpl<*>).evaluate()
+    val icon = (rpm.getProjectIcon(slnFile.toString(), false) as DeferredIconImpl<*>).evaluate()
 
     assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
   }

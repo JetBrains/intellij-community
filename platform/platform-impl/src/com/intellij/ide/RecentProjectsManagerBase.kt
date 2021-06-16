@@ -250,12 +250,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  fun getProjectIcon(path: String, isDark: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark, false)
+  fun getProjectIcon(path: String): Icon {
+    return projectIconHelper.getProjectIcon(path, false)
   }
 
-  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark, generateFromName)
+  fun getProjectIcon(path: String, generateFromName: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, generateFromName)
   }
 
   fun getProjectOrAppIcon(path: String): Icon {

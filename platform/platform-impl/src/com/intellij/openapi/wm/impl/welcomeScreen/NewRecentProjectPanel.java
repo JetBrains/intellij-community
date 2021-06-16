@@ -18,7 +18,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -253,7 +252,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula(), true);
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, true);
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {
