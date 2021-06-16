@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -730,7 +729,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme);
+        UIThemeBasedLookAndFeelInfo themeInfo = (UIThemeBasedLookAndFeelInfo)lookAndFeelInfo;
+        themeInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme);
+
+        //IntelliJ Light is the only theme which is, in fact, a LaF.
+        if (!themeInfo.getName().equals("IntelliJ Light")) {
+          defaults.put("Theme.name", themeInfo.getName());
+        }
       }
       catch (Exception e) {
         LOG.error(e);
