@@ -19,6 +19,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableNotNullBiFunction;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -184,8 +185,14 @@ public final class PluginDownloader {
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile == null) return null;
 
+    String builtinPluginsUrlPluginsXml = ApplicationInfoImpl.getShadowInstance().getBuiltinPluginsUrl();
+    String builtinPluginsUrl = null;
+    if (builtinPluginsUrlPluginsXml != null) {
+      builtinPluginsUrl = StringUtil.substringBefore(builtinPluginsUrlPluginsXml, "plugins.xml");
+    }
+    boolean pluginFromBuiltinRepo = builtinPluginsUrl != null && myPluginUrl.startsWith(builtinPluginsUrl);
     // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
-    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check")) {
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !pluginFromBuiltinRepo) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
