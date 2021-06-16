@@ -138,7 +138,7 @@ class PluginModelValidatorTest {
     val validator = PluginModelValidator()
     validator.validate(modules)
     assertThat(validator.getErrors().joinToString { it.message!! }).isEqualTo("""
-      Old format must be not used for a module: `depends` tag is used (
+      Old format must be not used for a module but `depends` tag is used (
         descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
         depends=XmlElement(name=depends, attributes={}, children=[], content=com.intellij.modules.lang)
       )

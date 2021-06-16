@@ -79,6 +79,7 @@ function initGraph(graph) {
     quality: "proof",
     randomize: false,
     nodeDimensionsIncludeLabels: true,
+    padding: 5,
   }
 
   // noinspection SpellCheckingInspection
