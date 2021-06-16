@@ -44,7 +44,7 @@ import java.io.File
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
   private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
-  private var mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+  private var mySyncId = getTaskId()
   private var finished = false
   private var started = false
   private var wrapperProgressIndicator: WrapperProgressIndicator? = null
@@ -81,7 +81,7 @@ class MavenSyncConsole(private val myProject: Project) {
     wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
     shownIssues.clear()
-    mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+    mySyncId = getTaskId()
 
     val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
                                             System.currentTimeMillis())
@@ -95,6 +95,8 @@ class MavenSyncConsole(private val myProject: Project) {
     myPostponed.forEach(this::doIfImportInProcess)
     myPostponed.clear();
   }
+
+  fun getTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
 
   fun addText(@Nls text: String) = addText(text, true)
 
@@ -250,8 +252,9 @@ class MavenSyncConsole(private val myProject: Project) {
     if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
       return ExceptionUtil.getThrowableText(e)
     }
-    return e.localizedMessage.ifEmpty { e.message ?: SyncBundle.message("build.event.title.error") }
-
+    return e.localizedMessage.ifEmpty {
+      if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else return e.message!!
+    }
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {

@@ -265,10 +265,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
       ParametersList programParametersList = myJavaParameters.getProgramParametersList();
-      boolean execGoal = programParametersList.getList().stream().anyMatch(parameter ->
-                                                                             parameter.equals("exec:exec") ||
-                                                                             EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches()
-      );
+      boolean execGoal = programParametersList.getList().stream()
+        .anyMatch(parameter -> parameter.equals("exec:exec") || EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches());
       if (!execGoal) {
         return null;
       }
@@ -412,7 +410,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           getEnvironment().getExecutor()
         );
         return parameters;
-      } else {
+      }
+      else {
         return new JavaParameters();
       }
     }
@@ -515,7 +514,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String workingDir =
         targetWorkingDirectory != null ? targetFileMapper.apply(targetWorkingDirectory) : getEnvironment().getProject().getBasePath();
       ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, myConfiguration.getProject());
-      DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
+      DefaultBuildDescriptor descriptor =
+        new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
       if (MavenRunConfigurationType.isDelegate(getEnvironment())) {
         return doDelegateBuildExecute(executor, runner, taskId, descriptor, processHandler, targetFileMapper);
       }

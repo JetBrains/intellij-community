@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,6 +23,7 @@ import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -78,12 +78,7 @@ public class MavenProjectResolver {
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
-          for (MavenProject mavenProject : mavenProjects) {
-            if (VfsUtilCore.pathEqualsTo(mavenProject.getDirectoryFile(), cause.getDirectory())) {
-              showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
-              mavenProject.setConfigFileError(cause.getMessage());
-            }
-          }
+          MavenLog.LOG.warn("Cannot parse maven config", cause);
         }
         else {
           throw t;

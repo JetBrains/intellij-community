@@ -53,14 +53,8 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId, myTaskId,
-      wrapListener(project, myBuildProgressListener, myWorkingDir),
+      myBuildProgressListener,
       Collections.singletonList(myParser));
-  }
-
-  private static BuildProgressListener wrapListener(@NotNull Project project,
-                                                    @NotNull BuildProgressListener listener,
-                                                    @NotNull String workingDir) {
-    return new MavenProgressListener(project, listener, workingDir);
   }
 
   public synchronized void finish() {

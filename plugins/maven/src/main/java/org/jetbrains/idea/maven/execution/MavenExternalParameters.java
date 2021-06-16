@@ -173,11 +173,17 @@ public final class MavenExternalParameters {
 
   @NotNull
   public static String readJvmConfigOptions(@NotNull String multiModuleDir) {
+    return Optional.ofNullable(getJvmConfig(multiModuleDir))
+      .map(jdkOpts -> toVmString(jdkOpts))
+      .orElse("");
+  }
+
+  @Nullable
+  public static VirtualFile getJvmConfig(@NotNull String multiModuleDir) {
     return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(multiModuleDir))
       .map(baseDir -> baseDir.findChild(".mvn"))
       .map(mvn -> mvn.findChild("jvm.config"))
-      .map(jdkOpts -> toVmString(jdkOpts))
-      .orElse("");
+      .orElse(null);
   }
 
   private static String toVmString(VirtualFile jdkOpts) {

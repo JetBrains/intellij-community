@@ -53,9 +53,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     completeParsers(messageConsumer);
 
     if (!myCompleted) {
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new MavenTaskFailedResultImpl("Process terminated")));
+      messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new MavenTaskFailedResultImpl(null)));
     }
   }
 

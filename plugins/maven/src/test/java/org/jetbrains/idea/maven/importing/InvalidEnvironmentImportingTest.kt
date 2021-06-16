@@ -32,16 +32,9 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-          if (message!=null && message.contains("Maven server exception for tests")){
-            return false
-          }
-          return super.processError(category, message, t, details)
-        }
-      });
-      MavenWorkspaceSettingsComponent.getInstance(
-        myProject).settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Project JDK is not specifie"))
+      MavenWorkspaceSettingsComponent.getInstance(myProject)
+        .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
       createAndImportProject()
       assertEvent { it.message.startsWith("Project JDK is not specified") }
@@ -53,23 +46,52 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  @Test fun testShouldShowLogsOfMavenServerIfNotStarted() {
+  @Test
+  fun testShouldShowLogsOfMavenServerIfNotStarted() {
     val oldLogger = LoggedErrorProcessor.getInstance()
     try {
-      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
-          if (message!=null && message.contains("Maven server exception for tests")){
-            return false
-          }
-          return super.processError(category, message, t, details)
-        }
-      });
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Maven server exception for tests"))
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
+      createProjectPom("<groupId>test</groupId>" +
+                       "<artifactId>test</artifactId>" +
+                       "<version>1.0</version>")
       createAndImportProject()
       assertEvent { it.message.contains("Maven server exception for tests") }
-    } finally {
+    }
+    finally {
       MavenServerCMDState.resetThrowExceptionOnNextServerStart()
       LoggedErrorProcessor.setNewInstance(oldLogger)
+    }
+  }
+
+  @Test
+  fun `test maven server not started - bad vm config`() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
+    try {
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("java.util.concurrent.ExecutionException:"))
+      createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
+      createAndImportProject()
+      assertEvent { it.message.contains("Error occurred during initialization of VM") }
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(oldLogger)
+    }
+  }
+
+  @Test
+  fun `test maven server not started - bad maven config`() {
+    assumeVersionMoreThan("3.3.1");
+    createProjectSubFile(".mvn/maven.config", "-aaaaT1")
+    createAndImportProject()
+    assertEvent { it.message.contains("Unable to parse maven.config:") }
+  }
+
+  private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {
+    override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+      if (message != null && message.contains(search)) {
+        return false
+      }
+      return super.processError(category, message, t, details)
     }
   }
 
