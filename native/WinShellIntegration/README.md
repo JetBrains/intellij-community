@@ -1,5 +1,5 @@
 # WinShellIntegration
-Library provides the features allow integrate your application into Windows Shell:
+The library provides the features allowing one to integrate your application into Windows Shell:
 * Managing AppUserModelID property of the current process
 * Jump lists support
 
@@ -19,14 +19,14 @@ Just use CMake normally.
 
 If you want to build [winshellintegrationbridge](src/winshellintegrationbridge) target too
 you have to set the variable `JDK_PATH` to the path of JDK which will be used for build.
-For example if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you should set the variable like
+For example, if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you should set the variable like
 `-DJDK_PATH="C:\Soft\jdk"`.
 
 ## Integration with CLion
 1. Configure the toolchain(s) (if you need help, please check [this guide](https://www.jetbrains.com/help/clion/quick-tutorial-on-configuring-clion-on-windows.html));
 2. Configure CMake profiles (if you need help, please check [this guide](https://www.jetbrains.com/help/clion/cmake-profile.html)).
    Don't forget to pass `JDK_PATH` variable (via `CMake options` field) if you want to build `winshellintegrationbridge` target.
-   Also you can set the root of each profile to [build](build) dir: it already has `.gitignore` file
+   Also, you can set the root of each profile to [build](build) dir: it already has `.gitignore` file
     that will exclude everything under it.
 
 ## Current binaries in repository
