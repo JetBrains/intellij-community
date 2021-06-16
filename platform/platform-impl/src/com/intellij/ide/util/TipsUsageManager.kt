@@ -113,7 +113,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     fun getMetadataVersion(): String = "0.1"
 
     fun sampleTips(tips: Iterable<TipAndTrickBean>): List<TipAndTrickBean> {
-      val (knownTips, unknownTips) = tips.map { Pair(it, getTipUtility(it)) }.partition { it.second > 0 }
+      val (knownTips, unknownTips) = tips.map { Pair(it, getTipUtility(it)) }.partition { it.second >= 0 }
       val result = mutableListOf<TipAndTrickBean>()
       result.sampleByUtility(knownTips)
       result.sampleUnknown(unknownTips)
@@ -126,7 +126,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
       for (i in 0 until sortedTips.size) {
         var cumulativeUtility = 0.0
         if (totalUtility <= 0.0) {
-          this.addAll(sortedTips.map { it.first })
+          this.addAll(sortedTips.map { it.first }.shuffled())
           break
         }
         val prob = Random.nextDouble(totalUtility)
@@ -156,7 +156,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     }
 
     private fun getTipUtility(tip: TipAndTrickBean): Double {
-      return tips2utility.getOrDefault(tip.fileName, 0.0)
+      return tips2utility.getOrDefault(tip.fileName, -1.0)
     }
   }
 
