@@ -38,6 +38,17 @@ class CastToIncompatibleInterface {
     if (getC(0) instanceof B && ((B)getC(0)).acting()) {}
     if (getC(0) instanceof B && ((<warning descr="Cast to incompatible interface 'B'">B</warning>)getC(1)).acting()) {}
   }
+
+  interface Generic<T> {}
+  class NonGeneric {}
+
+  volatile NonGeneric ng;
+
+  void testUnchecked() {
+    if (ng instanceof Generic) {
+      Generic<String> generic = (Generic<String>) ng;
+    }
+  }
   
   native C getC(int x);
 }
