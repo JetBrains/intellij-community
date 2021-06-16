@@ -4,8 +4,8 @@ Reports all <code>public</code> constructors in non-<code>public</code> classes.
 <p>Usually, there is no reason for creating a <code>public</code> constructor in a class with a lower access level.
   Please note, however, that this inspection changes the behavior of some reflection calls. In particular,
   <code>Class.getConstructor()</code> won't be able to find the updated constructor
-  (<code>Class.getDeclaredConstructor()</code> should be used instead). Please turn off this inspection if your code
-  relies on constructor accessibility via <code>getConstructor()</code>.
+  (<code>Class.getDeclaredConstructor()</code> should be used instead). Do not use inspection if your code
+  or code of some used frameworks may rely on constructor accessibility via <code>getConstructor()</code>.
 </p>
 <!-- tooltip end -->
 </body>
