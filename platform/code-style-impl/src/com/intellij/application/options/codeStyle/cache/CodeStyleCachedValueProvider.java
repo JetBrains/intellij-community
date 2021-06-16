@@ -120,6 +120,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private                   CancellablePromise<Void>  myPromise;
     private final             List<Runnable>            myScheduledRunnables = new ArrayList<>();
     private                   long                      myOldTrackerSetting;
+    private                   boolean                   myInsideRestartedComputation = false;
 
     private AsyncComputation(@NotNull Project project) {
       myProject = project;
@@ -264,8 +265,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       @SuppressWarnings("deprecation")
       CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
       long newTrackerSetting = currSettings.getModificationTracker().getModificationCount();
-      if (myOldTrackerSetting < newTrackerSetting) {
-        start();
+      if (myOldTrackerSetting < newTrackerSetting && !myInsideRestartedComputation) {
+        myInsideRestartedComputation = true;
+        try {
+          start();
+        } finally {
+          myInsideRestartedComputation = false;
+        }
+
         return;
       }
 
