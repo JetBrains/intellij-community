@@ -229,7 +229,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     override fun getDefaultDefinition(): ScriptDefinition {
         val standardScriptDefinitionContributor = ScriptDefinitionContributor.find<StandardScriptDefinitionContributor>(project)
-            ?: error("StandardScriptDefinitionContributor should be registered is plugin.xml")
+            ?: error("StandardScriptDefinitionContributor should be registered in plugin.xml")
         return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), standardScriptDefinitionContributor.getDefinitions().last())
     }
 
@@ -240,7 +240,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         val fileTypeManager = FileTypeManager.getInstance()
 
         val newExtensions = getKnownFilenameExtensions().toSet().filter {
-            val fileTypeByExtension = fileTypeManager.getFileTypeByFileName("xxx."+it)
+            val fileTypeByExtension = fileTypeManager.getFileTypeByFileName("xxx.$it")
             val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
             if (notKnown) {
                 scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
