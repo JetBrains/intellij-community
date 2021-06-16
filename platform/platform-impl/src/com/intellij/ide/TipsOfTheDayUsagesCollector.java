@@ -18,7 +18,7 @@ import java.util.Arrays;
 import static com.intellij.ide.util.TipsUsageManager.BY_TIP_UTILITY;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 7);
 
   public enum DialogType {automatically, manually}
 
