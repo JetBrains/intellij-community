@@ -133,6 +133,16 @@ abstract class Value<T> {
     }
   }
 
+  suspend fun tryReload(): T? {
+    try {
+      return reload()
+    }
+    catch (e: VcsException) {
+      logger<Value<*>>().warn(e)
+      return null
+    }
+  }
+
   @Throws(VcsException::class)
   suspend fun load(): T {
     val value = value
@@ -140,7 +150,6 @@ abstract class Value<T> {
     return reload()
   }
 
-  @Throws(VcsException::class)
   suspend fun tryLoad(): T? {
     try {
       return load()
