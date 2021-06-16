@@ -1228,6 +1228,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "coF",
+    "n": "com.intellij.javaee.jpa"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "oF",
     "name": "intellij.javaee.jpa.impl",
     "n": "i.javaee.jpa.impl",
@@ -1235,7 +1241,20 @@
     "sourceModule": "intellij.javaee.jpa.impl",
     "descriptor": "plugins/javaee/jpa/jpa-impl/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.javaee.jpa",
-    "type": 1
+    "parent": "coF",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "X2",
+    "name": "intellij.javaee.jpa.impl/diagram",
+    "n": "i.javaee.jpa.impl/diagram",
+    "package": "com.intellij.jpa.diagram",
+    "sourceModule": "intellij.javaee.jpa.impl",
+    "descriptor": "plugins/javaee/jpa/jpa-impl/resources/intellij.javaee.jpa.impl.diagram.xml",
+    "parent": "coF",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -1247,6 +1266,18 @@
     "sourceModule": "intellij.javaee.jsf",
     "descriptor": "plugins/javaee/jsf/jsf-core/src/META-INF/plugin.xml",
     "pluginId": "com.intellij.jsf",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wv",
+    "name": "intellij.javaee.persistence.impl",
+    "n": "i.javaee.persistence.impl",
+    "package": "com.intellij.persistence",
+    "sourceModule": "intellij.javaee.persistence.impl",
+    "descriptor": "plugins/javaee/persistence/persistence-impl/META-INF/plugin.xml",
+    "pluginId": "com.intellij.persistence",
     "type": 1
   }
 }, {
@@ -3049,18 +3080,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "wv",
-    "name": "intellij.javaee.persistence.impl",
-    "n": "i.javaee.persistence.impl",
-    "package": null,
-    "sourceModule": "intellij.javaee.persistence.impl",
-    "descriptor": "plugins/javaee/persistence/persistence-impl/META-INF/plugin.xml",
-    "pluginId": "com.intellij.persistence",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "RM",
     "name": "intellij.javaee.jsp.base.impl",
     "n": "i.javaee.jsp.base.impl",
@@ -3716,6 +3735,14 @@
     "id": "X0_c5",
     "source": "X0",
     "target": "c5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_X2",
+    "source": "oF",
+    "target": "X2",
     "type": 1
   }
 }, {
@@ -5105,6 +5132,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "X2_Bv",
+    "source": "X2",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "FR_s7",
     "source": "FR",
     "target": "s7",
@@ -5140,6 +5175,38 @@
     "id": "FR_PN",
     "source": "FR",
     "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_S9",
+    "source": "wv",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_3J",
+    "source": "wv",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_Bv",
+    "source": "wv",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_LX",
+    "source": "wv",
+    "target": "LX",
     "type": 0
   }
 }, {
