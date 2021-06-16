@@ -483,12 +483,10 @@ public final class Utils {
             }, new EmptyProgressIndicator());
             return ref.get();
           });
-          queue.offer(() -> {
-            ActionUpdater.getActionUpdater(sessionRef.get()).applyPresentationChanges();
-            promise.setResult(ref.get());
-          });
+          queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
+          queue.offer(() -> promise.setResult(ref.get()));
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           promise.setError(e);
         }
       });
@@ -522,7 +520,7 @@ public final class Utils {
     try {
       return promise.isCancelled() ? defValue : promise.get();
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       Throwable cause = ExceptionUtil.getRootCause(ex);
       if (!(cause instanceof ProcessCanceledException)) {
         LOG.error(cause);
