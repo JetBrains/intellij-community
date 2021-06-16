@@ -106,7 +106,10 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
         @Override
         public void run() {
           if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-          myBuilder.select(rootNode1.myCachedChildren.get(0)); //first there is ony one child
+          List<SliceNode> children = rootNode1.myCachedChildren;
+          if (!children.isEmpty()) {
+            myBuilder.select(children.get(0)); //first there is ony one child
+          }
         }
       });
       treeSelectionChanged();
