@@ -235,7 +235,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         val virtualFileUrl = virtualFileManager.fromUrl(url)
         orderOfItems += virtualFileUrl
         val sourceRoot = builder.addSourceRootEntity(contentRootEntity, virtualFileUrl,
-                                                     type == JAVA_TEST_ROOT_TYPE_ID || type == JAVA_TEST_RESOURCE_ROOT_ID,
                                                      type, entitySource)
         if (type == JAVA_SOURCE_ROOT_TYPE_ID || type == JAVA_TEST_ROOT_TYPE_ID) {
           builder.addJavaSourceRootEntity(sourceRoot, sourceRootElement.getAttributeValue(IS_GENERATED_ATTRIBUTE)?.toBoolean() ?: false,
@@ -585,7 +584,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
     val javaRootProperties = sourceRoot.asJavaSourceRoot()
     if (javaRootProperties != null) {
-      sourceRootTag.setAttribute(IS_TEST_SOURCE_ATTRIBUTE, sourceRoot.tests.toString())
+      sourceRootTag.setAttribute(IS_TEST_SOURCE_ATTRIBUTE, (rootType == JAVA_TEST_ROOT_TYPE_ID).toString())
       val packagePrefix = javaRootProperties.packagePrefix
       if (packagePrefix.isNotEmpty()) {
         sourceRootTag.setAttribute(PACKAGE_PREFIX_ATTRIBUTE, packagePrefix)

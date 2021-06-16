@@ -36,7 +36,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
   private val sourceRootType: JpsModuleSourceRootType<out JpsElement> = getSourceRootType(sourceRootEntity)
 
   override fun getRootType() = sourceRootType
-  override fun isTestSource() = sourceRootEntity.tests
+  override fun isTestSource() = sourceRootType.isForTests
   override fun getPackagePrefix() = packagePrefixVar ?:
                                     sourceRootEntity.asJavaSourceRoot()?.packagePrefix ?:
                                     sourceRootEntity.asJavaResourceRoot()?.relativeOutputPath?.replace('/', '.') ?: ""
@@ -57,7 +57,6 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
     if (sourceRootEntity.url != other.sourceRootEntity.url) return false
     if (sourceRootEntity.rootType != other.sourceRootEntity.rootType) return false
-    if (sourceRootEntity.tests != other.sourceRootEntity.tests) return false
 
     val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
     val otherJavaSourceRoot = other.sourceRootEntity.asJavaSourceRoot()

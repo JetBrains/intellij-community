@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -84,7 +85,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(projectDir.absolutePath, JpsPathUtil.urlToOsPath(assertOneElement(mainModule.contentRoots.toList()).url.url))
     val mainModuleSrc = assertOneElement(mainModule.sourceRoots.toList())
     assertEquals(File(projectDir, "src").absolutePath, JpsPathUtil.urlToOsPath(mainModuleSrc.url.url))
-    assertFalse(mainModuleSrc.tests)
+    assertEquals(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, mainModuleSrc.rootType)
 
     assertEquals(6, mainModule.dependencies.size)
     assertEquals(ModuleDependencyItem.InheritedSdkDependency, mainModule.dependencies[0])

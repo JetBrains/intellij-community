@@ -16,7 +16,6 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
-import java.lang.IllegalArgumentException
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]
@@ -186,10 +185,10 @@ internal class EmlFileLoader(
     for (sourceRoot in entity.sourceRoots) {
       val url = sourceRoot.url.url
       val isForTests = url in testSourceFolders
-      if (isForTests != sourceRoot.tests) {
+      val rootType = if (isForTests) JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID else JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
+      if (rootType != sourceRoot.rootType) {
         builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
-          tests = isForTests
-          rootType = if (isForTests) JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID else JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
+          this.rootType = rootType
         }
       }
 
