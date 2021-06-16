@@ -1,10 +1,12 @@
 <html>
 <body>
-Reports methods which must either recurse infinitely or throw an exception. Methods reported by this inspection can not return normally.
-Though such can be written intentionally, in many cases it may be an overseen mistake.
-<p>Example:</p>
-<pre><code>
-  int baz() {
+Reports methods that call themselves infinitely unless an exception is thrown.
+<p>
+  Methods reported by this inspection cannot return normally.
+  While such behavior may be intended, in many cases this is just an oversight.
+</p>
+<p><b>Example:</b></p>
+<pre><code>  int baz() {
       return baz();
   }</code></pre>
 <!-- tooltip end -->
