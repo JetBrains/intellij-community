@@ -1,12 +1,13 @@
 <html>
 <body>
-Reports classes which implement the <code>Cloneable</code> interface, but which do not override the
-<code>clone()</code> method. Such classes use the default implementation of <code>clone()</code>,
-which is not <code>public</code>, but <code>protected</code>, and which does not copy the mutable state of the class.
-The quick-fix generates a basic <code>clone()</code> method,
-which can be used as a basis for a properly functioning <code>clone()</code> method,
-which a <code>Cloneable</code> class is expected to provide
-<p>Example:</p>
+Reports classes implementing the <code>Cloneable</code> interface that don't override the
+<code>clone()</code> method.
+<p>Such classes use the default implementation of <code>clone()</code>,
+  which isn't <code>public</code> but <code>protected</code>, and which does not copy the mutable state of the class.</p>
+<p>A quick-fix is available to generate a basic <code>clone()</code> method,
+which can be used as a basis for a properly functioning <code>clone()</code> method
+  expected from a <code>Cloneable</code> class.</p>
+<p><b>Example:</b></p>
 <pre><code>
   <b>public class</b> Data <b>implements</b> Cloneable {
     <b>private</b> String[] names;
@@ -35,8 +36,9 @@ community/plugins/InspectionGadgets/InspectionGadgetsAnalysis/resources/messages
 property key: cloneable.class.without.clone.todo.message
 -->
 <!-- tooltip end -->
-<p>Use the first checkbox to ignore classes which are <code>Cloneable</code> because they inherit from a <code>Cloneable</code> class</p>
-<p>Use the second checkbox to ignore classes which need implement <code>Cloneable</code> because the <code>clone()</code> method
-  from the super class is called inside the class</p>
+<p>Use the <b>Ignore classes cloneable due to inheritance</b> option to ignore classes that are
+  <code>Cloneable</code> because they inherit from the <code>Cloneable</code> class.</p>
+<p>Use the <b>Ignore when Cloneable is necessary to call clone() method of super class</b>
+  option to ignore classes that require implementing <code>Cloneable</code> because they call the <code>clone()</code> method from a superclass.</p>
 </body>
 </html>
