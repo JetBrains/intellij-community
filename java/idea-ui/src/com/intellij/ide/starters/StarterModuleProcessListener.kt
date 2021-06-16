@@ -7,9 +7,13 @@ import com.intellij.util.messages.Topic
 import java.util.*
 
 interface StarterModuleProcessListener : EventListener {
-  fun moduleCreated(module: Module, moduleBuilder: ModuleBuilder, frameworkVersion: String?)
+  @JvmDefault
+  fun moduleCreated(module: Module, moduleBuilder: ModuleBuilder, frameworkVersion: String?) {
+  }
 
-  fun moduleOpened(module: Module, moduleBuilder: ModuleBuilder, frameworkVersion: String?)
+  @JvmDefault
+  fun moduleOpened(module: Module, moduleBuilder: ModuleBuilder, frameworkVersion: String?) {
+  }
 
   companion object {
     @JvmStatic
