@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports constant new array expressions which can be replaced with an array initializer. Array initializers omit the type declaration because
-that is already specified by the declaration of the variable the expression is assigned to.
+Reports constant new array expressions which can be replaced with an array initializer. Array initializers can omit the type because
+that is already specified in the declaration of the variable the expression is assigned to.
 <p>Example:</p>
 <pre>
   int[] foo = new int[] {42};
