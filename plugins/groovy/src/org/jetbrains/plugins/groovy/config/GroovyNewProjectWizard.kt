@@ -38,8 +38,9 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
           lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
           lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
           twoColumnRow(
-            { fromUrlCheckbox = radioButton(GroovyBundle.message("radio.use.version.from.maven")) },
-            { val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
+            { fromUrlCheckbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary) },
+            {
+              val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
               val groovyLibraryDescription = downloadableType.libraryDescription
               comboBox(DefaultComboBoxModel(emptyArray()),
                        settings::version,
@@ -55,12 +56,14 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
                 }.enableIf(fromUrlCheckbox.selected)
             })
           twoColumnRow(
-            { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk")) },
+            { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary) },
             {
+              // todo: color in red if selected path does not correspond to a groovy sdk home
               textFieldWithBrowseButton(
-                settings::jarPath,
+                settings::sdkPath,
                 GroovyBundle.message("dialog.title.select.groovy.sdk"),
-                fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()).enableIf(fromFilesystemCheckbox.selected)
+                fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()).enableIf(
+                fromFilesystemCheckbox.selected)
             }
           )
           fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }
@@ -72,9 +75,6 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
-    if (project == null) {
-      return
-    }
     val builder = context.projectBuilder as? ModuleBuilder ?: return
     builder.contentEntryPath = project.basePath
     builder.name = project.name
@@ -82,21 +82,30 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     val compositionSettings = LibraryCompositionSettings(GroovyLibraryDescription(), { project.basePath ?: "./" },
                                                          FrameworkLibraryVersionFilter.ALL, listOf(settings.version.get()))
     compositionSettings.setDownloadLibraries(true)
+
     groovyModuleBuilder.updateFrom(builder)
-    builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
-      override fun update(module: Module, rootModel: ModifiableRootModel) {
-        val librariesContainer = if (context.modulesProvider == null)
-          LibrariesContainerFactory.createContainer(context.project)
-        else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
-        groovyModuleBuilder.setupRootModel(rootModel)
-        compositionSettings.downloadFiles(context.wizard.contentComponent)
-        compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
-      }
-    })
+    if (settings.useMavenLibrary) {
+      builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
+        override fun update(module: Module, rootModel: ModifiableRootModel) {
+          val librariesContainer = if (context.modulesProvider == null)
+            LibrariesContainerFactory.createContainer(context.project)
+          else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
+          groovyModuleBuilder.setupRootModel(rootModel)
+          compositionSettings.downloadFiles(context.wizard.contentComponent)
+          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+        }
+      })
+    }
+    else if (settings.useLocalLibrary) {
+      //todo
+    }
+
   }
 }
 
 class GroovyModuleSettings {
+  var useMavenLibrary: Boolean = false
+  var useLocalLibrary: Boolean = false
   var version: Optional<FrameworkLibraryVersion> = Optional.empty()
-  var jarPath: String = ""
+  var sdkPath: String = ""
 }
