@@ -39,7 +39,10 @@ import kotlin.math.min
 class AlertMessagesManager : MacMessages() {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", true)
+    fun isEnabled(): Boolean {
+      val app = ApplicationManager.getApplication()
+      return app != null && !app.isUnitTestMode && !app.isHeadlessEnvironment && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
+    }
 
     @JvmStatic
     fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
