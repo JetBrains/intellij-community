@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.FALSE;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TRUE;
 
 public class NotInstruction extends ExpressionPushingInstruction {
-  public NotInstruction(DfaAnchor anchor) {
+  public NotInstruction(@Nullable DfaAnchor anchor) {
     super(anchor);
   }
 

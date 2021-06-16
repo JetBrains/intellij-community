@@ -27,10 +27,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.FList
 import com.intellij.util.containers.FactoryMap
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isDouble
 import org.jetbrains.kotlin.types.typeUtil.isFloat
@@ -78,6 +81,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtBinaryExpression -> processBinaryExpression(expr)
             is KtPrefixExpression -> processPrefixExpression(expr)
             is KtPostfixExpression -> processPostfixExpression(expr)
+            is KtIsExpression -> processIsExpression(expr)
             is KtCallExpression -> processCallExpression(expr)
             is KtConstantExpression -> processConstantExpression(expr)
             is KtSimpleNameExpression -> processReferenceExpression(expr)
@@ -96,13 +100,26 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtLambdaExpression -> processLambda(expr)
             is KtStringTemplateExpression -> processStringTemplate(expr)
             // when, try, anonymous classes, local functions
-            // as, as?, is, is?, in
+            // as, as?, in
             else -> {
                 // unsupported construct
                 broken = true
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processIsExpression(expr: KtIsExpression) {
+        processExpression(expr.leftHandSide)
+        val typeReference = expr.typeReference
+        val type = typeReference?.getAbbreviatedTypeOrType(expr.analyze(BodyResolveMode.FULL)).toDfType(expr)
+        addInstruction(PushValueInstruction(type))
+        if (expr.isNegated) {
+            addInstruction(InstanceofInstruction(null, false))
+            addInstruction(NotInstruction(KotlinExpressionAnchor(expr)))
+        } else {
+            addInstruction(InstanceofInstruction(KotlinExpressionAnchor(expr), false))
+        }
     }
 
     private fun processStringTemplate(expr: KtStringTemplateExpression) {
@@ -138,6 +155,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processCallExpression(expr: KtCallExpression) {
+        // TODO: recognize constructors, set the exact type for the result
         val args = expr.valueArgumentList?.arguments
         if (args != null) {
             for (arg: KtValueArgument in args) {

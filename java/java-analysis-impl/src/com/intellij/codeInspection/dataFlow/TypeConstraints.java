@@ -191,7 +191,7 @@ public final class TypeConstraints {
   }
 
   @NotNull
-  private static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
+  public static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name != null) {
       switch (name) {

@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
@@ -14,8 +13,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -32,7 +33,7 @@ public class InstanceofInstruction extends ExpressionPushingInstruction {
    * @param classObjectCheck if true then the top-of-stack value is assumed to be a Class object (PsiType constant or not)
    *                         instead of target DfType
    */
-  public InstanceofInstruction(@NotNull DfaAnchor anchor, boolean classObjectCheck) {
+  public InstanceofInstruction(@Nullable DfaAnchor anchor, boolean classObjectCheck) {
     super(anchor);
     myClassObjectCheck = classObjectCheck;
   }
@@ -87,6 +88,6 @@ public class InstanceofInstruction extends ExpressionPushingInstruction {
 
   @Override
   public String toString() {
-    return "INSTANCE_OF " + (myClassObjectCheck ? "" : "(CLASS)");
+    return "INSTANCE_OF " + (myClassObjectCheck ? "(CLASS)" : "");
   }
 }
