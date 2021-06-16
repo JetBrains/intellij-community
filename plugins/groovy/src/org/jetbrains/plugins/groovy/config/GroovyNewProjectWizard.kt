@@ -9,17 +9,20 @@ import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
+import java.awt.KeyboardFocusManager
+import java.nio.file.Path
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingUtilities
@@ -62,8 +65,8 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
               textFieldWithBrowseButton(
                 settings::sdkPath,
                 GroovyBundle.message("dialog.title.select.groovy.sdk"),
-                fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()).enableIf(
-                fromFilesystemCheckbox.selected)
+                fileChooserDescriptor = GroovyLibraryDescription().createFileChooserDescriptor()
+              ).enableIf(fromFilesystemCheckbox.selected)
             }
           )
           fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }
@@ -79,27 +82,32 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     builder.contentEntryPath = project.basePath
     builder.name = project.name
     val groovyModuleBuilder = GroovyAwareModuleBuilder()
-    val compositionSettings = LibraryCompositionSettings(GroovyLibraryDescription(), { project.basePath ?: "./" },
+    val libraryDescription = GroovyLibraryDescription()
+    val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
                                                          FrameworkLibraryVersionFilter.ALL, listOf(settings.version.get()))
-    compositionSettings.setDownloadLibraries(true)
 
     groovyModuleBuilder.updateFrom(builder)
+    val librariesContainer = if (context.modulesProvider == null)
+      LibrariesContainerFactory.createContainer(context.project)
+    else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
     if (settings.useMavenLibrary) {
-      builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
-        override fun update(module: Module, rootModel: ModifiableRootModel) {
-          val librariesContainer = if (context.modulesProvider == null)
-            LibrariesContainerFactory.createContainer(context.project)
-          else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
-          groovyModuleBuilder.setupRootModel(rootModel)
-          compositionSettings.downloadFiles(context.wizard.contentComponent)
-          compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
-        }
-      })
+      compositionSettings.setDownloadLibraries(true)
+      compositionSettings.downloadFiles(context.wizard.rootPane)
     }
     else if (settings.useLocalLibrary) {
-      //todo
+      val virtualFile = VfsUtil.findFile(Path.of(settings.sdkPath), false) ?: return
+      val newLibraryConfiguration = libraryDescription.createLibraryConfiguration(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow, virtualFile) ?: return
+      val libraryEditor = NewLibraryEditor(newLibraryConfiguration.libraryType, newLibraryConfiguration.properties)
+      libraryEditor.name = librariesContainer.suggestUniqueLibraryName(newLibraryConfiguration.defaultLibraryName)
+      newLibraryConfiguration.addRoots(libraryEditor)
+      compositionSettings.setNewLibraryEditor(libraryEditor)
     }
-
+    builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
+      override fun update(module: Module, rootModel: ModifiableRootModel) {
+        groovyModuleBuilder.setupRootModel(rootModel)
+        compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
+      }
+    })
   }
 }
 
