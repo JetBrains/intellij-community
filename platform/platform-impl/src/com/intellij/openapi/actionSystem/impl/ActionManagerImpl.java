@@ -51,6 +51,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.serviceContainer.ContainerUtilKt;
+import com.intellij.serviceContainer.PrecomputedExtensionModelKt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -165,7 +166,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @ApiStatus.Internal
   public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins) {
     KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-    ContainerUtilKt.executeRegisterTask(plugins, it -> {
+    PrecomputedExtensionModelKt.executeRegisterTask(plugins, it -> {
       registerPluginActions(it, keymapManager);
       return Unit.INSTANCE;
     });

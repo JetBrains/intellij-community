@@ -12,8 +12,8 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -67,7 +67,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
       val internalFile = entitySource as? JpsFileEntitySource ?: (entitySource as JpsImportedEntitySource).internalFile
       JpsImportedEntitySource(internalFile, externalSystemId, module.project.isExternalStorageEnabled)
     }
-    ModuleManagerComponentBridge.changeModuleEntitySource(module, storage, newSource, getModuleDiff())
+    ModuleManagerBridgeImpl.changeModuleEntitySource(module, storage, newSource, getModuleDiff())
   }
 
   override fun getExternalSystemId(): String? = findEntity()?.externalSystem

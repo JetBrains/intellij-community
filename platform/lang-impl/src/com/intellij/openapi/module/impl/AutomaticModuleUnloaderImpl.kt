@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.UnloadedModulesListChange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
@@ -24,9 +26,9 @@ import com.intellij.xml.util.XmlStringUtil
  * aren't required for loaded modules.
  */
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-@Service(Service.Level.PROJECT)
-internal class AutomaticModuleUnloader(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()) {
-  fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
+internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
+                                                                           AutomaticModuleUnloader {
+  override fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
     val oldLoaded = state.modules.toSet()
     if (oldLoaded.isEmpty() || modulesToLoad.all { it.moduleName in oldLoaded }) {
       return UnloadedModulesListChange(emptyList(), emptyList(), emptyList())
@@ -54,7 +56,7 @@ internal class AutomaticModuleUnloader(private val project: Project) : SimplePer
     return change
   }
 
-  fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
+  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
     if (currentModules.isEmpty()) return
 
     val oldLoaded = state.modules.toSet()
@@ -159,7 +161,7 @@ internal class AutomaticModuleUnloader(private val project: Project) : SimplePer
     }
   }
 
-  fun setLoadedModules(modules: List<String>) {
+  override fun setLoadedModules(modules: List<String>) {
     val list = state.modules
     list.clear()
     list.addAll(modules)
@@ -168,10 +170,7 @@ internal class AutomaticModuleUnloader(private val project: Project) : SimplePer
   }
 
   companion object {
-    private val LOG = logger<AutomaticModuleUnloader>()
-
-    @JvmStatic
-    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
+    private val LOG = logger<AutomaticModuleUnloaderImpl>()
 
     private val NOTIFICATION_GROUP: NotificationGroup
       get() = NotificationGroupManager.getInstance().getNotificationGroup("Automatic Module Unloading")
@@ -182,5 +181,3 @@ class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
   val modules by list<String>()
 }
-
-class UnloadedModulesListChange(val toLoad: List<ModulePath>, val toUnload: List<ModulePath>, val toUnloadDescriptions: List<UnloadedModuleDescriptionImpl>)
