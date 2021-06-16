@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -194,7 +195,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     final String name = method.getName();
     if (!"writeReplace".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
-    if (parameters.size() != 0) return false;
+    if (!parameters.isEmpty()) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.isStatic()) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
@@ -205,7 +206,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     final String name = method.getName();
     if (!"readResolve".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
-    if (parameters.size() != 0) return false;
+    if (!parameters.isEmpty()) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.isStatic()) return false;
     final UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
@@ -216,7 +217,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return type != null && type.equalsToText(text);
   }
 
-  private static boolean isSerializable(UClass aClass, @Nullable RefClass refClass) {
+  private static boolean isSerializable(@NotNull UClass aClass, @Nullable RefClass refClass) {
     PsiClass psi = aClass.getPsi();
     final PsiClass serializableClass = JavaPsiFacade.getInstance(psi.getProject()).findClass("java.io.Serializable", psi.getResolveScope());
     return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
@@ -465,7 +466,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
               }
             }
 
-            public void queryQualifiedNameUsages(@NotNull RefClass refClass) {
+            void queryQualifiedNameUsages(@NotNull RefClass refClass) {
               if (firstPhase && isAddNonJavaUsedEnabled()) {
                 globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
                   EntryPointsManager entryPointsManager = getEntryPointsManager(globalContext);
@@ -582,9 +583,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private int myInstantiatedClassesCount;
     private final Set<RefMethod> myProcessedMethods = new HashSet<>();
 
-    @Override public void visitMethod(@NotNull RefMethod method) {
+    @Override
+    public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
+        RefClass methodOwnerClass = method.getOwnerClass();
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
           if (method.isStatic()) {
             RefElementImpl owner = (RefElementImpl)method.getOwner();
@@ -592,25 +595,23 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
               owner.setReachable(true);
             }
           }
+          else if (methodOwnerClass != null) {
+            addInstantiatedClass(methodOwnerClass);
+          }
           else {
-            RefClass ownerClass = method.getOwnerClass();
-            if (ownerClass != null) {
-              addInstantiatedClass(ownerClass);
-            } else {
-              LOG.error("owner class is null for " + method.getPsiElement()
+            LOG.error("owner class is null for " + method.getPsiElement()
                       + " is static ? " + method.isStatic()
                       + "; is abstract ? " + method.isAbstract()
                       + "; is main method ? " + method.isAppMain()
                       + "; is constructor " + method.isConstructor()
                       + "; containing file " + method.getPointer().getVirtualFile().getFileType());
-            }
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
-          makeClassInitializersReachable(method.getOwnerClass());
+          makeClassInitializersReachable(methodOwnerClass);
         }
         else {
-          if (isClassInstantiated(method.getOwnerClass())) {
+          if (methodOwnerClass == null || isClassInstantiated(methodOwnerClass)) {
             myProcessedMethods.add(method);
             makeContentReachable((RefJavaElementImpl)method);
           }
@@ -675,17 +676,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void addDelayedMethod(RefMethod refMethod) {
-      Set<RefMethod> methods = myClassIDtoMethods.get(refMethod.getOwnerClass());
-      if (methods == null) {
-        methods = new HashSet<>();
-        myClassIDtoMethods.put(refMethod.getOwnerClass(), methods);
-      }
+    private void addDelayedMethod(@NotNull RefMethod refMethod) {
+      Set<RefMethod> methods = myClassIDtoMethods.computeIfAbsent(refMethod.getOwnerClass(), __ -> new HashSet<>());
       methods.add(refMethod);
     }
 
-    private boolean isClassInstantiated(RefClass refClass) {
-      return refClass == null || refClass.isUtilityClass() || myInstantiatedClasses.contains(refClass);
+    private boolean isClassInstantiated(@NotNull RefClass refClass) {
+      return refClass.isUtilityClass() || myInstantiatedClasses.contains(refClass);
     }
 
     private int newlyInstantiatedClassesCount() {
@@ -712,6 +709,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
+  @NotNull
   public List<EntryPoint> getExtensions() {
     List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
     List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
@@ -735,7 +733,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return deadCodeAddIns;
   }
 
-  public static String getDisplayNameText() {
+  @Contract(pure = true)
+  public static @NotNull String getDisplayNameText() {
     return AnalysisBundle.message("inspection.dead.code.display.name");
   }
 }

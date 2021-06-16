@@ -166,14 +166,15 @@ public final class VfsImplUtil {
    * <p>
    * Likely you need this method if you have following code:
    *
-   * <code>
+   * <code><pre>
    * FileDocumentManager.getInstance().saveDocument(document);
    * runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
-   * VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
-   * </code>
+   * VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with forceSyncRefresh(virtualFile);
+   * </pre></code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    RefreshQueue.getInstance().processSingleEvent(false, new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
+    VFileContentChangeEvent event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
+    RefreshQueue.getInstance().processSingleEvent(false, event);
   }
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
@@ -362,6 +363,7 @@ public final class VfsImplUtil {
    * should generate {@link VFileDeleteEvent}('file://x.jar').</p>
    * (The latter might happen when someone explicitly called {@code fileInsideJar.refresh()} without refreshing jar file in local file system).
    */
+  @NotNull
   public static List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||

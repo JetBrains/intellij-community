@@ -120,7 +120,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     ApplicationManager.getApplication().runWriteAction(() -> assertTrue(indicator.isCanceled()));
     assertTrue(indicator.isCanceled());
-    waitForComplete(future);
+    waitForCompleteInEDT(future);
   }
 
   public void testReadTaskCanceledShouldNotHappenAfterEdtContinuation() throws Exception {
@@ -145,11 +145,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       });
       UIUtil.dispatchAllInvocationEvents();
-      waitForComplete(future);
+      waitForCompleteInEDT(future);
     }
   }
 
-  private static void waitForComplete(CompletableFuture<?> future) throws InterruptedException, ExecutionException {
+  private static void waitForCompleteInEDT(@NotNull CompletableFuture<?> future) throws InterruptedException, ExecutionException {
     while (true) {
       try {
         future.get(1, TimeUnit.MILLISECONDS);
