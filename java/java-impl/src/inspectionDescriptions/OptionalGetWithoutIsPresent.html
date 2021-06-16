@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports <code>Optional.get()</code> method calls without an earlier check that the optional has a value.
-If the optional is empty, calling <code>Optional.get()</code> will throw an exception.
-<p>Example:
+Reports calls to <code>get()</code> on an <code>Optional</code> without checking that it has a value.
+<p>Calling <code>Optional.get()</code> on an empty <code>Optional</code> instance will throw an exception.</p>
+<p><b>Example:</b></p>
 <pre>
   <b>void</b> x(List&lt;Integer> list) {
     <b>final</b> Optional&lt;Integer> optional =

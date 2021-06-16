@@ -1,8 +1,10 @@
 <html>
 <body>
-Reports redundant operations on empty collections, maps or arrays. Iterating, removing elements, sorting, 
-and some other operations on empty collections have no effect and could be removed or signal about a possible bug.
-<p>Example:</p>
+Reports redundant operations on empty collections, maps or arrays.
+<p>
+  Iterating, removing elements, sorting,
+  and some other operations on empty collections have no effect and can be removed. Also, they may be a signal of a bug.</p>
+<p><b>Example:</b></p>
 <pre>
   if (numbers.isEmpty()){
     //error due to the missed negation

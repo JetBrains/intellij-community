@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports any <code>new</code> expressions that instantiate utility classes.
-Utility classes have all fields and methods declared <code>static</code>. 
-Instantiation of such classes is most likely unnecessary and indicates
-a mistake.
-<p>Example:</p>
+Reports instantiation of utility classes using the <code>new</code> keyword.
+<p>
+  In utility classes, all fields and methods are <code>static</code>.
+  Instantiation of such classes is most likely unnecessary and indicates a mistake.</p>
+<p><b>Example:</b></p>
 <pre>
   class MyUtils {
     public static double cube(double x) {
@@ -19,8 +19,8 @@ a mistake.
   }
 </pre>
 <p>
-  To avoid instantiations of utility classes completely,
-  it's recommended to add a private default constructor.
+  To prevent utility classes from being instantiated,
+  it's recommended to use a <code>private</code> constructor.
 </p>
 <!-- tooltip end -->
 </body>

@@ -1,8 +1,16 @@
 <html>
 <body>
-Reports any <code>StringBuilder</code> or <code>StringBuffer</code> fields or variables whose contents are read but not written,
-or written but not read. Such mismatched reads and writes are pointless, and probably indicate
-dead, incomplete or erroneous code.
+Reports <code>StringBuilder</code> or <code>StringBuffer</code> objects whose contents are read but not written to,
+or written to but not read.
+<p>Such inconsistent reads and writes are pointless and probably indicate
+  dead, incomplete, or erroneous code.</p>
+<p><b>Example:</b></p>
+<pre>
+  public void m1() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("a");
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
