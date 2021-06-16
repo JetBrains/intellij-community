@@ -5,7 +5,7 @@ Reports two consecutive comparisons that can be converted to a range check.
 <p><b>Example:</b></p>
 <pre><code>
   fun checkMonth(month: Int): Boolean {
-      return month >= 1 && month <= 12
+      return month >= 1 && month &lt;= 12
   }
 </code></pre>
 <p>A quick-fix is suggested to replace the comparison-based check into a range one:</p>
