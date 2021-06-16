@@ -1,18 +1,16 @@
 <html>
 <body>
-Reports labelled statements inside of <code>switch</code> statements.
-While occasionally intended, this construction is often the result of a typo.
+<p>Reports labeled statements inside of <code>switch</code> statements.
+  While occasionally intended, this construction is often the result of a typo.</p>
 <p><b>Example:</b></p>
-<pre>
-    switch (x) {
-        case 1:
-        case2:   //warning: Text label 'case2:' in 'switch' statement 
-        case 3:
-            break;
-    }
-</pre>
+<pre><code>
+  switch (x) {
+      case 1:
+      case2:   //warning: Text label 'case2:' in 'switch' statement
+      case 3:
+          break;
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

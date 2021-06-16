@@ -1,20 +1,20 @@
 <html>
 <body>
-Reports instantiations of <code>Throwable</code> or a subclass, where the created <code>Throwable</code>
-is never actually thrown.
-These are simple mistakes to make which are hard to catch in tests.
-<p>Also reports method calls which return instances of <code>Throwable</code> or a subclass,
-where the result of the method call is not thrown.
-Calls to methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.
-<p>Example:</p>
+<p>Reports instantiations of <code>Throwable</code> or a subclass, when the created <code>Throwable</code>
+  is never actually thrown.</p>
+<p>These reports indicate mistakes that are hard to catch in tests.</p>
+<p>Also, this inspection reports method calls that return instances of <code>Throwable</code> or a subclass,
+  when the result of the method call is not thrown.</p>
+<p>Calls to methods annotated with the Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.</p>
+<p><b>Example:</b></p>
 <pre>
+<code>
     void leftBehind() throws Throwable {
-        RuntimeException e = new RuntimeException("throw me");
+        RuntimeException e = new RuntimeException(""throw me"");
         // ...
     }
+</code>
 </pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
