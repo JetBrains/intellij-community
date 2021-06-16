@@ -568,6 +568,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "chz",
+    "n": "org.jetbrains.plugins.go.sharedIndexes.bundled"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "hz",
     "name": "intellij.go.sharedIndexes.bundled",
     "n": "i.go.sharedIndexes.bundled",
@@ -575,7 +581,20 @@
     "sourceModule": "intellij.go.sharedIndexes.bundled",
     "descriptor": "goland/intellij-go/go-shared-indexes-bundled/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.go.sharedIndexes.bundled",
-    "type": 1
+    "parent": "chz",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "iY",
+    "name": "intellij.go.sharedIndexes.bundled/sharedCore",
+    "n": "i.go.sharedIndexes.bundled/sharedCore",
+    "package": "com.goide.index.shared.bundled.gosdk",
+    "sourceModule": "intellij.go.sharedIndexes.bundled",
+    "descriptor": "goland/intellij-go/go-shared-indexes-bundled/resources/intellij.go.sharedIndexes.bundled.sharedCore.xml",
+    "parent": "chz",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2849,6 +2868,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "1t",
+    "name": "intellij.indexing.shared",
+    "n": "i.indexing.shared",
+    "package": null,
+    "sourceModule": "intellij.indexing.shared",
+    "descriptor": "plugins/shared-indexes/core/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.indexing.shared.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "87",
     "name": "intellij.gradle.java",
     "n": "i.gradle.java",
@@ -2927,18 +2958,6 @@
     "sourceModule": "intellij.microservices.uast",
     "descriptor": "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.microservices.uast",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "1t",
-    "name": "intellij.indexing.shared",
-    "n": "i.indexing.shared",
-    "package": null,
-    "sourceModule": "intellij.indexing.shared",
-    "descriptor": "plugins/shared-indexes/core/resources/META-INF/plugin.xml",
-    "pluginId": "intellij.indexing.shared.core",
     "type": 1
   }
 }, {
@@ -3445,6 +3464,14 @@
     "id": "ae_rq",
     "source": "ae",
     "target": "rq",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hz_iY",
+    "source": "hz",
+    "target": "iY",
     "type": 1
   }
 }, {
@@ -4437,6 +4464,14 @@
     "id": "hz_ae",
     "source": "hz",
     "target": "ae",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "iY_1t",
+    "source": "iY",
+    "target": "1t",
     "type": 0
   }
 }, {
