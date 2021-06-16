@@ -1,22 +1,21 @@
 <html>
 <body>
 Reports <code>equals()</code> calls on enum constants.
-Such calls can be replaced by an identity comparison (<code>==</code>) because two
-enum constants are equal only when they have the same identity.
-Use the quick-fix to change the call to a comparison.
-<p>Example:</p>
-<pre>
+<p>Such calls can be replaced by an identity comparison (<code>==</code>) because two
+  enum constants are equal only when they have the same identity.</p>
+<p>A quick-fix is available to change the call to a comparison.</p>
+<p><b>Example:</b></p>
+<pre><code>
   boolean foo(MyEnum value) {
     return value.equals(MyEnum.FOO);
   }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   boolean foo(MyEnum value) {
     return value == MyEnum.FOO;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>
