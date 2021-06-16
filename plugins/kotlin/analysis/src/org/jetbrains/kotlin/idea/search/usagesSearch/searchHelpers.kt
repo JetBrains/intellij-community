@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 fun PsiNamedElement.getAccessorNames(readable: Boolean = true, writable: Boolean = true): List<String> {
@@ -79,7 +80,9 @@ fun KtParameter.isDataClassProperty(): Boolean {
 }
 
 fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
-    val callableDescriptor = (target as? KtCallableDeclaration)?.resolveToDescriptorIfAny() as? CallableDescriptor
+    val ktCallableDeclaration =
+        target.safeAs<KtCallableDeclaration>()?.takeIf { it.hasModifier(KtTokens.OVERRIDE_KEYWORD) } ?: return emptyList()
+    val callableDescriptor = ktCallableDeclaration.resolveToDescriptorIfAny() as? CallableDescriptor
     val descriptorsToHighlight = if (callableDescriptor is ParameterDescriptor)
         listOf(callableDescriptor)
     else
