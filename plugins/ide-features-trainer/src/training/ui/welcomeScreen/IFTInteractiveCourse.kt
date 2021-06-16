@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
-import icons.FeaturesTrainerIcons.Img.PluginIcon
+import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
@@ -26,7 +26,7 @@ import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-class IFTInteractiveCourse : InteractiveCourseFactory {
+internal class IFTInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
 }
 
@@ -41,7 +41,7 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getIcon(): Icon {
-    return PluginIcon
+    return FeaturesTrainerIcons.Img.PluginIcon
   }
 
   override fun getActionButtonName(): String {

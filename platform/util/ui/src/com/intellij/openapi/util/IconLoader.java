@@ -173,15 +173,36 @@ public final class IconLoader {
 
   public static @Nullable Icon getReflectiveIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     try {
-      // if starts with lower case char - it is package name
-      int lastDotIndex = path.lastIndexOf('.');
-      String fullClassName = path.substring(0, lastDotIndex);
-      // if package is specified, $ must be used for nested subclasses instead of dot
-      if (!Character.isLowerCase(path.charAt(0))) {
-        fullClassName = (path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.") + fullClassName.replace('.', '$');
+      int dotIndex = path.lastIndexOf('.');
+      String fieldName = path.substring(dotIndex + 1);
+
+      StringBuilder builder;
+      builder = new StringBuilder(path.length() + 20);
+      builder.append(path, 0, dotIndex);
+      int separatorIndex = -1;
+      do {
+        dotIndex = path.lastIndexOf('.', dotIndex - 1);
+        // if starts with lower case char - it is package name
+        if (dotIndex == -1 || Character.isLowerCase(path.charAt(dotIndex + 1))) {
+          break;
+        }
+
+        if (separatorIndex != -1) {
+          builder.setCharAt(separatorIndex, '$');
+        }
+        separatorIndex = dotIndex;
       }
-      Class<?> aClass = classLoader.loadClass(fullClassName);
-      return (Icon)LOOKUP.findStaticGetter(aClass, path.substring(lastDotIndex + 1), Icon.class).invoke();
+      while (true);
+
+      if (!Character.isLowerCase(builder.charAt(0))) {
+        if (separatorIndex != -1) {
+          builder.setCharAt(separatorIndex, '$');
+        }
+        builder.insert(0, path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.");
+      }
+
+      Class<?> aClass = classLoader.loadClass(builder.toString());
+      return (Icon)LOOKUP.findStaticGetter(aClass, fieldName, Icon.class).invoke();
     }
     catch (Throwable e) {
       return null;
@@ -324,10 +345,7 @@ public final class IconLoader {
   }
 
   public static boolean isReflectivePath(@NotNull String path) {
-    if (path.isEmpty() || path.charAt(0) == '/') {
-      return false;
-    }
-    return path.contains("Icons.");
+    return !path.isEmpty() && path.charAt(0) != '/' && path.contains("Icons.");
   }
 
   public static @Nullable Icon findIcon(@Nullable URL url) {
