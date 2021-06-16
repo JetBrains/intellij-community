@@ -393,7 +393,7 @@ final class DistributionJARsBuilder {
     return moduleToJar
   }
 
-  private void buildLib() {
+  void buildLib() {
     LayoutBuilder layoutBuilder = createLayoutBuilder()
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
 
@@ -451,13 +451,17 @@ final class DistributionJARsBuilder {
                   Collections.<Pair<File, String>>emptyList())
   }
 
-  private void buildBundledPlugins() {
-    def layoutBuilder = createLayoutBuilder()
+  void buildBundledPlugins() {
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    buildBundledPlugins(allPlugins)
+  }
+
+  void buildBundledPlugins(List<PluginLayout> plugins) {
+    def layoutBuilder = createLayoutBuilder()
     def pluginDirectoriesToSkip = buildContext.options.bundledPluginDirectoriesToSkip as Set<String>
     buildContext.messages.debug("Plugin directories to skip: " + pluginDirectoriesToSkip)
     buildContext.messages.block("Build bundled plugins") {
-      def pluginsToBundle = allPlugins.findAll {
+      def pluginsToBundle = plugins.findAll {
         satisfiesBundlingRequirements(it, null) && !pluginDirectoriesToSkip.contains(it.directoryName)
       }
       buildPlugins(layoutBuilder, pluginsToBundle, buildContext.paths.distAllDir.resolve(PLUGINS_DIRECTORY), projectStructureMapping)
