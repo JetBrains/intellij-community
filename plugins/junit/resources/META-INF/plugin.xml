@@ -78,7 +78,7 @@
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
 
     <localInspection language="UAST" shortName="Junit5MalformedParameterized" bundle="messages.JUnitBundle"
-                     key="jvm.inspections.junit5.malformed.parameterized.display.name"
+                     key="junit5.malformed.parameterized.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
 

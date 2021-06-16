@@ -57,10 +57,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
         val testAnnotation = findAnnotations(node, JUnitUtil.TEST5_JUPITER_ANNOTATIONS.toMutableList())
         if (parameterizedAnnotation.isNotEmpty()) {
           if (testAnnotation.isNotEmpty() && node.uastParameters.isNotEmpty() && testAnnotation[0].sourcePsi != null) {
-            holder.registerProblem(testAnnotation[0].uastAnchor?.sourcePsi!!,
-                                   JUnitBundle.message(
-                                     "jvm.inspections.junit5.malformed.parameterized.inspection.description.suspicious.combination.test.and.parameterizedtest"),
-                                   DeleteElementFix(testAnnotation[0].sourcePsi!!))
+            testAnnotation[0].uastAnchor?.sourcePsi?.let {
+              holder.registerProblem(it,
+                                     JUnitBundle.message(
+                                       "junit5.malformed.parameterized.inspection.description.suspicious.combination.test.and.parameterizedtest"),
+                                     DeleteElementFix(testAnnotation[0].sourcePsi!!))
+            }
           }
 
           val singleParameterProviderChecker = SingleParameterChecker(holder)
@@ -89,11 +91,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
         else {
           if (testAnnotation.isNotEmpty() && MetaAnnotationUtil.isMetaAnnotated(node.javaPsi, JUnitCommonClassNames.SOURCE_ANNOTATIONS)
               && testAnnotation[0].sourcePsi != null && testAnnotation[0].javaPsi != null) {
-            holder.registerProblem(testAnnotation[0].uastAnchor?.sourcePsi!!,
-                                   JUnitBundle.message(
-                                     "jvm.inspections.junit5.malformed.parameterized.inspection.description.suspicious.combination"),
-                                   ChangeAnnotationFix(testAnnotation[0].javaPsi!!,
-                                                       JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+            testAnnotation[0].uastAnchor?.sourcePsi?.let {
+              holder.registerProblem(it,
+                                     JUnitBundle.message(
+                                       "junit5.malformed.parameterized.inspection.description.suspicious.combination"),
+                                     ChangeAnnotationFix(testAnnotation[0].javaPsi!!,
+                                                         JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+            }
           }
         }
         return true
@@ -122,11 +126,11 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
           if (!singleParameterProviders) {
             holder.registerProblem(sourcePsi,
                                    JUnitBundle.message(
-                                     "jvm.inspections.junit5.malformed.parameterized.inspection.description.no.sources.are.provided"))
+                                     "junit5.malformed.parameterized.inspection.description.no.sources.are.provided"))
           }
           else if (hasMultipleParameters(method.javaPsi)) {
             holder.registerProblem(sourcePsi, JUnitBundle.message(
-              "jvm.inspections.junit5.malformed.parameterized.inspection.description.multiple.parameters.are.not.supported.by.this.source"))
+              "junit5.malformed.parameterized.inspection.description.multiple.parameters.are.not.supported.by.this.source"))
           }
         }
       }
@@ -158,7 +162,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
 class ChangeAnnotationFix(testAnnotation: PsiAnnotation,
                           private val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
   override fun getFamilyName(): String = JUnitBundle.message(
-    "jvm.inspections.junit5.malformed.parameterized.fix.family.name")
+    "junit5.malformed.parameterized.fix.family.name")
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
     val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$targetAnnotation", startElement)
@@ -168,8 +172,8 @@ class ChangeAnnotationFix(testAnnotation: PsiAnnotation,
     }
   }
 
-  override fun getText(): String = JUnitBundle.message("jvm.inspections.junit5.malformed.parameterized.fix.text",
-                                                             StringUtil.getShortName(targetAnnotation))
+  override fun getText(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.text",
+                                                       StringUtil.getShortName(targetAnnotation))
 }
 
 private class CsvChecker(val holder: ProblemsHolder) {
@@ -181,7 +185,7 @@ private class CsvChecker(val holder: ProblemsHolder) {
         if (ref is FileReference && ref.multiResolve(false).isEmpty()) {
           holder.registerProblem(ref.element, ref.rangeInElement,
                                  JUnitBundle.message(
-                                   "jvm.inspections.junit5.malformed.parameterized.inspection.description.file.source",
+                                   "junit5.malformed.parameterized.inspection.description.file.source",
                                    attributeValue.text), *ref.quickFixes)
         }
       }
@@ -225,12 +229,12 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
 
     if (attributesNumber > 1) {
       holder.registerProblem(sourcePsi, JUnitBundle.message(
-        "jvm.inspections.junit5.malformed.parameterized.inspection.description.exactly.one.type.of.input.must.be.provided"))
+        "junit5.malformed.parameterized.inspection.description.exactly.one.type.of.input.must.be.provided"))
     }
     else if (attributesNumber == 0) {
       holder.registerProblem(sourcePsi,
                              JUnitBundle.message(
-                               "jvm.inspections.junit5.malformed.parameterized.inspection.description.no.value.source.is.defined"))
+                               "junit5.malformed.parameterized.inspection.description.no.value.source.is.defined"))
     }
   }
 
@@ -253,12 +257,12 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
             if (!allEnumConstants.contains(value)) {
               holder.registerProblem(sourcePsi,
                                      JUnitBundle.message(
-                                       "jvm.inspections.junit5.malformed.parameterized.inspection.description.unresolved.enum"))
+                                       "junit5.malformed.parameterized.inspection.description.unresolved.enum"))
             }
             else if (!definedConstants.add(value)) {
               holder.registerProblem(sourcePsi,
                                      JUnitBundle.message(
-                                       "jvm.inspections.junit5.malformed.parameterized.inspection.description.duplicated.enum"))
+                                       "junit5.malformed.parameterized.inspection.description.duplicated.enum"))
             }
           }
         }
@@ -310,7 +314,7 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
             JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH) != null || sourcePsi == null) return
         holder.registerProblem(sourcePsi,
                                JUnitBundle.message(
-                                 "jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.assignable",
+                                 "junit5.malformed.parameterized.inspection.description.method.source.assignable",
                                  componentType.presentableText, paramType.presentableText))
       }
     }
@@ -402,7 +406,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
       val intention = IntentionWrapper.wrapToQuickFixes(actions, sourceProvider.javaPsi.containingFile).toTypedArray()
       problemsHolder.registerProblem(sourcePsi,
                                      JUnitBundle.message(
-                                       "jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.static",
+                                       "junit5.malformed.parameterized.inspection.description.method.source.static",
                                        providerName),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      *intention)
@@ -410,7 +414,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
     else if (sourceProvider.uastParameters.isNotEmpty()) {
       problemsHolder.registerProblem(sourcePsi,
                                      JUnitBundle.message(
-                                       "jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.no.params",
+                                       "junit5.malformed.parameterized.inspection.description.method.source.no.params",
                                        providerName))
     }
     else {
@@ -418,7 +422,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
       if (componentType == null) {
         problemsHolder.registerProblem(sourcePsi,
                                        JUnitBundle.message(
-                                         "jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.return.type",
+                                         "junit5.malformed.parameterized.inspection.description.method.source.return.type",
                                          providerName))
       }
       else if (hasMultipleParameters(
@@ -428,7 +432,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
                !componentType.deepComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         problemsHolder.registerProblem(sourcePsi,
                                        JUnitBundle.message(
-                                         "jvm.inspections.junit5.malformed.parameterized.inspection.description.wrapped.in.arguments"))
+                                         "junit5.malformed.parameterized.inspection.description.wrapped.in.arguments"))
       }
     }
 
@@ -454,8 +458,8 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
       if (intention.isNotEmpty()) {
         problemsHolder.registerProblem(
           sourcePsi,
-          JUnitBundle.message("jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.unresolved",
-                                    sourceProviderName),
+          JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.unresolved",
+                              sourceProviderName),
           intention[0]
         )
       }
