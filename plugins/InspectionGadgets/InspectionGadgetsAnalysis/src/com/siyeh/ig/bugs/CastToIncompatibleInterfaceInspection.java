@@ -78,7 +78,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       }
       ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
       if (hasMutualSubclass == ThreeState.YES) return;
-      if (InstanceOfUtils.findPatternCandidate(expression) != null) return;
+      if (InstanceOfUtils.findCorrespondingInstanceOf(expression) != null) return;
       PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand)).getPsiType(operandClass.getProject());
       if (psiType != null && castClassType.isAssignableFrom(psiType)) return;
       if (hasMutualSubclass == ThreeState.UNSURE) {
