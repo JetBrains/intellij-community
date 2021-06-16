@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -180,7 +181,7 @@ public final class VfsImplUtil {
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
-  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock
+  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; its Set<String> is guarded by ourLock too
 
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
@@ -392,14 +393,17 @@ public final class VfsImplUtil {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
       path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
     }
-    Collection<String> jarPaths;
+    String[] jarPaths;
     synchronized (ourLock) {
-      jarPaths = ourDominatorsMap.get(path);
+      Set<String> handlers = ourDominatorsMap.get(path);
+      if (handlers == null) {
+        jarPaths = new String[] {path};
+      }
+      else {
+        jarPaths = ArrayUtil.toStringArray(handlers);
+      }
     }
-    if (jarPaths == null) {
-      jarPaths = Collections.singletonList(path);
-    }
-    List<VFileEvent> events = new ArrayList<>(jarPaths.size());
+    List<VFileEvent> events = new ArrayList<>(jarPaths.length);
     for (String jarPath : jarPaths) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.get(jarPath);
       if (handlerPair == null) {
