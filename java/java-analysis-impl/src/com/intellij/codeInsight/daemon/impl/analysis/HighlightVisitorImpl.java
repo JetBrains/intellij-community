@@ -906,9 +906,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     super.visitLiteralExpression(expression);
-    if (myHolder.hasErrorResults()) return;
 
-    myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
+    if (!myHolder.hasErrorResults() && expression.textMatches(PsiKeyword.NULL) && expression.getParent() instanceof PsiCaseLabelElementList) {
+      myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
+    }
+
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
+    }
 
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
       registerReferencesFromInjectedFragments(expression);
@@ -2036,18 +2041,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitTypeTestPattern(pattern);
     if (pattern.getParent() instanceof PsiCaseLabelElementList) {
       myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERNS_IN_SWITCH));
-    }
-  }
-
-  @Override
-  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
-    super.visitCaseLabelElementList(list);
-    for (PsiCaseLabelElement element : list.getElements()) {
-      PsiExpression expression = ObjectUtils.tryCast(element, PsiExpression.class);
-      if (ExpressionUtils.isNullLiteral(expression)) {
-        myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
-        break;
-      }
     }
   }
 
