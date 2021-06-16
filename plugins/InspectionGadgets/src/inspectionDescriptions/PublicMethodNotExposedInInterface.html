@@ -1,8 +1,9 @@
 <html>
 <body>
 Reports <code>public</code> methods in classes
-which are not exposed in an interface. Exposing all <code>public</code> methods via interface is important for
-maintaining loose coupling, and may be necessary for certain component-based programming styles.
+which are not exposed in an interface.
+<p>Exposing all <code>public</code> methods via an interface is important for
+  maintaining loose coupling, and may be necessary for certain component-based programming styles.</p>
 <p>Example:</p>
 <pre><code>
 interface Person {
@@ -27,10 +28,10 @@ class PersonImpl implements Person {
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the list below to specify special annotations. Methods annotated with one of
+  Use the <b>Ignore if annotated by</b> list to specify special annotations. Methods annotated with one of
 these annotations will be ignored by this inspection.
 <p>
-Use the checkbox below to ignore methods from classes which do not
+  Use the <b>Ignore if the containing class does not implement a non-library interface</b> option to ignore methods from classes which do not
 implement any interface from the project.
 <p>
 
