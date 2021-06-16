@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.ui.LightweightHint
-import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -54,27 +53,27 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     val newHint = LightweightHint(toolbar.component)
     newHint.setForceShowAsPopup(true)
 
-    HintManagerImpl.getInstanceImpl().showEditorHint(
-      newHint, editor,
-      getHintPosition(newHint),
-      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
-      0, true
-    )
+    showOrUpdateLocation(newHint)
     newHint.addHintListener { this.hint = null }
     this.hint = newHint
   }
 
 
   fun updateLocationIfShown() {
-    val hint = hint ?: return // for smart casts
-
-    val layeredPane = editor.contentComponent.rootPane.layeredPane
-    val hintPos = getHintPosition(hint)
-    hint.setLocation(RelativePoint(layeredPane, hintPos))
+    showOrUpdateLocation(hint ?: return)
   }
 
   override fun dispose() {
     unregisterListeners()
+  }
+
+  private fun showOrUpdateLocation(hint: LightweightHint) {
+    HintManagerImpl.getInstanceImpl().showEditorHint(
+      hint, editor,
+      getHintPosition(hint),
+      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
+      0, true
+    )
   }
 
   private fun registerListeners() {
