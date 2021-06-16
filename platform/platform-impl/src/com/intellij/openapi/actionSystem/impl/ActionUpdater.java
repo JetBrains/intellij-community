@@ -149,9 +149,9 @@ final class ActionUpdater {
   }
 
   // some actions remember the presentation passed to "update" and modify it later, in hope that menu will change accordingly
-  private static void reflectSubsequentChangesInOriginalPresentation(Presentation original, Presentation cloned) {
+  private static void reflectSubsequentChangesInOriginalPresentation(@NotNull Presentation original, @NotNull Presentation cloned) {
     cloned.addPropertyChangeListener(e -> {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         original.copyFrom(cloned);
       }
     });
@@ -270,15 +270,20 @@ final class ActionUpdater {
       if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       computeOnEdt(() -> {
-        applyPresentationChanges();
-        promise.setResult(result);
+        try {
+          applyPresentationChanges();
+          promise.setResult(result);
+        }
+        catch (Throwable e) {
+          promise.setError(e);
+        }
         return null;
       });
     };
     ourPromises.add(promise);
     ourExecutor.execute(() -> {
+      boolean[] success = {false};
       try {
-        boolean[] success = {false};
         ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
           success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
@@ -290,10 +295,16 @@ final class ActionUpdater {
         }
       }
       catch (Throwable e) {
-        promise.setError(e);
+        if (!promise.isDone()) {
+          promise.setError(e);
+        }
       }
       finally {
         ourPromises.remove(promise);
+        if (!promise.isDone()) {
+          cancelPromise(promise, "unknown reason");
+          LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + success[0] + ")"));
+        }
       }
     });
     return promise;
