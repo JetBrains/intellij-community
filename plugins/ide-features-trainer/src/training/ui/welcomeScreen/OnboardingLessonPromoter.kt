@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,8 +8,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import icons.FeaturesTrainerIcons
 import org.jetbrains.annotations.NonNls
+import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LearnBundle

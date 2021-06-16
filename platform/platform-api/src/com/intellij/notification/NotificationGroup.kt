@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
@@ -74,8 +74,8 @@ class NotificationGroup private constructor(val displayId: String,
   }
 
   companion object {
-    private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
-    private val registeredTitles: MutableMap<String, @NotificationTitle String> = ConcurrentHashMap()
+    private val registeredGroups = ConcurrentHashMap<String, NotificationGroup>()
+    private val registeredTitles = ConcurrentHashMap<String, @NotificationTitle String>()
 
     @ApiStatus.Internal
     @JvmStatic
@@ -85,8 +85,9 @@ class NotificationGroup private constructor(val displayId: String,
                toolWindowId: String?,
                icon: Icon?,
                @NotificationTitle title: String?,
-               pluginId: PluginId?): NotificationGroup =
-      NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, false)
+               pluginId: PluginId?): NotificationGroup {
+      return NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, false)
+    }
 
     //<editor-fold desc="Deprecated stuff.">
     @JvmStatic

@@ -106,23 +106,24 @@ public final class NotificationGroupEP implements PluginAware {
 
   private PluginDescriptor pluginDescriptor;
 
-  public @NlsContexts.NotificationTitle @Nullable String getDisplayName() {
-    String baseName = bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
+  public @NlsContexts.NotificationTitle @Nullable String getDisplayName(@NotNull PluginDescriptor pluginDescriptor) {
+    String baseName = bundle == null ? pluginDescriptor.getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       return id;
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getPluginDescriptor().getPluginClassLoader());
+
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, pluginDescriptor.getPluginClassLoader());
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
-  public @Nullable Icon getIcon() {
-    return icon == null ? null : IconLoader.findIcon(icon, getClass());
+  public @Nullable Icon getIcon(@NotNull PluginDescriptor pluginDescriptor) {
+    return icon == null ? null : IconLoader.findIcon(icon, pluginDescriptor.getPluginClassLoader());
   }
 
-  @Transient
-  public @NotNull PluginDescriptor getPluginDescriptor() {
-    return pluginDescriptor;
-  }
+  //@Transient
+  //public @NotNull PluginDescriptor getPluginDescriptor() {
+  //  return pluginDescriptor;
+  //}
 
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor value) {
