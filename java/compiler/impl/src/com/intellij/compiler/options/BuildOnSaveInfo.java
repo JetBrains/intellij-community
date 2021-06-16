@@ -18,7 +18,13 @@ public class BuildOnSaveInfo extends ActionOnSaveBackedByOwnConfigurable<Compile
     @Override
     protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
       for (CompilerOptionsFilter filter : CompilerOptionsFilter.EP_NAME.getExtensionList()) {
-        if (!filter.isAvailable(CompilerOptionsFilter.Setting.AUTO_MAKE, context.getProject())) return Collections.emptyList();
+        if (!filter.isAvailable(CompilerOptionsFilter.Setting.AUTO_MAKE, context.getProject()) ||
+            !filter.isAvailable(CompilerOptionsFilter.Setting.EXTERNAL_BUILD, context.getProject()) &&
+            CompilerUIConfigurable.EXTERNAL_BUILD_SETTINGS.contains(CompilerOptionsFilter.Setting.AUTO_MAKE)) {
+          // The option "Build project automatically" is not available in Android Studio on the CompilerConfigurable page.
+          // It is however available on the GradleCompilerSettingsConfigurable page.
+          return Collections.emptyList();
+        }
       }
 
       return List.of(new BuildOnSaveInfo(context));
