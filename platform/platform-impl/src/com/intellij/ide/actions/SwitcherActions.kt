@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -194,7 +194,10 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {
     val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)
-    return CustomShortcutSet.fromStrings(keys.map { modifiers + it })
+    val list = mutableListOf<String>()
+    keys.mapTo(list) { modifiers + it }
+    keys.mapTo(list) { modifiers + "shift " + it }
+    return CustomShortcutSet.fromStrings(list)
   }
 
   override fun keyReleased(keyEvent: KeyEvent) {
