@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports <code>switch</code> statements/expressions
-with too low a ratio of switch labels to executable statements. Such <code>switch</code> statements
-may be confusing, and should probably be refactored.
+Reports <code>switch</code> statements or expressions
+with a too low ratio of switch labels to executable statements.
+<p>Such <code>switch</code> statements
+may be confusing and should probably be refactored.</p>
 
-<p>Example of the reported code:</p>
-<pre>
+<p>Example:</p>
+<pre><code>
     switch (i) { // one case and 5 executable statements -> 20% density
         case 1:
             System.out.println("1");
@@ -15,9 +16,9 @@ may be confusing, and should probably be refactored.
             System.out.println("5");
             break;
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-<p>Use the field below to specify allowed ration of the switch labels to executable statements.</p>
+<p>Use the <b>Minimum density of branches</b> field to specify the allowed ratio of the switch labels to executable statements.</p>
 </body>
 </html>
