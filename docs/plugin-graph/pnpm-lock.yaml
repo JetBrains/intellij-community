@@ -8,7 +8,7 @@ specifiers:
   cytoscape-popper: ^2.0.0
   minisearch: ^3.0.2
   p-debounce: ^4.0.0
-  sass: ^1.35.0
+  sass: ^1.35.1
   tippy.js: ^6.3.1
   vite: ^2.3.7
 
@@ -23,7 +23,7 @@ dependencies:
   tippy.js: 6.3.1
 
 devDependencies:
-  sass: 1.35.0
+  sass: 1.35.1
   vite: 2.3.7
 
 packages:
@@ -56,8 +56,8 @@ packages:
       fill-range: 7.0.1
     dev: true
 
-  /chokidar/3.5.1:
-    resolution: {integrity: sha512-9+s+Od+W0VJJzawDma/gvBNQqkTiqYTWLuZoyAsivsI4AaWTCzHG06/TMjsf1cYe9Cb97UCEhjz7HvnPk2p/tw==}
+  /chokidar/3.5.2:
+    resolution: {integrity: sha512-ekGhOnNVPgT77r4K/U3GDhu+FQ2S8TnK/s2KbIGXi0SZWuwkZ2QNyfWdZW+TVfn84DpEP7rLeCt2UI6bJ8GwbQ==}
     engines: {node: '>= 8.10.0'}
     dependencies:
       anymatch: 3.1.2
@@ -66,7 +66,7 @@ packages:
       is-binary-path: 2.1.0
       is-glob: 4.0.1
       normalize-path: 3.0.0
-      readdirp: 3.5.0
+      readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
@@ -229,8 +229,8 @@ packages:
       source-map-js: 0.6.2
     dev: true
 
-  /readdirp/3.5.0:
-    resolution: {integrity: sha512-cMhu7c/8rdhkHXWsY+osBhfSy0JikwpHK/5+imo+LpeasTF8ouErHrlYkwT0++njiyuDvc7OFY5T3ukvZ8qmFQ==}
+  /readdirp/3.6.0:
+    resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
     dependencies:
       picomatch: 2.3.0
@@ -251,12 +251,12 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /sass/1.35.0:
-    resolution: {integrity: sha512-9joxNu7CoIEdZTDZFnH67NoWE/1VTofGPYiSIntWSE391SfmPu6Kd2Y0ZclDu9WQhVvvPwvo8LHeb/8wHIj95Q==}
+  /sass/1.35.1:
+    resolution: {integrity: sha512-oCisuQJstxMcacOPmxLNiLlj4cUyN2+8xJnG7VanRoh2GOLr9RqkvI4AxA4a6LHVg/rsu+PmxXeGhrdSF9jCiQ==}
     engines: {node: '>=8.9.0'}
     hasBin: true
     dependencies:
-      chokidar: 3.5.1
+      chokidar: 3.5.2
     dev: true
 
   /source-map-js/0.6.2:

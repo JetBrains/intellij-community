@@ -1486,6 +1486,61 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cq0",
+    "n": "com.jetbrains.packagesearch.intellij-plugin"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "q0",
+    "name": "intellij.packageSearch",
+    "n": "i.packageSearch",
+    "package": "com.jetbrains.packagesearch",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.packagesearch.intellij-plugin",
+    "parent": "cq0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7q",
+    "name": "intellij.packageSearch/gradle",
+    "n": "i.packageSearch/gradle",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.gradle",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.gradle.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "En",
+    "name": "intellij.packageSearch/kotlin",
+    "n": "i.packageSearch/kotlin",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.kotlin",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.kotlin.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "a0",
+    "name": "intellij.packageSearch/maven",
+    "n": "i.packageSearch/maven",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.maven",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.maven.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cT4",
     "n": "com.jetbrains.performancePlugin"
   }
@@ -3033,6 +3088,30 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "8B",
+    "name": "intellij.externalSystem.dependencyUpdater",
+    "n": "i.externalSystem.dependencyUpdater",
+    "package": null,
+    "sourceModule": "intellij.externalSystem.dependencyUpdater",
+    "descriptor": "community/plugins/dependency-updater/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.externalSystem.dependencyUpdater",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "RP1",
+    "name": "kotlin.idea",
+    "n": "kotlin.idea",
+    "package": null,
+    "sourceModule": "kotlin.idea",
+    "descriptor": "community/plugins/kotlin/resources-descriptors/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.kotlin",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Rm",
     "name": "intellij.php.impl",
     "n": "i.php.impl",
@@ -3099,18 +3178,6 @@
     "sourceModule": "",
     "descriptor": "",
     "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "RP1",
-    "name": "kotlin.idea",
-    "n": "kotlin.idea",
-    "package": null,
-    "sourceModule": "kotlin.idea",
-    "descriptor": "community/plugins/kotlin/resources-descriptors/META-INF/plugin.xml",
-    "pluginId": "org.jetbrains.kotlin",
-    "type": 1
   }
 }, {
   "group": "nodes",
@@ -3626,6 +3693,30 @@
     "id": "Nn_Ea",
     "source": "Nn",
     "target": "Ea",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_7q",
+    "source": "q0",
+    "target": "7q",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_En",
+    "source": "q0",
+    "target": "En",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_a0",
+    "source": "q0",
+    "target": "a0",
     "type": 1
   }
 }, {
@@ -5234,6 +5325,46 @@
     "id": "Ea_ra",
     "source": "Ea",
     "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_S9",
+    "source": "q0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_8B",
+    "source": "q0",
+    "target": "8B",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7q_87",
+    "source": "7q",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "En_RP1",
+    "source": "En",
+    "target": "RP1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "a0_Up",
+    "source": "a0",
+    "target": "Up",
     "type": 0
   }
 }, {
