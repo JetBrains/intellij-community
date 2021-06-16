@@ -1,16 +1,15 @@
 <html>
 <body>
-Reports non-<code>Serializable</code> classes which define <code>readObject()</code>
-or <code>writeObject()</code> methods. Such methods normally indicate error.
-<p>Example: </p>
-<pre>
-  public class SampleClazz {
+Reports non-<code>Serializable</code> classes that define <code>readObject()</code>
+or <code>writeObject()</code> methods. Such methods in that context normally indicate an error.
+<p><b>Example:</b></p>
+<pre><code>
+  public class SampleClass {
     private void readObject(ObjectInputStream str) {}
     private void writeObject(ObjectOutputStream str) {}
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

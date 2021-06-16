@@ -1,11 +1,11 @@
 <html>
 <body>
 Reports any references to local non-<code>Serializable</code> variables
-outside <code>serializable</code>lambda's, local and anonymous classes.
+outside <code>Serializable</code> lambdas, local and anonymous classes.
 <p>
-  When a local variable is referenced from an anonymous class, it's value
-  is stored in an implicit field in the anonymous class. The same happens
-  for local classes and lambda's. If that variable is of a
+  When a local variable is referenced from an anonymous class, its value
+  is stored in an implicit field of that class. The same happens
+  for local classes and lambdas. If the variable is of a
   non-<code>Serializable</code> type, serialization will fail.
 </p>
 <p><b>Example:</b></p>
@@ -27,7 +27,6 @@ outside <code>serializable</code>lambda's, local and anonymous classes.
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>
