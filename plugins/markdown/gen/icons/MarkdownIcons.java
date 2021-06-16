@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -25,5 +25,6 @@ public final class MarkdownIcons {
     /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", 7655458485343876010L, 2);
   }
 
+  /** 12x12 */ public static final @NotNull Icon ImageGutter = load("icons/imageGutter.svg", -5624930059003110774L, 2);
   /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("icons/MarkdownPlugin.svg", -2842140869353630844L, 0);
 }

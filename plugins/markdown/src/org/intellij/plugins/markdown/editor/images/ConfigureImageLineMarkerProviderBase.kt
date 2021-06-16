@@ -4,10 +4,10 @@ package org.intellij.plugins.markdown.editor.images
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import icons.MarkdownIcons
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.nio.file.Path
 import javax.swing.Icon
@@ -64,7 +64,7 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
   ) : MergeableLineMarkerInfo<PsiElement>(
     element,
     textRange,
-    AllIcons.General.LayoutPreviewOnly,
+    MarkdownIcons.ImageGutter,
     ::getMarkerElementPresentation,
     { _, e -> performAction(e) },
     ALIGNMENT,
