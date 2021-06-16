@@ -1,16 +1,15 @@
 <html>
 <body>
-Reports non-static inner classes which implement the <code>java.io.Serializable</code>
-interface, but does not define a <code>serialVersionUID</code> field.
+Reports non-static inner classes that implement <code>java.io.Serializable</code>, but do not define a <code>serialVersionUID</code> field.
 <p>
-  Without a <code>serialVersionUID</code> field, any change to a class will make previously
+  Without a <code>serialVersionUID</code> field, any change to the class will make previously
   serialized versions unreadable. It is strongly recommended that <code>Serializable</code>
   non-static inner classes have a <code>serialVersionUID</code> field, otherwise the default
   serialization algorithm may result in serialized versions being incompatible between
-  compilers, due to differences in synthetic accessor methods.
+  compilers due to differences in synthetic accessor methods.
 </p>
 <p>
-  The quick-fix adds the missing <code>serialVersionUID</code> field.
+  A quick-fix is suggested to add the missing <code>serialVersionUID</code> field.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
@@ -27,14 +26,15 @@ interface, but does not define a <code>serialVersionUID</code> field.
   }
 </code></pre>
 <!-- tooltip end -->
-<p>Configure the inspection:</p>
+<p>Use the following options to configure the inspection:</p>
 <ul>
   <li>
-    Use the list below to specify special annotations. Interfaces annotated with
-    one of these annotations will be ignored by this inspection.
+    List classes whose inheritors should not be reported by this inspection.
+    This is meant for classes that inherit
+    <code>Serializable</code> from a superclass but are not intended for serialization.
   </li>
   <li>
-    Use the checkbox below to ignore <code>Serializable</code> anonymous classes.
+    Whether to ignore <code>Serializable</code> anonymous classes.
   </li>
 </ul>
 </body>

@@ -1,15 +1,19 @@
 <html>
 <body>
-Reports non-serializable
-fields in classes which implement <code>java.io.Serializable</code> interface. Such fields will result
-in runtime exceptions if the object is serialized. Fields declared
-<code>transient</code> or <code>static</code>
-are not reported, nor are fields of classes which have defined a <code>writeObject</code>
-method. For purposes of this inspection, fields with
-<code>java.util.Collection</code> or
-<code>java.util.Map</code> types are assumed to be
-<code>Serializable</code>, unless the types
-they are declared to contain are non-<code>Serializable</code>.
+Reports non-serializable fields in classes that implement <code>java.io.Serializable</code>. Such fields will result
+in runtime exceptions if the object is serialized.
+<p>
+  Fields declared
+  <code>transient</code> or <code>static</code>
+  are not reported, nor are fields of classes that have a <code>writeObject</code> method defined.
+</p>
+<p>
+  This inspection assumes fields of the types
+  <code>java.util.Collection</code> and
+  <code>java.util.Map</code> to be
+  <code>Serializable</code>, unless the types
+  they are declared in are non-<code>Serializable</code>.
+</p>
 <p><b>Example:</b></p>
 <pre><code>
   class NonSerializableClass {}
@@ -22,14 +26,21 @@ they are declared to contain are non-<code>Serializable</code>.
 </pre>
 <!-- tooltip end -->
 <p>
-Use the first list below to specify what specific classes and inheritors should be excluded
-from being checked by this inspection. This is meant for those classes which, although they inherit
-  <code>Serializable</code> from a superclass, are not intended for serialization.
-<p>
-Use the second list below to specify filed annotations which should be ignored by this inspection.
-<p>
-Use the checkbox below to ignore fields initialized with anonymous class.
-<p>
+  Use the following options to configure the inspection:
+</p>
+<ol>
+  <li>
+    List classes whose inheritors should not be reported by this inspection.
+    This is meant for classes that inherit
+    <code>Serializable</code> from a superclass but are not intended for serialization.
+  </li>
+  <li>
+    List annotations that will make the inspection ignore the annotated fields.
+  </li>
+  <li>
+    Whether to ignore fields initialized with an anonymous class.
+  </li>
+</ol>
 
 </body>
 </html>

@@ -3,18 +3,23 @@
 Reports objects of classes not implementing <code>java.io.Serializable</code> used as arguments to
 <code>javax.servlet.http.HttpSession.setAttribute()</code> or
 <code>javax.servlet.http.HttpSession.putValue()</code>.
-Such objects will not be serialized if the <code>HttpSession</code> is passivated or migrated and may result in difficult-to-diagnose
-bugs. By default objects with <code>java.util.Collection</code> or
-<code>java.util.Map</code> types are assumed to be <code>Serializable</code>, unless type parameters are non-<code>Serializable</code>.
-<p>Example:</p>
-<pre>
+<p>
+  Such objects will not be serialized if the <code>HttpSession</code> is passivated or migrated,
+  and may result in difficult-to-diagnose bugs.
+</p>
+<p>
+  This inspection assumes objects of the types <code>java.util.Collection</code> and
+  <code>java.util.Map</code> to be <code>Serializable</code>,
+  unless type parameters are non-<code>Serializable</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   void foo(HttpSession session) {
       session.setAttribute("foo", new NonSerializable());
   }
   static class NonSerializable {}
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>
