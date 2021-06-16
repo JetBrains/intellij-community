@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Test;
 
 import static com.intellij.openapi.roots.DependencyScope.COMPILE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Vladislav.Soroka
@@ -98,8 +100,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("my-app.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     assertTasksProjectPath("adhoc", getProjectPath());
-    assertTasksProjectPath("my-app", path("../my-app"));
-    assertTasksProjectPath("my-utils", path("../my-utils"));
+    if (isGradleNewerOrSameAs("6.8")) {
+      assertTasksProjectPath("my-app", getProjectPath(), ":my-app:");
+      assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils");
+    } else {
+      assertTasksProjectPath("my-app", path("../my-app"));
+      assertTasksProjectPath("my-utils", path("../my-utils"));
+    }
   }
 
   @Test
@@ -128,7 +135,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("app.main", "lib.runtime.runtime-mod.main", COMPILE);
 
     assertTasksProjectPath("app", getProjectPath());
-    assertTasksProjectPath("lib", path("lib"));
+    if (isGradleNewerOrSameAs("6.8")) {
+      assertTasksProjectPath("lib", getProjectPath(), ":lib:");
+    }
+    else {
+      assertTasksProjectPath("lib", path("lib"));
+    }
   }
 
 
@@ -765,14 +777,21 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     return projectSettings;
   }
 
-  private void assertTasksProjectPath(String moduleName, String expectedTaskProjectPath) {
+  private void assertTasksProjectPath(@NotNull String moduleName, @NotNull String expectedTaskProjectPath) {
+    assertTasksProjectPath(moduleName, expectedTaskProjectPath, "");
+  }
+
+  private void assertTasksProjectPath(@NotNull String moduleName,
+                                      @NotNull String expectedTaskProjectPath,
+                                      @NotNull String expectedTaskPrefix) {
     for (DataNode<TaskData> node : ExternalSystemApiUtil
       .findAll(GradleUtil.findGradleModuleData(getModule(moduleName)), ProjectKeys.TASK)) {
       TaskData taskData = node.getData();
-      String actual = taskData.getLinkedExternalProjectPath();
-      if (expectedTaskProjectPath != null) expectedTaskProjectPath = FileUtil.toCanonicalPath(expectedTaskProjectPath);
-      if (actual != null) actual = FileUtil.toCanonicalPath(actual);
-      assertEquals(expectedTaskProjectPath, actual);
+      String actualTaskProjectPath = taskData.getLinkedExternalProjectPath();
+      expectedTaskProjectPath = FileUtil.toCanonicalPath(expectedTaskProjectPath);
+      actualTaskProjectPath = FileUtil.toCanonicalPath(actualTaskProjectPath);
+      assertEquals(expectedTaskProjectPath, actualTaskProjectPath);
+      assertThat(taskData.getName()).startsWith(expectedTaskPrefix);
     }
   }
 }
