@@ -113,9 +113,12 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
+    <!--Gradle tool window -->
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
     <toolWindowExtractorMode id="Gradle" mode="mirror"/>
+    <externalSystemViewContributor id="gradle"
+                                   implementation="org.jetbrains.plugins.gradle.ui.GradleViewContributor"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 

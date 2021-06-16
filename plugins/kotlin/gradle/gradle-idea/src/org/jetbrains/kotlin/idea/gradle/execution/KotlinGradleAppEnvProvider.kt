@@ -37,6 +37,7 @@ import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
+import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
 import org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
@@ -45,107 +46,16 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 /**
  * This provider is responsible for building [ExecutionEnvironment] for Kotlin JVM modules to be run using Gradle.
  */
-class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
+class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<KotlinRunConfiguration>() {
 
     override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
         val enabled = Registry.`is`("kotlin.gradle-run.enabled", false)
         return enabled && task.runProfile is KotlinRunConfiguration
     }
 
-    override fun createExecutionEnvironment(
-        project: Project, executeRunConfigurationTask: ExecuteRunConfigurationTask, executor: Executor?
-    ): ExecutionEnvironment? {
-
-        if (!isApplicable(executeRunConfigurationTask)) return null
-
-        val applicationConfiguration = executeRunConfigurationTask.runProfile as KotlinRunConfiguration
-
-        val mainClass = applicationConfiguration.configurationModule?.findClass(applicationConfiguration.runClass) ?: return null
-
-        val virtualFile = mainClass.containingFile.virtualFile
-        val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
-
-        val params = JavaParameters().apply {
-            JavaParametersUtil.configureConfiguration(this, applicationConfiguration)
-            this.vmParametersList.addParametersString(applicationConfiguration.vmParameters)
-        }
-
-        val javaModuleName: String?
-        val javaExePath: String
-        try {
-            val jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.alternativeJrePath)
-                ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-            val type = jdk.sdkType
-            if (type !is JavaSdkType) throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-            javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
-                FileUtil.toSystemIndependentName(it)
-            } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-            javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule!!, mainClass)
-        } catch (e: CantRunException) {
-            ExecutionErrorDialog.show(e, "Cannot use specified JRE", project)
-            throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-        }
-
-        val className = mainClass.name ?: return null
-        val runAppTaskName = "$className.main()"
-
-        val taskSettings = ExternalSystemTaskExecutionSettings().apply {
-            isPassParentEnvs = params.isPassParentEnvs
-            env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
-            externalSystemIdString = GradleConstants.SYSTEM_ID.id
-            externalProjectPath = GradleRunnerUtil.resolveProjectPath(module)
-            taskNames = listOf(runAppTaskName)
-        }
-
-        val executorId = executor?.id ?: DefaultRunExecutor.EXECUTOR_ID
-        val environment = ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId)
-            ?: return null
-        val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings ?: return null
-        val gradleRunConfiguration = runnerAndConfigurationSettings.configuration as ExternalSystemRunConfiguration
-
-        val sourceSetName = when {
-            GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(
-                module
-            ) -> GradleProjectResolverUtil.getSourceSetName(module)
-            ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContent(virtualFile) -> "test"
-            else -> "main"
-        } ?: return null
-
-        val initScript = generateInitScript(
-            applicationConfiguration, project, module, params, runAppTaskName,
-            mainClass, javaExePath, sourceSetName, javaModuleName
-        )
-        gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
-        gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
-
-        // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
-        gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration)
-            .filter { it.providerId !== CompileStepBeforeRun.ID }
-        return environment
-    }
-
-    companion object {
-        private fun createEscapedParameters(parameters: List<String>, prefix: String): String {
-            val result = StringBuilder()
-            for (parameter in parameters) {
-                if (StringUtil.isEmpty(parameter)) continue
-                val escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'')
-                result.append(prefix).append(" '").append(escaped).append("'\n")
-            }
-            return result.toString()
-        }
-
-        private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
-            return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
-                DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
-                    JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
-                }?.name ?: return null
-            } else null
-        }
-
-        private fun generateInitScript(
-            applicationConfiguration: KotlinRunConfiguration, project: Project, module: Module,
-            params: JavaParameters, runAppTaskName: String, mainClass: PsiClass, javaExePath: String,
+    override fun generateInitScript(
+            applicationConfiguration: KotlinRunConfiguration, module: Module,
+            params: JavaParameters, gradleTaskPath: String, runAppTaskName: String, mainClass: PsiClass, javaExePath: String,
             sourceSetName: String, javaModuleName: String?
         ): String? {
             // Init script creates the run task only for the project matching 'applicationConfiguration'.
@@ -153,7 +63,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             // data (external module data).
 
             val extProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-            val extProjectInfo = ExternalSystemUtil.getExternalProjectInfo(project, GradleConstants.SYSTEM_ID, extProjectPath) ?: return null
+            val extProjectInfo = ExternalSystemUtil.getExternalProjectInfo(module.project, GradleConstants.SYSTEM_ID, extProjectPath) ?: return null
             val extModuleData = GradleProjectResolverUtil.findModule(extProjectInfo.externalProjectStructure, extProjectPath) ?: return null
 
             // Pair of 'project.rootProject.name' and 'project.path' is a unique project id in Gradle (including composite builds).
@@ -166,7 +76,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
                 projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
             }
 
-            val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module)?.let {
+            val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
                 FileUtil.toSystemIndependentName(it)
             }
 
@@ -225,5 +135,4 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             // @formatter:on
             return initScript
         }
-    }
 }

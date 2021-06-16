@@ -31,6 +31,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
@@ -54,6 +56,7 @@ import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataSer
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleData;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -213,7 +216,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
     }
     // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
-    catch (UnsupportedMethodException ignore) { }
+    catch (UnsupportedMethodException ignore) {
+    }
   }
 
   private static @Nullable String resolveJdkName(@Nullable String jdkNameOrVersion) {
@@ -373,16 +377,14 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
       @Override
       public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-        for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
-          ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
-          ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
-
-          for (File file : sourceDirectorySet.getSrcDirs()) {
-            ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, file.getPath());
-            ideContentRoot.storePath(sourceType, file.getPath());
-            dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
-          }
-        }
+        sourceSet.getSources().forEach((key, sourceDirectorySet) -> {
+            ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
+            for (File file : sourceDirectorySet.getSrcDirs()) {
+              ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, file.getPath());
+              ideContentRoot.storePath(sourceType, file.getPath());
+              dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+            }
+          });
       }
     });
   }
@@ -651,7 +653,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         String title = GradleBundle.message("gradle.project.resolver.orphan.modules.error.title");
         String targetOption = GradleBundle.message("gradle.settings.text.module.per.source.set",
                                                    ApplicationNamesInfo.getInstance().getFullProductName());
-        String message = GradleBundle.message("gradle.project.resolver.orphan.modules.error.description", 
+        String message = GradleBundle.message("gradle.project.resolver.orphan.modules.error.description",
                                               orphanModules.size(), join(orphanModules, ", "), targetOption);
         NotificationData notification = new NotificationData(title, message, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
         ExternalSystemNotificationManager.getInstance(project).showNotification(taskId.getProjectSystemId(), notification);
@@ -667,31 +669,43 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     throws IllegalArgumentException, IllegalStateException {
 
     final Collection<TaskData> tasks = new ArrayList<>();
-    final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
-
-    File rootDir = gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir();
-    String rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(rootDir.getPath());
+    GradleModuleData gradleModuleData = new GradleModuleData(ideModule);
+    final String moduleConfigPath = gradleModuleData.getGradleProjectDir();
 
     ExternalProject externalProject = getExternalProject(gradleModule, resolverCtx);
     if (externalProject != null) {
-      final boolean isFlatProject = !FileUtil.isAncestor(rootProjectPath, moduleConfigPath, false);
+      String directoryToRunTask = gradleModuleData.getDirectoryToRunTask();
+      boolean isSimpleTaskNameAllowed = directoryToRunTask.equals(moduleConfigPath);
+      String compositeBuildGradlePath = gradleModuleData.getCompositeBuildGradlePath();
+      boolean compositeBuildTasksShouldBeUsed = !compositeBuildGradlePath.isEmpty();
+
       for (ExternalTask task : externalProject.getTasks().values()) {
-        String taskName = isFlatProject ? task.getQName() : task.getName();
         String taskGroup = task.getGroup();
-        if (taskName.trim().isEmpty() || isIdeaTask(taskName, taskGroup)) {
+        if (task.getName().trim().isEmpty() || isIdeaTask(task.getName(), taskGroup)) {
           continue;
         }
-        final String taskPath = isFlatProject ? rootProjectPath : moduleConfigPath;
-        String escapedTaskName = ParametersListUtil.escape(taskName);
-        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, escapedTaskName, taskPath, task.getDescription());
+        boolean inherited = StringUtil.equals(task.getName(), task.getQName());
+        String taskFullName;
+        if (compositeBuildTasksShouldBeUsed) {
+          if (inherited) {
+            // running a task for all subprojects using the qualified task name is not supported for included builds
+            continue;
+          }
+          taskFullName = gradleModuleData.getTaskPath(task.getName(), true);
+        }
+        else {
+          taskFullName = isSimpleTaskNameAllowed ? task.getName() : task.getQName();
+        }
+
+        String escapedTaskName = ParametersListUtil.escape(taskFullName);
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, escapedTaskName, directoryToRunTask, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         taskData.setTest(task.isTest());
         ideModule.createChild(ProjectKeys.TASK, taskData);
-        taskData.setInherited(StringUtil.equals(task.getName(), task.getQName()));
+        taskData.setInherited(inherited);
         tasks.add(taskData);
       }
-
       return tasks;
     }
 

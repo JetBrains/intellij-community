@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findTestsTaskToRun
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 fun <E : PsiElement> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   module: Module,
@@ -76,7 +76,13 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   getTestsTaskToRun: (VirtualFile) -> List<List<String>>
 ): Boolean {
   if (!GradleRunnerUtil.isGradleModule(module)) return false
-  val projectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+  var projectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+  CachedModuleDataFinder.getGradleModuleData(module)?.also {
+    val isGradleProjectDirUsedToRunTasks = it.directoryToRunTask == it.gradleProjectDir
+    if (!isGradleProjectDirUsedToRunTasks) {
+      projectPath = it.directoryToRunTask
+    }
+  }
   return applyTestConfiguration(projectPath, tests, findTestSource, createFilter, getTestsTaskToRun)
 }
 

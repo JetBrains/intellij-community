@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
@@ -84,8 +85,11 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
         String artifactCoordinates = StringUtil.trimStart(libraryName, GradleConstants.SYSTEM_ID.getReadableName() + ": ");
         if (StringUtil.equals(libraryName, artifactCoordinates)) return ActionCallback.REJECTED;
-        final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
-        if (gradlePath == null) return ActionCallback.REJECTED;
+
+        GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+        if (gradleModuleData == null)  return ActionCallback.REJECTED;
+
+        final String gradlePath = gradleModuleData.getGradlePath();
 
         String sourceArtifactNotation = getSourcesArtifactNotation(artifactIdCandidate -> {
           VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
@@ -147,8 +151,8 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
         String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
         ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
         settings.setExecutionName(getName());
-        settings.setExternalProjectPath(ExternalSystemApiUtil.getExternalRootProjectPath(module));
-        settings.setTaskNames(Collections.singletonList(taskName));
+        settings.setExternalProjectPath(gradleModuleData.getDirectoryToRunTask());
+        settings.setTaskNames(Collections.singletonList(gradleModuleData.getTaskPath(taskName, true)));
         settings.setVmOptions(gradleVmOptions);
         settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
         ExternalSystemUtil.runTask(
