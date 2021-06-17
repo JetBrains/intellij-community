@@ -375,6 +375,7 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
+      myCheckBoxDoNotShowDialog.font = JBFont.medium()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
