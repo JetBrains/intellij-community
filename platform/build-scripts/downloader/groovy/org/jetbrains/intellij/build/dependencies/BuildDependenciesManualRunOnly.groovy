@@ -7,10 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-/**
- * Use for debugging only or running code from a custom main method.
- * Any production code already has the community home path
- */
 @CompileStatic
 class BuildDependenciesManualRunOnly {
   static Path getCommunityRootFromWorkingDirectory() {
@@ -33,12 +29,6 @@ class BuildDependenciesManualRunOnly {
   }
 
   static Properties getDependenciesPropertiesFromWorkingDirectory() {
-    Path communityRoot = getCommunityRootFromWorkingDirectory()
-    Path propertiesFile = communityRoot.resolve("build").resolve("dependencies").resolve("gradle.properties")
-
-    println("Loading properties from $propertiesFile")
-    Properties properties = new Properties()
-    Files.newBufferedReader(propertiesFile).withCloseable { properties.load(it) }
-    return properties
+    return BuildDependenciesDownloader.getDependenciesProperties(getCommunityRootFromWorkingDirectory())
   }
 }
