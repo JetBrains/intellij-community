@@ -24,6 +24,13 @@ class IconLoaderTest {
   }
 
   @Test
+  fun reflectivePathNestedClassWithDollar() {
+    assertThat(IconLoader.getReflectiveIcon("com.intellij.ui.TestIcons\$TestNestedIcons.ToolWindow",
+                                            TestIcons.TestNestedIcons::class.java.classLoader))
+      .isEqualTo(TestIcons.TestNestedIcons.ToolWindow)
+  }
+
+  @Test
   fun reflectivePath() {
     assertThat(IconLoader.getReflectiveIcon("com.intellij.ui.TestIcons.NonNested",
                                             TestIcons::class.java.classLoader))
