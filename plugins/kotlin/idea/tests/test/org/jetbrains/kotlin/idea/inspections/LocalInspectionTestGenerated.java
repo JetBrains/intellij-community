@@ -4546,6 +4546,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/andRange.kt");
         }
 
+        @TestMetadata("anyIsString.kt")
+        public void testAnyIsString() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/anyIsString.kt");
+        }
+
         @TestMetadata("assignment.kt")
         public void testAssignment() throws Exception {
             runTest("testData/inspectionsLocal/dfa/assignment.kt");
@@ -4719,6 +4724,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unusedResult.kt")
         public void testUnusedResult() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unusedResult.kt");
+        }
+
+        @TestMetadata("whenLastBranchTrue.kt")
+        public void testWhenLastBranchTrue() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenLastBranchTrue.kt");
+        }
+
+        @TestMetadata("whenSubjectIs.kt")
+        public void testWhenSubjectIs() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenSubjectIs.kt");
+        }
+
+        @TestMetadata("whenSubjectIs2.kt")
+        public void testWhenSubjectIs2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenSubjectIs2.kt");
+        }
+
+        @TestMetadata("whenSubjectValue.kt")
+        public void testWhenSubjectValue() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenSubjectValue.kt");
+        }
+
+        @TestMetadata("whenUnboxing.kt")
+        public void testWhenUnboxing() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenUnboxing.kt");
         }
 
         @TestMetadata("whenUnit.kt")

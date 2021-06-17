@@ -12,10 +12,7 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -61,17 +58,21 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
             StandardNames.FqNames._long -> DfTypes.LONG
             StandardNames.FqNames._float -> DfTypes.FLOAT
             StandardNames.FqNames._double -> DfTypes.DOUBLE
+            StandardNames.FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
-                val typeFqName = fqNameUnsafe.asString()
+                val typeFqName = when(fqNameUnsafe) {
+                    StandardNames.FqNames.string -> CommonClassNames.JAVA_LANG_STRING
+                    else -> fqNameUnsafe.asString()
+                }
                 val psiClass = JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope)
                 if (psiClass != null) {
                     return TypeConstraints.exactClass(psiClass).instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
                 }
-                DfTypes.NOT_NULL_OBJECT
+                DfType.TOP
             }
         }
         // TODO: Support type parameters
-        else -> DfTypes.NOT_NULL_OBJECT
+        else -> DfType.TOP
     }
 }
 

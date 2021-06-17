@@ -15,6 +15,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -27,16 +29,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private class KotlinDfaListener : DfaListener {
-        val constantConditions = hashMapOf<KtExpression, ConstantValue>()
+        val constantConditions = hashMapOf<KotlinAnchor, ConstantValue>()
 
         override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
-            if (anchor is KotlinExpressionAnchor) {
-                recordExpressionValue(anchor.expression, state, value)
+            if (anchor is KotlinAnchor) {
+                recordExpressionValue(anchor, state, value)
             }
         }
 
-        private fun recordExpressionValue(expression: KtExpression, state: DfaMemoryState, value: DfaValue) {
-            val oldVal = constantConditions[expression]
+        private fun recordExpressionValue(anchor: KotlinAnchor, state: DfaMemoryState, value: DfaValue) {
+            val oldVal = constantConditions[anchor]
             if (oldVal == ConstantValue.UNKNOWN) return
             var newVal = when (state.getDfType(value)) {
                 DfTypes.TRUE -> ConstantValue.TRUE
@@ -46,7 +48,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (oldVal != null && oldVal != newVal) {
                 newVal = ConstantValue.UNKNOWN
             }
-            constantConditions[expression] = newVal
+            constantConditions[anchor] = newVal
         }
     }
 
@@ -75,15 +77,36 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val listener = KotlinDfaListener()
         val interpreter = StandardDataFlowInterpreter(flow, listener)
         if (interpreter.interpret(state) != RunnerResult.OK) return
-        listener.constantConditions.forEach { (expr, cv) ->
-            if (cv != ConstantValue.UNKNOWN && !shouldSuppress(expr)) {
-                val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true"
-                else "inspection.message.condition.always.false"
-                val highlightType =
-                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
-                    else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
+        listener.constantConditions.forEach { (anchor, cv) ->
+            if (cv != ConstantValue.UNKNOWN) {
+                when (anchor) {
+                    is KotlinExpressionAnchor -> {
+                        val expr = anchor.expression
+                        if (!shouldSuppress(expr)) {
+                            val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true"
+                            else "inspection.message.condition.always.false"
+                            val highlightType =
+                                if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
+                                else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                            holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
+                        }
+                    }
+                    is KotlinWhenConditionAnchor -> {
+                        val condition = anchor.condition
+                        if (cv != ConstantValue.TRUE || !isLastCondition(condition)) {
+                            val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
+                            else "inspection.message.when.condition.always.false"
+                            holder.registerProblem(condition, KotlinBundle.message(key))
+                        }
+                    }
+                }
             }
         }
     })
+
+    private fun isLastCondition(condition: KtWhenCondition): Boolean {
+        val entry = condition.parent as? KtWhenEntry ?: return false
+        val whenExpr = entry.parent as? KtWhenExpression ?: return false
+        return entry.conditions.last() == condition && whenExpr.entries.last() == entry
+    }
 }

@@ -3,4 +3,5 @@ package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtWhenCondition
 
