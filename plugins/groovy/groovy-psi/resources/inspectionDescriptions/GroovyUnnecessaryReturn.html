@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports <code>return</code> statements at the end of constructors and methods returning
-<code>void</code>. These are unnecessary and may be safely removed.
-<p><b>Example</b>:
+Reports <code>return</code> statements at the end of constructors and methods returning <code>void</code>.
+These are unnecessary and may be safely removed.
+<p><b>Example:</b></p>
 <pre><code>
   <b>void</b> foo (String s){
       print(s)
       <b>return</b>
   }
 </code></pre>
-<p>After the quick fix is applied:
+<p>After the quick-fix is applied:</p>
 <pre><code>
   <b>void</b> foo (String s){
       print(s)
