@@ -85,10 +85,8 @@ import java.util.*;
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(SingleInspectionProfilePanel.class);
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
-  @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   @NonNls private static final String myAddInspectionKey = "addInspection";
   private final KeyStroke myAddInspectionKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK);
-
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
@@ -983,7 +981,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    DescriptionEditorPaneKt.readHTML(myDescription, EMPTY_HTML);
+    DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPane.EMPTY_HTML);
     myOptionsPanel.validate();
     myOptionsPanel.repaint();
   }
