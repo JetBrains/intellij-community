@@ -1,15 +1,17 @@
 <html>
 <body>
-Reports any use of <b>==</b> or <b>!=</b> to compare strings, which compares object identity.
-In most cases strings should be compared with an <code>equals()</code> call instead,
-which does a character-by-character comparison when the strings are different objects.
+Reports code that uses of <b>==</b> or <b>!=</b> to compare strings.
+<p>
+  These operators determine referential equality instead of comparing content.
+  In most cases, strings should be compared using <code>equals()</code>,
+  which does a character-by-character comparison when the strings are different objects.</p>
 <p><b>Example:</b></p>
 <pre>
   void foo(String s, String t) {
     final boolean b = t == s;
   }
 </pre>
-<p>If <code>t</code> is known to be <code>non null</code>, then it's safe to apply "unsafe" quickfix and get the result like:</p>
+<p>If <code>t</code> is known to be non-null, then it's safe to apply the "unsafe" quick-fix and get the result similar to the following:</p>
 <pre>
   void foo(String s, String t) {
     final boolean b = t.equals(s);

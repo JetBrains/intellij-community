@@ -1,23 +1,23 @@
 <html>
 <body>
-Reports cases when the right side of the assignment is a division that shouldn't be truncated to integer.
-While occasionally intended, this construction is often buggy.
-<p>
-  For example, the following code doesn't change <code>x</code> because of the integer division result:
+Reports assignments whose right side is a division that shouldn't be truncated to integer.
+<p>While occasionally intended, this construction is often buggy.</p>
+<p><b>Example:</b></p>
 <pre>
   int x = 18;
-  x *= 3/2;
+  x *= 3/2; // doesn't change x because of the integer division result
 </pre>
-So, it should be replaced with:
+<p>
+This code should be replaced with:
 <pre>
   int x = 18;
   x *= 3.0/2;
 </pre>
 <!-- tooltip end -->
 <p>
-    Use the checkbox below to disable inspection in cases of suspicious but possibly exact divisions e.g., if dividend can't be calculated statically 
-<pre><code>
-  void calc(int d) {
+  In the inspection options, you can disable warnings for suspicious but possibly correct divisions,
+  for example, when the dividend can't be calculated statically.
+<pre><code>  void calc(int d) {
      int x = 18;
      x *= d/2;
   }
