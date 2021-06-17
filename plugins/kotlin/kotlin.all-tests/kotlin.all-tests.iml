@@ -85,5 +85,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.copyright" />
+    <orderEntry type="module" module-name="kotlin.spellchecker" />
   </component>
 </module>

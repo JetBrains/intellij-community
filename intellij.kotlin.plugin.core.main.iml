@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="kotlin.ml-completion" exported="" />
     <orderEntry type="module" module-name="kotlin.groovy" exported="" />
     <orderEntry type="module" module-name="kotlin.copyright" exported="" />
+    <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />
