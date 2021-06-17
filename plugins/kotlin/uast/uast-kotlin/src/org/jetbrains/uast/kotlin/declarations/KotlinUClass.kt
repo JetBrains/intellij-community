@@ -50,7 +50,9 @@ abstract class AbstractKotlinUClass(givenParent: UElement?) : KotlinAbstractUEle
     }
 
     override val uAnnotations: List<UAnnotation> by lz {
-        (sourcePsi as? KtModifierListOwner)?.annotationEntries.orEmpty().map { KotlinUAnnotation(it, this) }
+        (sourcePsi as? KtModifierListOwner)?.annotationEntries.orEmpty().map {
+            baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+        }
     }
 
     override fun equals(other: Any?) = other is AbstractKotlinUClass && psi == other.psi

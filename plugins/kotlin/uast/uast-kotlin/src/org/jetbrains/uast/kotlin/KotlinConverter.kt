@@ -53,6 +53,10 @@ object KotlinConverter : BaseKotlinConverter {
         else -> element
     }
 
+    override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
+        return KotlinUAnnotation(annotationEntry, givenParent)
+    }
+
     internal fun convertPsiElement(
         element: PsiElement?,
         givenParent: UElement?,
@@ -426,7 +430,7 @@ object KotlinConverter : BaseKotlinConverter {
 
                 is KtFile -> convertKtFile(element, givenParent, this).firstOrNull()
                 is FakeFileForLightClass -> el<UFile> { KotlinUFile(element.navigationElement, kotlinUastPlugin) }
-                is KtAnnotationEntry -> el<UAnnotation>(build(::KotlinUAnnotation))
+                is KtAnnotationEntry -> el<UAnnotation>(build(::convertAnnotation))
                 is KtCallExpression ->
                     if (requiredTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
                         !requiredTypes.isAssignableFrom(UCallExpression::class.java)
@@ -558,10 +562,14 @@ object KotlinConverter : BaseKotlinConverter {
             ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
             ?: KotlinUDeclarationsExpression(null, parent, psi)
         val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
-        val variable = KotlinUAnnotatedLocalVariable(
-            UastKotlinPsiVariable.create(psi, parentPsiElement, declarationsExpression), psi, declarationsExpression) { annotationParent ->
-            psi.annotationEntries.map { KotlinUAnnotation(it, annotationParent) }
-        }
+        val variable =
+            KotlinUAnnotatedLocalVariable(
+                UastKotlinPsiVariable.create(psi, parentPsiElement, declarationsExpression),
+                psi,
+                declarationsExpression
+            ) { annotationParent ->
+                psi.annotationEntries.map { convertAnnotation(it, annotationParent) }
+            }
         return declarationsExpression.apply { declarations = listOf(variable) }
     }
 }

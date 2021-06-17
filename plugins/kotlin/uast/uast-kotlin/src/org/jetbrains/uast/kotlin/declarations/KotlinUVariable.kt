@@ -70,9 +70,9 @@ abstract class AbstractKotlinUVariable(givenParent: UElement?) : KotlinAbstractU
         val sourcePsi = sourcePsi ?: return@lz psi.annotations.map { WrappedUAnnotation(it, this) }
         val annotations = SmartList<UAnnotation>(KotlinNullabilityUAnnotation(sourcePsi, this))
         if (sourcePsi is KtModifierListOwner) {
-            sourcePsi.annotationEntries.
-                    filter { acceptsAnnotationTarget(it.useSiteTarget?.getAnnotationUseSiteTarget()) }.
-                    mapTo(annotations) { KotlinUAnnotation(it, this) }
+            sourcePsi.annotationEntries
+                .filter { acceptsAnnotationTarget(it.useSiteTarget?.getAnnotationUseSiteTarget()) }
+                .mapTo(annotations) { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
         }
         annotations
     }
@@ -221,8 +221,8 @@ class KotlinReceiverUParameter(
 
     override val uAnnotations: List<UAnnotation> by lz {
         receiver.annotationEntries
-                .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER }
-                .map { KotlinUAnnotation(it, this) } +
+            .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER }
+            .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) } +
         super.uAnnotations
     }
 
