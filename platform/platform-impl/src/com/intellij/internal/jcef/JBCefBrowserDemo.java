@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author tav
  */
-public class WebBrowser extends AnAction implements DumbAware {
+public class JBCefBrowserDemo extends AnAction implements DumbAware {
   private static final String URL = "https://maps.google.com";
   private static final String myCookieManagerText = "Cookie Manager";
 
