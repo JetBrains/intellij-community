@@ -287,46 +287,15 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     project.messageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(project, module)
   }
 
-  override fun createModuleInstance(moduleEntity: ModuleEntity, versionedStorage: VersionedEntityStorage,
-                                             diff: WorkspaceEntityStorageDiffBuilder?, isNew: Boolean,
-                                             precomputedExtensionModel: PrecomputedExtensionModel?): ModuleBridge {
-    val plugins = PluginManagerCore.getLoadedPlugins(null)
-    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
-    val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
-
-    val module = ModuleBridgeImpl(
-      name = moduleEntity.name,
-      project = project,
-      virtualFileUrl = moduleFileUrl,
-      moduleEntityId = moduleEntity.persistentId(),
-      entityStorage = versionedStorage,
-      diff = diff
-    )
-
-    module.registerComponents(corePlugin = corePlugin,
-                              plugins = plugins,
-                              app = ApplicationManager.getApplication(),
-                              precomputedExtensionModel = precomputedExtensionModel,
-                              listenerCallbacks = null)
-
-    if (moduleFileUrl == null) {
-      module.registerService(serviceInterface = IComponentStore::class.java,
-                             implementation = NonPersistentModuleStore::class.java,
-                             pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-                             override = true,
-                             preloadMode = ServiceDescriptor.PreloadMode.FALSE)
-    }
-    else {
-      val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
-      moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
-    }
-
-    module.callCreateComponents()
-
-    return module
+  override fun registerNonPersistentModuleStore(module: ModuleBridge) {
+    (module as ModuleBridgeImpl).registerService(serviceInterface = IComponentStore::class.java,
+                                                 implementation = NonPersistentModuleStore::class.java,
+                                                 pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+                                                 override = true,
+                                                 preloadMode = ServiceDescriptor.PreloadMode.FALSE)
   }
 
-  override fun loadModuleToDiff(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity {
+  override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity {
     val builder = WorkspaceEntityStorageBuilder.create()
     var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
@@ -348,9 +317,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return moduleEntity
   }
 
-  override fun createModule(moduleEntityId: ModuleId, name: String, entityStorage: VersionedEntityStorage,
+  override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: WorkspaceEntityStorageDiffBuilder?): ModuleBridge {
-    return ModuleBridgeImpl(moduleEntityId, name, project, null, entityStorage, diff)
+    return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
   }
 
   companion object {

@@ -1,6 +1,10 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -23,4 +27,9 @@ interface ModuleBridge : ModuleEx {
   var diff: WorkspaceEntityStorageDiffBuilder?
 
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
+
+  fun registerComponents(corePlugin: IdeaPluginDescriptor?, plugins: List<IdeaPluginDescriptorImpl>,
+                         precomputedExtensionModel: PrecomputedExtensionModel?, app: Application?, listenerCallbacks: List<Runnable>?)
+
+  fun callCreateComponents()
 }
