@@ -55,12 +55,20 @@ object EventFields {
   @JvmStatic
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
+  /**
+   * Rounds integer value to the next power of two.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   */
   @JvmStatic
   fun RoundedInt(@NonNls name: String): RoundedIntEventField = RoundedIntEventField(name)
 
   @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
+  /**
+   * Rounds long value to the next power of two.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   */
   @JvmStatic
   fun RoundedLong(@NonNls name: String): RoundedLongEventField = RoundedLongEventField(name)
 
