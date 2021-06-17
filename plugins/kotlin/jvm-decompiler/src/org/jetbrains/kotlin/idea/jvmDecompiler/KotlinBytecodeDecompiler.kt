@@ -1,6 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.internal
+package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
@@ -13,15 +12,16 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.idea.actions.canBeDecompiledToJava
+import org.jetbrains.kotlin.idea.internal.DecompileFailedException
+import org.jetbrains.kotlin.idea.internal.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.jar.Manifest
 
-class KotlinDecompilerServiceImpl : KotlinDecompilerService {
-    override fun decompile(file: KtFile): String? {
+internal object KotlinBytecodeDecompiler {
+    fun decompile(file: KtFile): String? {
         try {
             val bytecodeMap: Map<File, () -> ByteArray> = runReadAction {
                 when {
@@ -78,7 +78,7 @@ class KotlinDecompilerServiceImpl : KotlinDecompilerService {
         return bytecodeMap
     }
 
-    class KotlinResultSaver : IResultSaver {
+    private class KotlinResultSaver : IResultSaver {
         private val decompiledText = mutableMapOf<String, String>()
 
         val resultText: String

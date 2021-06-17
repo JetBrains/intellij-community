@@ -244,6 +244,9 @@
         <element id="archive" name="kotlin-spellchecker.jar">
           <element id="module-output" name="kotlin.spellchecker" />
         </element>
+        <element id="archive" name="kotlin-jvm-decompiler.jar">
+          <element id="module-output" name="kotlin.jvm-decompiler" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.5.10-release-918/kotlin-dist-for-ide-1.5.10-release-918.jar" path-in-jar="/" />

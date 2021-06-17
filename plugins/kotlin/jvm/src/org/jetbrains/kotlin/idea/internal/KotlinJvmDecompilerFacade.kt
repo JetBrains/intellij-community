@@ -7,11 +7,10 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileFailedException(message: String, cause: Throwable) : RuntimeException(message, cause)
 
-interface KotlinDecompilerService {
-    fun decompile(file: KtFile): String?
+interface KotlinJvmDecompilerFacade {
+    fun showDecompiledCode(sourceFile: KtFile)
 
     companion object {
-        fun getInstance(): KotlinDecompilerService? = serviceOrNull()
+        fun getInstance(): KotlinJvmDecompilerFacade? = serviceOrNull()
     }
 }
-

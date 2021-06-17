@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.actions
+package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.codeInsight.AttachSourcesProvider
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -10,8 +10,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.internal.showDecompiledCode
 import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -19,7 +17,7 @@ class DecompileKotlinToJavaAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val binaryFile = getBinaryKotlinFile(e) ?: return
 
-        showDecompiledCode(binaryFile)
+        KotlinJvmDecompilerFacadeImpl.showDecompiledCode(binaryFile)
     }
 
     override fun update(e: AnActionEvent) {
@@ -50,14 +48,14 @@ class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
         if (psiFile !is KtFile || !psiFile.canBeDecompiledToJava()) return emptyList()
 
         return listOf(object : AttachSourcesProvider.AttachSourcesAction {
-            override fun getName() = KotlinBundle.message("action.decompile.java.name")
+            override fun getName() = KotlinJvmDecompilerBundle.message("action.decompile.java.name")
 
             override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>?): ActionCallback {
-                showDecompiledCode(psiFile)
+                KotlinJvmDecompilerFacadeImpl.showDecompiledCode(psiFile)
                 return ActionCallback.DONE
             }
 
-            override fun getBusyText() = KotlinBundle.message("action.decompile.busy.text")
+            override fun getBusyText() = KotlinJvmDecompilerBundle.message("action.decompile.busy.text")
         })
     }
 }
