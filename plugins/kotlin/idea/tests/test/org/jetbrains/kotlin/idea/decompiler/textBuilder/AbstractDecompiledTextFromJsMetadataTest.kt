@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.decompiler.textBuilder
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -76,7 +77,7 @@ abstract class AbstractDecompiledTextFromJsMetadataTest(baseDirectory: String) :
         val kjsmRoot = File(MockLibraryFacility.MOCK_LIBRARY_NAME, TEST_PACKAGE.replace('.', '/'))
         val kjsmFile = File(kjsmRoot, JsSerializerProtocol.getKjsmFilePath(FqName(TEST_PACKAGE)))
 
-        return root.findFileByRelativePath(kjsmFile.path) ?: error("KJSM file not found in JS library ${root.name}")
+        return root.findFileByRelativePath(FileUtil.toSystemIndependentName(kjsmFile.path)) ?: error("KJSM file not found in JS library ${root.name}")
     }
 }
 
