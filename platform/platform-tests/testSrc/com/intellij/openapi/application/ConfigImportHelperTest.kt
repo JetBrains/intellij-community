@@ -340,8 +340,9 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `filtering custom VM options`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
-    Files.write(oldConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()),
-                listOf("-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts"))
+    @Suppress("SpellCheckingInspection") val outlaws = listOf(
+      "-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts")
+    Files.write(oldConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()), outlaws)
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
 
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
