@@ -43,6 +43,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     scrambleMainJar = false
     buildSourcesArchive = true;
     buildCrossPlatformDistribution = true
+    addRemoteDevelopmentLibraries = false
 
     allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
