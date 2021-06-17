@@ -100,6 +100,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       targetParameters.add(request -> {
         return JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true");
       });
+      if (collectLineInfo && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
+        targetParameters.add(request -> {
+          return JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false");
+        });
+      }
     }
     if (project != null) {
       final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
