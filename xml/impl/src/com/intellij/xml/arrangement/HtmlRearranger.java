@@ -2,9 +2,7 @@
 package com.intellij.xml.arrangement;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -107,11 +105,5 @@ public class HtmlRearranger extends XmlRearranger {
                  @NotNull TextRange range) {
       super(parent, range, StdArrangementTokens.EntryType.XML_TAG, null, null, false);
     }
-  }
-
-  @Override
-  public @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
-    String displayName = HTMLLanguage.INSTANCE.getDisplayName();
-    return List.of(new ArrangementTabInfo(AllIcons.FileTypes.Html, displayName, displayName));
   }
 }

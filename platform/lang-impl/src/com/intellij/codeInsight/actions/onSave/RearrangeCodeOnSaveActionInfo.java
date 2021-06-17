@@ -16,6 +16,8 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAwa
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +60,7 @@ public class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
           Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           ArrangementTabInfo tabInfo = (ArrangementTabInfo)value;
           setText(tabInfo.languageDisplayName);
-          setIcon(tabInfo.icon);
+          setIcon(ObjectUtils.notNull(tabInfo.icon, EmptyIcon.ICON_16));
           setBorder(JBUI.Borders.empty(3));
           return result;
         }

@@ -2,10 +2,15 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,22 +87,34 @@ public interface ArrangementStandardSettingsAware {
    * Code Style page.
    */
   default @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
-    return Collections.emptyList();
+    ExtensionPoint<KeyedLazyInstance<Rearranger<?>>> point = Rearranger.EXTENSION.getPoint();
+    if (point == null) return Collections.emptyList();
+
+    KeyedLazyInstance<Rearranger<?>> instance = ContainerUtil.find(point.getExtensionList(), lazyInst -> lazyInst.getInstance() == this);
+    // Rearranger.EXTENSION is a LanguageExtension, key is language ID.
+    Language language = instance != null ? Language.findLanguageByID(instance.getKey()) : null;
+    if (language == null) return Collections.emptyList();
+
+    LanguageFileType fileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
+    Icon icon = fileType != null ? fileType.getIcon() : null;
+
+    return List.of(new ArrangementTabInfo(icon, language.getDisplayName(), language.getDisplayName()));
   }
 
   class ArrangementTabInfo {
-    public final @NotNull Icon icon;
+    public final @Nullable Icon icon;
     public final @NotNull @NlsSafe String languageDisplayName;
     public final @NotNull @NonNls String configurableId;
 
     /**
      * This information is used to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the
      * language-specific Code Style page.
+     *
      * @param configurableId must be equal to what the {@link com.intellij.psi.codeStyle.CodeStyleSettingsProvider#getConfigurableDisplayName()}
      *                       returns for the corresponding language-specific Code Style page. By default, it is {@link Language#getDisplayName()}
      *                       but some configurables override this method.
      */
-    public ArrangementTabInfo(@NotNull Icon icon, @NotNull @NlsSafe String languageDisplayName, @NotNull @NonNls String configurableId) {
+    public ArrangementTabInfo(@Nullable Icon icon, @NotNull @NlsSafe String languageDisplayName, @NotNull @NonNls String configurableId) {
       this.icon = icon;
       this.languageDisplayName = languageDisplayName;
       this.configurableId = configurableId;
