@@ -35,10 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Alarm;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
@@ -120,6 +117,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private volatile MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  private Module myDummyModule;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getService(MavenProjectsManager.class);
@@ -581,7 +579,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
   }
 
-  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles) {
+
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module dummyModuleToDelete) {
+    myDummyModule = dummyModuleToDelete;
     if (!isInitialized()) {
       initNew(files, profiles);
     }
@@ -591,7 +591,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
-    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE);
+    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
   }
 
   public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
@@ -1255,7 +1255,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                                       getFileToModuleMapping(new MavenModelsProvider() {
                                                                         @Override
                                                                         public Module[] getModules() {
-                                                                          return modelsProvider.getModules();
+                                                                          return ArrayUtil.remove(modelsProvider.getModules(),
+                                                                                                  myDummyModule);
                                                                         }
 
                                                                         @Override
@@ -1266,7 +1267,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                                       projectsToImportWithChanges,
                                                                       importModuleGroupsRequired,
                                                                       modelsProvider,
-                                                                      getImportingSettings());
+                                                                      getImportingSettings(),
+                                                                      myDummyModule);
       importer.set(projectImporter);
       postTasks.set(projectImporter.importProject());
     };

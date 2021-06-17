@@ -257,6 +257,9 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
+                 description="Create maven dummy module on import"/>
+
     <registryKey key="maven.server.per.idea.project" defaultValue="false"
                  description="Single Maven server per idea project, .mvn could be ignored"/>
 

@@ -2,13 +2,15 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
@@ -16,11 +18,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,6 +34,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,10 +159,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
-    if (project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
+    boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+    if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
     }
 
+    FileDocumentManager.getInstance().saveAllDocuments();
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
       return Collections.emptyList();
@@ -194,13 +202,21 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     manager.setIgnoredState(getParameters().mySelectedProjects, false);
+    if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
+      Module dummyModule = createDummyModule(project);
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, dummyModule);
+      return Collections.singletonList(dummyModule);
+    }
+    else {
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, null);
+    }
 
-    manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
     setupProjectSdk(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
+
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
       try {
@@ -216,6 +232,35 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
     }
     return manager.importProjects();
+  }
+
+  private @Nullable Module createDummyModule(Project project) {
+    if (ModuleManager.getInstance(project).getModules().length == 0) {
+      MavenProject root = ContainerUtil.getFirstItem(getParameters().mySelectedProjects);
+      if (root == null) return null;
+      VirtualFile contentRoot = root.getDirectoryFile();
+
+      return WriteAction.compute(() -> {
+        Module module = ModuleManager.getInstance(project)
+          .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());
+        ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        modifiableModel.addContentEntry(contentRoot);
+        modifiableModel.commit();
+        renameModuleToProjectName(project, module, root);
+        return module;
+      });
+    }
+    return null;
+  }
+
+  private static void renameModuleToProjectName(Project project, Module module, MavenProject root) {
+    try {
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+      moduleModel.renameModule(module, root.getDisplayName());
+      moduleModel.commit();
+    }
+    catch (ModuleWithNameAlreadyExists ignore) {
+    }
   }
 
   private static void showGeneralSettingsConfigurationDialog(@NotNull Project project, @NotNull MavenGeneralSettings generalSettings) {

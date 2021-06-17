@@ -9,10 +9,8 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -72,6 +70,7 @@ public class MavenProjectImporter {
   private final MavenImportingSettings myImportingSettings;
 
   private final ModifiableModuleModel myModuleModel;
+  private final Module myDummyModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
 
@@ -85,7 +84,8 @@ public class MavenProjectImporter {
                               Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                               boolean importModuleGroupsRequired,
                               IdeModifiableModelsProvider modelsProvider,
-                              MavenImportingSettings importingSettings) {
+                              MavenImportingSettings importingSettings,
+                              Module dummyModule) {
     myProject = p;
     myProjectsTree = projectsTree;
     myFileToModuleMapping = fileToModuleMapping;
@@ -95,6 +95,7 @@ public class MavenProjectImporter {
     myImportingSettings = importingSettings;
 
     myModuleModel = modelsProvider.getModifiableModuleModel();
+    myDummyModule = dummyModule;
   }
 
   @Nullable
@@ -618,20 +619,41 @@ public class MavenProjectImporter {
   }
 
   private boolean ensureModuleCreated(MavenProject project) {
-    if (myMavenProjectToModule.get(project) != null) return false;
-
+    Module existingModule = myMavenProjectToModule.get(project);
+    if (existingModule != null && existingModule != myDummyModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
+    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
+    if (isForTheDummyModule(project, existingModule)) {
+      try {
+        if (!myDummyModule.getName().equals(moduleName)) {
+          myModuleModel.renameModule(myDummyModule, moduleName);
+        }
+      }
+      catch (ModuleWithNameAlreadyExists e) {
+        MavenLog.LOG.error("Cannot rename dummy module:", e);
+      }
+      myMavenProjectToModule.put(project, myDummyModule);
+      myCreatedModules.add(myDummyModule);
+      return true;
+    }
+
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
     deleteExistingImlFile(path);
-    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
     deleteExistingModuleByName(moduleName);
-
     final Module module = myModuleModel.newModule(path, project.getModuleType().getId());
+
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
+  }
+
+  private boolean isForTheDummyModule(MavenProject project, Module existingModule) {
+    if (myDummyModule == null) return false;
+    if (existingModule == myDummyModule) return true;
+    return MavenProjectsManager.getInstance(myProject).getRootProjects().size() == 1 &&
+           MavenProjectsManager.getInstance(myProject).findRootProject(project) == project;
   }
 
   private void deleteExistingModuleByName(final String name) {
