@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
@@ -26,6 +27,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
+    VcsConfiguration.StandardConfirmation.ADD.doNothing()
     repo.untrackedFilesHolder.createWaiter().waitFor()
     _tracker = GitStageTracker(project)
   }
