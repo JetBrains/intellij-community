@@ -250,4 +250,9 @@ abstract class ProductProperties {
    * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}
    */
   List<CustomProperty> generateCustomPropertiesForProductInfo() { [] }
+
+  /**
+   * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
+   */
+  boolean addRemoteDevelopmentLibraries = true
 }
