@@ -6,7 +6,10 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -39,10 +42,6 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ForkJoinTask
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashSet
 import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
@@ -62,8 +61,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal val fileIdToFileName = Int2ObjectOpenHashMap<String>()
 
   // Map of module serializer to boolean that defines whenever modules.xml is external or not
-  // This map is not supposed to be updated after it's initialization.
-  private val moduleSerializerToExternalSourceBool = mutableMapOf<JpsFileEntitiesSerializer<ModuleEntity>, Boolean>()
+  private val moduleSerializerToExternalSourceBool = mutableMapOf<JpsFileEntitiesSerializer<*>, Boolean>()
 
   init {
     synchronized(lock) {
@@ -184,11 +182,15 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val oldFileUrls = oldSerializers.mapTo(HashSet()) { it.fileUrl }
           val newFileUrlsSet = newFileUrls.mapTo(HashSet()) { it.first }
           val obsoleteSerializersForFactory = oldSerializers.filter { it.fileUrl !in newFileUrlsSet }
-          obsoleteSerializersForFactory.forEach { moduleSerializers.remove(it, serializerFactory) }
+          obsoleteSerializersForFactory.forEach {
+            moduleSerializers.remove(it, serializerFactory)
+            moduleSerializerToExternalSourceBool.remove(it)
+          }
           val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
             serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
                                                                            it.first.fileName), it.first, it.second)
           }
+          newFileSerializersForFactory.associateWithTo(moduleSerializerToExternalSourceBool) { serializerFactory.isExternalStorage }
           newFileSerializersForFactory.associateWithTo(moduleSerializers) { serializerFactory }
           obsoleteSerializers.addAll(obsoleteSerializersForFactory)
           newFileSerializers.addAll(newFileSerializersForFactory)
@@ -656,6 +658,16 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 moduleSerializers[newSerializer] = moduleListSerializer
                 affectedModuleListSerializers.add(moduleListSerializer)
               }
+            }
+          }
+          for (serializer in existingSerializers) {
+            val moduleListSerializer = moduleSerializers[serializer]
+            val storedExternally = moduleSerializerToExternalSourceBool[serializer]
+            if (moduleListSerializer != null && storedExternally != null &&
+                (moduleListSerializer.isExternalStorage == storedExternally && !moduleListSerializer.entitySourceFilter(source)
+                || moduleListSerializer.isExternalStorage != storedExternally && moduleListSerializer.entitySourceFilter(source))) {
+              moduleSerializerToExternalSourceBool[serializer] = !storedExternally
+              affectedModuleListSerializers.add(moduleListSerializer)
             }
           }
         }

@@ -439,6 +439,15 @@ class ExternalSystemStorageTest {
   }
 
   @Test
+  fun `mark module with regular facet as mavenized`() {
+    loadModifySaveAndCheck("singleRegularModule", "regularFacetInImportedModule") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      addFacet(module, null, "regular")
+      ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true)
+    }
+  }
+
+  @Test
   fun `remove regular module with enabled external storage`() {
     loadModifySaveAndCheck("twoRegularModules", "twoRegularModulesAfterRemoval") { project ->
       val moduleManager = ModuleManager.getInstance(project)
