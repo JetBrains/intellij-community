@@ -226,7 +226,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else //noinspection deprecation
+    else
       if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
@@ -680,7 +680,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
-    //noinspection deprecation
     final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
     if (DomUtil.hasXml(xmlnsAttribute)) {
       highlightDeprecated(xmlnsAttribute, DevKitBundle.message("inspections.plugin.xml.use.defaultExtensionNs"), holder, false, true);
