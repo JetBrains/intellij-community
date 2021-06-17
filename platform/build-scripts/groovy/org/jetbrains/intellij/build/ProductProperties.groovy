@@ -254,5 +254,5 @@ abstract class ProductProperties {
   /**
    * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
-  boolean addRemoteDevelopmentLibraries = true
+  boolean addRemoteDevelopmentLibraries = false
 }
