@@ -322,6 +322,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                         expr<UBinaryExpression>(build(::FirKotlinUBinaryExpression))
                     }
                 }
+                is KtPrefixExpression -> expr<UPrefixExpression>(build(::KotlinUPrefixExpression))
 
                 else -> expr<UExpression>(build(::UnknownKotlinExpression))
             }
