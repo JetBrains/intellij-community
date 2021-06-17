@@ -38,12 +38,12 @@ open class KotlinUMethod(
         return unwrapFakeFileForLightClass(psi.containingFile)
     }
 
-    override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin as? KtDeclaration)
+    override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation> by lz {
         psi.annotations
             .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
-            .map { KotlinUAnnotation(it, this) }
+            .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
     }
 
     private val receiver by lz {
@@ -85,7 +85,6 @@ open class KotlinUMethod(
         )
     }
 
-
     override val uastBody by lz {
         if (kotlinOrigin?.canAnalyze() != true) return@lz null // EA-137193
         val bodyExpression = when (kotlinOrigin) {
@@ -101,7 +100,6 @@ open class KotlinUMethod(
 
         wrapExpressionBody(this, bodyExpression)
     }
-
 
     override val returnTypeReference: UTypeReferenceExpression? by lz {
         (sourcePsi as? KtCallableDeclaration)?.typeReference?.let {
@@ -140,8 +138,6 @@ open class KotlinUAnnotationMethod(
         val defaultValue = annotationParameter.defaultValue ?: return@lz null
         getLanguagePlugin().convertElement(defaultValue, this) as? UExpression
     }
-
-
 }
 
 class KotlinUMethodWithFakeLightDelegate internal constructor(
@@ -154,7 +150,7 @@ class KotlinUMethodWithFakeLightDelegate internal constructor(
             : this(original, UastFakeLightMethod(original, containingLightClass), givenParent)
 
     override val uAnnotations: List<UAnnotation>
-        get() = original.annotationEntries.mapNotNull { it.toUElementOfType<UAnnotation>() }
+        get() = original.annotationEntries.mapNotNull { it.toUElementOfType() }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

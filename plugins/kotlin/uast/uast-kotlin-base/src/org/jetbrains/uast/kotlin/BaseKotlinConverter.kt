@@ -8,6 +8,11 @@ import org.jetbrains.uast.*
 
 interface BaseKotlinConverter {
 
+    fun convertAnnotation(
+        annotationEntry: KtAnnotationEntry,
+        givenParent: UElement?
+    ): UAnnotation
+
     fun convertDeclaration(
         element: PsiElement,
         givenParent: UElement?,
