@@ -24,6 +24,9 @@ open class RuleGroup(rules: Set<String>) {
     /** An abstract category for all rules that report sentences starting with an unexpected punctuation (e.g. a semicolon). */
     const val UNLIKELY_OPENING_PUNCTUATION = "UNLIKELY_OPENING_PUNCTUATION"
 
+    /** An abstract category for all rules that report sentence fragments (e.g. bare noun phrases or missing subject). */
+    const val INCOMPLETE_SENTENCE = "INCOMPLETE_SENTENCE"
+
     val EMPTY = RuleGroup()
 
     /** Rules for checking casing errors */

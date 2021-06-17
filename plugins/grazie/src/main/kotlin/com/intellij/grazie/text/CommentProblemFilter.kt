@@ -15,6 +15,10 @@ internal class CommentProblemFilter : ProblemFilter() {
       return true
     }
 
+    if (domain == DOCUMENTATION) {
+      return problem.highlightRange.startOffset == 0 && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
+    }
+
     return domain == COMMENTS && Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)
   }
 

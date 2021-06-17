@@ -29,7 +29,7 @@ import java.util.*
 class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val state = GrazieConfig.get();
+    val state = GrazieConfig.get()
     val lang = state.enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
     return getRules(lang, state)
   }
@@ -51,7 +51,13 @@ class LanguageToolChecker : TextChecker() {
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
-      return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && match.rule.id == id }
+      val ruleId = match.rule.id
+      if (RuleGroup.INCOMPLETE_SENTENCE in group.rules &&
+          (ruleId == "SENTENCE_FRAGMENT" || ruleId == "SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA" || ruleId == "AGREEMENT_SENT_START")) {
+        return true
+      }
+
+      return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && ruleId == id }
     }
 
     private fun isAbstractCategory(id: String) =

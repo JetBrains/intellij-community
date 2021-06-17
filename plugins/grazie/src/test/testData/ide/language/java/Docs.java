@@ -28,12 +28,19 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
+     * @param cancellable Whether the progress can be cancelled.
      * @param member member to add
      * @return the new size of the group.
      */
-    Integer goodFunction(T member) {
+    Integer goodFunction(boolean cancellable, T member) {
         return 1; // no error comment
     }
+
+    /** Accepts files for which vcs operations are temporarily blocked. */
+    void some1() {}
+
+    /** Currently active change list. */
+    class ActiveChangeList {}
 }
 
 /**
