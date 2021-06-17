@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.codeMetaInfo
 
 import com.intellij.util.containers.Stack
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoParser
 import java.io.File
 
 object CodeMetaInfoRenderer {
