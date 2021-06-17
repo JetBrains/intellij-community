@@ -18,7 +18,9 @@ import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.DependencyDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
@@ -70,12 +72,21 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       }
     }
 
+    // new model
+    final DependencyDescriptor dependencyDescriptor = plugin.getDependencies();
+    for (DependencyDescriptor.PluginDescriptor pluginDescriptor : dependencyDescriptor.getPlugin()) {
+      ContainerUtil.addIfNotNull(ids, pluginDescriptor.getId().getStringValue());
+    }
+    for (ContentDescriptor.ModuleDescriptor moduleDescriptor : dependencyDescriptor.getModuleEntry()) {
+      ContainerUtil.addIfNotNull(ids, moduleDescriptor.getName().getStringValue());
+    }
+
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
