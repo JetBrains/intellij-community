@@ -42,9 +42,6 @@ public class CommonDataKeys {
    */
   public static final DataKey<Editor> EDITOR = DataKey.create("editor");
 
-  public static final DataKey<Object> CONTROL_ID = DataKey.create("controlId");
-
-
   /**
    * Returns reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
    */
