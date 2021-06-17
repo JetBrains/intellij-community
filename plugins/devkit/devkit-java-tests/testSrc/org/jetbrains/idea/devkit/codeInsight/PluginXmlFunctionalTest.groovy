@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -192,6 +193,18 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.testHighlighting("ExtensionsHighlighting-included.xml")
     myFixture.testHighlighting("ExtensionsHighlighting-via-depends.xml")
+  }
+
+  void testExtensionsDependencies() {
+    String moduleName = "ExtensionsDependencies-module"
+    String moduleDescriptorFilename = "ExtensionsDependencies-module.xml"
+    VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(moduleName)
+    myFixture.copyFileToProject(moduleDescriptorFilename, "/"+ moduleName+ "/" + moduleDescriptorFilename)
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, moduleRoot);
+    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+
+    doHighlightingTest("ExtensionsDependencies.xml",
+                       "ExtensionsDependencies-plugin.xml")
   }
 
   void testDependsHighlighting() {

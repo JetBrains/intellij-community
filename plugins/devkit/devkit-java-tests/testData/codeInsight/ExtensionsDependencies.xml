@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <dependencies>
+    <!-- ExtensionsDependencies-plugin.xml -->
+    <plugin id="com.intellij.myPlugin.plugin.dependency"/>
+
+    <!-- ExtensionsDependencies-module.xml -->
+    <module name="ExtensionsDependencies-module"/>
+  </dependencies>
+
+  <!-- ExtensionsDependencies-plugin.xml -->
+  <extensions defaultExtensionNs="com.intellij.myPlugin.plugin.dependency">
+    <fromPlugin/>
+  </extensions>
+
+  <!-- ExtensionsDependencies-module.xml -->
+  <extensions defaultExtensionNs="com.intellij.myPlugin.module.dependency">
+    <fromModule/>
+  </extensions>
+
+
+</idea-plugin>
