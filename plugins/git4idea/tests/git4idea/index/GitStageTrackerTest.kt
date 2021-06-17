@@ -26,6 +26,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
+    repo.untrackedFilesHolder.createWaiter().waitFor()
     _tracker = GitStageTracker(project)
   }
 
@@ -33,6 +34,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val t = _tracker
     _tracker = null
     t?.let { Disposer.dispose(it) }
+    repo.untrackedFilesHolder.createWaiter().waitFor()
     super.tearDown()
   }
 
