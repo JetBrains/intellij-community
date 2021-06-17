@@ -4,29 +4,34 @@ package org.jetbrains.plugins.groovy.config
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
-import com.intellij.ide.LabelAndComponent
+import com.intellij.ide.*
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
-import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
+import java.awt.Dimension
 import java.awt.KeyboardFocusManager
+import java.awt.event.ItemListener
 import java.nio.file.Path
 import java.util.*
 import javax.swing.DefaultComboBoxModel
@@ -37,9 +42,13 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override val language: String = "Groovy"
   override var settingsFactory = { GroovyModuleSettings() }
 
-  override fun settingsList(settings: GroovyModuleSettings): List<LabelAndComponent> {
+  override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
+    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
+      .apply { minimumSize = Dimension(0, 0) }
+      .also { combo -> combo.addItemListener(ItemListener { settings.javaSdk = combo.selectedJdk }) }
     val panel = panel {
       row {
+        label(GroovyBundle.message("label.groovy.sdk"))
         lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
         lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
         twoColumnRow(
@@ -71,7 +80,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
               GroovyBundle.message("dialog.title.select.groovy.sdk"), null, textWithBrowse, null, fileChooserDescriptor,
               TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
               override fun getInitialFile(): VirtualFile? {
-                return groovyLibraryDescription.findSystemGroovyHome()
+                return groovyLibraryDescription.findPathToGroovyHome()
               }
             })
             FileChooserFactory.getInstance().installFileCompletion(textWithBrowse.textField, fileChooserDescriptor, true, null)
@@ -85,7 +94,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         fromUrlCheckbox.applyToComponent { addChangeListener { if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.applyToComponent { isSelected = false } } }
       }
     }
-    return listOf(LabelAndComponent(null, panel))
+    return listOf(LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo), JustComponent(panel))
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
@@ -96,14 +105,16 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     val libraryDescription = GroovyLibraryDescription()
     val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
                                                          FrameworkLibraryVersionFilter.ALL, listOf(settings.version.get()))
-
+    builder.moduleJdk = settings.javaSdk
     groovyModuleBuilder.updateFrom(builder)
+    groovyModuleBuilder.moduleJdk = settings.javaSdk
+    println(settings.javaSdk)
     val librariesContainer = if (context.modulesProvider == null)
       LibrariesContainerFactory.createContainer(context.project)
     else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
     if (settings.useMavenLibrary) {
       compositionSettings.setDownloadLibraries(true)
-      compositionSettings.downloadFiles(context.wizard.rootPane)
+      compositionSettings.downloadFiles(context.wizard.contentComponent)
     }
     else if (settings.useLocalLibrary) {
       val virtualFile = VfsUtil.findFile(Path.of(settings.sdkPath), false) ?: return
@@ -123,6 +134,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
 }
 
 class GroovyModuleSettings {
+  var javaSdk: Sdk? = null
   var useMavenLibrary: Boolean = false
   var useLocalLibrary: Boolean = false
   var version: Optional<FrameworkLibraryVersion> = Optional.empty()

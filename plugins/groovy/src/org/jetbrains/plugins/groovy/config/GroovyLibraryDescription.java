@@ -87,7 +87,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    VirtualFile initial = findSystemGroovyHome();
+    VirtualFile initial = findPathToGroovyHome();
 
     final FileChooserDescriptor descriptor = createFileChooserDescriptor();
     final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
@@ -98,7 +98,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   }
 
   @Nullable
-  public VirtualFile findSystemGroovyHome() {
+  public VirtualFile findPathToGroovyHome() {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
     if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
       if (SystemInfo.isLinux) {
