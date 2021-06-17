@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -46,7 +48,7 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
         text(LessonsBundle.message("goto.action.invoke.about.action",
                               LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
-          dialog.title.contains("About")
+          dialog.title?.contains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName)) ?: false
         }
         test { actions(it) }
       }
