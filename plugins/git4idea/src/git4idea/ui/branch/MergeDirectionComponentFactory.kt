@@ -34,10 +34,10 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class CreateMergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
-  private val model: CreateMergeDirectionModel<RepoMapping>,
-  private val getBaseRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = { it.baseRepo.toString() },
-  private val getHeadRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = { it.headRepo?.toString() },
+class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
+  private val model: MergeDirectionModel<RepoMapping>,
+  private val getBaseRepoPresentation: (MergeDirectionModel<RepoMapping>) -> @Nls String? = { it.baseRepo.toString() },
+  private val getHeadRepoPresentation: (MergeDirectionModel<RepoMapping>) -> @Nls String? = { it.headRepo?.toString() },
 ) {
   fun create(): JComponent {
     val base = ActionLink("")
