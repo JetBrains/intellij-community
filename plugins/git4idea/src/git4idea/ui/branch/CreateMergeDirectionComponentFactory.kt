@@ -36,9 +36,9 @@ import javax.swing.event.ListDataListener
 
 class CreateMergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
   private val model: CreateMergeDirectionModel<RepoMapping>,
-  private val getBaseRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = {it.baseRepo.toString()},
-  private val getHeadRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = {it.headRepo?.toString()},
-  ) {
+  private val getBaseRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = { it.baseRepo.toString() },
+  private val getHeadRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = { it.headRepo?.toString() },
+) {
   fun create(): JComponent {
     val base = ActionLink("")
     base.addActionListener {
@@ -108,142 +108,143 @@ class CreateMergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingDat
       add(changesWarningLabel, CC().gapLeft("${UI.scale(10)}"))
     }
   }
-}
 
-
-private fun <RepoMapping : GitRepositoryMappingData> createRemoteBranchModel(repoMapping: RepoMapping,
-                                                                             currentRemoteBranch: GitRemoteBranch?): MutableCollectionComboBoxModel<GitRemoteBranch> {
-  val branchModel = MutableCollectionComboBoxModel<GitRemoteBranch>().apply {
-    val remote = repoMapping.gitRemote
-    val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
-      it.remote == remote
-    }
-    replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
-    selectedItem = currentRemoteBranch.takeIf { it != null && branches.contains(it) }
-  }
-  return branchModel
-}
-
-private fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
-                                                                      currentBranch: GitRemoteBranch?,
-                                                                      repoMapping: RepoMapping,
-                                                                      applySelection: (GitRemoteBranch?) -> Unit) {
-  val branchModel = createRemoteBranchModel(repoMapping, currentBranch)
-  val popup = createBranchPopup(branchModel,
-                                GitBundle.message("branch.direction.panel.base.repo.label"),
-                                JBTextField(repoMapping.repositoryPath).apply {
-                                  isEnabled = false
-                                }) {
-    applySelection(branchModel.selected)
-  }
-  popup.showUnderneathOf(parentComponent)
-}
-
-
-private fun <RepoMapping : GitRepositoryMappingData> chooseHeadRepoAndBranch(parentComponent: JComponent,
-                                                                             currentRepo: RepoMapping?,
-                                                                             currentBranch: GitBranch?,
-                                                                             applySelection: (RepoMapping?, GitBranch?) -> Unit,
-                                                                             items: List<RepoMapping>) {
-
-  val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
-  val branchModel = MutableCollectionComboBoxModel<GitBranch>()
-
-  repoModel.addListDataListener(object : ListDataListener {
-    override fun intervalAdded(e: ListDataEvent) {}
-    override fun intervalRemoved(e: ListDataEvent) {}
-    override fun contentsChanged(e: ListDataEvent) {
-      if (e.index0 == -1 && e.index1 == -1) updateHeadBranches(branchModel, repoModel.selected)
-    }
-  })
-  updateHeadBranches(branchModel, repoModel.selected)
-
-  if (currentBranch != null && branchModel.items.contains(currentBranch)) branchModel.selectedItem = currentBranch
-
-  val popup = createBranchPopup(branchModel,
-                                GitBundle.message("branch.direction.panel.head.repo.label"),
-                                ComboBox(repoModel).apply {
-                                  renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
-                                }) {
-    applySelection(repoModel.selected, branchModel.selected)
-  }
-
-  popup.showUnderneathOf(parentComponent)
-}
-
-private fun <RepoMapping : GitRepositoryMappingData> updateHeadBranches(branchModel: MutableCollectionComboBoxModel<GitBranch>,
-                                                                        repoMapping: RepoMapping?) {
-  val repo = repoMapping?.gitRepository
-  if (repo == null) {
-    branchModel.replaceAll(emptyList())
-    return
-  }
-
-  val remote = repoMapping.gitRemote
-  val remoteBranches = repo.branches.remoteBranches.filter {
-    it.remote == remote
-  }
-
-  val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
-  branchModel.replaceAll(branches)
-  branchModel.selectedItem = repo.currentBranch
-}
-
-private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
-
-
-fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
-                                      @Nls repoRowMessage: String,
-                                      repoComponent: JComponent,
-                                      onSave: () -> Unit): JBPopup {
-  var buttonHandler: ((ActionEvent) -> Unit)? = null
-
-  val branchComponent = ComboBox(branchModel).apply {
-    renderer = SimpleListCellRenderer.create<GitBranch>("", GitBranch::getName)
-  }.also {
-    ComboboxSpeedSearch.installSpeedSearch(it, GitBranch::getName)
-  }
-
-  val panel = panel(LCFlags.fill) {
-    row(repoRowMessage) {
-      repoComponent(CCFlags.growX)
-    }
-    row(GitBundle.message("branch.direction.panel.branch.label")) {
-      branchComponent(CCFlags.growX)
-    }
-    row {
-      right {
-        button(GitBundle.message("branch.direction.panel.save.button")) {
-          buttonHandler?.invoke(it)
+  companion object {
+    private fun <RepoMapping : GitRepositoryMappingData> createRemoteBranchModel(repoMapping: RepoMapping,
+                                                                                 currentRemoteBranch: GitRemoteBranch?): MutableCollectionComboBoxModel<GitRemoteBranch> {
+      val branchModel = MutableCollectionComboBoxModel<GitRemoteBranch>().apply {
+        val remote = repoMapping.gitRemote
+        val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
+          it.remote == remote
         }
+        replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
+        selectedItem = currentRemoteBranch.takeIf { it != null && branches.contains(it) }
       }
+      return branchModel
     }
-  }.apply {
-    isFocusCycleRoot = true
-    border = JBUI.Borders.empty(8, 8, 0, 8)
-  }
 
-  return JBPopupFactory.getInstance()
-    .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
-    .setFocusable(false)
-    .createPopup().apply {
-      setRequestFocus(true)
-    }.also { popup ->
-      branchModel.addListDataListener(object : ListDataListener {
-        override fun intervalAdded(e: ListDataEvent?) {
-          invokeLater { popup.pack(true, false) }
+    private fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
+                                                                          currentBranch: GitRemoteBranch?,
+                                                                          repoMapping: RepoMapping,
+                                                                          applySelection: (GitRemoteBranch?) -> Unit) {
+      val branchModel = createRemoteBranchModel(repoMapping, currentBranch)
+      val popup = createBranchPopup(branchModel,
+                                    GitBundle.message("branch.direction.panel.base.repo.label"),
+                                    JBTextField(repoMapping.repositoryPath).apply {
+                                      isEnabled = false
+                                    }) {
+        applySelection(branchModel.selected)
+      }
+      popup.showUnderneathOf(parentComponent)
+    }
+
+
+    private fun <RepoMapping : GitRepositoryMappingData> chooseHeadRepoAndBranch(parentComponent: JComponent,
+                                                                                 currentRepo: RepoMapping?,
+                                                                                 currentBranch: GitBranch?,
+                                                                                 applySelection: (RepoMapping?, GitBranch?) -> Unit,
+                                                                                 items: List<RepoMapping>) {
+
+      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
+      val branchModel = MutableCollectionComboBoxModel<GitBranch>()
+
+      repoModel.addListDataListener(object : ListDataListener {
+        override fun intervalAdded(e: ListDataEvent) {}
+        override fun intervalRemoved(e: ListDataEvent) {}
+        override fun contentsChanged(e: ListDataEvent) {
+          if (e.index0 == -1 && e.index1 == -1) updateHeadBranches(branchModel, repoModel.selected)
         }
-
-        override fun intervalRemoved(e: ListDataEvent?) {
-          invokeLater { popup.pack(true, false) }
-        }
-
-        override fun contentsChanged(e: ListDataEvent?) {}
       })
+      updateHeadBranches(branchModel, repoModel.selected)
 
-      buttonHandler = {
-        onSave()
-        popup.closeOk(null)
+      if (currentBranch != null && branchModel.items.contains(currentBranch)) branchModel.selectedItem = currentBranch
+
+      val popup = createBranchPopup(branchModel,
+                                    GitBundle.message("branch.direction.panel.head.repo.label"),
+                                    ComboBox(repoModel).apply {
+                                      renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
+                                    }) {
+        applySelection(repoModel.selected, branchModel.selected)
       }
+
+      popup.showUnderneathOf(parentComponent)
     }
+
+    private fun <RepoMapping : GitRepositoryMappingData> updateHeadBranches(branchModel: MutableCollectionComboBoxModel<GitBranch>,
+                                                                            repoMapping: RepoMapping?) {
+      val repo = repoMapping?.gitRepository
+      if (repo == null) {
+        branchModel.replaceAll(emptyList())
+        return
+      }
+
+      val remote = repoMapping.gitRemote
+      val remoteBranches = repo.branches.remoteBranches.filter {
+        it.remote == remote
+      }
+
+      val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
+      branchModel.replaceAll(branches)
+      branchModel.selectedItem = repo.currentBranch
+    }
+
+    private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
+
+
+    private fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
+                                                  @Nls repoRowMessage: String,
+                                                  repoComponent: JComponent,
+                                                  onSave: () -> Unit): JBPopup {
+      var buttonHandler: ((ActionEvent) -> Unit)? = null
+
+      val branchComponent = ComboBox(branchModel).apply {
+        renderer = SimpleListCellRenderer.create<GitBranch>("", GitBranch::getName)
+      }.also {
+        ComboboxSpeedSearch.installSpeedSearch(it, GitBranch::getName)
+      }
+
+      val panel = panel(LCFlags.fill) {
+        row(repoRowMessage) {
+          repoComponent(CCFlags.growX)
+        }
+        row(GitBundle.message("branch.direction.panel.branch.label")) {
+          branchComponent(CCFlags.growX)
+        }
+        row {
+          right {
+            button(GitBundle.message("branch.direction.panel.save.button")) {
+              buttonHandler?.invoke(it)
+            }
+          }
+        }
+      }.apply {
+        isFocusCycleRoot = true
+        border = JBUI.Borders.empty(8, 8, 0, 8)
+      }
+
+      return JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
+        .setFocusable(false)
+        .createPopup().apply {
+          setRequestFocus(true)
+        }.also { popup ->
+          branchModel.addListDataListener(object : ListDataListener {
+            override fun intervalAdded(e: ListDataEvent?) {
+              invokeLater { popup.pack(true, false) }
+            }
+
+            override fun intervalRemoved(e: ListDataEvent?) {
+              invokeLater { popup.pack(true, false) }
+            }
+
+            override fun contentsChanged(e: ListDataEvent?) {}
+          })
+
+          buttonHandler = {
+            onSave()
+            popup.closeOk(null)
+          }
+        }
+    }
+  }
 }
