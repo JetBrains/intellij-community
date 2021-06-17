@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.arrangement;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -146,11 +144,5 @@ public class XmlRearranger
   @Override
   public ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     throw new IllegalArgumentException("Can't build a matcher for condition " + condition);
-  }
-
-  @Override
-  public @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
-    String displayName = XMLLanguage.INSTANCE.getDisplayName();
-    return List.of(new ArrangementTabInfo(AllIcons.FileTypes.Xml, displayName, displayName));
   }
 }
