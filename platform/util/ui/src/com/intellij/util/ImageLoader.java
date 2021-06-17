@@ -397,8 +397,8 @@ public final class ImageLoader {
       // StartupUiUtil.drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver).
       //
       // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
-      // the image user space size (DerivedScaleType.EFF_USR_SCALE) will then be derived by JBHiDPIScaledImage
-      // (it is assumed the derived size is equal to {originalUserSize}, taking into account calculation accuracy).
+      // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
+      // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
       image = new JBHiDPIScaledImage(image, scaleContext, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
