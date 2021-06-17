@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,6 +16,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -32,10 +31,11 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -53,11 +53,11 @@ public final class IconLoader {
   private static final Logger LOG = Logger.getInstance(IconLoader.class);
   private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
-  // the key: URL or Pair(path, classLoader)
-  private static final ConcurrentMap<@NotNull Object, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
+  // the key: Pair(path, classLoader)
+  private static final Map<@NotNull Pair<String, ClassLoader>, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
 
   // contains mapping between icons and disabled icons.
-  private static final Cache<@NotNull Icon, @NotNull Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
+  private static final Map<@NotNull Icon, @NotNull Icon> iconToDisabledIcon = CollectionFactory.createConcurrentWeakMap();
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -117,7 +117,7 @@ public final class IconLoader {
     pathTransformGlobalModCount.incrementAndGet();
 
     if (prev != next) {
-      iconToDisabledIcon.invalidateAll();
+      iconToDisabledIcon.clear();
       // clear svg cache
       ImageLoader.ImageCache.INSTANCE.clearCache();
       // iconCache is not cleared because it contain original icon (instance that will delegate to)
@@ -157,7 +157,7 @@ public final class IconLoader {
   @TestOnly
   public static void clearCacheInTests() {
     iconCache.clear();
-    iconToDisabledIcon.invalidateAll();
+    iconToDisabledIcon.clear();
     ImageLoader.ImageCache.INSTANCE.clearCache();
     pathTransformGlobalModCount.incrementAndGet();
   }
@@ -354,18 +354,16 @@ public final class IconLoader {
     return findIcon(url, true);
   }
 
-  public static @Nullable Icon findIcon(@Nullable URL url, boolean useCache) {
+  public static @Nullable Icon findIcon(@Nullable URL url, boolean storeToCache) {
     if (url == null) {
       return null;
     }
-
-    if (useCache) {
-      return iconCache.computeIfAbsent(url, url1 -> new CachedImageIcon((URL)url1, true));
+    Pair<String, ClassLoader> key = Pair.create(url.toString(), null);
+    if (storeToCache) {
+      return iconCache.computeIfAbsent(key, __ -> new CachedImageIcon(url, true));
     }
-    else {
-      CachedImageIcon icon = iconCache.get(url);
-      return icon == null ? new CachedImageIcon(url, false) : icon;
-    }
+    CachedImageIcon icon = iconCache.get(key);
+    return icon == null ? new CachedImageIcon(url, false) : icon;
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -387,12 +385,11 @@ public final class IconLoader {
       icon = getReflectiveIcon(path, classLoader);
     }
     else {
-      Pair<String, Object> key = new Pair<>(originalPath, classLoader);
+      Pair<String, ClassLoader> key = new Pair<>(originalPath, classLoader);
       CachedImageIcon cachedIcon = iconCache.get(key);
       if (cachedIcon == null) {
         cachedIcon = iconCache.computeIfAbsent(key, k -> {
-          @SuppressWarnings("unchecked")
-          ClassLoader classLoader1 = (ClassLoader)((Pair<String, Object>)k).getSecond();
+          ClassLoader classLoader1 = k.getSecond();
           ImageDataLoader resolver;
           if (deferUrlResolve) {
             resolver = new ImageDataResolverImpl(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
@@ -554,9 +551,8 @@ public final class IconLoader {
       icon = getOrigin((RetrievableIcon)icon);
     }
 
-    return Objects.requireNonNull(iconToDisabledIcon.get(icon, existingIcon -> {
-      return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
-    }));
+    return iconToDisabledIcon.computeIfAbsent(icon, existingIcon ->
+      filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor));
   }
 
   /**
@@ -690,11 +686,11 @@ public final class IconLoader {
     iconCache.entrySet().removeIf(entry -> {
       CachedImageIcon icon = entry.getValue();
       icon.detachClassLoader(classLoader);
-      Object key = entry.getKey();
-      return key instanceof Pair && ((Pair<?, ?>)key).second == classLoader;
+      Pair<String, ClassLoader> key = entry.getKey();
+      return key.second == classLoader;
     });
 
-    iconToDisabledIcon.asMap().keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
+    iconToDisabledIcon.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
   }
 
   @ApiStatus.Internal
