@@ -36,9 +36,9 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
     if (userObject instanceof HierarchyNodeDescriptor) {
       HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)userObject;
       var tagIconAndText = TagManager.getTagIconAndText(descriptor.getPsiElement());
+      descriptor.getHighlightedText().customize(this);
       setIcon(IconUtil.rowIcon(tagIconAndText.first, fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
       append(tagIconAndText.second);
-      descriptor.getHighlightedText().customize(this);
     }
     else {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
