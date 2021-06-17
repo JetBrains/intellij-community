@@ -402,7 +402,7 @@ public final class PluginManagerCore {
   static @Nullable IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptorImpl descriptor,
                                                                   @NotNull Supplier<IdeaPluginDescriptorImpl> javaDepGetter) {
     // skip our plugins as expected to be up-to-date whether bundled or not
-    if (descriptor.isBundled() || descriptor.packagePrefix != null) {
+    if (descriptor.isBundled() || descriptor.packagePrefix != null || descriptor.implementationDetail) {
       return null;
     }
 
