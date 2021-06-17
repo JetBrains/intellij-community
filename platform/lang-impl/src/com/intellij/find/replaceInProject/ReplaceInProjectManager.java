@@ -468,7 +468,7 @@ public final class ReplaceInProjectManager {
       }
 
       final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
-      if (!document.isWritable()) return false;
+      if (document == null || !document.isWritable()) return false;
 
       return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();
