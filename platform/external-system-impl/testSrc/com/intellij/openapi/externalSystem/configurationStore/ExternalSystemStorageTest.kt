@@ -2,8 +2,9 @@
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
-import com.intellij.facet.*
+import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManagerBase
 import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.mock.MockFacet
@@ -431,8 +432,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `mark module as mavenized`() {
-    //after module is mavenized, we still store iml file with empty root tag inside; it would be better to delete the file in such cases,
-    // but it isn't simple to implement so let's leave it as is for now; and the old project model behaves in the same way.
     loadModifySaveAndCheck("singleRegularModule", "singleModuleAfterMavenization") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true)
