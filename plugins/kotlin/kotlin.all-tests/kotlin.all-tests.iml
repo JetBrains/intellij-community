@@ -87,5 +87,6 @@
     <orderEntry type="module" module-name="kotlin.copyright" />
     <orderEntry type="module" module-name="kotlin.spellchecker" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" />
+    <orderEntry type="module" module-name="kotlin.properties" />
   </component>
 </module>
