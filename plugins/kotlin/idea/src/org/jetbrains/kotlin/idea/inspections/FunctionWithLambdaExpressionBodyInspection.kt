@@ -64,7 +64,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     }
 
     private class AddArrowIntention : SpecifyExplicitLambdaSignatureIntention() {
-        override fun allowCaretInsideElement(element: PsiElement) = true
+        override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = false
     }
 
     private class RemoveBracesFix : LocalQuickFix {
