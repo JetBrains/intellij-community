@@ -197,7 +197,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     detailsLoadingErrorHandler).createWithUpdatesStripe(uiDisposable) { _, model ->
       val branchesModel = GHPRBranchesModelImpl(model,
                                                 dataProvider.detailsData,
-                                                dataContext.repositoryDataService.repositoryMapping.gitRemote.repository,
+                                                dataContext.repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates.repository,
                                                 disposable)
 
       val detailsModel = GHPRDetailsModelImpl(model)

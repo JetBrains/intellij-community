@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.ListenableProgressIndicator
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressWrapper
@@ -26,7 +27,6 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.ui.branch.CreateMergeDirectionComponentFactory
 import git4idea.ui.branch.CreateMergeDirectionModel
-import git4idea.ui.branch.GitRemoteAndRepository
 import git4idea.util.BranchNameInputDialogMessages
 import git4idea.util.findOrPushRemoteBranch
 import git4idea.util.findPushTarget
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFact
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import com.intellij.collaboration.ui.SingleValueModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -222,7 +221,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       val headBranch = directionModel.headBranch ?: return null
       if (headBranch is GitRemoteBranch) return headBranch
       else headBranch as GitLocalBranch
-      val gitRemote = headRepo.gitRemote
+      val gitRemote = headRepo.gitRemoteUrlCoordinates
       return findPushTarget(gitRemote.repository, gitRemote.remote, headBranch)?.branch
     }
   }
@@ -252,11 +251,11 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           GithubBundle.message("pull.request.create.input.remote.branch.title"),
           GithubBundle.message("pull.request.create.input.remote.branch.name"),
           GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
-                               headRepo.gitRemote.remote.name))
+                               headRepo.gitRemoteUrlCoordinates.remote.name))
         findOrPushRemoteBranch(project,
                                progressIndicator,
-                               headRepo.gitRemote.repository,
-                               headRepo.gitRemote.remote,
+                               headRepo.gitRemoteUrlCoordinates.repository,
+                               headRepo.gitRemoteUrlCoordinates.remote,
                                headBranch,
                                dialogMessages)
       }.thenCompose { remoteHeadBranch ->
@@ -269,7 +268,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
               viewController.viewPullRequest(it)
-              settings.recentNewPullRequestHead = headRepo.repository
+              settings.recentNewPullRequestHead = headRepo.ghRepositoryCoordinates
               viewController.resetNewPullRequestView()
             }
             it

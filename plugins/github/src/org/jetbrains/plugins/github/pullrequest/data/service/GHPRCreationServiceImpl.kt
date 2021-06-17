@@ -36,7 +36,7 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
       val actualTitle = title.takeIf(String::isNotBlank) ?: headBranch.nameForRemoteOperations
       val body = description.nullize(true)
 
-      requestExecutor.execute(it, GHGQLRequests.PullRequest.create(baseRepo.repository, repositoryId,
+      requestExecutor.execute(it, GHGQLRequests.PullRequest.create(baseRepo.ghRepositoryCoordinates, repositoryId,
                                                                    baseBranch.nameForRemoteOperations,
                                                                    headRepositoryPrefix + headBranch.nameForRemoteOperations,
                                                                    actualTitle, body, draft
@@ -49,14 +49,14 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
                                headBranch: GitRemoteBranch): GHPRIdentifier? {
     progressIndicator.text = GithubBundle.message("pull.request.existing.process.title")
     return requestExecutor.execute(progressIndicator,
-                                   GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
+                                   GHGQLRequests.PullRequest.findByBranches(baseRepo.ghRepositoryCoordinates,
                                                                             baseBranch.nameForRemoteOperations,
                                                                             headBranch.nameForRemoteOperations
                                    )).nodes.firstOrNull {
-      it.headRepository?.owner?.login == headRepo.repository.repositoryPath.owner
+      it.headRepository?.owner?.login == headRepo.ghRepositoryCoordinates.repositoryPath.owner
     }
   }
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
-    if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"
+    if (baseRepo.ghRepositoryCoordinates == headRepo.ghRepositoryCoordinates) "" else headRepo.ghRepositoryCoordinates.repositoryPath.owner + ":"
 }
