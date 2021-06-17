@@ -207,6 +207,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       removeAccounts(removed)
       dialogStateListener.onListItemChanged()
     }
+    val added = new - old
+    if (added.isNotEmpty()) {
+      for (account in added) {
+        if (repositoriesByAccount[account] != null) continue
+        addAccount(account)
+      }
+      switchToRepositories()
+      dialogStateListener.onListItemChanged()
+    }
   }
 
   override fun onAccountCredentialsChanged(account: GithubAccount) {
