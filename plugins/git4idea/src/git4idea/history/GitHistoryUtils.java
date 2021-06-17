@@ -299,7 +299,7 @@ public final class GitHistoryUtils {
   }
 
   /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
@@ -312,7 +312,7 @@ public final class GitHistoryUtils {
   }
 
   /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
+   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
    */
   @Deprecated
   @NotNull
