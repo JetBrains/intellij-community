@@ -18,6 +18,10 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
 internal object FirKotlinConverter : BaseKotlinConverter {
+    override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
+        TODO("Not yet implemented")
+    }
+
     internal fun convertDeclarationOrElement(
         element: PsiElement,
         givenParent: UElement?,
