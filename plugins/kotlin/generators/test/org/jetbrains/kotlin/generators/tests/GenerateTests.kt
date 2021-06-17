@@ -266,6 +266,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
+    testGroup("copyright/tests") {
+        testClass<AbstractUpdateKotlinCopyrightTest> {
+            model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
+        }
+    }
+
     testGroup("coverage/tests") {
         testClass<AbstractKotlinCoverageOutputFilesTest> {
             model("outputFiles")
@@ -704,10 +710,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractMoveOnCutPasteTest> {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
-        }
-
-        testClass<AbstractUpdateKotlinCopyrightTest> {
-            model("copyright", pattern = KT_OR_KTS, testMethodName = "doTest")
         }
 
         testClass<AbstractHighlightExitPointsTest> {

@@ -37,7 +37,6 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="completion-ranking-kotlin" level="project" />
-    <orderEntry type="library" scope="TEST" name="javaslang" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -70,7 +69,6 @@
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />

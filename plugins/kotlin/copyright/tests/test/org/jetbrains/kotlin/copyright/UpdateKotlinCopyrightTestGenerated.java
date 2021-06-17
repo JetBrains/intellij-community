@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("copyright/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/copyright")
+@TestMetadata("testData/update")
 public class UpdateKotlinCopyrightTestGenerated extends AbstractUpdateKotlinCopyrightTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,31 +25,31 @@ public class UpdateKotlinCopyrightTestGenerated extends AbstractUpdateKotlinCopy
 
     @TestMetadata("ClassDocComment.kt")
     public void testClassDocComment() throws Exception {
-        runTest("testData/copyright/ClassDocComment.kt");
+        runTest("testData/update/ClassDocComment.kt");
     }
 
     @TestMetadata("Empty.kt")
     public void testEmpty() throws Exception {
-        runTest("testData/copyright/Empty.kt");
+        runTest("testData/update/Empty.kt");
     }
 
     @TestMetadata("MultiComments.kt")
     public void testMultiComments() throws Exception {
-        runTest("testData/copyright/MultiComments.kt");
+        runTest("testData/update/MultiComments.kt");
     }
 
     @TestMetadata("NoPackage.kt")
     public void testNoPackage() throws Exception {
-        runTest("testData/copyright/NoPackage.kt");
+        runTest("testData/update/NoPackage.kt");
     }
 
     @TestMetadata("Script.kts")
     public void testScript() throws Exception {
-        runTest("testData/copyright/Script.kts");
+        runTest("testData/update/Script.kts");
     }
 
     @TestMetadata("Simple.kt")
     public void testSimple() throws Exception {
-        runTest("testData/copyright/Simple.kt");
+        runTest("testData/update/Simple.kt");
     }
 }
