@@ -56,7 +56,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   };
 
   @Override
-  public <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
     return getDelegate().instantiateClass(aClass, pluginId);
   }
 

@@ -130,12 +130,12 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default <T> T instantiateClass(@NotNull Class<T> aClass, @SuppressWarnings("unused") @Nullable PluginId pluginId) {
+  default <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
     return ReflectionUtil.newInstance(aClass, false);
   }
 
   @ApiStatus.Internal
-  <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @SuppressWarnings("unused") @NotNull PluginId pluginId);
+  <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
   default void logError(@NotNull Throwable error, @NotNull PluginId pluginId) {
