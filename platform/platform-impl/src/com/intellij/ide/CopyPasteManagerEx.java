@@ -49,7 +49,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
-    return ClientCopyPasteManager.getCurrentInstance().areDataFlavorsAvailable();
+    return ClientCopyPasteManager.getCurrentInstance().areDataFlavorsAvailable(flavors);
   }
 
   @Override
