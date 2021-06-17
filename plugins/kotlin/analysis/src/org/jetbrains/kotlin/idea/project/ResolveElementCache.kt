@@ -51,14 +51,13 @@ class ResolveElementCache(
     private val codeFragmentAnalyzer: CodeFragmentAnalyzer
 ) : BodyResolveCache {
 
-    private val cacheDependencies =
-        sequence {
-            yield(resolveSession.exceptionTracker)
-            yield(ProjectRootModificationTracker.getInstance(project))
-            if (resolveSession.moduleDescriptor.getCapability(ModuleInfo.Capability) !is LibraryInfo) {
-                yield(KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker)
-            }
-        }.toList().toTypedArray()
+    private val cacheDependencies = listOfNotNull(
+        resolveSession.exceptionTracker,
+        ProjectRootModificationTracker.getInstance(project),
+        if (resolveSession.moduleDescriptor.getCapability(ModuleInfo.Capability) !is LibraryInfo) {
+            KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+        } else null
+    ).toTypedArray()
 
     private val forcedFullResolveOnHighlighting = Registry.`is`("kotlin.resolve.force.full.resolve.on.highlighting", true)
 
