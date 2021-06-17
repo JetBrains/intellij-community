@@ -191,7 +191,8 @@ public final class PluginDownloader {
       builtinPluginsUrl = StringUtil.substringBefore(builtinPluginsUrlPluginsXml, "plugins.xml");
     }
     boolean pluginFromBuiltinRepo = builtinPluginsUrl != null && myPluginUrl.startsWith(builtinPluginsUrl);
-    if (Registry.is("marketplace.certificate.signature.check") && !pluginFromBuiltinRepo) {
+    // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !pluginFromBuiltinRepo) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
