@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static java.lang.Math.round;
 
 /**
@@ -132,6 +133,22 @@ public final class JBHiDPIScaledImage extends BufferedImage {
     myUserWidth = width;
     myUserHeight = height;
     myScale = myUserWidth > 0 ? myImage.getWidth(null) / myUserWidth : 1f;
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage wrapper for the provided scaled raw image,
+   * based on the provided ScaleContext.
+   *
+   * @param image the scaled raw image
+   * @param ctx the scaled context
+   * @param type the type
+   */
+  public JBHiDPIScaledImage(@NotNull Image image, @NotNull ScaleContext ctx, int type) {
+    super(1, 1, type); // a dummy wrapper
+    myImage = image;
+    myScale = ctx.getScale(SYS_SCALE);
+    myUserWidth = myImage.getWidth(null) / myScale;
+    myUserHeight = myImage.getHeight(null) / myScale;
   }
 
   public double getScale() {
