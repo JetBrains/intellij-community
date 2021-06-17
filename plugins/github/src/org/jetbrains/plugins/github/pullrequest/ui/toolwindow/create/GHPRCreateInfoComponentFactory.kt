@@ -28,8 +28,8 @@ import git4idea.GitRemoteBranch
 import git4idea.GitUtilKt
 import git4idea.GitUtilKt.findOrPushRemoteBranch
 import git4idea.GitUtilKt.findPushTarget
-import git4idea.ui.branch.CreateMergeDirectionComponentFactory
-import git4idea.ui.branch.CreateMergeDirectionModel
+import git4idea.ui.branch.MergeDirectionComponentFactory
+import git4idea.ui.branch.MergeDirectionModel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -63,7 +63,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val dataContext: GHPRDataContext,
                                               private val viewController: GHPRToolWindowTabComponentController) {
 
-  fun create(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
+  fun create(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,
              descriptionDocument: DisableableDocument,
              metadataModel: GHPRCreateMetadataModel,
@@ -95,7 +95,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
 
-    val directionSelector = CreateMergeDirectionComponentFactory(
+    val directionSelector = MergeDirectionComponentFactory(
       directionModel,
       { model ->
         with(model) {
@@ -198,7 +198,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  private inner class InfoController(private val directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
+  private inner class InfoController(private val directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
                                      private val existenceCheckLoadingModel: GHIOExecutorLoadingModel<GHPRIdentifier?>,
                                      private val existenceCheckProgressIndicator: ListenableProgressIndicator,
                                      private val createAction: AbstractAction,
@@ -232,7 +232,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       createDraftAction.isEnabled = enabled
     }
 
-    private fun findCurrentRemoteHead(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>): GitRemoteBranch? {
+    private fun findCurrentRemoteHead(directionModel: MergeDirectionModel<GHGitRepositoryMapping>): GitRemoteBranch? {
       val headRepo = directionModel.headRepo ?: return null
       val headBranch = directionModel.headBranch ?: return null
       if (headBranch is GitRemoteBranch) return headBranch
@@ -242,7 +242,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  private inner class CreateAction(private val directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
+  private inner class CreateAction(private val directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
                                    private val titleDocument: Document, private val descriptionDocument: DisableableDocument,
                                    private val metadataModel: GHPRCreateMetadataModel,
                                    private val draft: Boolean,
@@ -351,7 +351,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
   companion object {
     private val Document.text: String get() = getText(0, length)
 
-    private fun createNoChangesWarningLabel(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
+    private fun createNoChangesWarningLabel(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
                                             commitsCountModel: SingleValueModel<Int?>): JComponent {
       val label = JLabel(AllIcons.General.Warning)
       fun update() {

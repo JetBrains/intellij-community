@@ -3,9 +3,8 @@ package git4idea.ui.branch
 
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
-import org.jetbrains.annotations.Nls
 
-interface CreateMergeDirectionModel<RepoMapping> {
+interface MergeDirectionModel<RepoMapping> {
   val baseRepo: RepoMapping
   var baseBranch: GitRemoteBranch?
   val headRepo: RepoMapping?
