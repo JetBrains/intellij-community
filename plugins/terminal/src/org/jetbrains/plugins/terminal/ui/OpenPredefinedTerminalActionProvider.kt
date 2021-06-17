@@ -4,12 +4,13 @@ package org.jetbrains.plugins.terminal.ui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 
 interface OpenPredefinedTerminalActionProvider {
 
-  /**
-   * Called on a background thread without the read lock.
-   */
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   fun listOpenPredefinedTerminalActions(project: Project): List<AnAction>
 
   companion object {
@@ -17,6 +18,8 @@ interface OpenPredefinedTerminalActionProvider {
       "org.jetbrains.plugins.terminal.openPredefinedTerminalProvider")
 
     @JvmStatic
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     fun collectAll(project: Project): List<AnAction> = EP_NAME.extensionList.flatMap {
       it.listOpenPredefinedTerminalActions(project)
     }
