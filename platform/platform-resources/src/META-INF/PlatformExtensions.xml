@@ -953,7 +953,7 @@
     <!-- Actions on Save -->
     <projectConfigurable groupId="tools"
                          groupWeight="170"
-                         instance="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable"
+                         provider="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable$ActionsOnSaveConfigurableProvider"
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
