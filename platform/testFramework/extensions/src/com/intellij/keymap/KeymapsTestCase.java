@@ -7,6 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
+  /**
+   * This table lists known actions which use the same shortcut. Note that it's ok to add a new entry here only if you're sure that the
+   * mentioned actions will never be enabled in the same context. Otherwise, users may get unexpected behavior when they try to use that
+   * shortcut.
+   */
   @NonNls
   protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new HashMap<>(){{
     put("$default", new String[][] {
