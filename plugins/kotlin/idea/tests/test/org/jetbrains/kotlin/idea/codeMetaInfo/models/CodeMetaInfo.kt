@@ -4,52 +4,16 @@ package org.jetbrains.kotlin.idea.codeMetaInfo.models
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.checkers.diagnostics.ActualDiagnostic
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.model.DiagnosticCodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.editor.fixers.end
 import org.jetbrains.kotlin.idea.editor.fixers.start
-
-interface CodeMetaInfo {
-    val start: Int
-    val end: Int
-    val tag: String
-    val renderConfiguration: AbstractCodeMetaInfoRenderConfiguration
-    val attributes: MutableList<String>
-
-    fun asString(): String
-}
-
-class DiagnosticCodeMetaInfo(
-    override val start: Int,
-    override val end: Int,
-    renderConfiguration: DiagnosticCodeMetaInfoConfiguration,
-    val diagnostic: Diagnostic
-) : CodeMetaInfo {
-    constructor(
-        range: TextRange,
-        renderConfiguration: DiagnosticCodeMetaInfoConfiguration,
-        diagnostic: Diagnostic
-    ) : this(range.startOffset, range.endOffset, renderConfiguration, diagnostic)
-
-    override var renderConfiguration: DiagnosticCodeMetaInfoConfiguration = renderConfiguration
-        private set
-
-    fun replaceRenderConfiguration(renderConfiguration: DiagnosticCodeMetaInfoConfiguration) {
-        this.renderConfiguration = renderConfiguration
-    }
-
-    override val tag: String
-        get() = renderConfiguration.getTag(this)
-
-    override val attributes: MutableList<String> = mutableListOf()
-
-    override fun asString(): String = renderConfiguration.asString(this)
-}
 
 class LineMarkerCodeMetaInfo(
     override val renderConfiguration: LineMarkerConfiguration,

@@ -4,87 +4,12 @@ package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory1
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.diagnostics.rendering.*
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
-
-abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean = true) {
-    private val clickOrPressRegex = "(Click or press|Press).*(to navigate)".toRegex() // We have different hotkeys on different platforms
-    open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.tag + getPlatformsString(codeMetaInfo)
-
-    open fun getAdditionalParams(codeMetaInfo: CodeMetaInfo) = ""
-
-    protected fun sanitizeLineMarkerTooltip(originalText: String?): String {
-        if (originalText == null) return "null"
-        val noHtmlTags = StringUtil.removeHtmlTags(originalText)
-            .replace(" ", "")
-            .replace(clickOrPressRegex, "$1 ... $2")
-            .trim()
-        return sanitizeLineBreaks(noHtmlTags)
-    }
-
-    protected fun sanitizeLineBreaks(originalText: String): String {
-        var sanitizedText = originalText
-        sanitizedText = StringUtil.replace(sanitizedText, "\r\n", " ")
-        sanitizedText = StringUtil.replace(sanitizedText, "\n", " ")
-        sanitizedText = StringUtil.replace(sanitizedText, "\r", " ")
-        return sanitizedText
-    }
-
-    protected fun getPlatformsString(codeMetaInfo: CodeMetaInfo): String {
-        if (codeMetaInfo.attributes.isEmpty()) return ""
-        return "{${codeMetaInfo.attributes.joinToString(";")}}"
-    }
-}
-
-open class DiagnosticCodeMetaInfoConfiguration(
-    val withNewInference: Boolean = true,
-    val renderSeverity: Boolean = false
-) : AbstractCodeMetaInfoRenderConfiguration() {
-    private val crossPlatformLineBreak = """\r?\n""".toRegex()
-
-    override fun asString(codeMetaInfo: CodeMetaInfo): String {
-        if (codeMetaInfo !is DiagnosticCodeMetaInfo) return ""
-        return (getTag(codeMetaInfo)
-                + getPlatformsString(codeMetaInfo)
-                + getParamsString(codeMetaInfo))
-            .replace(crossPlatformLineBreak, "")
-    }
-
-    private fun getParamsString(codeMetaInfo: DiagnosticCodeMetaInfo): String {
-        if (!renderParams) return ""
-        val params = mutableListOf<String>()
-
-        @Suppress("UNCHECKED_CAST")
-        val renderer = when (codeMetaInfo.diagnostic.factory) {
-            is DebugInfoDiagnosticFactory1 -> DiagnosticWithParameters1Renderer(
-                "{0}",
-                Renderers.TO_STRING
-            ) as DiagnosticRenderer<Diagnostic>
-            else -> DefaultErrorMessages.getRendererForDiagnostic(codeMetaInfo.diagnostic)
-        }
-        if (renderer is AbstractDiagnosticWithParametersRenderer) {
-            val renderParameters = renderer.renderParameters(codeMetaInfo.diagnostic)
-            params.addAll(ContainerUtil.map(renderParameters) { it.toString() })
-        }
-        if (renderSeverity)
-            params.add("severity='${codeMetaInfo.diagnostic.severity}'")
-
-        params.add(getAdditionalParams(codeMetaInfo))
-
-        return "(\"${params.filter { it.isNotEmpty() }.joinToString("; ")}\")"
-    }
-
-    fun getTag(codeMetaInfo: DiagnosticCodeMetaInfo): String {
-        return codeMetaInfo.diagnostic.factory.name!!
-    }
-}
 
 open class LineMarkerConfiguration(var renderDescription: Boolean = true) : AbstractCodeMetaInfoRenderConfiguration() {
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
@@ -108,6 +33,11 @@ open class LineMarkerConfiguration(var renderDescription: Boolean = true) : Abst
 
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")
         return if (paramsString.isEmpty()) "" else "(\"$paramsString\")"
+    }
+
+    protected fun getPlatformsString(codeMetaInfo: CodeMetaInfo): String {
+        if (codeMetaInfo.attributes.isEmpty()) return ""
+        return "{${codeMetaInfo.attributes.joinToString(";")}}"
     }
 }
 
