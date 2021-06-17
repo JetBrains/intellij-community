@@ -60,7 +60,7 @@ class GrazieInspection : LocalInspectionTool() {
     internal fun areChecksDisabled(element: PsiElement, fileLanguage: Language): Boolean {
       var psiLanguage = element.language
       if (fileLanguage.isKindOf(psiLanguage)) psiLanguage = fileLanguage // e.g. XML PSI in HTML files
-      return psiLanguage.id in GrazieConfig.get().checkingContext.disabledLanguages
+      return psiLanguage.id in GrazieConfig.get().checkingContext.getEffectivelyDisabledLanguageIds()
     }
   }
 }

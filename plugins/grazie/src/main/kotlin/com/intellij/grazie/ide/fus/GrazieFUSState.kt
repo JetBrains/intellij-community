@@ -37,6 +37,9 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     for (id in state.checkingContext.disabledLanguages) {
       metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
     }
+    for (id in state.checkingContext.enabledLanguages) {
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("enabled_language", id)))
+    }
 
     return metrics
   }
