@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBaseImpl implements PsiSwitchLabeledRuleStatement {
+  private static final Logger LOG = Logger.getInstance(PsiSwitchLabeledRuleStatementImpl.class);
   private static final TokenSet BODY_STATEMENTS =
     TokenSet.create(JavaElementType.BLOCK_STATEMENT, JavaElementType.THROW_STATEMENT, JavaElementType.EXPRESSION_STATEMENT);
 
@@ -35,5 +36,23 @@ public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBa
   @Override
   public String toString() {
     return "PsiSwitchLabeledRule";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+
+    for (PsiCaseLabelElement e : patternsInCaseLabel.getElements()) {
+      boolean shouldKeepGoing = e.processDeclarations(processor, state, lastParent, place);
+      if (!shouldKeepGoing) return false;
+    }
+
+    return true;
   }
 }

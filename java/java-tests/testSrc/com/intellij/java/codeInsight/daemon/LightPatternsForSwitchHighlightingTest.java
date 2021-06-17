@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -23,6 +22,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testPatternsInSwitchInOldJava() {
       IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+  }
+
+  public void testPatternMatchingInSwitch() {
+    doTest();
   }
 
   private void doTest() {
