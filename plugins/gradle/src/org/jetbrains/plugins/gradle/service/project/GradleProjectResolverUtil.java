@@ -128,8 +128,8 @@ public final class GradleProjectResolverUtil {
     String mainBuildRootPath = ExternalSystemApiUtil.toCanonicalPath(mainBuildRootDir.getPath());
     boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
 
-    boolean includedBuildTasksSupported = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
-    String compositeBuildGradlePath = includedBuildTasksSupported ? ":" + rootDir.getName() : "";
+    boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
+    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + rootDir.getName() : "";
     GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
 
     String directoryToRunTask;
