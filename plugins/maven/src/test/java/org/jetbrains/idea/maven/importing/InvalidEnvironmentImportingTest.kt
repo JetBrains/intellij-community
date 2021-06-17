@@ -52,9 +52,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     try {
       LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Maven server exception for tests"))
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
-      createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>test</artifactId>" +
-                       "<version>1.0</version>")
       createAndImportProject()
       assertEvent { it.message.contains("Maven server exception for tests") }
     }
@@ -79,10 +76,11 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven server not started - bad maven config`() {
+  fun `test maven import - bad maven config`() {
     assumeVersionMoreThan("3.3.1");
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
+    assertModules("test")
     assertEvent { it.message.contains("Unable to parse maven.config:") }
   }
 
