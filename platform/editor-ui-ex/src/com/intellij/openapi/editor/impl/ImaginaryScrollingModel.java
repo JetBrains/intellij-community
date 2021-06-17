@@ -57,12 +57,12 @@ public class ImaginaryScrollingModel implements ScrollingModel {
 
   @Override
   public int getVerticalScrollOffset() {
-    throw notImplemented();
+    return 0;
   }
 
   @Override
   public int getHorizontalScrollOffset() {
-    throw notImplemented();
+    return 0;
   }
 
   @Override
