@@ -78,27 +78,7 @@ class ModulesEditorToolbarDecorator(
             event.presentation.isEnabled
         }
 
-        setRemoveAction {
-            val moduleKindText = selectedModuleKindText ?: KotlinNewProjectWizardBundle.message("module.kind.module")
-            if (Messages.showOkCancelDialog(
-                    tree,
-                    buildString {
-                        val moduleName = selectedModule?.name!!
-                        if (tree.selectedSettingItem.safeAs<Module>()?.kind != ModuleKind.target) {
-                            appendLine(KotlinNewProjectWizardUIBundle.message("editor.modules.remove.selected.module", moduleName))
-                        } else {
-                            appendLine(KotlinNewProjectWizardUIBundle.message("editor.modules.remove.selected.target", moduleName))
-                        }
-                    },
-                    KotlinNewProjectWizardUIBundle.message("editor.modules.remove.selected.question", moduleKindText),
-                    KotlinNewProjectWizardUIBundle.message("editor.modules.remove.selected.remove"),
-                    KotlinNewProjectWizardUIBundle.message("editor.modules.remove.selected.cancel"),
-                    AllIcons.General.QuestionDialog
-                ) == Messages.OK
-            ) {
-                model.removeSelected()
-            }
-        }
+        setRemoveAction { model.removeSelected() }
         setRemoveActionUpdater { event ->
             event.presentation.apply {
                 isEnabled = tree.selectedSettingItem is Module
