@@ -346,6 +346,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
             runTest("testData/evaluation/singleBreakpoint/localClass.kt");
         }
 
+        @TestMetadata("localFunctionCapturedLocalVariable.kt")
+        public void testLocalFunctionCapturedLocalVariable() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
+        }
+
         @TestMetadata("localFunctionsWithReceivers.kt")
         public void testLocalFunctionsWithReceivers() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
@@ -672,6 +677,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
             @TestMetadata("anyUpdateVariable.kt")
             public void testAnyUpdateVariable() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
+            }
+
+            @TestMetadata("capturedReceiverName.kt")
+            public void testCapturedReceiverName() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/capturedReceiverName.kt");
             }
 
             @TestMetadata("coroutineContextExists.kt")
