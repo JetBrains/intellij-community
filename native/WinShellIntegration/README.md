@@ -30,11 +30,10 @@ For example, if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you s
     that will exclude everything under it.
 
 ## Current binaries in repository
-Current version of IntelliJ Platform uses binaries located in:
-* x32: [bin/win/WinShellIntegrationBridge.dll](../../bin/win/WinShellIntegrationBridge.dll);
-* x64: [bin/win/WinShellIntegrationBridge64.dll](../../bin/win/WinShellIntegrationBridge64.dll).
+Current version of IntelliJ Platform uses the x64 binary located in 
+[bin/win/WinShellIntegrationBridge.dll](../../bin/win/WinShellIntegrationBridge.dll). 
 
-These binaries are built in the following environment:
+This DLL was built in the following environment:
 * Windows 10 build 19041;
 * Visual Studio 2017 Community MSVC 19.16.27043.0, Windows SDK v8.0 6.2.9200.16384;
 * [Amazon Corretto JDK 11.0.8.10.1](https://corretto.aws/downloads/resources/11.0.8.10.1/amazon-corretto-11.0.8.10.1-windows-x64.msi).
@@ -42,10 +41,6 @@ These binaries are built in the following environment:
 And using the following commands **ran at Visual Studio Developer Command Prompt**:
 ```bat
 cd build
-
-cmake -E rm -rf "x32"
-cmake -G"Visual Studio 15 2017" -A Win32 -DCMAKE_SYSTEM_VERSION=8.0 -DJDK_PATH="%JDK_11%" -S ".." -B "x32"
-cmake --build "x32" --config RelWithDebInfo
 
 cmake -E rm -rf "x64"
 cmake -G"Visual Studio 15 2017" -A x64 -DCMAKE_SYSTEM_VERSION=8.0 -DJDK_PATH="%JDK_11_x64%" -S ".." -B "x64"
