@@ -184,7 +184,8 @@ public final class PluginDownloader {
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile == null) return null;
 
-    if (Registry.is("marketplace.certificate.signature.check")) {
+    // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check")) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
