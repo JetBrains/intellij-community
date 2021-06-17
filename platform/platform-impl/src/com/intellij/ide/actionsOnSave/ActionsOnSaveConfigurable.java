@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
@@ -15,6 +16,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
+    private final @NotNull Project myProject;
+
+    public ActionsOnSaveConfigurableProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public boolean canCreateConfigurable() {
+      return !PlatformUtils.isRider();
+    }
+
+    @Override
+    public @Nullable Configurable createConfigurable() {
+      return new ActionsOnSaveConfigurable(myProject);
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
   private static final String CONFIGURABLE_ID = "actions.on.save";
 
