@@ -17,9 +17,5 @@ interface CreateMergeDirectionModel<RepoMapping> {
 
   fun addAndInvokeDirectionChangesListener(listener: () -> Unit)
 
-  @Nls
-  fun getBaseRepoText(): String?
-
-  @Nls
-  fun getHeadRepoText(): String?
+  fun getKnownRepoMapping(): List<RepoMapping>
 }

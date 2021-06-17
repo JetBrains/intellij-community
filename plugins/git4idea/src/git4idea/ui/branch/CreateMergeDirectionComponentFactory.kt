@@ -6,7 +6,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ComboboxSpeedSearch
@@ -22,8 +21,6 @@ import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
 import git4idea.util.findPushTarget
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -37,30 +34,27 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class CreateMergeDirectionComponentFactory<RepoMapping>(
-  private val knownHostsProvider: () -> List<RepoMapping>,
+class CreateMergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
   private val model: CreateMergeDirectionModel<RepoMapping>,
-  private val gitRemoteUrlCoordinatesProvider: (RepoMapping) -> GitRemoteAndRepository,
-  private val repoMappingPathProvider: (RepoMapping) -> String,
-) {
+  private val getBaseRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = {it.baseRepo.toString()},
+  private val getHeadRepoPresentation: (CreateMergeDirectionModel<RepoMapping>) -> @Nls String? = {it.headRepo?.toString()},
+  ) {
   fun create(): JComponent {
     val base = ActionLink("")
     base.addActionListener {
-      chooseBaseBranch(base, model.baseBranch,
-                       gitRemoteUrlCoordinatesProvider(model.baseRepo),
-                       repoMappingPathProvider(model.baseRepo),
+      chooseBaseBranch(base,
+                       model.baseBranch,
+                       model.baseRepo,
                        model::baseBranch::set)
     }
 
     val head = ActionLink("")
     head.addActionListener {
       val currentRepo = model.headRepo
-      chooseHeadRepoAndBranch(head, currentRepo, { gitRemoteUrlCoordinatesProvider(it) }, model.headBranch, { repo, branch ->
+      chooseHeadRepoAndBranch(head, currentRepo, model.headBranch, { repo, branch ->
         model.setHead(repo, branch)
         model.headSetByUser = true
-      }, knownHostsProvider()) {
-        repoMappingPathProvider(it)
-      }
+      }, model.getKnownRepoMapping())
     }
 
     val changesWarningLabel = JLabel(AllIcons.General.Warning)
@@ -69,24 +63,23 @@ class CreateMergeDirectionComponentFactory<RepoMapping>(
       val headRepo = model.headRepo
       val headBranch = model.headBranch
 
-      val baseText = model.getBaseRepoText() ?: GitBundle.message("branch.direction.panel.select.link")
+      val baseText = getBaseRepoPresentation(model) ?: GitBundle.message("branch.direction.panel.select.link")
       base.text = baseText
       base.toolTipText = baseText
-      val headText = model.getHeadRepoText() ?: GitBundle.message("branch.direction.panel.select.link")
+      val headText = getHeadRepoPresentation(model) ?: GitBundle.message("branch.direction.panel.select.link")
       head.text = headText
       head.toolTipText = headText
 
       with(changesWarningLabel) {
         if (headRepo != null && headBranch != null && headBranch is GitLocalBranch) {
-          val headRemote = gitRemoteUrlCoordinatesProvider(headRepo)
-          val pushTarget = findPushTarget(headRemote.gitRepository, headRemote.gitRemote, headBranch)
+          val pushTarget = findPushTarget(headRepo.gitRepository, headRepo.gitRemote, headBranch)
           if (pushTarget == null) {
-            toolTipText = GitBundle.message("branch.direction.panel.warning.push", headBranch.name, headRemote.gitRemote.name)
+            toolTipText = GitBundle.message("branch.direction.panel.warning.push", headBranch.name, headRepo.gitRemote.name)
             isVisible = true
             return@with
           }
           else {
-            val repo = headRemote.gitRepository
+            val repo = headRepo.gitRepository
             val localHash = repo.branches.getHash(headBranch)
             val remoteHash = repo.branches.getHash(pushTarget.branch)
             if (localHash != remoteHash) {
@@ -118,11 +111,11 @@ class CreateMergeDirectionComponentFactory<RepoMapping>(
 }
 
 
-private fun createRemoteBranchModel(gitRemoteAndRepository: GitRemoteAndRepository,
-                                    currentRemoteBranch: GitRemoteBranch?): MutableCollectionComboBoxModel<GitRemoteBranch> {
+private fun <RepoMapping : GitRepositoryMappingData> createRemoteBranchModel(repoMapping: RepoMapping,
+                                                                             currentRemoteBranch: GitRemoteBranch?): MutableCollectionComboBoxModel<GitRemoteBranch> {
   val branchModel = MutableCollectionComboBoxModel<GitRemoteBranch>().apply {
-    val remote = gitRemoteAndRepository.gitRemote
-    val branches = gitRemoteAndRepository.gitRepository.branches.remoteBranches.filter {
+    val remote = repoMapping.gitRemote
+    val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
       it.remote == remote
     }
     replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
@@ -131,15 +124,14 @@ private fun createRemoteBranchModel(gitRemoteAndRepository: GitRemoteAndReposito
   return branchModel
 }
 
-private fun chooseBaseBranch(parentComponent: JComponent,
-                             currentBranch: GitRemoteBranch?,
-                             gitRemoteAndRepository: GitRemoteAndRepository,
-                             @NlsSafe repositoryPathRepresentation: String,
-                             applySelection: (GitRemoteBranch?) -> Unit) {
-  val branchModel = createRemoteBranchModel(gitRemoteAndRepository, currentBranch)
+private fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
+                                                                      currentBranch: GitRemoteBranch?,
+                                                                      repoMapping: RepoMapping,
+                                                                      applySelection: (GitRemoteBranch?) -> Unit) {
+  val branchModel = createRemoteBranchModel(repoMapping, currentBranch)
   val popup = createBranchPopup(branchModel,
                                 GitBundle.message("branch.direction.panel.base.repo.label"),
-                                JBTextField(repositoryPathRepresentation).apply {
+                                JBTextField(repoMapping.repositoryPath).apply {
                                   isEnabled = false
                                 }) {
     applySelection(branchModel.selected)
@@ -148,36 +140,30 @@ private fun chooseBaseBranch(parentComponent: JComponent,
 }
 
 
-private fun <T> chooseHeadRepoAndBranch(parentComponent: JComponent,
-                                        currentRepo: T?,
-                                        gitRemoteUrlCoordinatesProvider: (T) -> GitRemoteAndRepository,
-                                        currentBranch: GitBranch?,
-                                        applySelection: (T?, GitBranch?) -> Unit,
-                                        items: List<T>,
-                                        repoMappingStringRepresentation: (T) -> String) {
+private fun <RepoMapping : GitRepositoryMappingData> chooseHeadRepoAndBranch(parentComponent: JComponent,
+                                                                             currentRepo: RepoMapping?,
+                                                                             currentBranch: GitBranch?,
+                                                                             applySelection: (RepoMapping?, GitBranch?) -> Unit,
+                                                                             items: List<RepoMapping>) {
 
-  val repoModel: CollectionComboBoxModel<T> = CollectionComboBoxModel(items, currentRepo)
+  val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
   val branchModel = MutableCollectionComboBoxModel<GitBranch>()
 
   repoModel.addListDataListener(object : ListDataListener {
     override fun intervalAdded(e: ListDataEvent) {}
     override fun intervalRemoved(e: ListDataEvent) {}
     override fun contentsChanged(e: ListDataEvent) {
-      val gitRemoteUrlCoordinates = repoModel.selected?.let { gitRemoteUrlCoordinatesProvider(it) }
-      if (e.index0 == -1 && e.index1 == -1) updateHeadBranches(branchModel, gitRemoteUrlCoordinates)
+      if (e.index0 == -1 && e.index1 == -1) updateHeadBranches(branchModel, repoModel.selected)
     }
   })
-  val gitRemoteUrlCoordinates = repoModel.selected?.let { gitRemoteUrlCoordinatesProvider(it) }
-  updateHeadBranches(branchModel, gitRemoteUrlCoordinates)
+  updateHeadBranches(branchModel, repoModel.selected)
 
   if (currentBranch != null && branchModel.items.contains(currentBranch)) branchModel.selectedItem = currentBranch
 
   val popup = createBranchPopup(branchModel,
                                 GitBundle.message("branch.direction.panel.head.repo.label"),
                                 ComboBox(repoModel).apply {
-                                  renderer = SimpleListCellRenderer.create("") {
-                                    repoMappingStringRepresentation(it)
-                                  }
+                                  renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
                                 }) {
     applySelection(repoModel.selected, branchModel.selected)
   }
@@ -185,15 +171,15 @@ private fun <T> chooseHeadRepoAndBranch(parentComponent: JComponent,
   popup.showUnderneathOf(parentComponent)
 }
 
-private fun updateHeadBranches(branchModel: MutableCollectionComboBoxModel<GitBranch>,
-                               gitRemoteAndRepository: GitRemoteAndRepository?) {
-  val repo = gitRemoteAndRepository?.gitRepository
+private fun <RepoMapping : GitRepositoryMappingData> updateHeadBranches(branchModel: MutableCollectionComboBoxModel<GitBranch>,
+                                                                        repoMapping: RepoMapping?) {
+  val repo = repoMapping?.gitRepository
   if (repo == null) {
     branchModel.replaceAll(emptyList())
     return
   }
 
-  val remote = gitRemoteAndRepository.gitRemote
+  val remote = repoMapping.gitRemote
   val remoteBranches = repo.branches.remoteBranches.filter {
     it.remote == remote
   }
@@ -204,8 +190,6 @@ private fun updateHeadBranches(branchModel: MutableCollectionComboBoxModel<GitBr
 }
 
 private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
-
-data class GitRemoteAndRepository(val gitRemote: GitRemote, val gitRepository: GitRepository)
 
 
 fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
