@@ -329,7 +329,7 @@ private class AlertDialog(project: Project?,
     dialogPanel.add(textPanel)
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
-      val titleComponent = createTextComponent(JTextPane(), myTitle)
+      val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
       titleComponent.font = JBFont.h3().asBold()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
@@ -346,12 +346,12 @@ private class AlertDialog(project: Project?,
           }
           return super.getPreferredSize()
         }
-      }, myMessage)
+      }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
       messageComponent.font = JBFont.medium()
       myMessageComponent = messageComponent
 
-      val lines = myMessage!!.length / 100
+      val lines = myMessage.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
