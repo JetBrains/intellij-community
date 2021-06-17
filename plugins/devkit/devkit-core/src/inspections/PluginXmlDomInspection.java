@@ -199,9 +199,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     else if (element instanceof ContentDescriptor) {
       annotateContentDescriptor((ContentDescriptor)element, holder);
     }
-    else if (element instanceof ContentDescriptor.ModuleDescriptor) {
-      annotateModuleDescriptor((ContentDescriptor.ModuleDescriptor)element, holder);
-    }
     else if (element instanceof Extensions) {
       annotateExtensions((Extensions)element, holder);
     }
@@ -269,11 +266,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       holder.createProblem(descriptor, HighlightSeverity.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
     }
-  }
-
-  private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
-    final IdeaPlugin ideaPlugin = descriptor.getName().getValue();
-    if (ideaPlugin == null) return;
   }
 
   private static boolean isIdeaProjectOrJetBrains(DomElement element) {
