@@ -76,11 +76,13 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
             val groovyLibraryDescription = GroovyLibraryDescription()
             val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
             val textWithBrowse = TextFieldWithBrowseButton()
+            val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
+            textWithBrowse.setText(pathToGroovyHome?.path)
             textWithBrowse.addActionListener(object : ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
               GroovyBundle.message("dialog.title.select.groovy.sdk"), null, textWithBrowse, null, fileChooserDescriptor,
               TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
               override fun getInitialFile(): VirtualFile? {
-                return groovyLibraryDescription.findPathToGroovyHome()
+                return pathToGroovyHome
               }
             })
             FileChooserFactory.getInstance().installFileCompletion(textWithBrowse.textField, fileChooserDescriptor, true, null)
