@@ -83,5 +83,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
+                    beanClass="com.intellij.grazie.config.CheckingContext$DisableChecking"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
