@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfig
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
+import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicInteger
