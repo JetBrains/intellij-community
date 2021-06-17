@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.configurationStore.getOsFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -117,7 +118,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = createConfigDir("2019.2", product = "DataGrip")
     ConfigImportHelper.setKeymapIfNeeded(oldConfigDir, newConfigDir, LOG)
 
-    val optionFile = newConfigDir.resolve("${PathManager.OPTIONS_DIRECTORY}/keymap.xml")
+    val optionFile = newConfigDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${getOsFolderName()}/keymap.xml")
     if (isMigrationExpected) {
       assertThat(optionFile).usingCharset(StandardCharsets.UTF_8).hasContent("""
         <application>
