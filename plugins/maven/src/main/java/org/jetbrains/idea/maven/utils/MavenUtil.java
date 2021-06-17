@@ -768,6 +768,9 @@ public class MavenUtil {
 
   @Nullable
   public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
+    if (overriddenMavenHome == null) {
+      return null;
+    }
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
     return new File(new File(directory, CONF_DIR), SETTINGS_XML);
   }
