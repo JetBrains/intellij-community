@@ -98,7 +98,7 @@ public final class ServiceDescriptor {
   /**
    * States whether the service should be created once per client.
    * Applicable only for application/project level services.
-   * Null means the the service is an ordinary one that is created one per application/project.
+   * Null means the the service is an ordinary one that is created once per application/project.
    */
   @Attribute
   @ApiStatus.Internal
