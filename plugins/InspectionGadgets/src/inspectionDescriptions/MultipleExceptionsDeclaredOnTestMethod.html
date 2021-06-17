@@ -2,7 +2,7 @@
 <body>
 Reports JUnit test method <code>throws</code> clauses with more than one exception.
 Such clauses are unnecessarily verbose.
-The test methods will not be called from other project code, so there is not need to handle the exceptions separately.
+Test methods will not be called from other project code, so there is no need to handle these exceptions separately.
 <p>For example:</p>
 <pre><code>
   @Test
@@ -13,7 +13,7 @@ The test methods will not be called from other project code, so there is not nee
     assertEquals("hello", result);
   }
 </code></pre>
-<p>A quick fix is provied to replace the exception declarations with a single exception:</p>
+<p>A quick fix is provided to replace the exception declarations with a single exception:</p>
 <pre><code>
   @Test
   <b>public void</b> testReflection() <b>throws</b> Exception {
