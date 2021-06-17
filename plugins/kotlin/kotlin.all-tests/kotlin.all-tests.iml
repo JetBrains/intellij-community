@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
-    <orderEntry type="module" module-name="kotlin.eval4j" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" />
