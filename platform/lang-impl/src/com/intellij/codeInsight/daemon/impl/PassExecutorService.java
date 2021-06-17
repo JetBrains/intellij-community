@@ -239,9 +239,9 @@ final class PassExecutorService implements Disposable {
                                                                      ((TextEditor)it).getEditor().getContentComponent().isFocusOwner());
     if (focusedEditor != null) return focusedEditor;
 
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      final FileEditor selected = myFileEditorManager.getSelectedEditor(file);
+      FileEditor selected = myFileEditorManager.getSelectedEditor(file);
       if (selected != null && fileEditors.contains(selected)) {
         return selected;
       }
@@ -310,7 +310,7 @@ final class PassExecutorService implements Disposable {
                                                     @NotNull List<ScheduledPass> dependentPasses,
                                                     @NotNull DaemonProgressIndicator updateProgress,
                                                     @NotNull AtomicInteger myThreadsToStartCountdown,
-                                                    final int predecessorId,
+                                                    int predecessorId,
                                                     @NotNull Int2ObjectMap<ScheduledPass> thisEditorId2ScheduledPass,
                                                     @NotNull Int2ObjectMap<TextEditorHighlightingPass> thisEditorId2Pass) {
     ScheduledPass predecessor = thisEditorId2ScheduledPass.get(predecessorId);
@@ -449,10 +449,10 @@ final class PassExecutorService implements Disposable {
     }
   }
 
-  private void applyInformationToEditorsLater(@NotNull final FileEditor fileEditor,
-                                              @NotNull final HighlightingPass pass,
-                                              @NotNull final DaemonProgressIndicator updateProgress,
-                                              @NotNull final AtomicInteger threadsToStartCountdown,
+  private void applyInformationToEditorsLater(@NotNull FileEditor fileEditor,
+                                              @NotNull HighlightingPass pass,
+                                              @NotNull DaemonProgressIndicator updateProgress,
+                                              @NotNull AtomicInteger threadsToStartCountdown,
                                               @NotNull Runnable callbackOnApplied) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (isDisposed() || !fileEditor.isValid()) {
