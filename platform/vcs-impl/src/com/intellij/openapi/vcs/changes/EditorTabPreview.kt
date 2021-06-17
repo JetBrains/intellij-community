@@ -181,11 +181,10 @@ private class EditorTabDiffPreviewProvider(
 
   override fun createDiffRequestChain(): DiffRequestChain? {
     if (diffProcessor is ChangeViewDiffRequestProcessor) {
-      val selection = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange)
-      val producers = selection.map { it!!.createProducer(diffProcessor.project) }
-      val chain = SimpleDiffRequestChain.fromProducers(producers.list)
-      chain.index = producers.selectedIndex
-      return chain
+      val producers = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange).map {
+        it.createProducer(diffProcessor.project)
+      }
+      return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
     }
     return null
   }

@@ -255,7 +255,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   @Nullable
-  private Change getSelectedChange() {
+  Change getSelectedChange() {
     return myFileHistoryModel.getSelectedChange(myGraphTable.getSelectedRows());
   }
 
