@@ -1,24 +1,31 @@
 <html>
 <body>
-Reports any <code>Channel</code> resource which is not safely closed. <code>Channel</code> resources reported
-by this inspection include any instances created by calling
+Reports <code>Channel</code> resources that are not safely closed, including any instances created by calling
 <code>getChannel()</code> on a file or socket resource.
-<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
-<p>Example:</p>
-<pre>
+<p>
+  By default, the inspection assumes that the resources can be closed by any method with
+  'close' or 'cleanup' in its name.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   void send(Socket socket) throws IOException {
     SocketChannel channel = socket.getChannel(); //warning
     channel.write(ByteBuffer.wrap("message".getBytes()));
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a <code>Channel</code> is allowed to be opened inside a <code>try</code>
-block. This style is less desirable because it is more verbose than opening a <code>Channel</code>
-in front of a <code>try</code> block.
+  Use the following options to configure the inspection:
 </p>
-<p>
-Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
-</p>
+<ul>
+  <li>
+    Whether a <code>Channel</code> resource is allowed to be opened inside a <code>try</code>
+    block. This style is less desirable because it is more verbose than opening a <code>Channel</code>
+    in front of a <code>try</code> block.
+  </li>
+  <li>
+    Whether the resource can be closed by any method call with the resource passed as argument.
+  </li>
+</ul>
 </body>
 </html>

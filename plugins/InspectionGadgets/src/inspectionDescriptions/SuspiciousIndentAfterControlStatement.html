@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any suspicious indentation of statements after a control statement without braces.
+Reports suspicious indentation of statements after a control statement without braces.
 <p>
-  Such indentation can make it look like the statement is part of the control statement,
-  when in fact it will be executed after the control statement, i.e. unconditionally.
+  Such indentation can make it look like the statement is inside the control statement,
+  when in fact it will be executed unconditionally after the control statement.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
@@ -21,7 +21,6 @@ Reports any suspicious indentation of statements after a control statement witho
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

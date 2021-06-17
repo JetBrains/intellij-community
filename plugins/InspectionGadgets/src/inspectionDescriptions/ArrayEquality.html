@@ -1,13 +1,12 @@
 <html>
 <body>
+Reports operators <code>==</code> and <code>!=</code> used to test for array equality.
+In most cases, testing for the equality of array contents is intended,
+which can be done with the <code>java.util.Arrays.equals()</code> method.
 <p>
-  Reports any use of <code>==</code> or <code>!=</code> to test for array equality,
-  rather than the <code>java.util.Arrays.equals()</code> method testing for content equality.
+  A quick-fix is suggested to replace <code>==</code> with <code>java.util.Arrays.equals()</code>.
 </p>
-<p>
-  Apply the quick-fix to replace <code>==</code> by <code>java.util.Arrays.equals()</code>.
-</p>
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   void foo(Object[] x, Object[] y) {
     boolean comparison = x == y;

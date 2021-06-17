@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports any implementations of <code>Iterator.next()</code>
-which can not throw <code>java.util.NoSuchElementException</code>. Such
-implementations violate the contract of <code>java.util.Iterator</code>,
-and may result in subtle bugs if the iterator is ever used in a non-standard fashion.
-<p>Example:</p>
-<pre>
+Reports implementations of <code>Iterator.next()</code>
+that cannot throw <code>java.util.NoSuchElementException</code>.
+<p>
+  Such implementations violate the contract of <code>java.util.Iterator</code>,
+  and may result in subtle bugs if the iterator is used in a non-standard way.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Numbers implements Iterator&lt;Integer&gt; {
     @Override
     public Integer next() { //warning
@@ -18,7 +20,7 @@ and may result in subtle bugs if the iterator is ever used in a non-standard fas
 
     ...
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

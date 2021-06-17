@@ -1,24 +1,21 @@
 <html>
 <body>
-Reports calls to the following methods:
-
+Reports calls to the following methods on objects of the <code>java.util.Properties</code> class:
 <ul>
   <li><code>java.util.Hashtable#put</code></li>
   <li><code>java.util.Hashtable#putIfAbsent</code></li>
   <li><code>java.util.Hashtable#putAll</code></li>
   <li><code>java.util.Hashtable#get</code></li>
 </ul>
-
-on a <code>java.util.Properties</code> object.
 <p>
-  For reasons lost to history, <code>java.util.Properties</code> inherits <code>java.util.Hashtable</code>,
+  For historical reasons, <code>java.util.Properties</code> inherits <code>java.util.Hashtable</code>,
   but using those methods is discouraged to prevent corruption of properties values of types other than <code>String</code>.
 </p>
 <p>
   Although <code>java.util.Properties#putAll</code> overrides <code>java.util.Hashtable#putAll</code> it doesn't get reported when
   both the key and the value parameters in the map are of the <code>String</code> type.
 </p>
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre>
   <code>
     Object f(Properties props) {
