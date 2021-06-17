@@ -142,10 +142,8 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     action: PluginEnableDisableAction,
     project: Project? = null,
     parentComponent: JComponent? = null,
-    options: DynamicPlugins.UnloadPluginOptions? = null,
   ): Boolean {
     assert(!action.isPerProject || project != null)
-    assert(action.isDisable || options == null)
 
     val pluginIds = descriptors.map { it.pluginId }
 
@@ -165,7 +163,6 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         descriptors.filter { predicate.invoke(it.pluginId) },
         project,
         parentComponent,
-        options,
       )
     }
     PluginManagerUsageCollector.pluginsStateChanged(project, pluginIds, action)
