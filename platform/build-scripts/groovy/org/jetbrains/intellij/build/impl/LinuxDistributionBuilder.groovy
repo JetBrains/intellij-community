@@ -49,8 +49,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
     BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
     BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
-    BuildTasksImpl.addProjectorServer(buildContext, unixDistPath)
-    prepareSelfContainedRemoteDevelopmentFiles(buildContext, unixDistPath)
+    if (buildContext.productProperties.addRemoteDevelopmentLibraries) {
+      BuildTasksImpl.addProjectorServer(buildContext, unixDistPath)
+      prepareSelfContainedRemoteDevelopmentFiles(buildContext, unixDistPath)
+    }
     Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
