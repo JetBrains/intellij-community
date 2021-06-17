@@ -91,6 +91,7 @@ public final class IconLoader {
 
   private IconLoader() {}
 
+  @TestOnly
   public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
     STRICT_LOCAL.set(true);
     try {
@@ -318,6 +319,7 @@ public final class IconLoader {
     return null;
   }
 
+  @TestOnly
   public static void activate() {
     isActivated = true;
   }
@@ -477,11 +479,8 @@ public final class IconLoader {
     }
   }
 
-  @Contract("null, _, _->null; !null, _, _->!null")
-  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor, boolean deepCopy) {
-    if (icon == null) {
-      return null;
-    }
+  @NotNull
+  public static Icon copy(@NotNull Icon icon, @Nullable Component ancestor, boolean deepCopy) {
     if (icon instanceof CopyableIcon) {
       return deepCopy ? ((CopyableIcon)icon).deepCopy() : ((CopyableIcon)icon).copy();
     }
@@ -582,10 +581,10 @@ public final class IconLoader {
     double scale;
     ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
     if (ctxSupport == null) {
-      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? JBUIScale.sysScale(ancestor) : 1f;
+      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? JBUIScale.sysScale(ancestor) : 1.0f;
     }
     else {
-      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(ScaleType.SYS_SCALE) : 1f;
+      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(ScaleType.SYS_SCALE) : 1.0f;
     }
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image =
@@ -757,7 +756,7 @@ public final class IconLoader {
       if (SVGLoader.isSelectionContext()) {
         ImageIcon result = null;
         synchronized (lock) {
-          ImageIcon icon = scaledIconCache.getOrScaleIcon(1f);
+          ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
           if (icon != null) {
             result = icon;
           }
@@ -785,7 +784,7 @@ public final class IconLoader {
 
     @Override
     public float getScale() {
-      return 1f;
+      return 1.0f;
     }
 
     @ApiStatus.Internal
@@ -847,7 +846,7 @@ public final class IconLoader {
           }
         }
 
-        ImageIcon icon = scaledIconCache.getOrScaleIcon(1f);
+        ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
         if (icon != null) {
           if (!SVGLoader.isSelectionContext()) {
             this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
@@ -872,7 +871,7 @@ public final class IconLoader {
 
     @Override
     public final @NotNull Icon scale(float scale) {
-      if (scale == 1f) {
+      if (scale == 1.0f) {
         return this;
       }
 

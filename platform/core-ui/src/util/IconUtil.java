@@ -567,8 +567,8 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @Contract("null, _->null; !null, _->!null")
-  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+  @NotNull
+  public static Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, false);
   }
 
@@ -577,8 +577,8 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @Contract("null, _->null; !null, _->!null")
-  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+  @NotNull
+  public static Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, true);
   }
 
