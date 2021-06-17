@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
@@ -55,20 +56,30 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   companion object {
     @JvmStatic
-    private val VALID_PACKAGE_NAME_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
+    private val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
       ExtensionPointName.create("com.intellij.starter.moduleImporter")
 
     @JvmStatic
-    fun getPackageName(group: String, artifact: String): String {
-      val artifactSanitized = artifact.replace(VALID_PACKAGE_NAME_PATTERN, "_")
-      val groupSanitized = group.replace("-", ".").replace(VALID_PACKAGE_NAME_PATTERN, "_")
+    fun suggestPackageName(group: String, artifact: String): String {
+      val groupPrefix = group.toLowerCase().split(".")
+        .joinToString(".") { sanitizePackage(it) }
 
-      return "$groupSanitized.$artifactSanitized"
+      return "$groupPrefix.${sanitizePackage(artifact)}"
     }
 
+    @JvmStatic
+    private fun sanitizePackage(input: String): String {
+      val fileName = FileUtil.sanitizeFileName(input, false)
+      return fileName
+        .replace("-", "")
+        .replace(INVALID_PACKAGE_NAME_SYMBOL_PATTERN, "_")
+        .toLowerCase()
+    }
+
+    @JvmStatic
     fun importModule(module: Module) {
       if (module.isDisposed) return
       val moduleBuilderPostTasks = IMPORTER_EP_NAME.extensions
@@ -77,18 +88,21 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       }
     }
 
+    @JvmStatic
     fun preprocessModuleCreated(module: Module, builder: ModuleBuilder, frameworkVersion: String?) {
       val project = module.project
       project.messageBus.syncPublisher(StarterModuleProcessListener.TOPIC)
         .moduleCreated(module, builder, frameworkVersion)
     }
 
+    @JvmStatic
     fun preprocessModuleOpened(module: Module, builder: ModuleBuilder, frameworkVersion: String?) {
       val project = module.project
       project.messageBus.syncPublisher(StarterModuleProcessListener.TOPIC)
         .moduleOpened(module, builder, frameworkVersion)
     }
 
+    @JvmStatic
     internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
       val contentRoot = module.rootManager.contentRoots.firstOrNull()
       if (contentRoot != null) {
@@ -255,7 +269,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
     val sdk = ModuleRootManager.getInstance(module).sdk
 
-    val rootPackage = getPackageName(starterContext.group, starterContext.artifact)
+    val rootPackage = suggestPackageName(starterContext.group, starterContext.artifact)
 
     val generatorContext = GeneratorContext(
       starter.id,
@@ -349,7 +363,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   }
 
   protected fun getPackagePath(group: String, artifact: String): String {
-    val packageName = getPackageName(group, artifact)
+    val packageName = suggestPackageName(group, artifact)
     return packageName.replace(".", "/").removeSuffix("/")
   }
 }
