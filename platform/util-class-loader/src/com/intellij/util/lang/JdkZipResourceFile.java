@@ -44,16 +44,9 @@ public final class JdkZipResourceFile implements ResourceFile {
     SoftReference<JarMemoryLoader> memoryLoader = null;
     if (preloadJarContents) {
       // IOException from opening is propagated to caller if zip file isn't valid
-      try {
-        JarMemoryLoader loader = preload(path);
-        if (loader != null) {
-          memoryLoader = new SoftReference<>(loader);
-        }
-      }
-      finally {
-        if (!lockJars) {
-          close();
-        }
+      JarMemoryLoader loader = preload(path);
+      if (loader != null) {
+        memoryLoader = new SoftReference<>(loader);
       }
     }
     this.memoryLoader = memoryLoader;
@@ -187,40 +180,46 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
     ZipFile zipFile = getZipFile();
-    Enumeration<? extends ZipEntry> entries = zipFile.entries();
-    if (!entries.hasMoreElements()) {
-      return null;
-    }
-
-    ZipEntry sizeEntry = entries.nextElement();
-    if (sizeEntry == null || !sizeEntry.getName().equals(JarMemoryLoader.SIZE_ENTRY)) {
-      return null;
-    }
-
-    byte[] bytes = loadBytes(zipFile.getInputStream(sizeEntry), 2);
-    int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
-
-    Object[] table = new Object[((size * 4) + 1) & ~1];
-    String baseUrl = JarLoader.fileToUri(basePath).toString();
-    for (int i = 0; i < size && entries.hasMoreElements(); i++) {
-      ZipEntry entry = entries.nextElement();
-      String name = entry.getName();
-      int index = JarMemoryLoader.probePlain(name, table);
-      if (index >= 0) {
-        throw new IllegalArgumentException("duplicate name: " + name);
+    try {
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      if (!entries.hasMoreElements()) {
+        return null;
       }
-      else {
-        byte[] content;
-        try (InputStream stream = zipFile.getInputStream(entry)) {
-          content = loadBytes(stream, (int)entry.getSize());
+
+      ZipEntry sizeEntry = entries.nextElement();
+      if (sizeEntry == null || !sizeEntry.getName().equals(JarMemoryLoader.SIZE_ENTRY)) {
+        return null;
+      }
+
+      byte[] bytes = loadBytes(zipFile.getInputStream(sizeEntry), 2);
+      int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
+
+      Object[] table = new Object[((size * 4) + 1) & ~1];
+      String baseUrl = JarLoader.fileToUri(basePath).toString();
+      for (int i = 0; i < size && entries.hasMoreElements(); i++) {
+        ZipEntry entry = entries.nextElement();
+        String name = entry.getName();
+        int index = JarMemoryLoader.probePlain(name, table);
+        if (index >= 0) {
+          throw new IllegalArgumentException("duplicate name: " + name);
         }
+        else {
+          byte[] content;
+          try (InputStream stream = zipFile.getInputStream(entry)) {
+            content = loadBytes(stream, (int)entry.getSize());
+          }
 
-        int dest = -(index + 1);
-        table[dest] = name;
-        table[dest + 1] = new MemoryResource(baseUrl, content, name);
+          int dest = -(index + 1);
+          table[dest] = name;
+          table[dest + 1] = new MemoryResource(baseUrl, content, name);
+        }
+      }
+      return new JarMemoryLoader(table);
+    } finally {
+      if (!lockJars){
+        zipFile.close();
       }
     }
-    return new JarMemoryLoader(table);
   }
 
   @Override
