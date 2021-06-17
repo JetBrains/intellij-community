@@ -90,19 +90,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
                     return element
                 }
             }
-
-            if (!allowCaretInsideElement(element)) {
-                val elementTextRange = element.textRange
-                checkWithAttachment(elementTextRange != null, {
-                    "No text range defined for the ${if (element.isValid) "valid" else "invalid"} element $element"
-                }) {
-                    it.withAttachment("intention.txt", this::class)
-                    it.withPsiAttachment("element.kt", element)
-                    it.withPsiAttachment("file.kt", element.containingFile)
-                }
-
-                if (elementTextRange.containsInside(offset)) break
-            }
+            if (element.textRange.containsInside(offset) && skipProcessingFurtherElementsAfter(element)) break
         }
         return null
     }
@@ -114,8 +102,16 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         return getTarget(offset, file)
     }
 
-    /** Whether to keep looking for targets after having processed the given element, which contains the cursor. */
-    protected open fun allowCaretInsideElement(element: PsiElement): Boolean = element !is KtBlockExpression
+    /** Whether to keep looking for targets after having processed the given element, which contains the cursor.
+     * */
+    @Deprecated(
+        "The name of this method is a bit confusing and hence deprecated.",
+        replaceWith = ReplaceWith("!skipProcessingFurtherElementsAfter(element)")
+    )
+    protected open fun allowCaretInsideElement(element: PsiElement): Boolean = !skipProcessingFurtherElementsAfter(element)
+
+    /** Whether to skip looking for targets after having processed the given element, which contains the cursor. */
+    protected open fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = element is KtBlockExpression
 
     final override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         if (isUnitTestMode()) {
