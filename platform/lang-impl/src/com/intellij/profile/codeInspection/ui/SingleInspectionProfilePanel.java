@@ -17,7 +17,9 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -31,7 +33,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -598,15 +599,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    int modifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
-
-    registerKeyboardAction(__ -> {
-      if (myTreeTable.getStrictlySelectedToolNode() != null) {
-        final Container parent = myTreeTable.getParent();
-        compoundPopup().show(parent, parent.getWidth() / 2,  parent.getHeight() / 2);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_V, modifiers), WHEN_IN_FOCUSED_WINDOW);
-
     new TreeSpeedSearch(tree, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
@@ -832,6 +824,19 @@ public class SingleInspectionProfilePanel extends JPanel {
                                                  GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  JBInsets.create(10, 0),
                                                  0, 0));
+        severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+          KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
+          "changeSeverity"
+        );
+        severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            final var panel = (JPanel)severityLevelChooserComponent;
+            final var button = (ComboBoxAction.ComboBoxButton)panel.getComponent(0);
+            button.showPopup();
+          }
+        });
+
         final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
           scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(scopesChooserComponent,
