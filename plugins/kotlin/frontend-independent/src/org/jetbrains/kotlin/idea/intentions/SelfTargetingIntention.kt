@@ -77,7 +77,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
             if (elementType.isInstance(element) && isApplicableTo(element as TElement, offset)) {
                 return element
             }
-            if (!allowCaretInsideElement(element) && element.textRange.containsInside(offset)) break
+            if (element.textRange.containsInside(offset) && !allowCaretInsideElement(element)) break
         }
         return null
     }
@@ -87,6 +87,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         return getTarget(offset, file)
     }
 
+    /** Whether to keep looking for targets after having processed the given element, which contains the cursor. */
     protected open fun allowCaretInsideElement(element: PsiElement): Boolean = element !is KtBlockExpression
 
     final override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
