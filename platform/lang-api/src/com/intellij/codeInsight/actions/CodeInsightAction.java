@@ -19,22 +19,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * Use {@link MultiCaretCodeInsightAction} for supporting multiple carets.
  *
  * @author Dmitry Avdeev
  */
 public abstract class CodeInsightAction extends AnAction implements UpdateInBackground {
-
-  protected CodeInsightAction() {
-  }
-
-  protected CodeInsightAction(Icon icon) {
-    super(icon);
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
