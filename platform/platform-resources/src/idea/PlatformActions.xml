@@ -1163,7 +1163,7 @@
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"/>
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
-        <action id="WebBrowser" class="com.intellij.internal.jcef.WebBrowser"/>
+        <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
