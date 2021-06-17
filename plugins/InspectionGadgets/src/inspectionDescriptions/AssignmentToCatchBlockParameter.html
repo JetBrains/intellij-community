@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports assignment to variable declared as a <code>catch</code> block parameter.
-Changing the <code>catch</code> block parameter is very confusing and should be discouraged.
-If you need to update the exception for rethrowing, consider declaring a new variable.
-<p>Example:</p>
+Reports an assignment to a variable declared as a <code>catch</code> block parameter.
+<p>Changing a <code>catch</code> block parameter is very confusing and should be discouraged.</p>
+<p>The quick-fix adds a declaration of a new variable.</p>
+<p><b>Example:</b></p>
 <pre><code>
   void processFile(String fileName) throws Exception {
     try {
@@ -18,7 +18,7 @@ If you need to update the exception for rethrowing, consider declaring a new var
     }
   }
 </code></pre>
-<p>A quick-fix is suggested to declare a new variable:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
     catch(Exception ex) {
       Exception unwrapped = ex;
@@ -29,10 +29,8 @@ If you need to update the exception for rethrowing, consider declaring a new var
       throw unwrapped;
     }
 </code></pre>
-<p>
-  Note that this inspection does not report parameters of multi-catch blocks, as such parameters
-  are implicitly final and reassigning them is a compilation error.
-</p>
+<p>Parameters of multi-catch blocks are not reported because such parameters
+  are implicitly <code>final</code> and reassigning them causes a compilation error.</p>
 <!-- tooltip end -->
 </body>
 </html>
