@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports a private primary constructor in data classes.
+Reports the <code>private</code> primary constructor in data classes.
 <p>
-    <code>data</code> classes have a <code>copy()</code> factory method that can be used similarly to a constructor, so making
-    a constructor <code>private</code> does not provide enough safety.
+    <code>data classes</code> have a <code>copy()</code> factory method that can be used similarly to a constructor.
+    A constructor should not be marked as <code>private</code> to provide enough safety.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
   data class User private constructor(val name: String)
 </code></pre>
-<p>A quick-fix is suggested to make the constructor <code>public</code>:</p>
+<p>A quick-fix changes the constructor visibility modifier to <code>public</code>:</p>
 <pre><code>
   data class User(val name: String)
 </code></pre>

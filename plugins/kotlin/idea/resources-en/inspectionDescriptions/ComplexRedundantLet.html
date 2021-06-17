@@ -2,14 +2,14 @@
 <body>
 Reports a redundant argument-based <code>let</code> call.
 <p><code>let</code> is redundant when the lambda parameter is only used as a qualifier in a call expression.</p>
-<p>If you need to give a name to the qualifying expression, consider declaring a local variable.</p>
+<p>If you need to give a name to the qualifying expression, declare a local variable.</p>
 <p><b>Example:</b></p>
 <pre><code>
   fun splitNumbers() {
       "1,2,3".let { it.split(',') }
   }
 </code></pre>
-<p>A quick-fix is suggested to remove the extra <code>let()</code> call:</p>
+<p>A quick-fix removes the extra <code>let()</code> call:</p>
 <pre><code>
   fun example() {
       "1,2,3".split(',')
