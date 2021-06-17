@@ -35,7 +35,7 @@ class CommitsBrowserComponentFactory (private val project: Project) {
       ListSpeedSearch(it) { commit -> commit.subject }
     }
 
-    commitsModel.addAndInvokeValueChangedListener {
+    commitsModel.addAndInvokeListener {
       val currentList = commitsListModel.toList()
       val newList = commitsModel.value
       if (currentList != newList) {
@@ -89,7 +89,7 @@ class CommitsBrowserComponentFactory (private val project: Project) {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       val commit = model.value
       if (commit != null) {
         val hashAndAuthor = CommitPresentationUtil.formatCommitHashAndAuthor(commit.id, commit.author, commit.authorTime, commit.committer,

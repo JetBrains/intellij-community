@@ -45,7 +45,7 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun addAndInvokeDraftStateListener(listener: () -> Unit) {
     var lastIsDraft = isDraft
-    detailsModel.addValueChangedListener {
+    detailsModel.addListener {
       if (lastIsDraft != isDraft) listener()
       lastIsDraft = isDraft
     }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.icons.AllIcons
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiff
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
@@ -101,7 +101,7 @@ object GHPRReviewThreadComponent {
     init {
       collapseButton.actionListener = ActionListener { collapseModel.value = true }
       expandButton.actionListener = ActionListener { collapseModel.value = false }
-      collapseModel.addValueChangedListener(::update)
+      collapseModel.addListener { update() }
       thread.addAndInvokeStateChangeListener(::update)
     }
 

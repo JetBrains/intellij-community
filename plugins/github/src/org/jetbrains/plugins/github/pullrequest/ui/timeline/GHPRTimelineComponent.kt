@@ -31,7 +31,7 @@ class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullReq
   init {
     border = JBUI.Borders.emptyTop(6)
 
-    detailsModel.addValueChangedListener {
+    detailsModel.addListener {
       remove(0)
       add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
     }

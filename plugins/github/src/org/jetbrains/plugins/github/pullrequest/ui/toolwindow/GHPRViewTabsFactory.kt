@@ -81,7 +81,7 @@ internal class GHPRViewTabsFactory(private val project: Project,
   }
 
   private fun installTabTitleUpdater(tabInfo: TabInfo, @Nls title: String, countModel: SingleValueModel<Int?>) {
-    countModel.addAndInvokeValueChangedListener {
+    countModel.addAndInvokeListener {
       val count = countModel.value
       tabInfo.clearText(false).append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       if (count != null) tabInfo.append("  $count", SimpleTextAttributes.GRAYED_ATTRIBUTES)

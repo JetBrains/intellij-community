@@ -14,7 +14,7 @@ internal class GHPREditorCommentableRangesController(
 ) : EditorRangesController(gutterIconRendererFactory, editor) {
 
   init {
-    commentableRanges.addAndInvokeValueChangedListener {
+    commentableRanges.addAndInvokeListener {
       for (range in commentableRanges.value) {
         markCommentableLines(range)
       }
