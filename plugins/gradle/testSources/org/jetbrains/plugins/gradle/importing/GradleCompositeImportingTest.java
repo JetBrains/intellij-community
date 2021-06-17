@@ -102,7 +102,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertTasksProjectPath("adhoc", getProjectPath());
     if (isGradleNewerOrSameAs("6.8")) {
       assertTasksProjectPath("my-app", getProjectPath(), ":my-app:");
-      assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils");
+      assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
     } else {
       assertTasksProjectPath("my-app", path("../my-app"));
       assertTasksProjectPath("my-utils", path("../my-utils"));
