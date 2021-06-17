@@ -107,7 +107,7 @@ internal object GHPRListComponent {
       if (searchStringModel.value != searchQueryHolder.queryString)
         searchStringModel.value = searchQueryHolder.queryString
     }
-    searchStringModel.addValueChangedListener {
+    searchStringModel.addListener {
       searchQueryHolder.queryString = searchStringModel.value
     }
 

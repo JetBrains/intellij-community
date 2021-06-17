@@ -86,7 +86,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       checkLoadChanges(true)
       commitSelectionModel.value = null
     }
-    commitSelectionModel.addAndInvokeValueChangedListener {
+    commitSelectionModel.addAndInvokeListener {
       checkLoadSelectedCommitChanges(true)
     }
     project.messageBus.connect(disposable).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->

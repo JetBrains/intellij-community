@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
@@ -35,7 +34,7 @@ internal object GHPRTitleComponent {
       font = font.deriveFont((font.size * 1.5).toFloat())
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }

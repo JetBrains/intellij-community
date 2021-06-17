@@ -338,7 +338,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
     border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       isVisible = !model.value.linearHistory
     }
   }
@@ -351,7 +351,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       model.value = changesModel.value.changesByCommits[commit?.id?.asString()].orEmpty()
     }
     commitSelectionListener.delegate = ::update
-    changesModel.addAndInvokeValueChangedListener(::update)
+    changesModel.addAndInvokeListener { update() }
     return model
   }
 

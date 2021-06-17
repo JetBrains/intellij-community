@@ -22,12 +22,12 @@ abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(privat
         update()
       }
     })
-    commentableRangesModel.addValueChangedListener {
+    commentableRangesModel.addListener {
       if (viewerReady) {
         markCommentableRanges(commentableRangesModel.value)
       }
     }
-    reviewThreadsModel.addValueChangedListener {
+    reviewThreadsModel.addListener {
       if (viewerReady) {
         showThreads(reviewThreadsModel.value)
       }

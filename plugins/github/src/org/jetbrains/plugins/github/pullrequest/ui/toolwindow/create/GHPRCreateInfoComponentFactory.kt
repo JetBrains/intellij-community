@@ -362,8 +362,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         label.text = GithubBundle.message("pull.request.create.no.changes", base, head)
       }
 
-      commitsCountModel.addValueChangedListener(::update)
-      commitsCountModel.addAndInvokeValueChangedListener(::update)
+      commitsCountModel.addListener { update() }
+      commitsCountModel.addAndInvokeListener { update() }
       return label
     }
 

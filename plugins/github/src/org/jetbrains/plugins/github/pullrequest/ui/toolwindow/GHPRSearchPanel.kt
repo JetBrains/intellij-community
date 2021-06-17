@@ -78,7 +78,7 @@ object GHPRSearchPanel {
         .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(SHOW_SEARCH_HISTORY_ACTION), this)
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       searchField.text = model.value
     }
 
