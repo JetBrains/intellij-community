@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * Provides content, masks for VCS native ignore files (e.g., {@code .gitignore}, {@code .hgignore}).
- * Every plugin which has ignore files should implement it to contribute own ignores to VCS.
+ * Every plugin which has "ignore" files should implement it to contribute own ignores to VCS.
  */
 @ApiStatus.Experimental
 public interface IgnoredFileProvider {

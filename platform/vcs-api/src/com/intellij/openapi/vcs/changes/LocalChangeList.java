@@ -28,7 +28,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract Collection<Change> getChanges();
 
   /**
-   * Logical id that identifies the changelist and should survive name changing.
+   * Logical id that identifies the changelist and should survive name change.
    */
   @NotNull
   @NonNls

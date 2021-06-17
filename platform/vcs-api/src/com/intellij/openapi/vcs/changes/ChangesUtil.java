@@ -345,7 +345,7 @@ public final class ChangesUtil {
   }
 
   /**
-   * Find common ancestor for changes (included both before and after files)
+   * Find common ancestor for changes (including both before and after files)
    */
   @Nullable
   public static File findCommonAncestor(@NotNull Collection<? extends Change> changes) {

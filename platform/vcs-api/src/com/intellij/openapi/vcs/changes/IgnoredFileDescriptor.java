@@ -18,9 +18,9 @@ public interface IgnoredFileDescriptor {
   String getPath();
 
   /**
-   * Ignored mask represent ignore pattern in ignore files for different VCS (e.g. .gitignore, .hgignore, etc).
-   * The recommend way to support all VCS is to choose common pattern for mask.
-   * Note: At the moment this mask will be written to ignore file without any pre-processing (as it is)
+   * Ignored mask represents ignore pattern in ignore files for different VCS (e.g. .gitignore, .hgignore, etc).
+   * The recommended way to support all VCS is to choose a common pattern for mask.
+   * Note: At the moment, this mask will be written to ignore file without any pre-processing (as it is)
    *
    * @return ignored mask. null in case if {@link IgnoreSettingsType} is not {@link IgnoreSettingsType#MASK}
    */
