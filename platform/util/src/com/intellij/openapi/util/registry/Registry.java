@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -220,6 +220,7 @@ public final class Registry  {
     return myUserProperties;
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<RegistryValue> getAll() {
     Map<String, String> bundle = null;
     try {
@@ -228,10 +229,9 @@ public final class Registry  {
     catch (IOException ignored) {
     }
     Set<String> keys = bundle == null ? Collections.emptySet() : bundle.keySet();
-
     List<RegistryValue> result = new ArrayList<>();
-
-    Registry instance = getInstance();
+    // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
+    Registry instance = ourInstance;
     Map<String, RegistryKeyDescriptor> contributedKeys = instance.myContributedKeys;
     for (String key : keys) {
       if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {
