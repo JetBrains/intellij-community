@@ -367,7 +367,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public VirtualFile copyFileToProject(@NotNull String sourcePath, @NotNull String targetPath) {
     String testDataPath = getTestDataPath();
-    File sourceFile = new File(testDataPath, toSystemDependentName(sourcePath));
+    File sourceFile = new File(toSystemDependentName(sourcePath));
+    if (!sourceFile.exists())
+      sourceFile = new File(testDataPath, toSystemDependentName(sourcePath));
     if (!sourceFile.exists()) {
       File candidate = new File(sourcePath);
       if (candidate.isAbsolute()) {
