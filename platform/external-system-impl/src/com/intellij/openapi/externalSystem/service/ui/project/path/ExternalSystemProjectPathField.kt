@@ -1,21 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.ui.*
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor.CompletionType
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
-import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -33,22 +29,20 @@ import javax.swing.text.Highlighter
 
 class ExternalSystemProjectPathField(
   project: Project,
-  externalSystemId: ProjectSystemId
+  private val projectPathInfo: ExternalSystemProjectPathInfo
 ) : ExtendableTextField() {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
   private val modeProperty = propertyGraph.graphProperty { Mode.NAME }
   private val textProperty = propertyGraph.graphProperty { "" }
   private val projectPathProperty = propertyGraph.graphProperty { "" }
-  private val projectUiPathProperty = projectPathProperty.transform(::getUiPath, ::getModelPath)
   private val projectNameProperty = propertyGraph.graphProperty { "" }
 
   var mode by modeProperty
   var projectPath by projectPathProperty
-  var projectUiPath by projectUiPathProperty
   var projectName by projectNameProperty
 
-  private val externalProjects = ArrayList<ExternalProject>()
+  private val externalProjects = projectPathInfo.externalProjects
 
   private var highlightTag: Any? = null
   private val highlightRecursionGuard =
@@ -56,7 +50,7 @@ class ExternalSystemProjectPathField(
 
   init {
     val text by textProperty.map { it.trim() }
-    projectUiPathProperty.dependsOn(textProperty) {
+    projectPathProperty.dependsOn(textProperty) {
       when (mode) {
         Mode.PATH -> text
         Mode.NAME -> resolveProjectPathByName(text) ?: text
@@ -70,14 +64,14 @@ class ExternalSystemProjectPathField(
     }
     textProperty.dependsOn(modeProperty) {
       when (mode) {
-        Mode.PATH -> projectUiPath
+        Mode.PATH -> getUiPath(projectPath)
         Mode.NAME -> projectName
       }
     }
-    textProperty.dependsOn(projectUiPathProperty) {
+    textProperty.dependsOn(projectPathProperty) {
       when (mode) {
-        Mode.PATH -> projectUiPath
-        Mode.NAME -> resolveProjectNameByPath(projectPath) ?: projectUiPath
+        Mode.PATH -> getUiPath(projectPath)
+        Mode.NAME -> resolveProjectNameByPath(projectPath) ?: getUiPath(projectPath)
       }
     }
     textProperty.dependsOn(projectNameProperty) {
@@ -86,10 +80,10 @@ class ExternalSystemProjectPathField(
         Mode.NAME -> projectName
       }
     }
-    modeProperty.dependsOn(projectUiPathProperty) {
+    modeProperty.dependsOn(projectPathProperty) {
       when {
-        projectUiPath.isEmpty() -> Mode.NAME
-        resolveProjectNameByPath(projectUiPath) != null -> mode
+        projectPath.isEmpty() -> Mode.NAME
+        resolveProjectNameByPath(projectPath) != null -> mode
         else -> Mode.PATH
       }
     }
@@ -155,19 +149,6 @@ class ExternalSystemProjectPathField(
   }
 
   init {
-    val localSettings = ExternalSystemApiUtil.getLocalSettings<AbstractExternalSystemLocalSettings<*>>(project, externalSystemId)
-    val uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId)
-    for ((parent, children) in localSettings.availableProjects) {
-      val parentPath = getModelPath(parent.path)
-      val parentName = uiAware.getProjectRepresentationName(project, parentPath, null)
-      externalProjects.add(ExternalProject(parentName, parentPath))
-      for (child in children) {
-        val childPath = getModelPath(child.path)
-        if (parentPath == childPath) continue
-        val childName = uiAware.getProjectRepresentationName(project, childPath, parentPath)
-        externalProjects.add(ExternalProject(childName, childPath))
-      }
-    }
     val rootProject = externalProjects.firstOrNull()
     if (rootProject != null) {
       projectName = rootProject.name
@@ -223,8 +204,6 @@ class ExternalSystemProjectPathField(
   }
 
   init {
-    val title = ExternalSystemBundle.message("settings.label.select.project", externalSystemId.readableName)
-    val fileChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)
     val fileBrowseAccessor = object : TextComponentAccessor<ExternalSystemProjectPathField> {
       override fun getText(component: ExternalSystemProjectPathField) = projectPath
       override fun setText(component: ExternalSystemProjectPathField, text: String) {
@@ -232,7 +211,12 @@ class ExternalSystemProjectPathField(
       }
     }
     val browseFolderRunnable = object : BrowseFolderRunnable<ExternalSystemProjectPathField>(
-      title, null, project, fileChooserDescriptor, this, fileBrowseAccessor
+      projectPathInfo.fileChooserTitle,
+      projectPathInfo.fileChooserDescription,
+      project,
+      projectPathInfo.fileChooserDescriptor,
+      this,
+      fileBrowseAccessor
     ) {
       override fun chosenFileToResultingText(chosenFile: VirtualFile): String {
         return ExternalSystemApiUtil.getLocalFileSystemPath(chosenFile)
@@ -266,6 +250,4 @@ class ExternalSystemProjectPathField(
   }
 
   enum class Mode { PATH, NAME }
-
-  private data class ExternalProject(val name: String, val path: String)
 }

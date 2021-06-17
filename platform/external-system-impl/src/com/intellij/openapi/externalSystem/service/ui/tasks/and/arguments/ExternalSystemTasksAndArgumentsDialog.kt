@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsInfo.CompletionTableInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -28,23 +26,22 @@ import javax.swing.ListSelectionModel
 
 @ApiStatus.Experimental
 class ExternalSystemTasksAndArgumentsDialog(
-  private val project: Project,
-  private val externalSystemId: ProjectSystemId,
-  private val tasksAndArguments: ExternalSystemTasksAndArguments
+  project: Project,
+  private val tasksAndArgumentsInfo: ExternalSystemTasksAndArgumentsInfo
 ) : DialogWrapper(project) {
 
   private val selectRecursionGuard =
     RecursionManager.createGuard<ExternalSystemTasksAndArgumentsDialog>(ExternalSystemTasksAndArgumentsDialog::class.java.name)
 
-  private val itemChooseListeners = CopyOnWriteArrayList<(Item) -> Unit>()
+  private val chooseListeners = CopyOnWriteArrayList<(TextCompletionInfo) -> Unit>()
 
-  fun whenItemChosen(listener: (Item) -> Unit) {
-    itemChooseListeners.add(listener)
+  fun whenVariantChosen(listener: (TextCompletionInfo) -> Unit) {
+    chooseListeners.add(listener)
   }
 
-  private fun fireItemChosen(item: Item?) {
+  private fun fireVariantChosen(item: TextCompletionInfo?) {
     if (item != null) {
-      itemChooseListeners.forEach { it(item) }
+      chooseListeners.forEach { it(item) }
     }
   }
 
@@ -57,46 +54,44 @@ class ExternalSystemTasksAndArgumentsDialog(
   }
 
   override fun createCenterPanel() = panel {
-    val taskTable = Table(
-      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.task.column"),
-      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.tasks.text"),
-      AllIcons.General.Gear,
-      items = tasksAndArguments.tasks.map { Item(it.name, it.description) }
-    )
-    val argumentTable = Table(
-      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.argument.column"),
-      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.arguments.text"),
-      items = tasksAndArguments.arguments.map { Item(it.name, it.description) }
-    )
+    val tables = tasksAndArgumentsInfo.tablesInfo
+      .filter { it.tableCompletionInfo.isNotEmpty() }
+      .map { Table(it) }
 
-    taskTable.clearSelectionWhenSelected(argumentTable)
-    argumentTable.clearSelectionWhenSelected(taskTable)
+    for ((i, parent) in tables.withIndex()) {
+      for ((j, child) in tables.withIndex()) {
+        if (i != j) {
+          parent.clearSelectionWhenSelected(child)
+        }
+      }
+    }
 
-    row { scrollPane(taskTable) }
-    row { scrollPane(argumentTable) }
+    for (table in tables) {
+      row {
+        scrollPane(table)
+      }
+    }
 
     onGlobalApply {
-      fireItemChosen(taskTable.selectedItem ?: argumentTable.selectedItem)
+      val selectedVariant = tables
+        .mapNotNull { it.selectedVariant }
+        .firstOrNull()
+      fireVariantChosen(selectedVariant)
     }
   }
 
   init {
-    title = ExternalSystemBundle.message("run.configuration.tasks.and.arguments.title")
+    title = tasksAndArgumentsInfo.title
     setOKButtonText(IdeBundle.message("button.insert"))
     init()
   }
 
-  private inner class Table(
-    @NlsContexts.ColumnName name: String,
-    @NlsContexts.ColumnName contentName: String,
-    icon: Icon? = null,
-    items: List<Item>
-  ) : JBTable() {
-    val selectedItem: Item?
+  private inner class Table(tableInfo: CompletionTableInfo) : JBTable() {
+    val selectedVariant: TextCompletionInfo?
       get() {
         if (selectedRow != -1) {
           @Suppress("UNCHECKED_CAST")
-          val model = model as ListTableModel<Item>
+          val model = model as ListTableModel<TextCompletionInfo>
           return model.getItem(selectedRow)
         }
         else {
@@ -110,13 +105,7 @@ class ExternalSystemTasksAndArgumentsDialog(
     }
 
     init {
-      val externalSystemName = externalSystemId.readableName
-      setEmptyText(ExternalSystemBundle.message("initializing.0.projects.data", externalSystemName))
-
-      val projectsManager = ExternalProjectsManager.getInstance(project)
-      projectsManager.runWhenInitialized {
-        setEmptyText(ExternalSystemBundle.message("run.configuration.tasks.and.arguments.no.content", externalSystemName, contentName))
-      }
+      setEmptyText(tableInfo.emptyState)
     }
 
     init {
@@ -128,22 +117,21 @@ class ExternalSystemTasksAndArgumentsDialog(
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     }
 
-    private fun column(@NlsContexts.ColumnName name: String, valueOf: (Item) -> String) =
-      object : ColumnInfo<Item, String>(name) {
-        override fun valueOf(item: Item) = valueOf(item)
+    private fun column(@NlsContexts.ColumnName name: String, valueOf: (TextCompletionInfo) -> String) =
+      object : ColumnInfo<TextCompletionInfo, String>(name) {
+        override fun valueOf(item: TextCompletionInfo) = valueOf(item)
       }
 
     init {
-      val taskColumnInfo = column(name) { it.name }
-      val descriptionColumnName = ExternalSystemBundle.message("run.configuration.tasks.and.arguments.description.column")
-      val argumentsColumnInfo = column(descriptionColumnName) { it.description ?: "" }
-      model = ListTableModel(arrayOf(taskColumnInfo, argumentsColumnInfo), items)
+      val dataColumnInfo = column(tableInfo.dataColumnName) { it.text }
+      val descriptionColumnInfo = column(tableInfo.descriptionColumnName) { it.description ?: "" }
+      model = ListTableModel(arrayOf(dataColumnInfo, descriptionColumnInfo), tableInfo.tableCompletionInfo)
     }
 
     init {
       val search = TableSpeedSearch(this)
       val nameColumn = columnModel.getColumn(0)
-      nameColumn.cellRenderer = Renderer(search, icon)
+      nameColumn.cellRenderer = Renderer(search, tableInfo.dataIcon)
       val descriptionColumn = columnModel.getColumn(1)
       descriptionColumn.cellRenderer = Renderer(search, null)
     }
@@ -157,6 +145,4 @@ class ExternalSystemTasksAndArgumentsDialog(
       SearchUtil.appendFragments(search.enteredPrefix, text, SimpleTextAttributes.STYLE_PLAIN, null, null, this)
     }
   }
-
-  data class Item(@Nls val name: String, @Nls val description: String?)
 }

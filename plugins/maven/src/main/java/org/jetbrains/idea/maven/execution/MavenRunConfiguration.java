@@ -41,6 +41,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,6 +52,7 @@ import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfigurationSettingsEditor;
 import org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
@@ -67,9 +69,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -80,23 +80,138 @@ import static com.intellij.util.containers.ContainerUtil.indexOf;
 import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
-  private MavenSettings mySettings;
+  private @Nullable String commandLine = null;
+  private @Nullable String workingDirectory = null;
+  private @Nullable Map<String, String> environment = null;
+  private @Nullable Boolean isPassParentEnvs = null;
+  private @Nullable String vmOptions = null;
+  private @Nullable String jreName = null;
+  private @Nullable String mavenHome = null;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
-    mySettings = new MavenSettings(project);
+  }
+
+  public @Nullable String getCommandLine() {
+    return commandLine;
+  }
+
+  public void setCommandLine(@Nullable String commandLine) {
+    this.commandLine = commandLine;
+  }
+
+  public @Nullable String getWorkingDirectory() {
+    return workingDirectory;
+  }
+
+  public void setWorkingDirectory(@Nullable String workingDirectory) {
+    this.workingDirectory = workingDirectory;
+  }
+
+  public @NotNull Map<String, String> getEnvironment() {
+    return ObjectUtils.chooseNotNull(environment, new HashMap<>());
+  }
+
+  public void setEnvironment(@NotNull Map<String, String> environment) {
+    this.environment = environment;
+  }
+
+  public boolean isPassParentEnvs() {
+    return ObjectUtils.chooseNotNull(isPassParentEnvs, true);
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    isPassParentEnvs = passParentEnvs;
+  }
+
+  public @Nullable String getVmOptions() {
+    return vmOptions;
+  }
+
+  public void setVmOptions(@Nullable String vmOptions) {
+    this.vmOptions = vmOptions;
+  }
+
+  public @Nullable String getJreName() {
+    return jreName;
+  }
+
+  public void setJreName(@Nullable String jreName) {
+    this.jreName = jreName;
+  }
+
+  public @Nullable String getMavenHome() {
+    return mavenHome;
+  }
+
+  public void setMavenHome(@Nullable String mavenHome) {
+    this.mavenHome = mavenHome;
+  }
+
+  public @NotNull MavenSettings getMavenSettings() {
+    return new MavenSettings(getGeneralSettings(), getRunnerSettings(), getRunnerParameters());
+  }
+
+  public @NotNull MavenGeneralSettings getGeneralSettings() {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
+    MavenGeneralSettings settings = projectsManager.getGeneralSettings().clone();
+    ObjectUtils.consumeIfNotNull(mavenHome, settings::setMavenHome);
+    return settings;
+  }
+
+  public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
+    mavenHome = ObjectUtils.doIfNotNull(settings, MavenGeneralSettings::getMavenHome);
+  }
+
+  public @NotNull MavenRunnerSettings getRunnerSettings() {
+    MavenRunner mavenRunner = MavenRunner.getInstance(getProject());
+    MavenRunnerSettings settings = mavenRunner.getSettings().clone();
+    ObjectUtils.consumeIfNotNull(jreName, settings::setJreName);
+    ObjectUtils.consumeIfNotNull(vmOptions, settings::setVmOptions);
+    ObjectUtils.consumeIfNotNull(environment, settings::setEnvironmentProperties);
+    ObjectUtils.consumeIfNotNull(isPassParentEnvs, settings::setPassParentEnv);
+    return settings;
+  }
+
+  public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
+    jreName = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getJreName);
+    vmOptions = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getVmOptions);
+    environment = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getEnvironmentProperties);
+    isPassParentEnvs = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::isPassParentEnv);
+  }
+
+  public @NotNull MavenRunnerParameters getRunnerParameters() {
+    MavenRunnerParameters parameters = new MavenRunnerParameters();
+    ObjectUtils.consumeIfNotNull(commandLine, parameters::setCommandLine);
+    ObjectUtils.consumeIfNotNull(workingDirectory, parameters::setWorkingDirPath);
+    return parameters;
+  }
+
+  public void setRunnerParameters(@NotNull MavenRunnerParameters parameters) {
+    commandLine = parameters.getCommandLine();
+    workingDirectory = parameters.getWorkingDirPath();
   }
 
   @Override
   public MavenRunConfiguration clone() {
     MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
-    clone.mySettings = mySettings.clone();
+    clone.mavenHome = mavenHome;
+    clone.jreName = jreName;
+    clone.vmOptions = vmOptions;
+    clone.environment = environment;
+    clone.isPassParentEnvs = isPassParentEnvs;
+    clone.commandLine = commandLine;
+    clone.workingDirectory = workingDirectory;
     return clone;
   }
 
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", true)) {
+      return new MavenRunConfigurationSettingsEditor(this);
+    }
+
     SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<>();
 
     MavenRunnerParametersSettingEditor runnerParamsEditor = new MavenRunnerParametersSettingEditor(getProject());
@@ -123,8 +238,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
   public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
-    return MavenExternalParameters
-      .createJavaParameters(project, mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings, this);
+    return MavenExternalParameters.createJavaParameters(project, getRunnerParameters(), getGeneralSettings(), getRunnerSettings(), this);
   }
 
   @Override
@@ -137,60 +251,35 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     return new ExecRemoteConnectionCreator(javaParameters, this);
   }
 
-  private void updateProjectsFolders() {
-    MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
-  }
-
-  @Nullable
-  public MavenGeneralSettings getGeneralSettings() {
-    return mySettings.myGeneralSettings;
-  }
-
-  public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
-    mySettings.myGeneralSettings = settings;
-  }
-
-  @Nullable
-  public MavenRunnerSettings getRunnerSettings() {
-    return mySettings.myRunnerSettings;
-  }
-
-  public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
-    mySettings.myRunnerSettings = settings;
-  }
-
-  public MavenRunnerParameters getRunnerParameters() {
-    return mySettings.myRunnerParameters;
-  }
-
-  public void setRunnerParameters(MavenRunnerParameters p) {
-    mySettings.myRunnerParameters = p;
-  }
-
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
     if (mavenSettingsElement != null) {
-      mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
-
-      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
+      MavenSettings settings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
+      if (settings.myRunnerParameters == null) {
+        settings.myRunnerParameters = new MavenRunnerParameters();
+      }
 
       // fix old settings format
-      mySettings.myRunnerParameters.fixAfterLoadingFromOldFormat();
+      settings.myRunnerParameters.fixAfterLoadingFromOldFormat();
+
+      ObjectUtils.consumeIfNotNull(settings.myGeneralSettings, this::setGeneralSettings);
+      ObjectUtils.consumeIfNotNull(settings.myRunnerSettings, this::setRunnerSettings);
+      ObjectUtils.consumeIfNotNull(settings.myRunnerParameters, this::setRunnerParameters);
     }
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings));
+    element.addContent(XmlSerializer.serialize(getMavenSettings()));
   }
 
   @Override
   public String suggestedName() {
-    return MavenRunConfigurationType.generateName(getProject(), mySettings.myRunnerParameters);
+    return MavenRunConfigurationType.generateName(getProject(), getRunnerParameters());
   }
 
   @Override
@@ -234,18 +323,31 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     public MavenSettings(Project project) {
-      this(null, null, new MavenRunnerParameters());
+      myRunnerParameters = new MavenRunnerParameters();
     }
 
-    private MavenSettings(@Nullable MavenGeneralSettings cs, @Nullable MavenRunnerSettings rs, MavenRunnerParameters rp) {
-      myGeneralSettings = cs == null ? null : cs.clone();
-      myRunnerSettings = rs == null ? null : rs.clone();
-      myRunnerParameters = rp.clone();
+    private MavenSettings(
+      @Nullable MavenGeneralSettings generalSettings,
+      @Nullable MavenRunnerSettings runnerSettings,
+      @NotNull MavenRunnerParameters runnerParameters
+    ) {
+      myGeneralSettings = ObjectUtils.doIfNotNull(generalSettings, MavenGeneralSettings::clone);
+      myRunnerSettings = ObjectUtils.doIfNotNull(runnerSettings, MavenRunnerSettings::clone);
+      myRunnerParameters = runnerParameters.clone();
     }
 
     @Override
     protected MavenSettings clone() {
-      return new MavenSettings(myGeneralSettings, myRunnerSettings, myRunnerParameters);
+      try {
+        MavenSettings clone = (MavenSettings)super.clone();
+        clone.myGeneralSettings = ObjectUtils.doIfNotNull(myGeneralSettings, MavenGeneralSettings::clone);
+        clone.myRunnerSettings = ObjectUtils.doIfNotNull(myRunnerSettings, MavenRunnerSettings::clone);
+        clone.myRunnerParameters = myRunnerParameters.clone();
+        return clone;
+      }
+      catch (CloneNotSupportedException e) {
+        throw new Error(e);
+      }
     }
   }
 
@@ -553,7 +655,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
       return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request)
-        .setupCommandLine(myConfiguration.mySettings)
+        .setupCommandLine(myConfiguration.getMavenSettings())
         .getCommandLine();
     }
 

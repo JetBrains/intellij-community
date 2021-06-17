@@ -23,6 +23,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
@@ -711,16 +712,6 @@ fun JTextComponent.bind(property: GraphProperty<String>) {
       }
     }
   )
-}
-
-private fun AtomicBoolean.lockOrSkip(action: () -> Unit) {
-  if (!compareAndSet(false, true)) return
-  try {
-    action()
-  }
-  finally {
-    set(false)
-  }
 }
 
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {

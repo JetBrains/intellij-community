@@ -1,0 +1,75 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.maven.execution.run.configuration
+
+import com.intellij.ide.util.BrowseFilesListener
+import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionsInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.ui.JBUI
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil
+
+class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
+  override val hint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
+  override val name: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
+
+  override val comboBoxPreferredWidth: Int = JBUI.scale(120)
+  override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
+
+  override val fileChooserTitle: String = MavenProjectBundle.message("maven.select.maven.home.directory")
+  override val fileChooserDescription: String? = null
+  override val fileChooserDescriptor: FileChooserDescriptor = BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR
+
+  override val distributions: List<ExternalSystemDistributionInfo> by lazy {
+    ArrayList<ExternalSystemDistributionInfo>().apply {
+      addIfNotNull(asDistributionInfo(MavenServerManager.BUNDLED_MAVEN_3))
+      addIfNotNull(asDistributionInfo(MavenServerManager.WRAPPED_MAVEN))
+      val mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null)
+      val bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3)
+      if (!FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
+        addIfNotNull(asDistributionInfo(mavenHomeDirectory?.path))
+      }
+    }
+  }
+
+  open class BundledDistributionInfo(version: String) : ExternalSystemDistributionInfo() {
+    override val name: String = MavenConfigurableBundle.message("maven.run.configuration.bundled.distribution.name", version)
+    override val description: String = MavenConfigurableBundle.message("maven.run.configuration.bundled.distribution.description")
+  }
+
+  class Bundled2DistributionInfo(version: String?) : BundledDistributionInfo(version ?: "2")
+  class Bundled3DistributionInfo(version: String?) : BundledDistributionInfo(version ?: "3")
+
+  class WrappedDistributionInfo : ExternalSystemDistributionInfo() {
+    override val name: String = MavenProjectBundle.message("maven.wrapper.version.title")
+    override val description: String? = null
+  }
+
+  companion object {
+    fun asDistributionInfo(mavenHome: String?): ExternalSystemDistributionInfo? {
+      val version = MavenServerManager.getMavenVersion(mavenHome)
+      return when (mavenHome) {
+        MavenServerManager.BUNDLED_MAVEN_2 -> Bundled2DistributionInfo(version)
+        MavenServerManager.BUNDLED_MAVEN_3 -> Bundled3DistributionInfo(version)
+        MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
+        null -> null
+        else -> LocalDistributionInfo(mavenHome)
+      }
+    }
+
+    fun asMavenHome(distribution: ExternalSystemDistributionInfo?): String? {
+      return when (distribution) {
+        is Bundled2DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_2
+        is Bundled3DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_3
+        is WrappedDistributionInfo -> MavenServerManager.WRAPPED_MAVEN
+        is LocalDistributionInfo -> distribution.path
+        else -> null
+      }
+    }
+  }
+}

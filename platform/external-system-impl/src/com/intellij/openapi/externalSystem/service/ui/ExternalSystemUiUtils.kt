@@ -3,26 +3,18 @@
 
 package com.intellij.openapi.externalSystem.service.ui
 
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.*
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
-import java.awt.event.ActionEvent
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.InputMap
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
-import kotlin.math.abs
 
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
@@ -65,6 +57,15 @@ fun getUiPath(path: String): String {
 
 fun getModelPath(path: String, removeLastSlash: Boolean = true): String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
+}
+
+fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) {
+  addItemListener {
+    if (it.stateChange == ItemEvent.SELECTED) {
+      @Suppress("UNCHECKED_CAST")
+      listener(it.item as E)
+    }
+  }
 }
 
 fun JTextComponent.whenTextModified(listener: () -> Unit) {

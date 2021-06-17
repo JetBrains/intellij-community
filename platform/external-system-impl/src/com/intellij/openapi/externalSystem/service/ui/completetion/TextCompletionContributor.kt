@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.completetion
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -26,7 +27,7 @@ interface TextCompletionContributor<C : JComponent> {
 
   data class TextCompletionInfo(
     val text: @NlsSafe String,
-    val description: @NlsSafe String? = null,
+    val description: @Nls String? = null,
     val icon: Icon? = null) {
   }
 }
