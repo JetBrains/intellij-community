@@ -48,7 +48,6 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
       .also { combo -> combo.addItemListener(ItemListener { settings.javaSdk = combo.selectedJdk }) }
     val panel = panel {
       row {
-        label(GroovyBundle.message("label.groovy.sdk"))
         lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
         lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
         twoColumnRow(
@@ -96,7 +95,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         fromUrlCheckbox.applyToComponent { addChangeListener { if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.applyToComponent { isSelected = false } } }
       }
     }
-    return listOf(LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo), JustComponent(panel))
+    return listOf(LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo), LabelAndComponent(JBLabel(GroovyBundle.message("label.groovy.sdk")), panel {}), JustComponent(panel))
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
