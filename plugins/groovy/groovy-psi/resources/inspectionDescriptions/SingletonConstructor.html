@@ -1,5 +1,29 @@
 <html>
 <body>
-Checks that classes annotated by <b>@Singleton</b> do not have constructors unless it is declared non strict.
+Reports constructors of classes annotated by <b>@Singleton</b> unless it is declared non-strict.
+<p><b>Example</b>:
+<pre><code>
+  @Singleton
+  class Foo{
+      Foo(){
+      }
+  }
+</code></pre>
+There are two possible quick-fixes: either to remove the constructor or to declare <b>@Singleton</b> non-strict.
+<p>After the quick-fix is applied:
+<pre><code>
+  @Singleton
+  class Foo{
+  }
+</code></pre>
+
+<p>or:
+<pre><code>
+  @Singleton(<b>strict = false</b>)
+  class Foo{
+      Foo(){
+      }
+  }
+</code></pre>
 </body>
 </html>

@@ -2,5 +2,21 @@
 <body>
 Reports new instance creation of classes annotated with <b>@groovy.lang.Singleton</b>.
 Such constructions can lead to runtime exception "Can't instantiate singleton".
+<p><b>Example</b>:
+<pre><code>
+  @Singleton
+  class Foo{
+  }
+  
+  Foo foo = <b>new Foo()</b>
+</code></pre>
+After the quick-fix is applied:
+<pre><code>
+  @Singleton
+  class Foo{
+  }
+  
+  Foo foo = <b>Foo.instance</b>
+</code></pre>
 </body>
 </html>
