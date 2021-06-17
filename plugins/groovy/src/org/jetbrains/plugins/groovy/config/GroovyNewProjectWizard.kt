@@ -11,6 +11,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
@@ -42,7 +43,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override var settingsFactory = { GroovyModuleSettings() }
 
   override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
-    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), null, null, null, null)
+    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), { it is JavaSdk }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo -> combo.addItemListener(ItemListener { settings.javaSdk = combo.selectedJdk }) }
     val panel = panel {
