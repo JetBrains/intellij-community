@@ -1,8 +1,10 @@
 <html>
 <body>
-Reports when a non-generic-array manipulation method like <code>Arrays.fill()</code> is called with mismatched argument types. Such a call
-will not do anything useful and is likely a mistake.
-<p>Example:</p>
+Reports calls to non-generic-array manipulation methods like <code>Arrays.fill()</code> with mismatched argument types.
+<p>
+  Such calls don't do anything useful and are likely to be mistakes.
+</p>
+<p><b>Example:</b></p>
 <pre>
   int foo(String[] strings) {
     return Arrays.binarySearch(strings, 1);

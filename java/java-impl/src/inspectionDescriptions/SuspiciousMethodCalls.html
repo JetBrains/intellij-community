@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports method calls to parameterized collections, where actual argument type does not
+Reports method calls on parameterized collections, where the actual argument type does not
 correspond to the collection's elements type.
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre>
   List&lt;Integer&gt; list = getListOfElements();
   list.remove(""); // remove is highlighted
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to report potentially correct code, like this:
+  In the inspection settings, you can disable warnings for potentially correct code like the following:
 </p>
 <pre>
   public boolean accept(Map&lt;Integer, String&gt; map, Object key) {
