@@ -34,28 +34,30 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     // size of the real checkBox is calculated correctly. The problem is that com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.getBorderInsets()
     // returns different result for a checkbox that has CellRendererPane class as its UI ancestor. We need TableCellEditor and
     // TableCellRenderer to look 100% identically.
-    // It's second goal is to normalize baseline of other components.
+    // Its second goal is to normalize baseline of other components.
     // The third use case is to calculate checkbox text horizontal offset - needed to align a label if label is used instead of a checkbox.
     JCheckBox anchorCheckBox = new JCheckBox(info.getActionOnSaveName());
     Dimension cbSize = anchorCheckBox.getPreferredSize();
+    int anchorBaseline = anchorCheckBox.getBaseline(cbSize.width, cbSize.height);
 
-    GridBagConstraints c = new GridBagConstraints();
-    c.weightx = 1.0;
-    c.weighty = 1.0;
-    c.anchor = GridBagConstraints.NORTHWEST;
-    c.fill = GridBagConstraints.NONE;
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.weightx = 1.0;
+    gbc.weighty = 1.0;
+    gbc.anchor = GridBagConstraints.NORTHWEST;
+    gbc.fill = GridBagConstraints.NONE;
 
-    resultPanel.add(createActionNamePanel(table, info, anchorCheckBox), c);
+    resultPanel.add(createActionNamePanel(table, info, anchorCheckBox, anchorBaseline), gbc);
 
-    c.weightx = 0.0;
-    c.anchor = GridBagConstraints.NORTHEAST;
+    gbc.weightx = 0.0;
+    gbc.anchor = GridBagConstraints.NORTHEAST;
 
     if (hovered) {
       for (ActionLink link : info.getActionLinks()) {
         Dimension linkSize = link.getPreferredSize();
-        int baselineDelta = anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - link.getBaseline(linkSize.width, linkSize.height);
-        c.insets = JBUI.insets(baselineDelta, 5, 0, 7);
-        resultPanel.add(link, c);
+        int baselineDelta = anchorBaseline - link.getBaseline(linkSize.width, linkSize.height);
+        //noinspection UseDPIAwareInsets   - baselineDelta is already scaled
+        gbc.insets = new Insets(baselineDelta, JBUI.scale(5), 0, JBUI.scale(7));
+        resultPanel.add(link, gbc);
       }
     }
 
@@ -63,9 +65,10 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     if (dropDownLink != null) {
       Dimension linkSize = dropDownLink.getPreferredSize();
       int baselineDelta =
-        anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - dropDownLink.getBaseline(linkSize.width, linkSize.height);
-      c.insets = JBUI.insets(baselineDelta, 5, 0, 7);
-      resultPanel.add(dropDownLink, c);
+        anchorBaseline - dropDownLink.getBaseline(linkSize.width, linkSize.height);
+      //noinspection UseDPIAwareInsets   - baselineDelta is already scaled
+      gbc.insets = new Insets(baselineDelta, JBUI.scale(5), 0, JBUI.scale(7));
+      resultPanel.add(dropDownLink, gbc);
     }
 
     setupTableCellBackground(resultPanel, hovered);
@@ -74,7 +77,8 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
 
   private static @NotNull JPanel createActionNamePanel(@NotNull TableView<?> table,
                                                        @NotNull ActionOnSaveInfo info,
-                                                       @NotNull JCheckBox anchorCheckBox) {
+                                                       @NotNull JCheckBox anchorCheckBox,
+                                                       int anchorBaseline) {
     if (info.isSaveActionApplicable()) {
       JBCheckBox checkBox = new JBCheckBox(info.getActionOnSaveName());
       checkBox.setAnchor(anchorCheckBox);
@@ -110,9 +114,8 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     // The label should have the same indent and baseline as the checkbox text
     int leftInsetScaled = UIUtil.getCheckBoxTextHorizontalOffset(anchorCheckBox); // already scaled
 
-    Dimension cbSize = anchorCheckBox.getPreferredSize();
     Dimension labelSize = label.getPreferredSize();
-    int baselineDelta = anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - label.getBaseline(labelSize.width, labelSize.height);
+    int baselineDelta = anchorBaseline - label.getBaseline(labelSize.width, labelSize.height);
 
     //noinspection UseDPIAwareBorders - already scaled
     panel.setBorder(new EmptyBorder(baselineDelta, leftInsetScaled, 0, 0));

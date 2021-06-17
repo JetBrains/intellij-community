@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
@@ -32,7 +33,8 @@ class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSave
     int baselineDelta = baseline < 0 ? 0 : anchorCheckBox.getBaseline(cbSize.width, cbSize.height) - baseline;
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.empty(ActionOnSaveColumnInfo.TOP_INSET + baselineDelta, 8, 0, 0));
+    //noinspection UseDPIAwareBorders  - baselineDelta is already scaled
+    panel.setBorder(new EmptyBorder(JBUI.scale(ActionOnSaveColumnInfo.TOP_INSET) + baselineDelta, JBUI.scale(8), 0, 0));
     panel.add(component, BorderLayout.NORTH);
     ActionOnSaveColumnInfo.setupTableCellBackground(panel, hovered);
 
