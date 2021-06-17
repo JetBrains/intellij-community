@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.ide.konan
+package org.jetbrains.kotlin.idea.gradle.native
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProvider
 import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.module
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-
 
 class KotlinNativeRunConfigurationProducer :
     LazyRunConfigurationProducer<GradleRunConfiguration>(),
