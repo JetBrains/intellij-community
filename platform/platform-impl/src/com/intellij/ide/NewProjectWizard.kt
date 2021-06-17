@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -12,7 +12,7 @@ interface NewProjectWizard<T> {
   var settingsFactory: () -> T
 
   fun enabled(): Boolean = true
-  fun settingsList(settings: T): List<LabelAndComponent> = emptyList()
+  fun settingsList(settings: T): List<SettingsComponent> = emptyList()
   fun setupProject(project: Project, settings: T, context: WizardContext) { }
 
   companion object {
@@ -27,4 +27,7 @@ class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectW
   fun setupProject(project: Project, context: WizardContext) = setupProject(project, settings, context)
 }
 
-data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)
+
+sealed class SettingsComponent(val component: JComponent)
+class LabelAndComponent(val label: JLabel? = null, component: JComponent) : SettingsComponent(component)
+class JustComponent(component: JComponent) : SettingsComponent(component)

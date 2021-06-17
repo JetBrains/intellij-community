@@ -11,7 +11,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 
 class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
-  private val settingsMap = mutableMapOf<String, List<LabelAndComponent>>()
+  private val settingsMap = mutableMapOf<String, List<SettingsComponent>>()
   private val rows = mutableMapOf<String, List<Row>>()
 
   val wizards: List<NewProjectWizardWithSettings<out Any?>> = EP_WIZARD.extensions.filter { it.enabled() }
@@ -38,9 +38,12 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
     settingsMap.entries.forEach {
       rows[it.key] =
         it.value.map { lc ->
-          row(lc.label) {
+          when (lc) {
+          is LabelAndComponent -> row(lc.label) {
             component(lc.component)
           }
+          is JustComponent -> row { component(lc.component)}
+        }
           .onGlobalApply { if (lc.component is DialogPanel) lc.component.apply() }
           .apply { visible = false }
             .apply { largeGapAfter() }
