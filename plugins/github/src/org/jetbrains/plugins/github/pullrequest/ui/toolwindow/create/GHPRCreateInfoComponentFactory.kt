@@ -24,8 +24,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.ui.branch.CreateDirectionComponentFactory
-import git4idea.ui.branch.CreateDirectionModel
+import git4idea.ui.branch.CreateMergeDirectionComponentFactory
+import git4idea.ui.branch.CreateMergeDirectionModel
 import git4idea.ui.branch.GitRemoteAndRepository
 import git4idea.util.BranchNameInputDialogMessages
 import git4idea.util.findOrPushRemoteBranch
@@ -66,7 +66,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val dataContext: GHPRDataContext,
                                               private val viewController: GHPRToolWindowTabComponentController) {
 
-  fun create(directionModel: CreateDirectionModel<GHGitRepositoryMapping>,
+  fun create(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,
              descriptionDocument: DisableableDocument,
              metadataModel: GHPRCreateMetadataModel,
@@ -98,10 +98,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
 
-    val directionSelector = CreateDirectionComponentFactory({ repositoriesManager.knownRepositories.toList() },
-                                                            directionModel,
-                                                            { GitRemoteAndRepository(it.gitRemote.remote, it.gitRemote.repository) },
-                                                            { mapping -> mapping.repository.repositoryPath.toString() }
+    val directionSelector = CreateMergeDirectionComponentFactory({ repositoriesManager.knownRepositories.toList() },
+                                                                 directionModel,
+                                                                 { GitRemoteAndRepository(it.gitRemote.remote, it.gitRemote.repository) },
+                                                                 { mapping -> mapping.repository.repositoryPath.toString() }
     ).create().apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                                   JBUI.Borders.empty(7, 8, 8, 8))
@@ -183,7 +183,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  private inner class InfoController(private val directionModel: CreateDirectionModel<GHGitRepositoryMapping>,
+  private inner class InfoController(private val directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
                                      private val existenceCheckLoadingModel: GHIOExecutorLoadingModel<GHPRIdentifier?>,
                                      private val existenceCheckProgressIndicator: ListenableProgressIndicator,
                                      private val createAction: AbstractAction,
@@ -217,7 +217,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       createDraftAction.isEnabled = enabled
     }
 
-    private fun findCurrentRemoteHead(directionModel: CreateDirectionModel<GHGitRepositoryMapping>): GitRemoteBranch? {
+    private fun findCurrentRemoteHead(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>): GitRemoteBranch? {
       val headRepo = directionModel.headRepo ?: return null
       val headBranch = directionModel.headBranch ?: return null
       if (headBranch is GitRemoteBranch) return headBranch
@@ -227,7 +227,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  private inner class CreateAction(private val directionModel: CreateDirectionModel<GHGitRepositoryMapping>,
+  private inner class CreateAction(private val directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
                                    private val titleDocument: Document, private val descriptionDocument: DisableableDocument,
                                    private val metadataModel: GHPRCreateMetadataModel,
                                    private val draft: Boolean,
@@ -336,7 +336,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
   companion object {
     private val Document.text: String get() = getText(0, length)
 
-    private fun createNoChangesWarningLabel(directionModel: CreateDirectionModel<GHGitRepositoryMapping>,
+    private fun createNoChangesWarningLabel(directionModel: CreateMergeDirectionModel<GHGitRepositoryMapping>,
                                             commitsCountModel: SingleValueModel<Int?>): JComponent {
       val label = JLabel(AllIcons.General.Warning)
       fun update() {

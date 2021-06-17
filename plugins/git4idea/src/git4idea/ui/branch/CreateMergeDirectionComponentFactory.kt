@@ -37,9 +37,9 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class CreateDirectionComponentFactory<RepoMapping>(
+class CreateMergeDirectionComponentFactory<RepoMapping>(
   private val knownHostsProvider: () -> List<RepoMapping>,
-  private val model: CreateDirectionModel<RepoMapping>,
+  private val model: CreateMergeDirectionModel<RepoMapping>,
   private val gitRemoteUrlCoordinatesProvider: (RepoMapping) -> GitRemoteAndRepository,
   private val repoMappingPathProvider: (RepoMapping) -> String,
 ) {

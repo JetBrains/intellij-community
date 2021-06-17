@@ -65,7 +65,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private val repositoryDataService = dataContext.repositoryDataService
 
-  private val directionModel = GHPRCreateDirectionModelImpl(repositoryDataService.repositoryMapping)
+  private val directionModel = GHPRCreateMergeDirectionModelImpl(repositoryDataService.repositoryMapping)
   private val titleDocument = PlainDocument()
   private val descriptionDocument = DisableableDocument()
   private val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
@@ -296,7 +296,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     directionModel.preFill()
   }
 
-  private fun GHPRCreateDirectionModelImpl.preFill() {
+  private fun GHPRCreateMergeDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
     val currentRemote = repositoryDataService.repositoryMapping.gitRemote
     val currentRepo = currentRemote.repository
