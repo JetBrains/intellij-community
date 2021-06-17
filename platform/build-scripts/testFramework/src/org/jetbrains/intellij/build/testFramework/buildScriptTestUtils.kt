@@ -6,7 +6,9 @@ import org.jetbrains.intellij.build.*
 
 fun createBuildContext(homePath: String, productProperties: ProductProperties,
                        buildTools: ProprietaryBuildTools,
-                       skipDependencySetup: Boolean = false, communityHomePath: String = "$homePath/community"
+                       skipDependencySetup: Boolean = false,
+                       communityHomePath: String = "$homePath/community",
+                       buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
   options.isSkipDependencySetup = skipDependencySetup
@@ -17,11 +19,14 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
     //skip compilation when running tests locally
     options.isUseCompiledClassesFromProjectOutput = true
   }
+  buildOptionsCustomizer(options)
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
 
 fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTools: ProprietaryBuildTools,
-                 communityHomePath: String = "$homePath/community") {
-  val buildContext = createBuildContext(homePath, productProperties, buildTools, false, communityHomePath)
+                 communityHomePath: String = "$homePath/community",
+                 buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+) {
+  val buildContext = createBuildContext(homePath, productProperties, buildTools, false, communityHomePath, buildOptionsCustomizer)
   BuildTasks.create(buildContext).runTestBuild()
 }
