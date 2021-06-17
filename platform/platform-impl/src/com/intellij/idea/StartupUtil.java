@@ -226,12 +226,8 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    // don't load EnvironmentUtil class in main thread
-    shellEnvLoadFuture = forkJoinPool.submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("environment loading");
-      Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
-      return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
-    });
+    // don't load EnvironmentUtil class in the main thread
+    shellEnvLoadFuture = forkJoinPool.submit(() -> EnvironmentUtil.loadEnvironment(StartUpMeasurer.startActivity("environment loading")));
 
     Thread.currentThread().setUncaughtExceptionHandler((__, e) -> {
       StartupAbortedException.processException(e);
