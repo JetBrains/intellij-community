@@ -155,7 +155,7 @@ object GitLessonsUtil {
     }
   }
 
-  private fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
+  fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
     val gotIt = CompletableFuture<Boolean>()
     text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
     addStep(gotIt)
