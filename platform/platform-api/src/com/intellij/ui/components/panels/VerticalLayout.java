@@ -242,7 +242,7 @@ public final class VerticalLayout implements LayoutManager2 {
       else if (aligned && center != null) {
         int topHeight = top == null ? 0 : top.height;
         int bottomHeight = bottom == null ? 0 : bottom.height;
-        result.width += Math.abs(topHeight - bottomHeight);
+        result.height += Math.abs(topHeight - bottomHeight);
       }
       JBInsets.addTo(result, container.getInsets());
       return result;
