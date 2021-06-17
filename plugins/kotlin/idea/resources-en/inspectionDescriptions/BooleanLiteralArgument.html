@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports call arguments with <code>Boolean</code> type without an explicit parameter name specified.
+Reports call arguments with <code>Boolean</code> type without explicit parameter names specified.
 <p>
-    When multiple boolean literals are passed sequentially, it's easy to forget parameter ordering and make a mistake.
+    When multiple boolean literals are passed sequentially, it's easy to forget parameter ordering that could lead to mistakes.
     Explicit parameter names allow for easier code reading and understanding.
 </p>
 <p><b>Example:</b></p>
@@ -13,7 +13,7 @@ Reports call arguments with <code>Boolean</code> type without an explicit parame
       check(true, false, true) // What does this mean?
   }
 </code></pre>
-<p>A quick-fix is suggested to add missing parameter names:</p>
+<p>A quick-fix adds missing parameter names:</p>
 <pre><code>
   fun check(checkName: Boolean, checkAddress: Boolean, checkPhone: Boolean) {}
 

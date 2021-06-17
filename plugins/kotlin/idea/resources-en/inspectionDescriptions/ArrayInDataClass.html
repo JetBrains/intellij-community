@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports properties with an <code>Array</code> type in a <code>data</code> class without overridden <code>equals()</code> or <code>hashCode()</code>.
+Reports properties with the <code>Array</code> type in a <code>data</code> class without overridden <code>equals()</code> or <code>hashCode()</code> methods.
 <p>
     Array parameters are compared by reference equality, which is likely an unexpected behavior.
-    Thus, it is strongly recommended to override <code>equals()</code> and <code>hashCode()</code> in such cases.
+    It is strongly recommended to override <code>equals()</code> and <code>hashCode()</code> methods in such cases.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
   data class Text(val lines: Array&lt;String&gt;)
 </code></pre>
-<p>A quick-fix is suggested to generate missing <code>equals()</code> and <code>hashCode()</code> implementations:</p>
+<p>A quick-fix generates missing <code>equals()</code> and <code>hashCode()</code> method implementations:</p>
 <pre><code>
   data class Text(val lines: Array&lt;String&gt;) {
       override fun equals(other: Any?): Boolean {

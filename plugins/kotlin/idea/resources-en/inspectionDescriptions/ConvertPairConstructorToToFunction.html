@@ -2,7 +2,7 @@
 <body>
 Reports a <code>Pair</code> constructor invocation that can be replaced with a <code>to()</code> infix function call.
 <p>
-    Explicit constructor invocations may add verbosity, especially if used multiple times.
+    Explicit constructor invocations may add verbosity, especially if they are used multiple times.
     Replacing constructor calls with <code>to()</code> makes code easier to read and maintain.
 </p>
 <p><b>Example:</b></p>
@@ -13,7 +13,7 @@ Reports a <code>Pair</code> constructor invocation that can be replaced with a <
       Pair("Germany", "Berlin")
   )
 </code></pre>
-<p>After the fix is applied:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   val countries = mapOf(
       "France" to "Paris",

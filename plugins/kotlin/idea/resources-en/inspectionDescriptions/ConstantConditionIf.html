@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports <code>if</code> expressions whose condition is constant and therefore the expression can be simplified.
-<p>While occasionally intended, this construction is confusing, and often the result of a typo.</p>
+Reports <code>if</code> expressions that has constant condition and can be simplified.
+<p>While occasionally intended, this construction is confusing and often the result of a typo.</p>
 <p><b>Example:</b></p>
 <pre><code>
   fun example() {
@@ -10,7 +10,7 @@ Reports <code>if</code> expressions whose condition is constant and therefore th
       }
   }
 </code></pre>
-<p>A quick-fix is suggested to remove the <code>if</code> condition:</p>
+<p>A quick-fix removes the <code>if</code> condition:</p>
 <pre><code>
   fun example() {
       throw IllegalStateException("Unexpected state")
