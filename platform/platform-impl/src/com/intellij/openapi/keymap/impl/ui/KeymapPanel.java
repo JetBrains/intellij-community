@@ -273,7 +273,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     systemShortcuts.updateKeymapConflicts(selectedKeymap);
     myShowOnlyConflictsButton.setVisible(!systemShortcuts.getUnmutedKeymapConflicts().isEmpty());
     myActionsTree.setBaseFilter(myShowOnlyConflicts ? systemShortcuts.createKeymapConflictsActionFilter() : null);
-    myActionsTree.reset(selectedKeymap, myQuickLists);
+    myActionsTree.reset(selectedKeymap, myQuickLists, myFilteringPanel.getShortcut());
     fillConflictsPanel(selectedKeymap);
   }
 
