@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
-import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSource
@@ -98,8 +97,5 @@ object GitUtilKt {
   @JvmStatic
   fun findPushTarget(repository: GitRepository, remote: GitRemote, branch: GitLocalBranch): GitPushTarget? =
     GitPushTarget.getFromPushSpec(repository, remote, branch)
-    ?: GitBranchUtil.getTrackInfoForBranch(repository, branch)
-      ?.takeIf { it.remote == remote }
-      ?.let { GitPushTarget(it.remoteBranch, false) }
 }
 
