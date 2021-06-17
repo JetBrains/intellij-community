@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,6 +47,7 @@ import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -72,6 +74,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.net.URI;
@@ -83,6 +86,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(SingleInspectionProfilePanel.class);
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
+  @NonNls private static final String myAddInspectionKey = "addInspection";
+  private final KeyStroke myAddInspectionKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK);
+
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
@@ -1119,6 +1125,23 @@ public class SingleInspectionProfilePanel extends JPanel {
         profile.lockProfile(enabled);
       }
     });
+
+    myTreeTable.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(myAddInspectionKeyStroke, myAddInspectionKey);
+    myTreeTable.getActionMap().put(myAddInspectionKey, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!myTreeTable.isEmpty()) return;
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(
+            AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
+            myCreateInspectionActions,
+            DataManager.getInstance().getDataContext(myInspectionProfilePanel),
+            null,
+            true)
+          .show(new RelativePoint(myTreeTable, myTreeTable.getEmptyText().getPointBelow()));
+      }
+    });
+
     return panel;
   }
 
@@ -1253,19 +1276,17 @@ public class SingleInspectionProfilePanel extends JPanel {
         e -> { myInspectionsFilter.reset(); }
       );
     } else {
-      emptyText.appendLine(
-        AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
-        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-        e -> {
-          JBPopupFactory.getInstance()
-            .createActionGroupPopup(
-              AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
-              myCreateInspectionActions,
-              DataManager.getInstance().getDataContext(this),
-              null,
-              true)
-            .showInCenterOf(myTreeTable);
-        }
+      emptyText
+        .appendSecondaryText(
+          AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
+          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+          e -> myTreeTable.getActionMap().get(myAddInspectionKey).actionPerformed(e)
+        )
+      .appendSecondaryText(" ", SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
+      .appendSecondaryText(
+        KeymapUtil.getFirstKeyboardShortcutText(new CustomShortcutSet(myAddInspectionKeyStroke)),
+        SimpleTextAttributes.GRAYED_ATTRIBUTES,
+        null
       );
     }
   }
