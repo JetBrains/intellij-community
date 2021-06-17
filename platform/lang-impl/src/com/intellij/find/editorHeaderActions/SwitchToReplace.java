@@ -4,10 +4,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindModel;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +13,7 @@ import javax.swing.*;
 
 public class SwitchToReplace extends DumbAwareAction implements LightEditCompatible {
   public SwitchToReplace(@NotNull JComponent shortcutHolder) {
-    AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
+    AnAction replaceAction = ActionManager.getInstance().getAction(IdeActions.ACTION_REPLACE);
     if (replaceAction != null) {
       registerCustomShortcutSet(replaceAction.getShortcutSet(), shortcutHolder);
     }
@@ -24,8 +21,8 @@ public class SwitchToReplace extends DumbAwareAction implements LightEditCompati
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    Editor editor = search != null ? search.getEditor() : e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     e.getPresentation().setEnabled(editor != null && search != null && !ConsoleViewUtil.isConsoleViewEditor(editor));
   }
 
