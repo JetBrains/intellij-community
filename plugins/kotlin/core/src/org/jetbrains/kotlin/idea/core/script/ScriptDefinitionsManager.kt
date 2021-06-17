@@ -45,6 +45,7 @@ import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.SourceCode
@@ -76,7 +77,7 @@ class LoadScriptDefinitionsStartupActivity : StartupActivity.Background {
 }
 
 class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
-    private val definitionsLock = ReentrantLock()
+    private val definitionsLock = ReentrantReadWriteLock()
     private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
     @Volatile
@@ -130,7 +131,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         findDefinition(File(fileName).toScriptSource())?.legacyDefinition
 
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
-        definitionsLock.withCheckCanceledLock {
+        definitionsLock.writeWithCheckCanceled {
             if (definitions == null) {
                 sourcesToReload.add(source)
                 return // not loaded yet
@@ -139,7 +140,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
 
         val safeGetDefinitions = source.safeGetDefinitions()
-        val updateDefinitionsResult = definitionsLock.withCheckCanceledLock {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitionsBySource[source] = safeGetDefinitions
 
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
@@ -178,7 +179,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        val updateDefinitionsResult = definitionsLock.withCheckCanceledLock {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitionsBySource.putAll(newDefinitionsBySource)
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
 
@@ -186,7 +187,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
         updateDefinitionsResult?.apply()
 
-        definitionsLock.withCheckCanceledLock {
+        definitionsLock.writeWithCheckCanceled {
             sourcesToReload.takeIf { it.isNotEmpty() }?.let {
                 val copy = ArrayList<ScriptDefinitionsSource>(it)
                 it.clear()
@@ -197,7 +198,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        val updateDefinitionsResult = definitionsLock.withCheckCanceledLock {
+        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
             definitions?.let { list ->
                 list.forEach {
                     it.order = scriptingSettings.getScriptDefinitionOrder(it)
@@ -221,7 +222,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun isReady(): Boolean {
         if (definitions == null) return false
-        val keys = definitionsLock.withCheckCanceledLock { definitionsBySource.keys }
+        val keys = definitionsLock.writeWithCheckCanceled { definitionsBySource.keys }
         return keys.all { source ->
             // TODO: implement another API for readiness checking
             (source as? ScriptDefinitionContributor)?.isReady() != false
@@ -235,7 +236,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun updateDefinitions(): UpdateDefinitionsResult? {
-        assert(definitionsLock.isLocked) { "updateDefinitions should only be called under the write lock" }
+        assert(definitionsLock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
         if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()
