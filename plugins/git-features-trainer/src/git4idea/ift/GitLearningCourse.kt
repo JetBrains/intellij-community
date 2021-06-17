@@ -10,7 +10,8 @@ import training.learn.course.LessonType
 class GitLearningCourse : LearningCourse {
   override fun modules(): Collection<IftModule> {
     val initLessons: () -> List<KLesson> = {
-      listOf(GitProjectHistoryLesson(),
+      listOf(GitQuickStartLesson(),
+             GitProjectHistoryLesson(),
              GitCommitLesson(),
              GitFeatureBranchWorkflowLesson(),
              GitInteractiveRebaseLesson(),
