@@ -35,10 +35,10 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     state.userDisabledRules.forEach { logRule(it, enabled = false) }
 
     for (id in state.checkingContext.disabledLanguages) {
-      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("language", id).addData("userChange", "disabled")))
     }
     for (id in state.checkingContext.enabledLanguages) {
-      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("enabled_language", id)))
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("language", id).addData("userChange", "enabled")))
     }
 
     return metrics
