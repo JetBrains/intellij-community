@@ -5,12 +5,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
-import git4idea.ui.branch.CreateDirectionModel
+import git4idea.ui.branch.CreateMergeDirectionModel
 import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
-class GHPRCreateDirectionModelImpl(override val baseRepo: GHGitRepositoryMapping) : CreateDirectionModel<GHGitRepositoryMapping> {
+class GHPRCreateMergeDirectionModelImpl(override val baseRepo: GHGitRepositoryMapping) : CreateMergeDirectionModel<GHGitRepositoryMapping> {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
