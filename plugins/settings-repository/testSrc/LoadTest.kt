@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.TestScheme
@@ -68,24 +68,25 @@ class LoadTest : LoadTestBase() {
     provider.write("$dirName/local.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme("remote")
-    val remoteRepository = tempDirManager.createRepository()
-    remoteRepository
-      .add("$dirName/Mac OS X from RubyMine.xml", serialize(remoteScheme)!!.toByteArray())
-      .commit("add")
-
-    remoteRepository.useAsReadOnlySource {
-      val schemeManager = createSchemeManager(dirName)
-      schemeManager.loadSchemes()
-      assertThat(schemeManager.allSchemes).containsOnly(remoteScheme, localScheme)
-      assertThat(schemeManager.isMetadataEditable(localScheme)).isTrue()
-      assertThat(schemeManager.isMetadataEditable(remoteScheme)).isFalse()
-
+    tempDirManager.createRepository().use { remoteRepository ->
       remoteRepository
-        .delete("$dirName/Mac OS X from RubyMine.xml")
-        .commit("delete")
+        .add("$dirName/Mac OS X from RubyMine.xml", serialize(remoteScheme)!!.toByteArray())
+        .commit("add")
 
-      icsManager.sync(SyncType.MERGE)
-      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+      remoteRepository.useAsReadOnlySource {
+        val schemeManager = createSchemeManager(dirName)
+        schemeManager.loadSchemes()
+        assertThat(schemeManager.allSchemes).containsOnly(remoteScheme, localScheme)
+        assertThat(schemeManager.isMetadataEditable(localScheme)).isTrue()
+        assertThat(schemeManager.isMetadataEditable(remoteScheme)).isFalse()
+
+        remoteRepository
+          .delete("$dirName/Mac OS X from RubyMine.xml")
+          .commit("delete")
+
+        icsManager.sync(SyncType.MERGE)
+        assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+      }
     }
   }
 
@@ -96,17 +97,19 @@ class LoadTest : LoadTestBase() {
     provider.write("$dirName/$schemeName.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
-    val remoteRepository = tempDirManager.createRepository("remote")
-    remoteRepository
-      .add("$dirName/$schemeName.xml", serialize(remoteScheme)!!.toByteArray())
-      .commit("")
+    tempDirManager.createRepository("remote").use { remoteRepository ->
+      remoteRepository
+        .add("$dirName/$schemeName.xml", serialize(remoteScheme)!!.toByteArray())
+        .commit("")
 
-    remoteRepository.useAsReadOnlySource {
-      val schemeManager = createSchemeManager(dirName)
-      schemeManager.loadSchemes()
-      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
-      assertThat(schemeManager.isMetadataEditable(localScheme)).isFalse()
+      remoteRepository.useAsReadOnlySource {
+        val schemeManager = createSchemeManager(dirName)
+        schemeManager.loadSchemes()
+        assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+        assertThat(schemeManager.isMetadataEditable(localScheme)).isFalse()
+      }
     }
+
   }
 
   private inline fun Repository.useAsReadOnlySource(runnable: () -> Unit) {
