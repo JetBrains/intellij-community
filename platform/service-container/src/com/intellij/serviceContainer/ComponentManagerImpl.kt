@@ -804,14 +804,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   private fun <T : Any> createLightService(serviceClass: Class<T>): T {
     val startTime = StartUpMeasurer.getCurrentTime()
-    val result = instantiateClass(serviceClass, null)
+    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
+
+    val result = instantiateClass(serviceClass, pluginId)
     if (result is Disposable) {
       Disposer.register(serviceParentDisposable, result)
     }
 
-    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId
     initializeComponent(result, null, pluginId)
-    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getActivityCategory(isExtension = false), pluginId?.idString)
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getActivityCategory(isExtension = false), pluginId.idString)
     return result
   }
 
@@ -820,7 +821,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     return doLoadClass(className, pluginDescriptor) as Class<T>
   }
 
-  final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
+  final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
 
     try {
@@ -866,12 +867,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       }
 
       val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
-      if (pluginId == null) {
-        throw PluginException.createByClass(message, e, aClass)
-      }
-      else {
-        throw PluginException(message, e, pluginId)
-      }
+      throw PluginException(message, e, pluginId)
     }
   }
 
@@ -885,7 +881,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     get() = true
 
   final override fun <T : Any> instantiateClass(className: String, pluginDescriptor: PluginDescriptor): T {
-    val pluginId = pluginDescriptor.pluginId!!
+    val pluginId = pluginDescriptor.pluginId
     try {
       @Suppress("UNCHECKED_CAST")
       return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)

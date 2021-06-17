@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Date;
 
 public interface PluginDescriptor {
+  @NotNull
   PluginId getPluginId();
 
   ClassLoader getPluginClassLoader();
