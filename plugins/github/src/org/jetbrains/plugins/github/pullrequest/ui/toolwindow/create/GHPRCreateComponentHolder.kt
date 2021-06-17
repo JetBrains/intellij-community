@@ -65,7 +65,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private val repositoryDataService = dataContext.repositoryDataService
 
-  private val directionModel = GHPRCreateMergeDirectionModelImpl(repositoryDataService.repositoryMapping)
+  private val directionModel = GHPRCreateMergeDirectionModelImpl(repositoryDataService.repositoryMapping, repositoriesManager)
   private val titleDocument = PlainDocument()
   private val descriptionDocument = DisableableDocument()
   private val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
@@ -158,7 +158,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   val component by lazy {
-    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
+    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, dataContext, viewController)
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 

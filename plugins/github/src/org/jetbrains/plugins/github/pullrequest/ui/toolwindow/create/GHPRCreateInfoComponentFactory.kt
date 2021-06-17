@@ -51,7 +51,6 @@ import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.ActionEvent
@@ -61,7 +60,6 @@ import javax.swing.text.Document
 
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val settings: GithubPullRequestsProjectUISettings,
-                                              private val repositoriesManager: GHProjectRepositoriesManager,
                                               private val dataContext: GHPRDataContext,
                                               private val viewController: GHPRToolWindowTabComponentController) {
 
@@ -97,10 +95,28 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
 
-    val directionSelector = CreateMergeDirectionComponentFactory({ repositoriesManager.knownRepositories.toList() },
-                                                                 directionModel,
-                                                                 { GitRemoteAndRepository(it.gitRemote.remote, it.gitRemote.repository) },
-                                                                 { mapping -> mapping.repository.repositoryPath.toString() }
+    val directionSelector = CreateMergeDirectionComponentFactory(
+      directionModel,
+      { model ->
+        with(model) {
+          val branch = baseBranch ?: return@with null
+          val headRepoPath = headRepo?.ghRepositoryCoordinates?.repositoryPath
+          val baseRepoPath = baseRepo.ghRepositoryCoordinates.repositoryPath
+          val showOwner = headRepoPath != null && baseRepoPath != headRepoPath
+          baseRepo.ghRepositoryCoordinates.repositoryPath.toString(showOwner) + ":" + branch.name
+        }
+      },
+
+      { model ->
+        with(model) {
+          val branch = headBranch ?: return@with null
+          val headRepoPath = headRepo?.ghRepositoryCoordinates?.repositoryPath ?: return@with null
+          val baseRepoPath = baseRepo.ghRepositoryCoordinates.repositoryPath
+          val showOwner = baseRepoPath != headRepoPath
+          headRepoPath.toString(showOwner) + ":" + branch.name
+        }
+      }
+
     ).create().apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                                   JBUI.Borders.empty(7, 8, 8, 8))
