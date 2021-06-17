@@ -8,6 +8,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -268,13 +271,42 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     return entitySource.directory.append("${moduleEntity.name}.iml")
   }
 
-  abstract fun createModuleInstance(moduleEntity: ModuleEntity, versionedStorage: VersionedEntityStorage,
+  fun createModuleInstance(moduleEntity: ModuleEntity, versionedStorage: VersionedEntityStorage,
                                              diff: WorkspaceEntityStorageDiffBuilder?, isNew: Boolean,
-                                             precomputedExtensionModel: PrecomputedExtensionModel?): ModuleBridge
+                                             precomputedExtensionModel: PrecomputedExtensionModel?): ModuleBridge {
+    val plugins = PluginManagerCore.getLoadedPlugins(null)
+    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+    val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
-  abstract fun loadModuleToDiff(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity
+    val module = createModule(persistentId = moduleEntity.persistentId(),
+                              name = moduleEntity.name,
+                              virtualFileUrl = moduleFileUrl,
+                              entityStorage = versionedStorage,
+                              diff = diff)
 
-  abstract fun createModule(moduleEntityId: ModuleId, name: String, entityStorage: VersionedEntityStorage,
+    module.registerComponents(corePlugin = corePlugin,
+                              plugins = plugins,
+                              app = ApplicationManager.getApplication(),
+                              precomputedExtensionModel = precomputedExtensionModel,
+                              listenerCallbacks = null)
+
+    if (moduleFileUrl == null) {
+      registerNonPersistentModuleStore(module)
+    }
+    else {
+      val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
+      moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
+    }
+
+    module.callCreateComponents()
+    return module
+  }
+
+  open fun registerNonPersistentModuleStore(module: ModuleBridge) { }
+
+  abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity
+
+  abstract fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
                             diff: WorkspaceEntityStorageDiffBuilder?): ModuleBridge
 
   companion object {

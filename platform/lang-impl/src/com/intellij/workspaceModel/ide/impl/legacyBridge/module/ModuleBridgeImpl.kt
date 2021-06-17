@@ -71,11 +71,11 @@ internal class ModuleBridgeImpl(
                        listenerCallbacks = listenerCallbacks)
   }
 
-  fun callCreateComponents() {
+  override fun callCreateComponents() {
     createComponents(null)
   }
 
-  fun registerComponents(corePlugin: IdeaPluginDescriptor?,
+  override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
                          plugins: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
