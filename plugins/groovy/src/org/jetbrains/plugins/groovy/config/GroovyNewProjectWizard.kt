@@ -33,7 +33,6 @@ import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ItemListener
 import java.nio.file.Path
-import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
@@ -56,13 +55,13 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
             val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
             val groovyLibraryDescription = downloadableType.libraryDescription
             comboBox(DefaultComboBoxModel(emptyArray()),
-                     settings::version,
-                     SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>" })
+                     { settings.mavenVersion }, { settings.mavenVersion = it },
+                     SimpleListCellRenderer.create("") { it?.versionString ?: "<unknown>" })
               .applyToComponent {
                 groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
                   override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
                     for (item in versions) {
-                      addItem(Optional.of(item))
+                      addItem(item)
                     }
                   }
                 })
@@ -105,7 +104,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     val groovyModuleBuilder = GroovyAwareModuleBuilder()
     val libraryDescription = GroovyLibraryDescription()
     val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
-                                                         FrameworkLibraryVersionFilter.ALL, listOf(settings.version.get()))
+                                                         FrameworkLibraryVersionFilter.ALL, listOf(settings.mavenVersion))
     builder.moduleJdk = settings.javaSdk
     groovyModuleBuilder.updateFrom(builder)
     groovyModuleBuilder.moduleJdk = settings.javaSdk
@@ -113,7 +112,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     val librariesContainer = if (context.modulesProvider == null)
       LibrariesContainerFactory.createContainer(context.project)
     else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
-    if (settings.useMavenLibrary) {
+    if (settings.useMavenLibrary && settings.mavenVersion != null) {
       compositionSettings.setDownloadLibraries(true)
       compositionSettings.downloadFiles(context.wizard.contentComponent)
     }
@@ -138,6 +137,6 @@ class GroovyModuleSettings {
   var javaSdk: Sdk? = null
   var useMavenLibrary: Boolean = false
   var useLocalLibrary: Boolean = false
-  var version: Optional<FrameworkLibraryVersion> = Optional.empty()
+  var mavenVersion: FrameworkLibraryVersion? = null
   var sdkPath: String = ""
 }
