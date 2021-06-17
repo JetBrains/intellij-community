@@ -1,6 +1,13 @@
 <html>
 <body>
-This quick fix prevent possible <b>NullPointerException</b> during chain methods or properties call.
-E.g. <b>domain?.getZone().getName()</b> replaces by <b>domain?.getZone()?.getName()</b>
+Reports possible <b>NullPointerException</b> during chain methods or properties call.
+<p><b>Example</b>:
+<pre><code>
+  domain?.getZone().getName()
+</code></pre>
+After the quick-fix is applied:
+<pre><code>
+  domain?.getZone()?.getName()
+</code></pre>
 </body>
 </html>
