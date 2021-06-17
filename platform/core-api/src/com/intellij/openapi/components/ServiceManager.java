@@ -12,7 +12,7 @@ public final class ServiceManager {
   private ServiceManager() { }
 
   /**
-   * @deprecated Use {@link ComponentManager#getService(Class)}.
+   * @deprecated Use {@link ComponentManager#getService(Class)}: {@code Application.getService() / Project.getService()}.
    */
   @Deprecated
   public static <T> T getService(@NotNull Class<T> serviceClass) {
@@ -20,7 +20,7 @@ public final class ServiceManager {
   }
 
   /**
-   * @deprecated Use {@link ComponentManager#getService(Class)}.
+   * @deprecated Use {@link ComponentManager#getService(Class)}: {@code Application.getService() / Project.getService()}.
    */
   @Deprecated
   public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {
@@ -28,7 +28,7 @@ public final class ServiceManager {
   }
 
   /**
-   * @deprecated Use {@link ComponentManager#getServiceIfCreated(Class)}.
+   * @deprecated Use {@link ComponentManager#getServiceIfCreated(Class)}: {@code Application.getServiceIfCreated() / Project.getServiceIfCreated()}.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
