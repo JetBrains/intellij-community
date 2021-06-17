@@ -216,7 +216,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private void installCellRenderer() {
     setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,

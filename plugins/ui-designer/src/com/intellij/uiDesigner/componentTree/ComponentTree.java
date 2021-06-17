@@ -382,7 +382,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     @Override
     public void customizeCellRenderer(
-      final JTree tree,
+      final @NotNull JTree tree,
       final Object value,
       final boolean selected,
       final boolean expanded,
