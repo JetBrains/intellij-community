@@ -76,7 +76,7 @@ final class FileTypeDetectionService implements Disposable {
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   private static final int CHUNK_SIZE = 10;
-  private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
+  private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Executor reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool",
                                                                             AppExecutorUtil.getAppExecutorService(),
                                                                             1,
@@ -737,7 +737,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @TestOnly
-  static void reDetectAsync(boolean enable) {
+  void reDetectAsync(boolean enable) {
     RE_DETECT_ASYNC = enable;
   }
 }
