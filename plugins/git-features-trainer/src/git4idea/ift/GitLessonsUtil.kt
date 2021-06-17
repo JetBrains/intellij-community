@@ -14,6 +14,7 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
@@ -67,8 +68,10 @@ object GitLessonsUtil {
       val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
       // todo: find out how to open branches if it is hidden (git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY is internal and can't be accessed)
       vcsLogUi?.filterUi?.clearFilters()
-
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
+
+      val vcsLogWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
+      VcsLogContentUtil.selectMainLog(vcsLogWindow!!.contentManager)
     }
 
     // clear Git tool window to return it to default state (needed in case of restarting the lesson)
