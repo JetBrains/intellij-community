@@ -27,9 +27,9 @@ private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aw
 
 internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
 
-private fun sortTipsByUtility(): Boolean = ApplicationManager.getApplication().isEAP && EventLogConfiguration.isInExperiment()
+private fun sortTipsByUtility(): Boolean = ApplicationManager.getApplication().isEAP && isInExperiment()
 
-private fun EventLogConfiguration.isInExperiment(): Boolean = bucket in 75..99
+private fun isInExperiment(): Boolean = EventLogConfiguration.getInstance().bucket in 75..99
 
 private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescription {
   return RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
