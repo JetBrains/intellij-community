@@ -1,22 +1,21 @@
 <html>
 <body>
 Reports non-<b>synchronized</b> methods overriding <b>synchronized</b> methods.
-<p><b>Example</b>:
+<p><b>Example:</b></p>
 <pre><code>
-  abstract class Foo {
+  abstract class Base {
       <b>synchronized</b> void foo() {
           // ...
-      };
+      }
   }
-  class Bar extends Foo {
+  class Derived extends Base {
       @Override
       <b>void foo()</b> {
-          super.foo();
+          super.foo()
             // ...
         }
     }
 </code></pre>
-<p>Here the non-synchronized method <code>foo()</code> in class Bar overrides synchronized method.
-<!-- tooltip end -->
+<p>Here the non-synchronized method <code>foo()</code> in class <code>Bar</code> overrides synchronized method.
 </body>
 </html>

@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports constructors of classes annotated by <b>@Singleton</b> unless it is declared non-strict.
-<p><b>Example</b>:
+<p><b>Example:</b></p>
 <pre><code>
   @Singleton
   class Foo{
@@ -10,14 +10,13 @@ Reports constructors of classes annotated by <b>@Singleton</b> unless it is decl
   }
 </code></pre>
 There are two possible quick-fixes: either to remove the constructor or to declare <b>@Singleton</b> non-strict.
-<p>After the quick-fix is applied:
+<p>After the quick-fix is applied:</p>
 <pre><code>
   @Singleton
   class Foo{
   }
 </code></pre>
-
-<p>or:
+<p>or:</p>
 <pre><code>
   @Singleton(<b>strict = false</b>)
   class Foo{
