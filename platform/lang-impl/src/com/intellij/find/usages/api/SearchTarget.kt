@@ -20,7 +20,7 @@ interface SearchTarget {
 
   /**
    * Returning [LocalSearchScope] will also make search scope unavailable to change in the UI.
-   * Maximal scope is used to rerun Show Usages if user scope differs from maximal scope.
+   * Maximal scope is used to rerun Show Usages if the user scope differs from maximal scope.
    *
    * @return maximal search scope where this usage handler might yield any results, or `null` to search everywhere
    */
@@ -44,7 +44,7 @@ interface SearchTarget {
   /**
    * Text doesn't contain references by design (e.g. plain text or markdown),
    * but there might exist occurrences which are feasible to find/rename,
-   * e.g fully qualified name of a Java class or package.
+   * e.g. fully qualified name of a Java class or package.
    *
    * Returning non-empty collection will enable "Search for text occurrences" checkbox in the UI.
    *
