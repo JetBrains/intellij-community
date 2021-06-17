@@ -36,10 +36,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.isDouble
-import org.jetbrains.kotlin.types.typeUtil.isFloat
-import org.jetbrains.kotlin.types.typeUtil.isLong
-import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
@@ -475,10 +472,59 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processNullSafeOperator(expr)
             return
         }
+        if (token === KtTokens.IN_KEYWORD) {
+            val left = expr.left
+            processExpression(left)
+            processInCheck(left?.getKotlinType(), expr.right, KotlinExpressionAnchor(expr), false)
+            return
+        }
+        if (token === KtTokens.NOT_IN) {
+            val left = expr.left
+            processExpression(left)
+            processInCheck(left?.getKotlinType(), expr.right, KotlinExpressionAnchor(expr), true)
+            return
+        }
         // TODO: support other operators
         processExpression(expr.left)
         processExpression(expr.right)
         addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
+        addInstruction(FlushFieldsInstruction())
+    }
+
+    private fun processInCheck(kotlinType: KotlinType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
+        if (kotlinType != null && (kotlinType.isInt() || kotlinType.isLong())) {
+            if (range is KtBinaryExpression) {
+                val ref = range.operationReference.text
+                if (ref == ".." || ref == "until") {
+                    val left = range.left
+                    val right = range.right
+                    val leftType = left?.getKotlinType()
+                    val rightType = right?.getKotlinType()
+                    if (leftType.toDfType(range) is DfIntegralType && rightType.toDfType(range) is DfIntegralType) {
+                        processExpression(left)
+                        processExpression(right)
+                        addInstruction(SpliceInstruction(3, 2, 0, 2, 1))
+                        addInstruction(BooleanBinaryInstruction(RelationType.GE, false, null))
+                        val offset = DeferredOffset()
+                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
+                        var relationType = if (ref == "until") RelationType.LT else RelationType.LE
+                        if (negated) {
+                            relationType = relationType.negated
+                        }
+                        addInstruction(BooleanBinaryInstruction(relationType, false, anchor))
+                        val finalOffset = DeferredOffset()
+                        addInstruction(GotoInstruction(finalOffset))
+                        setOffset(offset)
+                        addInstruction(SpliceInstruction(2))
+                        addInstruction(PushValueInstruction(if (negated) DfTypes.TRUE else DfTypes.FALSE, anchor))
+                        setOffset(finalOffset)
+                        return
+                    }
+                }
+            }
+        }
+        processExpression(range)
+        addInstruction(EvalUnknownInstruction(anchor, 2))
         addInstruction(FlushFieldsInstruction())
     }
 
@@ -580,10 +626,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (actualType == expectedType) return
         val actualPsiType = actualType.toPsiType(expression)
         val expectedPsiType = expectedType.toPsiType(expression)
-        if (actualType.isMarkedNullable && !expectedType.isMarkedNullable && expectedPsiType is PsiPrimitiveType) {
+        if (actualPsiType !is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
         }
-        else if (!actualType.isMarkedNullable && expectedType.isMarkedNullable && actualPsiType is PsiPrimitiveType) {
+        else if (expectedPsiType !is PsiPrimitiveType && actualPsiType is PsiPrimitiveType) {
             addInstruction(WrapDerivedVariableInstruction(
                 expectedType.toDfType(expression).meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX))
         }
@@ -617,8 +663,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun balanceType(leftType: KotlinType?, rightType: KotlinType?, forceEqualityByContent: Boolean): KotlinType? = when {
         leftType == null || rightType == null -> null
         !forceEqualityByContent -> balanceType(leftType, rightType)
-        leftType.isMarkedNullable && !rightType.isMarkedNullable && leftType.makeNotNullable() == rightType -> leftType
-        rightType.isMarkedNullable && !leftType.isMarkedNullable && rightType.makeNotNullable() == leftType -> rightType
+        leftType.isSubtypeOf(rightType) -> rightType
+        rightType.isSubtypeOf(leftType) -> leftType
         else -> null
     }
 
@@ -729,10 +775,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
             is KtWhenConditionInRange -> {
-                // TODO: implement inRange for numbers
-                processExpression(condition.rangeExpression)
-                addInstruction(PopInstruction())
-                pushUnknown()
+                if (dfVar != null) {
+                    addInstruction(PushInstruction(dfVar, null))
+                } else {
+                    pushUnknown()
+                }
+                processInCheck(dfVarType, condition.rangeExpression, KotlinWhenConditionAnchor(condition), condition.isNegated)
             }
             else -> broken = true
         }

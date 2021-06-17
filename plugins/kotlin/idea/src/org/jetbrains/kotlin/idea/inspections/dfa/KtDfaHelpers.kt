@@ -101,7 +101,7 @@ internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode
 
 internal fun KotlinType.toPsiType(context: PsiElement): PsiType? {
     val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe?.asString()
-    val boxed = isMarkedNullable
+    val boxed = canBeNull()
     fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
     return when (typeFqName) {
         "kotlin.Int" -> PsiType.INT.orBoxed()

@@ -4566,6 +4566,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
         }
 
+        @TestMetadata("basicIn.kt")
+        public void testBasicIn() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicIn.kt");
+        }
+
+        @TestMetadata("basicIn2.kt")
+        public void testBasicIn2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicIn2.kt");
+        }
+
         @TestMetadata("basicIs.kt")
         public void testBasicIs() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicIs.kt");
@@ -4731,6 +4741,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/unusedResult.kt");
         }
 
+        @TestMetadata("whenIn.kt")
+        public void testWhenIn() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenIn.kt");
+        }
+
+        @TestMetadata("whenIn2.kt")
+        public void testWhenIn2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenIn2.kt");
+        }
+
         @TestMetadata("whenLastBranchTrue.kt")
         public void testWhenLastBranchTrue() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whenLastBranchTrue.kt");
@@ -4754,6 +4774,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("whenUnboxing.kt")
         public void testWhenUnboxing() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whenUnboxing.kt");
+        }
+
+        @TestMetadata("whenUnboxing2.kt")
+        public void testWhenUnboxing2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenUnboxing2.kt");
         }
 
         @TestMetadata("whenUnit.kt")

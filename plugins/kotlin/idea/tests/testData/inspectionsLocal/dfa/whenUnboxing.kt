@@ -6,5 +6,3 @@ fun test(obj : Boolean?) {
         null -> {}
     }
 }
-class X {}
-class Y {}
