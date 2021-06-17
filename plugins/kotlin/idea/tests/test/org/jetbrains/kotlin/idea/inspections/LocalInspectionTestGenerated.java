@@ -4546,6 +4546,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/andRange.kt");
         }
 
+        @TestMetadata("anyIsInt.kt")
+        public void testAnyIsInt() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/anyIsInt.kt");
+        }
+
         @TestMetadata("anyIsString.kt")
         public void testAnyIsString() throws Exception {
             runTest("testData/inspectionsLocal/dfa/anyIsString.kt");

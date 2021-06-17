@@ -111,8 +111,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processIsExpression(expr: KtIsExpression) {
         processExpression(expr.leftHandSide)
-        val typeReference = expr.typeReference
-        val type = typeReference?.getAbbreviatedTypeOrType(expr.analyze(BodyResolveMode.FULL)).toDfType(expr)
+        val type = getTypeCheckDfType(expr.typeReference)
         if (type == DfType.TOP) {
             pushUnknown()
         } else {
@@ -713,17 +712,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtWhenConditionIsPattern -> {
                 if (dfVar != null) {
                     addInstruction(PushInstruction(dfVar, null))
-                    val typeReference = condition.typeReference
-                    val kotlinType = typeReference?.getAbbreviatedTypeOrType(condition.analyze(BodyResolveMode.FULL))
-                    var type = kotlinType.toDfType(condition)
-                    if (type is DfPrimitiveType) {
-                        val boxedType = (kotlinType?.toPsiType(condition) as? PsiPrimitiveType)?.getBoxedType(condition)
-                        if (boxedType != null) {
-                            type = DfTypes.typedObject(boxedType, Nullability.NOT_NULL)
-                        } else {
-                            type = DfType.TOP
-                        }
-                    }
+                    val type = getTypeCheckDfType(condition.typeReference)
                     if (type == DfType.TOP) {
                         pushUnknown()
                     } else {
@@ -747,6 +736,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             else -> broken = true
         }
+    }
+
+    private fun getTypeCheckDfType(typeReference: KtTypeReference?): DfType {
+        if (typeReference == null) return DfType.TOP
+        val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.analyze(BodyResolveMode.FULL))
+        val type = kotlinType.toDfType(typeReference)
+        return if (type is DfPrimitiveType) {
+            val boxedType = (kotlinType?.toPsiType(typeReference) as? PsiPrimitiveType)?.getBoxedType(typeReference)
+            if (boxedType != null) {
+                DfTypes.typedObject(boxedType, Nullability.NOT_NULL)
+            } else {
+                DfType.TOP
+            }
+        } else type
     }
 
     private fun processIfExpression(ifExpression: KtIfExpression) {
