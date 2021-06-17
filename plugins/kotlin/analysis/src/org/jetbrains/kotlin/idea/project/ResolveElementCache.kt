@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.SimpleGlobalContext
@@ -21,12 +22,12 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.frontend.di.createContainerForBodyResolve
 import org.jetbrains.kotlin.idea.DaemonCodeAnalyzerStatusService
+import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
 import org.jetbrains.kotlin.idea.caches.resolve.util.analyzeControlFlow
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.inBlockModificationCount
-import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -49,6 +50,15 @@ class ResolveElementCache(
     private val targetPlatform: TargetPlatform,
     private val codeFragmentAnalyzer: CodeFragmentAnalyzer
 ) : BodyResolveCache {
+
+    private val cacheDependencies =
+        sequence {
+            yield(resolveSession.exceptionTracker)
+            yield(ProjectRootModificationTracker.getInstance(project))
+            if (resolveSession.moduleDescriptor.getCapability(ModuleInfo.Capability) !is LibraryInfo) {
+                yield(KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker)
+            }
+        }.toList().toTypedArray()
 
     private val forcedFullResolveOnHighlighting = Registry.`is`("kotlin.resolve.force.full.resolve.on.highlighting", true)
 
@@ -77,9 +87,7 @@ class ResolveElementCache(
             CachedValueProvider {
                 CachedValueProvider.Result.create(
                     ContainerUtil.createConcurrentWeakKeySoftValueMap(),
-                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker,
-                    resolveSession.exceptionTracker,
-                    rootsChangedTracker
+                    cacheDependencies
                 )
             },
             false
@@ -115,17 +123,10 @@ class ResolveElementCache(
                         }
                     }
 
-                CachedValueProvider.Result.create(
-                    slruCache,
-                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker,
-                    resolveSession.exceptionTracker,
-                    rootsChangedTracker
-                )
+                CachedValueProvider.Result.create(slruCache, cacheDependencies)
             },
             false
         )
-
-    private val rootsChangedTracker = ProjectRootModificationTracker.getInstance(project)
 
     override fun resolveFunctionBody(function: KtNamedFunction) = getElementsAdditionalResolve(function, null, BodyResolveMode.FULL)
 
