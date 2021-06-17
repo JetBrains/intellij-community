@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
@@ -212,6 +213,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
     }
 
+    @TestOnly
+    fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)
+
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
         val fqName = when (element) {
@@ -320,7 +324,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     companion object {
         operator fun get(project: Project): KotlinCompilerReferenceIndexService = project.service()
         fun getInstanceIfEnable(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
-        val isEnabled: Boolean get() = AdvancedSettings.getBoolean("kotlin.compiler.ref.index")
+        const val SETTINGS_ID: String = "kotlin.compiler.ref.index"
+        val isEnabled: Boolean get() = AdvancedSettings.getBoolean(SETTINGS_ID)
         private val LOG: Logger = logger<KotlinCompilerReferenceIndexService>()
     }
 

@@ -76,5 +76,6 @@
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.jps-plugin.tests" />
     <orderEntry type="module" module-name="kotlin.refIndex" />
+    <orderEntry type="module" module-name="kotlin.refIndex.tests" />
   </component>
 </module>
