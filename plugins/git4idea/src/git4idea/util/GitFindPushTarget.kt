@@ -7,8 +7,3 @@ import git4idea.push.GitPushTarget
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 
-fun findPushTarget(repository: GitRepository, remote: GitRemote, branch: GitLocalBranch) =
-  GitPushTarget.getFromPushSpec(repository, remote, branch)
-  ?: GitBranchUtil.getTrackInfoForBranch(repository, branch)
-    ?.takeIf { it.remote == remote }
-    ?.let { GitPushTarget(it.remoteBranch, false) }
