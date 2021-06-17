@@ -70,6 +70,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting-ide-services" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" />
+    <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" />
