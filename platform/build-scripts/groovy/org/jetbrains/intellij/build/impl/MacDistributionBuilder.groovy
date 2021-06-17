@@ -292,6 +292,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/*.sh",
       "bin/*.py",
       "bin/fsnotifier",
+      "bin/printenv",
       "bin/restarter",
       "MacOS/*"
     ] + customizer.extraExecutables
