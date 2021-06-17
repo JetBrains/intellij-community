@@ -16,6 +16,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
+import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -387,6 +388,16 @@ private class AlertDialog(project: Project?,
     for (button in myButtons) {
       button.parent.remove(button)
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
+    }
+
+    if (SystemInfoRt.isMac) {
+      for ((index, button) in myButtons.withIndex()) {
+        button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
+        val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
+        if (button.action.getValue(DEFAULT_ACTION) != null) {
+          descriptor.isDefault = true
+        }
+      }
     }
 
     mySouthPanel.add(myButtonsPanel)
