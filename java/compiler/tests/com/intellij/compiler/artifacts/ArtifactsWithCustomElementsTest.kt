@@ -4,6 +4,7 @@ package com.intellij.compiler.artifacts
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -46,15 +47,16 @@ class ArtifactsWithCustomElementsTest {
 
     PlatformTestUtil.saveProject(project)
 
-    Assert.assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="MyElement" data="MyData" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals(
+      """
+        |<component name="ArtifactManager">
+        |  <artifact name="Artifact">
+        |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+        |    <root id="root">
+        |      <element id="MyElement" data="MyData" />
+        |    </root>
+        |  </artifact>
+        |</component>""".trimMargin())
   }
 
   @Test
@@ -79,15 +81,21 @@ class ArtifactsWithCustomElementsTest {
 
     PlatformTestUtil.saveProject(project)
 
-    Assert.assertEquals(
-      """<component name="ArtifactManager">
-  <artifact name="Artifact">
-    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
-    <root id="root">
-      <element id="MyElement" data="AnotherData" />
-    </root>
-  </artifact>
-</component>""", File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText())
+    assertArtifactFileTextEquals(
+      """
+        |<component name="ArtifactManager">
+        |  <artifact name="Artifact">
+        |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
+        |    <root id="root">
+        |      <element id="MyElement" data="AnotherData" />
+        |    </root>
+        |  </artifact>
+        |</component>""".trimMargin())
+  }
+
+  private fun assertArtifactFileTextEquals(expectedText: String) {
+    Assert.assertEquals(StringUtil.convertLineSeparators(expectedText),
+                        StringUtil.convertLineSeparators(File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText()))
   }
 
   companion object {
