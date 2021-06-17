@@ -54,7 +54,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
   }
 
   fun findKnownRepositories(repository: GitRepository) = knownRepositories.filter {
-    it.gitRemote.repository == repository
+    it.gitRemoteUrlCoordinates.repository == repository
   }
 
   @CalledInAny
