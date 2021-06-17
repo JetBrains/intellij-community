@@ -85,7 +85,7 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
                         }
                     }
                     GradlePrinter.GradleDsl.GROOVY -> {
-                        +"""KotlinNativeTargetWithTests $variableName"""; nlIndented()
+                        +"""def $variableName"""; nlIndented()
                         +"""if (hostOs == "Mac OS X") $variableName = macosX64('$moduleName')"""; nlIndented()
                         +"""else if (hostOs == "Linux") $variableName = linuxX64("$moduleName")"""; nlIndented()
                         +"""else if (isMingwX64) $variableName = mingwX64("$moduleName")"""; nlIndented()
@@ -100,16 +100,6 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
                 targetName = moduleName,
                 irs = createInnerTargetIrs(this@createTargetIrs, module).toPersistentList()
             )
-        }
-    }
-
-    override fun createBuildFileIRs(
-        reader: Reader,
-        configurationData: ModulesToIrConversionData,
-        module: Module
-    ): List<BuildSystemIR> = irsList {
-        if (configurationData.buildSystemType == BuildSystemType.GradleGroovyDsl) {
-            import("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests")
         }
     }
 }
