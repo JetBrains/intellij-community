@@ -12,6 +12,9 @@
     ]]></description>
   <vendor>JetBrains</vendor>
 
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.xml</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="editor" groupWeight="110" dynamic="true"
                          bundle="messages.CopyrightBundle"
