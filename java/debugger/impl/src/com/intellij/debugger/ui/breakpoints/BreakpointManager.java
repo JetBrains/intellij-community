@@ -544,9 +544,14 @@ public class BreakpointManager {
           .append(eventRequestManager.methodEntryRequests())
           .append(eventRequestManager.methodExitRequests())
           .select(EventRequestManagerImpl.ThreadVisibleEventRequestImpl.class);
-      Stream<CompletableFuture> futures = requests
-        .map(r -> newFilterThread != null ? r.addThreadFilterAsync(newFilterThread) : r.removeThreadFilterAsync(oldFilterThread));
-      CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+      try {
+        Stream<CompletableFuture> futures = requests
+          .map(r -> newFilterThread != null ? r.addThreadFilterAsync(newFilterThread) : r.removeThreadFilterAsync(oldFilterThread));
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+      }
+      catch (Exception e) {
+        LOG.error(new Exception(e));
+      }
     }
     else if (newFilterThread == null || oldFilterThread != null) {
       final List<Breakpoint> breakpoints = getBreakpoints();
