@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryRe
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.CompletableFuture
@@ -116,13 +117,13 @@ object MavenJvmConfigBuildIssue {
     val issueDescription = StringBuilder(errorMessage)
     issueDescription.append("\n\nPossible solution:\n")
     if (import) {
-      val openMavenImportingSettingsQuickFix = OpenMavenImportingSettingsQuickFix("VM options for importer")
+      val openMavenImportingSettingsQuickFix = OpenMavenImportingSettingsQuickFix(message("maven.settings.importing.vm.options"))
       quickFixes.add(openMavenImportingSettingsQuickFix)
       issueDescription.append(
         " - Check your maven import VM options. <a href=\"${openMavenImportingSettingsQuickFix.id}\">Open maven import settings</a>.\n")
     }
     else {
-      val openMavenRunnerSettingsQuickFix = OpenMavenRunnerSettingsQuickFix("VM Options")
+      val openMavenRunnerSettingsQuickFix = OpenMavenRunnerSettingsQuickFix(message("maven.settings.runner.vm.options"))
       quickFixes.add(openMavenRunnerSettingsQuickFix)
       issueDescription.append(
         " - Check your maven runner VM options. <a href=\"${openMavenRunnerSettingsQuickFix.id}\">Open maven runner settings</a>.\n")
