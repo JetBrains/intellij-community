@@ -9,16 +9,11 @@ import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleImportIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.addWithJavaIntoJvmTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidSinglePlatformModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
-import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.*

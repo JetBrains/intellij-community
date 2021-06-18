@@ -7,14 +7,13 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleImportIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.GradleOnlyPluginByNameIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.addWithJavaIntoJvmTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidSinglePlatformModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.inContextOfModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -22,12 +21,13 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
-import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptorWithPath
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
-import org.jetbrains.kotlin.tools.projectWizard.templates.asSrcOf
 
 class ComposeAndroidTemplate : Template() {
     @NonNls

@@ -19,7 +19,6 @@ kotlin {
         testRuns["test"].executionTask.configure {
             useJUnit()
         }
-        withJava()
     }
     js(LEGACY) {
         binaries.executable()

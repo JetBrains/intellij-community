@@ -2,21 +2,19 @@
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.addWithJavaIntoJvmTarget
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.runTaskIrs
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
-import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
 class ConsoleJvmApplicationTemplate : Template() {
     @NonNls
@@ -34,9 +32,6 @@ class ConsoleJvmApplicationTemplate : Template() {
     ) = buildList<BuildSystemIR> {
         +runTaskIrs("MainKt")
     }
-
-    override fun updateTargetIr(module: ModuleIR, targetConfigurationIR: TargetConfigurationIR): TargetConfigurationIR =
-        targetConfigurationIR.addWithJavaIntoJvmTarget()
 
     override fun Reader.getFileTemplates(module: ModuleIR) =
         buildList<FileTemplateDescriptorWithPath> {
