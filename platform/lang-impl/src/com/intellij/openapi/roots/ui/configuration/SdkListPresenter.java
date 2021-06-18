@@ -17,6 +17,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -89,8 +90,9 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     panel.setOpaque(true);
     panel.setBackground(list.getBackground());
     if (value instanceof GroupItem) {
-      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       toggle.setOpaque(true);
+      toggle.setBorder(JBUI.Borders.emptyRight(JBUI.scale(5)));
       toggle.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
       panel.add(toggle, BorderLayout.EAST);
     }
