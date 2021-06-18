@@ -91,7 +91,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
   @Nullable
-  private static List<OldSwitchStatementBranch> extractBranches(@NotNull PsiCodeBlock body) {
+  private static List<OldSwitchStatementBranch> extractBranches(@NotNull PsiCodeBlock body,
+                                                                PsiSwitchStatement switchStatement) {
     List<OldSwitchStatementBranch> branches = new ArrayList<>();
     PsiStatement[] statements = body.getStatements();
     int unmatchedCaseIndex = -1;
@@ -108,6 +109,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         unmatchedCaseIndex = i;
       }
       else if (current instanceof PsiBreakStatement) {
+        if (((PsiBreakStatement)current).findExitedStatement() != switchStatement) return null;
         if (unmatchedCaseIndex == -1) return null;
         OldSwitchStatementBranch newBranch = addBranch(branches, statements, unmatchedCaseIndex, i, false, (PsiBreakStatement)current);
         newBranch.myPreviousSwitchBranch = previousBranch;
@@ -136,7 +138,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     if (expression == null) return null;
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) return null;
-    List<OldSwitchStatementBranch> branches = extractBranches(body);
+    List<OldSwitchStatementBranch> branches = extractBranches(body, switchStatement);
     if (branches == null || branches.isEmpty()) return null;
     boolean isExhaustive = isExhaustiveSwitch(branches, expression);
     return runInspections(switchStatement, isExhaustive, branches);
