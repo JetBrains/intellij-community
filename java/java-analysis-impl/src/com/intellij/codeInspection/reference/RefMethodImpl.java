@@ -233,8 +233,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         PsiElement sourceElement = psiSuperMethod instanceof LightElement ? psiSuperMethod.getNavigationElement() : psiSuperMethod;
-        RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(sourceElement);
-        if (refSuperMethod != null) {
+        RefElement refElement = getRefManager().getReference(sourceElement);
+        if (refElement instanceof RefMethodImpl) {
+          RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
           addSuperMethod(refSuperMethod);
           refSuperMethod.markExtended(this);
         } else {

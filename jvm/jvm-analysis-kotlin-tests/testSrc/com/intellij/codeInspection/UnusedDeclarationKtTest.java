@@ -29,6 +29,10 @@ public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testOverridingProperty() {
+    doTest();
+  }
+
   public void testStaticMethods() {
     doTest();
   }
