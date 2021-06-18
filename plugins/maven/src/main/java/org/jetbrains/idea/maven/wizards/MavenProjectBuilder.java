@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
@@ -148,6 +150,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
+    if (project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
+      ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
+    }
+
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
       return Collections.emptyList();
