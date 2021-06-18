@@ -432,7 +432,7 @@ class KotlinFunctionCallUsage(
         }
 
         val oldArgumentList = element.valueArgumentList.sure { "Argument list is expected: " + element.text }
-        for (argument in replaceListPsiAndKeepDelimiters(oldArgumentList, newArgumentList) { arguments }.arguments) {
+        for (argument in replaceListPsiAndKeepDelimiters(changeInfo, oldArgumentList, newArgumentList) { arguments }.arguments) {
             if (argument.getArgumentExpression() == null) argument.delete()
         }
 
