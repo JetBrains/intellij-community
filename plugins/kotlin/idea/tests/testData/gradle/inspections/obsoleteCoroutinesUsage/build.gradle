@@ -1,4 +1,4 @@
-// TOOL: GradleKotlinxCoroutinesDeprecationInspection
+// TOOL: org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection
 
 group 'Again'
 version '1.0-SNAPSHOT'

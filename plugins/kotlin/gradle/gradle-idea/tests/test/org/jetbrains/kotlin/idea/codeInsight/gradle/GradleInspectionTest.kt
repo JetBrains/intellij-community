@@ -140,7 +140,7 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
         val buildGradle = importProjectFromTestData().find { it.name == "build.gradle" }!!
         val tool = explicitTool ?: run {
             val toolName = File(buildGradle.path).readLines().find { it.startsWith(TOOL) }!!.substring(TOOL.length)
-            val inspectionClass = Class.forName("org.jetbrains.kotlin.idea.inspections.gradle.$toolName")
+            val inspectionClass = Class.forName(toolName)
             inspectionClass.getDeclaredConstructor().newInstance() as LocalInspectionTool
         }
 
