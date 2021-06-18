@@ -1,14 +1,14 @@
 <html>
 <body>
 Reports comparison operations where the constant value is on the wrong side.
-Some coding conventions specify that constants should be on a specific side of a comparison, either left or right.
-<p>Example:</p>
+<p>Some coding conventions specify that constants should be on a specific side of a comparison, either left or right.</p>
+<p><b>Example:</b></p>
 <pre>
   boolean compare(int x) {
     return 1 &gt; x; // Constant '1' on the left side of the comparison
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   boolean compare(int x) {
     return x &lt; 1;
@@ -16,7 +16,7 @@ Some coding conventions specify that constants should be on a specific side of a
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the combo box below to choose the side of constants in comparisons.
+  Use the inspection settings to choose the side of constants in comparisons.
 </p>
 <small>New in 2019.2</small>
 </body>

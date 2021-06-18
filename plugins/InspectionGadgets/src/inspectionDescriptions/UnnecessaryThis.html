@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports on any unnecessary uses of <code>this</code> in the code.
-Using <code>this</code> to disambiguate a code reference may easily become unnecessary
-via automatic refactorings, and is discouraged by many coding styles.
-<p>Example:</p>
+Reports unnecessary <code>this</code> qualifier.
+<p>
+  Using <code>this</code> to disambiguate a code reference is discouraged by many coding styles
+  and may easily become unnecessary
+  via automatic refactorings.
+</p>
+<p><b>Example:</b></p>
 <pre>
   class Foo {
     int x;
@@ -12,7 +15,7 @@ via automatic refactorings, and is discouraged by many coding styles.
     }
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class Foo {
     int x;
@@ -23,8 +26,8 @@ via automatic refactorings, and is discouraged by many coding styles.
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore assignments to fields.
-  For instance, <code>this.x = 2;</code> won't be reported, but <code>int y = this.x;</code> will.
+  Use the inspection settings to ignore assignments to fields.
+  For instance, <code>this.x = 2;</code> won't be reported, but <code>int y = this.x;</code> will be.
 <p>
 </body>
 </html>

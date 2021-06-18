@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports issues on fields of type <code>java.util.concurrent.atomic.AtomicLongFieldUpdater</code>,
-<code>java.util.concurrent.atomic.AtomicIntegerFieldUpdater</code> or <code>java.util.concurrent.atomic.AtomicReferenceFieldUpdater</code>.
-The issues reported are identical to the runtime problems that can happen with atomic field updaters:
-specified field not found, specified field not accessible, specified field of the wrong type, etc.
+Reports issues with <code>AtomicLongFieldUpdater</code>,
+<code>AtomicIntegerFieldUpdater</code>, or <code>AtomicReferenceFieldUpdater</code> fields (the <code>java.util.concurrent.atomic</code> package).
+<p>The reported issues are identical to the runtime problems that can happen with atomic field updaters:
+  specified field not found, specified field not accessible, specified field has a wrong type, and so on.</p>
 <p><b>Examples:</b></p>
 <ul>
   <li><pre>
@@ -22,6 +22,5 @@ specified field not found, specified field not accessible, specified field of th
 </ul>
 <!-- tooltip end -->
 <p>
-<small>New in 16</small>
 </body>
 </html>

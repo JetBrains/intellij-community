@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports any unnecessary uses of the <code>super</code>
-qualifier in method calls and fields references. A super qualifier is unnecessary
-when the field or method of the super class is not overridden in the calling class.
-<p>Example:</p>
+Reports unnecessary <code>super</code>
+qualifiers in method calls and field references.
+<p>
+  A <code>super</code> qualifier is unnecessary
+  when the field or method of the superclass is not hidden/overridden in the calling class.
+</p>
+<p><b>Example:</b></p>
 <pre>
   class Foo {
     void foo() {}
@@ -15,7 +18,7 @@ when the field or method of the super class is not overridden in the calling cla
     }
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class Foo {
     void foo() {}
@@ -29,13 +32,15 @@ when the field or method of the super class is not overridden in the calling cla
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore qualifiers, which help to distinguish super members access
-  from the same named members of the outer class.
-  See also the following inspections:
-  <ul>
-   <li><i>Java | Visibility | Access of inherited field</i> looks like access of element in surrounding code</li>
-   <li><i>Java | Visibility | Call to inherited method</i> looks like call to local method</li>
-  </ul>
+  Use the inspection settings to ignore qualifiers that help to distinguish superclass members access
+  from the identically named members of the outer class.
 <p>
+<p>
+  See also the following inspections:
+</p>
+<ul>
+  <li><i>Java | Visibility | Access of inherited field looks like access of element in surrounding code</i></li>
+  <li><i>Java | Visibility | Call to inherited method looks like call to local method</i></li>
+</ul>
 </body>
 </html>
