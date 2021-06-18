@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffContentVirtualFile
@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -34,9 +33,8 @@ class VcsEditorTabFilesManager :
         //currently shouldOpenInNewWindow is bound only to diff files
         if (file is DiffContentVirtualFile && source is FileEditorManagerEx) {
           val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
-          file.putUserData(OPENED_IN_NEW_WINDOW, if (isOpenInNewWindow) true else null)
           shouldOpenInNewWindow = isOpenInNewWindow
-          messageBus.syncPublisher(VcsEditorTabFilesListener.TOPIC).shouldOpenInNewWindowChanged(isOpenInNewWindow)
+          messageBus.syncPublisher(VcsEditorTabFilesListener.TOPIC).shouldOpenInNewWindowChanged(file, isOpenInNewWindow)
         }
       }
     })
@@ -89,9 +87,6 @@ class VcsEditorTabFilesManager :
   override fun dispose() {}
 
   companion object {
-    @JvmField
-    val OPENED_IN_NEW_WINDOW = Key<Boolean>("OPENED_IN_NEW_WINDOW")
-
     @JvmStatic
     fun getInstance(): VcsEditorTabFilesManager = service()
 
@@ -104,7 +99,7 @@ class VcsEditorTabFilesManager :
 
 interface VcsEditorTabFilesListener {
   @RequiresEdt
-  fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean)
+  fun shouldOpenInNewWindowChanged(file: VirtualFile, shouldOpenInNewWindow: Boolean)
 
   companion object {
     @JvmField

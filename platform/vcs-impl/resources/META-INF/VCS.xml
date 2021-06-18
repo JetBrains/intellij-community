@@ -55,4 +55,8 @@
     <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.vcs.changes.DiffEditorTabStateListener"
+              topic="com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener"/>
+  </applicationListeners>
 </idea-plugin>
