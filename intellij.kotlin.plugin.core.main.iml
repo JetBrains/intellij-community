@@ -70,6 +70,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" exported="" />
     <orderEntry type="module" module-name="kotlin.properties" exported="" />
     <orderEntry type="module" module-name="kotlin.native.native-gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />

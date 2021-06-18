@@ -2,10 +2,16 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService
 
-interface IdeaWizardService : WizardService
+interface IdeaWizardService : WizardService {
+    companion object {
+        val EP_NAME: ExtensionPointName<IdeaWizardService> =
+            ExtensionPointName.create("org.jetbrains.kotlin.idea.ideaWizardService")
+    }
+}
 
 object IdeaServices {
     val PROJECT_INDEPENDENT: List<IdeaWizardService> = listOf(
@@ -17,12 +23,7 @@ object IdeaServices {
         IdeaVelocityEngineTemplateService()
     )
 
-    fun createScopeDependent(project: Project) = listOfNotNull(
-        IdeaGradleWizardService(project),
-        IdeaMavenWizardService(project),
-        IdeaFileFormattingService(project),
-        IdeaRunConfigurationsService(project)
-    )
+    fun createScopeDependent(project: Project): List<IdeaWizardService> {
+        return IdeaWizardService.EP_NAME.getExtensionList(project)
+    }
 }
-
-

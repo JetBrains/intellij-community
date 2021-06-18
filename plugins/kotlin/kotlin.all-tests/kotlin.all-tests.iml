@@ -89,5 +89,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" />
     <orderEntry type="module" module-name="kotlin.properties" />
     <orderEntry type="module" module-name="kotlin.native.native-gradle" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" />
   </component>
 </module>
