@@ -16,5 +16,5 @@ interface MergeDirectionModel<RepoMapping> {
 
   fun addAndInvokeDirectionChangesListener(listener: () -> Unit)
 
-  fun getKnownRepoMapping(): List<RepoMapping>
+  fun getKnownRepoMappings(): List<RepoMapping>
 }
