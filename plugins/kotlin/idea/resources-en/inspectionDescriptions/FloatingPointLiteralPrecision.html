@@ -1,0 +1,9 @@
+<html>
+<body>
+Detects floating point literals that cannot be represented with the required precision.
+
+For example, 1.9999999999999999999 has too many significant digits, so its representation
+as the double will be rounded to 2.0. Specifying excess digits may be misleading as it hides
+the fact that computations use rounded values instead.
+</body>
+</html>
