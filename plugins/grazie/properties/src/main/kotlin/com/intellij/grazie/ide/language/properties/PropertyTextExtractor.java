@@ -17,8 +17,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PropertyTextExtractor extends TextExtractor {
-  private static final Pattern FORMAT_ELEMENT = Pattern.compile("\\{.+?}");
-
   @Override
   public @Nullable TextContent buildTextContent(@NotNull PsiElement root,
                                                 @NotNull Set<TextContent.TextDomain> allowedDomains) {
@@ -35,10 +33,18 @@ public class PropertyTextExtractor extends TextExtractor {
       }
 
       while (true) {
-        Matcher matcher = FORMAT_ELEMENT.matcher(content.toString());
-        if (!matcher.find()) break;
+        String str = content.toString();
+        int start = str.indexOf("{");
+        if (start < 0) break;
 
-        content = content.markUnknown(new TextRange(matcher.start(), matcher.end()));
+        int nesting = 1;
+        for (int end = start + 1; end < str.length(); end++) {
+          if (str.charAt(end) == '}' && --nesting == 0) {
+            content = content.markUnknown(new TextRange(start, end + 1));
+            break;
+          }
+          if (str.charAt(end) == '{') nesting++;
+        }
       }
       return HtmlUtilsKt.removeHtml(content);
     }
