@@ -121,7 +121,7 @@ class MarketplaceRequests : PluginInfoProvider {
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
     ): PluginNode {
-      val updateMetadataFile = Paths.get(PathManager.getPluginsPath(), "meta")
+      val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
       return readOrUpdateFile(
         updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"),
         "$PLUGIN_MANAGER_URL/files/${ideCompatibleUpdate.externalPluginId}/${ideCompatibleUpdate.externalUpdateId}/meta.json",
@@ -248,7 +248,7 @@ class MarketplaceRequests : PluginInfoProvider {
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     return readOrUpdateFile(
-      Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME),
+      Paths.get(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
       "${PLUGIN_MANAGER_URL}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
       indicator,
       IdeBundle.message("progress.downloading.available.plugins"),
@@ -269,7 +269,7 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   override fun loadCachedPlugins(): Set<PluginId>? {
-    val pluginXmlIdsFile = Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
+    val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     try {
       if (Files.size(pluginXmlIdsFile) > 0) {
         return Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
@@ -313,7 +313,7 @@ class MarketplaceRequests : PluginInfoProvider {
   fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>> {
     val brokenPlugins = try {
       readOrUpdateFile(
-        Paths.get(PathManager.getPluginsPath(), "brokenPlugins.json"),
+        Paths.get(PathManager.getPluginTempPath(), "brokenPlugins.json"),
         "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json",
         null,
         ""
