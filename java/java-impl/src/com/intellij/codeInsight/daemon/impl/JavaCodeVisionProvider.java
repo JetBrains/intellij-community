@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -10,8 +10,6 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -36,10 +34,6 @@ import java.util.List;
 
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
-  public static final String FUS_GROUP_ID = "java.lens";
-  private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
-  private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
-  private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
   private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
   interface InlResult {
@@ -71,7 +65,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, USAGES_CLICKED_EVENT_ID);
+               JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(file.getProject());
                 GotoDeclarationAction.startFindUsages(editor, file.getProject(), element, new RelativePoint(event));
               }
 
@@ -92,10 +86,8 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                  FeatureUsageData data = new FeatureUsageData().addData("location", "class");
-                  FUCounterUsageLogger.getInstance()
-                    .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(file.getProject(), "class");
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
 
@@ -116,9 +108,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                  FeatureUsageData data = new FeatureUsageData().addData("location", "method");
-                  FUCounterUsageLogger.getInstance()
-                    .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(file.getProject(), "method");
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
@@ -196,7 +186,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
     item.addActionListener(e -> {
-      FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
+      JavaCodeVisionUsageCollector.SETTINGS_CLICKED_EVENT_ID.log(project);
       InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
     });
     popupMenu.add(item);
