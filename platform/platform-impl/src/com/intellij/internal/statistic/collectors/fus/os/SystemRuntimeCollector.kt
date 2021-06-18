@@ -69,10 +69,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       result.add(JVM_OPTION.metric(option.key, option.value))
     }
 
-    for (clientProperty in knownClientProperties) {
+    for (clientProperty in splashClientProperties) {
       val value = System.getProperty(clientProperty)
       if (value != null) {
-        result.add(JVM_CLIENT_PROPERTIES.metric(clientProperty, value))
+        result.add(JVM_CLIENT_PROPERTIES.metric(clientProperty, value.toBoolean()))
       }
     }
 
@@ -107,11 +107,11 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     )
 
     //No -D prefix is required here
-    private val knownClientProperties = arrayListOf(
+    private val splashClientProperties = arrayListOf(
       "splash", "nosplash"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 11)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 12)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
@@ -135,9 +135,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       EventFields.String("name", arrayListOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")),
       EventFields.Long("value")
     )
-    private val JVM_CLIENT_PROPERTIES: EventId2<String?, String?> = GROUP.registerEvent("jvm.client.properties",
-      EventFields.String("name", knownClientProperties),
-      EventFields.String("value", listOf("true", "false"))
+    private val JVM_CLIENT_PROPERTIES: EventId2<String?, Boolean> = GROUP.registerEvent("jvm.client.properties.splash",
+                                                                                        EventFields.String("name", splashClientProperties),
+                                                                                        EventFields.Boolean("value")
     )
 
     fun convertOptionToData(arg: String): Pair<String, Long>? {
