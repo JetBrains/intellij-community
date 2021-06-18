@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -401,7 +402,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return injected;
   }
 
-  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
+  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes() {
     @Override
     public boolean isEmpty() {
       return false;
