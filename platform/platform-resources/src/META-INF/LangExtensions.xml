@@ -1415,8 +1415,8 @@
     <advancedSetting id="editor.maximize.on.double.click" default="true" groupKey="group.advanced.settings.editor.tabs"/>
     <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor.tabs"/>
 
-    <actionOnSaveInfoProvider id="FormatOnSaveActionProvider"
-                              implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveActionProvider"
+    <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
+                              implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"
                               order="first"/>
     <actionOnSave id="FormatOnSaveAction" implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveAction" order="first"/>
   </extensions>

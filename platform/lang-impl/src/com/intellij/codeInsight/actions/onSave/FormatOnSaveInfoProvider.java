@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.util.PlatformUtils.*;
 
-public class FormatOnSaveActionProvider extends ActionOnSaveInfoProvider {
+public class FormatOnSaveInfoProvider extends ActionOnSaveInfoProvider {
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
     if (isRider()) {

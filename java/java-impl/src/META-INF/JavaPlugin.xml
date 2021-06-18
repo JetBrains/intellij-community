@@ -507,7 +507,7 @@
 
     <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
                               implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"
-                              order="after FormatOnSaveActionProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveActionProvider, after UploadOnSaveActionProvider"/>
+                              order="after FormatOnSaveInfoProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveInfoProvider, after UploadOnSaveInfoProvider"/>
 
     <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
                      bundle="messages.JavaBundle"/>
