@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
-import java.util.function.Supplier
 
 class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -63,7 +62,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
             .map {
                 RegisterToolWindowTask.closable(
                     ToolWindowId,
-                    Supplier { PackageSearchBundle.message("toolwindow.stripe.Packages") },
+                     PackageSearchBundle.messagePointer("toolwindow.stripe.Packages"),
                     PackageSearchIcons.ArtifactSmall
                 )
             }
