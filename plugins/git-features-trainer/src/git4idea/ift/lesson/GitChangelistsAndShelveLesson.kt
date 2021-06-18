@@ -12,9 +12,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -39,17 +41,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
   private var backupShelveDialogLocation: Point? = null
   private var backupUnshelveDialogLocation: Point? = null
-
-  /**
-   * Constructs from dialog name and layout version.
-   * The same value as returns from [com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getDimensionServiceKey]
-   */
-  private val commitChangelistDialogStateKey = "CommitChangelistDialog2"
-
-  /**
-   * The same value as returns from [com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog.getDimensionServiceKey]
-   */
-  private val applyPatchDialogStateKey = "vcs.ApplyPatchDifferentiatedDialog"
 
   private val fileAddition = """
     |
@@ -171,7 +162,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       before {
         if (backupShelveDialogLocation == null) {
-          backupShelveDialogLocation = adjustPopupPosition(commitChangelistDialogStateKey)
+          backupShelveDialogLocation = adjustPopupPosition(CommitChangeListDialog.DIMENSION_SERVICE_KEY)
         }
       }
       text(GitLessonsBundle.message("git.changelists.shelf.shelve.changelist", strong(shelveChangesButtonText), strong(shelfText)))
@@ -213,7 +204,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       before {
         if (backupUnshelveDialogLocation == null) {
-          backupUnshelveDialogLocation = adjustPopupPosition(applyPatchDialogStateKey)
+          backupUnshelveDialogLocation = adjustPopupPosition(ApplyPatchDifferentiatedDialog.DIMENSION_SERVICE_KEY)
         }
       }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
@@ -223,9 +214,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    restorePopupPosition(project, commitChangelistDialogStateKey, backupShelveDialogLocation)
+    restorePopupPosition(project, CommitChangeListDialog.DIMENSION_SERVICE_KEY, backupShelveDialogLocation)
     backupShelveDialogLocation = null
-    restorePopupPosition(project, applyPatchDialogStateKey, backupUnshelveDialogLocation)
+    restorePopupPosition(project, ApplyPatchDifferentiatedDialog.DIMENSION_SERVICE_KEY, backupUnshelveDialogLocation)
     backupUnshelveDialogLocation = null
   }
 
