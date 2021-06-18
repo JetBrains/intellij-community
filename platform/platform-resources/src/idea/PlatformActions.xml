@@ -678,12 +678,8 @@
           <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
           <separator/>
           <group id="TemplateParametersNavigation">
-            <action id="NextTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Next">
-              <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-            </action>
-            <action id="PrevTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Prev">
-              <keyboard-shortcut first-keystroke="shift TAB" keymap="$default"/>
-            </action>
+            <action id="NextTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Next"/>
+            <action id="PrevTemplateParameter" class="com.intellij.codeInsight.completion.NextPrevParameterAction$Prev"/>
           </group>
           <action id="GotoCustomRegion" class="com.intellij.lang.customFolding.GotoCustomRegionAction"/>
         </group>
