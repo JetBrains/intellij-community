@@ -34,7 +34,7 @@ class FloatingPointLiteralPrecisionInspection : AbstractKotlinInspection() {
     private val FORMATTING_CHARACTERS_REGEX = Regex("[_fF]")
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return expressionVisitor { it ->
+        return expressionVisitor {
             if ((it is KtConstantExpression) && (it.elementType == FLOAT_LITERAL)) {
                 val isFloat = it.getKotlinType()?.isFloat() ?: false
                 val uppercaseSuffix = isFloat && it.text?.endsWith('F') ?: false
