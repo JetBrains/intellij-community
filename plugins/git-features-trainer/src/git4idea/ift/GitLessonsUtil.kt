@@ -7,11 +7,9 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
@@ -29,8 +27,6 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.subscribeForMessageBus
-import training.learn.LearnBundle
-import training.ui.LearnToolWindow
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 
@@ -88,24 +84,6 @@ object GitLessonsUtil {
         ui.selectionModel.clearSelection()
         true
       }
-    }
-  }
-
-  fun LessonContext.moveLearnToolWindowRight() {
-    prepareRuntimeTask {
-      val learnToolWindow = ToolWindowManager.getInstance(project).getToolWindow("Learn") ?: error("Not found Learn toolwindow")
-      learnToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
-      learnToolWindow.show()
-    }
-
-    task {
-      triggerByUiComponentAndHighlight(false, false) { _: LearnToolWindow -> true }
-    }
-
-    task {
-      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
-      gotItStep(Balloon.Position.atLeft, 300, GitLessonsBundle.message("git.move.learn.window.balloon.text",
-                                                                       strong(LearnBundle.message("toolwindow.stripe.Learn")), strong(VcsBundle.message("commit.dialog.configurable"))))
     }
   }
 

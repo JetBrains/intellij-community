@@ -28,7 +28,6 @@ import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -90,8 +89,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       commitWorkflowHandler.workflow.commitOptions.allOptions.forEach(RefreshableOnComponent::restoreState)
       commitWorkflowHandler.setCommitMessage(lastCommitMessage)
     }
-
-    moveLearnToolWindowRight()
 
     task { highlightVcsChange(secondFileName, highlightBorder = false) }
 
