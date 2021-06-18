@@ -70,6 +70,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -777,6 +778,7 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
 fun KtNamedDeclaration.isConstructorDeclaredProperty() = this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
 
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
+    changeInfo: KotlinChangeInfo,
     originalList: ListType,
     newList: ListType,
     @Suppress("UNCHECKED_CAST") listReplacer: ListType.(ListType) -> ListType = { replace(it) as ListType },
@@ -790,8 +792,13 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     val newCount = newParameters.size
 
     val commonCount = min(oldCount, newCount)
-    for (i in 0 until commonCount) {
-        oldParameters[i] = oldParameters[i].replace(newParameters[i]) as KtElement
+    val originalIndexes = changeInfo.newParameters.map { it.originalIndex }
+    val keepComments = originalList.allChildren.any { it is PsiComment } &&
+            oldCount > commonCount && originalIndexes == originalIndexes.sorted()
+    if (!keepComments) {
+        for (i in 0 until commonCount) {
+            oldParameters[i] = oldParameters[i].replace(newParameters[i]) as KtElement
+        }
     }
 
     if (commonCount == 0) return originalList.listReplacer(newList)
@@ -799,7 +806,20 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     val lastOriginalParameter = oldParameters.last()
 
     if (oldCount > commonCount) {
-        originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+        if (keepComments) {
+            ((0 until oldParameters.size) - originalIndexes).forEach { index ->
+                val oldParameter = oldParameters[index]
+                val nextComma = oldParameter.getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }
+                if (nextComma != null) {
+                    nextComma.delete()
+                } else {
+                    oldParameter.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }?.delete()
+                }
+                oldParameter.delete()
+            }
+        } else {
+            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+        }
     } else if (newCount > commonCount) {
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
