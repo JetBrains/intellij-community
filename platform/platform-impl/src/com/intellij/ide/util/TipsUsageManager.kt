@@ -20,8 +20,6 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   companion object {
     @JvmStatic
     fun getInstance(): TipsUsageManager = service()
-
-    const val BY_TIP_UTILITY = "tip_utility"
   }
 
   private val shownTips: MutableMap<String, Long> = mutableMapOf()
@@ -37,7 +35,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     shownTips.putAll(state.shownTips)
   }
 
-  fun sortByUtility(tips: List<TipAndTrickBean>): RecommendationDescription {
+  fun sortByUtility(tips: List<TipAndTrickBean>, experimentType: TipsUtilityExperiment): RecommendationDescription {
     val usedTips = mutableSetOf<TipAndTrickBean>()
     val unusedTips = mutableSetOf<TipAndTrickBean>()
     ProductivityFeaturesRegistry.getInstance()?.let { featuresRegistry ->
@@ -53,10 +51,17 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
       }
     }
     val otherTips = tips.toSet() - (usedTips + unusedTips)
-    val sortedByUtility = utilityHolder.sampleTips(unusedTips)
-    return RecommendationDescription(BY_TIP_UTILITY,
-                                     sortedByUtility + otherTips.shuffled() + usedTips.shuffled(),
-                                     utilityHolder.getMetadataVersion())
+    val resultTips = when (experimentType) {
+      TipsUtilityExperiment.BY_TIP_UTILITY -> {
+        val sortedByUtility = utilityHolder.sampleTips(unusedTips + usedTips)
+        sortedByUtility + otherTips.shuffled()
+      }
+      TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED -> {
+        val sortedByUtility = utilityHolder.sampleTips(unusedTips)
+        sortedByUtility + otherTips.shuffled() + usedTips.shuffled()
+      }
+    }
+    return RecommendationDescription(experimentType.toString(), resultTips, utilityHolder.getMetadataVersion())
   }
 
   fun fireTipShown(tip: TipAndTrickBean) {
