@@ -50,6 +50,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC)
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
@@ -62,7 +63,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
+  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc";
   @NonNls private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
 
   private final Set<FileTypeWithDescriptor> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
@@ -108,7 +109,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NonNls
   static final String FILE_SPEC = "filetypes";
 
-  public FileTypeManagerImpl() {
+  protected FileTypeManagerImpl() {
     NonLazySchemeProcessor<FileTypeWithDescriptor, FileTypeWithDescriptor> abstractTypesProcessor = new NonLazySchemeProcessor<>() {
       @NotNull
       @Override
@@ -841,7 +842,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public String getIgnoredFilesList() {
     Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
-    return masks.isEmpty() ? "" : String.join(";", masks) + ";";
+    return masks.isEmpty() ? "" : String.join(";", masks);
   }
 
   @Override
@@ -1123,16 +1124,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public Element getState() {
     Element state = new Element("state");
 
-    Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
-    String ignoreFiles;
-    if (masks.isEmpty()) {
-      ignoreFiles = "";
-    }
-    else {
-      String[] strings = ArrayUtil.toStringArray(masks);
-      Arrays.sort(strings);
-      ignoreFiles = String.join(";", strings) + ";";
-    }
+    String ignoreFiles = myIgnoredPatterns.getIgnoreMasks()
+      .stream()
+      .sorted()
+      .collect(Collectors.joining(";"));
 
     if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
       // empty means empty list - we need to distinguish null and empty to apply or not to apply default value
