@@ -30,7 +30,6 @@ public final class SlowOperations {
   private static final Set<String> ourReportedTraces = new HashSet<>();
   private static final String[] misbehavingFrames = {
     "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
-    "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
   private static int ourAlwaysAllow = -1;
