@@ -31,7 +31,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -294,9 +296,11 @@ object UpdateChecker {
   @JvmStatic
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
     if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-      val updateable = collectUpdateablePlugins()
-      if (updateable.isNotEmpty()) {
-        findUpdatesInJetBrainsRepository(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val updateable = collectUpdateablePlugins()
+        if (updateable.isNotEmpty()) {
+          findUpdatesInJetBrainsRepository(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
+        }
       }
     }
   }
@@ -305,6 +309,8 @@ object UpdateChecker {
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
    */
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   @JvmOverloads
   @JvmStatic
   fun getInternalPluginUpdates(
@@ -408,6 +414,8 @@ object UpdateChecker {
     return updateable
   }
 
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
                                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
@@ -76,6 +77,8 @@ class MarketplaceRequests : PluginInfoProvider {
       }
     }
 
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginDescriptors(
@@ -86,6 +89,8 @@ class MarketplaceRequests : PluginInfoProvider {
         .map { loadPluginDescriptor(it.pluginId, it, null) }
     }
 
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
@@ -113,6 +118,8 @@ class MarketplaceRequests : PluginInfoProvider {
       }
     }
 
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     @JvmStatic
     @JvmOverloads
     @Throws(IOException::class)
@@ -364,21 +371,37 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  fun loadPluginDetails(pluginNode: PluginNode): PluginNode {
-    val externalPluginId = pluginNode.externalPluginId
-    val externalUpdateId = pluginNode.externalUpdateId
-    if (externalPluginId == null || externalUpdateId == null) return pluginNode
-    val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate).apply {
-      // these three fields are not present in `IntellijUpdateMetadata`, but present in `MarketplaceSearchPluginData`
-      rating = pluginNode.rating
-      downloads = pluginNode.downloads
-      date = pluginNode.date
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
+  @JvmOverloads
+  fun loadPluginDetails(
+    pluginNode: PluginNode,
+    indicator: ProgressIndicator? = null,
+  ): PluginNode? {
+    val externalPluginId = pluginNode.externalPluginId ?: return pluginNode
+    val externalUpdateId = pluginNode.externalUpdateId ?: return pluginNode
+
+    try {
+      return loadPluginDescriptor(
+        pluginNode.pluginId.idString,
+        IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId),
+        indicator,
+      ).apply {
+        // these three fields are not present in `IntellijUpdateMetadata`, but present in `MarketplaceSearchPluginData`
+        rating = pluginNode.rating
+        downloads = pluginNode.downloads
+        date = pluginNode.date
+      }
+    }
+    catch (e: IOException) {
+      LOG.error(e)
+      return null
     }
   }
 
   @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
   @RequiresBackgroundThread
+  @RequiresNoReadLock
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     id: String,
@@ -387,6 +410,7 @@ class MarketplaceRequests : PluginInfoProvider {
   ): PluginNode? = getLastCompatiblePluginUpdate(PluginId.getId(id), buildNumber, indicator)
 
   @RequiresBackgroundThread
+  @RequiresNoReadLock
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     pluginId: PluginId,
