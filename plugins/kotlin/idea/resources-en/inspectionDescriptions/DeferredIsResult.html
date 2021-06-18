@@ -11,13 +11,13 @@ Reports functions with the <code>kotlinx.coroutines.Deferred</code> return type.
       return CompletableDeferred(42)
   }
 </code></pre>
-<p>After the quick-fix applied (it adds the <code>Async</code> suffix):</p>
+<p>After the quick-fix that adds the <code>Async</code> suffix applied:</p>
 <pre><code>
   fun calcEverythingAsync(): Deferred&lt;Int&gt; {
       return CompletableDeferred(42)
   }
 </code></pre>
-<p>After the quick-fix applied (it converts the function into a <code>suspend</code> one):</p>
+<p>After the quick-fix that converts the function into a <code>suspend</code> one applied:</p>
 <pre><code>
   suspend fun calcEverything(): Int {
       return CompletableDeferred(42).await()
