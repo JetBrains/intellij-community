@@ -7,12 +7,12 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
@@ -26,7 +26,6 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
@@ -88,12 +87,11 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
 
     component.setOpaque(true);
     panel.setOpaque(true);
-    Color background = selected ? list.getSelectionBackground() : list.getBackground();
-    panel.setBackground(background);
+    panel.setBackground(list.getBackground());
     if (value instanceof GroupItem) {
       JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
       toggle.setOpaque(true);
-      toggle.setBackground(background);
+      toggle.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
       panel.add(toggle, BorderLayout.EAST);
     }
 
@@ -103,13 +101,10 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       if (!separatorTextAbove.isEmpty()) {
         separator.setCaption(separatorTextAbove);
       }
-      separator.setOpaque(false);
-      separator.setBackground(list.getBackground());
 
-      JPanel wrapper = new CellRendererPanel(new BorderLayout());
+      OpaquePanel wrapper = new OpaquePanel(new BorderLayout());
       wrapper.add(separator, BorderLayout.CENTER);
       wrapper.setBackground(list.getBackground());
-      wrapper.setOpaque(true);
 
       panel.add(wrapper, BorderLayout.NORTH);
     }
