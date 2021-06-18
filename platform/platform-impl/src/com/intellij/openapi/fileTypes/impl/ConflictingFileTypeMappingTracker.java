@@ -58,9 +58,9 @@ class ConflictingFileTypeMappingTracker {
     final boolean approved;
 
     ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
-                                  @NotNull @Nls String notification,
-                                  @NotNull @Nls String explanation,
-                                  boolean approved) {
+                          @NotNull @Nls String notification,
+                          @NotNull @Nls String explanation,
+                          boolean approved) {
       this.resolved = resolved;
       this.notification = notification;
       this.explanation = explanation;
