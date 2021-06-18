@@ -198,7 +198,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
               }
             }
             if (toolWrapper instanceof LocalInspectionToolWrapper) {
-              hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultFile(outputDir, toolWrapper.getShortName()));
+              hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
             }
             else {
               presentation.updateContent();
@@ -248,8 +248,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                             @NotNull Path outputPath) {
     for (Tools tools : toolsWithResultsToAggregate) {
       String inspectionName = tools.getShortName();
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName));
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
       try {
         List<? extends InspectionToolWrapper<?, ?>> wrappers = ContainerUtil.map(tools.getTools(), ScopeToolState::getTool);
         InspectionsResultUtil.writeInspectionResult(getProject(), inspectionName, wrappers, outputPath, this::getPresentation);
