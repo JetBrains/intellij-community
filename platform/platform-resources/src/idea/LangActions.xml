@@ -1492,13 +1492,12 @@
           <separator text="type.large"/>
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
-          <separator text="type.flexible"/>
         </group>
         <group id="TouchBarDefault_cmd.alt">
           <separator/>
         </group>
         <group id="TouchBarDefault_shift">
-          <!--Use Shift to show Refactor actions/-->
+          <separator/>
         </group>
       </group>
       <group id="TouchBarDebug">
