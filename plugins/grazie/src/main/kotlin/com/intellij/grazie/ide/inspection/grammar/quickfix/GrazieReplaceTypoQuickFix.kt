@@ -6,33 +6,33 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
-import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.ui.components.dsl.msg
+import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
+import kotlin.math.min
 
-internal class GrazieReplaceTypoQuickFix(
-  @NlsSafe private val message: String, private val fixes: List<String>,
-  private val underlineRange: SmartPsiFileRange, private val replacementRange: SmartPsiFileRange
-  )
-  : DefaultIntentionActionWithChoice {
+internal object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
     HighPriorityAction
 
-  override fun getTitle(): ChoiceTitleIntentionAction {
-    return ReplaceTypoTitleAction(GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", message), message)
-  }
-
-  private inner class ChangeToVariantAction(
+  private class ChangeToVariantAction(
     override val index: Int,
     @IntentionFamilyName private val family: String,
-    @NlsSafe private val suggestion: String
+    @NlsSafe private val suggestion: String,
+    private val replacement: String,
+    private val underlineRange: SmartPsiFileRange,
+    private val replacementRange: SmartPsiFileRange,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String = suggestion.takeIf { it.isNotEmpty() } ?: msg("grazie.grammar.quickfix.remove.typo.tooltip")
@@ -50,20 +50,33 @@ internal class GrazieReplaceTypoQuickFix(
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-      val replacementRange = this@GrazieReplaceTypoQuickFix.replacementRange.range ?: return
+      val replacementRange = this.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
       underlineRange.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
 
-      document.replaceString(replacementRange.startOffset, replacementRange.endOffset, suggestion)
+      document.replaceString(replacementRange.startOffset, replacementRange.endOffset, replacement)
     }
 
     override fun startInWriteAction(): Boolean = true
   }
 
-  override fun getVariants(): List<ChoiceVariantIntentionAction> {
-    return fixes.withIndex().map { (index, suggestion) ->
-      ChangeToVariantAction(index, msg("grazie.grammar.quickfix.replace.typo.text", message), suggestion)
+  fun getReplacementFixes(problem: TextProblem, underlineRange: SmartPsiFileRange, file: PsiFile): List<LocalQuickFix> {
+    val replacementRange = problem.replacementRange
+    val replacedText = replacementRange.subSequence(problem.text)
+    val spm = SmartPointerManager.getInstance(file.project)
+    val familyName = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", problem.shortMessage)
+    val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
+    problem.corrections.forEachIndexed { index, suggestion ->
+      val commonPrefix = StringUtil.commonPrefixLength(suggestion, replacedText)
+      val commonSuffix =
+        min(StringUtil.commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
+      val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
+      val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
+      result.add(ChangeToVariantAction(
+        index, familyName, suggestion, replacement, underlineRange,
+        spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange))))
     }
+    return result
   }
 }
