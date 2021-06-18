@@ -27,9 +27,14 @@ private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aw
 
 internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
 
-private fun sortTipsByUtility(): Boolean = ApplicationManager.getApplication().isEAP && isInExperiment()
-
-private fun isInExperiment(): Boolean = EventLogConfiguration.getInstance().bucket in 75..99
+private fun getUtilityExperiment(): TipsUtilityExperiment? {
+  if (!ApplicationManager.getApplication().isEAP) return null
+  return when (EventLogConfiguration.getInstance().bucket) {
+    in 50..74 -> TipsUtilityExperiment.BY_TIP_UTILITY
+    in 75..99 -> TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED
+    else -> null
+  }
+}
 
 private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescription {
   return RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
@@ -94,13 +99,22 @@ internal class TipsOrderUtil {
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
   fun sort(tips: List<TipAndTrickBean>): RecommendationDescription {
-    if (sortTipsByUtility()) {
-      return service<TipsUsageManager>().sortByUtility(tips)
+    getUtilityExperiment()?.let {
+      return service<TipsUsageManager>().sortByUtility(tips, it)
     }
 
     serverRecommendation?.let { return it.reorder(tips) }
 
     return randomShuffle(tips)
+  }
+}
+
+enum class TipsUtilityExperiment {
+  BY_TIP_UTILITY {
+    override fun toString(): String = "tip_utility"
+  },
+  BY_TIP_UTILITY_IGNORE_USED {
+    override fun toString(): String = "tip_utility_and_ignore_used"
   }
 }
 
