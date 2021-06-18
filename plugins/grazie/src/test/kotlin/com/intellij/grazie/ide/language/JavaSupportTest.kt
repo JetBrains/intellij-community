@@ -28,4 +28,10 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test grammar check in comments`() {
     runHighlightTestForFile("ide/language/java/Comments.java")
   }
+
+  fun `test split line quick fix`() {
+    runHighlightTestForFile("ide/language/java/SplitLine.java")
+    myFixture.launchAction(myFixture.findSingleIntention(", so"))
+    myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
+  }
 }

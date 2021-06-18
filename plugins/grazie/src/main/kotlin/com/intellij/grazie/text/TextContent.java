@@ -55,6 +55,13 @@ public interface TextContent extends CharSequence {
   @Nullable TextRange fileRangeToText(TextRange fileRange);
 
   /**
+   * @return the range with start and end translated using {@link #textOffsetToFile(int)}.
+   */
+  default @NotNull TextRange textRangeToFile(TextRange textRange) {
+    return new TextRange(textOffsetToFile(textRange.getStartOffset()), textOffsetToFile(textRange.getEndOffset()));
+  }
+
+  /**
    * @return the PSI element containing all of this content's fragments.
    */
   @NotNull PsiElement getCommonParent();
