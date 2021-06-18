@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 import com.intellij.execution.RunManager
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.service.RunConfigurationsService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.isBuildSystemAvailable
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 
 class IdeaRunConfigurationsService(private val project: Project) : RunConfigurationsService, IdeaWizardService {
     override fun Reader.addRunConfigurations(configurations: List<WizardRunConfiguration>) {
@@ -25,7 +25,7 @@ class IdeaRunConfigurationsService(private val project: Project) : RunConfigurat
 
     private fun addGradleRunConfiguration(wizardConfiguration: WizardGradleRunConfiguration) {
         val runManager = RunManager.getInstance(project)
-        val configurationFactory = GradleExternalTaskConfigurationType().configurationFactories[0]
+        val configurationFactory = KotlinGradleFacade.instance?.runConfigurationFactory ?: return
         val ideaConfiguration = runManager.createConfiguration(wizardConfiguration.configurationName, configurationFactory)
         val runConfiguration = ideaConfiguration.configuration
         if (runConfiguration is ExternalSystemRunConfiguration) {

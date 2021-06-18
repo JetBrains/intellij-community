@@ -111,6 +111,5 @@
         implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
 
     <newProjectWizard implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
-    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.GradleKotlinBuildSystemType"/>
   </extensions>
 </idea-plugin>

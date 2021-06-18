@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.tools.projectWizard
+package org.jetbrains.kotlin.idea.gradle.projectWizard
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.KotlinSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
 class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSystemSettings>("Gradle") {
@@ -14,13 +16,13 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSyste
         TODO("Not yet implemented")
     }
 
-    override fun advancedSettings(languageSettings: GradleKotlinBuildSystemSettings): DialogPanel =
+    override fun advancedSettings(settings: GradleKotlinBuildSystemSettings): DialogPanel =
         panel {
             hideableRow(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                 row {
                     cell { label(GradleBundle.message("label.project.wizard.new.project.group.id")) }
                     cell {
-                        textField(languageSettings::groupId)
+                        textField(settings::groupId)
                     }
                 }
 
@@ -28,7 +30,7 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSyste
                     cell { label(GradleBundle.message("label.project.wizard.new.project.artifact.id")) }
                     cell {
                         textFieldWithBrowseButton(
-                            languageSettings::artifactId, GradleBundle.message("label.project.wizard.new.project.artifact.id"), null,
+                            settings::artifactId, GradleBundle.message("label.project.wizard.new.project.artifact.id"), null,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor()
                         )
                     }
@@ -38,7 +40,7 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSyste
                     cell { label(GradleBundle.message("label.project.wizard.new.project.version")) }
                     cell {
                         textFieldWithBrowseButton(
-                            languageSettings::version,
+                            settings::version,
                             GradleBundle.message("label.project.wizard.new.project.version"), null,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor()
                         )

@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="kotlin.maven.tests" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea.tests" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.idea" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" />

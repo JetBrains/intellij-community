@@ -1292,7 +1292,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("project-wizard/idea", testDataPath = "../cli/testData") {
+    testGroup("project-wizard/tests", testDataPath = "../cli/testData") {
         fun MutableTSuite.allBuildSystemTests(relativeRootPath: String) {
             for (testClass in listOf("GradleKts", "GradleGroovy", "Maven")) {
                 model(

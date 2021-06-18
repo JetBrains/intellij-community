@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("project-wizard/idea")
+@TestRoot("project-wizard/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends AbstractProjectTemplateNewWizardProjectImportTest {

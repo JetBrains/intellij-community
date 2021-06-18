@@ -1,16 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradle
 
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
+import icons.GradleIcons
 import org.jetbrains.kotlin.idea.configuration.GradleVersionProviderImpl
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
+import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import javax.swing.Icon
 
 // Gradle path (example): ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-runtime/<version>
 private const val KOTLIN_PLUGIN_PATH_MARKER = "${KotlinGradleConstants.GROUP_ID}/${KotlinGradleConstants.GRADLE_PLUGIN_ID}/"
@@ -20,6 +24,12 @@ private val KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO =
     "${KotlinGradleConstants.GROUP_ID.replace('.', '/')}/${KotlinGradleConstants.GRADLE_PLUGIN_ID}/"
 
 object KotlinGradleFacadeImpl : KotlinGradleFacade {
+    override val gradleIcon: Icon
+        get() = GradleIcons.Gradle
+
+    override val runConfigurationFactory: ConfigurationFactory
+        get() = GradleExternalTaskConfigurationType.getInstance().configurationFactories[0]
+
     override fun isDelegatedBuildEnabled(module: Module): Boolean {
         return GradleProjectSettings.isDelegatedBuildEnabled(module)
     }
