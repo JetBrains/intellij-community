@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports declarations of unchecked exceptions (<code>java.lang.RuntimeException</code> and its subclasses) in the <code>throws</code> clause of a method.
-Declaration of unchecked exceptions are not required and may be deleted or moved to a Javadoc <code>@throws</code> tag.
+Reports declaration of an unchecked exception (<code>java.lang.RuntimeException</code> or one of its subclasses) in the <code>throws</code>
+clause of a method.
+<p>Declarations of unchecked exceptions are not required and may be deleted or moved to a Javadoc <code>@throws</code> tag.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public class InvalidDataException extends RuntimeException {}
 
   class TextEditor {
     void readSettings() throws InvalidDataException {} // warning: Unchecked exception 'InvalidDataException' declared in 'throws' clause
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>
