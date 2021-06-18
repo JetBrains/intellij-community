@@ -10,6 +10,8 @@
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.xml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
