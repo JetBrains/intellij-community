@@ -20,6 +20,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -36,6 +38,8 @@ import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
+  private val vcsConfiguration = VcsConfiguration.getInstance(project)
+  private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click")
   private val previewFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
@@ -51,13 +55,28 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     installSelectionChangedHandler(tree) { updatePreview(false) }
   }
 
-  fun openWithSingleClick(tree: ChangesTree) {
-    //do not open file aggressively on start up, do it later
-    DumbService.getInstance(project).smartInvokeLater {
-      if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
+  fun installListeners(tree: ChangesTree) {
+    installDoubleClickHandler(tree)
+    installEnterKeyHandler(tree)
+    if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
+      //do not open file aggressively on start up, do it later
+      DumbService.getInstance(project).smartInvokeLater {
+        if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
+        installSelectionHandler(tree)
+      }
+    }
+    else {
+      installSelectionHandler(tree)
+    }
+  }
 
-      installSelectionChangedHandler(tree) {
+  private fun installSelectionHandler(tree: ChangesTree) {
+    installSelectionChangedHandler(tree) {
+      if (vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
+      }
+      else {
+        updatePreview(false)
       }
     }
   }
