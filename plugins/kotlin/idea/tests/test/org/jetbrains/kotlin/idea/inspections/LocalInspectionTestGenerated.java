@@ -4756,6 +4756,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/returnLiteral.kt");
         }
 
+        @TestMetadata("senselessDiagnosticDuplicate.kt")
+        public void testSenselessDiagnosticDuplicate() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/senselessDiagnosticDuplicate.kt");
+        }
+
         @TestMetadata("shiftLeft.kt")
         public void testShiftLeft() throws Exception {
             runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");

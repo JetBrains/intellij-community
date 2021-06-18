@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
@@ -70,7 +71,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        val context = expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
+        val context = expression.analyze(BodyResolveMode.FULL)
+        if (context.diagnostics.forElement(expression)
+            .any { it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }) {
+            return true
+        }
         return expression.isUsedAsStatement(context)
     }
 

@@ -17,7 +17,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -54,24 +54,54 @@ internal fun KotlinType?.toDfType(context: KtElement) : DfType {
             descriptor.expandedType.toDfType(context)
         }
         is ClassDescriptor -> when (val fqNameUnsafe = descriptor.fqNameUnsafe) {
-            StandardNames.FqNames._boolean -> DfTypes.BOOLEAN
-            StandardNames.FqNames._byte -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
-            StandardNames.FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
-            StandardNames.FqNames._short -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
-            StandardNames.FqNames._int -> DfTypes.INT
-            StandardNames.FqNames._long -> DfTypes.LONG
-            StandardNames.FqNames._float -> DfTypes.FLOAT
-            StandardNames.FqNames._double -> DfTypes.DOUBLE
-            StandardNames.FqNames.array ->
+            FqNames._boolean -> DfTypes.BOOLEAN
+            FqNames._byte -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
+            FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
+            FqNames._short -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
+            FqNames._int -> DfTypes.INT
+            FqNames._long -> DfTypes.LONG
+            FqNames._float -> DfTypes.FLOAT
+            FqNames._double -> DfTypes.DOUBLE
+            FqNames.array ->
                 TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-            StandardNames.FqNames.any -> DfTypes.NOT_NULL_OBJECT
+            FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
-                val typeFqName = when(fqNameUnsafe) {
-                    StandardNames.FqNames.string -> CommonClassNames.JAVA_LANG_STRING
-                    else -> fqNameUnsafe.asString()
+                // see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
+                val typeFqName = when (val rawName = fqNameUnsafe.asString()) {
+                    "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
+                    "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
+                    "kotlin.Throwable" -> CommonClassNames.JAVA_LANG_THROWABLE
+                    "kotlin.Cloneable" -> CommonClassNames.JAVA_LANG_CLONEABLE
+                    "kotlin.Number" -> CommonClassNames.JAVA_LANG_NUMBER
+                    "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE
+                    "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
+                    "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
+                    "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
+                    "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
+                    "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
+                    "kotlin.collections.List", "kotlin.collections.MutableList" -> CommonClassNames.JAVA_UTIL_LIST
+                    "kotlin.collections.ListIterator", "kotlin.collections.MutableListIterator" -> "java.util.ListIterator"
+                    "kotlin.collections.Set", "kotlin.collections.MutableSet" -> CommonClassNames.JAVA_UTIL_SET
+                    "kotlin.collections.Map", "kotlin.collections.MutableMap" -> CommonClassNames.JAVA_UTIL_MAP
+                    "kotlin.collections.MapEntry", "kotlin.collections.MutableMapEntry" -> CommonClassNames.JAVA_UTIL_MAP_ENTRY
+                    else -> rawName
                 }
-                val psiClass = JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
-                return TypeConstraints.exactClass(psiClass).instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                val typeConstraint = when (typeFqName) {
+                    "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
+                    "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
+                    "kotlin.LongArray" -> TypeConstraints.exact(PsiType.LONG.createArrayType())
+                    "kotlin.ShortArray" -> TypeConstraints.exact(PsiType.SHORT.createArrayType())
+                    "kotlin.CharArray" -> TypeConstraints.exact(PsiType.CHAR.createArrayType())
+                    "kotlin.BooleanArray" -> TypeConstraints.exact(PsiType.BOOLEAN.createArrayType())
+                    "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
+                    "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
+                    else -> {
+                        val psiClass =
+                            JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
+                        TypeConstraints.exactClass(psiClass).instanceOf()
+                    }
+                }
+                return typeConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             }
         }
         // TODO: Support type parameters
@@ -107,17 +137,17 @@ internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
     val boxed = canBeNull()
     fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
     return when (typeFqName) {
-        StandardNames.FqNames._int -> PsiType.INT.orBoxed()
-        StandardNames.FqNames._long -> PsiType.LONG.orBoxed()
-        StandardNames.FqNames._short -> PsiType.SHORT.orBoxed()
-        StandardNames.FqNames._boolean -> PsiType.BOOLEAN.orBoxed()
-        StandardNames.FqNames._byte -> PsiType.BYTE.orBoxed()
-        StandardNames.FqNames._char -> PsiType.CHAR.orBoxed()
-        StandardNames.FqNames._double -> PsiType.DOUBLE.orBoxed()
-        StandardNames.FqNames._float -> PsiType.FLOAT.orBoxed()
-        StandardNames.FqNames.unit -> PsiType.VOID.orBoxed()
-        StandardNames.FqNames.string -> PsiType.getJavaLangString(context.manager, context.resolveScope)
-        StandardNames.FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
+        FqNames._int -> PsiType.INT.orBoxed()
+        FqNames._long -> PsiType.LONG.orBoxed()
+        FqNames._short -> PsiType.SHORT.orBoxed()
+        FqNames._boolean -> PsiType.BOOLEAN.orBoxed()
+        FqNames._byte -> PsiType.BYTE.orBoxed()
+        FqNames._char -> PsiType.CHAR.orBoxed()
+        FqNames._double -> PsiType.DOUBLE.orBoxed()
+        FqNames._float -> PsiType.FLOAT.orBoxed()
+        FqNames.unit -> PsiType.VOID.orBoxed()
+        FqNames.string -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+        FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
         else -> null
     }
 }
