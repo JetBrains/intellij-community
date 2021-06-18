@@ -142,6 +142,26 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     doNegativeTest(getConvertListToSet());
   }
 
+  // PY-49288
+  public void testCannotConvertTupleInAnnotationToList() {
+    doNegativeTest(getConvertTupleToList());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInTypeCommentToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInFunctionTypeCommentToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInTypeAliasToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
   private static String getConvertTupleToList() {
     return PyPsiBundle.message("INTN.convert.collection.literal", "tuple", "list");
   }
