@@ -211,8 +211,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     val firstFile = files.find { it.name == "sphinx_cat.yml" }
     val secondFile = files.find { it.name == "puss_in_boots.yml" }
     if (firstFile != null && secondFile != null) {
-      gitChange(remoteProjectRoot, "user.name", "JonnyCatsville")
-      gitChange(remoteProjectRoot, "user.email", "jonny.catsville@meow.com")
+      gitChange(remoteProjectRoot, "user.name", "Johnny Catsville")
+      gitChange(remoteProjectRoot, "user.email", "johnny.catsville@meow.com")
       createOneFileCommit(remoteProjectRoot, firstFile, "Add new fact about sphinx's behaviour") {
         it.appendText(firstFileAddition)
       }
