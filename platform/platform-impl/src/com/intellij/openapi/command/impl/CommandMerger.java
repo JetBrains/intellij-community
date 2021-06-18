@@ -180,21 +180,27 @@ public final class CommandMerger {
   }
 
   void flushCurrentCommand() {
+    flushCurrentCommand(myManager.nextCommandTimestamp(), myManager.getUndoStacksHolder());
+  }
+
+  void flushCurrentCommand(int commandTimestamp, @NotNull UndoRedoStacksHolder stacksHolder) {
     if (hasActions()) {
       if (!myAdditionalAffectedDocuments.isEmpty()) {
         DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(DocumentReference.EMPTY_ARRAY);
         myCurrentActions.add(new MyEmptyUndoableAction(refs));
       }
 
-      myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
-                                                                    isGlobal(),
-                                                                    myManager,
-                                                                    myStateBefore,
-                                                                    myStateAfter,
-                                                                    myCurrentActions,
-                                                                    myUndoConfirmationPolicy,
-                                                                    isTransparent(),
-                                                                    myValid));
+      stacksHolder.addToStacks(new UndoableGroup(myCommandName,
+                                                 isGlobal(),
+                                                 commandTimestamp,
+                                                 myStateBefore,
+                                                 myStateAfter,
+                                                 myCurrentActions,
+                                                 stacksHolder,
+                                                 myManager.getProject(),
+                                                 myUndoConfirmationPolicy,
+                                                 isTransparent(),
+                                                 myValid));
     }
 
     reset();

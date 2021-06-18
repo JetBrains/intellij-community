@@ -42,24 +42,26 @@ final class UndoableGroup implements Dumpable {
 
   UndoableGroup(@NlsContexts.Command String commandName,
                 boolean isGlobal,
-                UndoManagerImpl manager,
+                int commandTimestamp,
                 EditorAndState stateBefore,
                 EditorAndState stateAfter,
                 @NotNull List<? extends UndoableAction> actions,
+                @NotNull UndoRedoStacksHolder stacksHolder,
+                @Nullable Project project,
                 UndoConfirmationPolicy confirmationPolicy,
                 boolean transparent,
                 boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
-    myCommandTimestamp = manager.nextCommandTimestamp();
+    myCommandTimestamp = commandTimestamp;
     myActions = actions;
-    myProject = manager.getProject();
+    myProject = project;
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
     myValid = valid;
-    composeStartFinishGroup(manager.getUndoStacksHolder());
+    composeStartFinishGroup(stacksHolder);
     myTemporary = transparent;
   }
 
