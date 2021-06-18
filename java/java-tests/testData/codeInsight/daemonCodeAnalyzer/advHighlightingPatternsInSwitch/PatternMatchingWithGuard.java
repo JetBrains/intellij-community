@@ -2,13 +2,13 @@
 class Main {
   static int m(Object o) {
 
-    int i1 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
+    int i1 = switch(o) {
       case String s && s.length() > 0 -> s.length();
       case String s -> s.length();
       default -> 1;
     };
 
-    int i2 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
+    int i2 = switch(o) {
       case String s && (s.length() > 0) -> s.length();
       case String s -> s.length();
       default -> 1;
