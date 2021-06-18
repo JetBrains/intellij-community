@@ -34,5 +34,3 @@ class FirKotlinUClass(
 // TODO: FirKotlinUAnonymousClass or FirKotlinUAnonymousObject ?
 
 // TODO: FirKotlinScriptUClass
-
-// TODO: FirKotlinInvalidUClass
