@@ -43,7 +43,7 @@ Includes the following features:</p>
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
-    <fileType name="Markdown" extensions="md;markdown" language="Markdown"
+    <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <lang.fileViewProviderFactory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
