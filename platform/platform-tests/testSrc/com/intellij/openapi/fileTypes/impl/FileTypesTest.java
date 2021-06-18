@@ -158,10 +158,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testIgnoreOrder() {
-    WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList("a;b;"));
-    assertEquals("a;b;", myFileTypeManager.getIgnoredFilesList());
-    WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList("b;a;"));
-    assertEquals("b;a;", myFileTypeManager.getIgnoredFilesList());
+    WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList("a;b"));
+    assertEquals("a;b", myFileTypeManager.getIgnoredFilesList());
+    WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList("b;a"));
+    assertEquals("b;a", myFileTypeManager.getIgnoredFilesList());
   }
 
   public void testIgnoredFiles() throws IOException {
@@ -915,11 +915,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void testDEFAULT_IGNOREDIsSorted() {
     List<String> strings = StringUtil.split(FileTypeManagerImpl.DEFAULT_IGNORED, ";");
     String sorted = strings.stream().sorted().collect(Collectors.joining(";"));
-    for (int i = 0; i < strings.size(); i++) {
-      String string = strings.get(i);
-      String prev = i == 0 ? "" : strings.get(i - 1);
-      assertTrue("FileTypeManagerImpl.DEFAULT_IGNORED must be sorted, but got: '" + prev + "' >= '" + string + "'. This would be better:\n" + sorted, prev.compareTo(string) < 0);
-    }
+
+    assertEquals("FileTypeManagerImpl.DEFAULT_IGNORED entries must be sorted", sorted, FileTypeManagerImpl.DEFAULT_IGNORED);
   }
 
   public void testRegisterUnregisterExtension() {

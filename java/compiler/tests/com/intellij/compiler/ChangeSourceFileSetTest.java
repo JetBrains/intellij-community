@@ -83,7 +83,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
       TestFileSystemBuilder all = fs().file("A.class").file("Ignored.class").dir("IgnoredDir").file("B.class").dir("p").file("C.class");
       assertOutput(m, all);
 
-      setIgnoredFiles(oldPatterns + "Ignored*;");
+      setIgnoredFiles(oldPatterns + ";Ignored*");
       make(m);
       assertOutput(m, fs().file("A.class"));
 
