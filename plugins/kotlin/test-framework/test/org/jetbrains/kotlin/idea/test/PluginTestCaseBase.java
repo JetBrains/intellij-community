@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.lang.JavaVersion;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.util.IjPlatformUtil;
@@ -59,6 +60,8 @@ public class PluginTestCaseBase {
             case FULL_JDK_9:
                 String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
                 return getSdk(jre9, "Full JDK 9");
+            case FULL_JDK_15:
+                return IdeaTestUtil.getMockJdk(LanguageLevel.JDK_15_PREVIEW.toJavaVersion());
             case FULL_JDK:
                 return fullJdk();
             default:
@@ -73,6 +76,8 @@ public class PluginTestCaseBase {
                 return LanguageLevel.JDK_1_8;
             case FULL_JDK_9:
                 return LanguageLevel.JDK_1_9;
+            case FULL_JDK_15:
+                return LanguageLevel.JDK_15_PREVIEW;
             case FULL_JDK:
                 return LanguageLevel.JDK_1_8;
             default:
