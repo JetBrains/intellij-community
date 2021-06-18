@@ -80,9 +80,13 @@ public final class SlowOperations {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread() ||
-        application.isWriteAccessAllowed() ||
-        ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
+    if (!application.isDispatchThread()) {
+      return;
+    }
+    if (application.isWriteAccessAllowed() && !Registry.is("ide.slow.operations.assertion.write.action")) {
+      return;
+    }
+    if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
     }
     if (isInsideActivity(FAST_TRACK)) {
