@@ -1087,56 +1087,16 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("fir/multiModule", isRecursive = false, pattern = DIRECTORY)
         }
 
-        testClass<AbstractFirLazyResolveTest> {
-            model("fir/lazyResolve", pattern = TEST, isRecursive = false)
-        }
-    }
-
-    testGroup("fir-low-level-api", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/fir/raw-fir/psi2fir/testData")) {
-        testClass<AbstractFirLazyBodiesCalculatorTest> {
-            model("rawBuilder", testMethodName = "doTest")
-        }
-    }
-
-    testGroup("fir-low-level-api", testDataPath = "testdata") {
-        testClass<AbstractFirMultiModuleLazyResolveTest> {
-            model("multiModuleLazyResolve", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractFirSealedInheritorsTest> {
-            model("resolveSealed", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractFirOnAirResolveTest> {
-            model("onAirResolve")
-        }
-        testClass<AbstractFirLazyDeclarationResolveTest> {
-            model("lazyResolve")
-        }
-        testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
-            model("libraryModuleResolve", isRecursive = false)
-        }
+    testGroup("idea/idea-frontend-fir/fir-low-level-api-ide-impl/tests", "idea/idea-frontend-fir/idea-fir-low-level-api/testdata") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
         }
-        testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
-            model("outOfBlockProjectWide")
-        }
-        testClass<AbstractFileStructureTest> {
-            model("fileStructure")
-        }
-        testClass<AbstractFirContextCollectionTest> {
-            model("fileStructure")
-        }
-        testClass<AbstractDiagnosticTraversalCounterTest> {
-            model("diagnosticTraversalCounter")
-        }
+//
+//      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
+//          model("outOfBlockProjectWide")
+//      }
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
-        }
-        testClass<AbstractInnerDeclarationsResolvePhaseTest> {
-            model("innerDeclarationsResolve")
-        }
-        testClass<AbstractPartialRawFirBuilderTestCase> {
-            model("partialRawBuilder", testMethodName = "doRawFirTest")
         }
     }
 
@@ -1152,40 +1112,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }*/
-
-    testGroup(
-        "fir-low-level-api",
-        testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/fir/analysis-tests/testData"),
-    ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(
-            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerFirTestdataTestGenerated"
-        ) {
-            model("resolve", pattern = KT_WITHOUT_DOTS)
-            model("resolveWithStdlib", pattern = KT_WITHOUT_DOTS)
-        }
-    }
-
-    testGroup(
-        "fir-low-level-api",
-        testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData"),
-    ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(
-            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerTestFE10TestdataTestGenerated"
-        ) {
-            model("diagnostics/tests", pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("diagnostics/testsWithStdLib", pattern = KT.withPrecondition(excludedFirPrecondition))
-        }
-    }
-
-    testGroup("fir-low-level-api", testDataPath = AdditionalKotlinArtifacts.compilerTestData(GeneralConfiguration.SPEC_TESTDATA_PATH)) {
-        testClass<AbstractDiagnosisCompilerTestDataSpecTest>(suiteTestClassName = "FirIdeSpecTest") {
-            model(
-                "diagnostics",
-                excludedDirectories = listOf("helpers") + detectDirsWithTestsMapFileOnly("diagnostics", baseDir = AdditionalKotlinArtifacts.compilerTestDataDir.canonicalPath),
-                pattern = KT.withPrecondition(excludedFirPrecondition),
-            )
-        }
-    }
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
