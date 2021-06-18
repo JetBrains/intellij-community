@@ -33,6 +33,14 @@ public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testPrimaryConstructor() {
+    doTest();
+  }
+  
+  public void testReceiverParameter() {
+    doTest();
+  }
+
   public void testStaticMethods() {
     doTest();
   }
