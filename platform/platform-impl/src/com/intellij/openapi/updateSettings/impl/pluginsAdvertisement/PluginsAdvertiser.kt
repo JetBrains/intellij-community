@@ -41,7 +41,7 @@ val notificationGroup: NotificationGroup
   get() = NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")
 
 @Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("Use `installAndEnable(Set, Runnable)`")
+@Deprecated("Use `installAndEnable(Project, Set, Boolean, Runnable)`")
 fun installAndEnablePlugins(
   pluginIds: Set<String>,
   onSuccess: Runnable,
@@ -52,6 +52,7 @@ fun installAndEnablePlugins(
   )
 }
 
+@Deprecated("Use `installAndEnable(Project, Set, Boolean, Runnable)`")
 fun installAndEnable(
   pluginIds: Set<PluginId>,
   onSuccess: Runnable,

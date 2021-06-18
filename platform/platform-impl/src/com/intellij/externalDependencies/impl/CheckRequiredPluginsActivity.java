@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -144,7 +144,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), join(errorMessages, "<br>"), NotificationType.ERROR)
       .setListener(notInstalled.isEmpty() ?
                    createEnableNotificationListener(project, disabled) :
-                   createInstallNotificationListener(notInstalled, disabled))
+                   createInstallNotificationListener(project, notInstalled, disabled))
       .notify(project);
   }
 
@@ -171,7 +171,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     };
   }
 
-  private static @NotNull NotificationListener createInstallNotificationListener(@NotNull Set<PluginId> notInstalled,
+  private static @NotNull NotificationListener createInstallNotificationListener(@NotNull Project project,
+                                                                                 @NotNull Set<PluginId> notInstalled,
                                                                                  @NotNull List<? extends IdeaPluginDescriptor> disabled) {
 
     HashSet<PluginId> pluginIds = new HashSet<>(notInstalled);
@@ -183,7 +184,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     return (notification, event) -> {
       if (!isApplicable(event, INSTALL)) return;
 
-      PluginsAdvertiser.installAndEnable(pluginIds, () -> notification.expire());
+      PluginsAdvertiser.installAndEnable(project, pluginIds, true, () -> notification.expire());
     };
   }
 

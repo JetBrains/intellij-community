@@ -79,7 +79,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
       }
     }
     else if (suggestionData.myJbProduced.isNotEmpty()) {
-      createInstallActionLabel(panel, suggestionData.myJbProduced, onPluginsInstalled)
+      createInstallActionLabel(project, panel, suggestionData.myJbProduced, onPluginsInstalled)
     }
     else if (suggestionData.suggestedIdes.isNotEmpty()) {
       val suggestedIdes = suggestionData.suggestedIdes
@@ -116,7 +116,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
       return panel    // Don't show the "Ignore extension" label
     }
     else if (!suggestionData.myThirdParty.isEmpty()) {
-      createInstallActionLabel(panel, suggestionData.myThirdParty, onPluginsInstalled)
+      createInstallActionLabel(project, panel, suggestionData.myThirdParty, onPluginsInstalled)
     }
     else {
       return null
@@ -210,13 +210,14 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotifications.Provider<
       }
     }
 
-    private fun createInstallActionLabel(panel: EditorNotificationPanel,
+    private fun createInstallActionLabel(project: Project,
+                                         panel: EditorNotificationPanel,
                                          dataSet: Set<PluginData>,
                                          onSuccess: Runnable) {
       val pluginIds = dataSet.mapTo(mutableSetOf(), PluginData::pluginId)
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins")) {
         FUSEventSource.EDITOR.logInstallPlugins(pluginIds.map { it.idString })
-        installAndEnable(pluginIds, onSuccess)
+        installAndEnable(project, pluginIds, true, onSuccess)
       }
     }
 

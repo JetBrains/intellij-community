@@ -38,7 +38,7 @@ fun suggestNativeDebug(projectPath: String) {
         .createNotification(KotlinIdeaGradleBundle.message("notification.title.plugin.suggestion"), KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"), NotificationType.INFORMATION)
         .addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.install")) {
             override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                installAndEnable(setOf<@NotNull PluginId>(pluginId)) { notification.expire() }
+                installAndEnable(project, setOf<@NotNull PluginId>(pluginId)) { notification.expire() }
             }
         })
         .addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.dontShowAgain")) {
