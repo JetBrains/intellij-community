@@ -100,8 +100,14 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     return pane;
   }
 
-  @Override
-  public void addAll(@NotNull Collection<? extends PluginDownloader> orderEntries) {
+  public void addAll(@NotNull Collection<? extends PluginDownloader> orderEntries, @Nullable PluginDownloader selectedPlugin) {
+    if (selectedPlugin != null) {
+      for (PluginDownloader entry : orderEntries) {
+        if (entry != selectedPlugin) {
+          mySkippedPlugins.add(entry.getId());
+        }
+      }
+    }
     super.addAll(orderEntries);
     TableUtil.ensureSelectionExists(getEntryTable());
   }

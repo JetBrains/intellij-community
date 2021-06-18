@@ -52,7 +52,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-      myPanel.addAll(myPluginToInstall);
+      myPanel.addAll(myPluginToInstall, myPluginToInstall.iterator().next());
     }
     return myPanel;
   }
