@@ -525,7 +525,8 @@
              tip-file="BreakpointSpeedmenu.html">
       <event-detector type="action" id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
     </feature>
-    <feature id="debugger.evaluate.expression"/>
+    <feature id="debugger.evaluate.expression"
+             tip-file="EvaluateExpression.html"/>
   </group>
 
   <group id="intentions">
