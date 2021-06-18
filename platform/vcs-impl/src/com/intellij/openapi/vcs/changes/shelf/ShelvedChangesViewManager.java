@@ -792,12 +792,7 @@ public class ShelvedChangesViewManager implements Disposable {
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
       });
-      if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
-        editorPreview.openWithSingleClick(myTree);
-      }
-      else {
-        editorPreview.openWithDoubleClick(myTree);
-      }
+      editorPreview.installListeners(myTree);
       editorPreview.installNextDiffActionOn(myTreeScrollPane);
 
       return editorPreview;
