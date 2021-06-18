@@ -62,6 +62,8 @@
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade"
                             serviceImplementation="org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl"/>
+
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger"/>
     </extensions>
 
     <actions>
