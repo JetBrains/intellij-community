@@ -1,18 +1,19 @@
 <html>
 <body>
-Reports conditional expressions with <em>then</em> and <em>else</em> branches so similar that the conditional expression can be pushed inside, thereby shortening the code.
+Reports conditional expressions with <code>then</code> and <c>else</c> branches that are similar enough so that the expression can be moved
+inside. This action shortens the code.
 <p>Example:</p>
-<pre>
+<pre><code>
   double g(int a, int b) {
     return a == b ? Math.cos(0) : Math.cos(1);
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   double g(int a, int b) {
     return Math.cos(a == b ? 0 : 1);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>
