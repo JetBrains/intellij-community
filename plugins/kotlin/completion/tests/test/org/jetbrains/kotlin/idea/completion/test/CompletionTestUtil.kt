@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.test
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.Assert
@@ -60,4 +61,66 @@ private fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
         settings.AUTOCOMPLETE_ON_CODE_COMPLETION = oldValue1
         settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = oldValue2
     }
+}
+
+internal fun JavaCodeInsightTestFixture.addCharacterCodingException() {
+    addClass(
+        """
+        package java.nio.charset;
+                                
+        import java.io.IOException;            
+        
+        public class CharacterCodingException extends IOException {}
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addAppendable() {
+    addClass(
+        """
+        package java.lang;
+        
+        import java.io.IOException;
+        
+        public interface Appendable {
+            Appendable append(CharSequence csq) throws IOException;
+            Appendable append(CharSequence csq, int start, int end) throws IOException;
+            Appendable append(char c) throws IOException;
+        }
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addHashSet() {
+    addClass(
+        """
+        package java.util;
+        
+        import java.io.Serializable;
+        
+        public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Serializable {
+            @Override
+            public Iterator<E> iterator() {
+                return null;
+            }
+                    
+            @Override
+            public int size() {
+                return 0;
+            }
+        }
+        """.trimIndent()
+    )
+}
+
+internal fun JavaCodeInsightTestFixture.addLinkedHashSet() {
+    addClass(
+        """
+        package java.util;
+        
+        import java.io.Serializable;
+                    
+        public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable, Serializable {}
+        """.trimIndent()
+    )
 }
