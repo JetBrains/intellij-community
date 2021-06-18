@@ -15,7 +15,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -126,9 +125,6 @@ public final class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        if (entry instanceof ContentEntryImpl) {
-          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
-        }
         return entry;
       }
     }

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -197,12 +196,6 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @NotNull
-  public Library cloneLibrary(@NotNull RootModelImpl rootModel) {
-    LOG.assertTrue(myLibraryTable == null);
-    return new LibraryImpl(this, null, rootModel);
-  }
-
-  @NotNull
   @Override
   public List<String> getInvalidRootUrls(@NotNull OrderRootType type) {
     if (myDisposed) return Collections.emptyList();
@@ -242,8 +235,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NotNull
   private VirtualFilePointerListener getListener() {
     Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
-    return myRootModel != null ? ((RootModelImpl)myRootModel).getRootsChangedListener() : project != null ? ProjectRootManagerImpl
-      .getInstanceImpl(project).getRootsValidityChangedListener() : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
+    return project != null
+           ? ProjectRootManagerImpl.getInstanceImpl(project).getRootsValidityChangedListener()
+           : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
   }
 
   @Nullable

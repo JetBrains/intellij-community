@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ClonableOrderEntry
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.SdkFinder
 import com.intellij.openapi.roots.libraries.Library
@@ -134,7 +133,18 @@ internal class ModuleOrderEntryBridge(
   override fun getUrls(rootType: OrderRootType): Array<String> = getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   private fun getEnumerator(rootType: OrderRootType) = ownerModuleBridge.let {
-    ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it)
+    getEnumeratorForType(rootType, it).usingCache()
+  }
+
+  private fun getEnumeratorForType(type: OrderRootType, module: Module): OrderRootsEnumerator {
+    val base = OrderEnumerator.orderEntries(module)
+    if (type === OrderRootType.CLASSES) {
+      return base.exportedOnly().withoutModuleSourceEntries().recursively().classes()
+    }
+    return if (type === OrderRootType.SOURCES) {
+      base.exportedOnly().recursively().sources()
+    }
+    else base.roots(type)
   }
 
   override fun getPresentableName() = moduleName
