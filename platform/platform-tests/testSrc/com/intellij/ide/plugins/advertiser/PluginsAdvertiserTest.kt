@@ -79,6 +79,13 @@ class PluginsAdvertiserTest {
   }
 
   @Test
+  fun suggestionForNonPlainTextFile() {
+    preparePluginCache("build.xml" to PluginData("Ant"))
+    val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IU", "build.xml", SupportedFileType())
+    assertEquals(listOf("Ant"), suggestion!!.myThirdParty.map { it.pluginIdString })
+  }
+
+  @Test
   fun noSuggestionForUnknownExtension() {
     preparePluginCache("*.jaba" to null)
     val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IC", "foo.jaba", PlainTextFileType.INSTANCE)

@@ -195,10 +195,9 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
         return null
       }
 
+      // Check if there's a plugin matching the exact file name
+
       state[fileName]?.let {
-        return it
-      }
-      fullExtension?.let { state[it] }?.let {
         return it
       }
 
@@ -208,22 +207,31 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
         return null
       }
 
+      val plugin = findEnabledPlugin(knownExtensions[fileName].map { it.pluginIdString }.toSet())
+      if (plugin != null) {
+        // Plugin supporting the exact file name is installed and enabled, no advertiser is needed
+        return null
+      }
+
+      val pluginsForExactFileName = cache.getIfPresent(fileName)
+      if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
+        return pluginsForExactFileName
+      }
+      if (knownExtensions[fileName].isNotEmpty()) {
+        // there is a plugin that can support the exact file name but we don't know a compatible version, return null to force request to update cache
+        return null
+      }
+
+      // Check if there's a plugin matching the extension
+
+      fullExtension?.let { state[it] }?.let {
+        return it
+      }
+
       if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
-        val pluginsForExactFileName = cache.getIfPresent(fileName)
-        if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
-          return pluginsForExactFileName
-        }
         return fullExtension?.let { cache.getIfPresent(it) } ?: PluginAdvertiserExtensionsData(fileName, emptySet())
       }
-
-      val plugin = findEnabledPlugin(knownExtensions[fileName].map { it.pluginIdString }.toSet())
-      LOG.debug {
-        val suffix = plugin?.let { "by fileName via '${it.name}'(id: '${it.pluginId}') plugin" }
-                     ?: "therefore looking only for plugins exactly matching fileName"
-        "File '$fileName' (type: '$fileType') is already supported $suffix"
-      }
-
-      return if (plugin != null) null else cache.getIfPresent(fileName)
+      return null
     }
 
     private fun isIgnored(extensionOrFileName: String): Boolean {
