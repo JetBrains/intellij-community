@@ -188,7 +188,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         FileType fileType = mergeOrInstantiateFileTypeBean(fileTypeBean);
 
-        fileTypeAdded(fileType, ApplicationManager.getApplication().isUnitTestMode());
+        fireFileTypesChanged(fileType, null);
       }
 
       @Override
@@ -261,12 +261,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       for (FileNameMatcher matcher : extension.getMatchers()) {
         myPatternsTable.removeAssociation(matcher, descriptorForStandard(stdFileType));
       }
-      fileTypeAdded(stdFileType.fileType, ApplicationManager.getApplication().isUnitTestMode());
+      fireFileTypesChanged(stdFileType.fileType, null);
     });
-  }
-
-  private void fileTypeAdded(@NotNull FileType fileType, boolean later) {
-    fireFileTypesChanged(fileType, null);
   }
 
   @NotNull
@@ -406,19 +402,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static void handleFileTypesConflict(FileTypeBean bean, FileTypeBean otherBean) {
+  private static void handleFileTypesConflict(@NotNull FileTypeBean bean, @NotNull FileTypeBean otherBean) {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       PluginConflictReporter conflictReporter = application.getService(PluginConflictReporter.class);
       if (conflictReporter != null) {
         Set<PluginId> conflictingPlugins = new HashSet<>();
-        if (bean.getPluginId() != null) {
-          conflictingPlugins.add(bean.getPluginId());
-        }
-        if (otherBean.getPluginId() != null) {
-          conflictingPlugins.add(otherBean.getPluginId());
-        }
-        boolean hasConflictWithPlatform = bean.getPluginId() == null || otherBean.getPluginId() == null;
+        // assume core plugins are not stupid enough to register two file types with the same name and if they are, the tests are going to catch that
+        conflictingPlugins.add(bean.getPluginId());
+        conflictingPlugins.add(otherBean.getPluginId());
+        boolean hasConflictWithPlatform = PluginManagerCore.CORE_ID.equals(bean.getPluginId()) ||
+                                          PluginManagerCore.CORE_ID.equals(otherBean.getPluginId());
         conflictReporter.reportConflict(conflictingPlugins, hasConflictWithPlatform);
         return;
       }
@@ -1628,7 +1622,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         FileTypeBean pendingTypeByMatcher = myPendingAssociations.findAssociatedFileType(matcher);
         if (pendingTypeByMatcher != null) {
           PluginId pluginId = pendingTypeByMatcher.getPluginId();
-          if (pluginId == null || PluginManagerCore.CORE_ID.equals(pluginId)) {
+          if (PluginManagerCore.CORE_ID.equals(pluginId)) {
             instantiateFileTypeBean(pendingTypeByMatcher);
           }
         }
