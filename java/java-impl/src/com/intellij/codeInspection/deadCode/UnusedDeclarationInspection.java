@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -12,6 +12,8 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -56,14 +58,22 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     if (myLocalInspectionBase.PARAMETER) {
       globalContext.getRefManager().iterate(new RefVisitor() {
         @Override public void visitElement(@NotNull RefEntity refEntity) {
-          if (!(refEntity instanceof RefMethod) ||
-              !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
-              !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase.getParameterVisibility())) {
-            return;
+          try {
+            if (!(refEntity instanceof RefMethod) ||
+                !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
+                !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase.getParameterVisibility())) {
+              return;
+            }
+            CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
+            if (descriptors != null) {
+              problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
+            }
           }
-          CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
-          if (descriptors != null) {
-            problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error("Exception on '" + refEntity.getExternalName() + "'", e);
           }
         }
       });
