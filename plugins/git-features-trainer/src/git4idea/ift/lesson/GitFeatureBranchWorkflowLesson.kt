@@ -41,7 +41,13 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private val remoteName = "origin"
   private val branchName = "feature"
   private val main = "main"
-  private lateinit var repository: GitRepository
+
+  private val firstFileName = "sphinx_cat.yml"
+  private val secondFileName = "puss_in_boots.yml"
+  private val committerName = "Johnny Catsville"
+  private val committerEmail = "johnny.catsville@meow.com"
+  private val firstCommitMessage = "Add new fact about sphinx's behaviour"
+  private val secondCommitMessage = "Add fact about Puss in boots"
 
   private val firstFileAddition = """
     |
@@ -56,6 +62,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     |        condition: favourite sword become blunt
     |        actions:
     |          - sharpen the sword using the stone""".trimMargin()
+
+  private lateinit var repository: GitRepository
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -208,15 +216,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private fun modifyRemoteProject(remoteProjectRoot: File) {
     val files = mutableListOf<File>()
     FileUtil.processFilesRecursively(remoteProjectRoot, files::add)
-    val firstFile = files.find { it.name == "sphinx_cat.yml" }
-    val secondFile = files.find { it.name == "puss_in_boots.yml" }
+    val firstFile = files.find { it.name == firstFileName }
+    val secondFile = files.find { it.name == secondFileName }
     if (firstFile != null && secondFile != null) {
-      gitChange(remoteProjectRoot, "user.name", "Johnny Catsville")
-      gitChange(remoteProjectRoot, "user.email", "johnny.catsville@meow.com")
-      createOneFileCommit(remoteProjectRoot, firstFile, "Add new fact about sphinx's behaviour") {
+      gitChange(remoteProjectRoot, "user.name", committerName)
+      gitChange(remoteProjectRoot, "user.email", committerEmail)
+      createOneFileCommit(remoteProjectRoot, firstFile, firstCommitMessage) {
         it.appendText(firstFileAddition)
       }
-      createOneFileCommit(remoteProjectRoot, secondFile, "Add fact about Puss in boots") {
+      createOneFileCommit(remoteProjectRoot, secondFile, secondCommitMessage) {
         it.appendText(secondFileAddition)
       }
     }
