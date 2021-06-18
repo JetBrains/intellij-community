@@ -68,7 +68,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 is KtLightClass -> {
                     // TODO: differentiate enum entry
-                    el<UClass> { AbstractFirKotlinUClass.create(original, givenParent) }
+                    el<UClass> { FirKotlinUClass.create(original, givenParent) }
                 }
                 is KtClassOrObject -> {
                     convertClassOrObject(original, givenParent, requiredTypes).firstOrNull()
@@ -123,7 +123,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             // File
             alternative { KotlinUFile(element, firKotlinUastPlugin) },
             // Facade
-            alternative { element.findFacadeClass()?.let { AbstractFirKotlinUClass.create(it, givenParent) } }
+            alternative { element.findFacadeClass()?.let { FirKotlinUClass.create(it, givenParent) } }
         )
     }
 
@@ -133,7 +133,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
         requiredTypes: Array<out Class<out UElement>>
     ): Sequence<UElement> {
         val ktLightClass = element.toLightClass() ?: return emptySequence()
-        val uClass = AbstractFirKotlinUClass.create(ktLightClass, givenParent)
+        val uClass = FirKotlinUClass.create(ktLightClass, givenParent)
         return requiredTypes.accommodate(
             // Class
             alternative { uClass },
