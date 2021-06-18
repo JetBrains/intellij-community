@@ -16,11 +16,12 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     override fun getGroup() = GROUP
 
-    override fun getVersion() = 1
+    override fun getVersion() = VERSION
 
     companion object {
 
-        private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, 1);
+        private const val VERSION = 1
+        private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
         private val coordinatesField = EventFields.StringValidatedByCustomRule(FUSGroupIds.COORDINATES, FUSGroupIds.COORDINATES)
