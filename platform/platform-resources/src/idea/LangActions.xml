@@ -1203,8 +1203,6 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
-      <reference ref="CreateRunConfiguration"/>
-      <separator/>
       <action id="XDebugger.PreviewTab" class="com.intellij.xdebugger.impl.actions.OpenFilesInPreviewTabAction"/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>
