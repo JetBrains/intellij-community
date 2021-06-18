@@ -195,6 +195,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         scheduleDiffUpdate(Couple.of(first, last));
       }
     });
+    myToolBar.setTargetComponent(myRevisionsList.getComponent());
     PopupHandler.installPopupMenu(myRevisionsList.getComponent(), actions, "LvcsRevisionsListPopup");
 
 

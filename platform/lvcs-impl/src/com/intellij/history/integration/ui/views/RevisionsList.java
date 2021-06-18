@@ -78,6 +78,13 @@ public final class RevisionsList {
     return table;
   }
 
+  public void moveSelection(boolean fwd) {
+    int index = table.getSelectionModel().getLeadSelectionIndex();
+    int count = table.getRowCount();
+    int newIdx = (count + index + (fwd ? 1 : -1)) % count;
+    table.getSelectionModel().setSelectionInterval(newIdx, newIdx);
+  }
+
   private void addSelectionListener(SelectionListener listener) {
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       private final SelectionListener mySelectionListener = listener;

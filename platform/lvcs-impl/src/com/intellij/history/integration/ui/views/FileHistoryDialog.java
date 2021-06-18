@@ -10,20 +10,23 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffPanel;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.SearchTextArea;
+import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -32,6 +35,7 @@ import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,18 +75,25 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected void addExtraToolbar(JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
-    Ref<LoadingDecorator> decorator = Ref.create();
+    new NextOccurenceAction(true).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT),
+      Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    )), mySearchTextArea);
+    new NextOccurenceAction(false).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS),
+      Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+    )), mySearchTextArea);
+    LoadingDecorator decorator = new ProgressBarLoadingDecorator(mySearchTextArea, this, 500) {
+      @Override
+      protected boolean isOnTop() { return false; }
+    };
     mySearchTextArea.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        applyFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()), decorator.get());
+        applyFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()), decorator);
       }
     });
-    decorator.set(new ProgressBarLoadingDecorator(mySearchTextArea, this, 500) {
-      @Override
-      protected boolean isOnTop() { return false; }
-    });
-    toolBarPanel.add(decorator.get().getComponent(), BorderLayout.CENTER);
+    toolBarPanel.add(decorator.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -141,6 +152,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     }
     if (session == null) {
       session = EditorSearchSession.start(editor, myProject);
+      session.searchForward();
     }
     session.setTextInField(filter);
   }
@@ -180,5 +192,29 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected String getHelpId() {
     return "reference.dialogs.showhistory";
+  }
+
+  private class NextOccurenceAction extends DumbAwareAction {
+    private final boolean myForward;
+    private NextOccurenceAction(boolean forward) {
+      myForward = forward;
+    }
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Editor editor = findLeftEditor();
+      if (editor == null) return;
+      EditorSearchSession session = EditorSearchSession.get(editor);
+      if (session != null && session.hasMatches()) {
+        if (session.isLast(myForward)) {
+          myRevisionsList.moveSelection(myForward);
+        }
+        else if (myForward) {
+          session.searchForward();
+        }
+        else {
+          session.searchBackward();
+        }
+      }
+    }
   }
 }
