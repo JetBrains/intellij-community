@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 
 internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, private val isRunningFromSources: Boolean) : PathResolver {
   override val isFlat: Boolean
@@ -37,11 +36,14 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
         descriptor.`package` = "com.intellij.profiler.clion"
         return descriptor
       }
+
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader is LocalFsDataLoader) {
         try {
           resource = Files.newInputStream(dataLoader.basePath.parent.resolve("${path.substring(0, path.length - 4)}/$path"))
         }
-        catch (e: NoSuchFileException) {
+        catch (e: Exception) {
+          throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
+                                 "Please ensure that project is built (Build -> Build Project).", e)
         }
       }
 
