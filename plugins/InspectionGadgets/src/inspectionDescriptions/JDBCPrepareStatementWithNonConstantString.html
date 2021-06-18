@@ -1,9 +1,12 @@
 <html>
 <body>
 Reports calls to <code>java.sql.Connection.prepareStatement()</code>, <code>java.sql.Connection.prepareCall()</code>, or any of their
-variants, which take a dynamically-constructed string as the statement to prepare. Constructed SQL statements are a common source of
-security breaches. By default this inspection ignores compile-time constants.
-<p>Example:</p>
+variants which take a dynamically-constructed string as the statement to prepare.
+<p>
+  Constructed SQL statements are a common source of
+  security breaches. By default, this inspection ignores compile-time constants.
+</p>
+<p><b>Example:</b></p>
 <pre>
   String bar() { return "bar"; }
 
@@ -11,7 +14,7 @@ security breaches. By default this inspection ignores compile-time constants.
   connection.("SELECT * FROM user WHERE name='" + bar() + "'");
 </pre>
 <!-- tooltip end -->
-Use the checkbox below to consider any <code>static</code> <code>final</code> fields as constants. Be careful, because strings like the
+Use the inspection settings to consider any <code>static</code> <code>final</code> fields as constants. Be careful, because strings like the
 following will be ignored when the option is enabled:
 <pre>
   static final String SQL = "SELECT * FROM user WHERE name='" + getUserInput() + "'";
