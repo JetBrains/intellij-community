@@ -135,7 +135,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       EventFields.String("name", arrayListOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")),
       EventFields.Long("value")
     )
-    private val JVM_CLIENT_PROPERTIES: EventId2<String?, Boolean> = GROUP.registerEvent("jvm.client.properties.splash",
+    private val JVM_CLIENT_PROPERTIES: EventId2<String?, Boolean> = GROUP.registerEvent("jvm.client.properties",
                                                                                         EventFields.String("name", splashClientProperties),
                                                                                         EventFields.Boolean("value")
     )
