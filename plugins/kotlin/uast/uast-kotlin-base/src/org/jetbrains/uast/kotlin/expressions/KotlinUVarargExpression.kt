@@ -8,52 +8,16 @@ import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
-class KotlinUNamedExpression private constructor(
-    override val name: String?,
-    override val sourcePsi: PsiElement?,
-    givenParent: UElement?,
-    expressionProducer: (UElement) -> UExpression
-) : KotlinAbstractUElement(givenParent), UNamedExpression {
-
-    override val expression: UExpression by lz { expressionProducer(this) }
-
-    override val uAnnotations: List<UAnnotation> = emptyList()
-
-    override val psi: PsiElement? = null
-
-    override val javaPsi: PsiElement? = null
-
-    companion object {
-        internal fun create(name: String?, valueArgument: ValueArgument, uastParent: UElement?): UNamedExpression {
-            val expression = valueArgument.getArgumentExpression()
-            return KotlinUNamedExpression(name, valueArgument.asElement(), uastParent) { expressionParent ->
-                expression?.let { expressionParent.getLanguagePlugin().convertOpt<UExpression>(it, expressionParent) }
-                    ?: UastEmptyExpression(expressionParent)
-            }
-        }
-
-        internal fun create(
-            name: String?,
-            valueArguments: List<ValueArgument>,
-            uastParent: UElement?
-        ): UNamedExpression {
-            return KotlinUNamedExpression(name, null, uastParent) { expressionParent ->
-                KotlinUVarargExpression(valueArguments, expressionParent)
-            }
-        }
-    }
-}
-
 class KotlinUVarargExpression(
     private val valueArgs: List<ValueArgument>,
     uastParent: UElement?
-) : KotlinAbstractUExpression(uastParent), UCallExpressionEx, DelegatedMultiResolve {
+) : KotlinAbstractUExpression(uastParent), UCallExpression, DelegatedMultiResolve {
     override val kind: UastCallKind = UastCallKind.NESTED_ARRAY_INITIALIZER
 
     override val valueArguments: List<UExpression> by lz {
         valueArgs.map {
             it.getArgumentExpression()?.let { argumentExpression ->
-                getLanguagePlugin().convert<UExpression>(argumentExpression, this)
+                getLanguagePlugin().convertOpt(argumentExpression, this)
             } ?: UastEmptyExpression(this)
         }
     }
