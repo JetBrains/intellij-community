@@ -1,11 +1,9 @@
 <html>
 <body>
-Reports any instantiations of the <code>java.lang.ClassLoader</code> class.
+Reports instantiations of the <code>java.lang.ClassLoader</code> class.
 <p>While often benign, any instantiations of <code>ClassLoader</code> should be closely examined in any security audit.</p>
-<p>Example:</p>
-<pre>
-  <code>
-    Class&lt;?&gt; loadExtraClass(String name) throws Exception {
+<p><b>Example:</b></p>
+<pre><code>    Class&lt;?&gt; loadExtraClass(String name) throws Exception {
       try(URLClassLoader loader =
           new URLClassLoader(new URL[]{new URL("extraClasses/")})) {
         return loader.loadClass(name);
