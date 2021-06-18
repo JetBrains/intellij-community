@@ -11,6 +11,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -40,10 +41,17 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
       settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
     }
 
-    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), { it is JavaSdkType }, null, null, null)
+    val sdkModel = ProjectSdksModel()
+    val sdkCombo = JdkComboBox(null, sdkModel, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
-      .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
-
+      .also { combo ->
+        combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk })
+        val sdk = ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk
+        if (sdk != null && sdk.sdkType is JavaSdkType) {
+          sdkModel.addSdk(sdk)
+          combo.selectedJdk = sdk
+        }
+      }
     settings.buildSystemProperty.set(settings.buildSystemButtons.value.first())
 
     return listOf(
@@ -56,8 +64,9 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     settings.buildSystemProperty.get().setupProject(project, settings)
 
     settings.sdk?.let { sdk ->
+      val table = ProjectJdkTable.getInstance()
       runWriteAction {
-        ProjectJdkTable.getInstance().addJdk(sdk)
+        if (table.findJdk(sdk.name) == null) table.addJdk(sdk)
         ProjectRootManager.getInstance(project).projectSdk = sdk
       }
     }
