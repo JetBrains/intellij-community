@@ -5,9 +5,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 
-interface ExternalSystemDistributionsInfo {
-  val hint: @Nls String?
-  val name: @Nls(capitalization = Nls.Capitalization.Sentence) String
+interface DistributionsInfo {
+  val settingsName: @Nls(capitalization = Nls.Capitalization.Sentence) String?
+  val settingsGroup: @Nls(capitalization = Nls.Capitalization.Title) String?
+  val settingsPriority: Int
+  val settingsHint: @Nls String?
+  val settingsActionHint: @Nls String?
 
   val comboBoxPreferredWidth: Int?
   val comboBoxActionName: @Nls(capitalization = Nls.Capitalization.Sentence) String
@@ -16,5 +19,5 @@ interface ExternalSystemDistributionsInfo {
   val fileChooserDescription: @NlsContexts.Label String?
   val fileChooserDescriptor: FileChooserDescriptor
 
-  val distributions: List<ExternalSystemDistributionInfo>
+  val distributions: List<DistributionInfo>
 }

@@ -9,7 +9,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -103,24 +106,22 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   }
 
   @Transient
-  @ApiStatus.Experimental
-  public void setTasksAndArguments(@NotNull String tasksAndArguments) {
+  public void setCommandLine(@NotNull String commandLine) {
     setTaskNames(new ArrayList<>());
-    setScriptParameters(tasksAndArguments);
+    setScriptParameters(commandLine);
   }
 
   @Transient
-  @ApiStatus.Experimental
-  public @NotNull String getTasksAndArguments() {
-    StringJoiner tasksAndArguments = new StringJoiner(" ");
+  public @NotNull String getCommandLine() {
+    StringJoiner commandLine = new StringJoiner(" ");
     for (String taskName : getTaskNames()) {
-      tasksAndArguments.add(taskName);
+      commandLine.add(taskName);
     }
     String scriptParameters = getScriptParameters();
     if (StringUtil.isNotEmpty(scriptParameters)) {
-      tasksAndArguments.add(scriptParameters);
+      commandLine.add(scriptParameters);
     }
-    return tasksAndArguments.toString();
+    return commandLine.toString();
   }
 
   @NotNull

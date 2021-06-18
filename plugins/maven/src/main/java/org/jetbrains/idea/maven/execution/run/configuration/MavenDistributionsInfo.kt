@@ -2,8 +2,9 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionsInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.AbstractDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.util.io.FileUtil
@@ -14,9 +15,12 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
-  override val hint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
-  override val name: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
+class MavenDistributionsInfo : DistributionsInfo {
+  override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
+  override val settingsGroup: String? = null
+  override val settingsPriority: Int = 90
+  override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
+  override val settingsActionHint: String? = null
 
   override val comboBoxPreferredWidth: Int = JBUI.scale(120)
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
@@ -25,8 +29,8 @@ class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
   override val fileChooserDescription: String? = null
   override val fileChooserDescriptor: FileChooserDescriptor = BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR
 
-  override val distributions: List<ExternalSystemDistributionInfo> by lazy {
-    ArrayList<ExternalSystemDistributionInfo>().apply {
+  override val distributions: List<DistributionInfo> by lazy {
+    ArrayList<DistributionInfo>().apply {
       addIfNotNull(asDistributionInfo(MavenServerManager.BUNDLED_MAVEN_3))
       addIfNotNull(asDistributionInfo(MavenServerManager.WRAPPED_MAVEN))
       val mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null)
@@ -37,7 +41,7 @@ class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
     }
   }
 
-  open class BundledDistributionInfo(version: String) : ExternalSystemDistributionInfo() {
+  open class BundledDistributionInfo(version: String) : AbstractDistributionInfo() {
     override val name: String = MavenConfigurableBundle.message("maven.run.configuration.bundled.distribution.name", version)
     override val description: String = MavenConfigurableBundle.message("maven.run.configuration.bundled.distribution.description")
   }
@@ -45,13 +49,13 @@ class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
   class Bundled2DistributionInfo(version: String?) : BundledDistributionInfo(version ?: "2")
   class Bundled3DistributionInfo(version: String?) : BundledDistributionInfo(version ?: "3")
 
-  class WrappedDistributionInfo : ExternalSystemDistributionInfo() {
+  class WrappedDistributionInfo : AbstractDistributionInfo() {
     override val name: String = MavenProjectBundle.message("maven.wrapper.version.title")
     override val description: String? = null
   }
 
   companion object {
-    fun asDistributionInfo(mavenHome: String?): ExternalSystemDistributionInfo? {
+    fun asDistributionInfo(mavenHome: String?): DistributionInfo? {
       val version = MavenServerManager.getMavenVersion(mavenHome)
       return when (mavenHome) {
         MavenServerManager.BUNDLED_MAVEN_2 -> Bundled2DistributionInfo(version)
@@ -62,7 +66,7 @@ class MavenDistributionsInfo : ExternalSystemDistributionsInfo {
       }
     }
 
-    fun asMavenHome(distribution: ExternalSystemDistributionInfo?): String? {
+    fun asMavenHome(distribution: DistributionInfo?): String? {
       return when (distribution) {
         is Bundled2DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_2
         is Bundled3DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_3

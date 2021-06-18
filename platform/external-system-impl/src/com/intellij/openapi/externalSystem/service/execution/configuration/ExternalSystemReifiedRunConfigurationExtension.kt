@@ -8,7 +8,7 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
   private val runConfigurationClass: Class<C>
 ) : ExternalSystemRunConfigurationExtension() {
 
-  abstract fun MutableList<SettingsEditorFragment<C, *>>.configureFragments(configuration: C)
+  abstract fun SettingsFragmentsContainer<C>.configureFragments(configuration: C)
 
   override fun isApplicableFor(configuration: ExternalSystemRunConfiguration): Boolean {
     return runConfigurationClass.isInstance(configuration)
@@ -16,8 +16,8 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
 
   @Suppress("UNCHECKED_CAST")
   override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditorFragment<P, *>> {
-    val fragments = ArrayList<SettingsEditorFragment<C, *>>()
-    fragments.configureFragments(configuration as C)
-    return fragments as List<SettingsEditorFragment<P, *>>
+    return SettingsFragmentsContainer.fragments<C> {
+      configureFragments(configuration as C)
+    } as List<SettingsEditorFragment<P, *>>
   }
 }

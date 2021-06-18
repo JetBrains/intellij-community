@@ -24,16 +24,16 @@ import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
 
 
-class ExternalSystemDistributionComboBox(
+class DistributionComboBox(
   project: Project,
-  distributionsInfo: ExternalSystemDistributionsInfo
-) : ComboBox<ExternalSystemDistributionInfo>(CollectionComboBoxModel()) {
+  distributionsInfo: DistributionsInfo
+) : ComboBox<DistributionInfo>(CollectionComboBoxModel()) {
 
-  private val collectionModel: CollectionComboBoxModel<ExternalSystemDistributionInfo>
+  private val collectionModel: CollectionComboBoxModel<DistributionInfo>
     get() = model as CollectionComboBoxModel
 
-  var selectedDistribution: ExternalSystemDistributionInfo
-    get() = selectedItem as ExternalSystemDistributionInfo
+  var selectedDistribution: DistributionInfo
+    get() = selectedItem as DistributionInfo
     set(distribution) {
       selectedItem = distribution
     }
@@ -41,14 +41,14 @@ class ExternalSystemDistributionComboBox(
   override fun setSelectedItem(anObject: Any?) {
     val distribution = when (anObject) {
       is SpecifyDistributionActionInfo -> LocalDistributionInfo(System.getProperty("user.home", ""))
-      is ExternalSystemDistributionInfo -> anObject
+      is DistributionInfo -> anObject
       else -> return
     }
     addIfNotExists(distribution)
     super.setSelectedItem(distribution)
   }
 
-  private fun addIfNotExists(distribution: ExternalSystemDistributionInfo) {
+  private fun addIfNotExists(distribution: DistributionInfo) {
     if (distribution !in collectionModel.items) {
       collectionModel.add(distribution)
     }
@@ -89,7 +89,7 @@ class ExternalSystemDistributionComboBox(
       }
       actionMap.put(DefaultEditorKit.pasteAction, object : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
-          val comboBox = e.source as? ExternalSystemDistributionComboBox ?: return
+          val comboBox = e.source as? DistributionComboBox ?: return
           val clipboardText = ClipboardUtil.getTextInClipboard() ?: return
           val distribution = comboBox.selectedDistribution
           if (distribution is LocalDistributionInfo) {
@@ -103,10 +103,10 @@ class ExternalSystemDistributionComboBox(
     }
   }
 
-  private class Renderer : ColoredListCellRenderer<ExternalSystemDistributionInfo>() {
+  private class Renderer : ColoredListCellRenderer<DistributionInfo>() {
     override fun customizeCellRenderer(
-      list: JList<out ExternalSystemDistributionInfo>,
-      value: ExternalSystemDistributionInfo?,
+      list: JList<out DistributionInfo>,
+      value: DistributionInfo?,
       index: Int,
       selected: Boolean,
       hasFocus: Boolean
@@ -125,17 +125,17 @@ class ExternalSystemDistributionComboBox(
 
   private class ComboBoxEditor(
     project: Project,
-    distributionsInfo: ExternalSystemDistributionsInfo,
-    component: ExternalSystemDistributionComboBox
+    distributionsInfo: DistributionsInfo,
+    component: DistributionComboBox
   ) : ExtendableTextField() {
     init {
-      val fileBrowserAccessor = object : TextComponentAccessor<ExternalSystemDistributionComboBox> {
-        override fun getText(component: ExternalSystemDistributionComboBox) = component.selectedDistribution.asText()
-        override fun setText(component: ExternalSystemDistributionComboBox, text: String) {
+      val fileBrowserAccessor = object : TextComponentAccessor<DistributionComboBox> {
+        override fun getText(component: DistributionComboBox) = component.selectedDistribution.asText()
+        override fun setText(component: DistributionComboBox, text: String) {
           component.selectedDistribution = LocalDistributionInfo(text)
         }
       }
-      val selectFolderAction = BrowseFolderRunnable<ExternalSystemDistributionComboBox>(
+      val selectFolderAction = BrowseFolderRunnable<DistributionComboBox>(
         distributionsInfo.fileChooserTitle,
         distributionsInfo.fileChooserDescription,
         project,
@@ -158,8 +158,8 @@ class ExternalSystemDistributionComboBox(
     companion object {
       fun installComboBoxEditor(
         project: Project,
-        distributionsInfo: ExternalSystemDistributionsInfo,
-        component: ExternalSystemDistributionComboBox
+        distributionsInfo: DistributionsInfo,
+        component: DistributionComboBox
       ) {
         val mutex = AtomicBoolean()
         component.setEditor(object : BasicComboBoxEditor() {
@@ -179,7 +179,7 @@ class ExternalSystemDistributionComboBox(
 
           override fun setItem(anObject: Any?) {
             mutex.lockOrSkip {
-              if (anObject is ExternalSystemDistributionInfo) {
+              if (anObject is DistributionInfo) {
                 editor.text = anObject.asText()
               }
             }
@@ -191,13 +191,13 @@ class ExternalSystemDistributionComboBox(
         })
       }
 
-      private fun ExternalSystemDistributionInfo.asText(): String {
+      private fun DistributionInfo.asText(): String {
         return if (description == null) name else "$name $description"
       }
     }
   }
 
-  private class SpecifyDistributionActionInfo(override val name: String) : ExternalSystemDistributionInfo() {
+  private class SpecifyDistributionActionInfo(override val name: String) : AbstractDistributionInfo() {
     override val description: String? = null
   }
 }

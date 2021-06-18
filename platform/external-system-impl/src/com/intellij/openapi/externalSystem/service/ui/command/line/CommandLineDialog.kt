@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments
+package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsInfo.CompletionTableInfo
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -16,22 +15,19 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 
-
-@ApiStatus.Experimental
-class ExternalSystemTasksAndArgumentsDialog(
+class CommandLineDialog(
   project: Project,
-  private val tasksAndArgumentsInfo: ExternalSystemTasksAndArgumentsInfo
+  private val commandLineInfo: CommandLineInfo
 ) : DialogWrapper(project) {
 
   private val selectRecursionGuard =
-    RecursionManager.createGuard<ExternalSystemTasksAndArgumentsDialog>(ExternalSystemTasksAndArgumentsDialog::class.java.name)
+    RecursionManager.createGuard<CommandLineDialog>(CommandLineDialog::class.java.name)
 
   private val chooseListeners = CopyOnWriteArrayList<(TextCompletionInfo) -> Unit>()
 
@@ -47,14 +43,14 @@ class ExternalSystemTasksAndArgumentsDialog(
 
   fun JTable.clearSelectionWhenSelected(table: JTable) {
     table.selectionModel.addListSelectionListener {
-      selectRecursionGuard.doPreventingRecursion(this@ExternalSystemTasksAndArgumentsDialog, false) {
+      selectRecursionGuard.doPreventingRecursion(this@CommandLineDialog, false) {
         clearSelection()
       }
     }
   }
 
   override fun createCenterPanel() = panel {
-    val tables = tasksAndArgumentsInfo.tablesInfo
+    val tables = commandLineInfo.tablesInfo
       .filter { it.tableCompletionInfo.isNotEmpty() }
       .map { Table(it) }
 
@@ -81,7 +77,7 @@ class ExternalSystemTasksAndArgumentsDialog(
   }
 
   init {
-    title = tasksAndArgumentsInfo.title
+    title = commandLineInfo.dialogTitle
     setOKButtonText(IdeBundle.message("button.insert"))
     init()
   }
@@ -131,9 +127,9 @@ class ExternalSystemTasksAndArgumentsDialog(
     init {
       val search = TableSpeedSearch(this)
       val nameColumn = columnModel.getColumn(0)
-      nameColumn.cellRenderer = Renderer(search, tableInfo.dataIcon)
+      nameColumn.cellRenderer = Renderer(search, tableInfo.dataColumnIcon)
       val descriptionColumn = columnModel.getColumn(1)
-      descriptionColumn.cellRenderer = Renderer(search, null)
+      descriptionColumn.cellRenderer = Renderer(search, tableInfo.descriptionColumnIcon)
     }
   }
 

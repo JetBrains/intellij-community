@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.service.ui.distribution
 import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.service.ui.getUiPath
 
-class LocalDistributionInfo(path: String) : ExternalSystemDistributionInfo() {
+class LocalDistributionInfo(path: String) : AbstractDistributionInfo() {
   var path = getModelPath(path)
   var uiPath: String
     get() = getUiPath(path)

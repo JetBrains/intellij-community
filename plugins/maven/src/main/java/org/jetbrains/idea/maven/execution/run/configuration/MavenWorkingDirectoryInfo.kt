@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemProjectPathInfo
-import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemProjectPathInfo.ExternalProject
+import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalProject
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -11,9 +11,14 @@ import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenWorkingDirectoryInfo(project: Project) : ExternalSystemProjectPathInfo {
-  override val label: String = ExecutionBundle.message("run.configuration.working.directory.label")
-  override val name: String = ExecutionBundle.message("run.configuration.working.directory.name")
+class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
+  override val settingsLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
+
+  override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
+  override val settingsGroup: String? = null
+  override val settingsPriority: Int = -10
+  override val settingsHint: String? = null
+  override val settingsActionHint: String? = null
 
   override val fileChooserTitle: String = RunnerBundle.message("maven.select.working.directory")
   override val fileChooserDescription: String? = null

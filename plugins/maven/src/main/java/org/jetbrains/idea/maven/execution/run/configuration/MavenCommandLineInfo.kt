@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.run.configuration
 
-import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemProjectPathField
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsInfo
-import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsInfo.CompletionTableInfo
+import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
+import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.execution.MavenCommandLineOptions
@@ -14,28 +14,38 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import javax.swing.Icon
 
-class MavenTasksAndArgumentsInfo(
+class MavenCommandLineInfo(
   project: Project,
-  projectPathField: ExternalSystemProjectPathField
-) : ExternalSystemTasksAndArgumentsInfo {
-  override val hint: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.hint")
-  override val title: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.title")
-  override val tooltip: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.tooltip")
-  override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.empty.state")
-  override val name: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.name")
+  projectPathField: WorkingDirectoryField
+) : CommandLineInfo {
+  override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.name")
+  override val settingsGroup: String? = null
+  override val settingsPriority: Int = 100
+  override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.hint")
+  override val settingsActionHint: String? = null
 
-  override val tablesInfo: List<CompletionTableInfo> =
-    listOf(PhasesAndGoalsCompletionTableInfo(project, projectPathField), ArgumentsCompletionTableInfo())
+  override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.title")
+  override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.tooltip")
+
+  override val fieldEmptyState: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.empty.state")
+
+  override val tablesInfo: List<CompletionTableInfo> = listOf(
+    PhasesAndGoalsCompletionTableInfo(project, projectPathField),
+    ArgumentsCompletionTableInfo()
+  )
 
   private class PhasesAndGoalsCompletionTableInfo(
     project: Project,
-    projectPathField: ExternalSystemProjectPathField
+    workingDirectoryField: WorkingDirectoryField
   ) : CompletionTableInfo {
-    override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.tasks.empty.text")
-    override val dataIcon: Icon? = null
-    override val dataColumnName: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.task.column")
+    override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.tasks.empty.text")
+
+    override val dataColumnIcon: Icon? = null
+    override val dataColumnName: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.task.column")
+
+    override val descriptionColumnIcon: Icon? = null
     override val descriptionColumnName: String = MavenConfigurableBundle.message(
-      "maven.run.configuration.tasks.and.arguments.description.column")
+      "maven.run.configuration.command.line.description.column")
 
     private val phases: List<TextCompletionInfo> =
       MavenConstants.BASIC_PHASES.map { TextCompletionInfo(it) }
@@ -43,7 +53,7 @@ class MavenTasksAndArgumentsInfo(
     private val goals: List<TextCompletionInfo> by lazy {
       val projectsManager = MavenProjectsManager.getInstance(project)
       val localFileSystem = LocalFileSystem.getInstance()
-      val projectPath = projectPathField.projectPath
+      val projectPath = workingDirectoryField.workingDirectory
       val projectDir = localFileSystem.refreshAndFindFileByPath(projectPath) ?: return@lazy emptyList()
       val mavenProject = projectsManager.findContainingProject(projectDir) ?: return@lazy emptyList()
       val localRepository = projectsManager.localRepository
@@ -61,11 +71,14 @@ class MavenTasksAndArgumentsInfo(
   }
 
   private class ArgumentsCompletionTableInfo : CompletionTableInfo {
-    override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.arguments.empty.text")
-    override val dataIcon: Icon? = null
-    override val dataColumnName: String = MavenConfigurableBundle.message("maven.run.configuration.tasks.and.arguments.argument.column")
+    override val emptyState: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.arguments.empty.text")
+
+    override val dataColumnIcon: Icon? = null
+    override val dataColumnName: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.argument.column")
+
+    override val descriptionColumnIcon: Icon? = null
     override val descriptionColumnName: String = MavenConfigurableBundle.message(
-      "maven.run.configuration.tasks.and.arguments.description.column")
+      "maven.run.configuration.command.line.description.column")
 
     private val options: Collection<MavenCommandLineOptions.Option> =
       MavenCommandLineOptions.getAllOptions()

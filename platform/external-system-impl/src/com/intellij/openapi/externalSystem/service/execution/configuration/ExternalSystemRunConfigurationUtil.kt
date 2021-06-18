@@ -7,13 +7,13 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionComboBox
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionsInfo
-import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemProjectPathField
-import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemProjectPathInfo
-import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsField
-import com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments.ExternalSystemTasksAndArgumentsInfo
+import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineField
+import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionComboBox
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.ValidationInfo
@@ -26,13 +26,26 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 
 
-fun <C : RunConfigurationBase<*>> createBeforeRun(buildTaskKey: Key<*>): BeforeRunFragment<C> {
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addBeforeRunFragment(buildTaskKey: Key<*>) =
+  add(createBeforeRunFragment(buildTaskKey))
+
+fun <C : RunConfigurationBase<*>> createBeforeRunFragment(buildTaskKey: Key<*>): BeforeRunFragment<C> {
   val parentDisposable = Disposer.newDisposable()
   val beforeRunComponent = BeforeRunComponent(parentDisposable)
   val beforeRunFragment = BeforeRunFragment.createBeforeRun<C>(beforeRunComponent, buildTaskKey)
   Disposer.register(beforeRunFragment, parentDisposable)
   return beforeRunFragment
 }
+
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addSettingsTag(
+  id: String,
+  @Nls name: String,
+  @Nls group: String,
+  @Nls hint: String?,
+  getter: (C) -> Boolean,
+  setter: (C, Boolean) -> Unit,
+  menuPosition: Int
+) = add(createSettingsTag(id, name, group, hint, getter, setter, menuPosition))
 
 @Suppress("UNCHECKED_CAST")
 fun <C : RunConfigurationBase<*>> createSettingsTag(
@@ -55,76 +68,87 @@ fun <C : RunConfigurationBase<*>> createSettingsTag(
     actionHint = hint
   }
 
-fun <C : ExternalSystemRunConfiguration> createTasksAndArguments(
+fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addCommandLineFragment(
   project: Project,
-  tasksAndArgumentsInfo: ExternalSystemTasksAndArgumentsInfo
-): SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField> {
-  return createTasksAndArguments(
-    project,
-    tasksAndArgumentsInfo,
-    ExternalSystemRunConfiguration::getTasksAndArguments,
-    ExternalSystemRunConfiguration::setTasksAndArguments
-  )
-}
+  commandLineInfo: CommandLineInfo
+) = addCommandLineFragment(
+  project,
+  commandLineInfo,
+  { settings.commandLine },
+  { settings.commandLine = it }
+)
 
-fun <C : RunConfigurationBase<*>> createTasksAndArguments(
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addCommandLineFragment(
   project: Project,
-  tasksAndArgumentsInfo: ExternalSystemTasksAndArgumentsInfo,
-  getTasksAndArguments: C.() -> String,
-  setTasksAndArguments: C.(String) -> Unit
-): SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField> {
-  val taskAndArgumentsField = ExternalSystemTasksAndArgumentsField(project, tasksAndArgumentsInfo).apply {
+  commandLineInfo: CommandLineInfo,
+  getCommandLine: C.() -> String,
+  setCommandLine: C.(String) -> Unit
+) = add(createCommandLineFragment(project, commandLineInfo, getCommandLine, setCommandLine))
+
+fun <C : RunConfigurationBase<*>> createCommandLineFragment(
+  project: Project,
+  commandLineInfo: CommandLineInfo,
+  getCommandLine: C.() -> String,
+  setCommandLine: C.(String) -> Unit
+): SettingsEditorFragment<C, CommandLineField> {
+  val commandLineField = CommandLineField(project, commandLineInfo).apply {
     CommonParameterFragments.setMonospaced(this)
     FragmentedSettingsUtil.setupPlaceholderVisibility(this)
   }
-  return SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField>(
-    "external.system.tasks.and.arguments.fragment",
-    tasksAndArgumentsInfo.name,
-    null,
-    taskAndArgumentsField,
-    100,
-    { it, c -> c.tasksAndArguments = it.getTasksAndArguments() },
-    { it, c -> it.setTasksAndArguments(c.tasksAndArguments) },
+  return SettingsEditorFragment<C, CommandLineField>(
+    "external.system.command.line.fragment",
+    commandLineInfo.settingsName,
+    commandLineInfo.settingsGroup,
+    commandLineField,
+    commandLineInfo.settingsPriority,
+    SettingsEditorFragmentType.COMMAND_LINE,
+    { it, c -> c.commandLine = it.getCommandLine() },
+    { it, c -> it.setCommandLine(c.commandLine) },
     { true }
   ).apply {
     isCanBeHidden = false
     isRemovable = false
-    setHint(tasksAndArgumentsInfo.hint)
+    setHint(commandLineInfo.settingsHint)
+    actionHint = commandLineInfo.settingsActionHint
   }
 }
 
-
-fun <C : ExternalSystemRunConfiguration> createProjectPath(
+fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
   project: Project,
-  projectPathInfo: ExternalSystemProjectPathInfo
-): SettingsEditorFragment<C, LabeledComponent<ExternalSystemProjectPathField>> {
-  return createProjectPath(
-    project,
-    projectPathInfo,
-    ExternalSystemRunConfiguration::getExternalProjectPath,
-    ExternalSystemRunConfiguration::setExternalProjectPath
-  )
-}
+  workingDirectoryInfo: WorkingDirectoryInfo
+) = addWorkingDirectoryFragment(
+  project,
+  workingDirectoryInfo,
+  { settings.externalProjectPath },
+  { settings.externalProjectPath = it }
+)
 
-fun <C : RunConfigurationBase<*>> createProjectPath(
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
   project: Project,
-  projectPathInfo: ExternalSystemProjectPathInfo,
-  getProjectPath: C.() -> String?,
-  setProjectPath: C.(String) -> Unit
-): SettingsEditorFragment<C, LabeledComponent<ExternalSystemProjectPathField>> {
-  val projectPathField = ExternalSystemProjectPathField(project, projectPathInfo).apply {
+  workingDirectoryInfo: WorkingDirectoryInfo,
+  getWorkingDirectory: C.() -> String?,
+  setWorkingDirectory: C.(String) -> Unit
+) = add(createWorkingDirectoryFragment(project, workingDirectoryInfo, getWorkingDirectory, setWorkingDirectory))
+
+fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
+  project: Project,
+  projectPathInfo: WorkingDirectoryInfo,
+  getWorkingDirectory: C.() -> String?,
+  setWorkingDirectory: C.(String) -> Unit
+): SettingsEditorFragment<C, LabeledComponent<WorkingDirectoryField>> {
+  val projectPathField = WorkingDirectoryField(project, projectPathInfo).apply {
     CommonParameterFragments.setMonospaced(this)
     FragmentedSettingsUtil.setupPlaceholderVisibility(this)
   }
-  return SettingsEditorFragment<C, LabeledComponent<ExternalSystemProjectPathField>>(
+  return SettingsEditorFragment<C, LabeledComponent<WorkingDirectoryField>>(
     "external.system.project.path.fragment",
-    projectPathInfo.name,
-    null,
-    LabeledComponent.create(projectPathField, projectPathInfo.label, BorderLayout.WEST),
-    -10,
+    projectPathInfo.settingsName,
+    projectPathInfo.settingsGroup,
+    LabeledComponent.create(projectPathField, projectPathInfo.settingsLabel, BorderLayout.WEST),
+    projectPathInfo.settingsPriority,
     SettingsEditorFragmentType.EDITOR,
-    { it, c -> it.getProjectPath()?.let { p -> c.component.projectPath = p } },
-    { it, c -> it.setProjectPath(FileUtil.toCanonicalPath(c.component.projectPath)) },
+    { it, c -> it.getWorkingDirectory()?.let { p -> c.component.workingDirectory = p } },
+    { it, c -> it.setWorkingDirectory(FileUtil.toCanonicalPath(c.component.workingDirectory)) },
     { true }
   ).apply {
     isCanBeHidden = false
@@ -132,29 +156,39 @@ fun <C : RunConfigurationBase<*>> createProjectPath(
   }
 }
 
-fun <C : RunConfigurationBase<*>> createDistribution(
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addDistributionFragment(
   project: Project,
-  distributionsInfo: ExternalSystemDistributionsInfo,
-  getDistribution: C.() -> ExternalSystemDistributionInfo?,
-  setDistribution: C.(ExternalSystemDistributionInfo) -> Unit,
-  validate: ValidationInfoBuilder.(ExternalSystemDistributionInfo) -> ValidationInfo?
-): SettingsEditorFragment<C, ExternalSystemDistributionComboBox> {
-  val comboBox = ExternalSystemDistributionComboBox(project, distributionsInfo).apply {
+  distributionsInfo: DistributionsInfo,
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo) -> Unit,
+  validate: ValidationInfoBuilder.(DistributionInfo) -> ValidationInfo?
+) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution, validate))
+
+fun <C : RunConfigurationBase<*>> createDistributionFragment(
+  project: Project,
+  distributionsInfo: DistributionsInfo,
+  getDistribution: C.() -> DistributionInfo?,
+  setDistribution: C.(DistributionInfo) -> Unit,
+  validate: ValidationInfoBuilder.(DistributionInfo) -> ValidationInfo?
+): SettingsEditorFragment<C, DistributionComboBox> {
+  val comboBox = DistributionComboBox(project, distributionsInfo).apply {
     CommonParameterFragments.setMonospaced(this)
   }
-  return SettingsEditorFragment<C, ExternalSystemDistributionComboBox>(
+  return SettingsEditorFragment<C, DistributionComboBox>(
     "external.system.distribution.fragment",
-    distributionsInfo.name,
-    null,
+    distributionsInfo.settingsName,
+    distributionsInfo.settingsGroup,
     comboBox,
-    90,
+    distributionsInfo.settingsPriority,
+    SettingsEditorFragmentType.COMMAND_LINE,
     { it, c -> it.getDistribution()?.let { d -> c.selectedDistribution = d } },
     { it, c -> it.setDistribution(c.selectedDistribution) },
     { true }
   ).apply {
     isCanBeHidden = false
     isRemovable = false
-    setHint(distributionsInfo.hint)
+    setHint(distributionsInfo.settingsHint)
+    actionHint = distributionsInfo.settingsActionHint
     setValidation {
       val validationInfoBuilder = ValidationInfoBuilder(comboBox)
       val selectedDistribution = comboBox.selectedDistribution
@@ -164,7 +198,19 @@ fun <C : RunConfigurationBase<*>> createDistribution(
   }
 }
 
-fun <C : RunConfigurationBase<*>> createVmOptions(
+
+fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
+  addVmOptionsFragment(
+    { settings.vmOptions },
+    { settings.vmOptions = it }
+  )
+
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addVmOptionsFragment(
+  getVmOptions: C.() -> String?,
+  setVmOptions: C.(String?) -> Unit
+) = add(createVmOptionsFragment(getVmOptions, setVmOptions))
+
+fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
   getVmOptions: C.() -> String?,
   setVmOptions: C.(String?) -> Unit
 ): SettingsEditorFragment<C, LabeledComponent<RawCommandLineEditor>> {
@@ -190,7 +236,23 @@ fun <C : RunConfigurationBase<*>> createVmOptions(
   }
 }
 
-fun <C : RunConfigurationBase<*>> createEnvParameters(
+
+fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnvironmentFragment() =
+  addEnvironmentFragment(
+    { settings.env },
+    { settings.env = it },
+    { settings.isPassParentEnvs },
+    { settings.isPassParentEnvs = it }
+  )
+
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addEnvironmentFragment(
+  getEnvs: C.() -> Map<String, String>,
+  setEnvs: C.(Map<String, String>) -> Unit,
+  isPassParentEnvs: C.() -> Boolean,
+  setPassParentEnvs: C.(Boolean) -> Unit
+) = add(createEnvironmentFragment(getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
+
+fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
   getEnvs: C.() -> Map<String, String>,
   setEnvs: C.(Map<String, String>) -> Unit,
   isPassParentEnvs: C.() -> Boolean,

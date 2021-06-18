@@ -5,9 +5,10 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.JavaRunConfigurationExtensionManager
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
-import com.intellij.openapi.externalSystem.service.ui.distribution.ExternalSystemDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
@@ -32,56 +33,69 @@ class MavenRunConfigurationSettingsEditor(
   JavaRunConfigurationExtensionManager.instance
 ) {
   override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> {
-    return ArrayList<SettingsEditorFragment<MavenRunConfiguration, *>>().apply {
-      val workingDirectory = createProjectPath(
+    return SettingsFragmentsContainer.fragments {
+      add(CommonParameterFragments.createRunHeader())
+      addBeforeRunFragment(CompileStepBeforeRun.ID)
+      addAll(BeforeRunFragment.createGroup())
+      add(CommonTags.parallelRun())
+      addDistributionFragment(
+        project,
+        MavenDistributionsInfo(),
+        { asDistributionInfo(mavenHome) },
+        { mavenHome = asMavenHome(it) },
+        { validateMavenHome(it) }
+      )
+      val workingDirectoryFragment = addWorkingDirectoryFragment(
         project,
         MavenWorkingDirectoryInfo(project),
         MavenRunConfiguration::getWorkingDirectory,
         MavenRunConfiguration::setWorkingDirectory
       )
-      val tasksAndArguments = createTasksAndArguments(
+      addCommandLineFragment(
         project,
-        MavenTasksAndArgumentsInfo(project, workingDirectory.component().component),
+        MavenCommandLineInfo(
+          project,
+          workingDirectoryFragment.component().component
+        ),
         { commandLine ?: "" },
         MavenRunConfiguration::setCommandLine
       )
-
-      add(CommonParameterFragments.createRunHeader())
-      add(createBeforeRun(CompileStepBeforeRun.ID))
-      addAll(BeforeRunFragment.createGroup())
-      add(CommonTags.parallelRun())
-      add(createDistribution(
-        project,
-        MavenDistributionsInfo(),
-        { asDistributionInfo(mavenHome) },
-        { mavenHome = asMavenHome(it) },
-        { validateMavenHome(it) }))
-      add(tasksAndArguments)
-      add(workingDirectory)
-      add(createJreCombobox())
-      add(createEnvParameters(
+      addJdkFragment(
+        MavenRunConfiguration::getJreName,
+        MavenRunConfiguration::setJreName)
+      addEnvironmentFragment(
         MavenRunConfiguration::getEnvironment, MavenRunConfiguration::setEnvironment,
-        MavenRunConfiguration::isPassParentEnvs, MavenRunConfiguration::setPassParentEnvs))
-      add(createVmOptions(
-        MavenRunConfiguration::getVmOptions, MavenRunConfiguration::setVmOptions))
+        MavenRunConfiguration::isPassParentEnvs, MavenRunConfiguration::setPassParentEnvs
+      )
+      addVmOptionsFragment(
+        MavenRunConfiguration::getVmOptions, MavenRunConfiguration::setVmOptions
+      )
       add(LogsGroupFragment())
     }
   }
 
-  private fun createJreCombobox(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>> {
+  private fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addJdkFragment(
+    getJdk: C.() -> String?,
+    setJdk: C.(String?) -> Unit
+  ) = add(createJdkFragment(getJdk, setJdk))
+
+  private fun <C : RunConfigurationBase<*>> createJdkFragment(
+    getJdk: C.() -> String?,
+    setJdk: C.(String?) -> Unit
+  ): SettingsEditorFragment<C, LabeledComponent<SdkComboBox>> {
     val sdkLookupProvider = SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
     val jreComboBox = SdkComboBox(createProjectJdkComboBoxModel(project, this)).apply {
       CommonParameterFragments.setMonospaced(this)
     }
     val jreComboBoxLabel = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
-    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>>(
+    return SettingsEditorFragment<C, LabeledComponent<SdkComboBox>>(
       "maven.jre.fragment",
       MavenConfigurableBundle.message("maven.run.configuration.jre.name"),
       ExecutionBundle.message("group.java.options"),
       LabeledComponent.create(jreComboBox, jreComboBoxLabel, BorderLayout.WEST),
-      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.jreName) },
-      { it, c -> it.jreName = if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null },
-      { !it.jreName.isNullOrBlank() }
+      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.getJdk()) },
+      { it, c -> it.setJdk(if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null) },
+      { !it.getJdk().isNullOrBlank() }
     ).apply {
       isCanBeHidden = true
       isRemovable = true
@@ -89,7 +103,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun ValidationInfoBuilder.validateMavenHome(distribution: ExternalSystemDistributionInfo): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateMavenHome(distribution: DistributionInfo): ValidationInfo? {
     return when {
       distribution is MavenDistributionsInfo.Bundled2DistributionInfo -> null
       distribution is MavenDistributionsInfo.Bundled3DistributionInfo -> null

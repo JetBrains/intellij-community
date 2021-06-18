@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -50,7 +49,6 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,12 +56,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.Map;
 
-public class ExternalSystemRunConfiguration
-  extends LocatableConfigurationBase
-  implements SearchScopeProvidingRunProfile,
-             CommonProgramRunConfigurationParameters {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
 
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
@@ -218,76 +212,6 @@ public class ExternalSystemRunConfiguration
       }
     }
     return scope;
-  }
-
-  public @NotNull ProjectSystemId getExternalSystemId() {
-    return mySettings.getExternalSystemId();
-  }
-
-  public void setExternalProjectPath(@Nullable String path) {
-    mySettings.setExternalProjectPath(path);
-  }
-
-  public @Nullable String getExternalProjectPath() {
-    return mySettings.getExternalProjectPath();
-  }
-
-  @ApiStatus.Experimental
-  public void setTasksAndArguments(@NotNull String tasksAndArguments) {
-    mySettings.setTasksAndArguments(tasksAndArguments);
-  }
-
-  @ApiStatus.Experimental
-  public @NotNull String getTasksAndArguments() {
-    return mySettings.getTasksAndArguments();
-  }
-
-  @Override
-  public void setProgramParameters(@Nullable String value) {
-    mySettings.setScriptParameters(value);
-  }
-
-  @Override
-  public @Nullable String getProgramParameters() {
-    return mySettings.getScriptParameters();
-  }
-
-  @Override
-  public void setWorkingDirectory(@Nullable String value) {
-    mySettings.setExternalProjectPath(value);
-  }
-
-  @Override
-  public @Nullable String getWorkingDirectory() {
-    return mySettings.getExternalProjectPath();
-  }
-
-  @Override
-  public void setEnvs(@NotNull Map<String, String> envs) {
-    mySettings.setEnv(envs);
-  }
-
-  @Override
-  public @NotNull Map<String, String> getEnvs() {
-    return mySettings.getEnv();
-  }
-
-  @Override
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    mySettings.setPassParentEnvs(passParentEnvs);
-  }
-
-  @Override
-  public boolean isPassParentEnvs() {
-    return mySettings.isPassParentEnvs();
-  }
-
-  public @Nullable String getVmOptions() {
-    return mySettings.getVmOptions();
-  }
-
-  public void setVmOptions(@Nullable String vmOptions) {
-    mySettings.setVmOptions(vmOptions);
   }
 
   static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.service.ui.*
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor.CompletionType
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -27,30 +27,30 @@ import javax.swing.text.DefaultHighlighter.DefaultHighlightPainter
 import javax.swing.text.Highlighter
 
 
-class ExternalSystemProjectPathField(
+class WorkingDirectoryField(
   project: Project,
-  private val projectPathInfo: ExternalSystemProjectPathInfo
+  private val workingDirectoryInfo: WorkingDirectoryInfo
 ) : ExtendableTextField() {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
   private val modeProperty = propertyGraph.graphProperty { Mode.NAME }
   private val textProperty = propertyGraph.graphProperty { "" }
-  private val projectPathProperty = propertyGraph.graphProperty { "" }
+  private val workingDirectoryProperty = propertyGraph.graphProperty { "" }
   private val projectNameProperty = propertyGraph.graphProperty { "" }
 
   var mode by modeProperty
-  var projectPath by projectPathProperty
+  var workingDirectory by workingDirectoryProperty
   var projectName by projectNameProperty
 
-  private val externalProjects = projectPathInfo.externalProjects
+  private val externalProjects = workingDirectoryInfo.externalProjects
 
   private var highlightTag: Any? = null
   private val highlightRecursionGuard =
-    RecursionManager.createGuard<ExternalSystemProjectPathField>(ExternalSystemProjectPathField::class.java.name)
+    RecursionManager.createGuard<WorkingDirectoryField>(WorkingDirectoryField::class.java.name)
 
   init {
     val text by textProperty.map { it.trim() }
-    projectPathProperty.dependsOn(textProperty) {
+    workingDirectoryProperty.dependsOn(textProperty) {
       when (mode) {
         Mode.PATH -> text
         Mode.NAME -> resolveProjectPathByName(text) ?: text
@@ -64,14 +64,14 @@ class ExternalSystemProjectPathField(
     }
     textProperty.dependsOn(modeProperty) {
       when (mode) {
-        Mode.PATH -> getUiPath(projectPath)
+        Mode.PATH -> getUiPath(workingDirectory)
         Mode.NAME -> projectName
       }
     }
-    textProperty.dependsOn(projectPathProperty) {
+    textProperty.dependsOn(workingDirectoryProperty) {
       when (mode) {
-        Mode.PATH -> getUiPath(projectPath)
-        Mode.NAME -> resolveProjectNameByPath(projectPath) ?: getUiPath(projectPath)
+        Mode.PATH -> getUiPath(workingDirectory)
+        Mode.NAME -> resolveProjectNameByPath(workingDirectory) ?: getUiPath(workingDirectory)
       }
     }
     textProperty.dependsOn(projectNameProperty) {
@@ -80,10 +80,10 @@ class ExternalSystemProjectPathField(
         Mode.NAME -> projectName
       }
     }
-    modeProperty.dependsOn(projectPathProperty) {
+    modeProperty.dependsOn(workingDirectoryProperty) {
       when {
-        projectPath.isEmpty() -> Mode.NAME
-        resolveProjectNameByPath(projectPath) != null -> mode
+        workingDirectory.isEmpty() -> Mode.NAME
+        resolveProjectNameByPath(workingDirectory) != null -> mode
         else -> Mode.PATH
       }
     }
@@ -100,8 +100,8 @@ class ExternalSystemProjectPathField(
   private fun resolveProjectPathByName(projectName: String) =
     resolveValueByKey(projectName, externalProjects, { name }, { path })
 
-  private fun resolveProjectNameByPath(projectPath: String) =
-    resolveValueByKey(projectPath, externalProjects, { path }, { name })
+  private fun resolveProjectNameByPath(workingDirectory: String) =
+    resolveValueByKey(workingDirectory, externalProjects, { path }, { name })
 
   private fun <E> resolveValueByKey(
     key: String,
@@ -204,17 +204,17 @@ class ExternalSystemProjectPathField(
   }
 
   init {
-    val fileBrowseAccessor = object : TextComponentAccessor<ExternalSystemProjectPathField> {
-      override fun getText(component: ExternalSystemProjectPathField) = projectPath
-      override fun setText(component: ExternalSystemProjectPathField, text: String) {
-        projectPath = text
+    val fileBrowseAccessor = object : TextComponentAccessor<WorkingDirectoryField> {
+      override fun getText(component: WorkingDirectoryField) = workingDirectory
+      override fun setText(component: WorkingDirectoryField, text: String) {
+        workingDirectory = text
       }
     }
-    val browseFolderRunnable = object : BrowseFolderRunnable<ExternalSystemProjectPathField>(
-      projectPathInfo.fileChooserTitle,
-      projectPathInfo.fileChooserDescription,
+    val browseFolderRunnable = object : BrowseFolderRunnable<WorkingDirectoryField>(
+      workingDirectoryInfo.fileChooserTitle,
+      workingDirectoryInfo.fileChooserDescription,
       project,
-      projectPathInfo.fileChooserDescriptor,
+      workingDirectoryInfo.fileChooserDescriptor,
       this,
       fileBrowseAccessor
     ) {
