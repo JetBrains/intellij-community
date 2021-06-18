@@ -881,7 +881,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                                                  false,
                                                                  this,
                                                                  List.of(this),
-                                                                 PluginDetailsPageComponent::getPlugin
-    );
+                                                                 PluginDetailsPageComponent::getPlugin);
   }
 }
