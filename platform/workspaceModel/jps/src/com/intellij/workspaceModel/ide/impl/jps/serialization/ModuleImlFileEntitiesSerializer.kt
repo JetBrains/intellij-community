@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -16,6 +15,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -682,7 +682,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
-    return ModuleManagerImpl.getPathsToModuleFiles(moduleManagerTag).map {
+    return ModuleManagerBridgeImpl.getPathsToModuleFiles(moduleManagerTag).map {
       Paths.get(it.path).toVirtualFileUrl(virtualFileManager) to it.group
     }
   }

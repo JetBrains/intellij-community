@@ -4,14 +4,16 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ConfigurationErrorDescription
-import com.intellij.openapi.module.impl.ModuleLoadingErrorDescription
+import com.intellij.openapi.module.ConfigurationErrorType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.Nls
 
 internal class IdeErrorReporter(private val project: Project) : ErrorReporter {
   val errors = ArrayList<ConfigurationErrorDescription>()
@@ -30,10 +32,16 @@ internal class IdeErrorReporter(private val project: Project) : ErrorReporter {
   }
 }
 
+private val MODULE_ERROR: ConfigurationErrorType = object : ConfigurationErrorType(false) {
+  override fun getErrorText(errorCount: Int, firstElementName: @NlsSafe String?): @Nls String {
+    return ProjectModelBundle.message("module.configuration.problem.text", errorCount, firstElementName)
+  }
+}
+
 private class ModuleLoadingErrorDescriptionBridge(@NlsContexts.DetailedDescription description: String,
                                                   private val moduleFile: VirtualFileUrl,
                                                   private val project: Project)
-  : ConfigurationErrorDescription(FileUtil.getNameWithoutExtension(moduleFile.fileName), description, ModuleLoadingErrorDescription.MODULE_ERROR) {
+  : ConfigurationErrorDescription(FileUtil.getNameWithoutExtension(moduleFile.fileName), description, MODULE_ERROR) {
   override fun ignoreInvalidElement() {
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->

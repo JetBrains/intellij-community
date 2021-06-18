@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
@@ -32,7 +34,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
@@ -376,6 +380,26 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
           }
         }
       }
+    }
+
+    @JvmStatic
+    fun getPathsToModuleFiles(element: Element): Set<ModulePath> {
+      val paths = LinkedHashSet<ModulePath>()
+      val modules = element.getChild(JpsProjectLoader.MODULES_TAG)
+      if (modules == null) return paths
+      for (moduleElement in modules.getChildren(JpsProjectLoader.MODULE_TAG)) {
+        val fileUrlValue = moduleElement.getAttributeValue(JpsProjectLoader.FILE_URL_ATTRIBUTE)
+        val filepath = if (fileUrlValue == null) {
+          // support for older formats
+          moduleElement.getAttributeValue(JpsProjectLoader.FILE_PATH_ATTRIBUTE)
+        }
+        else {
+          VirtualFileManager.extractPath(fileUrlValue)
+        }
+        paths.add(ModulePath(FileUtilRt.toSystemIndependentName(Objects.requireNonNull(filepath)),
+                             moduleElement.getAttributeValue(JpsProjectLoader.GROUP_ATTRIBUTE)))
+      }
+      return paths
     }
 
     private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {
