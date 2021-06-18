@@ -31,5 +31,5 @@ class GHPRMergeDirectionModelImpl(override val baseRepo: GHGitRepositoryMapping,
   override fun addAndInvokeDirectionChangesListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(changeEventDispatcher, listener)
 
-  override fun getKnownRepoMapping(): List<GHGitRepositoryMapping> = repositoriesManager.knownRepositories.toList()
+  override fun getKnownRepoMappings(): List<GHGitRepositoryMapping> = repositoriesManager.knownRepositories.toList()
 }

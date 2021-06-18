@@ -54,7 +54,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
       chooseHeadRepoAndBranch(head, currentRepo, model.headBranch, { repo, branch ->
         model.setHead(repo, branch)
         model.headSetByUser = true
-      }, model.getKnownRepoMapping())
+      }, model.getKnownRepoMappings())
     }
 
     val changesWarningLabel = JLabel(AllIcons.General.Warning)
