@@ -26,7 +26,7 @@ public class FormatOnSaveActionProvider extends ActionOnSaveInfoProvider {
 
     // If anyone ever decides to rewrite these conditions to become a 'supported IDE list' instead of the current 'unsupported IDE list'
     // please don't forget about Android Studio: it should get all the options that IntelliJ IDEA has.
-    if (!isRubyMine() && !isDataGrip() && !isCLion() && !isAppCode()) {
+    if (!isDataGrip() && !isAppCode()) {
       result.add(new OptimizeImportsOnSaveActionInfo(context));
 
       if (!isPyCharm()) {
