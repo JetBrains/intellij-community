@@ -163,6 +163,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     if (file instanceof PsiFileWithOneLanguage) {
       return file.getLanguage();
     }
+
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     Language language = element != null ? PsiUtilCore.findLanguageFromElement(element) : Language.ANY;
     if (language != Language.ANY) {
