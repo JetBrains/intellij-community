@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any variables declared as <code>java.lang.String</code> which are
-repeatedly appended to. Such variables may be more efficiently declared as <code>java.lang.StringBuffer</code>
+Reports variables declared as <code>java.lang.String</code> that are
+repeatedly appended to. Such variables could be declared more efficiently as <code>java.lang.StringBuffer</code>
 or <code>java.lang.StringBuilder</code>.
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre><code>
   String s = "";
   for (int i = 0; i &lt; names.length; i++) {
@@ -19,15 +19,13 @@ or <code>java.lang.StringBuilder</code>.
     s.append(name);
   }
 </code></pre>
-<p>Or even:</p>
+<p>Or even with:</p>
 <pre><code>
   String s = String.join(" ", names);
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify that this inspection should only warn when the variable is appended
-to in a loop.
-<p>
-
+  Use the option to make this inspection only report when the variable is appended to in a loop.
+</p>
 </body>
 </html>

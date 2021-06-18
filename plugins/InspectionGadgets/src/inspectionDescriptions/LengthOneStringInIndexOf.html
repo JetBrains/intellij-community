@@ -1,19 +1,16 @@
 <html>
 <body>
-Reports single character string being used
-as a parameter in <code>String.indexOf()</code> or
+Reports single character strings being used as an argument in <code>String.indexOf()</code> and
 <code>String.lastIndexOf()</code> calls.
-There is a fix that allows to replace these string literals with equivalent character literals, gaining some performance enhancement.
-<p>Example</p>
-<pre>
+<p>A quick-fix is suggested to replace such string literals with equivalent character literals, gaining some performance enhancement.</p>
+<p><b>Example:</b></p>
+<pre><code>
   return s.indexOf("x");
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   return s.indexOf('x');
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

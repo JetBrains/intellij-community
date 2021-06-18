@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports any uses of concrete JDBC driver classes. Use of such classes will
+Reports uses of specific JDBC driver classes. Use of such classes will
 bind your project to a specific database and driver, defeating the purpose of JDBC and
 resulting in loss of portability.
-<p>Example: </p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   import java.sql.Driver;
 
   abstract class Sample implements Driver {
@@ -12,9 +12,7 @@ resulting in loss of portability.
         Sample sample;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
