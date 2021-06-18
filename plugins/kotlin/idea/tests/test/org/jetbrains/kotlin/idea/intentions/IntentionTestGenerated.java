@@ -11212,6 +11212,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/argument.kt");
         }
 
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/callExpression.kt");
+        }
+
+        @TestMetadata("callExpression2.kt")
+        public void testCallExpression2() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/callExpression2.kt");
+        }
+
         @TestMetadata("destructuringParameter.kt")
         public void testDestructuringParameter() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/destructuringParameter.kt");
