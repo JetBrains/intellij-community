@@ -57,13 +57,13 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
     // Directly from the file
     element is XmlTag && !element.containingFile.name.endsWith(".xsd", true) -> {
       symbolName = element.localName
-      getTagDocumentation(getApiNamespace(element.namespace, element, toLowerCase(symbolName)), toLowerCase(symbolName))
+      getTagDocumentation(getHtmlApiNamespace(element.namespace, element, toLowerCase(symbolName)), toLowerCase(symbolName))
     }
     // TODO support special documentation for attribute values
     element is XmlAttribute || element is XmlAttributeValue -> {
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName
-        getAttributeDocumentation(getApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
+        getAttributeDocumentation(getHtmlApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
                                   attr.parent.localName, toLowerCase(symbolName))
       }
     }
@@ -92,7 +92,7 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       }
       symbolName?.let {
         val lcName = toLowerCase(it)
-        val namespace = getApiNamespace(context?.namespace, context, lcName)
+        val namespace = getHtmlApiNamespace(context?.namespace, context, lcName)
         if (isTag) {
           getTagDocumentation(namespace, lcName)
         }
@@ -163,16 +163,21 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
     .let { Pair(it, it.events[eventName] ?: return@let null) }
 
 interface MdnSymbolDocumentation {
+  val name: String
   val url: String
   val isDeprecated: Boolean
+  val description: String
+  val sections: Map<String, String>
+  val footnote: String?
 
   fun getDocumentation(withDefinition: Boolean): String
 
   fun getDocumentation(withDefinition: Boolean,
                        additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
+
 }
 
-class MdnSymbolDocumentationAdapter(private val name: String,
+class MdnSymbolDocumentationAdapter(override val name: String,
                                     private val source: MdnDocumentation,
                                     private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
   override val url: String
@@ -181,12 +186,38 @@ class MdnSymbolDocumentationAdapter(private val name: String,
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
+  override val description: String
+    get() = capitalize(doc.doc ?: "").fixUrls()
+
+  override val sections: Map<String, String>
+    get() {
+      val result = doc.sections.toMutableMap()
+      if (doc.compatibility != null) {
+        result["Supported by:"] = doc.compatibility!!.entries
+          .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
+          .ifBlank { "none" }
+      }
+      doc.status?.asSequence()
+        ?.filter { it != MdnApiStatus.StandardTrack }
+        ?.map { Pair(it.name, "") }
+        ?.toMap(result)
+      return result.mapValues { (_, value) -> value.fixUrls() }
+    }
+
+  override val footnote: String
+    get() = "By <a href='${doc.url}/contributors.txt'>Mozilla Contributors</a>, <a href='https://creativecommons.org/licenses/by-sa/2.5/'>CC BY-SA 2.5</a>"
+      .fixUrls()
+
   override fun getDocumentation(withDefinition: Boolean): String =
     getDocumentation(withDefinition, null)
 
   override fun getDocumentation(withDefinition: Boolean,
                                 additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
-    buildDoc(doc, name, source.lang, withDefinition, additionalSectionsContent)
+    buildDoc(this, withDefinition, additionalSectionsContent)
+
+  private fun String.fixUrls(): String =
+    fixMdnUrls(replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
+      source.lang)
 
 }
 
@@ -391,7 +422,7 @@ private fun fixMdnUrls(content: String, lang: String): String =
   content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/$lang/docs/")
     .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/$lang/docs")
 
-private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
+fun getHtmlApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
   when {
     symbolName.equals("svg", true) -> MdnApiNamespace.Svg
     symbolName.equals("math", true) -> MdnApiNamespace.MathML
@@ -421,32 +452,22 @@ private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace,
   MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")!!
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
 
-private fun buildDoc(doc: MdnRawSymbolDocumentation,
-                     name: String,
-                     lang: String,
+private fun buildDoc(doc: MdnSymbolDocumentation,
                      withDefinition: Boolean,
                      additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
   val buf = StringBuilder()
   if (withDefinition)
     buf.append(DocumentationMarkup.DEFINITION_START)
-      .append(name)
+      .append(doc.name)
       .append(DocumentationMarkup.DEFINITION_END)
 
   buf.append(DocumentationMarkup.CONTENT_START)
-    .append(capitalize(doc.doc ?: ""))
+    .append(doc.description)
     .append(DocumentationMarkup.CONTENT_END)
 
-  val sections = doc.sections?.toMutableMap() ?: mutableMapOf()
-  if (doc.compatibility != null) {
-    sections["Supported by:"] = doc.compatibility!!.entries
-      .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
-      .ifBlank { "none" }
-  }
-  doc.status?.asSequence()
-    ?.filter { it != MdnApiStatus.StandardTrack }
-    ?.map { Pair(it.name, "") }
-    ?.toMap(sections)
-  if (!sections.isNullOrEmpty() || additionalSectionsContent != null) {
+  val sections = doc.sections
+
+  if (sections.isNotEmpty() || additionalSectionsContent != null) {
     buf.append(DocumentationMarkup.SECTIONS_START)
     for (entry in sections) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START)
@@ -463,14 +484,10 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     buf.append(DocumentationMarkup.SECTIONS_END)
   }
   buf.append(DocumentationMarkup.CONTENT_START)
-    .append("By <a href='")
-    .append(doc.url)
-    .append("/contributors.txt'>Mozilla Contributors</a>, <a href='http://creativecommons.org/licenses/by-sa/2.5/'>CC BY-SA 2.5</a>")
+    .append(doc.footnote)
     .append(DocumentationMarkup.CONTENT_END)
   // Expand MDN URL prefix and fix relative "#" references to point to external MDN docs
-  return fixMdnUrls(
-    buf.toString().replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
-    lang)
+  return buf.toString()
 }
 
 fun buildSubSection(items: Map<String, String>): String {
