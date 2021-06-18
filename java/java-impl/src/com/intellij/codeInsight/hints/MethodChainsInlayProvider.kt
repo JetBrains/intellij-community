@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
@@ -21,6 +21,7 @@ import javax.swing.text.DefaultFormatter
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): FactoryInlayHintsCollector? {
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
+    if (file.project.isDefault) return null
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink) : Boolean {
         if (file.project.service<DumbService>().isDumb) return true
@@ -102,30 +103,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   override val name: String
     get() = JavaBundle.message("settings.inlay.java.method.chains")
 
-  override val previewText: String?
-    @Language("JAVA")
-    get() = """class Main {
-  void layout(A a) {
-    a
-     .b()
-     .a()
-     .b()
-     .c();
-  }
-  interface A {
-    B b();
-    C c();
-  }
-  interface B {
-    A a();
-    C c();
-  }
-  interface C {
-    B b();
-    A a();
-  }
-}
-"""
+  override val previewText: String? = null
 
 
   private fun isFirstCall(call: PsiMethodCallExpression, document: Document): Boolean {
