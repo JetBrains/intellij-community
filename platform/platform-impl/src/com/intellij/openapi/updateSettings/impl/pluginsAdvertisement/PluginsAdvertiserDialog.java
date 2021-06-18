@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
@@ -51,7 +51,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   @Override
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
-      myPanel = new DetectedPluginsPanel();
+      myPanel = new DetectedPluginsPanel(myProject);
       myPanel.addAll(myPluginToInstall);
     }
     return myPanel;

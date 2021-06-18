@@ -250,7 +250,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void setOnlyUpdateMode() {
     myNameAndButtons.removeButtons();
-    myEnabledForProject.getParent().remove(myEnabledForProject);
+    Container parent = myEnabledForProject.getParent();
+    if (parent != null) {
+      parent.remove(myEnabledForProject);
+    }
     myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
     myEmptyPanel.setBorder(null);
   }
@@ -470,7 +473,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
                 stopLoading();
-                showPluginImpl(component);
+                showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -478,14 +481,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
 
       if (syncLoading) {
-        showPluginImpl(component);
+        showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
       }
     }
   }
 
-  private void showPluginImpl(@NotNull ListPluginComponent component) {
-    myPlugin = component.getPluginDescriptor();
-    myUpdateDescriptor = component.myUpdateDescriptor;
+  public void showPluginImpl(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
+    myPlugin = pluginDescriptor;
+    myUpdateDescriptor = updateDescriptor;
     showPlugin();
     select(0, true);
   }
