@@ -1,37 +1,485 @@
+import java.util.*;
+
 class Main {
   static class X {
     int f() { return 0; }
   }
 
-  int switchTest(Object o) {
-    int i1 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
+  int switchTestResolve(Object o) {
+    int i1 = switch(o) {
       case X x -> x.f();
       default -> 1;
     };
-    int i2 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
+    int i2 = switch(o) {
       case null, X x -> x.f();
       default -> 1;
     };
 
-    int i3 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
+    int i3 = switch(o) {
       case X x, null -> x.f();
       default -> 1;
     };
 
-    int i4 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
-      case String s, X x -> x.f();
+    int i4 = switch(o) {
+      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
       default -> 1;
     };
 
-    int i5 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
-      case String s, X x -> x.f();
+    int i5 = switch(o) {
+      case String s, <error descr="Illegal fall-through to a pattern">X x</error> -> x.f();
       default -> 1;
     };
 
-    int i6 = switch(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">o</error>) {
-      case X x, String s -> x.f();
+    int i6 = switch(o) {
+      case X x, <error descr="Illegal fall-through to a pattern">String s</error> -> x.f();
       default -> 1;
     };
     return i1 + i2 + i3 + i4 + i5 + i6;
   }
+
+  void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s) {
+    switch (n) {
+      case <error descr="Incompatible types. Found: 'int', required: 'java.lang.Number'">1</error>:
+        System.out.println("ok");
+    }
+    String str;
+    str = switch (n) {
+      case <error descr="Incompatible types. Found: 'int', required: 'java.lang.Number'">1</error> -> "ok";
+      default -> "not ok";
+    };
+
+    switch (c) {
+      case <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.CharSequence'">"ok"</error>:
+        System.out.println("ok");
+    }
+    str = switch (c) {
+      case <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.CharSequence'">"ok"</error> -> "ok";
+      default -> "not ok";
+    };
+
+    switch (i) {
+      case 1:
+        System.out.println("ok");
+    }
+    str= switch (i) {
+      case 1 -> "ok";
+      default -> "not ok";
+    };
+
+    switch (s) {
+      case "null" :
+        System.out.println("null");
+        break;
+      default:
+        System.out.println("s");
+    }
+    str = switch (s) {
+      case "null" -> "null";
+      default -> "s";
+    };
+  }
+
+  void incompatibleNullLabelAndSelector(int i) {
+    switch (i) {
+      case <error descr="'null' cannot be converted to 'int'">null</error>:
+        System.out.println("ok");
+    }
+    String str;
+    str = switch (i) {
+      case <error descr="'null' cannot be converted to 'int'">null</error> -> "ok";
+        default -> "not ok";
+    };
+  }
+
+  void defaultAlwaysCompatible(int i) {
+    switch (i) {
+      case 1, default:
+        System.out.println("ok");
+    }
+    String str;
+    str = switch (i) {
+      case 1, default -> "ok";
+    };
+  }
+
+  void patternsCompatibilty(I i) {
+    switch (i) {
+      case Sub1 s2:
+        System.out.println("s1");
+        break;
+      case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error>:
+        System.out.println("s5");
+      default:
+        System.out.println("s");
+    }
+    String str;
+    str = switch (i) {
+      case Sub1 s2 -> "s1";
+      case <error descr="Incompatible types. Found: 'Sub5', required: 'I'">Sub5 s5</error> -> "s5";
+      default -> "s";
+    };
+
+    switch (i) {
+      // total pattern
+      case Object o:
+        System.out.println("s1");
+    }
+    str = switch (i) {
+      // total pattern
+      case Object o -> "s1";
+    };
+  }
+
+  void duplicateLabels(Integer i) {
+    // A switch label may not use more than one default label
+    switch (i) {
+      case 1, <error descr="Duplicate default label">default</error>:
+        System.out.println("s1");
+        break;
+      <error descr="Duplicate default label">default</error>:
+        System.out.println("s");
+    }
+    String str;
+    str = switch (i) {
+      case 1, <error descr="Duplicate default label">default</error> -> "s1";
+      <error descr="Duplicate default label">default</error> -> "s";
+    };
+
+    switch (i) {
+      case <error descr="Duplicate default label">default</error>:
+        System.out.println("s1");
+        break;
+      case <error descr="Duplicate default label">default</error>:
+        System.out.println("s");
+    }
+    str = switch (i) {
+      case <error descr="Duplicate default label">default</error> -> "s1";
+      case <error descr="Duplicate default label">default</error> -> "s";
+    };
+
+    // A switch label may not have more than one default case label element
+    switch (i) {
+      case <error descr="Duplicate default label">default</error>, <error descr="Duplicate default label">default</error>:
+        System.out.println("s");
+    }
+    str = switch (i) {
+      case <error descr="Duplicate default label">default</error>, <error descr="Duplicate default label">default</error> -> "s";
+    };
+
+    // A switch label may not have more than one null case label element.
+    switch (i) {
+      case 1, <error descr="Duplicate label 'null'">null</error>:
+        System.out.println("s");
+      case <error descr="Duplicate label 'null'">null</error>:
+        System.out.println("null");
+    }
+    str = switch (i) {
+      case 1, <error descr="Duplicate label 'null'">null</error> -> "s";
+      case <error descr="Duplicate label 'null'">null</error> -> "null";
+    };
+  }
+
+  void fallThroughToPatterns(Object o, Integer ii) {
+    /* wasn't implemented in javac
+      If a switch label has a null case label element then if the switch label also has any pattern case element labels, t
+      they must be type patterns (14.30.1).
+     */
+    // A switch label may not have more than one pattern case label element.
+    switch (o) {
+      case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error>: System.out.println("s");
+      default: System.out.println("null");
+    }
+    String str;
+    str = switch (o) {
+      case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error> -> "s";
+      default -> "null";
+    };
+    // todo A switch label may not have both a pattern case label element and a default case label element.
+    // A switch label may not have both a pattern case label element and a default case label element.
+    switch (o) {
+      case Integer i, <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("s");
+    }
+    str = switch (o) {
+      case Integer i, <error descr="Illegal fall-through from a pattern">default</error> -> "s";
+    };
+    switch (o) {
+      case default, <error descr="Illegal fall-through to a pattern">Integer i</error>: System.out.println("s");
+    }
+    str = switch (o) {
+      case default, <error descr="Illegal fall-through to a pattern">Integer i</error> -> "s";
+    };
+
+    // If a switch label has a constant case label element then if the switch label also has other case element labels
+    // they must be either a constant case label element, the default case label element, or the null case label element.
+    switch (ii) {
+      case 1, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>:
+        System.out.println("s1");
+        break;
+      default: System.out.println("null");
+    }
+    str = switch (ii) {
+      case 1, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error> -> "s1";
+      default -> "null";
+    };
+    switch (ii) {
+      case Integer i1 && i1 > 5, <error descr="Illegal fall-through from a pattern">1</error>:
+        System.out.println("s1");
+        break;
+      default: System.out.println("null");
+    }
+    str = switch (ii) {
+      case Integer i1 && i1 > 5, <error descr="Illegal fall-through from a pattern">1</error> -> "s1";
+      default -> "null";
+    };
+    // more complex case
+    switch (ii) {
+      case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error>:
+        System.out.println("s1");
+        break;
+    }
+    str = switch (ii) {
+      case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error> -> "s1";
+    };
+
+    /**
+     * It is a compile-time error if there is a statement in a switch block that consists of switch-labeled statement groups
+     * for which both of the following are true:
+     * It is labeled with a switch label that has a pattern case label element whose pattern introduces a pattern variable.
+     * There is a statement preceding it in the switch block and that statement can completely normally (14.22).
+     */
+    switch (o) {
+      case default:
+        System.out.println("def");
+      case <error descr="Illegal fall-through to a pattern">Float d</error>:
+        System.out.println("float");
+    }
+    switch (o) {
+      case null, Integer i:
+        if (o != null) {
+          throw new IllegalArgumentException("");
+        }
+      case <error descr="Illegal fall-through to a pattern">Float d</error>:
+        System.out.println("float");
+    }
+    switch (o) {
+      case null:
+        if (o != null) {
+          throw new IllegalArgumentException("");
+        }
+        break;
+      case Float d:
+        System.out.println("float");
+    }
+  }
+
+  void dominance(Object o, Integer ii) {
+    // A switch label that has a pattern case label element p dominates another switch label that has a pattern case label element q if p dominates q
+    switch (o) {
+      case List n:
+        System.out.println("num");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">List i</error>:
+        System.out.println("int");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    String str;
+    str = switch (o) {
+      case List n -> "num";
+      case <error descr="This case label is dominated by a preceding case label">List i</error> -> "int";
+      default -> "def";
+    };
+
+    switch (o) {
+      case Number n:
+        System.out.println("num");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">Integer i</error>:
+        System.out.println("int");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case Number n -> "num";
+      case <error descr="This case label is dominated by a preceding case label">Integer i</error> -> "int";
+      default -> "def";
+    };
+
+    // Dominance permits a guarded pattern to be followed by its unguarded form:
+    switch (o) {
+      case Integer o1 && o1 != null:
+        System.out.println("num");
+        break;
+      case Integer i:
+        System.out.println("int");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case Integer o1 && o1 != null -> "num";
+      case Integer i -> "int";
+      default -> "def";
+    };
+
+    switch (o) {
+      case (Integer i):
+        System.out.println("int");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">Integer o1 && o1 != null</error>:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case (Integer i) -> "num";
+      case <error descr="This case label is dominated by a preceding case label">Integer o1 && o1 != null</error> -> "int";
+      default -> "def";
+    };
+
+    switch (o) {
+      case (Integer o1 && o1 > 5):
+        System.out.println("int");
+        break;
+      case Integer o2 && o2 != null:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case (Integer o1 && o1 > 5) -> "num";
+      case Integer o2 && o2 != null -> "int";
+      default -> "def";
+    };
+
+    switch (o) {
+      case (Number i && false):
+        System.out.println("int");
+        break;
+      case Integer o2 && o2 != null:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case (Number i && false) -> "num";
+      case Integer o2 && o2 != null -> "int";
+      default -> "def";
+    };
+
+    switch (o) {
+      case (Integer i && true):
+        System.out.println("int");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">(Integer o2 && o2 != null)</error>:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (o) {
+      case (Integer i && true) -> "num";
+      case <error descr="This case label is dominated by a preceding case label">(Integer o2 && o2 != null)</error> -> "int";
+      default -> "def";
+    };
+
+    // A switch label that has a pattern case label element p that is total for the type of the selector expression
+    // of the enclosing switch statement or switch expression dominates a switch label that has a null case label element.
+    switch (ii) {
+      case Object obj:
+        System.out.println("int");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">null</error>:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (ii) {
+      case Object obj -> "num";
+      case <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      default -> "def";
+    };
+
+    switch (ii) {
+      case Object obj, <error descr="This case label is dominated by a preceding case label">null</error>:
+        System.out.println("int");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (ii) {
+      case Object obj, <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      default -> "def";
+    };
+
+    switch (ii) {
+      case (Integer i && true):
+        System.out.println("int");
+        break;
+      case <error descr="This case label is dominated by a preceding case label">null</error>:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (ii) {
+      case (Integer i && true) -> "int";
+      case <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      default -> "def";
+    };
+
+    switch (ii) {
+      case ((Integer i && false)):
+        System.out.println("int");
+        break;
+      case null:
+        System.out.println("num");
+        break;
+      default:
+        System.out.println("def");
+        break;
+    }
+    str = switch (ii) {
+      case ((Integer i && false)) -> "int";
+      case null -> "int";
+      default -> "def";
+    };
+  }
 }
+
+sealed interface I permits Sub1, Sub2, Sub3 {
+}
+
+enum Days {
+  MONDAY, TUESDAY, WEDNESDAY
+}
+
+final class Sub1 implements I {
+}
+
+final class Sub2 implements I {
+}
+
+sealed class Sub3 implements I permits Sub4 {
+}
+
+final class Sub4 extends Sub3 {
+}
+
+final class Sub5 {}
