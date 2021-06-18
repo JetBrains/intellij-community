@@ -388,6 +388,10 @@ public class EditorSearchSession implements SearchSession,
     addTextToRecent(myComponent.getSearchTextComponent());
   }
 
+  public boolean isLast(boolean forward) {
+    return myLivePreviewController.isLast(forward ? SearchResults.Direction.DOWN : SearchResults.Direction.UP);
+  }
+
   private void updateUIWithFindModel() {
     myComponent.update(myFindModel.getStringToFind(),
                        myFindModel.getStringToReplace(),

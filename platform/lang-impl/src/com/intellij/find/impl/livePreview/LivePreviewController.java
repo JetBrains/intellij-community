@@ -18,10 +18,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
@@ -93,6 +95,15 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     else {
       mySearchResults.nextOccurrence(false);
     }
+  }
+
+  public boolean isLast(SearchResults.Direction direction) {
+    List<FindResult> occurrences = mySearchResults.getOccurrences();
+    FindResult cursor = mySearchResults.getCursor();
+    FindResult last = direction == SearchResults.Direction.UP
+                      ? ContainerUtil.getFirstItem(occurrences)
+                      : ContainerUtil.getLastItem(occurrences);
+    return cursor == last;
   }
 
   public boolean isReplaceDenied() {
