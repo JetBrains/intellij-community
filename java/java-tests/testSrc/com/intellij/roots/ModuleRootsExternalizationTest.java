@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
@@ -19,7 +18,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -35,21 +33,10 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-
 /**
  *  @author dsl
  */
 public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
-  public void testEmptyModuleWrite() {
-    ModuleRootManager moduleRootManager = createTempModuleRootManager();
-    if (moduleRootManager instanceof ModuleRootManagerImpl) {
-      Element root = new Element("root");
-      ((ModuleRootManagerImpl)moduleRootManager).getState().writeExternal(root);
-      assertThat(root.getText()).isEmpty();
-    }
-  }
-
   private @NotNull ModuleRootManager createTempModuleRootManager() {
     Module module = createModule(getTempDir().newPath("tst" + ModuleFileType.DOT_DEFAULT_EXTENSION));
     return ModuleRootManager.getInstance(module);

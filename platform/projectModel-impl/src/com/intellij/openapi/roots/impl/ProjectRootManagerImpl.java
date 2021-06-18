@@ -668,11 +668,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
           details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
           for (OrderEntry orderEntry : entry.getValue()) {
             details.append("   ").append(orderEntry);
-            if (orderEntry instanceof RootModelComponentBase) {
-              details.append(", isDisposed = ").append(((RootModelComponentBase)orderEntry).isDisposed());
-              details.append(", root model = ").append(((RootModelComponentBase)orderEntry).getRootModel());
-              details.append(", module.isDisposed = ").append(((RootModelComponentBase)orderEntry).getRootModel().getModule().isDisposed());
-            }
             details.append("\n");
           }
         }
