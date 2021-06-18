@@ -1,13 +1,13 @@
 <html>
 <body>
-Reports any uses of another object's <code>private</code> or <code>protected</code> fields. Java
-allows the use of such fields for objects of the same class as the current objects, but
-some coding styles discourage this use. Additionally, such direct access to <code>private</code> fields
-may fail in component-oriented architectures such (e.g. Spring, Hibernate) which expect all access
-to other objects to be through method calls so as to allow the framework to mediate all access
-using proxies.
+Reports an object that uses a <code>private</code> or <code>protected</code> field of another object.
+<p>Java allows using such fields for objects of the same class as the current object but
+  some coding styles discourage this use. Additionally, such direct access to <code>private</code> fields
+  may fail in component-oriented architectures, such as Spring or Hibernate, that expect all access
+  to other objects to be through method calls so the framework can mediate access
+  using proxies.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
 public class Base {
     protected int bar;
 
@@ -23,15 +23,15 @@ class SomewhereElse {
         base.bar = 1; // warning: direct access to non-public field
     }
 }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to ignore accesses from the same class and only report accesses
-from inner or outer classes.
-  To ignore accesses from inner classes also, use the nested checkbox.
-<p>
-Use the second checkbox below to ignore accesses from an <code>equals()</code> method.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore accesses from the same class</b> option to ignore access from the same class and only report access
+    from inner or outer classes.
+    <p>To ignore access from inner classes as well, use the nested <b>Ignore accesses from inner classes</b>.</p>
+  </li>
+  <li>Use the <b>Ignore accesses from 'equals()' method</b> to ignore access from an <code>equals()</code> method.</li>
+</ul>
 </body>
 </html>
