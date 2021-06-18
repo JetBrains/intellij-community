@@ -90,6 +90,11 @@
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
+                        client="all"/>
+    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
+                    client="all"/>
+
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
                     headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
