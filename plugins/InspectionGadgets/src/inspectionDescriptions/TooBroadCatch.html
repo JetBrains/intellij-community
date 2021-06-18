@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports <code>catch</code> blocks which have parameters which are more generic than the
-exceptions thrown by the corresponding <code>try</code> block.
+Reports a <code>catch</code> block with parameters that are more generic than the
+exception thrown by the corresponding <code>try</code> block.
 <p><b>Example:</b></p>
 <pre><code>
   try  {
@@ -23,12 +23,11 @@ exceptions thrown by the corresponding <code>try</code> block.
   }
 </code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to have this inspection only warn on the most generic exceptions.
-<p>
-Use the second checkbox below to ignore any exceptions which hide other exceptions, but which may be thrown and thus
-are technically not overly broad.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Only warn on RuntimeException, Exception, Error or Throwable</b> option to have this inspection warn only on the most generic exceptions.</li>
+  <li>Use the <b>Ignore exceptions which hide others but are themselves thrown</b> option to ignore any exceptions that hide other exceptions but
+    still may be thrown and thus are technically not overly broad.</li>
+</ul>
 </body>
 </html>

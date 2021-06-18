@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports any <code>instanceof</code> expressions on <code>catch</code> block parameters.
-Testing the type of <code>catch</code> parameters is usually better done by having separate
-<code>catch</code> blocks, rather than <code>instanceof</code>.
+Reports cases in which an <code>instanceof</code> expression is used for testing the type of a parameter in a <code>catch</code> block.
+<p>Testing the type of <code>catch</code> parameters is usually better done by having separate
+  <code>catch</code> blocks instead of using <code>instanceof</code>.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void foo(Runnable runnable) {
     try {
         runnable.run();
@@ -14,9 +14,7 @@ Testing the type of <code>catch</code> parameters is usually better done by havi
         }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

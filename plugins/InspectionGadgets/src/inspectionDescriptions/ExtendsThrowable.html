@@ -1,16 +1,14 @@
 <html>
 <body>
-Reports any classes which directly extend <code>java.lang.Throwable</code>.
-It is generally considered bad practice to extend <code>java.lang.Throwable</code> directly and
-it is usually enough to extend either <code>java.lang.RuntimeException</code> or <code>java.lang.Exception</code> or in special
-cases <code>java.lang.Error</code>.
+Reports a class that directly extends <code>java.lang.Throwable</code>.
+<p>Extending <code>java.lang.Throwable</code> directly is generally considered bad practice.
+  It is usually enough to extend <code>java.lang.RuntimeException</code>, <code>java.lang.Exception</code>, or - in special
+  cases - <code>java.lang.Error</code>.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class EnigmaThrowable extends Throwable {} // warning: Class 'EnigmaThrowable' directly extends 'java.lang.Throwable'
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-<small>New in 15</small>
-<p>
+<!--<p><small>New in 15</small><p>-->
 </body>
 </html>
