@@ -1,38 +1,33 @@
 <html>
 <body>
-Reports any unnecessary unary minuses. Such expressions could be hard to understand and bug-prone.
-<p>Example 1:</p>
-<pre>
-  void unaryMinus(int i) {
+Reports unnecessary unary minuses. Such expressions might be hard to understand and might contain errors.
+<p><b>For example:</b></p>
+<pre><code>void unaryMinus(int i) {
     int x = - -i;
-  }
-</pre>
-<p>Two quick fixes are suggested here:</p>
-1) Remove <code>-</code> operators before <code>i</code> variable:
-<pre>
-  void unaryMinus(int i) {
+  }</code></pre>
+<p>The following quick fixes are suggested here:</p>
+<ul>
+  <li><p>Remove <code>-</code> operators before the <code>i</code> variable:</p>
+    <pre><code>void unaryMinus(int i) {
     int x = i;
-  }
-</pre>
-2) Replace <code>-</code> operators with prefix decrement operator:
-<pre>
-  void unaryMinus(int i) {
+  }</code></pre>
+  </li>
+  <li>
+ <p>Replace <code>-</code> operators with the prefix decrement operator:</p>
+    <pre><code>void unaryMinus(int i) {
     int x = --i;
-  }
-</pre>
-<p>Example 2:</p>
-<pre>
-  void unaryMinus(int i) {
+  }</code></pre>
+  </li>
+</ul>
+
+<p><b>Another example:</b></p>
+<pre><code>void unaryMinus(int i) {
     i += - 8;
-  }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
-  void unaryMinus(int i) {
+  }</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>void unaryMinus(int i) {
     i -= 8;
-  }
-</pre>
+  }</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>
