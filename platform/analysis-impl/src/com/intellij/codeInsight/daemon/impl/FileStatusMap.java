@@ -36,8 +36,7 @@ public final class FileStatusMap implements Disposable {
   private final Map<Document,FileStatus> myDocumentToStatusMap = ContainerUtil.createWeakMap(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
-  // Don't reduce visibility rules here because this class is used in Upsource as well.
-  public FileStatusMap(@NotNull Project project) {
+  FileStatusMap(@NotNull Project project) {
     myProject = project;
   }
 

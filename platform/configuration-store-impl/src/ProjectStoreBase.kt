@@ -4,8 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.ide.impl.TrustedProjectSettings
-import com.intellij.ide.impl.getTrustedState
-import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -266,9 +264,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()
 
   final override fun getDirectoryStorePath() = dotIdea
-
-  // dummy implementation for Upsource
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }
 
   final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(project) {
