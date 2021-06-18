@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
@@ -589,8 +590,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       myHomePage.show(IdeBundle.message(
                         "plugins.configurable.plugin.homepage.link"),
-                      () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
-      );
+                      () -> {
+                        String url = MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString());
+                        BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
+                      });
     }
 
     IdeaPluginDescriptor pluginNode = myUpdateDescriptor != null ? myUpdateDescriptor : myPlugin;

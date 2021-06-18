@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -148,7 +149,7 @@ public class LicensePanel extends NonOpaquePanel {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
     setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
-      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
     PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
