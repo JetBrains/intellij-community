@@ -20,8 +20,9 @@ abstract class AbstractUltraLightScriptLoadingTest : KotlinLightCodeInsightFixtu
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     fun doTest(testDataPath: String) {
-        val sourceText = File(testDataPath).readText()
-        val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
+        val testDataFile = File(testDataPath)
+        val sourceText = testDataFile.readText()
+        val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile
 
         UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
 
