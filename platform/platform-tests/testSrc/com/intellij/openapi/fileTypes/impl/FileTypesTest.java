@@ -133,22 +133,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertFalse(myFileTypeManager.isIgnoredFilesListEqualToCurrent(pattern2 + ";" + "ab.c*d"));
   }
 
-  public void testExcludePerformance() {
-    WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList("1*2;3*4;5*6;7*8;9*0;*1;*3;*5;*6;7*;*8*"));
-    String[] names = new String[100];
-    for (int i = 0; i < names.length; i++) {
-      String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
-      names[i] = name + name + name + name;
-    }
-    PlatformTestUtil.startPerformanceTest("isFileIgnored", 19_000, () -> {
-      for (int i = 0; i < 100_000; i++) {
-        for (String name : names) {
-          myFileTypeManager.isFileIgnored(name);
-        }
-      }
-    }).assertTiming();
-  }
-
   public void testMaskToPattern() {
     for (char i = 0; i < 256; i++) {
       if (i == '?' || i == '*') continue;
