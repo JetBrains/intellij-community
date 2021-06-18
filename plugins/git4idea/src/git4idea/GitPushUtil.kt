@@ -22,7 +22,7 @@ import git4idea.validators.GitRefNameValidator
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
-object GitUtilKt {
+object GitPushUtil {
   @JvmStatic
   fun findOrPushRemoteBranch(project: Project,
                              progressIndicator: ProgressIndicator,

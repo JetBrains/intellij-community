@@ -25,9 +25,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.GitUtilKt
-import git4idea.GitUtilKt.findOrPushRemoteBranch
-import git4idea.GitUtilKt.findPushTarget
+import git4idea.GitPushUtil
+import git4idea.GitPushUtil.findOrPushRemoteBranch
+import git4idea.GitPushUtil.findPushTarget
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import git4idea.ui.branch.MergeDirectionModel
 import net.miginfocom.layout.CC
@@ -263,7 +263,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         CompletableFuture.completedFuture(headBranch)
       }
       else {
-        val dialogMessages = GitUtilKt.BranchNameInputDialogMessages(
+        val dialogMessages = GitPushUtil.BranchNameInputDialogMessages(
           GithubBundle.message("pull.request.create.input.remote.branch.title"),
           GithubBundle.message("pull.request.create.input.remote.branch.name"),
           GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
