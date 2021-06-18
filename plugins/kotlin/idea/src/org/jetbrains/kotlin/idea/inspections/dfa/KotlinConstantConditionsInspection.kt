@@ -53,8 +53,13 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(expression: KtExpression): Boolean {
-        if (expression is KtConstantExpression || expression is KtProperty ||
-            expression is KtBinaryExpression && expression.operationToken == KtTokens.EQ
+        if (expression is KtConstantExpression ||
+            // If result of initialization is constant, then the initializer will be reported
+            expression is KtProperty ||
+            // If result of assignment is constant, then the right-hand part will be reported
+            expression is KtBinaryExpression && expression.operationToken == KtTokens.EQ ||
+            // Negation operand: negation itself will be reported
+            (expression.parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
         ) {
             return true
         }

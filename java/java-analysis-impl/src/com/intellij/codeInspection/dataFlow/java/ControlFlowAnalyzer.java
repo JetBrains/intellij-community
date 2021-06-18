@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescript
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TryFinally;
@@ -231,7 +232,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         // duplicate array and index on the stack
         addInstruction(new SpliceInstruction(2, 1, 0, 1, 0));
         DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-        addInstruction(new ArrayAccessInstruction(arrayStore, transfer));
+        DfaVariableValue staticValue =
+          ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
+        addInstruction(new ArrayAccessInstruction(
+          transfer, new JavaExpressionAnchor(arrayStore), new ArrayIndexProblem(arrayStore), staticValue));
       } else {
         addInstruction(new DupInstruction());
       }
@@ -1256,7 +1260,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-    addInstruction(new ArrayAccessInstruction(expression, transfer));
+    DfaVariableValue staticValue =
+      ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), DfaVariableValue.class);
+    addInstruction(new ArrayAccessInstruction(transfer, new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression),
+                                              staticValue));
     addNullCheck(expression);
     finishElement(expression);
   }

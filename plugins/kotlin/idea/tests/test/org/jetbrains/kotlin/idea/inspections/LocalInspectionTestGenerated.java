@@ -4556,6 +4556,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/anyIsString.kt");
         }
 
+        @TestMetadata("arrayBasic.kt")
+        public void testArrayBasic() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayBasic.kt");
+        }
+
+        @TestMetadata("arrayIndex.kt")
+        public void testArrayIndex() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayIndex.kt");
+        }
+
+        @TestMetadata("arrayIndex2.kt")
+        public void testArrayIndex2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayIndex2.kt");
+        }
+
+        @TestMetadata("assertNotNull.kt")
+        public void testAssertNotNull() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/assertNotNull.kt");
+        }
+
         @TestMetadata("assignment.kt")
         public void testAssignment() throws Exception {
             runTest("testData/inspectionsLocal/dfa/assignment.kt");
@@ -4574,6 +4594,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("basicIn2.kt")
         public void testBasicIn2() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicIn2.kt");
+        }
+
+        @TestMetadata("basicIn3.kt")
+        public void testBasicIn3() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicIn3.kt");
+        }
+
+        @TestMetadata("basicIn4.kt")
+        public void testBasicIn4() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicIn4.kt");
+        }
+
+        @TestMetadata("basicIn5.kt")
+        public void testBasicIn5() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicIn5.kt");
         }
 
         @TestMetadata("basicIs.kt")
@@ -4674,6 +4709,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("elvisSimple.kt")
         public void testElvisSimple() throws Exception {
             runTest("testData/inspectionsLocal/dfa/elvisSimple.kt");
+        }
+
+        @TestMetadata("inLongUntil.kt")
+        public void testInLongUntil() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/inLongUntil.kt");
         }
 
         @TestMetadata("intBoxed.kt")

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
@@ -71,7 +72,8 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
     DfaInstructionState[] states =
-      ArrayAccessInstruction.processOutOfBounds(myExpression, myOutOfBoundsTransfer, interpreter, stateBefore, index, array);
+      ArrayAccessInstruction.processOutOfBounds(myOutOfBoundsTransfer, interpreter, stateBefore, index, array,
+                                                new ArrayIndexProblem(myExpression));
     if (states != null) return states;
 
     checkArrayElementAssignability(interpreter, stateBefore, valueToStore, array);

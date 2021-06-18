@@ -12,26 +12,30 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
-import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
-internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
+internal fun KotlinType?.toDfType(context: KtElement) : DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
         var notNullableType = makeNotNullable().toDfType(context)
@@ -58,17 +62,16 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
             StandardNames.FqNames._long -> DfTypes.LONG
             StandardNames.FqNames._float -> DfTypes.FLOAT
             StandardNames.FqNames._double -> DfTypes.DOUBLE
+            StandardNames.FqNames.array ->
+                TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             StandardNames.FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
                 val typeFqName = when(fqNameUnsafe) {
                     StandardNames.FqNames.string -> CommonClassNames.JAVA_LANG_STRING
                     else -> fqNameUnsafe.asString()
                 }
-                val psiClass = JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope)
-                if (psiClass != null) {
-                    return TypeConstraints.exactClass(psiClass).instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-                }
-                DfType.TOP
+                val psiClass = JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
+                return TypeConstraints.exactClass(psiClass).instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             }
         }
         // TODO: Support type parameters
@@ -99,21 +102,22 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
 
 internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
 
-internal fun KotlinType.toPsiType(context: PsiElement): PsiType? {
-    val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe?.asString()
+internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
+    val typeFqName = this.constructor.declarationDescriptor?.fqNameUnsafe
     val boxed = canBeNull()
     fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
     return when (typeFqName) {
-        "kotlin.Int" -> PsiType.INT.orBoxed()
-        "kotlin.Long" -> PsiType.LONG.orBoxed()
-        "kotlin.Short" -> PsiType.SHORT.orBoxed()
-        "kotlin.Boolean" -> PsiType.BOOLEAN.orBoxed()
-        "kotlin.Byte" -> PsiType.BYTE.orBoxed()
-        "kotlin.Char" -> PsiType.CHAR.orBoxed()
-        "kotlin.Double" -> PsiType.DOUBLE.orBoxed()
-        "kotlin.Float" -> PsiType.FLOAT.orBoxed()
-        "kotlin.Unit" -> PsiType.VOID.orBoxed()
-        "kotlin.String" -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+        StandardNames.FqNames._int -> PsiType.INT.orBoxed()
+        StandardNames.FqNames._long -> PsiType.LONG.orBoxed()
+        StandardNames.FqNames._short -> PsiType.SHORT.orBoxed()
+        StandardNames.FqNames._boolean -> PsiType.BOOLEAN.orBoxed()
+        StandardNames.FqNames._byte -> PsiType.BYTE.orBoxed()
+        StandardNames.FqNames._char -> PsiType.CHAR.orBoxed()
+        StandardNames.FqNames._double -> PsiType.DOUBLE.orBoxed()
+        StandardNames.FqNames._float -> PsiType.FLOAT.orBoxed()
+        StandardNames.FqNames.unit -> PsiType.VOID.orBoxed()
+        StandardNames.FqNames.string -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+        StandardNames.FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
         else -> null
     }
 }

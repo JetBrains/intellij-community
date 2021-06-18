@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
+import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -97,13 +98,37 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtProperty -> processDeclaration(expr)
             is KtLambdaExpression -> processLambda(expr)
             is KtStringTemplateExpression -> processStringTemplate(expr)
-            // try, anonymous classes, local functions, as, as?, in
+            is KtArrayAccessExpression -> processArrayAccess(expr)
+            // try, anonymous classes, local functions, as, as?
             else -> {
                 // unsupported construct
                 broken = true
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processArrayAccess(expr: KtArrayAccessExpression) {
+        val arrayExpression = expr.arrayExpression
+        processExpression(arrayExpression)
+        val kotlinType = arrayExpression?.getKotlinType()
+        var curType = kotlinType
+        val indexes = expr.indexExpressions
+        for (idx in indexes) {
+            processExpression(idx)
+            val anchor = if (idx == indexes.last()) KotlinExpressionAnchor(expr) else null
+            if (curType != null && KotlinBuiltIns.isArrayOrPrimitiveArray(curType)) {
+                if (idx.getKotlinType()?.canBeNull() == true) {
+                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                }
+                val transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException")
+                addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(expr, idx), null))
+                curType = expr.builtIns.getArrayElementType(curType)
+            } else {
+                addInstruction(EvalUnknownInstruction(anchor, 2))
+                addInstruction(FlushFieldsInstruction())
+            }
+        }
     }
 
     private fun processIsExpression(expr: KtIsExpression) {
@@ -279,8 +304,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
                 }
             }
+        } else if (ref == "!!") {
+            val transfer: DfaControlTransferValue? = createTransfer("java.lang.NullPointerException")
+            addInstruction(EnsureInstruction(null, RelationType.NE, DfTypes.NULL, transfer))
+            // Probably unbox
+            addImplicitConversion(expr, operand?.getKotlinType(), expr.getKotlinType())
         } else {
-            // TODO: process !!
             addInstruction(EvalUnknownInstruction(anchor, 1))
         }
     }
@@ -502,7 +531,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     val rightType = right?.getKotlinType()
                     if (leftType.toDfType(range) is DfIntegralType && rightType.toDfType(range) is DfIntegralType) {
                         processExpression(left)
+                        addImplicitConversion(left, kotlinType)
                         processExpression(right)
+                        addImplicitConversion(right, kotlinType)
                         addInstruction(SpliceInstruction(3, 2, 0, 2, 1))
                         addInstruction(BooleanBinaryInstruction(RelationType.GE, false, null))
                         val offset = DeferredOffset()
@@ -646,18 +677,21 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val right = expr.right
         val leftType = left?.getKotlinType()
         val rightType = right?.getKotlinType()
-        val balancedType: KotlinType? = balanceType(leftType, rightType, forceEqualityByContent)
         processExpression(left)
-        addImplicitConversion(left, balancedType)
-        processExpression(right)
-        addImplicitConversion(right, balancedType)
-        if (left == null || right == null) {
+        if ((relation == RelationType.EQ || relation == RelationType.NE) ||
+            (leftType.toDfType(expr) is DfPrimitiveType && rightType.toDfType(expr) is DfPrimitiveType)) {
+            val balancedType: KotlinType? = balanceType(leftType, rightType, forceEqualityByContent)
+            addImplicitConversion(left, balancedType)
+            processExpression(right)
+            addImplicitConversion(right, balancedType)
+            // TODO: avoid equals-comparison of unknown object types
+            addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+        } else {
+            // Overloaded >/>=/</<=: do not evaluate
+            processExpression(right)
             addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
-            return
+            addInstruction(FlushFieldsInstruction())
         }
-        // TODO: support overloaded operators
-        // TODO: avoid equals-comparison of unknown object types
-        addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
     }
 
     private fun balanceType(leftType: KotlinType?, rightType: KotlinType?, forceEqualityByContent: Boolean): KotlinType? = when {
