@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -12,6 +12,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +27,6 @@ public class TypeCookDialog extends RefactoringDialog {
   private final JCheckBox myCbCookObjects = new JCheckBox();
   private final JCheckBox myCbCookToWildcards = new JCheckBox();
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
 
@@ -192,6 +192,7 @@ public class TypeCookDialog extends RefactoringDialog {
     };
   }
 
+  @Nls
   public static String getRefactoringName() {
     return JavaRefactoringBundle.message("generify.title");
   }
