@@ -21,76 +21,14 @@ abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestC
     override fun defaultCompletionType() = CompletionType.BASIC
 
     override fun configureFixture(testPath: String) {
-        // Kotlin SDK references many JDK classes via typealiases.
-        // Some of them are missing in the mockJDKs of intellij repository,
-        // so we have to add them to the fixture by hand
-        addCharacterCodingException()
-        addAppendable()
-        addHashSet()
-        addLinkedHashSet()
+        // those classes are missing in mockJDK-1.7
+        with(myFixture) {
+            addCharacterCodingException()
+            addAppendable()
+            addHashSet()
+            addLinkedHashSet()
+        }
 
         super.configureFixture(testPath)
-    }
-
-    private fun addCharacterCodingException() {
-        myFixture.addClass(
-            """
-            package java.nio.charset;
-                                    
-            import java.io.IOException;            
-            
-            public class CharacterCodingException extends IOException {}
-            """.trimIndent()
-        )
-    }
-
-    private fun addAppendable() {
-        myFixture.addClass(
-            """
-            package java.lang;
-            
-            import java.io.IOException;
-            
-            public interface Appendable {
-                Appendable append(CharSequence csq) throws IOException;
-                Appendable append(CharSequence csq, int start, int end) throws IOException;
-                Appendable append(char c) throws IOException;
-            }
-            """.trimIndent()
-        )
-    }
-
-    private fun addHashSet() {
-        myFixture.addClass(
-            """
-            package java.util;
-            
-            import java.io.Serializable;
-            
-            public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Serializable {
-                @Override
-                public Iterator<E> iterator() {
-                    return null;
-                }
-                        
-                @Override
-                public int size() {
-                    return 0;
-                }
-            }
-            """.trimIndent()
-        )
-    }
-
-    private fun addLinkedHashSet() {
-        myFixture.addClass(
-            """
-            package java.util;
-            
-            import java.io.Serializable;
-                        
-            public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable, Serializable {}
-            """.trimIndent()
-        )
     }
 }
