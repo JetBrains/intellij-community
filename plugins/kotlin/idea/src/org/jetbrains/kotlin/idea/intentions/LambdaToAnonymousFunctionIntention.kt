@@ -129,7 +129,17 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                 }.asString()
             )
 
-            return replaceElement(function).also { ShortenReferences.DEFAULT.process(it) }
+            return replaceElement(function)
+                .let {
+                    val parent = it.parent
+                    val grandParent = parent.parent
+                    if (parent is KtCallExpression && grandParent !is KtParenthesizedExpression && grandParent !is KtDeclaration) {
+                        it.replaced(psiFactory.createExpressionByPattern("($0)", it))
+                    } else {
+                        it
+                    }
+                }
+                .also { ShortenReferences.DEFAULT.process(it) }
         }
     }
 }
