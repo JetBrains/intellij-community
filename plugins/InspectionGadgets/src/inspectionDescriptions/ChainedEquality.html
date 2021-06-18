@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports chained equality comparisons (i.e. <code>a == b == c</code>).
-Such comparisons are confusing: <code>a == b == c</code> means <code>(a == b) == c</code>,
-but <code>a == b && a == c</code> could be intended.
-<p>Example:</p>
+Reports chained equality comparisons.
+<p>Such comparisons may be confusing: <code>a == b == c</code> means <code>(a == b) == c</code>,
+  but possibly <code>a == b && a == c</code> is intended.</p>
+<p><b>Example:</b></p>
 <pre>
   boolean chainedEquality(boolean a, boolean b, boolean c) {
     return a == b == c;
   }
 </pre>
-<p>Parentheses can be used to make the comparison less confusing:</p>
+<p>You can use parentheses to make the comparison less confusing:</p>
 <pre>
   boolean chainedEquality(boolean a, boolean b, boolean c) {
     return (a == b) == c;

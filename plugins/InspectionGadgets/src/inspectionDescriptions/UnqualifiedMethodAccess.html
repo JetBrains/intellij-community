@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports calls to non-static methods of the same object which are not qualified with <code>this</code>.
-<p>Example:</p>
+Reports calls to non-<code>static</code> methods on the same instance that are not qualified with <code>this</code>.
+<p><b>Example:</b></p>
 <pre>
   class Foo {
     void bar() {}
@@ -11,7 +11,7 @@ Reports calls to non-static methods of the same object which are not qualified w
     }
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class Foo {
     void bar() {}

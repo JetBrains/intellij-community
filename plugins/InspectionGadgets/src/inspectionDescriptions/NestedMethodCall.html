@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports method calls used as parameters of another method call.
-The quick-fix introduces a variable to reduce cognitive complexity and make debugging easier.
-<p>Example:</p>
+Reports method calls used as parameters to another method call.
+<p>The quick-fix introduces a variable to make the code simpler and easier to debug.</p>
+<p><b>Example:</b></p>
 <pre>
   public int y() { return 1; }
   public int f(int x) { return 2 * x; }
@@ -11,7 +11,7 @@ The quick-fix introduces a variable to reduce cognitive complexity and make debu
       int x = f(y());
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   public int y() { return 1; }
   public int f(int x) { return 2 * x; }
@@ -23,10 +23,13 @@ The quick-fix introduces a variable to reduce cognitive complexity and make debu
 </pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to ignore method calls in field initializers.
-<p>
-Use the second checkbox below to ignore calls to static methods.
-<p>
-Use the third checkbox below to ignore calls to simple getters.
+Use the inspection options to toggle the reporting of:
+</p>
+<ul>
+  <li>method calls in field initializers</li>
+  <li>calls to static methods</li>
+  <li>calls to simple getters</li>
+</ul>
+
 </body>
 </html>

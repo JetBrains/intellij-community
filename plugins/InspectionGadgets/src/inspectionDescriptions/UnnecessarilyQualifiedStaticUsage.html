@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports calls to static methods or accesses of static fields
-on the current class which are qualified with the class name. Such qualification is unnecessary,
-and may be safely removed.
-<p>Example:</p>
+Reports usages of static members qualified with the class name.
+<p>
+  Such qualification is unnecessary and may be safely removed.
+</p>
+<p><b>Example:</b></p>
 <pre>
   class Foo {
     static void foo() {}
@@ -17,7 +18,7 @@ and may be safely removed.
     static void baz() { Foo.foo(); }
   }
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   class Foo {
     static void foo() {}
@@ -33,17 +34,20 @@ and may be safely removed.
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the first checkbox below to ignore accesses of static fields.
-  In the above example, <code>void bar() { System.out.println(Foo.x); }</code> will not be reported.
+  Use the inspection options to toggle the reporting for:
 </p>
+<ul>
+  <li>
+    <p>Static fields access:<br><code>void bar() { System.out.println(Foo.x); }</code></p>
+  </li>
+  <li>
+    <p>Calls to static methods:<br><code>void bar() { Foo.foo(); }</code></p>
+  </li>
+</ul>
 <p>
-  Use the second checkbox below to ignore calls to static methods.
-  In the above example, <code>void bar() { Foo.foo(); }</code> will not be reported.
+  Also, you can configure the inspection to only report static member usage
+  in a static context. In this case, only <code>static void baz() { Foo.foo(); }</code> will be reported.
 </p>
-<p>
-  Use the third checkbox below to only report calls to static methods or accesses of static fields
-  from a static context.
-  In the above example, <i>only</i> <code>static void baz() { Foo.foo(); }</code> will be reported.
-</p>
+
 </body>
 </html>
