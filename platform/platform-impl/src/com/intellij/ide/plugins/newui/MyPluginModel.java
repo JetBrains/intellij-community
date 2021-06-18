@@ -16,7 +16,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -343,16 +345,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                              @NotNull IdeaPluginDescriptor descriptor,
                              @Nullable IdeaPluginDescriptor updateDescriptor,
                              @NotNull ModalityState modalityState) {
-    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
+    boolean isUpdate = updateDescriptor != null;
+    IdeaPluginDescriptor actionDescriptor = isUpdate ? updateDescriptor : descriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(actionDescriptor))) {
       return;
     }
 
-    boolean allowUninstallWithoutRestart = true;
-    if (updateDescriptor != null) {
-      IdeaPluginDescriptorImpl installedPluginDescriptor = (IdeaPluginDescriptorImpl) descriptor;
-      if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
-        allowUninstallWithoutRestart = false;
+    Ref<Boolean> allowInstallWithoutRestart = Ref.create(true);
+    if (isUpdate) {
+      IdeaPluginDescriptorImpl installedPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
+      if (!DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
+        allowInstallWithoutRestart.set(false);
       }
       else if (!installedPluginDescriptor.isEnabled()) {
         try {
@@ -363,125 +366,152 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         }
       }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
-        if (!PluginInstaller.uninstallDynamicPlugin(parentComponent, installedPluginDescriptor, true)) {
-          allowUninstallWithoutRestart = false;
-        }
+        allowInstallWithoutRestart.set(PluginInstaller.uninstallDynamicPlugin(parentComponent,
+                                                                              installedPluginDescriptor,
+                                                                              true));
       }
       else {
         performUninstall(installedPluginDescriptor);
       }
     }
 
-    PluginNode pluginNode;
-    if (actionDescriptor instanceof PluginNode) {
-      pluginNode = (PluginNode)actionDescriptor;
-      if (!pluginNode.detailsLoaded()) {
-        Ref<PluginNode> fullNode = new Ref<>();
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> fullNode.set(MarketplaceRequests.getInstance().loadPluginDetails(((PluginNode) actionDescriptor))),
-            IdeBundle.message("progress.title.loading.plugin.details"), true, null, parentComponent)
-        ) {
-          return;
+    ProgressManager.getInstance()
+      .runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(),
+                                                                    parentComponent,
+                                                                    IdeBundle.message("progress.title.loading.plugin.details"),
+                                                                    true,
+                                                                    null) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          PluginNode pluginNode = toPluginNode(actionDescriptor, indicator);
+          if (pluginNode == null) {
+            return;
+          }
+
+          List<PluginNode> pluginsToInstall = List.of(pluginNode);
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            PluginManagerMain.suggestToEnableInstalledDependantPlugins(MyPluginModel.this,
+                                                                       pluginsToInstall);
+          }, modalityState);
+
+
+          InstallPluginInfo info = new InstallPluginInfo((BgProgressIndicator)indicator,
+                                                         descriptor,
+                                                         MyPluginModel.this,
+                                                         !isUpdate);
+          prepareToInstall(info);
+
+          PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall,
+                                                                        getCustomRepoPlugins(),
+                                                                        MyPluginModel.this,
+                                                                        indicator);
+          operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart.get());
+
+          runInstallOperation(operation, info, modalityState);
         }
-        pluginNode = fullNode.get();
-      }
-    }
-    else {
-      pluginNode = new PluginNode(actionDescriptor.getPluginId(), actionDescriptor.getName(), "-1");
-      pluginNode.setDependencies(actionDescriptor.getDependencies());
-      pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
-    }
-    List<PluginNode> pluginsToInstall = List.of(pluginNode);
 
-    PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
-
-    installPlugin(pluginsToInstall, prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart, modalityState);
-  }
-
-  private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
-                             @NotNull InstallPluginInfo info,
-                             boolean allowInstallWithoutRestart,
-                             @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      boolean cancel = false;
-      boolean error = false;
-      boolean showErrors = true;
-      boolean restartRequired = true;
-      List<PendingDynamicPluginInstall> pluginsToInstallSynchronously = new ArrayList<>();
-      try {
-        PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, getCustomRepoPlugins(), this, info.indicator);
-        operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-        operation.run();
-        for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-          if (DynamicPlugins.allowLoadUnloadSynchronously(install.getPluginDescriptor())) {
-            pluginsToInstallSynchronously.add(install);
-            myPluginsToRemoveOnCancel.add(install.getPluginDescriptor());
+        private @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor,
+                                                  @NotNull ProgressIndicator indicator) {
+          if (descriptor instanceof PluginNode) {
+            PluginNode pluginNode = (PluginNode)descriptor;
+            return pluginNode.detailsLoaded() ?
+                   pluginNode :
+                   MarketplaceRequests.getInstance().loadPluginDetails(pluginNode, indicator);
           }
           else {
-            myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
+            PluginNode pluginNode = new PluginNode(descriptor.getPluginId(),
+                                                   descriptor.getName(),
+                                                   "-1");
+            pluginNode.setDependencies(descriptor.getDependencies());
+            pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
+            return pluginNode;
           }
         }
+      }, new BgProgressIndicator());
+  }
 
-        error = !operation.isSuccess();
-        showErrors = !operation.isShownErrors();
-        restartRequired = operation.isRestartRequired();
-      }
-      catch (ProcessCanceledException e) {
-        cancel = true;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        error = true;
+  private void runInstallOperation(@NotNull PluginInstallOperation operation,
+                                   @NotNull InstallPluginInfo info,
+                                   @NotNull ModalityState modalityState) {
+    boolean cancel = false;
+    boolean success = true;
+    boolean showErrors = true;
+    boolean restartRequired = true;
+    List<PendingDynamicPluginInstall> pluginsToInstallSynchronously = new ArrayList<>();
+    try {
+      operation.run();
+      for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+        if (DynamicPlugins.allowLoadUnloadSynchronously(install.getPluginDescriptor())) {
+          pluginsToInstallSynchronously.add(install);
+          myPluginsToRemoveOnCancel.add(install.getPluginDescriptor());
+        }
+        else {
+          myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
+        }
       }
 
-      boolean success = !error;
-      boolean _cancel = cancel;
-      boolean _showErrors = showErrors;
-      boolean finalRestartRequired = restartRequired;
-      ApplicationManager.getApplication()
-        .invokeLater(() -> {
-          boolean dynamicRestartRequired = false;
-          for (PendingDynamicPluginInstall install : pluginsToInstallSynchronously) {
-            boolean installedWithoutRestart = PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
-                                                                                          myInstalledPanel,
-                                                                                          install.getPluginDescriptor());
-            if (installedWithoutRestart) {
-              IdeaPluginDescriptor installedDescriptor = PluginManagerCore.getPlugin(info.getDescriptor().getPluginId());
-              if (installedDescriptor != null) {
-                info.setInstalledDescriptor((IdeaPluginDescriptorImpl)installedDescriptor);
-              }
-            }
-            else {
-              dynamicRestartRequired = true;
-            }
+      success = operation.isSuccess();
+      showErrors = !operation.isShownErrors();
+      restartRequired = operation.isRestartRequired();
+    }
+    catch (ProcessCanceledException e) {
+      cancel = true;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      success = false;
+    }
+
+    boolean _success = success;
+    boolean _cancel = cancel;
+    boolean _showErrors = showErrors;
+    boolean _restartRequired = restartRequired;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      boolean dynamicRestartRequired = false;
+      for (PendingDynamicPluginInstall install : pluginsToInstallSynchronously) {
+        boolean installedWithoutRestart = PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
+                                                                                      myInstalledPanel,
+                                                                                      install.getPluginDescriptor());
+        if (installedWithoutRestart) {
+          IdeaPluginDescriptor installedDescriptor = PluginManagerCore.getPlugin(info.getDescriptor().getPluginId());
+          if (installedDescriptor != null) {
+            info.setInstalledDescriptor((IdeaPluginDescriptorImpl)installedDescriptor);
           }
-          info.finish(success, _cancel, _showErrors, finalRestartRequired || dynamicRestartRequired);
-        }, modalityState);
-    });
+        }
+        else {
+          dynamicRestartRequired = true;
+        }
+      }
+      info.finish(_success, _cancel, _showErrors, _restartRequired || dynamicRestartRequired);
+    }, modalityState);
   }
 
   public boolean toBackground() {
     for (InstallPluginInfo info : myInstallingInfos.values()) {
       info.toBackground(myStatusBar);
     }
-    return !myInstallingInfos.isEmpty();
+
+    boolean result = !myInstallingInfos.isEmpty();
+    if (result) {
+      InstallPluginInfo.showRestart();
+    }
+    return result;
   }
 
-  @NotNull
-  private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
-    boolean install = updateDescriptor == null;
-    InstallPluginInfo info = new InstallPluginInfo(descriptor, updateDescriptor, this, install);
-    myInstallingInfos.put(descriptor.getPluginId(), info);
+  private void prepareToInstall(@NotNull InstallPluginInfo info) {
+    IdeaPluginDescriptor descriptor = info.getDescriptor();
+    PluginId pluginId = descriptor.getPluginId();
+    myInstallingInfos.put(pluginId, info);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
       myTopController.showProgress(true);
     }
     myInstallingWithUpdatesPlugins.add(descriptor);
-    if (install) {
+    if (info.install) {
       myInstallingPlugins.add(descriptor);
     }
 
-    if (install && myInstalling != null) {
+    if (info.install && myInstalling != null) {
       if (myInstalling.ui == null) {
         myInstalling.descriptors.add(descriptor);
         myInstalledPanel.addGroup(myInstalling, 0);
@@ -494,13 +524,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       myInstalledPanel.doLayout();
     }
 
-    List<ListPluginComponent> gridComponents = myMarketplacePluginComponentMap.get(descriptor.getPluginId());
+    List<ListPluginComponent> gridComponents = myMarketplacePluginComponentMap.get(pluginId);
     if (gridComponents != null) {
       for (ListPluginComponent gridComponent : gridComponents) {
         gridComponent.showProgress();
       }
     }
-    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor.getPluginId());
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(pluginId);
     if (listComponents != null) {
       for (ListPluginComponent listComponent : listComponents) {
         listComponent.showProgress();
@@ -511,8 +541,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         panel.showProgress();
       }
     }
-
-    return info;
   }
 
   /**
