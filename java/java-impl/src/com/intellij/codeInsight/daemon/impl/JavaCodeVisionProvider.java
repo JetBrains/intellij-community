@@ -65,8 +65,8 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-               JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(file.getProject());
-                GotoDeclarationAction.startFindUsages(editor, file.getProject(), element, new RelativePoint(event));
+               JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.getProject());
+                GotoDeclarationAction.startFindUsages(editor, element.getProject(), element, new RelativePoint(event));
               }
 
               @NotNull
@@ -87,7 +87,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(file.getProject(), "class");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "class");
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
 
@@ -108,7 +108,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
-                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(file.getProject(), "method");
+                  JavaCodeVisionUsageCollector.IMPLEMENTATION_CLICKED_EVENT_ID.log(element.getProject(), "method");
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
@@ -176,8 +176,13 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                                       @NotNull Editor editor,
                                                       @NotNull InlResult result) {
     InlayPresentation text = factory.smallTextWithoutBackground(result.getRegularText());
-
-    return factory.referenceOnHover(text, (event, translated) -> result.onClick(editor, element, event));
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
+    return factory.referenceOnHover(text, (event, translated) -> {
+      PsiElement actual = pointer.getElement();
+      if (actual != null) {
+        result.onClick(editor, actual, event);
+      }
+    });
   }
 
   private static @NotNull InlayPresentation addSettings(@NotNull Project project,
