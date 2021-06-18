@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
+import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -81,6 +82,9 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
     }
 
     protected open fun setUpFixture(testPath: String) {
+        // this class is missing in mockJDK-1.8
+        fixture.addCharacterCodingException()
+
         fixture.configureWithExtraFile(testPath, ".dependency", ".dependency.1", ".dependency.2")
     }
 
