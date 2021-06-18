@@ -53,46 +53,59 @@ private fun doCalculateCrc(project: Project, charSequence: CharSequence, systemI
       return crcCalculator.calculateCrc(project, file, charSequence)
     }
   }
-  val parserDefinition = getParserDefinition(file.fileType) ?: return null
-  val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
-  return calculateCrc(project, charSequence, parserDefinition) { tokenType, _ -> ignoredTokens.contains(tokenType) }
+  return DefaultCrcCalculator.calculateCrc(project, file, charSequence)
 }
 
-fun calculateCrc(project: Project,
-                 charSequence: CharSequence,
-                 parserDefinition: ParserDefinition,
-                 ignoreToken: (IElementType, CharSequence) -> Boolean): Long {
-  val lexer = parserDefinition.createLexer(project)
-  val crc32 = CRC32()
-  lexer.start(charSequence)
-  ProgressManager.checkCanceled()
-  while (true) {
-    val tokenType = lexer.tokenType ?: break
-    val tokenText = charSequence.subSequence(lexer.tokenStart, lexer.tokenEnd)
-    crc32.update(tokenType, tokenText, ignoreToken)
-    lexer.advance()
-    ProgressManager.checkCanceled()
-  }
-  return crc32.value
-}
+private object DefaultCrcCalculator : AbstractCrcCalculator() {
+  override fun isApplicable(id: ProjectSystemId, file: VirtualFile): Boolean = true
 
-private fun CRC32.update(tokenType: IElementType, tokenText: CharSequence, ignoreToken: (IElementType, CharSequence) -> Boolean) {
-  if (ignoreToken(tokenType, tokenText)) return
-  if (tokenText.isBlank()) return
-  update(tokenText)
-}
-
-private fun CRC32.update(charSequence: CharSequence) {
-  update(charSequence.length)
-  for (ch in charSequence) {
-    update(ch.toInt())
+  override fun calculateCrc(project: Project, file: VirtualFile, fileText: CharSequence): Long? {
+    val parserDefinition = getParserDefinition(file.fileType) ?: return null
+    val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
+    return calculateCrc(project, fileText, parserDefinition) { tokenType, _ -> ignoredTokens.contains(tokenType) }
   }
 }
 
-private fun getParserDefinition(fileType: FileType): ParserDefinition? {
-  return when (fileType) {
-    is LanguageFileType -> LanguageParserDefinitions.INSTANCE.forLanguage(fileType.language)
-    else -> null
+abstract class AbstractCrcCalculator : ExternalSystemSettingsFileCrcCalculator {
+  companion object {
+    @JvmStatic
+    fun calculateCrc(project: Project,
+                     charSequence: CharSequence,
+                     parserDefinition: ParserDefinition,
+                     ignoreToken: (IElementType, CharSequence) -> Boolean): Long {
+      val lexer = parserDefinition.createLexer(project)
+      val crc32 = CRC32()
+      lexer.start(charSequence)
+      ProgressManager.checkCanceled()
+      while (true) {
+        val tokenType = lexer.tokenType ?: break
+        val tokenText = charSequence.subSequence(lexer.tokenStart, lexer.tokenEnd)
+        crc32.update(tokenType, tokenText, ignoreToken)
+        lexer.advance()
+        ProgressManager.checkCanceled()
+      }
+      return crc32.value
+    }
+
+    private fun CRC32.update(tokenType: IElementType, tokenText: CharSequence, ignoreToken: (IElementType, CharSequence) -> Boolean) {
+      if (ignoreToken(tokenType, tokenText)) return
+      if (tokenText.isBlank()) return
+      update(tokenText)
+    }
+
+    private fun CRC32.update(charSequence: CharSequence) {
+      update(charSequence.length)
+      for (ch in charSequence) {
+        update(ch.toInt())
+      }
+    }
+
+    fun getParserDefinition(fileType: FileType): ParserDefinition? {
+      return when (fileType) {
+        is LanguageFileType -> LanguageParserDefinitions.INSTANCE.forLanguage(fileType.language)
+        else -> null
+      }
+    }
   }
 }
 
