@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
@@ -44,7 +43,6 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
-import training.util.learningToolWindow
 import java.awt.Rectangle
 import java.io.File
 import javax.swing.JButton
@@ -58,13 +56,9 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   private val textToHighlight = "green"
   private lateinit var remoteProjectRoot: File
 
-  override val lessonContent: LessonContext.() -> Unit = {
-    prepareRuntimeTask {
-      val learnToolWindow = learningToolWindow(project) ?: error("Not found Learn toolwindow")
-      learnToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
-      learnToolWindow.show()
-    }
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
+  override val lessonContent: LessonContext.() -> Unit = {
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
     lateinit var findActionTaskId: TaskContext.TaskId
     task("GotoAction") {

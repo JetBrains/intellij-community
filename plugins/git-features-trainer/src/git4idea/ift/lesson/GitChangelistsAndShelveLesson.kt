@@ -24,7 +24,6 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
-import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
@@ -123,8 +122,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
         true
       }
     }
-
-    moveLearnToolWindowRight()
 
     val shelfText = VcsBundle.message("shelf.tab")
     task {
