@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
-import com.google.common.base.Predicates;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -220,7 +219,7 @@ public final class ConsentOptions {
   }
 
   public @NotNull Pair<List<Consent>, Boolean> getConsents() {
-    return getConsents(Predicates.alwaysTrue());
+    return getConsents(consent -> true);
   }
   
   public @NotNull Pair<List<Consent>, Boolean> getConsents(Predicate<Consent> filter) {
