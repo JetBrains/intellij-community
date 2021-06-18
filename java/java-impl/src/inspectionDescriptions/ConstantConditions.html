@@ -28,10 +28,10 @@ Integer square(@Nullable Integer input) {
     nullable value is passed as an argument to a method with a non-annotated parameter,
     stored into non-annotated field, or returned from a non-annotated method. In this case, the inspection will suggest propagating
     the <code>@Nullable</code> annotation. You can also configure nullability annotations using the <b>Configure Annotations</b> button.</li>
-  <li>Use the <b>Treat non-annotated members and parameters as @Nullable</b> option to assume that non-annotated members can be null
+  <li>Use the <b>Treat non-annotated members and parameters as @Nullable</b> option to assume that non-annotated members can be null,
     so they must not be used in non-null context.</li>
   <li>Use the <b>Report not-null required parameter with null-literal argument usages</b> option to report method parameters that cannot be
-    null (e. g. immediately dereferenced in the method body), but there are call sites where a <code>null</code> literal is passed.</li>
+    null (e.g. immediately dereferenced in the method body), but there are call sites where a <code>null</code> literal is passed.</li>
   <li>Use the <b>Report nullable methods that always return a non-null value</b> option to report methods that are annotated as
   <code>@Nullable</code>, but always return non-null value. In this case, it's suggested that you change the annotation to <code>@NotNull</code>.</li>
   <li>Use the <b>Don't report assertions with condition statically proven to be always true</b> option to avoid reporting assertions that were

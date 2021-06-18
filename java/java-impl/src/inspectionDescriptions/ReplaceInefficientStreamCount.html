@@ -8,7 +8,7 @@ could be optimized.
 <ul>
   <li><code>Collection.stream().count()</code> &rarr; <code>Collection.size()</code>. In Java 8 <code>Collection.stream().count()</code>
     actually iterates over the collection elements to count them, while <code>Collection.size()</code> is much faster for most of the collections.</li>
-  <li><code>Stream.flatMap(Collection::stream).count()</code> &rarr; <code>Stream.mapToLong(Collection::size).sum()</code>. Similarly
+  <li><code>Stream.flatMap(Collection::stream).count()</code> &rarr; <code>Stream.mapToLong(Collection::size).sum()</code>. Similarly,
     there's no need to iterate over all the nested collections. Instead, their sizes could be summed up.</li>
   <li><code>Stream.filter(o -> ...).count() > 0</code> &rarr; <code>Stream.anyMatch(o -> ...)</code>. Unlike the original call,
     <code>anyMatch()</code> may stop the computation as soon as a matching element is found.</li>
@@ -16,7 +16,7 @@ could be optimized.
 </ul>
 <p>
   Note that if the replacement involves a short-circuiting operation like <code>anyMatch()</code>, there could be a visible behavior change,
-  if the intermediate stream operations produce side-effects. In general, side-effects should be avoided in Stream API calls.
+  if the intermediate stream operations produce side effects. In general, side effects should be avoided in Stream API calls.
 </p>
 <!-- tooltip end -->
 <p><small>New in 2016.3</small></p>
