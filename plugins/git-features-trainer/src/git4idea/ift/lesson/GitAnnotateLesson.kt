@@ -199,7 +199,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       task("Annotate") {
         val closeAnnotationsText = EditorBundle.message("close.editor.annotations.action.name")
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
-             + GitLessonsBundle.message("git.annotate.invoke.manually", strong(closeAnnotationsText)))
+             + GitLessonsBundle.message("git.annotate.invoke.manually.2", strong(closeAnnotationsText)))
         triggerByPartOfComponent { ui: EditorGutterComponentEx ->
           Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
         }
