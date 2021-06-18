@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 public final class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
-  private final SortedSet<PluginDownloader> myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
+  private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
@@ -35,7 +35,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
-    myPluginToInstall.addAll(pluginsToInstall);
+    myPluginToInstall = pluginsToInstall;
     myCustomPlugins = customPlugins;
     myFinishFunction = finishFunction;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
