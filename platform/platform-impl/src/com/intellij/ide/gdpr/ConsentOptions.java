@@ -9,18 +9,17 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,20 +39,24 @@ public final class ConsentOptions {
     static final ConsentOptions ourInstance;
     static {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      Path commonDataPath = PathManager.getCommonDataPath();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final File DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName()).resolve("consentOptions").resolve("cached").toFile();
-        private final File CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted").toFile();
+        private final Path DEFAULT_CONSENTS_FILE = commonDataPath
+          .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
+          .resolve("consentOptions/cached");
+        private final Path CONFIRMED_CONSENTS_FILE = commonDataPath.resolve("consentOptions/accepted");
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override
         public void writeDefaultConsents(@NotNull String data) throws IOException {
-          FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
+          Files.createDirectories(DEFAULT_CONSENTS_FILE.getParent());
+          Files.writeString(DEFAULT_CONSENTS_FILE, data);
         }
 
         @Override
         @NotNull
         public String readDefaultConsents() throws IOException {
-          return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
+          return loadText(Files.newInputStream(DEFAULT_CONSENTS_FILE));
         }
 
         @Override
@@ -64,13 +67,14 @@ public final class ConsentOptions {
 
         @Override
         public void writeConfirmedConsents(@NotNull String data) throws IOException {
-          FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
+          Files.createDirectories(CONFIRMED_CONSENTS_FILE.getParent());
+          Files.writeString(CONFIRMED_CONSENTS_FILE, data);
         }
 
         @Override
         @NotNull
         public String readConfirmedConsents() throws IOException {
-          return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
+          return loadText(Files.newInputStream(CONFIRMED_CONSENTS_FILE));
         }
 
         @NotNull
@@ -222,7 +226,7 @@ public final class ConsentOptions {
     return getConsents(consent -> true);
   }
   
-  public @NotNull Pair<List<Consent>, Boolean> getConsents(Predicate<Consent> filter) {
+  public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (myIsEAP) {
       // for EA builds there is a different option for statistics sending management
