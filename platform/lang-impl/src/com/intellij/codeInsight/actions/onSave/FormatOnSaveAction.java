@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.*;
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -44,7 +45,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
                   ? new RearrangeCodeProcessor(processor)
                   : new RearrangeCodeProcessor(project, files, CodeInsightBundle.message("command.rearrange.code"), null, onlyChangedLines);
     }
-    if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project)) {
+    if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !DumbService.isDumb(project)) {
       processor = processor != null
                   ? new CodeCleanupCodeProcessor(processor)
                   : new CodeCleanupCodeProcessor(project, files, null, onlyChangedLines);
