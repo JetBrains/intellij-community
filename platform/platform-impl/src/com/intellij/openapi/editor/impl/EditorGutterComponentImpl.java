@@ -409,7 +409,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (ExperimentalUI.isNewUI()) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
         LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
-        paintCaretRowBackground(g, gutterSeparatorX + 1, getWidth() - gutterSeparatorX);
       }
     }
     finally {
@@ -582,9 +581,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     g.setColor(background);
     g.fillRect(x, clip.y, width, clip.height);
 
-    if (!ExperimentalUI.isNewUI()) {
-      paintCaretRowBackground(g, x, width);
-    }
+    paintCaretRowBackground(g, x, width);
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
