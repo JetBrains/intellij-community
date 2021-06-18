@@ -119,7 +119,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task("CheckinProject") {
-      text(GitLessonsBundle.message("git.changelists.shelf.open.commit.window", action(it)))
+      text(GitLessonsBundle.message("git.changelists.shelf.open.commit.window", action(it),
+                                    strong(VcsBundle.message("commit.dialog.configurable"))))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }

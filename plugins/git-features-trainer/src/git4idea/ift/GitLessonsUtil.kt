@@ -5,6 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
@@ -27,6 +28,7 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.subscribeForMessageBus
+import training.learn.LearnBundle
 import training.ui.LearnToolWindow
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
@@ -99,7 +101,8 @@ object GitLessonsUtil {
 
     task {
       text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
-      gotItStep(Balloon.Position.atLeft, 300, GitLessonsBundle.message("git.move.learn.window.balloon.text"))
+      gotItStep(Balloon.Position.atLeft, 300, GitLessonsBundle.message("git.move.learn.window.balloon.text",
+                                                                       strong(LearnBundle.message("toolwindow.stripe.Learn")), strong(VcsBundle.message("commit.dialog.configurable"))))
     }
   }
 
@@ -162,13 +165,16 @@ object GitLessonsUtil {
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
-    showWarningIfToolWindowClosed(ToolWindowId.COMMIT, GitLessonsBundle.message("git.window.closed.warning", action("CheckinProject")),
+    showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
+                                  GitLessonsBundle.message("git.window.closed.warning",
+                                                           action("CheckinProject"), strong(VcsBundle.message("commit.dialog.configurable"))),
                                   restoreTaskWhenResolved)
   }
 
   fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
-                                  GitLessonsBundle.message("git.commit.window.closed.warning", action("ActivateVersionControlToolWindow")),
+                                  GitLessonsBundle.message("git.window.closed.warning",
+                                                           action("ActivateVersionControlToolWindow"), strong("Git")),
                                   restoreTaskWhenResolved)
   }
 

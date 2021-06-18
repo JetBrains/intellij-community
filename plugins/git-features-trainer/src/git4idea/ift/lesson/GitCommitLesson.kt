@@ -68,8 +68,10 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       modifyFiles()
     }
 
+    val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
-      text(GitLessonsBundle.message("git.commit.open.commit.window", action("CheckinProject")))
+      text(GitLessonsBundle.message("git.commit.open.commit.window", action("CheckinProject"),
+                                    strong(commitWindowName)))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
@@ -94,7 +96,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task { highlightVcsChange(secondFileName, highlightBorder = false) }
 
     task {
-      text(GitLessonsBundle.message("git.commit.choose.files"))
+      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 300))
       highlightVcsChange(secondFileName)
       triggerOnOneChangeIncluded(firstFileName)
@@ -180,7 +182,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
       text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
                                     strong(amendCheckboxText),
-                                    LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK))))
+                                    LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)),
+                                    strong(commitWindowName)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBCheckBox ->
         ui.text?.contains(amendCheckboxText) == true
       }
