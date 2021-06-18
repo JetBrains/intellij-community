@@ -576,9 +576,7 @@ public class Runner {
     }
   }
 
-  private static Map<String, ValidationResult.Option> askForResolutions(
-    List<ValidationResult> problems, UpdaterUI ui
-  ) throws OperationCancelledException {
+  private static Map<String, ValidationResult.Option> askForResolutions(List<ValidationResult> problems, UpdaterUI ui) throws OperationCancelledException {
     if (problems.isEmpty()) return Collections.emptyMap();
     LOG.warning("conflicts:");
     for (ValidationResult problem : problems) {

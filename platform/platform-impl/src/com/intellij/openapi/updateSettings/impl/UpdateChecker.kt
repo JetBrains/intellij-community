@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -59,7 +59,7 @@ object UpdateChecker {
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
-  private const val PRODUCT_DATA_TTL_MS = 300_000L
+  private const val PRODUCT_DATA_TTL_MIN = 5L
   private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
   private const val MACHINE_ID_PARAMETER = "mid"
 
@@ -279,7 +279,7 @@ object UpdateChecker {
       }
 
       productDataCache = SoftReference(result)
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
       return@withLock result.getOrThrow()
     }
 
