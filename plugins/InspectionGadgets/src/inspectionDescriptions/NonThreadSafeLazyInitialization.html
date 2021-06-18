@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports <code>static</code> variables being lazily initialized in a non-thread-safe manner. Lazy initialization of <code>static</code>
-variables should be done with an appropriate synchronization construct, to prevent different threads from performing conflicting
-initialization.
-<p>
-When applicable, a quickfix is suggested which introduces the
-<a href="https://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">lazy initialization holder class idiom</a>.
+Reports <code>static</code> variables that are lazily initialized in a non-thread-safe manner.
+<p>Lazy initialization of <code>static</code> variables should be done with an appropriate synchronization construct
+  to prevent different threads from performing conflicting initialization.</p>
+<p>When applicable, a quick-fix, which introduces the
+<a href="https://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">lazy initialization holder class idiom</a>, is suggested.
   This idiom makes use of the fact that the JVM guarantees that a class will not be initialized until it is used.
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   class X {
     private static List&lt;String&gt; list;
 
@@ -19,9 +18,9 @@ When applicable, a quickfix is suggested which introduces the
       return list;
     }
   }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class X {
     private static final class ListHolder {
       static final List&lt;String&gt; list = List.of("one", "two", "tree");
@@ -31,7 +30,7 @@ When applicable, a quickfix is suggested which introduces the
       return ListHolder.list;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>
