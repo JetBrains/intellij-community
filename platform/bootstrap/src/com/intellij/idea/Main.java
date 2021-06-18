@@ -47,6 +47,7 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
+  public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
 
   private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
@@ -105,7 +106,7 @@ public final class Main {
     startupTimings.put("classloader init", System.nanoTime());
     PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
-    if (args.length > 0 && CWM_HOST_COMMAND.equals(args[0])) {
+    if (args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
       Class<ClassLoader> aClass = ClassLoader.class;
       MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);

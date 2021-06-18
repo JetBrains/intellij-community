@@ -139,7 +139,7 @@ public final class StartupUtil {
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    if (args.length > 0 && Main.CWM_HOST_COMMAND.equals(args[0])) {
+    if (args.length > 0 && (Main.CWM_HOST_COMMAND.equals(args[0]) || Main.CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       activity = activity.endAndStart("Cwm Host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
