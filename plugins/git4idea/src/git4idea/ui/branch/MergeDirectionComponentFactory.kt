@@ -20,7 +20,7 @@ import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.GitUtilKt.findPushTarget
+import git4idea.GitPushUtil.findPushTarget
 import git4idea.i18n.GitBundle
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
