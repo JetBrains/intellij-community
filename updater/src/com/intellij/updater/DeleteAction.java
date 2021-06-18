@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.DataInputStream;
@@ -37,10 +37,16 @@ public class DeleteAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.DELETE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.DELETE, ValidationResult.Option.KEEP};
-      boolean invalid = getChecksum() == Digester.INVALID;
-      ValidationResult.Action action = invalid ? ValidationResult.Action.VALIDATE : ValidationResult.Action.DELETE;
-      String message = invalid ? "Unexpected file" : "Modified";
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, message, options);
+      if (getChecksum() == Digester.INVALID) {
+        ValidationResult.Action action = ValidationResult.Action.VALIDATE;
+        String details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, "Unexpected file", details, options);
+      }
+      else {
+        ValidationResult.Action action = ValidationResult.Action.DELETE;
+        String details = "expected 0x" + Long.toHexString(getChecksum()) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+      }
     }
 
     return null;
