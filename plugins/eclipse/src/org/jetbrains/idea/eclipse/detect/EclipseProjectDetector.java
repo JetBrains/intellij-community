@@ -81,7 +81,10 @@ class EclipseProjectDetector extends ProjectDetector {
 
         List<String> projects = new ArrayList<>();
         new EclipseProjectDetector().collectProjectPaths(projects);
-        PropertiesComponent.getInstance().setValue(property, "");
+        if (!PropertiesComponent.getInstance().isValueSet(property)) {
+          EclipseProjectDetectorUsagesCollector.logProjectsDetected(projects.size());
+          PropertiesComponent.getInstance().setValue(property, "");
+        }
         projects.removeAll(manager.getRecentPaths());
         if (projects.isEmpty()) return;
         HashSet<String> set = new HashSet<>(projects);
