@@ -732,6 +732,8 @@
 
     <statistics.counterUsagesCollector groupId="kotlin.code.vision" version="1"/>
     <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
+
+    <psi.referenceContributor implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
   </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
