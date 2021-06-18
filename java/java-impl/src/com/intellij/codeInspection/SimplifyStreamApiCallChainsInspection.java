@@ -185,6 +185,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if(parameter instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
           ReplaceCollectorFix fix = ReplaceCollectorFix.COLLECTOR_TO_FIX_MAPPER.mapFirst(collectorCall);
+          PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
+          if (fix == null && !COLLECTION_STREAM.test(qualifier) && CollectCollectorsToListUtil.isUnmodified(methodCall)) {
+            fix = CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
+                  call -> new ReplaceCollectorFix("toList", "toList()", false)).apply(collectorCall);
+          }
           if (fix != null) {
             TextRange range = methodCall.getTextRange();
             PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
@@ -197,7 +202,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             if(!(PsiUtil.resolveClassInClassTypeOnly(methodCall.getType()) instanceof PsiTypeParameter)) {
               String replacement = SimplifyCollectionCreationFix.COLLECTOR_TO_CLASS_MAPPER.mapFirst(collectorCall);
               if (replacement != null) {
-                PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
                 if (COLLECTION_STREAM.test(qualifier)) {
                   PsiElement startElement = qualifier.getMethodExpression().getReferenceNameElement();
                   if (startElement != null) {
