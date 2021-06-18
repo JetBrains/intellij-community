@@ -25,6 +25,7 @@ import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
+import git4idea.rebase.interactive.dialog.GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
@@ -41,11 +42,6 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   private val branchName = "fixes"
 
   private var backupRebaseDialogLocation: Point? = null
-
-  /**
-   * Value from [git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog.DIMENSION_KEY]
-   */
-  private val rebaseDialogStateKey = "Git.Interactive.Rebase.Dialog"
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -102,7 +98,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       before {
         if (backupRebaseDialogLocation == null) {
-          backupRebaseDialogLocation = adjustPopupPosition(rebaseDialogStateKey)
+          backupRebaseDialogLocation = adjustPopupPosition(GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY)
         }
       }
       text(GitLessonsBundle.message("git.interactive.rebase.select.one.commit"))
@@ -189,7 +185,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    restorePopupPosition(project, rebaseDialogStateKey, backupRebaseDialogLocation)
+    restorePopupPosition(project, GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY, backupRebaseDialogLocation)
     backupRebaseDialogLocation = null
   }
 
