@@ -1,29 +1,30 @@
 <html>
 <body>
-Reports any calls to <code>String.startsWith()</code> or
-<code>String.endsWith()</code> where single character string literals passed as a parameter.
-<p>There is a fix that replaces such calls with more efficiently implemented <code>String.charAt()</code>.</p>
-Because the performance gain is minimal and the code becomes less readable because of the extra non-zero length check,
-it is recommended to do so only inside tight loops.
+Reports calls to <code>String.startsWith()</code> and
+<code>String.endsWith()</code> where single character string literals are passed as an argument.
+<p>
+  A quick-fix is suggested to replace such calls with more efficiently implemented <code>String.charAt()</code>.
+</p>
+<p>
+  However, the performance gain of such change is minimal and the code becomes less readable because of the extra non-zero length check,
+  so it is recommended to apply the quick-fix only inside tight loops.
+</p>
 <p>
   This inspection is intended for Java ME and other highly resource constrained environments.
   Applying the results of this inspection without consideration might have negative effects on code clarity and design.
 </p>
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   boolean startsWithX(String s) {
     return s.startsWith("x");
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   boolean startsWithX(String s) {
     return !s.isEmpty() && s.charAt(0) == 'x';
   }
-</pre>
-
-  <!-- tooltip end -->
-<p>
-
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
