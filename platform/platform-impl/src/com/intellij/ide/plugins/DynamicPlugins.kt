@@ -433,7 +433,7 @@ object DynamicPlugins {
     }
   }
 
-  @JvmStatic
+  @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, options: UnloadPluginOptions = UnloadPluginOptions()): Boolean {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId

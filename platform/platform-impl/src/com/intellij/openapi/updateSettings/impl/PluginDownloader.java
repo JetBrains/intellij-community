@@ -309,8 +309,10 @@ public final class PluginDownloader {
                                                 (IdeaPluginDescriptorImpl)installedPlugin :
                                                 null;
       if (fullDescriptor == null ||
-          !DynamicPlugins.unloadPlugin(fullDescriptor,
-                                       new DynamicPlugins.UnloadPluginOptions().withUpdate(true).withWaitForClassloaderUnload(true))) {
+          !DynamicPlugins.INSTANCE.unloadPlugin(fullDescriptor,
+                                                new DynamicPlugins.UnloadPluginOptions()
+                                                  .withUpdate(true)
+                                                  .withWaitForClassloaderUnload(true))) {
         return false;
       }
     }
