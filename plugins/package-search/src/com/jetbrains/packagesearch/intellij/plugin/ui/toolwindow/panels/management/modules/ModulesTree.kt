@@ -30,7 +30,7 @@ internal class ModulesTree(
 
     private var latestTargetModules: TargetModules? = null
 
-    private val onTreeItemSelected = TreeSelectionListener { _ ->
+    private val onTreeItemSelected = TreeSelectionListener {
         val node = lastSelectedPathComponent as DefaultMutableTreeNode?
         if (node == null) {
             setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))

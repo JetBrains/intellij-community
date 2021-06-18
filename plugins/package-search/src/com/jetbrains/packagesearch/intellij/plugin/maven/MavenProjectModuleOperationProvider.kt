@@ -33,24 +33,3 @@ internal class MavenProjectModuleOperationProvider : AbstractProjectModuleOperat
             repositories
     }
 }
-
-private object ProjectRefreshingListener : MavenProjectsManager.Listener {
-
-    private val runOnNextChange = AtomicReference<(() -> Unit)?>()
-    private val needsRegistering = AtomicBoolean(true)
-
-    fun doOnNextChange(mavenProjectsManager: MavenProjectsManager, action: () -> Unit) {
-        registerIfNeeded(mavenProjectsManager)
-        runOnNextChange.set(action)
-    }
-
-    private fun registerIfNeeded(mavenProjectsManager: MavenProjectsManager) {
-        if (needsRegistering.getAndSet(false)) {
-            mavenProjectsManager.addManagerListener(this)
-        }
-    }
-
-    override fun projectsScheduled() {
-        runOnNextChange.getAndSet(null)?.invoke()
-    }
-}

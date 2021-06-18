@@ -1,9 +1,6 @@
 @file:Suppress("MagicNumber") // Swing dimension constants
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import kotlinx.coroutines.Dispatchers
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.UIManager
