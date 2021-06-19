@@ -35,7 +35,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   // only for sub descriptors
   @JvmField internal var descriptorPath: String? = null
-
   @Volatile private var description: String? = null
   private val productCode = raw.productCode
   private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
