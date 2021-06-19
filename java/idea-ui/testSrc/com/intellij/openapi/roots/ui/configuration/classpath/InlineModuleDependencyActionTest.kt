@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.TestActionEvent
