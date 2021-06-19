@@ -12,7 +12,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwitchStatement {
   private static final Logger LOG = Logger.getInstance(PsiSwitchStatementImpl.class);
@@ -71,7 +70,6 @@ public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwi
       caseHandlerBlock = null;
     }
 
-    //final PsiElement caseHandlerBlock = getCaseHandlerBlock(place, lastParent);
     if (caseHandlerBlock == null) return true;
 
     final PsiElement prevCaseLabel = PsiTreeUtil.findSiblingBackward(caseHandlerBlock, JavaElementType.SWITCH_LABEL_STATEMENT, null);
@@ -79,17 +77,6 @@ public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwi
 
     return prevCaseLabel.processDeclarations(processor, state, null, place);
   }
-
-  private static @Nullable PsiExpressionStatement getCaseHandlerBlock(@NotNull PsiElement place, PsiElement lastParent) {
-    PsiExpressionStatement type = PsiTreeUtil.getParentOfType(place, PsiExpressionStatement.class);
-
-    while (type != null && type.getParent() != lastParent) {
-      type = PsiTreeUtil.getParentOfType(place, PsiExpressionStatement.class, false);
-    }
-
-    return type;
-  }
-
 
   @Override
   public String toString() {
