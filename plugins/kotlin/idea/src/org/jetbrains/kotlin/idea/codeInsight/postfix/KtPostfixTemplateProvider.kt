@@ -50,7 +50,8 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
         KtWrapWithArrayOfPostfixTemplate,
         KtWrapWithSequenceOfPostfixTemplate,
         KtSpreadPostfixTemplate,
-        KtArgumentPostfixTemplate
+        KtArgumentPostfixTemplate,
+        KtWithPostfixTemplate,
     )
 
     override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'

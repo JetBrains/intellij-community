@@ -223,6 +223,11 @@ public class PostfixTemplateProviderTestGenerated extends AbstractPostfixTemplat
         runTest("testData/codeInsight/postfix/while.kt");
     }
 
+    @TestMetadata("with.kt")
+    public void testWith() throws Exception {
+        runTest("testData/codeInsight/postfix/with.kt");
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/postfix/wrapWithCall")
     public static class WrapWithCall extends AbstractPostfixTemplateProviderTest {
