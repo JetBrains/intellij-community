@@ -10,8 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class UntaintedAnnotationProvider implements AnnotationProvider {
 
-  static final String DEFAULT_UNTAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.Untainted";
-  static final String DEFAULT_TAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.Tainted";
+  public static final String DEFAULT_UNTAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.Untainted";
+  public static final String DEFAULT_TAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.Tainted";
+  public static final String DEFAULT_POLY_TAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.PolyTainted";
 
   @NotNull
   @Override
@@ -22,6 +23,7 @@ public class UntaintedAnnotationProvider implements AnnotationProvider {
   @Override
   public boolean isAvailable(PsiModifierListOwner owner) {
     return (owner instanceof PsiMethod || owner instanceof PsiLocalVariable) &&
-           !owner.hasAnnotation(DEFAULT_TAINTED_ANNOTATION);
+           !owner.hasAnnotation(DEFAULT_TAINTED_ANNOTATION) &&
+           !owner.hasAnnotation(DEFAULT_POLY_TAINTED_ANNOTATION);
   }
 }

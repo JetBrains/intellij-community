@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
@@ -96,8 +96,8 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       PsiElement sinkArgument = javaContext.getSinkCallArgument();
       HighlightInfo info = infos.get(0);
       assertEquals(sinkArgument.getTextRange().getStartOffset(), info.getActualStartOffset());
-      String description = JavaBundle.message(taintState == TaintState.TAINTED ? "inspection.source.unsafe.to.sink.flow.description"
-                                                                               : "inspection.source.unknown.to.sink.flow.description");
+      String description = JvmAnalysisBundle.message(taintState == TaintState.TAINTED ? "jvm.inspections.source.unsafe.to.sink.flow.description"
+                                                                                      : "jvm.inspections.source.unknown.to.sink.flow.description");
       assertEquals(description, info.getDescription());
     }
   }
@@ -154,7 +154,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       PsiMethodCallExpression call = PsiTreeUtil.findChildOfType(statement, PsiMethodCallExpression.class);
       mySinkCallArgument = call.getArgumentList().getExpressions()[0];
     }
-    
+
     public PsiElement getSinkCallArgument() {
       return mySinkCallArgument;
     }
@@ -184,7 +184,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     public TaintState taintState() {
       return myCallType;
     }
-    
+
     private static CallExpression generate(ImperativeCommand.Environment env) {
       boolean isExternal = env.generateValue(Generator.booleans(), null);
       TaintState callType = env.generateValue(Generator.sampledFrom(TaintState.values()), null);

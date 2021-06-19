@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
-import com.intellij.codeInspection.sourceToSink.restriction.RestrictionInfo;
+import com.intellij.codeInspection.UntaintedAnnotationProvider;
+import com.intellij.codeInspection.restriction.RestrictionInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ interface TaintValue extends RestrictionInfo {
 
     @Override
     public @NotNull String getName() {
-      return "org.checkerframework.checker.tainting.qual.Untainted";
+      return UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION;
     }
 
     @Override
@@ -37,7 +38,7 @@ interface TaintValue extends RestrictionInfo {
 
     @Override
     public @NotNull String getErrorMessage() {
-      return "inspection.source.unsafe.to.sink.flow.description";
+      return "jvm.inspections.source.unsafe.to.sink.flow.description";
     }
 
     @Override
@@ -47,7 +48,7 @@ interface TaintValue extends RestrictionInfo {
 
     @Override
     public @NotNull String getName() {
-      return "org.checkerframework.checker.tainting.qual.Tainted";
+      return UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION;
     }
 
     @Override
@@ -73,7 +74,7 @@ interface TaintValue extends RestrictionInfo {
 
     @Override
     public @NotNull String getErrorMessage() {
-      return "inspection.source.unknown.to.sink.flow.description";
+      return "jvm.inspections.source.unknown.to.sink.flow.description";
     }
 
     @Override
@@ -83,7 +84,7 @@ interface TaintValue extends RestrictionInfo {
 
     @Override
     public @NotNull String getName() {
-      return "org.checkerframework.checker.tainting.qual.PolyTainted";
+      return UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION;
     }
 
     @Override

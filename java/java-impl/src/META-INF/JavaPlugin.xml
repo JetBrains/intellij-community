@@ -1610,11 +1610,6 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection"
                      key="inspection.anonymous.2.method.ref.display.name" bundle="messages.JavaBundle"/>
-    <localInspection groupPath="Java" language="UAST" shortName="SourceToSinkFlow"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection"
-                     key="inspection.source.to.sink.flow.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"

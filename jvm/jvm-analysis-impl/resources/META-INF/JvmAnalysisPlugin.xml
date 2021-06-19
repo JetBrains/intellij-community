@@ -19,6 +19,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="jvm.inspections.blocking.method.display.name" bundle="messages.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
+    <localInspection language="UAST" shortName="SourceToSinkFlow"
+                     groupBundle="messages.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection"
+                     key="jvm.inspections.source.to.sink.flow.display.name" bundle="messages.JvmAnalysisBundle"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="NonExtendableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.no.extension.display.name"

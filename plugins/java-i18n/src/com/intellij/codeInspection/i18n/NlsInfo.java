@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.sourceToSink.restriction.AnnotationContext;
-import com.intellij.codeInspection.sourceToSink.restriction.RestrictionInfo;
-import com.intellij.codeInspection.sourceToSink.restriction.RestrictionInfoBuilder;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.RestrictionInfo;
+import com.intellij.codeInspection.restriction.RestrictionInfoBuilder;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.codeInspection.sourceToSink.restriction.StringFlowUtil;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;

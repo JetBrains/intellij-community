@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.sourceToSink.restriction.AnnotationContext;
-import com.intellij.codeInspection.sourceToSink.restriction.RestrictionInfo;
-import com.intellij.codeInspection.sourceToSink.restriction.RestrictionInfoBuilder;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.RestrictionInfo;
+import com.intellij.codeInspection.restriction.RestrictionInfoBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.sourceToSink.restriction;
+package com.intellij.codeInspection.restriction;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.psi.*;
@@ -15,8 +15,11 @@ import org.jetbrains.uast.util.UastExpressionUtils;
 
 public class StringFlowUtil {
 
+  /**
+   * Extracts return value without qualifier from getter-like method.
+   */
   @Nullable
-  public static UExpression getReturnValue(UCallExpression call) {
+  public static UExpression getReturnValue(@NotNull UCallExpression call) {
     PsiMethod psiMethod = call.resolve();
     UExpression returnValue = UastContextKt.toUElement(PropertyUtilBase.getGetterReturnExpression(psiMethod), UExpression.class);
     if (returnValue instanceof UQualifiedReferenceExpression) {
@@ -25,6 +28,15 @@ public class StringFlowUtil {
     return returnValue;
   }
 
+  /**
+   * Traverses tree up starting from expression while current expression result may depend on starting expression result.
+   * 
+   * @param expression starting expression
+   * @param allowStringTransformation true if transformations like concatenation are allowed
+   * @param builder restriction info builder. used to check if we can go up through some method calls
+   *               (e.g. if this method return value is marked with some restriction or not)  
+   * @return last expression that we can go through
+   */
   public static @NotNull UExpression goUp(@NotNull UExpression expression,
                                           boolean allowStringTransformation,
                                           @NotNull RestrictionInfoBuilder<? extends RestrictionInfo> builder) {
@@ -123,6 +135,21 @@ public class StringFlowUtil {
     return true;
   }
 
+  /**
+   * Checks if method is passthrough.
+   * <p>
+   * Method is passthrough if:
+   * <ul>
+   *   <li>it doesn't have a type parameter with extends list as return type and it is kotlin passthrough method {@see StringFlowUtil.isKotlinPassthroughMethod}</li>
+   *   <li>it has parameter bounded to arg and this parameter type can be resolved to non-parameterized type</li>
+   *   <li>there's no method call or argument and one of method parameters can be resolved to non-parameterized type</li>
+   * </ul>
+   *
+   * @param method  method to check
+   * @param call    this method call
+   * @param arg     argument which is passed
+   * @param builder restriction builder to check if there's any restrictions related to method
+   */
   public static boolean isPassthroughMethod(@Nullable PsiMethod method,
                                             @Nullable UCallExpression call,
                                             @Nullable UExpression arg,
@@ -160,6 +187,16 @@ public class StringFlowUtil {
     return isKotlinPassthroughMethod(method);
   }
 
+  /**
+   * Checks if method is kotlin passthrough.
+   * <p>
+   * Method is kotlin passthrough if:
+   * <ul>
+   *   <li>it is <code>let</code> or <code>run</code> inline call</li>
+   *   <li>it is <code>joinToString</code> method call</li>
+   *   <li>it is any <code>static</code> method without parameters from <code>StringsKt__Strings</code></li>
+   * </ul>
+   */
   private static boolean isKotlinPassthroughMethod(PsiMethod method) {
     if ((method.getName().equals("let") || method.getName().equals("run")) &&
         method.getModifierList().textMatches("public inline")) {

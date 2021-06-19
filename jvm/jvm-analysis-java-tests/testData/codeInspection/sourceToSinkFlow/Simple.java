@@ -3,14 +3,6 @@ package org.checkerframework.checker.tainting.qual;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-@Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.METHOD})
-@interface Tainted {
-}
-
-@Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@interface Untainted {
-}
-
 public class Simple {
   
   void simple() {

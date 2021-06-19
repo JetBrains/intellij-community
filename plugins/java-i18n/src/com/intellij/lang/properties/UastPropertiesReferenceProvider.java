@@ -3,7 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.i18n.NlsInfo;
-import com.intellij.codeInspection.sourceToSink.restriction.StringFlowUtil;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;

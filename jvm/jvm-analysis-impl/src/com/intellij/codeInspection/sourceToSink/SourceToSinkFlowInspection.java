@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.sourceToSink.restriction.AnnotationContext;
-import com.intellij.codeInspection.sourceToSink.restriction.StringFlowUtil;
-import com.intellij.java.JavaBundle;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
           if (target == null) return;
           fix = new UntaintedAnnotationProvider().createFix(target);
         }
-        holder.registerProblem(element, JavaBundle.message(errorMessage), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+        holder.registerProblem(element, JvmAnalysisBundle.message(errorMessage), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
       }
     };
   }

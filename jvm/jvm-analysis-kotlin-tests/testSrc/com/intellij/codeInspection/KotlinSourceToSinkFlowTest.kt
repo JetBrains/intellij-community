@@ -33,7 +33,6 @@ class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow"
 
   fun testSimple() {
-    myFixture.configureByFile("${getTestName(false)}.kt")
-    myFixture.testHighlighting()
+    myFixture.testHighlighting("Simple.kt")
   }
 }
