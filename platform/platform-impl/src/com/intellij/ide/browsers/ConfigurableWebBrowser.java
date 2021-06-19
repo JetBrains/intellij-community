@@ -74,9 +74,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw") || checkNameAndPath("nwjs")) {
         return AllIcons.Xml.Browsers.Nwjs;
       }
-    }
-    else if (family == BrowserFamily.EXPLORER) {
-      if (WebBrowserManager.isEdge(this)) {
+      else if (WebBrowserManager.isEdge(this)) {
         return AllIcons.Xml.Browsers.Edge;
       }
     }
@@ -168,15 +166,6 @@ final class ConfigurableWebBrowser extends WebBrowser {
     return IdeBundle.message("error.0.browser.path.not.specified", getName());
   }
 
-  @Override
-  public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
-    if (WebBrowserManager.isEdge(this) && !command.isEmpty()) {
-      command.set(command.size() - 1, command.get(command.size() - 1) + ":" + url);
-    }
-    else {
-      super.addOpenUrlParameter(command, url);
-    }
-  }
 
   @Override
   public String toString() {
