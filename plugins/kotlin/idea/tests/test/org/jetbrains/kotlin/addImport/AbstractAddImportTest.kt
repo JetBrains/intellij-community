@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 abstract class AbstractAddImportTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String? {
-        var descriptorName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// IMPORT:") ?: error("No IMPORT directive defined")
+        var descriptorName = InTextDirectivesUtils.stringWithDirective(file.text, "IMPORT")
 
         var filter: (DeclarationDescriptor) -> Boolean = { true }
         if (descriptorName.startsWith("class:")) {

@@ -54,7 +54,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         val optionsFile = File(path)
         val options = FileUtil.loadFile(optionsFile, true)
 
-        val inspectionClass = Class.forName(InTextDirectivesUtils.findStringWithPrefixes(options, "// INSPECTION_CLASS: ")!!)
+        val inspectionClass = Class.forName(InTextDirectivesUtils.stringWithDirective(options, "INSPECTION_CLASS"))
 
         val fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(options, "// FIXTURE_CLASS: ")
 

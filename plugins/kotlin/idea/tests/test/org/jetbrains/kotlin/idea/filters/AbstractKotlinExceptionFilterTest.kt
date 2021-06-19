@@ -62,7 +62,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
 
         val fileText = FileUtil.loadFile(mainFile, true)
 
-        val mainClass = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MAIN_CLASS: ") ?: error("Main class directive not found")
+        val mainClass = InTextDirectivesUtils.stringWithDirective(fileText, "MAIN_CLASS")
         val prefix = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// PREFIX: ") ?: "at"
 
         val stackTraceElement = getStackTraceElement(mainClass)
