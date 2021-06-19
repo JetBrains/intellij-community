@@ -459,7 +459,6 @@
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadJvmConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadConfigEventParser"/>
-    <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.TargetOptionQuickFix"/>
     <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
     <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
   </extensions>
