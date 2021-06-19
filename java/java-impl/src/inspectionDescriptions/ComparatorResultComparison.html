@@ -3,7 +3,7 @@
 Reports the cases in which the result of <code>Comparator.compare</code> or <code>Comparable.compareTo</code> is compared with
   a specific non-zero constant.
 <p>By contract, these methods can return any positive number (not just 1) or any negative number (not just -1),
-  so comparing against particular numbers is a bad practice. Some widely used comparison methods (e.g. <code>String.compareTo</code>)
+  so comparing against particular numbers is bad practice. Some widely used comparison methods (e.g. <code>String.compareTo</code>)
   actually return values outside of the [-1..1] range, so such a comparison may cause incorrect program behavior.</p>
 <p>Example:</p>
 <pre><code>
