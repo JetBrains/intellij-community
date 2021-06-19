@@ -5,17 +5,16 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.compiler.progress.BuildIssueContributor
-import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.CompletableFuture
 
 class JpsLanguageLevelQuickFix : BuildIssueContributor {
@@ -32,25 +31,25 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
-    val manager = MavenProjectsManager.getInstance(project);
-    if (!manager.isMavenizedProject) return null
+    val mavenManager = MavenProjectsManager.getInstance(project);
+    if (!mavenManager.isMavenizedProject) return null
 
     if (moduleNames.size != 1) {
       return null
     }
     val moduleName = moduleNames.first()
-    val failedId = ModuleManager.getInstance(project).findModuleByName(moduleName)
-                     ?.let { MavenProjectsManager.getInstance(project).findProject(it) }?.mavenId ?: return null
-    val mavenProject = manager.findProject(failedId) ?: return null
-    val moduleJdk = MavenUtil.getModuleJdk(manager, mavenProject)
-    val moduleProjectLanguageLevel = moduleJdk?.let { LanguageLevel.parse(it.versionString) } ?: return null
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+    val mavenProject = mavenManager.findProject(module) ?: return null
+    val moduleRootManager = ModuleRootManager.getInstance(module) ?: return null
+    val moduleJdk = moduleRootManager.sdk
 
+    val moduleProjectLanguageLevel = moduleJdk?.let { LanguageLevel.parse(it.versionString) } ?: return null
     val sourceLanguageLevel = getLanguageLevelFromError(message) ?: return null
     if (sourceLanguageLevel.isLessThan(moduleProjectLanguageLevel)) {
-      return SourceLevelBuildIssue(title, message, mavenProject, moduleJdk)
+      return getBuildIssueSourceVersionLess(sourceLanguageLevel, moduleProjectLanguageLevel, message, mavenProject, moduleRootManager)
     }
     else {
-      return getBuildIssue(sourceLanguageLevel, moduleProjectLanguageLevel, message, mavenProject, moduleName)
+      return getBuildIssueSourceVersionGreat(sourceLanguageLevel, moduleProjectLanguageLevel, message, moduleRootManager)
     }
   }
 
@@ -64,24 +63,49 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
       .firstOrNull()?.let { LanguageLevel.parse(it) }
   }
 
-  private fun getBuildIssue(sourceLanguageLevel: LanguageLevel,
-                            moduleProjectLanguageLevel: LanguageLevel,
-                            errorMessage: String,
-                            mavenProject: MavenProject,
-                            moduleName: String): BuildIssue {
+  private fun getBuildIssueSourceVersionGreat(sourceLanguageLevel: LanguageLevel,
+                                              moduleProjectLanguageLevel: LanguageLevel,
+                                              errorMessage: String,
+                                              moduleRootManager: ModuleRootManager): BuildIssue {
+    val moduleName = moduleRootManager.module.name
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
     val issueDescription = StringBuilder(errorMessage)
     issueDescription.append("\n\nModule $moduleName project JDK ${moduleProjectLanguageLevel.toJavaVersion()} " +
-                            "is lower then source version ${sourceLanguageLevel.toJavaVersion()}. \nPossible solution:\n")
-    val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName)
+                            "is lower then source version ${sourceLanguageLevel.toJavaVersion()}.")
+    val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName, moduleRootManager.isSdkInherited)
     quickFixes.add(setupModuleSdkQuickFix)
     issueDescription.append(
-      " - Upgrade module JDK in project settings to ${sourceLanguageLevel.toJavaVersion()} or higher." +
+      "\nUpgrade module JDK in project settings to ${sourceLanguageLevel.toJavaVersion()} or higher." +
+      " <a href=\"${setupModuleSdkQuickFix.id}\">Open project settings</a>.\n")
+
+    return object : BuildIssue {
+      override val title: String = errorMessage
+      override val description: String = issueDescription.toString()
+      override val quickFixes = quickFixes
+      override fun getNavigatable(project: Project): Navigatable? = null
+    }
+  }
+
+  private fun getBuildIssueSourceVersionLess(sourceLanguageLevel: LanguageLevel,
+                                             moduleProjectLanguageLevel: LanguageLevel,
+                                             errorMessage: String,
+                                             mavenProject: MavenProject,
+                                             moduleRootManager: ModuleRootManager): BuildIssue {
+    val moduleName = moduleRootManager.module.name
+    val quickFixes = mutableListOf<BuildIssueQuickFix>()
+    val issueDescription = StringBuilder(errorMessage)
+    issueDescription.append("\n\nModule $moduleName project JDK ${moduleProjectLanguageLevel.toJavaVersion()} " +
+                            "is not supported source version ${sourceLanguageLevel.toJavaVersion()}. " +
+                            "\nPossible solution:\n")
+    val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName, moduleRootManager.isSdkInherited)
+    quickFixes.add(setupModuleSdkQuickFix)
+    issueDescription.append(
+      " - Downgrade project JDK in settings to ${sourceLanguageLevel.toJavaVersion()} or compatible." +
       " <a href=\"${setupModuleSdkQuickFix.id}\">Open project settings</a>.\n")
     val updateSourceLevelQuickFix = UpdateSourceLevelQuickFix(mavenProject)
     quickFixes.add(updateSourceLevelQuickFix)
     issueDescription.append(
-      " - Downgrade JDK version in source to ${moduleProjectLanguageLevel.toJavaVersion()} (Not recommended)." +
+      " - Upgrade JDK version in source to ${moduleProjectLanguageLevel.toJavaVersion()}." +
       " <a href=\"${updateSourceLevelQuickFix.id}\">Update pom.xml</a>.\n")
 
     return object : BuildIssue {
@@ -93,13 +117,17 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
   }
 }
 
-class SetupModuleSdkQuickFix(val moduleName: String) : BuildIssueQuickFix {
+class SetupModuleSdkQuickFix(val moduleName: String, val isSdkInherited: Boolean) : BuildIssueQuickFix {
 
   override val id: String = "setup_module_sdk_quick_fix"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    ProjectSettingsService.getInstance(project)
-      .showModuleConfigurationDialog(moduleName, JavaUiBundle.message("module.libraries.target.jdk.module.radio"))
+    if (isSdkInherited) {
+      ProjectSettingsService.getInstance(project).openProjectSettings()
+    }
+    else {
+      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, null)
+    }
     return CompletableFuture.completedFuture<Any>(null)
   }
 }
