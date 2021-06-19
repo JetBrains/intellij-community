@@ -65,6 +65,14 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
       }
     }
 
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+
+    for (PsiCaseLabelElement label : patternsInCaseLabel.getElements()) {
+      boolean shouldKeepGoing = label.processDeclarations(processor, state, null, place);
+      if (!shouldKeepGoing) return false;
+    }
+
     return true;
   }
 

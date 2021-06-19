@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,17 @@ public class PsiParenthesizedPatternImpl extends CompositePsiElement implements 
   @Override
   public @Nullable PsiPattern getPattern() {
     return PsiTreeUtil.getChildOfType(this, PsiPattern.class);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PsiPattern pattern = getPattern();
+    if (pattern == null) return true;
+
+    return pattern.processDeclarations(processor, state, null, place);
   }
 }
 

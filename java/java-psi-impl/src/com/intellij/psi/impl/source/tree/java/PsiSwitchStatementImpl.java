@@ -1,21 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwitchStatement {
-  private static final Logger LOG = Logger.getInstance(PsiSwitchBlockImpl.class);
+  private static final Logger LOG = Logger.getInstance(PsiSwitchStatementImpl.class);
 
   public PsiSwitchStatementImpl() {
     super(JavaElementType.SWITCH_STATEMENT);
@@ -55,6 +55,41 @@ public class PsiSwitchStatementImpl extends PsiSwitchBlockImpl implements PsiSwi
       visitor.visitElement(this);
     }
   }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (lastParent == null) return true;
+
+    final PsiElement caseHandlerBlock;
+    if (PsiTreeUtil.isAncestor(lastParent, place, true))  {
+      caseHandlerBlock = lastParent;
+    }
+    else {
+      caseHandlerBlock = null;
+    }
+
+    //final PsiElement caseHandlerBlock = getCaseHandlerBlock(place, lastParent);
+    if (caseHandlerBlock == null) return true;
+
+    final PsiElement prevCaseLabel = PsiTreeUtil.findSiblingBackward(caseHandlerBlock, JavaElementType.SWITCH_LABEL_STATEMENT, null);
+    if (!(prevCaseLabel instanceof PsiSwitchLabelStatement)) return true;
+
+    return prevCaseLabel.processDeclarations(processor, state, null, place);
+  }
+
+  private static @Nullable PsiExpressionStatement getCaseHandlerBlock(@NotNull PsiElement place, PsiElement lastParent) {
+    PsiExpressionStatement type = PsiTreeUtil.getParentOfType(place, PsiExpressionStatement.class);
+
+    while (type != null && type.getParent() != lastParent) {
+      type = PsiTreeUtil.getParentOfType(place, PsiExpressionStatement.class, false);
+    }
+
+    return type;
+  }
+
 
   @Override
   public String toString() {
