@@ -452,7 +452,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getVendorUrl() = vendorUrl
 
-  override fun getUrl() = url!!
+  override fun getUrl() = url
 
   override fun getPluginId() = id
 
