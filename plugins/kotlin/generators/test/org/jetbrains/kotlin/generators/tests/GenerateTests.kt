@@ -76,6 +76,7 @@ import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest2
@@ -462,6 +463,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractLocalInspectionTest> {
             model("inspectionsLocal", pattern = "^([\\w\\-_]+)\\.(kt|kts)$".toRegex())
+        }
+
+        testClass<AbstractViewOfflineInspectionTest> {
+            model("inspectionsLocal", pattern = "^([\\w\\-_]+)_report\\.(xml)$".toRegex())
         }
 
         testClass<AbstractHierarchyTest> {

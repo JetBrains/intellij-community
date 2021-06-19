@@ -2,5 +2,6 @@
 // WITH_RUNTIME
 fun test() {
     val list = mutableListOf(1)<caret>
-    list += 2
+    list <selection>+=</selection> 2
 }
+// OFFLINE_REPORT: "'+=' creates new list under the hood"
