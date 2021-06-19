@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -17,6 +17,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -267,9 +268,18 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
       child = ((PsiElement)this).getLastChild();
     }
 
-    while (child != null) {
+    final boolean projectLevelAtLeast17 = PsiUtil.isLanguageLevel17OrHigher(place);
+    boolean shouldStop = false;
+    while (!shouldStop && child != null) {
       if (child instanceof PsiSwitchLabelStatementBase) {
         state = PatternResolveState.WHEN_NONE.putInto(state);
+        if (child instanceof PsiSwitchLabelStatement) {
+          // The scope of a pattern variable declaration which occurs in a case label of
+          // a switch labeled statement group, where there are no further switch labels that follow,
+          // includes the block statements of the statement group.
+          // See more https://openjdk.java.net/jeps/406#3--Scope-of-pattern-variable-declarations
+          shouldStop = projectLevelAtLeast17;
+        }
       }
       if (!child.processDeclarations(processor, state, null, place)) return false;
       child = child.getPrevSibling();
