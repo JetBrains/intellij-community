@@ -28,13 +28,17 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
 import java.util.stream.Collectors
 import javax.swing.ScrollPaneConstants
 import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
-internal data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
+internal class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf(),
+                                        val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
+                                        val placesRemover: Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
   val projectConnection = project.messageBus.simpleConnect()
 
   init {
@@ -109,13 +113,14 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
   }
 
   private fun createPlaceLinePairs(project: Project, changed: Boolean): List<RecentLocationItem> {
-    return getPlaces(project, changed)
+    val items = doGetPlaces(project, changed)
       .mapNotNull { RecentLocationItem(createEditor(project, it) ?: return@mapNotNull null, it) }
-      .take(UISettings.instance.recentLocationsLimit)
+    if (placesSupplier != null) return items
+    return items.take(UISettings.instance.recentLocationsLimit)
   }
 
-  private fun getPlaces(project: Project, changed: Boolean): List<IdeDocumentHistoryImpl.PlaceInfo> {
-    val infos = ContainerUtil.reverse(
+  private fun doGetPlaces(project: Project, changed: Boolean): List<IdeDocumentHistoryImpl.PlaceInfo> {
+    val infos = placesSupplier?.apply(changed) ?: ContainerUtil.reverse(
       if (changed) IdeDocumentHistory.getInstance(project).changePlaces else IdeDocumentHistory.getInstance(project).backPlaces)
 
     val infosCopy = arrayListOf<IdeDocumentHistoryImpl.PlaceInfo>()
@@ -126,6 +131,23 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
     }
 
     return infosCopy
+  }
+
+  fun removeItems(project: Project, isChanged: Boolean, items: List<RecentLocationItem>) {
+    if (isChanged) changedPlaces.drop() else navigationPlaces.drop()
+    if (placesRemover != null) {
+      placesRemover.accept(ContainerUtil.map(items) { it.info })
+      return
+    }
+    val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
+    for (item in items) {
+      ContainerUtil.filter(if (isChanged) ideDocumentHistory.changePlaces else ideDocumentHistory.backPlaces) {
+        IdeDocumentHistoryImpl.isSame(it, item.info)
+      }.forEach {
+        if (isChanged) ideDocumentHistory.removeChangePlace(it)
+        else ideDocumentHistory.removeBackPlace(it)
+      }
+    }
   }
 
   private fun createEditor(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): EditorEx? {
