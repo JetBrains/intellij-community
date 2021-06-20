@@ -261,7 +261,7 @@ public class AnimatedIcon implements Icon {
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
     if (EventQueue.isDispatchThread()) {
-      CellRendererPane pane = ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c);
+      CellRendererPane pane = ComponentUtil.getParentOfType(CellRendererPane.class, c);
       requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
     }
     else if (LOG.isDebugEnabled()) {

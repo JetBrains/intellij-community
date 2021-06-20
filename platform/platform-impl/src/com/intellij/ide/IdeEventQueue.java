@@ -245,7 +245,7 @@ public final class IdeEventQueue extends EventQueue {
       case HierarchyEvent.ANCESTOR_RESIZED:
         Object source = event.getSource();
         if (source instanceof Component &&
-            ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)source) != null) {
+            ComponentUtil.getParentOfType(CellRendererPane.class, (Component)source) != null) {
           return true;
         }
     }
