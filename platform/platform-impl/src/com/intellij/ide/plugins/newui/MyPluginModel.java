@@ -806,20 +806,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   boolean isRequiredPluginForProject(@NotNull PluginId pluginId) {
     Project project = getProject();
     return project != null &&
-           myRequiredPluginsForProject.computeIfAbsent(
-             pluginId,
-             id -> ContainerUtil.exists(
-               getDependenciesOnPlugins(project),
-               id.getIdString()::equals
-             )
-           );
+           myRequiredPluginsForProject
+             .computeIfAbsent(pluginId,
+                              id -> ContainerUtil.exists(getDependenciesOnPlugins(project),
+                                                         id.getIdString()::equals));
   }
 
   boolean requiresRestart(@NotNull IdeaPluginDescriptor descriptor) {
-    return myRequiresRestart.computeIfAbsent(
-      descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
-      it -> it == null || DynamicPlugins.checkCanUnloadWithoutRestart(it) != null
-    );
+    return myRequiresRestart
+      .computeIfAbsent(descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
+                       it -> it == null || DynamicPlugins.checkCanUnloadWithoutRestart(it) != null);
   }
 
   boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
