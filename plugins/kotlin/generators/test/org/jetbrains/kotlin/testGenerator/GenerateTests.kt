@@ -1014,60 +1014,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    /*testGroup("frontend-fir") {
-        testClass<AbstractKtDeclarationAndFirDeclarationEqualityChecker> {
-            model("ktDeclarationAndFirDeclarationEqualityChecker")
-        }
-
-        testClass<AbstractResolveCallTest> {
-            model("analysisSession/resolveCall")
-        }
-
-        testClass<AbstractMemberScopeByFqNameTest> {
-            model("memberScopeByFqName")
-        }
-
-        testClass<AbstractFileScopeTest> {
-            model("fileScopeTest")
-        }
-
-        testClass<AbstractSymbolByPsiTest> {
-            model("symbols/symbolByPsi")
-        }
-
-        testClass<AbstractSymbolByFqNameTest> {
-            model("symbols/symbolByFqName")
-        }
-
-        testClass<AbstractSymbolByReferenceTest> {
-            model("symbols/symbolByReference")
-        }
-
-        testClass<AbstractMemoryLeakInSymbolsTest> {
-            model("symbolMemoryLeak")
-        }
-
-        testClass<AbstractReturnExpressionTargetTest> {
-            model("components/returnExpressionTarget")
-        }
-
-        testClass<AbstractExpectedExpressionTypeTest> {
-            model("components/expectedExpressionType")
-        }
-
-        testClass<AbstractOverriddenDeclarationProviderTest> {
-            model("components/overridenDeclarations")
-        }
-
-        testClass<AbstractHLExpressionTypeTest> {
-            model("components/expressionType")
-        }
-
-        testClass<AbstractRendererTest> {
-            model("components/declarationRenderer")
-        }
-    }
-
     testGroup("fir", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData")) {
         testClass<AbstractFirLightClassTest> {
             model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
