@@ -1160,6 +1160,7 @@
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"/>
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
         <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
+        <action id="DefaultBundleIndex" internal="true" class="com.intellij.ide.util.gotoByName.DefaultBundleIndexAction"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
