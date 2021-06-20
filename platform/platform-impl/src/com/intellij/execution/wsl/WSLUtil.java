@@ -144,7 +144,6 @@ public final class WSLUtil {
    *               See https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options
    * @return Windows-dependent path to the file, pointed by {@code wslPath} in WSL or null if the path is unmappable.
    * For example, {@code getWindowsPath("/mnt/c/Users/file.txt", "/mnt/") returns "C:\Users\file.txt"}
-   * consider using WSLDistribution#getWindowsPath(java.lang.String) instead
    */
   @Nullable
   public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
