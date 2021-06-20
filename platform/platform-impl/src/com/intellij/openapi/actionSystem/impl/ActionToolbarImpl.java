@@ -223,6 +223,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void addNotify() {
     super.addNotify();
+    if (ComponentUtil.getParentOfType(CellRendererPane.class, (Component)this) != null) return;
     ourToolbars.add(this);
 
     // should update action right on the showing, otherwise toolbar may not be displayed at all,
@@ -237,6 +238,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public void removeNotify() {
     super.removeNotify();
+    if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null) return;
     ourToolbars.remove(this);
 
     if (myPopup != null) {

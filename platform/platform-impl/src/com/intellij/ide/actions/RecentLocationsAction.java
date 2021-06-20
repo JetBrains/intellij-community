@@ -247,7 +247,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
 
     originalModel.removeAllElements();
-    data.getPlaces(changed).forEach(item -> originalModel.addElement(item));
+    originalModel.addAll(data.getPlaces(changed));
 
     listWithFilter.getSpeedSearch().reset();
   }
