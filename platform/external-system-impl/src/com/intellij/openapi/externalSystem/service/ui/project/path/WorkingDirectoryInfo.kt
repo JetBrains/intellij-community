@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nls
 
 interface WorkingDirectoryInfo {
   val settingsLabel: @NlsContexts.Label String
+  val settingsEmptyError: @Nls(capitalization = Nls.Capitalization.Sentence) String
 
   val settingsName: @Nls(capitalization = Nls.Capitalization.Sentence) String?
   val settingsGroup: @Nls(capitalization = Nls.Capitalization.Title) String?

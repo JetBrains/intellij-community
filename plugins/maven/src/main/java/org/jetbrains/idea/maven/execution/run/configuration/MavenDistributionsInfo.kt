@@ -35,8 +35,8 @@ class MavenDistributionsInfo : DistributionsInfo {
       addIfNotNull(asDistributionInfo(MavenServerManager.WRAPPED_MAVEN))
       val mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null)
       val bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3)
-      if (!FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
-        addIfNotNull(asDistributionInfo(mavenHomeDirectory?.path))
+      if (mavenHomeDirectory != null && !FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
+        addIfNotNull(asDistributionInfo(mavenHomeDirectory.path))
       }
     }
   }
@@ -55,24 +55,23 @@ class MavenDistributionsInfo : DistributionsInfo {
   }
 
   companion object {
-    fun asDistributionInfo(mavenHome: String?): DistributionInfo? {
+    fun asDistributionInfo(mavenHome: String): DistributionInfo {
       val version = MavenServerManager.getMavenVersion(mavenHome)
       return when (mavenHome) {
         MavenServerManager.BUNDLED_MAVEN_2 -> Bundled2DistributionInfo(version)
         MavenServerManager.BUNDLED_MAVEN_3 -> Bundled3DistributionInfo(version)
         MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
-        null -> null
         else -> LocalDistributionInfo(mavenHome)
       }
     }
 
-    fun asMavenHome(distribution: DistributionInfo?): String? {
+    fun asMavenHome(distribution: DistributionInfo): String {
       return when (distribution) {
         is Bundled2DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_2
         is Bundled3DistributionInfo -> MavenServerManager.BUNDLED_MAVEN_3
         is WrappedDistributionInfo -> MavenServerManager.WRAPPED_MAVEN
         is LocalDistributionInfo -> distribution.path
-        else -> null
+        else -> throw NoWhenBranchMatchedException(distribution.javaClass.toString())
       }
     }
   }

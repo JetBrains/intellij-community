@@ -13,6 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
   override val settingsLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
+  override val settingsEmptyError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
   override val settingsGroup: String? = null

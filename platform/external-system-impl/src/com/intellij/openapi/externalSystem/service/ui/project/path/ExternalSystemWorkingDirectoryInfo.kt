@@ -11,15 +11,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 
 class ExternalSystemWorkingDirectoryInfo(project: Project, externalSystemId: ProjectSystemId) : WorkingDirectoryInfo {
-  override val settingsLabel: String = ExternalSystemBundle.message("run.configuration.project.path.label", externalSystemId.readableName)
+  private val readableName = externalSystemId.readableName
 
-  override val settingsName: String = ExternalSystemBundle.message("run.configuration.project.path.name", externalSystemId.readableName)
+  override val settingsLabel: String = ExternalSystemBundle.message("run.configuration.project.path.label", readableName)
+  override val settingsEmptyError: String = ExternalSystemBundle.message("run.configuration.project.path.empty.error", readableName)
+
+  override val settingsName: String = ExternalSystemBundle.message("run.configuration.project.path.name", readableName)
   override val settingsGroup: String? = null
   override val settingsPriority: Int = -10
   override val settingsHint: String? = null
   override val settingsActionHint: String? = null
 
-  override val fileChooserTitle: String = ExternalSystemBundle.message("settings.label.select.project", externalSystemId.readableName)
+  override val fileChooserTitle: String = ExternalSystemBundle.message("settings.label.select.project", readableName)
   override val fileChooserDescription: String? = null
   override val fileChooserDescriptor: FileChooserDescriptor =
     ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)

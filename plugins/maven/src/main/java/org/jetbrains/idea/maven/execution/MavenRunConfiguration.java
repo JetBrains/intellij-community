@@ -69,7 +69,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -80,129 +82,77 @@ import static com.intellij.util.containers.ContainerUtil.indexOf;
 import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
-  private @Nullable String commandLine = null;
-  private @Nullable String workingDirectory = null;
-  private @Nullable Map<String, String> environment = null;
-  private @Nullable Boolean isPassParentEnvs = null;
-  private @Nullable String vmOptions = null;
-  private @Nullable String jreName = null;
-  private @Nullable String mavenHome = null;
+
+  private MavenRunConfigurationSettings settings = new MavenRunConfigurationSettings();
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 
-  public @Nullable String getCommandLine() {
-    return commandLine;
-  }
-
-  public void setCommandLine(@Nullable String commandLine) {
-    this.commandLine = commandLine;
-  }
-
-  public @Nullable String getWorkingDirectory() {
-    return workingDirectory;
-  }
-
-  public void setWorkingDirectory(@Nullable String workingDirectory) {
-    this.workingDirectory = workingDirectory;
-  }
-
-  public @NotNull Map<String, String> getEnvironment() {
-    return ObjectUtils.chooseNotNull(environment, new HashMap<>());
-  }
-
-  public void setEnvironment(@NotNull Map<String, String> environment) {
-    this.environment = environment;
-  }
-
-  public boolean isPassParentEnvs() {
-    return ObjectUtils.chooseNotNull(isPassParentEnvs, true);
-  }
-
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    isPassParentEnvs = passParentEnvs;
-  }
-
-  public @Nullable String getVmOptions() {
-    return vmOptions;
-  }
-
-  public void setVmOptions(@Nullable String vmOptions) {
-    this.vmOptions = vmOptions;
-  }
-
-  public @Nullable String getJreName() {
-    return jreName;
-  }
-
-  public void setJreName(@Nullable String jreName) {
-    this.jreName = jreName;
-  }
-
-  public @Nullable String getMavenHome() {
-    return mavenHome;
-  }
-
-  public void setMavenHome(@Nullable String mavenHome) {
-    this.mavenHome = mavenHome;
+  public @NotNull MavenRunConfigurationSettings getSettings() {
+    return settings;
   }
 
   public @NotNull MavenSettings getMavenSettings() {
     return new MavenSettings(getGeneralSettings(), getRunnerSettings(), getRunnerParameters());
   }
 
-  public @NotNull MavenGeneralSettings getGeneralSettings() {
+  public @Nullable MavenGeneralSettings getGeneralSettings() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
-    MavenGeneralSettings settings = projectsManager.getGeneralSettings().clone();
-    ObjectUtils.consumeIfNotNull(mavenHome, settings::setMavenHome);
-    return settings;
+    MavenGeneralSettings originalSettings = projectsManager.getGeneralSettings();
+    MavenGeneralSettings settings = originalSettings.clone();
+    ObjectUtils.consumeIfNotNull(this.settings.getMavenHome(), settings::setMavenHome);
+    return settings.equals(originalSettings) ? null : settings;
   }
 
   public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
-    mavenHome = ObjectUtils.doIfNotNull(settings, MavenGeneralSettings::getMavenHome);
+    if (settings != null) {
+      this.settings.setMavenHome(settings.getMavenHome());
+    }
   }
 
-  public @NotNull MavenRunnerSettings getRunnerSettings() {
+  public @Nullable MavenRunnerSettings getRunnerSettings() {
     MavenRunner mavenRunner = MavenRunner.getInstance(getProject());
-    MavenRunnerSettings settings = mavenRunner.getSettings().clone();
-    ObjectUtils.consumeIfNotNull(jreName, settings::setJreName);
-    ObjectUtils.consumeIfNotNull(vmOptions, settings::setVmOptions);
-    ObjectUtils.consumeIfNotNull(environment, settings::setEnvironmentProperties);
-    ObjectUtils.consumeIfNotNull(isPassParentEnvs, settings::setPassParentEnv);
-    return settings;
+    MavenRunnerSettings originalSettings = mavenRunner.getSettings();
+    MavenRunnerSettings settings = originalSettings.clone();
+    ObjectUtils.consumeIfNotNull(this.settings.getJreName(), settings::setJreName);
+    ObjectUtils.consumeIfNotNull(this.settings.getVmOptions(), settings::setVmOptions);
+    ObjectUtils.consumeIfNotNull(this.settings.getEnvironment(), settings::setEnvironmentProperties);
+    ObjectUtils.consumeIfNotNull(this.settings.isPassParentEnvs(), settings::setPassParentEnv);
+    return settings.equals(originalSettings) ? null : settings;
   }
 
   public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
-    jreName = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getJreName);
-    vmOptions = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getVmOptions);
-    environment = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::getEnvironmentProperties);
-    isPassParentEnvs = ObjectUtils.doIfNotNull(settings, MavenRunnerSettings::isPassParentEnv);
+    if (settings != null) {
+      this.settings.setJreName(settings.getJreName());
+      this.settings.setVmOptions(settings.getVmOptions());
+      this.settings.setEnvironment(settings.getEnvironmentProperties());
+      this.settings.setPassParentEnvs(settings.isPassParentEnv());
+    }
   }
 
   public @NotNull MavenRunnerParameters getRunnerParameters() {
     MavenRunnerParameters parameters = new MavenRunnerParameters();
-    ObjectUtils.consumeIfNotNull(commandLine, parameters::setCommandLine);
-    ObjectUtils.consumeIfNotNull(workingDirectory, parameters::setWorkingDirPath);
+    ObjectUtils.consumeIfNotNull(settings.getCommandLine(), parameters::setCommandLine);
+    ObjectUtils.consumeIfNotNull(settings.getWorkingDirectory(), parameters::setWorkingDirPath);
     return parameters;
   }
 
   public void setRunnerParameters(@NotNull MavenRunnerParameters parameters) {
-    commandLine = parameters.getCommandLine();
-    workingDirectory = parameters.getWorkingDirPath();
+    settings.setCommandLine(parameters.getCommandLine());
+    settings.setWorkingDirectory(parameters.getWorkingDirPath());
   }
 
   @Override
   public MavenRunConfiguration clone() {
     MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
-    clone.mavenHome = mavenHome;
-    clone.jreName = jreName;
-    clone.vmOptions = vmOptions;
-    clone.environment = environment;
-    clone.isPassParentEnvs = isPassParentEnvs;
-    clone.commandLine = commandLine;
-    clone.workingDirectory = workingDirectory;
+    clone.settings = settings.clone();
     return clone;
+  }
+
+  @ApiStatus.Internal
+  public JavaRunConfigurationExtensionManager getExtensionsManager() {
+    return JavaRunConfigurationExtensionManager.getInstance();
   }
 
   @NotNull
@@ -269,12 +219,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       ObjectUtils.consumeIfNotNull(settings.myRunnerSettings, this::setRunnerSettings);
       ObjectUtils.consumeIfNotNull(settings.myRunnerParameters, this::setRunnerParameters);
     }
+    settings.readExternal(element);
+    getExtensionsManager().readExternal(this, element);
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(getMavenSettings()));
+    settings.writeExternal(element);
+    getExtensionsManager().writeExternal(this, element);
   }
 
   @Override

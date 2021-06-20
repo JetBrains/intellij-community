@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.execution.run.configuration
 import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.JavaRunConfigurationExtensionManager
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
@@ -19,6 +18,7 @@ import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
@@ -30,7 +30,7 @@ class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
 ) : RunConfigurationFragmentedEditor<MavenRunConfiguration>(
   runConfiguration,
-  JavaRunConfigurationExtensionManager.instance
+  runConfiguration.extensionsManager
 ) {
   override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> {
     return SettingsFragmentsContainer.fragments {
@@ -41,15 +41,15 @@ class MavenRunConfigurationSettingsEditor(
       addDistributionFragment(
         project,
         MavenDistributionsInfo(),
-        { asDistributionInfo(mavenHome) },
-        { mavenHome = asMavenHome(it) },
+        { asDistributionInfo(settings.mavenHome) },
+        { settings.mavenHome = asMavenHome(it) },
         { validateMavenHome(it) }
       )
       val workingDirectoryFragment = addWorkingDirectoryFragment(
         project,
         MavenWorkingDirectoryInfo(project),
-        MavenRunConfiguration::getWorkingDirectory,
-        MavenRunConfiguration::setWorkingDirectory
+        { settings.workingDirectory },
+        { settings.workingDirectory = it }
       )
       addCommandLineFragment(
         project,
@@ -57,29 +57,36 @@ class MavenRunConfigurationSettingsEditor(
           project,
           workingDirectoryFragment.component().component
         ),
-        { commandLine ?: "" },
-        MavenRunConfiguration::setCommandLine
+        { settings.commandLine },
+        { settings.commandLine = it }
       )
       addJdkFragment(
-        MavenRunConfiguration::getJreName,
-        MavenRunConfiguration::setJreName)
+        { MavenRunnerSettings.USE_PROJECT_JDK },
+        { settings.jreName },
+        { settings.jreName = it }
+      )
       addEnvironmentFragment(
-        MavenRunConfiguration::getEnvironment, MavenRunConfiguration::setEnvironment,
-        MavenRunConfiguration::isPassParentEnvs, MavenRunConfiguration::setPassParentEnvs
+        { settings.environment },
+        { settings.environment = it },
+        { settings.isPassParentEnvs },
+        { settings.isPassParentEnvs = it }
       )
       addVmOptionsFragment(
-        MavenRunConfiguration::getVmOptions, MavenRunConfiguration::setVmOptions
+        { settings.vmOptions },
+        { settings.vmOptions = it }
       )
       add(LogsGroupFragment())
     }
   }
 
   private fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addJdkFragment(
+    getDefaultJdk: C.() -> String?,
     getJdk: C.() -> String?,
     setJdk: C.(String?) -> Unit
-  ) = add(createJdkFragment(getJdk, setJdk))
+  ) = add(createJdkFragment(getDefaultJdk, getJdk, setJdk))
 
   private fun <C : RunConfigurationBase<*>> createJdkFragment(
+    getDefaultJdk: C.() -> String?,
     getJdk: C.() -> String?,
     setJdk: C.(String?) -> Unit
   ): SettingsEditorFragment<C, LabeledComponent<SdkComboBox>> {
@@ -93,7 +100,7 @@ class MavenRunConfigurationSettingsEditor(
       MavenConfigurableBundle.message("maven.run.configuration.jre.name"),
       ExecutionBundle.message("group.java.options"),
       LabeledComponent.create(jreComboBox, jreComboBoxLabel, BorderLayout.WEST),
-      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.getJdk()) },
+      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.getJdk() ?: it.getDefaultJdk()) },
       { it, c -> it.setJdk(if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null) },
       { !it.getJdk().isNullOrBlank() }
     ).apply {
