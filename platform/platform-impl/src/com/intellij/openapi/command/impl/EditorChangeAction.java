@@ -4,6 +4,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
@@ -78,10 +79,20 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
 
   @Override
   public @NotNull List<ActionChangeRange> getChangeRanges(@NotNull DocumentReference reference) {
-    if (reference.getDocument() != getAffectedDocuments()[0].getDocument()) {
-      return Collections.emptyList();
+    return isAffected(reference) ? Collections.singletonList(myChangeRange) : Collections.emptyList();
+  }
+
+  private boolean isAffected(@NotNull DocumentReference reference) {
+    // `DocumentReference.getDocument()` can throw if it refers to a deleted file
+    // (see an implementation for `DocumentReferenceByVirtualFile`),
+    // so it's safer to compare two virtual files first
+    DocumentReference affected = getAffectedDocuments()[0];
+    VirtualFile affectedFile = affected.getFile();
+    if (affectedFile != null) {
+      return affectedFile.equals(reference.getFile());
+    } else {
+      return affected.getDocument() == reference.getDocument();
     }
-    return Collections.singletonList(myChangeRange);
   }
 
   @Override
