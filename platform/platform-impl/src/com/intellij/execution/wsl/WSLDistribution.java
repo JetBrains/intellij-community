@@ -16,7 +16,6 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.fmap.FMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +64,6 @@ public class WSLDistribution {
   private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
   private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
   private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
-  private final NotNullLazyValue<FMap<String, String>> myMountedDrives = NotNullLazyValue.createValue(this::readMountInfo);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -479,18 +476,12 @@ public class WSLDistribution {
    */
 
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    for (Map.Entry<String, String> mountInfo : getDriveMountDirs().entrySet()) {
-      String linuxPath = mountInfo.getKey();
-      if (wslPath.equals(linuxPath)) {
-        return StringUtil.trimTrailing(mountInfo.getValue(), '\\');
-      }
-      String pathWithTrailingSlash = linuxPath.endsWith("/") ? linuxPath : linuxPath + "/";
-      if (wslPath.startsWith(pathWithTrailingSlash)) {
-        return FileUtil.toSystemDependentName(
-          StringUtil.capitalize(mountInfo.getValue() + wslPath.substring(pathWithTrailingSlash.length())));
+    if (wslPath.startsWith(getMntRoot())) {
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      if (windowsPath != null) {
+        return windowsPath;
       }
     }
-
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
@@ -520,18 +511,9 @@ public class WSLDistribution {
 
   /**
    * @see WslDistributionDescriptor#getMntRoot()
-   * @see getDriveMountDirs()
    */
   public final @NotNull @NlsSafe String getMntRoot() {
     return myDescriptor.getMntRoot();
-  }
-
-  /**
-   * @return mapping of mounted drives
-   * /mnt/c/ -> c:\
-   */
-  public final @NotNull Map<@NlsSafe String, @NlsSafe String> getDriveMountDirs() {
-    return myMountedDrives.getValue().toMap();
   }
 
   public final @Nullable @NlsSafe String getUserHome() {
@@ -540,31 +522,6 @@ public class WSLDistribution {
 
   private @NlsSafe @Nullable String readUserHome() {
     return getEnvironmentVariable("HOME");
-  }
-
-  private @NotNull FMap<String, String> readMountInfo() {
-    try {
-      ProcessOutput output = executeOnWsl(List.of("mount", "-t", "9p"), new WSLCommandLineOptions(), 10_000, null);
-      FMap<String, String> result = FMap.empty();
-      if (output.getExitCode() == 0) {
-        for (String line : output.getStdoutLines(true)) {
-          @NotNull List<String> mountData = StringUtil.split(line, " ");
-          if (mountData.size() < 3) continue;
-          String driveName = mountData.get(0);
-          String on = mountData.get(1);
-          String mountDir = mountData.get(2);
-          if (driveName.length() != 3) continue;
-          if (driveName.charAt(1) != ':' || driveName.charAt(2) != '\\') continue;
-          if (!"on".equals(on)) continue;
-          result = result.plus(mountDir, driveName);
-        }
-      }
-      return result;
-    }
-    catch (ExecutionException e) {
-      LOG.info("Cannot read wsl mount directories", e);
-      return FMap.empty();
-    }
   }
 
   /**

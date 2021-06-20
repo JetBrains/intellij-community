@@ -56,7 +56,7 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\x\\", wsl.getWindowsPath("/mnt/x/"));
+    assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
 
     assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
     assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));
