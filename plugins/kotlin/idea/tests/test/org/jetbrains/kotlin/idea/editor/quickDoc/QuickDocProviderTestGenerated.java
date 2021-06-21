@@ -193,6 +193,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnEnumValuesFunction.kt");
     }
 
+    @TestMetadata("OnFunctionDeclarationWithGFMTable.kt")
+    public void testOnFunctionDeclarationWithGFMTable() throws Exception {
+        runTest("idea/testData/editor/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
+    }
+
     @TestMetadata("OnFunctionDeclarationWithPackage.kt")
     public void testOnFunctionDeclarationWithPackage() throws Exception {
         runTest("testData/editor/quickDoc/OnFunctionDeclarationWithPackage.kt");
