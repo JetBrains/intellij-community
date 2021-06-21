@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.UnloadedModulesListChange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
@@ -28,34 +27,6 @@ import com.intellij.xml.util.XmlStringUtil
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
-    val oldLoaded = state.modules.toSet()
-    if (oldLoaded.isEmpty() || modulesToLoad.all { it.moduleName in oldLoaded }) {
-      return UnloadedModulesListChange(emptyList(), emptyList(), emptyList())
-    }
-
-    val moduleDescriptions = LinkedHashMap<String, UnloadedModuleDescriptionImpl>(modulesToLoad.size + modulesToUnload.size)
-    UnloadedModuleDescriptionImpl.createFromPaths(modulesToLoad, project).associateByTo(moduleDescriptions) { it.name }
-    modulesToUnload.associateByTo(moduleDescriptions) { it.name }
-
-    val oldLoadedWithDependencies = HashSet<ModuleDescription>()
-    val explicitlyUnloaded = modulesToUnload.mapTo(HashSet()) { it.name }
-    for (name in oldLoaded) {
-      processTransitiveDependencies(name, moduleDescriptions, explicitlyUnloaded, oldLoadedWithDependencies)
-    }
-
-    val newLoadedNames = oldLoadedWithDependencies.mapTo(LinkedHashSet()) { it.name }
-    val toLoad = modulesToLoad.filter { it.moduleName in newLoadedNames && it.moduleName !in oldLoaded}
-    val toUnload = modulesToLoad.filter { it.moduleName !in newLoadedNames && it.moduleName in moduleDescriptions}
-    state.modules.clear()
-    modulesToLoad.asSequence()
-      .filter { it.moduleName in newLoadedNames }
-      .mapTo(state.modules) { it.moduleName }
-    val change = UnloadedModulesListChange(toLoad, toUnload, toUnload.map { moduleDescriptions[it.moduleName]!! })
-    fireNotifications(change.toLoad.map { it.moduleName }, change.toUnload.map { it.moduleName })
-    return change
-  }
-
   override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
     if (currentModules.isEmpty()) return
 

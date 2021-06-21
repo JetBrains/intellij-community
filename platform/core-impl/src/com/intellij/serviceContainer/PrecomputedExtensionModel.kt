@@ -14,7 +14,7 @@ class PrecomputedExtensionModel(
   @JvmField val nameToExtensions: Map<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>
 )
 
-internal fun precomputeExtensionModel(plugins: List<IdeaPluginDescriptorImpl>): PrecomputedExtensionModel {
+fun precomputeExtensionModel(plugins: List<IdeaPluginDescriptorImpl>): PrecomputedExtensionModel {
   val extensionPointDescriptors = ArrayList<List<ExtensionPointDescriptor>>()
   val pluginDescriptors = ArrayList<IdeaPluginDescriptor>()
   var extensionPointTotalCount = 0

@@ -100,7 +100,7 @@
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" preload="await"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService$ModuleBridgeProjectServiceInitializedListener"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
-                    serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl"/>
+                    serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
