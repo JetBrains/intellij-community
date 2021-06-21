@@ -593,7 +593,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
       text(PythonLessonsBundle.message("python.onboarding.balloon.interpreter"),
-           LearningBalloonConfig(Balloon.Position.above, width = 0))
+           LearningBalloonConfig(Balloon.Position.above, width = 0, delayBeforeShow = 1000, animationCycle = 200))
 
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true

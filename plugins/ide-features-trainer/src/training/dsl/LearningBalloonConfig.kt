@@ -10,5 +10,7 @@ data class LearningBalloonConfig(
   val width: Int,
   val duplicateMessage: Boolean = false,
   val highlightingComponent: JComponent? = null,
+  val delayBeforeShow: Int = 0,
+  val animationCycle: Int = 0,
   val gotItCallBack: (() -> Unit)? = null
 )
