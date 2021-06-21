@@ -66,6 +66,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -86,6 +87,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -836,6 +838,22 @@ public class MavenUtil {
   }
 
   @Nullable
+  public static File getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+    if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
+      return null;
+    }
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    return getParentFile(id, projectsManager.getLocalRepository());
+  }
+
+  private static File getParentFile(@NotNull MavenId id, File localRepository) {
+    String[] pathParts = id.getGroupId().split("\\.");
+    java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
+    path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
+    return path.toFile();
+  }
+
+  @Nullable
   protected static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
     if (userSettingsFile != null) {
       final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
@@ -1040,24 +1058,27 @@ public class MavenUtil {
   }
 
   public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {
-    Set<MavenId> unresolvedIds = new HashSet<>();
+    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
     for (MavenProjectReaderResult result : results) {
       if (result.mavenModel.getDependencies() != null) {
         for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
           if (!artifact.isResolved()) {
-            unresolvedIds.add(artifact.getMavenId());
+            unresolvedArtifacts.add(artifact);
           }
         }
       }
     }
 
-    if (unresolvedIds.isEmpty()) {
+    if (unresolvedArtifacts.isEmpty()) {
       return;
     }
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    for (MavenId id : unresolvedIds) {
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).showError(id.getKey());
+    List<File> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().getParentFile());
+    CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
+    for (MavenArtifact artifact : unresolvedArtifacts) {
+      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+        .showBuildIssue(artifact.getMavenId().getKey(), fix);
     }
   }
 

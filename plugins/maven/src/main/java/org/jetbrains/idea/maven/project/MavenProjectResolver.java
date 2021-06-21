@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
@@ -160,7 +161,8 @@ public class MavenProjectResolver {
     }
   }
 
-  public void resolvePlugins(@NotNull MavenProject mavenProject,
+  public void resolvePlugins(@NotNull Project project,
+                             @NotNull MavenProject mavenProject,
                              @NotNull NativeMavenProjectHolder nativeMavenProject,
                              @NotNull MavenEmbeddersManager embeddersManager,
                              @NotNull MavenConsole console,
@@ -174,9 +176,11 @@ public class MavenProjectResolver {
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
+      Set<Pair<MavenPlugin, File>> unresolvedPlugins = new HashSet<>();
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
+        File file = MavenUtil.getRepositoryParentFile(project, each.getMavenId());
         Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
 
         for (MavenArtifact artifact : artifacts) {
@@ -187,8 +191,16 @@ public class MavenProjectResolver {
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
+          unresolvedPlugins.add(Pair.create(each, file));
+        }
+      }
+      if (!unresolvedPlugins.isEmpty()) {
+        List<File> files = ContainerUtil.map(unresolvedPlugins, t -> t.getSecond());
+        CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
+        for (Pair<MavenPlugin, File> data : unresolvedPlugins) {
           MavenProjectsManager.getInstance(myProject)
-            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).showError(each.getMavenId().getKey());
+            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
+            .showBuildIssue(data.getFirst().getMavenId().getKey(), fix);
         }
       }
 

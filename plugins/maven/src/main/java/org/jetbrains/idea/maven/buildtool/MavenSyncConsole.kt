@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.CannotStartServerException
@@ -298,6 +299,18 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix,) = doIfImportInProcess {
+    hasErrors = true
+    hasUnresolved = true
+    val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
+    val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
+    startTask(mySyncId, umbrellaString)
+    val buildIssue = DownloadArtifactBuildIssue.getIssue(errorString, quickFix)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(umbrellaString, buildIssue, MessageEvent.Kind.ERROR))
+    addText(mySyncId, errorString, false)
+  }
+
+  @Synchronized
   private fun startTask(parentId: Any, @NlsSafe taskName: String) = doIfImportInProcess {
     debugLog("Maven sync: start $taskName")
     if (myStartedSet.add(parentId to taskName)) {
@@ -449,12 +462,17 @@ class MavenSyncConsole(private val myProject: Project) {
     override fun showError(dependency: String) {
       showError(keyPrefix, dependency)
     }
+
+    override fun showBuildIssue(dependency: String,  quickFix: BuildIssueQuickFix) {
+      showBuildIssue(keyPrefix, dependency, quickFix)
+    }
   }
 
 }
 
 interface ArtifactSyncListener {
   fun showError(dependency: String)
+  fun showBuildIssue(dependency: String,  quickFix: BuildIssueQuickFix)
   fun downloadStarted(dependency: String)
   fun downloadCompleted(dependency: String)
   fun downloadFailed(dependency: String, error: String, stackTrace: String?)
