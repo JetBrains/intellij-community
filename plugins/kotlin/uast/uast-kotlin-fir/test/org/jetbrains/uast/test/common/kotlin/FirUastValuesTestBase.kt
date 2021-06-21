@@ -5,7 +5,7 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.FirUastTestSuffix.TXT
