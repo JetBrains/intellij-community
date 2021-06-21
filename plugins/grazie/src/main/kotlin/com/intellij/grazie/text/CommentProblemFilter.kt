@@ -1,5 +1,6 @@
 package com.intellij.grazie.text
 
+import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
@@ -23,7 +24,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == DOCUMENTATION) {
-      return problem.highlightRange.startOffset == 0 && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
+      return isInFirstSentence(problem) && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
     }
 
     if (domain == COMMENTS) {
@@ -36,6 +37,9 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
     return false
   }
+
+  private fun isInFirstSentence(problem: TextProblem) =
+    SRXSentenceTokenizer.tokenize(problem.text.substring(0, problem.highlightRange.startOffset)).size <= 1
 
   private fun isNumberRange(problem: TextProblem, text: TextContent): Boolean {
     val range = problem.highlightRange

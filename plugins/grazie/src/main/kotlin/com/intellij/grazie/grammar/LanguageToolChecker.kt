@@ -52,9 +52,14 @@ class LanguageToolChecker : TextChecker() {
 
     override fun fitsGroup(group: RuleGroup): Boolean {
       val ruleId = match.rule.id
-      if (RuleGroup.INCOMPLETE_SENTENCE in group.rules &&
-          (ruleId == "SENTENCE_FRAGMENT" || ruleId == "SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA" || ruleId == "AGREEMENT_SENT_START")) {
-        return true
+      if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
+        if (highlightRange.startOffset == 0 &&
+            (ruleId == "SENTENCE_FRAGMENT" || ruleId == "SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA" || ruleId == "AGREEMENT_SENT_START")) {
+          return true
+        }
+        if (ruleId == "MASS_AGREEMENT" && text.subSequence(highlightRange.endOffset, text.length).startsWith(".")) {
+          return true
+        }
       }
 
       return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && ruleId == id }
