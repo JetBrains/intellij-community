@@ -25,7 +25,7 @@ public interface DocCommentSettings {
   DocCommentSettings DEFAULTS = new Defaults();
 
   /**
-   * @return True if doc comment formatting enabled.
+   * @return True if doc comment formatting is enabled.
    */
   boolean isDocFormattingEnabled();
 
@@ -41,7 +41,7 @@ public interface DocCommentSettings {
   boolean isLeadingAsteriskEnabled();
 
   /**
-   * @return True if at least some empty tags can to be removed.
+   * @return True if at least some empty tags can be removed.
    */
   boolean isRemoveEmptyTags();
 
