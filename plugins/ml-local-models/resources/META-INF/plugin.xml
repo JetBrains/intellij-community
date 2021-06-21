@@ -27,4 +27,6 @@
 
     <projectService serviceImplementation="com.intellij.ml.local.models.LocalModelsManager"/>
   </extensions>
+
+  <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.modules.java</depends>
 </idea-plugin>
