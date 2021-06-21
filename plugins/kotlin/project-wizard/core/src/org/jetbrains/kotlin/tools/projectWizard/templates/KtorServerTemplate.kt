@@ -4,6 +4,11 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
+import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.WizardGradleRunConfiguration
+import org.jetbrains.kotlin.tools.projectWizard.WizardRunConfiguration
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList

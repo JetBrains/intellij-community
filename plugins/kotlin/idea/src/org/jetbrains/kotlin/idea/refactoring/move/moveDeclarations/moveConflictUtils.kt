@@ -789,9 +789,8 @@ class MoveConflictChecker(
                 return KotlinJavaPsiFacade.getInstance(project).findPackage(fqName.asString(), GlobalSearchScope.moduleScope(module))
             }
 
-            return (this as? KotlinDirectoryBasedMoveTarget)?.directory?.getPackage()
-                ?: targetFile?.toPsiDirectory(project)?.getPackage()
-                ?: targetFile?.toPsiFile(project)?.containingDirectory?.getPackage()
+            return (this as? KotlinDirectoryMoveTarget)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
+                ?: (this as? KotlinMoveTargetForDeferredFile)?.targetFileOrDir?.toPsiDirectory(project)?.getPackage()
                 ?: tryGetPackageFromTargetContainer()
         }
 
