@@ -55,6 +55,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("Hello World '|'!", TextContentTest.unknownOffsets(extractText("a.properties", "a=Hello World ''{0}''!", 4)));
   }
 
+  public void testBrokenPropertyMessageFormat() {
+    assertEquals("a |", TextContentTest.unknownOffsets(extractText("a.properties", "a=a {0, choice, 1#1 code fragment|2#{0,number} code fragments", 4)));
+  }
+
   public void testExcludePropertyHtml() {
     assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 4)));
   }
