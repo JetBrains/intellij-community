@@ -379,9 +379,10 @@ final class ScratchImplUtil {
       sb.append(TreeUtil.getUserObject(value));
     }
     sb.append("\n");
-    // replace com.intellij.util.FontUtil#thinSpace with space
+    // replace various space chars like `FontUtil#thinSpace` with just space
     for (int i = length, len = sb.length(); i < len; i++) {
-      if (sb.charAt(i) == '\u2009') sb.setCharAt(i, ' ');
+      char c = sb.charAt(i);
+      if (c >= '\u2000' && c <= '\u2009') sb.setCharAt(i, ' ');
     }
   }
 
@@ -393,10 +394,7 @@ final class ScratchImplUtil {
       sb.append(((JTextComponent)renderer).getText());
     }
     else if (renderer instanceof SimpleColoredComponent) {
-      for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)renderer).iterator(); it.hasNext(); ) {
-        String next = it.next();
-        sb.append(next);
-      }
+      sb.append(((SimpleColoredComponent)renderer).getCharSequence(true));
     }
     else {
       return false;
