@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.StripeButton
+import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -44,9 +45,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.ift.PythonLessonsUtil
-import training.FeaturesTrainerIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModified
@@ -77,6 +78,7 @@ import javax.swing.tree.TreePath
 class PythonOnboardingTour :
   KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name")) {
 
+  private lateinit var openLearnTaskId: TaskContext.TaskId
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
@@ -118,6 +120,10 @@ class PythonOnboardingTour :
     prepareSample(sample)
 
     openLearnToolwindow()
+
+    waitBeforeContinue(500)
+
+    showInterpreterConfiguration()
 
     runTasks()
 
@@ -320,6 +326,7 @@ class PythonOnboardingTour :
     }
 
     task {
+      openLearnTaskId = taskId
       text(PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
            LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
@@ -575,6 +582,27 @@ class PythonOnboardingTour :
     }
 
     text(PythonLessonsBundle.message("python.onboarding.case.changed"))
+  }
+
+  private fun LessonContext.showInterpreterConfiguration() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false) { info: TextPanel.WithIconAndArrows ->
+        info.toolTipText.contains(PyBundle.message("current.interpreter", ""))
+      }
+    }
+    task {
+      text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
+      text(PythonLessonsBundle.message("python.onboarding.balloon.interpreter"),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
+
+      restoreState(restoreId = openLearnTaskId) {
+        learningToolWindow(project)?.isVisible?.not() ?: true
+      }
+      proceedLink()
+    }
+    prepareRuntimeTask {
+      LearningUiHighlightingManager.clearHighlights()
+    }
   }
 
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
