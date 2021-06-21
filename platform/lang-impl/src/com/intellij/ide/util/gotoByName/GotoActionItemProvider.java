@@ -58,24 +58,10 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     myIntentions = ClearableLazyValue.create(() -> ReadAction.compute(() -> myModel.getAvailableIntentions()));
   }
 
-  @Override
-  public @NotNull List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
-    return filterNames((ChooseByNameViewModel)base, names, pattern);
-  }
-
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return Collections.emptyList(); // no common prefix insertion in goto action
-  }
-
-  @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
-                                boolean everywhere,
-                                @NotNull ProgressIndicator cancelled,
-                                @NotNull Processor<Object> consumer) {
-    return filterElements((ChooseByNameViewModel)base, pattern, everywhere, cancelled, consumer);
   }
 
   @Override
