@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
         }
         final PsiExpression[] moreBadReads = uninitializedReadCollector.getUninitializedReads();
         for (PsiExpression badRead : moreBadReads) {
-          registerError(badRead);
+          if (badRead.isPhysical()) registerError(badRead); // EA-263167
         }
       }
     }
