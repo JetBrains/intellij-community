@@ -82,7 +82,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * Returns descriptions of unloaded modules content of whose might be included into this scope if they had been loaded. Actually search in
+   * Returns descriptions of unloaded modules whose content might be included in this scope if they had been loaded. Actually, search in
    * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
    */
   @NotNull
@@ -276,7 +276,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources and tests, excluding libraries and dependencies.
    *
    * @param module the module to get the scope.
-   * @return scope including sources and tests, excluding libraries and dependencies.
+   * @return the scope, including sources and tests, excluding libraries and dependencies.
    */
   @NotNull
   @Contract(pure = true)
@@ -288,7 +288,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources, tests, and libraries, excluding dependencies.
    *
    * @param module the module to get the scope.
-   * @return scope including sources, tests, and libraries, excluding dependencies.
+   * @return the scope, including sources, tests, and libraries, excluding dependencies.
    */
   @NotNull
   @Contract(pure = true)
@@ -300,7 +300,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns module scope including sources, tests, and dependencies, excluding libraries.
    *
    * @param module the module to get the scope.
-   * @return scope including sources, tests, and dependencies, excluding libraries.
+   * @return the scope, including sources, tests, and dependencies, excluding libraries.
    */
   @NotNull
   @Contract(pure = true)
@@ -365,10 +365,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * Optimization. By default FilesScope makes a decision about searching in libraries by checking that
-   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether
+   * Optimization. By default, FilesScope makes a decision about searching in libraries by checking that
+   * at least one file is placed out of module roots.
+   * So if you're sure about file placement, you can explicitly say FilesScope whether
    * it should include libraries or not in order to avoid checking each file.
-   * Also, if you have a lot of files it might be faster to always search in libraries.
+   * Also, if you have a lot of files, it might be faster to always search in libraries.
    */
   @NotNull
   @Contract(pure = true)
