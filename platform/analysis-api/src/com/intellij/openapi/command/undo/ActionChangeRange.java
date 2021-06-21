@@ -34,6 +34,36 @@ public interface ActionChangeRange {
   boolean isValid();
 
   /**
+   * Get a unique ID of this change range.
+   * <b>Note:</b> zero ID is reserved and must be considered invalid.
+   * The following equations must be satisfied:
+   * <pre>
+   * {@code
+   * range.getId() == -range.asInverted().getId();
+   * range.getId() == range.asInverted().asInverted().getId();
+   * }
+   * </pre>
+   */
+  int getId();
+
+  /**
+   * Get ID of the original change range this one was created from.
+   * If this range is created immediately by some {@link AdjustableUndoableAction},
+   * returns the same ID as {@link ActionChangeRange#getId()}.
+   * No possible sequence of {@link ActionChangeRange#asInverted()} and
+   * {@link ActionChangeRange#createIndependentCopy(boolean)} must change it,
+   * i.e., the following equations must be satisfied:
+   * <pre>
+   * {@code
+   * range.getId() == range.asInverted().getOriginatorId();
+   * range.getId() == range.createIndependentCopy(true).getOriginatorId();
+   * range.getId() == range.asInverted().createIndependentCopy(false).getOriginatorId();
+   * }
+   * </pre>
+   */
+  int getOriginatorId();
+
+  /**
    * Create independent copy of this range. <b>Independent</b> means that if the original range is moved,
    * its copy won't change, the opposite is true as well
    * @param invalidate if <code>true</code>, obtained copy will be invalid right from the start

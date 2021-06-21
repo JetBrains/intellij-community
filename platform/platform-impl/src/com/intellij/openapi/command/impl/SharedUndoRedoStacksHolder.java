@@ -14,12 +14,38 @@ public class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionC
   }
 
   void addToStack(@NotNull DocumentReference reference, @NotNull ActionChangeRange changeRange) {
-    List<ActionChangeRange> stack = getStack(reference);
+    LinkedList<ActionChangeRange> stack = getStack(reference);
     trimInvalid(stack);
-    if (stack.isEmpty() && !changeRange.isValid()) {
-      return;  // No need to add invalid change at the beginning of stack since it will be trimmed anyway
+    if (!changeRange.isValid()) {
+      if (stack.isEmpty()) {
+        return;  // No need to add invalid change at the beginning of stack since it will be trimmed anyway
+      } else {
+        ActionChangeRange lastRange = stack.getLast();
+        if (!lastRange.isValid() && isRolledBackBy(lastRange, changeRange)) {
+          stack.removeLast();
+          return;
+        }
+      }
     }
     stack.add(changeRange);
+  }
+
+  private static boolean isRolledBackBy(@NotNull ActionChangeRange lastRange, @NotNull ActionChangeRange newRange) {
+    if (areSymmetric(lastRange, newRange)) {
+      if (lastRange.getOldLength() == 0) {
+        return true;  // `lastRange` inserts some fragment which is then erased by `newRange`
+      }
+      if (lastRange.getOriginatorId() == newRange.getOriginatorId()) {
+        return true;  // `lastRange` and `newRange` refer to the same undoable action
+      }
+    }
+    return false;
+  }
+
+  private static boolean areSymmetric(@NotNull ActionChangeRange lastRange, @NotNull ActionChangeRange newRange) {
+    return lastRange.getOffset() == newRange.getOffset() &&
+           lastRange.getOldLength() == newRange.getNewLength() &&
+           lastRange.getNewLength() == newRange.getOldLength();
   }
 
   @NotNull ActionChangeRange removeLastFromStack(@NotNull DocumentReference reference) {
