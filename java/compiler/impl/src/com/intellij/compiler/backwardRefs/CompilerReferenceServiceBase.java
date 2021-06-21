@@ -29,7 +29,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -313,7 +312,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(referentFiles, myProjectFileIndex);
+    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(referentFiles);
 
     GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
     GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
@@ -531,16 +530,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   public static final class ScopeWithReferencesOnCompilation extends GlobalSearchScope {
     private final Set<VirtualFile> myReferentFiles;
-    private final ProjectFileIndex myIndex;
 
-    public ScopeWithReferencesOnCompilation(Set<VirtualFile> files, ProjectFileIndex index) {
+    public ScopeWithReferencesOnCompilation(Set<VirtualFile> files) {
       myReferentFiles = files;
-      myIndex = index;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && myReferentFiles.contains(file);
+      return myReferentFiles.contains(file);
     }
 
     @Override
