@@ -7,19 +7,40 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 
 internal class CommentProblemFilter : ProblemFilter() {
+  private val suppressedInComments =
+    setOf("LanguageTool.EN.LC_AFTER_PERIOD", "LanguageTool.NL.PUNT_GEEN_HL", "LanguageTool.DE.KLEIN_NACH_PUNKT")
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val text = problem.text
     val domain = text.domain
-    if ((domain == COMMENTS || domain == DOCUMENTATION) && isTodoComment(text.commonParent.containingFile, text)) {
-      return true
+    if (domain == COMMENTS || domain == DOCUMENTATION) {
+      if (isTodoComment(text.commonParent.containingFile, text)) {
+        return true
+      }
+      if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && isNumberRange(problem, text)) {
+        return true
+      }
     }
 
     if (domain == DOCUMENTATION) {
       return problem.highlightRange.startOffset == 0 && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
     }
 
-    return domain == COMMENTS && Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)
+    if (domain == COMMENTS) {
+      if (problem.rule.globalId in suppressedInComments) {
+        return true
+      }
+      if (Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private fun isNumberRange(problem: TextProblem, text: TextContent): Boolean {
+    val range = problem.highlightRange
+    return range.startOffset > 0 && range.endOffset < text.length &&
+           text[range.startOffset - 1].isDigit() && text[range.endOffset].isDigit()
   }
 
   // the _todo_ word spoils the grammar of what follows
