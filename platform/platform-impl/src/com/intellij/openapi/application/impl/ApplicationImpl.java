@@ -362,7 +362,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
     if (indicator == null) {
-      // no splash, no need to to use progress manager
+      // no splash, no need to use progress manager
       createComponents(null);
     }
     else {
