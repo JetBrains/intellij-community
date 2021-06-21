@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -185,14 +186,8 @@ public final class PluginDownloader {
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile == null) return null;
 
-    String builtinPluginsUrlPluginsXml = ApplicationInfoImpl.getShadowInstance().getBuiltinPluginsUrl();
-    String builtinPluginsUrl = null;
-    if (builtinPluginsUrlPluginsXml != null) {
-      builtinPluginsUrl = StringUtil.substringBefore(builtinPluginsUrlPluginsXml, "plugins.xml");
-    }
-    boolean pluginFromBuiltinRepo = builtinPluginsUrl != null && myPluginUrl.startsWith(builtinPluginsUrl);
     // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
-    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !pluginFromBuiltinRepo) {
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !isPluginFromBuiltinRepo()) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
@@ -231,6 +226,26 @@ public final class PluginDownloader {
     }
 
     return actualDescriptor;
+  }
+
+  private boolean isPluginFromBuiltinRepo() {
+    String builtinPluginsUrlPluginsXml = ApplicationInfoImpl.getShadowInstance().getBuiltinPluginsUrl();
+    String builtinPluginsUrl = null;
+    if (builtinPluginsUrlPluginsXml != null) {
+      builtinPluginsUrl = StringUtil.substringBeforeLast(builtinPluginsUrlPluginsXml, "/");
+    }
+    if (builtinPluginsUrl != null) {
+      try {
+        URL builtinPluginsUrlURL = new URL(builtinPluginsUrl);
+        URL myPluginUrlURL = new URL(myPluginUrl);
+        if (!myPluginUrlURL.getHost().equals(builtinPluginsUrlURL.getHost())) return false;
+        if (!myPluginUrlURL.getPath().startsWith(builtinPluginsUrlURL.getPath())) return false;
+        return true;
+      } catch (MalformedURLException ignored) {
+        return false;
+      }
+    }
+    return false;
   }
 
   private void reportError(boolean showMessageOnError, @Nullable @Nls String errorMessage) {
