@@ -38,13 +38,16 @@ public class PropertyTextExtractor extends TextExtractor {
         if (start < 0) break;
 
         int nesting = 1;
-        for (int end = start + 1; end < str.length(); end++) {
+        int end = start + 1;
+        while (end < str.length()) {
           if (str.charAt(end) == '}' && --nesting == 0) {
-            content = content.markUnknown(new TextRange(start, end + 1));
+            end++;
             break;
           }
           if (str.charAt(end) == '{') nesting++;
+          end++;
         }
+        content = content.markUnknown(new TextRange(start, end));
       }
       return HtmlUtilsKt.removeHtml(content);
     }
