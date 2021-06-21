@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
     <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

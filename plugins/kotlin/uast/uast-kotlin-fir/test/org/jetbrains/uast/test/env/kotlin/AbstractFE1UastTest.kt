@@ -6,6 +6,7 @@
 package org.jetbrains.uast.test.env.kotlin
 
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.test.kotlin.AbstractKotlinUastTest
 import java.io.File
 
