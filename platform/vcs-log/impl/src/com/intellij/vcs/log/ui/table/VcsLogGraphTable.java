@@ -127,6 +127,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setRootColumnSize();
     myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(disposable, new MyCurrentColumnsListener());
+    VcsLogColumnManager.getInstance().addColumnModelListener(disposable, (column, index) -> {
+      getModel().fireTableStructureChanged();
+    });
 
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
