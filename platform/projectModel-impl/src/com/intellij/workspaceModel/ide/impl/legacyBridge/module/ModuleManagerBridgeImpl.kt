@@ -202,16 +202,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(unloadedModuleNames)
-
-    if (unloadedModuleNames.isNotEmpty()) {
-      val loadedModules = modules.map { it.name }.toMutableList()
-      loadedModules.removeAll(unloadedModuleNames)
-      AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
-    }
-    else {
-      AutomaticModuleUnloader.getInstance(project).setLoadedModules(emptyList())
-    }
-
     val unloadedModuleNamesSet = unloadedModuleNames.toSet()
     val moduleMap = entityStore.current.moduleMap
     val modulesToUnload = entityStore.current.entities(ModuleEntity::class.java)
@@ -224,6 +214,15 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     val moduleEntitiesToLoad = entityStore.current.entities(ModuleEntity::class.java)
       .filter { moduleMap.getDataByEntity(it) == null && it.name !in unloadedModuleNamesSet }.toList()
 
+    if (unloadedModuleNames.isNotEmpty()) {
+      val loadedModules = modules.map { it.name }.toMutableList()
+      loadedModules.removeAll(unloadedModuleNames)
+      moduleEntitiesToLoad.mapTo(loadedModules) { it.name }
+      AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
+    }
+    else {
+      AutomaticModuleUnloader.getInstance(project).setLoadedModules(emptyList())
+    }
     unloadedModules.keys.removeAll { it !in unloadedModuleNamesSet }
     runWriteAction {
       if (modulesToUnload.isNotEmpty()) {

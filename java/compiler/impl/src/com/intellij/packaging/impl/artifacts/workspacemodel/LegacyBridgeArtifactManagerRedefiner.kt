@@ -4,7 +4,6 @@ package com.intellij.packaging.impl.artifacts.workspacemodel
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.impl.ExternalModuleListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.packaging.artifacts.ArtifactManager
@@ -29,10 +28,8 @@ class LegacyBridgeArtifactManagerRedefiner : ProjectServiceContainerCustomizer {
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
 
-    val container = project as ComponentManagerImpl
-    container.unregisterComponent(ExternalModuleListStorage::class.java)
-
     if (WorkspaceModel.enabledForArtifacts) {
+      val container = project as ComponentManagerImpl
       container.registerService(ArtifactManager::class.java, ArtifactManagerBridge::class.java, pluginDescriptor, override = true,
                                 preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     }
