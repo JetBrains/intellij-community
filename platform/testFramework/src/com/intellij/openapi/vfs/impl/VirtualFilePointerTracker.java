@@ -35,9 +35,9 @@ import java.util.Set;
  */
 @TestOnly
 public final class VirtualFilePointerTracker {
-  private static final Set<VirtualFilePointer> storedPointers = new ReferenceOpenHashSet<>();
-  private static Throwable trace;
-  private static boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
+  private final Set<VirtualFilePointer> storedPointers = new ReferenceOpenHashSet<>();
+  private Throwable trace;
+  private boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
 
   public VirtualFilePointerTracker() {
     storePointers();
@@ -51,7 +51,6 @@ public final class VirtualFilePointerTracker {
     trace = new Throwable();
     storedPointers.clear();
     storedPointers.addAll(dumpAllPointers());
-    //System.out.println("VFPT.storePointers(" + storedPointers + ")");
     isTracking = true;
   }
 
