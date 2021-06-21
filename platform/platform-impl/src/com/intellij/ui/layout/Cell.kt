@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -662,7 +663,7 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
-fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
+fun <T> ComboBox<T>.bind(property: ObservableClearableProperty<T>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -682,7 +683,7 @@ fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
 private val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
 
-fun StatusText.bind(property: GraphProperty<String>) {
+fun StatusText.bind(property: ObservableClearableProperty<String>) {
   text = property.get()
   property.afterChange {
     text = it
@@ -692,11 +693,11 @@ fun StatusText.bind(property: GraphProperty<String>) {
   }
 }
 
-fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
+fun TextFieldWithBrowseButton.bind(property: ObservableClearableProperty<String>) {
   textField.bind(property)
 }
 
-fun JTextComponent.bind(property: GraphProperty<String>) {
+fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

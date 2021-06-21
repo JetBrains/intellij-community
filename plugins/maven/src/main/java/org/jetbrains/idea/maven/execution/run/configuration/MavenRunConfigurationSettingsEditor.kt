@@ -10,7 +10,9 @@ import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
@@ -51,11 +53,12 @@ class MavenRunConfigurationSettingsEditor(
         { settings.workingDirectory },
         { settings.workingDirectory = it }
       )
+      val workingDirectoryField = workingDirectoryFragment.component().component
       addCommandLineFragment(
         project,
         MavenCommandLineInfo(
           project,
-          workingDirectoryFragment.component().component
+          workingDirectoryField
         ),
         { settings.commandLine },
         { settings.commandLine = it }
@@ -75,6 +78,7 @@ class MavenRunConfigurationSettingsEditor(
         { settings.vmOptions },
         { settings.vmOptions = it }
       )
+      addMavenProfilesFragment(project, workingDirectoryField)
       add(LogsGroupFragment())
     }
   }
@@ -117,6 +121,36 @@ class MavenRunConfigurationSettingsEditor(
       distribution is MavenDistributionsInfo.WrappedDistributionInfo -> null
       distribution is LocalDistributionInfo && MavenUtil.isValidMavenHome(File(distribution.path)) -> null
       else -> error(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
+    }
+  }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenProfilesFragment(
+    project: Project,
+    workingDirectoryField: WorkingDirectoryField
+  ) = add(createMavenProfilesFragment(project, workingDirectoryField))
+
+  private fun createMavenProfilesFragment(
+    project: Project,
+    workingDirectoryField: WorkingDirectoryField
+  ): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<MavenProfilesFiled>> {
+    val mavenProfilesFiled = MavenProfilesFiled(project, workingDirectoryField).apply {
+      CommonParameterFragments.setMonospaced(this)
+      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
+    }
+    val mavenProfilesLabel = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
+    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<MavenProfilesFiled>>(
+      "external.system.command.line.fragment",
+      MavenConfigurableBundle.message("maven.run.configuration.profiles.name"),
+      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
+      LabeledComponent.create(mavenProfilesFiled, mavenProfilesLabel, BorderLayout.WEST),
+      SettingsEditorFragmentType.EDITOR,
+      { it, c -> c.component.profiles = it.settings.profiles },
+      { it, c -> it.settings.profiles = c.component.profiles },
+      { it.settings.profiles.isNotEmpty() }
+    ).apply {
+      isCanBeHidden = true
+      isRemovable = true
+      setHint(MavenConfigurableBundle.message("maven.run.configuration.profiles.hint"))
     }
   }
 }

@@ -135,12 +135,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenRunnerParameters parameters = new MavenRunnerParameters();
     ObjectUtils.consumeIfNotNull(settings.getCommandLine(), parameters::setCommandLine);
     ObjectUtils.consumeIfNotNull(settings.getWorkingDirectory(), parameters::setWorkingDirPath);
+    ObjectUtils.consumeIfNotNull(settings.getProfiles(), parameters::setProfilesMap);
     return parameters;
   }
 
   public void setRunnerParameters(@NotNull MavenRunnerParameters parameters) {
     settings.setCommandLine(parameters.getCommandLine());
     settings.setWorkingDirectory(parameters.getWorkingDirPath());
+    settings.setProfiles(parameters.getProfilesMap());
   }
 
   @Override
