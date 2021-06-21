@@ -86,6 +86,11 @@ public class DiffHyperlink implements Printable {
     return getTitle();
   }
 
+  @Nullable
+  public @NlsSafe String getTestName() {
+    return myTestProxyName;
+  }
+
   @NotNull
   public String getLeft() {
     return myExpected;

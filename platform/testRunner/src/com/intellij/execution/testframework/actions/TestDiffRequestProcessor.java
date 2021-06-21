@@ -50,6 +50,8 @@ public class TestDiffRequestProcessor {
 
     @Override
     public @Nls @NotNull String getName() {
+      String testName = myHyperlink.getTestName();
+      if (testName != null) return testName;
       return myHyperlink.getDiffTitle();
     }
 
