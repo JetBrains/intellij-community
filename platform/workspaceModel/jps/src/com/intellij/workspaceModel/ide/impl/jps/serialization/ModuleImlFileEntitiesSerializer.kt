@@ -268,7 +268,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val moduleLibraryNames = mutableSetOf<String>()
     var nextUnnamedLibraryIndex = 1
     val dependencyItems = rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
-      when (dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
+      val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)
+      when (orderEntryType) {
         SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
         JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
                                                        dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE))
@@ -297,7 +298,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                            dependencyElement.readScope(),
                                                            dependencyElement.getAttributeValue("production-on-test") != null)
         }
-        else -> error(dependencyElement.name)
+        else -> throw JDOMException("Unexpected '$TYPE_ATTRIBUTE' attribute in '$ORDER_ENTRY_TAG' tag: $orderEntryType")
       }
     }
 
