@@ -6,7 +6,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
