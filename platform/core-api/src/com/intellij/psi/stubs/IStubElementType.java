@@ -37,7 +37,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
       return ourLazyExternalIds.contains(getExternalId());
     }
     catch (Throwable e) {
-      // "getExternalId" might throw when called from constructor, if it accesses subclass fields
+      // "getExternalId" might throw when called from constructor, if it accesses subclass fields.
       // Lazily-registered types have a contract that their "getExternalId" doesn't throw like this,
       // so getting an exception here is a sign that someone indeed creates their stub type after StubElementTypeHolderEP initialization.
       return false;

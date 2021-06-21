@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.util.function.IntUnaryOperator;
 
-/** An int list where most values are in range 0..2^16 */
+/** An int list where most values are in the range 0..2^16 */
 final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private final UnsignedShortArrayList myList;
