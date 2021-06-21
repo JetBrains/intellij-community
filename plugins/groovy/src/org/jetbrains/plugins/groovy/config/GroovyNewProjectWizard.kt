@@ -127,7 +127,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
 
     val librariesContainer = LibrariesContainerFactory.createContainer(context.project)
 
-    val compositionSettings = generateCompositionSettings(settings, project, context, librariesContainer)
+    val compositionSettings = generateCompositionSettings(settings, project, librariesContainer)
 
     builder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
       override fun update(module: Module, rootModel: ModifiableRootModel) {
@@ -140,14 +140,13 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
 
 private fun generateCompositionSettings(settings: GroovyModuleSettings,
                                         project: Project,
-                                        context: WizardContext,
                                         container: LibrariesContainer): LibraryCompositionSettings {
   val libraryDescription = GroovyLibraryDescription()
   val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
                                                        FrameworkLibraryVersionFilter.ALL, listOf(settings.mavenVersion))
   if (settings.useMavenLibrary && settings.mavenVersion != null) {
     compositionSettings.setDownloadLibraries(true)
-    compositionSettings.downloadFiles(context.wizard.contentComponent)
+    compositionSettings.downloadFiles(null)
   }
   else if (settings.useLocalLibrary) {
     val virtualFile = VfsUtil.findFile(Path.of(settings.sdkPath), false) ?: return compositionSettings

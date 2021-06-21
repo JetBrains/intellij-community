@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -131,7 +131,7 @@ public final class LibraryCompositionSettings implements Disposable {
     myNewLibraryLevel = newLibraryLevel;
   }
 
-  public boolean downloadFiles(final @NotNull JComponent parent) {
+  public boolean downloadFiles(final @Nullable JComponent parent) {
     if (myDownloadLibraries && myDownloadSettings != null) {
       final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent, getBaseDirectoryPath());
       if (libraryEditor != null) {
