@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -21,6 +22,7 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
+import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
@@ -36,9 +38,9 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignal
-import com.jetbrains.rd.util.getOrCreate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -63,6 +65,9 @@ import java.util.Locale
 import kotlin.time.hours
 import kotlin.time.milliseconds
 import kotlin.time.seconds
+
+private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
+    UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
 
 internal class PackageSearchDataService(
     override val project: Project
@@ -255,6 +260,20 @@ internal class PackageSearchDataService(
         return moduleModels
     }
 
+    private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
+        val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+            ?.listRepositoriesInModule(this)
+            ?.toList()
+            ?: emptyList())
+
+        // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
+        if (moduleType == MavenProjectModuleType && declaredRepositories.none { it.id == "central" }) {
+            declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
+        } else {
+            declaredRepositories
+        }
+    }
+
     private suspend fun installedPackages(projectModules: List<ProjectModule>, traceInfo: TraceInfo): List<PackageModel.Installed> {
         val dependenciesByModule = fetchProjectDependencies(projectModules, traceInfo)
         val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
@@ -399,6 +418,12 @@ internal class PackageSearchDataService(
         return PackagesToUpdate(updatesByModule)
     }
 
+    private inline fun <K : Any, V : Any> MutableMap<K, V>.getOrCreate(key: K, crossinline creator: (K) -> V): V =
+        this[key] ?: creator(key).let {
+            this[key] = it
+            return it
+        }
+
     private fun computeHeaderData(
         installed: List<PackageModel.Installed>,
         installable: List<PackageModel.SearchResult>,
@@ -472,10 +497,17 @@ internal class PackageSearchDataService(
         runReadAction {
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
-                    val file = PsiUtil.getPsiFile(project, virtualFile)
-                    ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
-                        ?.hasSupportFor(project, file)
-                        ?: false
+                    try {
+                        val file = PsiUtil.getPsiFile(project, virtualFile)
+                        ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
+                            ?.hasSupportFor(project, file)
+                            ?: false
+                    } catch (e: Throwable) {
+                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", e) {
+                            "Error while filtering open files to trigger highlight rerun for"
+                        }
+                        false
+                    }
                 }
                 .mapNotNull { psiManager.findFile(it) }
                 .forEach { daemonCodeAnalyzer.restart(it) }
