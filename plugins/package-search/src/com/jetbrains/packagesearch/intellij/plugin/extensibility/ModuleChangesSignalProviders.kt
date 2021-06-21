@@ -1,10 +1,9 @@
-package com.jetbrains.packagesearch.intellij.plugin.extensions
+package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
+import com.jetbrains.packagesearch.intellij.plugin.util.dumbService
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
@@ -21,4 +20,13 @@ abstract class AbstractMessageBusModuleChangesSignalProvider : ModuleChangesSign
     }
 
     protected abstract fun registerModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>)
+}
+
+abstract class DumbAwareMessageBusModuleChangesSignalProvider : AbstractMessageBusModuleChangesSignalProvider() {
+
+    override fun registerModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) =
+        registerDumbAwareModuleChangesListener(project, bus) { project.dumbService.runWhenSmart { listener() } }
+
+    abstract fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>)
+
 }

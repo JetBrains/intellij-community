@@ -8,7 +8,7 @@ internal sealed class TargetModules(
 ) : Collection<ModuleModel> by modules {
 
     fun refreshWith(modules: List<ProjectModule>): TargetModules {
-        val availableModules = filter { it.projectModule in modules }
+        val availableModules = filter { it.projectModule in modules && !it.projectModule.nativeModule.isDisposed }
         return when (availableModules.size) {
             0 -> None
             1 -> One(availableModules.first())

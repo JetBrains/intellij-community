@@ -43,6 +43,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChan
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,14 +58,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
+import java.net.SocketTimeoutException
 import java.net.URI
 import java.util.Locale
+import java.util.concurrent.TimeoutException
 import kotlin.time.hours
 import kotlin.time.milliseconds
-import kotlin.time.seconds
 
 private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
     UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
@@ -72,8 +73,6 @@ private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
 internal class PackageSearchDataService(
     override val project: Project
 ) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope by project.lifecycleScope {
-
-    private val apiTimeout = 10.seconds
 
     private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
 
@@ -150,6 +149,13 @@ internal class PackageSearchDataService(
         }
 
         searchQueryState.onEach { performSearch(it, TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)) }
+            .catch { error ->
+                when (error) {
+                    is TimeoutCancellationException, is TimeoutException, is SocketTimeoutException ->
+                        showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed.timeout"))
+                    else -> logError("searchQueryState", error) { "Error while retrieving search results." }
+                }
+            }
             .launchIn(this)
     }
 
@@ -162,7 +168,7 @@ internal class PackageSearchDataService(
     private suspend fun refreshKnownRepositories(traceInfo: TraceInfo) = coroutineScope {
         setStatus(isRefreshingData = true)
         logDebug(traceInfo, "PKGSDataService#refreshKnownRepositories()") { "Refreshing known repositories from API..." }
-        withTimeout(apiTimeout) { dataProvider.fetchKnownRepositories() }
+        dataProvider.fetchKnownRepositories()
             .onFailure { logError(traceInfo, "refreshKnownRepositories()", it) { "Failed to refresh known repositories list." } }
             .onSuccess {
                 logInfo(traceInfo, "refreshKnownRepositories()") { "Known repositories refreshed. We know of ${it.size} repo(s). Refreshing data..." }
@@ -181,7 +187,7 @@ internal class PackageSearchDataService(
 
         setStatus(isSearching = true)
 
-        withTimeout(apiTimeout) { dataProvider.doSearch(query, filterOptionsState.value) }
+        dataProvider.doSearch(query, filterOptionsState.value)
             .onFailure {
                 logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
                 showErrorNotification(
@@ -300,9 +306,7 @@ internal class PackageSearchDataService(
         val installedDependencies = dependenciesByModule.values.flatten()
             .mapNotNull { InstalledDependency.from(it) }
 
-        val dependencyRemoteInfoMap = withTimeout(apiTimeout) {
-            dataProvider.fetchInfoFor(installedDependencies, traceInfo)
-        }
+        val dependencyRemoteInfoMap = dataProvider.fetchInfoFor(installedDependencies, traceInfo)
 
         return usageInfoByDependency.mapNotNull { (dependency, usageInfo) ->
             val installedDependency = InstalledDependency.from(dependency)

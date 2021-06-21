@@ -2,7 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.extensions.AbstractMessageBusModuleChangesSignalProvider
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

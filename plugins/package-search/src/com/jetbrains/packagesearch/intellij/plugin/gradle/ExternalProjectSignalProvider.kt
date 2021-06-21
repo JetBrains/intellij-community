@@ -3,44 +3,37 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.invoke
-import com.jetbrains.packagesearch.intellij.plugin.extensions.AbstractMessageBusModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.util.dumbService
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DumbAwareMessageBusModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.settings.TestRunner
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
-internal class ExternalProjectSignalProvider : AbstractMessageBusModuleChangesSignalProvider() {
+internal class ExternalProjectSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
         bus.subscribe(
             ProjectDataImportListener.TOPIC,
             ProjectDataImportListener {
                 logDebug("ExternalProjectSignalProvider#registerModuleChangesListener#ProjectDataImportListener") { "value=$it" }
-                project.dumbService.runWhenSmart { listener.get() }
+                listener()
             }
         )
     }
 }
 
-internal class SmartModeSignalProvider : ModuleChangesSignalProvider {
+internal class SmartModeSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerModuleChangesListener(project: Project, listener: Supplier<Unit>): Subscription {
-        val isSubscribed = AtomicBoolean(true)
-        project.dumbService.runWhenSmart { if (isSubscribed.get()) listener() }
-        return Subscription { isSubscribed.set(false) }
-    }
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) =
+        listener()
 }
 
-internal class GradleModuleLinkSignalProvider : AbstractMessageBusModuleChangesSignalProvider() {
+internal class GradleModuleLinkSignalProvider : DumbAwareMessageBusModuleChangesSignalProvider() {
 
-    override fun registerModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
+    override fun registerDumbAwareModuleChangesListener(project: Project, bus: SimpleMessageBusConnection, listener: Supplier<Unit>) {
         bus.subscribe(
             GradleSettingsListener.TOPIC,
             object : GradleSettingsListener {
