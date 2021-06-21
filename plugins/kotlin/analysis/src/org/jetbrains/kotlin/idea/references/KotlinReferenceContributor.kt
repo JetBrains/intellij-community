@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.references
 
+import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.kdoc.KDocReferenceDescriptorsImpl
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -16,9 +17,11 @@ class KotlinReferenceContributor : KotlinReferenceProviderContributor {
             registerProvider(factory = ::KtSimpleNameReferenceDescriptorsImpl)
 
             registerMultiProvider<KtNameReferenceExpression> { nameReferenceExpression ->
-                if (nameReferenceExpression.getReferencedNameElementType() != KtTokens.IDENTIFIER) return@registerMultiProvider emptyArray()
+                if (nameReferenceExpression.getReferencedNameElementType() != KtTokens.IDENTIFIER) {
+                    return@registerMultiProvider PsiReference.EMPTY_ARRAY
+                }
                 if (nameReferenceExpression.parents.any { it is KtImportDirective || it is KtPackageDirective || it is KtUserType }) {
-                    return@registerMultiProvider emptyArray()
+                    return@registerMultiProvider PsiReference.EMPTY_ARRAY
                 }
 
                 when (nameReferenceExpression.readWriteAccess(useResolveForReadWrite = false)) {

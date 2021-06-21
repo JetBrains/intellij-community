@@ -43,7 +43,7 @@ internal class KotlinWebReferenceContributor : PsiReferenceContributor() {
                         }
                     }
 
-                    return if (!results.isEmpty()) results.toTypedArray() else PsiReference.EMPTY_ARRAY
+                    return results.toArray(PsiReference.EMPTY_ARRAY)
                 }
             })
     }
