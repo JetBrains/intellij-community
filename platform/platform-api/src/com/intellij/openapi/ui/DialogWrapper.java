@@ -1061,6 +1061,12 @@ public abstract class DialogWrapper {
     doOKAction();
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public final List<ValidationInfo> performValidateAll() {
+    return doValidateAll();
+  }
+
   /**
    * This method is invoked by default implementation of "OK" action. It just closes dialog
    * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
