@@ -17,14 +17,10 @@ interface AutomaticModuleUnloader {
   }
 }
 
-class DummyAutomaticModuleUnloader: AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
-    TODO("Not yet implemented")
-  }
+class DummyAutomaticModuleUnloader : AutomaticModuleUnloader {
+  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {}
 
-  override fun setLoadedModules(modules: List<String>) {
-    TODO("Not yet implemented")
-  }
+  override fun setLoadedModules(modules: List<String>) {}
 }
 
 class UnloadedModulesListChange(val toLoad: List<ModulePath>, val toUnload: List<ModulePath>, val toUnloadDescriptions: List<UnloadedModuleDescriptionImpl>)
