@@ -53,6 +53,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -105,6 +106,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private LibraryTableTracker myLibraryTableTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   private Disposable mySdkParentDisposable = Disposer.newDisposable("sdk for project in light tests");
 
@@ -246,6 +248,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+      myLibraryTableTracker = new LibraryTableTracker();
     });
   }
 
@@ -397,6 +400,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
+        }
+      },
+      () -> {
+        if (myLibraryTableTracker != null) {
+          myLibraryTableTracker.assertDisposed();
         }
       },
       () -> {

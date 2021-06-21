@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
@@ -112,7 +113,8 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
 
   private var sharedProject: ProjectEx? = null
   private var testClassName: String? = null
-  var virtualFilePointerTracker: VirtualFilePointerTracker? = null
+  var virtualFilePointerTracker: VirtualFilePointerTracker? =null
+  var libraryTracker: LibraryTableTracker? = null
   var projectTracker: AccessToken? = null
 
   override fun before(description: Description) {
@@ -127,6 +129,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
+    libraryTracker = LibraryTableTracker()
     return project
   }
 
@@ -136,6 +139,7 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     l.catchAndStoreExceptions { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } }
     l.catchAndStoreExceptions { projectTracker?.finish() }
     l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
+    l.catchAndStoreExceptions { libraryTracker?.assertDisposed() }
     l.catchAndStoreExceptions {
       sharedProject = null
       sharedModule = null

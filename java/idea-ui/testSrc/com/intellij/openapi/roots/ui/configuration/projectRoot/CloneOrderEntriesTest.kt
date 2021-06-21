@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.JavaModuleTestCase
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -115,6 +118,13 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
 
     TestCase.assertSame(globalLibrary, copiedOrderEntries.first().library)
     TestCase.assertNotSame(originalOrderEntries.first(), copiedOrderEntries.first())
+
+    WriteAction.run<RuntimeException> {
+      val model: LibraryTable.ModifiableModel = globalLibraryTable.modifiableModel
+      model.removeLibrary(globalLibrary)
+      model.commit()
+      Disposer.dispose(globalLibrary)
+    }
   }
 
   fun `test copy module with module`() {

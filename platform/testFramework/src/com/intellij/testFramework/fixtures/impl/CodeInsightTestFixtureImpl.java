@@ -94,6 +94,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -181,6 +182,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myCaresAboutInjection = true;
   private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private LibraryTableTracker  myLibraryTableTracker;
   private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
@@ -1270,6 +1272,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (shouldTrackVirtualFilePointers()) {
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
+    myLibraryTableTracker = new LibraryTableTracker();
   }
 
   protected boolean shouldTrackVirtualFilePointers() {
@@ -1328,6 +1331,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
+        }
+      },
+      () -> {
+        if (myLibraryTableTracker != null) {
+          myLibraryTableTracker.assertDisposed();
         }
       }
     );
