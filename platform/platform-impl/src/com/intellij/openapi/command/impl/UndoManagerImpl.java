@@ -28,7 +28,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
 import java.util.List;
 import java.util.*;
 
@@ -248,9 +246,9 @@ public class UndoManagerImpl extends UndoManager {
           editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
         }
         else {
-          Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-          if (component != null) {
-            editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+          FileEditor fileEditor = myEditorProvider.getCurrentEditor();
+          if (fileEditor instanceof TextEditor) {
+            editor = ((TextEditor)fileEditor).getEditor();
           }
         }
 
