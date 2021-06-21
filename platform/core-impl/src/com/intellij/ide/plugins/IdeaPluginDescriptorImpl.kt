@@ -25,7 +25,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                val path: Path,
                                private val isBundled: Boolean,
                                id: PluginId?) : IdeaPluginDescriptor {
-  val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Nor id, neither name are specified"))
+  val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name = raw.name ?: id?.idString ?: raw.id
 
   @Suppress("EnumEntryName")
@@ -485,7 +485,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun toString(): String {
     return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix)"
+           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix), isBundled=$isBundled"
   }
 }
 
