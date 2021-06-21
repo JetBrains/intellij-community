@@ -394,12 +394,6 @@
         <group id="InspectCodeGroup">
           <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
           <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
-
-          <group id="AnalyzePlatformMenu">
-            <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
-              <override-text place="EditorPopup"/>
-            </action>
-          </group>
         </group>
 
         <group id="AnalyzeActionsPopup" popup="true">
@@ -418,6 +412,12 @@
               <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
             </action>
           </group>
+        </group>
+
+        <group id="AnalyzePlatformMenu">
+          <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
+            <override-text place="EditorPopup"/>
+          </action>
         </group>
       </group>
 
