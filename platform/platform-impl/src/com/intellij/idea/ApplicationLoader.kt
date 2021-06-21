@@ -140,7 +140,7 @@ private fun startApp(app: ApplicationImpl,
     .thenComposeAsync<Void?>({
       val pool = ForkJoinPool.commonPool()
 
-      val future: CompletableFuture<Void?> = if (starter.commandName == null) {
+      val future: CompletableFuture<Void?> = if (starter.commandName == null || starter.commandName == "buildAppcodeCache") {
         CompletableFuture.runAsync({
                                      initAppActivity.runChild("app initialized callback") {
                                        ForkJoinTask.invokeAll(callAppInitialized(app))
