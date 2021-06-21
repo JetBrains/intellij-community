@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -23,13 +24,25 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
+import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
 public class NonFinalFieldInEnumInspection extends BaseInspection {
+  @SuppressWarnings("PublicField")
+  public boolean onlyWarnWhenQuickFix = true;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("non.final.field.in.enum.quickfix.option"), this, "onlyWarnWhenQuickFix"
+    );
+  }
 
   @NotNull
   @Override
@@ -50,16 +63,19 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
     return new NonFinalFieldInEnumVisitor();
   }
 
-  private static class NonFinalFieldInEnumVisitor extends BaseInspectionVisitor {
+  private class NonFinalFieldInEnumVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null || !containingClass.isEnum()) {
+      if (onlyWarnWhenQuickFix && !FinalUtils.canBeFinal(field)) {
         return;
       }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || !containingClass.isEnum()) {
         return;
       }
       registerFieldError(field, containingClass, field);

@@ -458,7 +458,7 @@
                      implementationClass="com.siyeh.ig.classlayout.MultipleTopLevelClassesInFileInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonFinalFieldInEnum" bundle="messages.InspectionGadgetsBundle"
                      key="non.final.field.in.enum.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.class.structure" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.NonFinalFieldInEnumInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonFinalUtilityClass" bundle="messages.InspectionGadgetsBundle"
                      key="non.final.utility.class.display.name" groupBundle="messages.InspectionsBundle"
