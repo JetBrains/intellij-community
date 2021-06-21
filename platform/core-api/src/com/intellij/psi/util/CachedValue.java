@@ -95,7 +95,7 @@ public interface CachedValue<T> {
   CachedValueProvider<T> getValueProvider();
 
   /**
-   * @return whether there is a cached result inside this object and it's not outdated
+   * @return whether there is a cached result inside this object, and it's not outdated
    */
   boolean hasUpToDateValue();
 

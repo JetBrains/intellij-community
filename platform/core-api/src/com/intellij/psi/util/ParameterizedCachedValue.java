@@ -24,7 +24,7 @@ package com.intellij.psi.util;
  * Note that this object holds just one cached value, not a map from parameters to their respective results.
  * So the {@code value} argument of {@link #getValue(Object)} method must always be the same
  * for the same {@code ParameterizedCachedValue} (most likely it'll be the object where this {@code ParameterizedCachedValue}
- * is stored as a field or user data). Otherwise the cache would contain some accidental data
+ * is stored as a field or user data). Otherwise, the cache would contain some accidental data
  * depending on which thread called it first with which argument.<p></p>
  */
 public interface ParameterizedCachedValue<T, P> {

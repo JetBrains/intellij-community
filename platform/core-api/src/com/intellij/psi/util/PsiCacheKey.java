@@ -67,7 +67,7 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
    * Creates cache key value
    *
    * @param name        key name
-   * @param function    function to reproduce new value when old value is stale
+   * @param function    function to reproduce new value when the old value is stale
    * @param <T>         cached value type
    * @param <H>         PSI element type that holds the user data with the cache
    * @return instance
