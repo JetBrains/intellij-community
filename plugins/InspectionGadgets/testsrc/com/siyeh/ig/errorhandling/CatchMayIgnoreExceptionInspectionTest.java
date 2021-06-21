@@ -142,7 +142,22 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                     "    }\n" +
                     "  ");
   }
-  
+
+  public void testVMExceptionLeaked() {
+    doTest("class Exc {\n" +
+           "  volatile Throwable exception;\n" +
+           "  void test() {\n" +
+           "    //noinspection EmptyTryBlock\n" +
+           "    try {\n" +
+           "      //blah blah\n" +
+           "    }\n" +
+           "    catch (Throwable e) {\n" +
+           "      exception = e;\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
   public void testSneakyThrow() {
     doTest("class Exc {\n" +
            "  Object apply() {\n" +
