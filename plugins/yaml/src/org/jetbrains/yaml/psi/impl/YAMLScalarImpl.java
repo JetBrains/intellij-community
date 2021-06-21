@@ -117,13 +117,22 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
       String text = myHost.getText();
       List<TextRange> ranges = myHost.getContentRanges();
+      boolean decoded = false;
       for (TextRange range : ranges) {
         TextRange intersection = range.intersection(rangeInsideHost);
         if (intersection == null) continue;
+        decoded = true;
         String substring = intersection.substring(text);
         outChars.append(processReplacements(substring, myHost.getDecodeReplacements(substring)));
       }
-      return true;
+      return decoded;
+    }
+
+    @Override
+    public @NotNull TextRange getRelevantTextRange() {
+      List<TextRange> ranges = myHost.getContentRanges();
+      if (ranges.isEmpty()) return TextRange.EMPTY_RANGE;
+      return TextRange.create(ranges.get(0).getStartOffset(), ranges.get(ranges.size() - 1).getEndOffset());
     }
 
     @Override
