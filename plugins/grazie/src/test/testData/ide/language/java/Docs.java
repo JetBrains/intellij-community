@@ -36,8 +36,11 @@ class ExampleClassWithNoTypos<T> {
         return 1; // no error comment
     }
 
-    /** Accepts files for which vcs operations are temporarily blocked. */
-    void some1() {}
+    /**
+     * Accepts files for which vcs operations are temporarily blocked.
+     * @return the project instance.
+     */
+    Object some1() { return 42; }
 
     /** Currently active change list. */
     class ActiveChangeList {}
