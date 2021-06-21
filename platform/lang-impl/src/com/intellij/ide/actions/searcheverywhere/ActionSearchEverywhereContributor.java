@@ -234,6 +234,9 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlSessionService service,
                                                                                         @NotNull GotoActionModel.MatchedValue element) {
+    if (element.isAbbreviation()) {
+      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
+    }
     SearchEverywhereMLSearchSession session = service.getCurrentSession();
     double mlWeight = session != null ? session.getMLWeight(this, element) : -1.0;
     if (mlWeight > 0) {

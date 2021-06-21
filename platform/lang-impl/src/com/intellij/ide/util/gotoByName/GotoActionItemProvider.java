@@ -109,7 +109,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
         ActionWrapper wrapper = wrapAnAction(action);
         int degree = matcher.matchingDegree(pattern);
-        return new MatchedValue(wrapper, pattern, degree) {
+        return new MatchedValue(wrapper, pattern, degree, true) {
           @NotNull
           @Override
           public String getValueText() {
