@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -42,7 +41,10 @@ public final class XDebuggerInlayUtil {
                                                                                         .disableSoftWrapping(true)
                                                                                         .priority(customNode ? 0 : -1),
                                                                                       renderer);
-          XDebuggerTreeListener loadListener = new XDebuggerTreeListener() {
+          if (inlay == null) {
+            return;
+          }
+          valueNode.getTree().addTreeListener(new XDebuggerTreeListener() {
             @Override
             public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
               if (node == valueNode) {
@@ -50,10 +52,7 @@ public final class XDebuggerInlayUtil {
                 inlay.update();
               }
             }
-          };
-          XDebuggerTree tree = valueNode.getTree();
-          tree.addTreeListener(loadListener);
-          Disposer.register(inlay, () -> tree.removeTreeListener(loadListener));
+          }, inlay);
 
           if (customNode) {
             ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);
