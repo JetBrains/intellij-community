@@ -8,13 +8,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 
 interface AutomaticModuleUnloader {
-  fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange
   fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage)
   fun setLoadedModules(modules: List<String>)
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
+  }
+}
+
+class DummyAutomaticModuleUnloader: AutomaticModuleUnloader {
+  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
+    TODO("Not yet implemented")
+  }
+
+  override fun setLoadedModules(modules: List<String>) {
+    TODO("Not yet implemented")
   }
 }
 
