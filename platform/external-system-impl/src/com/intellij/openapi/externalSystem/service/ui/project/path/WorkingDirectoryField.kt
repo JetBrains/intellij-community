@@ -52,7 +52,7 @@ class WorkingDirectoryField(
     val text by textProperty.map { it.trim() }
     workingDirectoryProperty.dependsOn(textProperty) {
       when (mode) {
-        Mode.PATH -> text
+        Mode.PATH -> getModelPath(text)
         Mode.NAME -> resolveProjectPathByName(text) ?: text
       }
     }
