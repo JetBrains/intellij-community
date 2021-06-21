@@ -174,12 +174,14 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull public final Object value;
     @NotNull final String pattern;
     final int matchingDegree;
+    final boolean isAbbreviation;
 
     MatchedValue(@NotNull Object value, @NotNull String pattern) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = calcMatchingDegree();
+      this.isAbbreviation = false;
     }
 
     MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
@@ -187,6 +189,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       this.value = value;
       this.pattern = pattern;
       matchingDegree = degree;
+      this.isAbbreviation = false;
+    }
+
+    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, boolean isAbbreviation) {
+      assert value instanceof OptionDescription || value instanceof ActionWrapper;
+      this.value = value;
+      this.pattern = pattern;
+      matchingDegree = degree;
+      this.isAbbreviation = isAbbreviation;
     }
 
     @Nullable
@@ -203,6 +214,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     public int getMatchingDegree() {
       return matchingDegree;
+    }
+
+    public boolean isAbbreviation() {
+      return isAbbreviation;
     }
 
     private int calcMatchingDegree() {

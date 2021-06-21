@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 
 internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
+    private const val IS_ABBREVIATION_DATA_KEY = "isAbbreviation"
     private const val IS_ACTION_DATA_KEY = "isAction"
     private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
     private const val PRIORITY_DATA_KEY = "priority"
@@ -49,6 +50,7 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = hashMapOf(
       TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
+      IS_ABBREVIATION_DATA_KEY to matchedValue.isAbbreviation,
       IS_ACTION_DATA_KEY to (wrapper != null),
       PRIORITY_DATA_KEY to priority
     )
