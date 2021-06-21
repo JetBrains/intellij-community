@@ -116,8 +116,7 @@ class EclipseProjectDetector extends ProjectDetector {
         scanForProjects(workspace, projects);
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
+    catch (IOException ignore) {
     }
   }
 
