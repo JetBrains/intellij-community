@@ -13,12 +13,14 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
@@ -37,6 +39,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
@@ -50,6 +53,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
@@ -99,16 +104,29 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
+      Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
+      // selection from the current editor
       ScratchFileCreationHelper.Context context = createContext(e);
       LanguageItem selectionItem =
         context.language != null ? LanguageItem.fromLanguage(context.language) :
         context.fileExtension != null ? new LanguageItem(
           null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) : null;
+
+      // extract text from the focused component, e.g. a tree or a list
+      ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
+      LanguageItem extractItem =
+        textExtractor != null && StringUtil.isEmpty(context.text) &&
+        !EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR)) ?
+        new LanguageItem(null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
+
       Consumer<LanguageItem> consumer = o -> {
         context.language = o.language;
         context.fileExtension = o.fileExtension;
-        if (o != selectionItem) {
+        if (o == extractItem) {
+          context.text = StringUtil.notNullize(textExtractor.extractText());
+        }
+        else if (o != selectionItem) {
           context.text = "";
         }
         if (context.language != null) {
@@ -126,6 +144,15 @@ public final class ScratchFileActions {
       if (selectionItem != null) {
         String displayName = LangBundle.message("scratch.file.action.new.from.selection", selectionItem.fileType.getDisplayName());
         builder.withExtraTopValue(selectionItem, displayName, EmptyIcon.ICON_16);
+      }
+      else if (extractItem != null) {
+        String displayName = LangBundle.message("scratch.file.action.new.from.ui");
+        if (textExtractor.hasSelection()) {
+          builder.withExtraTopValue(extractItem, displayName, EmptyIcon.ICON_16);
+        }
+        else {
+          builder.withExtraMiddleValue(extractItem, displayName, EmptyIcon.ICON_16);
+        }
       }
       builder
         .onChosen(consumer)
@@ -215,7 +242,8 @@ public final class ScratchFileActions {
       project, fileName, context.language, context.text, context.createOption);
     if (file == null) return null;
 
-    PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset).navigate(true);
+    Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
+    navigatable.navigate(!LaterInvocator.isInModalContextForProject(project));
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (context.ideView != null && psiFile != null) {
       context.ideView.selectElement(psiFile);
@@ -406,6 +434,34 @@ public final class ScratchFileActions {
       PsiManager psiManager = PsiManager.getInstance(project);
       List<PsiFile> files = ContainerUtil.mapNotNull(toRemove, o -> psiManager.findFile(o.getFile()));
       DeleteHandler.deletePsiElement(files.toArray(PsiElement.EMPTY_ARRAY), project, false);
+    }
+  }
+
+  public static class ExportToScratchAction extends DumbAwareAction implements UpdateInBackground {
+    {
+      setEnabledInModalContext(true);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      Component c = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(c);
+      boolean isFileEditor = EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR));
+      e.getPresentation().setEnabled(project != null && extractor != null && !isFileEditor);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project == null) return;
+      ScratchImplUtil.TextExtractor extractor = ScratchImplUtil.getTextExtractor(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+      String text = extractor == null ? null : extractor.extractText();
+      if (text == null) return;
+      ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
+      context.text = text;
+      context.fileExtension = PlainTextFileType.INSTANCE.getDefaultExtension();
+      doCreateNewScratch(project, context);
     }
   }
 }
