@@ -13,19 +13,17 @@ import com.intellij.util.Processor
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import java.io.IOException
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
 
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = when (element) {
-        is KtClassOrObject -> element.resolveToDescriptorIfAny()
-            ?.let { DescriptorUtils.getJvmName(it) ?: element.fqName?.asString() }
+        is KtClassOrObject -> element.fqName
+            ?.asString()
             ?.let(names::tryEnumerate)
             ?.takeUnless { it == 0 }
             ?.let(CompilerRef::JavaCompilerClassRef)
