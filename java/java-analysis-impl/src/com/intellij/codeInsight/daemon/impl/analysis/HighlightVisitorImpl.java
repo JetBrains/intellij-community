@@ -907,7 +907,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     super.visitLiteralExpression(expression);
 
-    if (!myHolder.hasErrorResults() && expression.textMatches(PsiKeyword.NULL) && expression.getParent() instanceof PsiCaseLabelElementList) {
+    if (!myHolder.hasErrorResults() && expression.getParent() instanceof PsiCaseLabelElementList && expression.textMatches(PsiKeyword.NULL)) {
       myHolder.add(checkFeature(expression, HighlightingFeature.PATTERNS_IN_SWITCH));
     }
 
