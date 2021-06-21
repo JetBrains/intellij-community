@@ -20,6 +20,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
   private final WeakReference<AdjustableUndoableAction> myActionReference;
   private boolean myMoved;
   private final int myId;
+  private final int myOriginatorId;
 
   public ActionChangeRangeImpl(int offset,
                                int oldLength,
@@ -27,6 +28,16 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
                                int oldDocumentLength,
                                int newDocumentLength,
                                @Nullable AdjustableUndoableAction action) {
+    this(offset, oldLength, newLength, oldDocumentLength, newDocumentLength, action, 0);
+  }
+
+  private ActionChangeRangeImpl(int offset,
+                                int oldLength,
+                                int newLength,
+                                int oldDocumentLength,
+                                int newDocumentLength,
+                                @Nullable AdjustableUndoableAction action,
+                                int originatorId) {
     myOffset = offset;
     myOldLength = oldLength;
     myNewLength = newLength;
@@ -34,6 +45,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     myNewDocumentLength = newDocumentLength;
     myActionReference = new WeakReference<>(action);
     myId = idCounter.incrementAndGet();
+    myOriginatorId = originatorId != 0 ? originatorId : myId;
   }
 
   @Override
@@ -64,6 +76,16 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     return myActionReference.get() != null;
   }
 
+  @Override
+  public int getId() {
+    return myId;
+  }
+
+  @Override
+  public int getOriginatorId() {
+    return myOriginatorId;
+  }
+
   public boolean isMoved() {
     return myMoved;
   }
@@ -80,7 +102,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
   @Override
   public @NotNull ActionChangeRange createIndependentCopy(boolean invalidate) {
     AdjustableUndoableAction action = invalidate ? null : myActionReference.get();
-    return new ActionChangeRangeImpl(myOffset, myOldLength, myNewLength, myOldDocumentLength, myNewDocumentLength, action);
+    return new ActionChangeRangeImpl(myOffset, myOldLength, myNewLength, myOldDocumentLength, myNewDocumentLength, action, myOriginatorId);
   }
 
   @Override
@@ -174,6 +196,16 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     }
 
     @Override
+    public int getId() {
+      return -myId;
+    }
+
+    @Override
+    public int getOriginatorId() {
+      return myOriginatorId;
+    }
+
+    @Override
     public @NotNull ActionChangeRange asInverted() {
       return ActionChangeRangeImpl.this;
     }
@@ -181,7 +213,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     @Override
     public @NotNull ActionChangeRange createIndependentCopy(boolean invalidate) {
       AdjustableUndoableAction action = invalidate ? null : myActionReference.get();
-      return new ActionChangeRangeImpl(myOffset, myNewLength, myOldLength, myNewDocumentLength, myOldDocumentLength, action);
+      return new ActionChangeRangeImpl(myOffset, myNewLength, myOldLength, myNewDocumentLength, myOldDocumentLength, action, myOriginatorId);
     }
 
     @Override
@@ -202,7 +234,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     @Override
     public boolean equals(Object obj) {
       if (obj instanceof Inverted) {
-        return hashCode() == obj.hashCode();
+        return getId() == ((Inverted)obj).getId();
       }
       return false;
     }
