@@ -48,20 +48,24 @@
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="khttp:khttp:1.0.0" type="repository">
-        <properties maven-id="khttp:khttp:1.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/khttp/khttp/1.0.0/khttp-1.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.1.1/kotlin-stdlib-1.1.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20150729/json-20150729.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/spek/spek-api/1.1.0/spek-api-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.0.6/kotlin-reflect-1.0.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/spek/spek-junit-platform-engine/1.1.0/spek-junit-platform-engine-1.1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
+      <library name="okhttp-4-9-0" type="repository">
+          <properties maven-id="com.squareup.okhttp3:okhttp:4.9.0">
+            <exclude>
+              <dependency maven-id="org.jetbrains:annotations" />
+              <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+              <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            </exclude>
+          </properties>
+          <CLASSES>
+            <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/4.9.0/okhttp-4.9.0.jar!/" />
+            <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.8.0/okio-2.8.0.jar!/" />
+          </CLASSES>
+          <JAVADOC />
+          <SOURCES>
+            <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/4.9.0/okhttp-4.9.0-sources.jar!/" />
+            <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.8.0/okio-2.8.0-sources.jar!/" />
+          </SOURCES>
+        </library>
     </orderEntry>
   </component>
 </module>
