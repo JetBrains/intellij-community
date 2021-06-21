@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
@@ -216,7 +217,7 @@ final class ScratchImplUtil {
 
       @Override
       public Icon getIcon(LanguageItem o) {
-        return ObjectUtils.notNull(o.fileType.getIcon(), EmptyIcon.ICON_16);
+        return ObjectUtils.notNull(o.fileType.getIcon(), AllIcons.FileTypes.Any_type);
       }
 
       @Override
