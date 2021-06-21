@@ -177,7 +177,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     for (SmartPsiElementPointer<PsiElement> pointer : myRefsToShorten) {
       PsiElement element = pointer.getElement();
-      if (element != null) {
+      if (element != null && element.isWritable()) {
         styleManager.shortenClassReferences(element);
       }
     }
