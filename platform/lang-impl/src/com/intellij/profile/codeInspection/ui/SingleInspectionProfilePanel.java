@@ -1258,7 +1258,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
         e -> { myInspectionsFilter.reset(); }
       );
-    } else {
+    } else if (myCreateInspectionActions.getChildrenCount() > 0) {
       emptyText
         .appendSecondaryText(
           AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
