@@ -49,7 +49,7 @@ class GrazieScopeTab : GrazieUIComponent {
       cbComments.isSelected != isCheckInCommentsEnabled ||
       cbDocumentation.isSelected != isCheckInDocumentationEnabled ||
       cbCommits.isSelected != isCheckInCommitMessagesEnabled ||
-      myDisabledLanguageIds != disabledLanguages
+      myDisabledLanguageIds != disabledLanguages ||
       myEnabledLanguageIds != enabledLanguages
     }
 
