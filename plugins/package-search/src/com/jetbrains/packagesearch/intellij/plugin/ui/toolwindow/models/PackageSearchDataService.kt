@@ -36,9 +36,9 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignal
-import com.jetbrains.rd.util.getOrCreate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -399,6 +399,12 @@ internal class PackageSearchDataService(
         return PackagesToUpdate(updatesByModule)
     }
 
+    private inline fun <K : Any, V : Any> MutableMap<K, V>.getOrCreate(key: K, crossinline creator: (K) -> V): V =
+        this[key] ?: creator(key).let {
+            this[key] = it
+            return it
+        }
+
     private fun computeHeaderData(
         installed: List<PackageModel.Installed>,
         installable: List<PackageModel.SearchResult>,
@@ -472,10 +478,17 @@ internal class PackageSearchDataService(
         runReadAction {
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
-                    val file = PsiUtil.getPsiFile(project, virtualFile)
-                    ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
-                        ?.hasSupportFor(project, file)
-                        ?: false
+                    try {
+                        val file = PsiUtil.getPsiFile(project, virtualFile)
+                        ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
+                            ?.hasSupportFor(project, file)
+                            ?: false
+                    } catch (e: Throwable) {
+                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", e) {
+                            "Error while filtering open files to trigger highlight rerun for"
+                        }
+                        false
+                    }
                 }
                 .mapNotNull { psiManager.findFile(it) }
                 .forEach { daemonCodeAnalyzer.restart(it) }
