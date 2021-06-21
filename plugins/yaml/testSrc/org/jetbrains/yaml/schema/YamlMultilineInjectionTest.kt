@@ -2,19 +2,33 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.ElementManipulators
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.PrintlnLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.parents
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.castSafelyTo
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
-import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.collectResults
+import org.jetbrains.concurrency.runAsync
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeoutException
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
@@ -181,6 +195,47 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+                <xml1>
+                    <xml2>
+                        <xml3>
+                            <caret>
+                        </xml3>
+                    </xml2>
+                </xml1>
+                
+    """.trimIndent())
+  }
+
+  fun testNewLineInInjectedXMLinNestedAndUndoInMultithreading() {
+    // reuse testNewLineInInjectedXMLinNested fixture
+    testNewLineInInjectedXMLinNested()
+
+    // then undo and try again to check that all editors are disposed properly
+    val hostEditor = myFixture.editor.let { it.castSafelyTo<EditorWindow>()?.delegate ?: it }
+    val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document) ?: throw AssertionError("no psi file")
+    val hostVFile = hostFile.virtualFile
+    myFixture.openFileInEditor(hostVFile)
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val simultaneouslyRequestedEditorsByOtherThreads = (1..10).map {
+      runAsync {
+        runReadAction {
+            val hostCaret = hostEditor.caretModel.offset
+            val psiElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostCaret)
+                             ?: throw AssertionError("can't get injected element in the background at $hostCaret")
+            InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, hostEditor.caretModel.currentCaret,
+                                                                  psiElement.containingFile)
+        }
+      }
+    }
+    PlatformTestUtil.waitForPromise(simultaneouslyRequestedEditorsByOtherThreads.collectResults(), 5000)
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       long:
