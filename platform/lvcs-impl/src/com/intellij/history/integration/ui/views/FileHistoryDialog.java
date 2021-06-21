@@ -17,6 +17,7 @@ import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,6 +45,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,6 +85,19 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS),
       Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
     )), mySearchTextArea);
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextArea.getTextArea(), true);
+      }
+    }.registerCustomShortcutSet(Utils.shortcutSetOf(Utils.shortcutsOf(IdeActions.ACTION_FIND)), myRevisionsList.getComponent());
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        mySearchTextArea.getTextArea().setText("");
+        IdeFocusManager.getInstance(myProject).requestFocus(myRevisionsList.getComponent(), true);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_ESCAPE), mySearchTextArea.getTextArea());
     LoadingDecorator decorator = new ProgressBarLoadingDecorator(mySearchTextArea, this, 500) {
       @Override
       protected boolean isOnTop() { return false; }
