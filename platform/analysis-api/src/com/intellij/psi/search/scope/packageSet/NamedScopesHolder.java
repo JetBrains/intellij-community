@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.Disposable;
@@ -156,11 +156,12 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @Override
   public void loadState(@NotNull Element state) {
     List<Element> sets = state.getChildren(SCOPE_TAG);
-    myScopes = new NamedScope[sets.size()];
+    NamedScope [] scopes = new NamedScope[sets.size()];
     for (int i = 0; i < sets.size(); i++) {
       Element set = sets.get(i);
-      myScopes[i] = readScope(set);
+      scopes[i] = readScope(set);
     }
+    myScopes = scopes;
     fireScopeListeners();
   }
 
