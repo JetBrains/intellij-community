@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable
 
+@Suppress("DialogTitleCapitalization")
 class ShowSettingsAction(private val currentProject: Project? = null) :
     AnAction(
         PackageSearchBundle.message("packagesearch.actions.showSettings.text"),

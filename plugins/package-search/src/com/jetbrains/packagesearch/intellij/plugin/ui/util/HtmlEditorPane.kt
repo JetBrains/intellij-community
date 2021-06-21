@@ -17,6 +17,7 @@ import javax.swing.text.ParagraphView
 import javax.swing.text.View
 import kotlin.math.max
 
+@Suppress("LeakingThis")
 internal open class HtmlEditorPane : JEditorPane() {
 
     init {

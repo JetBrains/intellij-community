@@ -10,6 +10,7 @@ data class RepositoryOperationMetadata(
     val newScope: String? = null
 ) {
 
+    @Suppress("DuplicatedCode")
     val displayName by lazy {
         buildString {
             append(groupId)

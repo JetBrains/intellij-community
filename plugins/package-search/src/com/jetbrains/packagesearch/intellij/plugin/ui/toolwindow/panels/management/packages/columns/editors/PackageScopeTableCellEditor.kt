@@ -43,6 +43,7 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
             setCell(row, column)
         }
 
+    @Suppress("DuplicatedCode")
     private fun createComboBoxEditor(
         table: JTable,
         scopeViewModels: List<ScopeViewModel<*>>,
