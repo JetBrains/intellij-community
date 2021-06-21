@@ -18,9 +18,10 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-api" exported="" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-fir" exported="" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api" exported="" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api-fir" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="kotlinc.high-level-api-fir-tests" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

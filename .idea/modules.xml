@@ -955,9 +955,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir-low-level-api/kotlin.fir.fir-low-level-api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir-low-level-api/kotlin.fir.fir-low-level-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-api/kotlin.fir.frontend-api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-api/kotlin.fir.frontend-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-fir/kotlin.fir.frontend-fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-fir/kotlin.fir.frontend-fir.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlin/fir-fe10-binding/kotlin.fir.fir-fe10-binding.iml" filepath="$PROJECT_DIR$/kotlin/fir-fe10-binding/kotlin.fir.fir-fe10-binding.iml" />
