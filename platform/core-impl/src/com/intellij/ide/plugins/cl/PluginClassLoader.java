@@ -139,7 +139,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private final ResolveScopeManager resolveScopeManager;
 
   public interface ResolveScopeManager {
-    boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
+    String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
   }
 
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
@@ -151,7 +151,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
     instanceId = instanceIdProducer.incrementAndGet();
 
-    this.resolveScopeManager = (p1, p2, p3) -> false;
+    this.resolveScopeManager = (p1, p2, p3) -> null;
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
@@ -181,7 +181,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
     instanceId = instanceIdProducer.incrementAndGet();
 
-    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> false : resolveScopeManager;
+    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> null : resolveScopeManager;
     this.parents = parents;
     this.dependencies = dependencies;
     this.pluginDescriptor = pluginDescriptor;
@@ -268,8 +268,18 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
     Class<?> c;
+    PluginException error = null;
     try {
-      c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+      String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader);
+      if (consistencyError == null) {
+        c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+      }
+      else {
+        if (!consistencyError.isEmpty()) {
+          error = new PluginException(consistencyError, pluginId);
+        }
+        c = null;
+      }
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
@@ -277,7 +287,31 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
     if (c == null) {
       for (ClassLoader classloader : getAllParents()) {
-        if (classloader instanceof UrlClassLoader) {
+        if (classloader instanceof PluginClassLoader) {
+          try {
+            PluginClassLoader pluginClassLoader = (PluginClassLoader)classloader;
+            String consistencyError = pluginClassLoader.resolveScopeManager.isDefinitelyAlienClass(name,
+                                                                                                   pluginClassLoader.packagePrefix,
+                                                                                                   forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty()) {
+                if (error == null) {
+                  // yes, we blame requestor plugin
+                  error = new PluginException(consistencyError, pluginId);
+                }
+              }
+              continue;
+            }
+            c = pluginClassLoader.loadClassInsideSelf(name, false);
+          }
+          catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
+          }
+          if (c != null) {
+            break;
+          }
+        }
+        else if (classloader instanceof UrlClassLoader) {
           try {
             c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
           }
@@ -299,6 +333,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
             // ignore and continue
           }
         }
+      }
+
+      if (error != null) {
+        throw error;
       }
     }
 
@@ -384,10 +422,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader)) {
-      return null;
-    }
-
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
