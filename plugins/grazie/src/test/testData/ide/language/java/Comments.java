@@ -17,4 +17,8 @@ class ForMultiLanguageSupport {
     // bad
 
   // todo no mistakes here so far
+
+  // also releases ThreadContext.consumer reference
+
+  /** An int list where most values are in the range 0..2^16 */
 }
