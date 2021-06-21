@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import junit.framework.TestCase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -17,11 +18,12 @@ import java.nio.file.Path;
 
 public class ConflictFileTypeMappingTrackerTest extends TestCase {
   public void testEveryPossibleFriggingCombination() {
-    IdeaPluginDescriptorImpl bundled1 = createDescriptor(PluginId.getId("bundled1"), true);
-    IdeaPluginDescriptorImpl bundled2 = createDescriptor(PluginId.getId("bundled2"), true);
-    IdeaPluginDescriptorImpl core = createDescriptor(PluginManagerCore.CORE_ID, true);
-    IdeaPluginDescriptorImpl user1 = createDescriptor(PluginId.getId("user1"), false);
-    IdeaPluginDescriptorImpl user2 = createDescriptor(PluginId.getId("user2"), false);
+    IdeaPluginDescriptorImpl bundled1 = createDescriptor(PluginId.getId("bundled1"), "JetBrains", true);
+    IdeaPluginDescriptorImpl bundled2 = createDescriptor(PluginId.getId("bundled2"), "JetBrains", true);
+    IdeaPluginDescriptorImpl bundledFromOtherVendor = createDescriptor(PluginId.getId("bundled3"), "JetBrains, Google", true);
+    IdeaPluginDescriptorImpl core = createDescriptor(PluginManagerCore.CORE_ID, "JetBrains", true);
+    IdeaPluginDescriptorImpl user1 = createDescriptor(PluginId.getId("user1"), "JetBrains", false);
+    IdeaPluginDescriptorImpl user2 = createDescriptor(PluginId.getId("user2"), "JetBrains", false);
 
     assertConflict(bundled1, bundled2, false, false);
     assertConflict(bundled1, core, false, true);
@@ -32,6 +34,11 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     assertConflict(user1, bundled1, false, true);
     assertConflict(user1, core, false, true);
     assertConflict(user1, user2, true, false);
+
+    // if both bundled, should win the bundle from other vendor as more specific
+    // see the case "Image" plugin vs "Adobe Photoshop" from Android
+    assertConflict(bundled1, bundledFromOtherVendor, true, true);
+    assertConflict(bundledFromOtherVendor, bundled1, false, true);
   }
 
   private static void assertConflict(@NotNull PluginDescriptor oldDescriptor,
@@ -61,7 +68,11 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     return oldFileType;
   }
 
-  private static @NotNull IdeaPluginDescriptorImpl createDescriptor(PluginId id, boolean isBundled) {
-    return PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), isBundled, "<idea-plugin />".getBytes(StandardCharsets.UTF_8), id);
+  private static @NotNull IdeaPluginDescriptorImpl createDescriptor(@NotNull PluginId id, @NotNull String vendor, boolean isBundled) {
+    @Language("XML")
+    String input = "<idea-plugin>" +
+                   "  <vendor>" + vendor + "</vendor>" +
+                   "</idea-plugin>";
+    return PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +106,17 @@ class ConflictingFileTypeMappingTracker {
       String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), newFileType.getDisplayName());
       return new ResolveConflictResult(newFtd, message, explanation, true);
     }
+    
+    // if both bundled, should win the bundle from other vendor as more specific
+    // see the case "Image" plugin vs "Adobe Photoshop" from Android
+    boolean isOldJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(oldPlugin.getVendor()));
+    boolean isNewJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(newPlugin.getVendor()));
+    if (isOldJetBrains != isNewJetBrains) {
+      FileTypeManagerImpl.FileTypeWithDescriptor result = isOldJetBrains ? newFtd : oldFtd;
+      String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), result.fileType.getDisplayName());
+      return new ResolveConflictResult(result, message, explanation, true);
+    }
+
     /* ? wild guess: two bundled file types */
     String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), oldFileType.getDisplayName());
     // prefer old file type to avoid notification about file type reassignments twice
