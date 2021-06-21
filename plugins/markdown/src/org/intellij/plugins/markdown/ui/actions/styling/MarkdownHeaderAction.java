@@ -68,7 +68,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
       return;
     }
 
-    WriteCommandAction.runWriteCommandAction(psiFile.getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(psiFile.getProject(), null, null, () -> {
       if (!psiFile.isValid()) {
         return;
       }
@@ -84,7 +84,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
           parent.replace(createHeaderForText(parent));
         }
       }
-    });
+    }, psiFile);
   }
 
   @Nullable
