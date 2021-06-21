@@ -93,8 +93,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val isRepositoryNode = descriptor.type == NodeType.GROUP_REPOSITORY_NODE
 
       icon = when {
-        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
-        isBranchNode && branchInfo != null && branchInfo.isCurrent -> DvcsImplIcons.CurrentBranchLabel
+        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLocation
+        isBranchNode && branchInfo != null && branchInfo.isCurrent -> DvcsImplIcons.CurrentBranchLocation
         isBranchNode && branchInfo != null && branchInfo.isFavorite -> AllIcons.Nodes.Favorite
         isBranchNode -> AllIcons.Vcs.BranchNode
         isGroupNode -> PlatformIcons.FOLDER_ICON

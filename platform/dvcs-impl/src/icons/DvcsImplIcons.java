@@ -15,8 +15,8 @@ public final class DvcsImplIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, DvcsImplIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon CherryPick = load("icons/cherryPick.svg", 8121888426639848694L, 2);
-  /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLabel = load("icons/currentBranchFavoriteLabel.svg", -5100325215613088446L, 0);
-  /** 16x16 */ public static final @NotNull Icon CurrentBranchLabel = load("icons/currentBranchLabel.svg", 3819831225637521358L, 0);
+  /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLocation = load("icons/currentBranchFavoriteLocation.svg", -5100325215613088446L, 0);
+  /** 16x16 */ public static final @NotNull Icon CurrentBranchLocation = load("icons/currentBranchLocation.svg", 3819831225637521358L, 0);
   /** 16x16 */ public static final @NotNull Icon Incoming = load("icons/incoming.svg", 8229951403001488976L, 2);
   /** 16x16 */ public static final @NotNull Icon IncomingLayer = load("icons/incomingLayer.svg", 728029283896002474L, 2);
   /** 16x16 */ public static final @NotNull Icon IncomingOutgoing = load("icons/incomingOutgoing.svg", 220799405741956046L, 2);

@@ -89,7 +89,7 @@ internal object GHPRBranchesPanel {
       to.text = model.baseBranch
       from.text = model.headBranch
       from.icon = when {
-        currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
+        currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLocation
         localBranch != null -> GithubIcons.LocalBranch
         else -> CollaborationToolsIcons.Branch
       }
