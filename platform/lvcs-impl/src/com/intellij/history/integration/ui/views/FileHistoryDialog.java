@@ -98,6 +98,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected ContentDiffRequest createDifference(FileDifferenceModel m) {
+    if (myRevisionsList.isEmpty()) return null;
     ContentDiffRequest request = super.createDifference(m);
     ApplicationManager.getApplication().invokeLater(this::updateEditorSearch, ModalityState.stateForComponent(myRevisionsList.getComponent()));
     return request;
@@ -131,6 +132,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   private void applyFilteredRevisions(Set<Long> revisions) {
     myRevisionsList.setFilteredRevisions(revisions);
+    myModel.resetEntriesCache();
     updateEditorSearch();
   }
 

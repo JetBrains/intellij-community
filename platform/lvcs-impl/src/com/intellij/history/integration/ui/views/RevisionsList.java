@@ -78,6 +78,10 @@ public final class RevisionsList {
     return table;
   }
 
+  public boolean isEmpty() {
+    return table.isEmpty();
+  }
+
   public void moveSelection(boolean fwd) {
     int index = table.getSelectionModel().getLeadSelectionIndex();
     int count = table.getRowCount();
@@ -177,7 +181,9 @@ public final class RevisionsList {
       }
       sm.addSelectionInterval(idx, idx);
     }
-    if (sm.isSelectionEmpty()) sm.setSelectionInterval(0, 0);
+    if (sm.isSelectionEmpty() && table.getRowCount() > 0) {
+      sm.setSelectionInterval(0, 0);
+    }
     sm.setValueIsAdjusting(false);
   }
 
