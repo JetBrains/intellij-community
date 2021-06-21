@@ -568,6 +568,7 @@
       <add-to-group group-id="EditorPopupMenu2"/>
     </action>
     <action id="Scratch.ShowFilesPopup" class="com.intellij.ide.scratch.ScratchFileActions$ShowFilesPopupAction"/>
+    <action id="Scratch.ExportToScratch" class="com.intellij.ide.scratch.ScratchFileActions$ExportToScratchAction"/>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
