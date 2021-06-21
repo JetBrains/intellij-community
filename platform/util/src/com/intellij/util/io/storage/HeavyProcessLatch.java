@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -26,6 +27,7 @@ public final class HeavyProcessLatch {
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final Queue<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedQueue<>();
+  private final Map<Type, Queue<Runnable>> toExecuteOutOfHeavyActivityButType = new ConcurrentHashMap<>();
 
   private HeavyProcessLatch() {
   }
@@ -86,6 +88,22 @@ public final class HeavyProcessLatch {
   }
 
   private void executeHandlers() {
+    for (Map.Entry<Type, Queue<Runnable>> entry : toExecuteOutOfHeavyActivityButType.entrySet()) {
+      final Type type = entry.getKey();
+      final Queue<Runnable> toExecuteRunnables = entry.getValue();
+
+      if (!isRunningAnythingBut(type)) {
+        Runnable runnable;
+        while ((runnable = toExecuteRunnables.poll()) != null) {
+          try {
+            runnable.run();
+          } catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }
+
     if (!isRunning()) {
       Runnable runnable;
       while ((runnable = toExecuteOutOfHeavyActivity.poll()) != null) {
@@ -158,6 +176,21 @@ public final class HeavyProcessLatch {
       toExecuteOutOfHeavyActivity.add(runnable);
     }
     else {
+      runnable.run();
+    }
+  }
+
+  /**
+   * schedules {@code runnable} to be executed when all heavy operations beside a certain type are finished
+   * (i.e. when {@link #isRunningAnythingBut(Type)} returned false).
+   */
+  public void executeOutOfHeavyProcessButType(@NotNull Type type, @NotNull Runnable runnable) {
+    if (isRunningAnythingBut(type)) {
+      if (!toExecuteOutOfHeavyActivityButType.containsKey(type)) {
+        toExecuteOutOfHeavyActivityButType.put(type, new ConcurrentLinkedQueue<>());
+      }
+      toExecuteOutOfHeavyActivityButType.get(type).add(runnable);
+    } else {
       runnable.run();
     }
   }
