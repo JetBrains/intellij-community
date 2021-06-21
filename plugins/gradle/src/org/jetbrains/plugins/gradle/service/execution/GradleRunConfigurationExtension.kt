@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
 class GradleRunConfigurationExtension
   : ExternalSystemReifiedRunConfigurationExtension<GradleRunConfiguration>(GradleRunConfiguration::class.java) {
@@ -13,20 +13,10 @@ class GradleRunConfigurationExtension
   override fun SettingsFragmentsContainer<GradleRunConfiguration>.configureFragments(configuration: GradleRunConfiguration) {
     val project = configuration.project
     addBeforeRunFragment(GradleBeforeRunTaskProvider.ID)
-    val workingDirectoryFragment = addWorkingDirectoryFragment(
-      project,
-      ExternalSystemWorkingDirectoryInfo(
-        project,
-        GradleConstants.SYSTEM_ID
-      )
-    )
-    addCommandLineFragment(
-      project,
-      GradleCommandLineInfo(
-        project,
-        workingDirectoryFragment.component().component
-      )
-    )
+    val workingDirectoryFragment =
+      addWorkingDirectoryFragment(project, ExternalSystemWorkingDirectoryInfo(project, SYSTEM_ID))
+    val workingDirectoryField = workingDirectoryFragment.component().component
+    addCommandLineFragment(project, GradleCommandLineInfo(project, workingDirectoryField))
     addSettingsTag(
       "gradle.tasks.script.debugging.fragment",
       GradleBundle.message("gradle.tasks.script.debugging"),

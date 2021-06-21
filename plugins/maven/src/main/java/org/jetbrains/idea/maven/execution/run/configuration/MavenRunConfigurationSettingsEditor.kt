@@ -4,13 +4,15 @@ package org.jetbrains.idea.maven.execution.run.configuration
 import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
+import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
@@ -40,73 +42,80 @@ class MavenRunConfigurationSettingsEditor(
       addBeforeRunFragment(CompileStepBeforeRun.ID)
       addAll(BeforeRunFragment.createGroup())
       add(CommonTags.parallelRun())
-      addDistributionFragment(
-        project,
-        MavenDistributionsInfo(),
-        { asDistributionInfo(settings.mavenHome) },
-        { settings.mavenHome = asMavenHome(it) },
-        { validateMavenHome(it) }
-      )
-      val workingDirectoryFragment = addWorkingDirectoryFragment(
-        project,
-        MavenWorkingDirectoryInfo(project),
-        { settings.workingDirectory },
-        { settings.workingDirectory = it }
-      )
+      addDistributionFragment(project, MavenDistributionsInfo())
+      val workingDirectoryFragment =
+        addWorkingDirectoryFragment(project, MavenWorkingDirectoryInfo(project))
       val workingDirectoryField = workingDirectoryFragment.component().component
-      addCommandLineFragment(
-        project,
-        MavenCommandLineInfo(
-          project,
-          workingDirectoryField
-        ),
-        { settings.commandLine },
-        { settings.commandLine = it }
-      )
-      addJdkFragment(
-        { MavenRunnerSettings.USE_PROJECT_JDK },
-        { settings.jreName },
-        { settings.jreName = it }
-      )
-      addEnvironmentFragment(
-        { settings.environment },
-        { settings.environment = it },
-        { settings.isPassParentEnvs },
-        { settings.isPassParentEnvs = it }
-      )
-      addVmOptionsFragment(
-        { settings.vmOptions },
-        { settings.vmOptions = it }
-      )
+      addCommandLineFragment(project, MavenCommandLineInfo(project, workingDirectoryField))
+      addJreFragment()
+      addEnvironmentFragment()
+      addVmOptionsFragment()
       addMavenProfilesFragment(project, workingDirectoryField)
       add(LogsGroupFragment())
     }
   }
 
-  private fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addJdkFragment(
-    getDefaultJdk: C.() -> String?,
-    getJdk: C.() -> String?,
-    setJdk: C.(String?) -> Unit
-  ) = add(createJdkFragment(getDefaultJdk, getJdk, setJdk))
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment(
+    project: Project,
+    distributionsInfo: DistributionsInfo
+  ) = addDistributionFragment(
+    project,
+    distributionsInfo,
+    { asDistributionInfo(settings.mavenHome) },
+    { settings.mavenHome = asMavenHome(it) },
+    { validateMavenHome(it) }
+  )
 
-  private fun <C : RunConfigurationBase<*>> createJdkFragment(
-    getDefaultJdk: C.() -> String?,
-    getJdk: C.() -> String?,
-    setJdk: C.(String?) -> Unit
-  ): SettingsEditorFragment<C, LabeledComponent<SdkComboBox>> {
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment(
+    project: Project,
+    workingDirectoryInfo: WorkingDirectoryInfo
+  ) = addWorkingDirectoryFragment(
+    project,
+    workingDirectoryInfo,
+    { settings.workingDirectory },
+    { settings.workingDirectory = it }
+  )
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addCommandLineFragment(
+    project: Project,
+    commandLineInfo: CommandLineInfo
+  ) = addCommandLineFragment(
+    project,
+    commandLineInfo,
+    { settings.commandLine },
+    { settings.commandLine = it }
+  )
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addEnvironmentFragment() =
+    addEnvironmentFragment(
+      { settings.environment },
+      { settings.environment = it },
+      { settings.isPassParentEnvs },
+      { settings.isPassParentEnvs = it }
+    )
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addVmOptionsFragment() =
+    addVmOptionsFragment(
+      { settings.vmOptions },
+      { settings.vmOptions = it }
+    )
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() = add(createJreFragment())
+
+  private fun createJreFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>> {
     val sdkLookupProvider = SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
     val jreComboBox = SdkComboBox(createProjectJdkComboBoxModel(project, this)).apply {
       CommonParameterFragments.setMonospaced(this)
     }
     val jreComboBoxLabel = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
-    return SettingsEditorFragment<C, LabeledComponent<SdkComboBox>>(
+    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>>(
       "maven.jre.fragment",
       MavenConfigurableBundle.message("maven.run.configuration.jre.name"),
       ExecutionBundle.message("group.java.options"),
       LabeledComponent.create(jreComboBox, jreComboBoxLabel, BorderLayout.WEST),
-      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.getJdk() ?: it.getDefaultJdk()) },
-      { it, c -> it.setJdk(if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null) },
-      { !it.getJdk().isNullOrBlank() }
+      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.settings.jreName ?: MavenRunnerSettings.USE_PROJECT_JDK) },
+      { it, c -> it.settings.jreName = if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null },
+      { !it.settings.jreName.isNullOrBlank() }
     ).apply {
       isCanBeHidden = true
       isRemovable = true
