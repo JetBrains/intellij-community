@@ -22,8 +22,8 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
-import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
+import com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -251,7 +251,7 @@ internal class PackageSearchDataService(
         // Refresh project modules, this will cascade into updating the rest of the data
 
         val moduleModels = runReadAction {
-            projectModules.map { ModuleModel(it) }
+            projectModules.map { ModuleModel(it, it.declaredRepositories()) }
         }
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
@@ -260,7 +260,7 @@ internal class PackageSearchDataService(
         return moduleModels
     }
 
-    private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
+    private fun ProjectModule.declaredRepositories(): List<RepositoryDeclaration> = runReadAction {
         val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
             ?.listRepositoriesInModule(this)
             ?.toList()
@@ -271,6 +271,8 @@ internal class PackageSearchDataService(
             declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
         } else {
             declaredRepositories
+        }.map { repository ->
+            RepositoryDeclaration(repository.id, repository.name, repository.url, this)
         }
     }
 
