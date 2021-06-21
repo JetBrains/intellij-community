@@ -541,10 +541,8 @@ public class RefManagerImpl extends RefManager {
   }
 
   public @Nullable RefElement getReference(PsiElement elem, final boolean ignoreScope) {
-    if (elem == null || ReadAction.compute(() ->
-                                 !elem.isValid() ||
-                                 (elem instanceof LightElement && elem.getNavigationElement() instanceof LightElement) ||
-                                 !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
+    if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
+                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
     }
 

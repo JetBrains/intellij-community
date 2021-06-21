@@ -449,7 +449,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Nullable
   static RefMethod methodFromExternalName(RefManager manager, String externalName) {
-    return (RefMethod) manager.getReference(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
+    PsiElement method = findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName);
+    if (method instanceof LightElement) {
+      method = method.getNavigationElement();
+    }
+    return (RefMethod) manager.getReference(method);
   }
 
   @Nullable
