@@ -185,7 +185,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Override
   public JComponent createComponent() {
     myModel = PyTestRunConfigurationsModel.Companion.create(myModule);
-    myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer());
+    myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule)));
 
     updateConfigurations();
     initErrorValidation();
