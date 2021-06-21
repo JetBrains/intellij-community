@@ -617,9 +617,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @TestOnly
   @ApiStatus.Internal
-  public @NotNull List<ClassLoader> _getParents() {
+  public @Nullable List<ClassLoader> _getParents() {
+    ClassLoader[] parents = this.parents;
     //noinspection SSBasedInspection
-    return Collections.unmodifiableList(Arrays.asList(parents));
+    return parents == null ? null : Collections.unmodifiableList(Arrays.asList(parents));
   }
 
   @ApiStatus.Internal
