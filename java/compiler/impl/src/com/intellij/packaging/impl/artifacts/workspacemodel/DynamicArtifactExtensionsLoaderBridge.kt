@@ -23,8 +23,9 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
       }
 
       override fun extensionRemoved(extension: ArtifactType, pluginDescriptor: PluginDescriptor) {
-        // As I understand, this should be called already with write action (see prev version of this listener)
-        artifactManager.dropMappings { it.artifactType == extension.id }
+        runWriteAction {
+          artifactManager.dropMappings { it.artifactType == extension.id }
+        }
       }
     }, false, disposable)
 
@@ -38,17 +39,18 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
 
         override fun extensionRemoved(extension: PackagingElementType<out PackagingElement<*>>, pluginDescriptor: PluginDescriptor) {
 
-          // As I understand, this should be called already with write action (see prev version of this listener)
-          artifactManager.dropMappings { artifactEntity ->
-            fun shouldDrop(element: PackagingElementEntity): Boolean {
-              if (element.sameTypeWith(extension)) return true
-              if (element is CompositePackagingElementEntity) {
-                return element.children.any { shouldDrop(it) }
+          runWriteAction {
+            artifactManager.dropMappings { artifactEntity ->
+              fun shouldDrop(element: PackagingElementEntity): Boolean {
+                if (element.sameTypeWith(extension)) return true
+                if (element is CompositePackagingElementEntity) {
+                  return element.children.any { shouldDrop(it) }
+                }
+                return false
               }
-              return false
-            }
 
-            return@dropMappings shouldDrop(artifactEntity.rootElement)
+              return@dropMappings shouldDrop(artifactEntity.rootElement)
+            }
           }
         }
       }, false, disposable)
@@ -61,8 +63,9 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
       }
 
       override fun extensionRemoved(extension: ArtifactPropertiesProvider, pluginDescriptor: PluginDescriptor) {
-        // As I understand, this should be called already with write action (see prev version of this listener)
-        artifactManager.dropMappings { entity -> entity.customProperties.any { it.providerType == extension.id } }
+        runWriteAction {
+          artifactManager.dropMappings { entity -> entity.customProperties.any { it.providerType == extension.id } }
+        }
       }
     }, false, disposable)
   }

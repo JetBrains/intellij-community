@@ -3,6 +3,7 @@ package com.intellij.compiler.artifacts.propertybased
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -488,7 +489,7 @@ class ArtifactsPropertyTest {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val manager = ArtifactManager.getInstance(projectModel.project)
       env.logMessage("Get all artifacts")
-      val artifacts = manager.artifacts
+      val artifacts = runReadAction { manager.artifacts }
       artifacts.forEach { _ ->
         // Nothing
       }

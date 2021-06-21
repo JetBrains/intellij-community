@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.packaging.artifacts.*
@@ -210,6 +211,8 @@ class ArtifactModifiableModelBridge(
 
   @RequiresWriteLock
   override fun commit() {
+    // XXX @RequiresReadLock annotation doesn't work for kt now
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     manager.commit(this)
   }
 

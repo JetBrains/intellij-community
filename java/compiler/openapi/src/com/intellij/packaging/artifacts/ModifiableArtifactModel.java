@@ -17,6 +17,7 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public interface ModifiableArtifactModel extends ArtifactModel {
 
   boolean isModified();
 
+  @RequiresWriteLock
   void commit();
 
   void dispose();

@@ -417,7 +417,7 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `load artifacts`() = loadProjectAndCheckResults("artifacts") { project ->
-    val artifacts = ArtifactManager.getInstance(project).sortedArtifacts
+    val artifacts = runReadAction { ArtifactManager.getInstance(project).sortedArtifacts }
     assertThat(artifacts).hasSize(2)
     val (imported, regular) = artifacts
     assertThat(imported.name).isEqualTo("imported")
