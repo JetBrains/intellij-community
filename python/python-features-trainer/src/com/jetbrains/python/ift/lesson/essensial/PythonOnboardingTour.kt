@@ -328,7 +328,7 @@ class PythonOnboardingTour :
     task {
       openLearnTaskId = taskId
       text(PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0, duplicateMessage = true))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
       }
