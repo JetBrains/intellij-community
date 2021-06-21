@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -25,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author gregsh
@@ -42,6 +44,7 @@ public abstract class LRUPopupBuilder<T> {
   private Comparator<? super T> myComparator;
   private Iterable<? extends T> myValues;
   private JBIterable<T> myTopValues = JBIterable.empty();
+  private JBIterable<T> myMiddleValues = JBIterable.empty();
   private JBIterable<T> myBottomValues = JBIterable.empty();
 
   @NotNull
@@ -49,7 +52,7 @@ public abstract class LRUPopupBuilder<T> {
                                            @NotNull @PopupTitle String title,
                                            @Nullable Language selection,
                                            @NotNull Consumer<? super Language> onChosen) {
-    return languagePopupBuilder(project, title).
+    return languagePopupBuilder(project, title, null).
       forValues(LanguageUtil.getFileLanguages()).
       withSelection(selection).
       onChosen(onChosen).
@@ -57,7 +60,9 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project, @NotNull @PopupTitle String title) {
+  public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
+                                                               @NotNull @PopupTitle String title,
+                                                               @Nullable Function<Language, Icon> iconProvider) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {
@@ -66,8 +71,10 @@ public abstract class LRUPopupBuilder<T> {
 
       @Override
       public Icon getIcon(Language language) {
-        LanguageFileType associatedLanguage = language.getAssociatedFileType();
-        return associatedLanguage != null ? associatedLanguage.getIcon() : null;
+        if (iconProvider != null) return iconProvider.apply(language);
+        LanguageFileType fileType = language.getAssociatedFileType();
+        Icon icon = fileType == null ? null : fileType.getIcon();
+        return icon != null ? icon : AllIcons.FileTypes.Any_type;
       }
 
       @Override
@@ -106,6 +113,13 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
+  public LRUPopupBuilder<T> withExtraMiddleValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+    myMiddleValues = myMiddleValues.append(extra);
+    myPresentations.put(extra, Pair.create(displayName, icon));
+    return this;
+  }
+
+  @NotNull
   public LRUPopupBuilder<T> withExtraBottomValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myBottomValues = myBottomValues.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
@@ -131,12 +145,11 @@ public abstract class LRUPopupBuilder<T> {
     }
     List<T> topItems = myTopValues.toList();
     List<T> lru = new ArrayList<>(LRU_ITEMS);
+    List<T> middleItems = myMiddleValues.toList();
     List<T> items = new ArrayList<>(MAX_VISIBLE_SIZE);
     List<T> bottomItems = myBottomValues.toList();
-    if (myValues != null) {
-      for (T t : myValues) {
-        (ids.contains(getStorageId(t)) ? lru : items).add(t);
-      }
+    for (T t : JBIterable.from(myValues)) {
+      (ids.contains(getStorageId(t)) ? lru : items).add(t);
     }
     if (myComparator != null) {
       items.sort(myComparator);
@@ -144,8 +157,8 @@ public abstract class LRUPopupBuilder<T> {
     if (!lru.isEmpty()) {
       lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
-    List<T> combinedItems = ContainerUtil.concat(topItems, lru, items, bottomItems);
-    T sep1 = combinedItems.get(topItems.size() + lru.size());
+    List<T> combinedItems = ContainerUtil.concat(topItems, lru, middleItems, items, bottomItems);
+    T sep1 = combinedItems.get(topItems.size() + lru.size() + middleItems.size());
     T sep2 = bottomItems.isEmpty() ? null : combinedItems.get(topItems.size() + lru.size() + items.size());
 
     BaseListPopupStep<T> step =
