@@ -246,7 +246,7 @@ class ClassLoaderConfigurator(
           val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = plugin, pluginSet = pluginSet)
           if (resolveScopeManager != null) {
             coreUrlClassLoader.resolveScopeManager = BiPredicate { name, force ->
-              resolveScopeManager.isDefinitelyAlienClass(name, "", force)
+              resolveScopeManager.isDefinitelyAlienClass(name, "", force) != null
             }
           }
         }
@@ -430,12 +430,15 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                        classPath = classPath,
                                        libDirectories = libDirectories) { name, packagePrefix, force ->
           if (force) {
-            false
+            null
+          }
+          else if (!name.startsWith(packagePrefix) &&
+                   !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
+                   name != "com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider") {
+            ""
           }
           else {
-            !name.startsWith(packagePrefix) &&
-            !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
-            name != "com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+            null
           }
         }
       }
@@ -477,7 +480,7 @@ private fun createModuleResolveScopeManager(): PluginClassLoader.ResolveScopeMan
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
     // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced
     // as extension implementation in several modules
-    !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier")
+    if (!name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier")) "" else null
   }
 }
 
@@ -506,10 +509,15 @@ private fun createPluginClassLoaderWithExtraPackage(parentLoaders: Array<ClassLo
                                  classPath = classPath,
                                  libDirectories = libDirectories) { name, packagePrefix, force ->
     if (force) {
-      false
+      null
     }
     else {
-      !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier") && !name.startsWith(customPackage)
+      if (!name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier") && !name.startsWith(customPackage)) {
+        ""
+      }
+      else {
+        null
+      }
     }
   }
 }
@@ -527,23 +535,22 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
   val pluginId = descriptor.pluginId.idString
   return PluginClassLoader.ResolveScopeManager { name, _, force ->
     if (force) {
-      return@ResolveScopeManager false
+      return@ResolveScopeManager null
     }
 
     for (prefix in contentPackagePrefixes) {
       if (name.startsWith(prefix)) {
-        log.error("Class $name must be not requested from main classloader of $pluginId plugin")
-        return@ResolveScopeManager true
+        return@ResolveScopeManager "Class $name must be not requested from main classloader of $pluginId plugin"
       }
     }
 
     for (prefix in dependencyPackagePrefixes) {
       if (name.startsWith(prefix)) {
-        return@ResolveScopeManager true
+        return@ResolveScopeManager ""
       }
     }
 
-    false
+    null
   }
 }
 
@@ -587,7 +594,7 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
   // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
     if (name.startsWith(packagePrefix!!) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
-      return@ResolveScopeManager false
+      return@ResolveScopeManager null
     }
 
     // For a module, the referenced module doesn't have own classloader and is added directly to classpath,
@@ -595,10 +602,10 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
     // Check that it is not in content - if in content, then it means that class is not alien.
     for (prefix in packagePrefixes) {
       if (name.startsWith(prefix)) {
-        return@ResolveScopeManager false
+        return@ResolveScopeManager null
       }
     }
-    true
+    ""
   }
 }
 

@@ -365,12 +365,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
 
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    // isDefinitelyAlienClass
-    BiPredicate<String, Boolean> resolveScopeManager = this.resolveScopeManager;
-    if (resolveScopeManager != null && resolveScopeManager.test(name, forceLoadFromSubPluginClassloader)) {
-      return null;
-    }
-
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {
