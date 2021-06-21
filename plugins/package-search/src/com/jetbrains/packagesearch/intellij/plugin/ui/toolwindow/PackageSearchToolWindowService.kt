@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.ContentFactory
@@ -20,7 +19,6 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.HasToolWindowActions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithToolWindowActionsPanel
@@ -40,10 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
-import java.awt.AWTEvent
-import java.awt.Component
 import javax.swing.JComponent
-import javax.swing.SwingUtilities
 
 internal class PackageSearchToolWindowService(val project: Project) : Disposable {
 
@@ -208,14 +203,6 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         val contentManager = checkNotNull(contentManagerOrNull) { "The content manager is unavailable when starting monitoring" }
         ApplicationManager.getApplication().messageBus.connect(this)
             .subscribe(LafManagerListener.TOPIC, LafManagerListener { contentManager.component.updateAndRepaint() })
-
-        object : FocusWatcher() {
-            override fun focusedComponentChanged(focusedComponent: Component?, cause: AWTEvent?) {
-                if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, toolWindow.component)) {
-                    PackageSearchEventsLogger.logToolWindowFocused()
-                }
-            }
-        }.install(toolWindow.component)
     }
 
     override fun dispose() {
