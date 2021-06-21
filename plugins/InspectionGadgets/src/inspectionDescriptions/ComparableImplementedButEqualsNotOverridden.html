@@ -18,7 +18,7 @@ but do not override <code>equals()</code>.
     @Override
     public int compareTo(@NotNull Length o) {
       if (cm == o.cm) return 0;
-      return cm < o.cm ? -1 : 1;
+      return cm &lt; o.cm ? -1 : 1;
     }
   }
 </code></pre>
@@ -30,7 +30,7 @@ but do not override <code>equals()</code>.
     @Override
     public int compareTo(@NotNull Length o) {
       if (cm == o.cm) return 0;
-      return cm < o.cm ? -1 : 1;
+      return cm &lt; o.cm ? -1 : 1;
     }
 
     @Override
