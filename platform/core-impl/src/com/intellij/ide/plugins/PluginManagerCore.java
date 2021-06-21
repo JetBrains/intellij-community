@@ -355,17 +355,21 @@ public final class PluginManagerCore {
       return false;
     }
 
-    if (vendorString.equals(VENDOR_JETBRAINS) || vendorString.equals(VENDOR_JETBRAINS_SRO)) {
+    if (isVendorJetBrains(vendorString)) {
       return true;
     }
 
     for (String vendor : StringUtil.split(vendorString, ",")) {
       String vendorItem = vendor.trim();
-      if (VENDOR_JETBRAINS.equals(vendorItem) || VENDOR_JETBRAINS_SRO.equals(vendorItem)) {
+      if (isVendorJetBrains(vendorItem)) {
         return true;
       }
     }
     return false;
+  }
+
+  public static boolean isVendorJetBrains(@NotNull String vendorItem) {
+    return VENDOR_JETBRAINS.equals(vendorItem) || VENDOR_JETBRAINS_SRO.equals(vendorItem);
   }
 
   private static Path getUpdatedBrokenPluginFile(){
