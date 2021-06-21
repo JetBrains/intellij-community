@@ -124,6 +124,12 @@ public interface LanguageCompilerRefAdapter {
 
   boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass);
 
+  /**
+   * A class to extend existing {@link LanguageCompilerRefAdapter} to support other languages within existing compact internal
+   * representation of indexed elements, e.g.: find Kotlin usages in Java files
+   *
+   * @see CompilerReferenceServiceBase
+   */
   abstract class ExternalLanguageHelper implements LanguageCompilerRefAdapter {
 
     @Override
