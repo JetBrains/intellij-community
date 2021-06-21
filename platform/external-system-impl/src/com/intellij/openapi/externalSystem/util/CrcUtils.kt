@@ -3,23 +3,14 @@
 
 package com.intellij.openapi.externalSystem.util
 
-import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFileCrcCalculator
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
-import java.util.zip.CRC32
 
 fun Document.calculateCrc(project: Project, file: VirtualFile): Long = this.calculateCrc(project, null, file)
 
@@ -46,80 +37,29 @@ private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, c
   return crc
 }
 
-private fun doCalculateCrc(project: Project, charSequence: CharSequence, systemId: ProjectSystemId?, file: VirtualFile): Long? {
+private fun calculateCrc(project: Project, charSequence: CharSequence, systemId: ProjectSystemId?, file: VirtualFile): Long? {
+  val crcCalculator = getCrcCalculator(systemId, file)
+  return crcCalculator.calculateCrc(project, file, charSequence)
+}
+
+private fun getCrcCalculator(systemId: ProjectSystemId?, file: VirtualFile): ExternalSystemCrcCalculator {
   if (systemId != null) {
-    val crcCalculator = ExternalSystemSettingsFileCrcCalculator.getInstance(systemId, file)
-    if (crcCalculator != null) {
-      return crcCalculator.calculateCrc(project, file, charSequence)
-    }
+    return ExternalSystemCrcCalculator.getInstance(systemId, file) ?: DefaultCrcCalculator
   }
-  return DefaultCrcCalculator.calculateCrc(project, file, charSequence)
-}
-
-private object DefaultCrcCalculator : AbstractCrcCalculator() {
-  override fun isApplicable(id: ProjectSystemId, file: VirtualFile): Boolean = true
-
-  override fun calculateCrc(project: Project, file: VirtualFile, fileText: CharSequence): Long? {
-    val parserDefinition = getParserDefinition(file.fileType) ?: return null
-    val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
-    return calculateCrc(project, fileText, parserDefinition) { tokenType, _ -> ignoredTokens.contains(tokenType) }
-  }
-}
-
-abstract class AbstractCrcCalculator : ExternalSystemSettingsFileCrcCalculator {
-  companion object {
-    @JvmStatic
-    fun calculateCrc(project: Project,
-                     charSequence: CharSequence,
-                     parserDefinition: ParserDefinition,
-                     ignoreToken: (IElementType, CharSequence) -> Boolean): Long {
-      val lexer = parserDefinition.createLexer(project)
-      val crc32 = CRC32()
-      lexer.start(charSequence)
-      ProgressManager.checkCanceled()
-      while (true) {
-        val tokenType = lexer.tokenType ?: break
-        val tokenText = charSequence.subSequence(lexer.tokenStart, lexer.tokenEnd)
-        crc32.update(tokenType, tokenText, ignoreToken)
-        lexer.advance()
-        ProgressManager.checkCanceled()
-      }
-      return crc32.value
-    }
-
-    private fun CRC32.update(tokenType: IElementType, tokenText: CharSequence, ignoreToken: (IElementType, CharSequence) -> Boolean) {
-      if (ignoreToken(tokenType, tokenText)) return
-      if (tokenText.isBlank()) return
-      update(tokenText)
-    }
-
-    private fun CRC32.update(charSequence: CharSequence) {
-      update(charSequence.length)
-      for (ch in charSequence) {
-        update(ch.toInt())
-      }
-    }
-
-    fun getParserDefinition(fileType: FileType): ParserDefinition? {
-      return when (fileType) {
-        is LanguageFileType -> LanguageParserDefinitions.INSTANCE.forLanguage(fileType.language)
-        else -> null
-      }
-    }
-  }
+  return DefaultCrcCalculator
 }
 
 private fun Document.doCalculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile) =
   when {
     file.fileType.isBinary -> null
-    else -> doCalculateCrc(project, immutableCharSequence, systemId, file)
+    else -> calculateCrc(project, immutableCharSequence, systemId, file)
   }
 
 private fun VirtualFile.doCalculateCrc(project: Project, systemId: ProjectSystemId?) =
   when {
     isDirectory -> null
     fileType.isBinary -> null
-    else -> doCalculateCrc(project, LoadTextUtil.loadText(this), systemId, this)
+    else -> calculateCrc(project, LoadTextUtil.loadText(this), systemId, this)
   }
 
 private fun UserDataHolder.getCachedCrc(modificationStamp: Long): Long? {
