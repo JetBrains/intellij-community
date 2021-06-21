@@ -2549,10 +2549,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       long start = System.currentTimeMillis();
       myDaemonCodeAnalyzer
         .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-      List<RangeHighlighter> h = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
+      List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
 
-      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + h + "; called: " + called+"; highlighted in "+elapsed+"ms");
+      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + errors + "; called: " + called+"; highlighted in "+elapsed+"ms");
     }
     catch (DebugException ignored) {
     }
@@ -2571,6 +2571,56 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
         iDidIt();
       }
+    }
+  }
+
+  public void testAddInspectionProblemToProblemsHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
+    if (!ensureEnoughParallelism()) return;
+    registerInspection(new MySwearingInspection());
+    checkSwearingAnnotationIsVisibleImmediately();
+  }
+
+  // produces error problem for "XXX" comment very fast and then very slowly inspects the rest of the file
+  private static class MySwearingInspection extends LocalInspectionTool {
+    @Nls
+    @NotNull
+    @Override
+    public String getGroupDisplayName() {
+      return "sweardanuna";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      return new JavaElementVisitor() {
+        @Override
+        public void visitComment(@NotNull PsiComment element) {
+          if (element.getText().equals("//XXX")) {
+            holder.registerProblem(element, MyFastAnnotator.SWEARING);
+          }
+        }
+
+        @Override
+        public void visitFile(@NotNull PsiFile file) {
+          // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
+          while (toSleepMs.addAndGet(-100) > 0) {
+            TimeoutUtil.sleep(100);
+          }
+        }
+      };
     }
   }
 
