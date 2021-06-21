@@ -268,10 +268,25 @@ public class HelpTooltip {
    * @return {@code this}
    */
   public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction) {
+    return setLink(linkText, linkAction, false);
+  }
+
+  /**
+   * Enables link in the tooltip below description and sets action for it.
+   *
+   * @param linkText text to show in the link.
+   * @param linkAction action to execute when link is clicked.
+   * @param external whether the link is "external" or not
+   * @return {@code this}
+   */
+  public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction, boolean external) {
     link = new ActionLink(linkText, e -> {
       hidePopup(true);
       linkAction.run();
     });
+    if (external) {
+      link.setExternalLinkIcon();
+    }
     return this;
   }
 
