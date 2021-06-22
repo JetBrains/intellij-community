@@ -437,7 +437,12 @@ final class DistributionJARsBuilder {
       String archiveName = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + "-sources.zip"
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
         buildContext.findRequiredModule(moduleName).contentRootsList.urls.every { url ->
-          FileUtil.isAncestor(buildContext.paths.communityHome, JpsPathUtil.urlToOsPath(url), false)
+          // Android Studio: Also include cidr sources in the output zip file.
+          FileUtil.isAncestor(buildContext.paths.communityHome, JpsPathUtil.urlToOsPath(url), false) ||
+          FileUtil.isAncestor(
+            Paths.get(buildContext.paths.communityHome, "../../tools/vendor/intellij/cidr/").toString(),
+            JpsPathUtil.urlToOsPath(url),
+            false)
         }
       }
       BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
