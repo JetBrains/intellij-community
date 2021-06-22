@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
     if (this is LookupElementDecorator<*>) {
@@ -369,26 +368,26 @@ fun BasicLookupElementFactory.createLookupElementForType(type: KotlinType): Look
         val classifier = type.constructor.declarationDescriptor ?: return null
         val baseLookupElement = createLookupElement(classifier, qualifyNestedClasses = true, includeClassTypeArguments = false)
 
-        val itemText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type)
-
-        val typeLookupElement = object : BaseTypeLookupElement(type, baseLookupElement) {
-            override fun renderElement(presentation: LookupElementPresentation) {
-                super.renderElement(presentation)
-                presentation.itemText = itemText
+        // if type is simply classifier without anything else, use classifier's lookup element to avoid duplicates (works after "as" in basic completion)
+        if (type.fqType == IdeDescriptorRenderers.FQ_NAMES_IN_TYPES_WITH_NORMALIZER.renderClassifierName(classifier))
+            baseLookupElement
+        else {
+            val itemText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type)
+            object : BaseTypeLookupElement(type, baseLookupElement) {
+                override fun renderElement(presentation: LookupElementPresentation) {
+                    super.renderElement(presentation)
+                    presentation.itemText = itemText
+                }
             }
         }
-
-        // if type is simply classifier without anything else, use classifier's lookup element to avoid duplicates (works after "as" in basic completion)
-        if (typeLookupElement.fullText == IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(classifier))
-            baseLookupElement
-        else
-            typeLookupElement
     }
 }
 
+private val KotlinType.fqType: String get() = IdeDescriptorRenderers.FQ_NAMES_IN_TYPES_WITH_NORMALIZER.renderType(this)
+
 private open class BaseTypeLookupElement(type: KotlinType, baseLookupElement: LookupElement) :
     LookupElementDecorator<LookupElement>(baseLookupElement) {
-    val fullText = IdeDescriptorRenderers.SOURCE_CODE.renderType(type)
+    private val fullText = type.fqType
 
     override fun equals(other: Any?) = other is BaseTypeLookupElement && fullText == other.fullText
     override fun hashCode() = fullText.hashCode()

@@ -1456,6 +1456,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/fromSmart/ArrayLiteralAnnotationUseForVararg.kt");
             }
 
+            @TestMetadata("CustomAnnotation.kt")
+            public void testCustomAnnotation() throws Exception {
+                runTest("testData/basic/common/fromSmart/CustomAnnotation.kt");
+            }
+
             @TestMetadata("EnumEntries.kt")
             public void testEnumEntries() throws Exception {
                 runTest("testData/basic/common/fromSmart/EnumEntries.kt");
