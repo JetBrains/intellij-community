@@ -9,6 +9,7 @@ import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -30,6 +31,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
+import com.intellij.util.ui.update.LazyUiDisposable
 import org.jetbrains.plugins.groovy.GroovyBundle
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager
@@ -46,10 +48,12 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     val sdkCombo = JdkComboBox(null, ProjectSdksModel(), { it is JavaSdk }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
+    lateinit var disposableComponent: Disposable
     val panel = panel {
       row {
         val fromUrlCheckbox: JBRadioButton = createDownloadableLibraryPanel(settings)
-        val fromFilesystemCheckbox: JBRadioButton = createFileSystemLibraryPanel(settings)
+        val (fromFilesystemCheckbox, innerDisposableComponent) = createFileSystemLibraryPanel(settings)
+        disposableComponent = innerDisposableComponent
 
         fromFilesystemCheckbox.addChangeListener {
           if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.isSelected = false
@@ -59,6 +63,12 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         }
       }
     }
+
+    object : LazyUiDisposable<Disposable>(null, panel, disposableComponent) {
+      override fun initialize(parent: Disposable, child: Disposable, project: Project?) {
+      }
+    }
+
     return listOf(LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo),
                   LabelAndComponent(JBLabel(GroovyBundle.message("label.groovy.sdk")), panel {}),
                   JustComponent(panel))
@@ -86,8 +96,9 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     return checkbox
   }
 
-  private fun Row.createFileSystemLibraryPanel(settings: GroovyModuleSettings): JBRadioButton {
+  private fun Row.createFileSystemLibraryPanel(settings: GroovyModuleSettings): Pair<JBRadioButton, Disposable> {
     lateinit var checkbox: JBRadioButton
+    lateinit var disposable: Disposable
     twoColumnRow(
       { checkbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk"), settings::useLocalLibrary).component },
       {
@@ -110,13 +121,14 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
             FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null)
           }
           .let(::component)
-        textWithBrowse
           .constraints(growX)
           .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, settings::sdkPath.toBinding())
           .enableIf(checkbox.selected)
+
+        disposable = textWithBrowse.component
       }
     )
-    return checkbox
+    return checkbox to disposable
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
@@ -144,6 +156,8 @@ private fun generateCompositionSettings(settings: GroovyModuleSettings,
                                         project: Project,
                                         container: LibrariesContainer): LibraryCompositionSettings {
   val libraryDescription = GroovyLibraryDescription()
+  // compositionSettings implements Disposable, but it is done that way because of the field with the type Library.
+  // this field in our usage is always null, so there is no need to dispose compositionSettings
   val compositionSettings = LibraryCompositionSettings(libraryDescription, { project.basePath ?: "./" },
                                                        FrameworkLibraryVersionFilter.ALL, listOf(settings.mavenVersion))
   if (settings.useMavenLibrary && settings.mavenVersion != null) {
