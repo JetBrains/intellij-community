@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -15,6 +16,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -22,6 +24,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -31,12 +34,14 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
@@ -68,6 +73,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private JBPanelWithEmptyText myEmptyPanel;
 
+  private OpaquePanel myRootPanel;
   private OpaquePanel myPanel;
   private JLabel myIconLabel;
   private final JEditorPane myNameComponent = createNameComponent();
@@ -86,6 +92,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JLabel myDownloads;
   private JLabel mySize;
   private LinkPanel myAuthor;
+  private BorderLayoutPanel myControlledByOrgNotification;
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private JBScrollPane myBottomScrollPane;
@@ -95,6 +102,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private OneLineProgressIndicator myIndicator;
 
   private @Nullable IdeaPluginDescriptor myPlugin;
+  private boolean myIsPluginAllowed;
   private IdeaPluginDescriptor myUpdateDescriptor;
 
   private ListPluginComponent myShowComponent;
@@ -125,7 +133,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   @Override
   protected JComponent create(Integer key) {
     if (key == 0) {
-      return myPanel;
+      return myRootPanel;
     }
     if (key == 1) {
       if (myEmptyPanel == null) {
@@ -153,6 +161,27 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     createHeaderPanel().add(createCenterPanel());
     createBottomPanel();
+
+    myRootPanel = new OpaquePanel(new BorderLayout());
+    myControlledByOrgNotification = new BorderLayoutPanel();
+    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    myControlledByOrgNotification.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
+    myControlledByOrgNotification.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
+    myControlledByOrgNotification.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+
+    JBLabel notificationLabel = new JBLabel();
+    notificationLabel.setIcon(AllIcons.General.Warning);
+    notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
+    notificationLabel.setText(HtmlChunk
+                                .html()
+                                .addText(IdeBundle.message("plugins.configurable.not.allowed"))
+                                .toString());
+
+    myControlledByOrgNotification.addToCenter(notificationLabel);
+    myControlledByOrgNotification.setVisible(false);
+
+    myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
+    myRootPanel.add(myPanel, BorderLayout.CENTER);
   }
 
   @NotNull
@@ -496,7 +525,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void showPluginImpl(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     myPlugin = pluginDescriptor;
-    myUpdateDescriptor = updateDescriptor;
+    PluginManagerConfigurableForOrg org = PluginManagerConfigurableForOrg.getInstance();
+    myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(updateDescriptor) ? updateDescriptor : null;
+    myIsPluginAllowed = org.isPluginAllowed(pluginDescriptor);
     showPlugin();
     select(0, true);
   }
@@ -530,6 +561,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private void showPlugin() {
     @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
     myNameComponent.setText(text);
+    myControlledByOrgNotification.setVisible(!myIsPluginAllowed);
     updateIcon();
 
     updateButtons();
@@ -704,6 +736,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void updateButtons() {
+    if (!myIsPluginAllowed) {
+      myRestartButton.setVisible(false);
+      myInstallButton.setVisible(false);
+      myUpdateButton.setVisible(false);
+      myGearButton.setVisible(false);
+      return;
+    }
+
     boolean installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(myPlugin.getPluginId());
     if (myMarketplace) {
       boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
