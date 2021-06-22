@@ -25,17 +25,16 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   var type: String? = null
   lateinit var dependencies: List<ModuleDependencyItem>
 
-  @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
-    return buildSet {
-      dependencies.forEach { dependency ->
-        when (dependency) {
-          is ModuleDependencyItem.Exportable.ModuleDependency -> this.add(dependency.module)
-          is ModuleDependencyItem.Exportable.LibraryDependency -> this.add(dependency.library)
-          else -> Unit
-        }
+    val ret = HashSet<PersistentEntityId<*>>()
+    dependencies.forEach { dependency ->
+      when (dependency) {
+        is ModuleDependencyItem.Exportable.ModuleDependency -> ret.add(dependency.module)
+        is ModuleDependencyItem.Exportable.LibraryDependency -> ret.add(dependency.library)
+        else -> Unit
       }
     }
+    return ret
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
