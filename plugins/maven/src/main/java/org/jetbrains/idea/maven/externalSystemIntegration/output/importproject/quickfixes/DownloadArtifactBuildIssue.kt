@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.Navigatable
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
@@ -15,12 +16,10 @@ import java.util.concurrent.CompletableFuture
 object DownloadArtifactBuildIssue {
   fun getIssue(title: String, quickFix: BuildIssueQuickFix): BuildIssue {
     val quickFixes = listOf(quickFix)
-    val issueDescription = StringBuilder(title)
-    issueDescription.append("\n\n<a href=\"${quickFix.id}\">Clean the broken data and start reimport the project</a>.")
 
     return object : BuildIssue {
       override val title: String = title
-      override val description: String = issueDescription.toString()
+      override val description: String = MavenProjectBundle.message("maven.quickfix.cannot.artifact.download", title, quickFix.id)
       override val quickFixes = quickFixes
       override fun getNavigatable(project: Project): Navigatable? = null
     }

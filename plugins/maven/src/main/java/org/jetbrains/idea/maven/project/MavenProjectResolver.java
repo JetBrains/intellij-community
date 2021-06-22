@@ -176,7 +176,7 @@ public class MavenProjectResolver {
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
-      Set<Pair<MavenPlugin, File>> unresolvedPlugins = new HashSet<>();
+      Map<MavenPlugin, File> unresolvedPlugins = new HashMap<>();
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
@@ -191,16 +191,16 @@ public class MavenProjectResolver {
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
-          unresolvedPlugins.add(Pair.create(each, file));
+          unresolvedPlugins.put(each, file);
         }
       }
       if (!unresolvedPlugins.isEmpty()) {
-        List<File> files = ContainerUtil.map(unresolvedPlugins, t -> t.getSecond());
+        Collection<File> files = unresolvedPlugins.values();
         CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-        for (Pair<MavenPlugin, File> data : unresolvedPlugins) {
+        for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
           MavenProjectsManager.getInstance(myProject)
             .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
-            .showBuildIssue(data.getFirst().getMavenId().getKey(), fix);
+            .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
         }
       }
 
