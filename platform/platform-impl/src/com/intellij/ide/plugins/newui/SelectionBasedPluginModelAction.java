@@ -181,7 +181,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        List<? extends IdeaPluginDescriptor> dependents = myPluginModel.getDependents(descriptor);
+        List<IdeaPluginDescriptorImpl> dependents = myPluginModel.getDependents(descriptor);
 
         if (dependents.isEmpty() ||
             askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {

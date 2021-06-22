@@ -7,10 +7,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.OkCancelDialogBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +18,8 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class InstalledPluginsTableModel {
+
+  private static final boolean HIDE_IMPLEMENTATION_DETAILS = !Boolean.getBoolean("startup.performance.framework");
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
@@ -104,9 +104,7 @@ public class InstalledPluginsTableModel {
         }
 
         IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-        boolean isHidden = descriptor instanceof IdeaPluginDescriptorImpl &&
-                           (((IdeaPluginDescriptorImpl)descriptor).isDeleted() || descriptor.isImplementationDetail());
-        if (!isHidden) {
+        if (descriptor != null && !isHidden(descriptor)) {
           result.put(pluginId, descriptor);
         }
         break;
@@ -183,11 +181,8 @@ public class InstalledPluginsTableModel {
                                    tempEnabled,
                                    enabled);
 
-    if (!dependencies.isEmpty() &&
-        !SystemProperties.getBooleanProperty("startup.performance.framework", false) &&
-        !createUpdateDependenciesDialog(action,
-                                        ContainerUtil.map(dependencies, pair -> pair.getSecond()))
-          .ask(getProject())) {
+    if (HIDE_IMPLEMENTATION_DETAILS &&
+        !createUpdateDependenciesDialog(ContainerUtil.map(dependencies, pair -> pair.getSecond()), action)) {
       return;
     }
 
@@ -270,8 +265,7 @@ public class InstalledPluginsTableModel {
         }
 
         if (enabled ||
-            pluginDescriptor.isDeleted() ||
-            pluginDescriptor.isImplementationDetail()) {
+            isHidden(pluginDescriptor)) {
           return FileVisitResult.CONTINUE;
         }
 
@@ -289,9 +283,13 @@ public class InstalledPluginsTableModel {
     return dependencies;
   }
 
-  private static @NotNull OkCancelDialogBuilder createUpdateDependenciesDialog(@NotNull PluginEnableDisableAction action,
-                                                                               @NotNull List<String> dependencies) {
-    boolean hasOnlyOneDependency = dependencies.size() == 1;
+  private boolean createUpdateDependenciesDialog(@NotNull List<String> dependencies,
+                                                 @NotNull PluginEnableDisableAction action) {
+    int size = dependencies.size();
+    if (size == 0) {
+      return true;
+    }
+    boolean hasOnlyOneDependency = size == 1;
 
     String key;
     switch (action) {
@@ -340,8 +338,10 @@ public class InstalledPluginsTableModel {
       .okCancel(IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"),
                 IdeBundle.message(key, dependenciesText))
       .yesText(IdeBundle.message(enabled ? "button.enable" : "button.disable"))
-      .noText(Messages.getCancelButton());
+      .noText(Messages.getCancelButton())
+      .ask(getProject());
   }
+
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
                                                @NotNull Pair<PluginEnableDisableAction, PluginEnabledState> pair) {
   }
@@ -361,5 +361,10 @@ public class InstalledPluginsTableModel {
   protected static boolean isLoaded(@NotNull PluginId pluginId,
                                     @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
     return enabledMap.get(pluginId) != null;
+  }
+
+  protected static boolean isHidden(@NotNull IdeaPluginDescriptor descriptor) {
+    return (descriptor instanceof IdeaPluginDescriptorImpl) && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
+           HIDE_IMPLEMENTATION_DETAILS && descriptor.isImplementationDetail();
   }
 }

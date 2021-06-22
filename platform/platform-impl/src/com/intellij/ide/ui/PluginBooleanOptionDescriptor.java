@@ -136,11 +136,15 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     return result;
   }
 
+  /**
+   * TODO unify
+   *
+   * @see {@link com.intellij.ide.plugins.newui.MyPluginModel#getDependents(IdeaPluginDescriptor)}
+   */
   private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
-    // TODO unify with PluginBooleanOptionDescriptor.getPluginsIdsToDisable
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     PluginId rootId = rootDescriptor.getPluginId();
 

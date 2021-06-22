@@ -116,7 +116,6 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  @JvmStatic
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
     return updateDescriptorsWithoutRestart(descriptors, load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true)
@@ -126,17 +125,15 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  @JvmStatic
   @JvmOverloads
   fun unloadPlugins(
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
     parentComponent: JComponent? = null,
-    options: UnloadPluginOptions? = null,
+    options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
-    val nonNullOptions = options ?: UnloadPluginOptions().withDisable(true)
     return updateDescriptorsWithoutRestart(descriptors, load = false) {
-      unloadPluginWithProgress(project, parentComponent, it, nonNullOptions)
+      unloadPluginWithProgress(project, parentComponent, it, options)
     }
   }
 
@@ -406,30 +403,34 @@ object DynamicPlugins {
     var requireMemorySnapshot: Boolean = false,
     var waitForClassloaderUnload: Boolean = false,
     var checkImplementationDetailDependencies: Boolean = true,
-    var unloadWaitTimeout: Int? = null
+    var unloadWaitTimeout: Int? = null,
   ) {
-    fun withUpdate(value: Boolean): UnloadPluginOptions {
-      isUpdate = value; return this
+    fun withUpdate(isUpdate: Boolean): UnloadPluginOptions = also {
+      this.isUpdate = isUpdate
     }
 
-    fun withWaitForClassloaderUnload(value: Boolean): UnloadPluginOptions {
-      waitForClassloaderUnload = value; return this
+    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean) = also {
+      this.waitForClassloaderUnload = waitForClassloaderUnload
     }
 
-    fun withDisable(value: Boolean): UnloadPluginOptions {
-      disable = value; return this
+    fun withDisable(disable: Boolean) = also {
+      this.disable = disable
     }
 
-    fun withRequireMemorySnapshot(value: Boolean): UnloadPluginOptions {
-      requireMemorySnapshot = value; return this
+    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean) = also {
+      this.requireMemorySnapshot = requireMemorySnapshot
     }
 
-    fun withUnloadWaitTimeout(value: Int): UnloadPluginOptions {
-      unloadWaitTimeout = value; return this
+    fun withUnloadWaitTimeout(unloadWaitTimeout: Int) = also {
+      this.unloadWaitTimeout = unloadWaitTimeout
     }
 
-    fun withSave(value: Boolean): UnloadPluginOptions {
-      save = value; return this
+    fun withSave(save: Boolean) = also {
+      this.save = save
+    }
+
+    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean) = also {
+      this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
   }
 
