@@ -1,6 +1,6 @@
 lateinit var x: java.lang.Readable
 lateinit var y: java.nio.CharBuffer
 
-val h = x.read(p<caret>0 = y)
+val h = x.read(c<caret>b = y)
 
-// REF: CharBuffer var1
+// REF: CharBuffer cb
