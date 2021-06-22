@@ -28,8 +28,9 @@ final class PluginsCollector {
     availableModulesAndPlugins.addAll(parse['plugins'] as Collection)
 
     def descriptorsMap = collectPluginDescriptors(true, true, true)
+    def descriptorsMapWithBundled = collectPluginDescriptors(true, false, true)
     def pluginDescriptors = new HashSet<PluginDescriptor>(descriptorsMap.values())
-    return pluginDescriptors.findAll { isPluginCompatible(it, availableModulesAndPlugins, descriptorsMap) }.collect { it.pluginLayout }
+    return pluginDescriptors.findAll { isPluginCompatible(it, availableModulesAndPlugins, descriptorsMapWithBundled) }.collect { it.pluginLayout }
   }
 
   private boolean isPluginCompatible(@NotNull PluginDescriptor plugin,
