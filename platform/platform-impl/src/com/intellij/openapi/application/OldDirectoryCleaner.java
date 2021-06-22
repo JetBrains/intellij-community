@@ -217,7 +217,7 @@ public final class OldDirectoryCleaner {
           NioFiles.deleteRecursively(directory);
         }
         catch (IOException e) {
-          myLogger.error(e);
+          myLogger.info(e);
         }
       }
     }
@@ -252,7 +252,7 @@ public final class OldDirectoryCleaner {
                   });
                 }
                 catch (IOException e) {
-                  myLogger.error(e);
+                  myLogger.info(e);
                   errors.add(directory + " (" + IoErrorText.message(e) + ')');
                 }
               }
