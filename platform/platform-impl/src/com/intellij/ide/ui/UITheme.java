@@ -141,11 +141,11 @@ public final class UITheme {
       theme.providerClassLoader = provider;
     }
 
+    initializeNamedColors(theme);
+
     if (theme.icons == null || theme.icons.isEmpty()) {
       return theme;
     }
-
-    initializeNamedColors(theme);
 
     theme.patcher = new IconPathPatcher() {
       @Nullable
