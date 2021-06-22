@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -328,7 +327,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @Override
   public void addNotify() {
     super.addNotify();
-    if (!Registry.is("ide.new.tool.window.dnd")) {
       JPanel divider = this.divider;
       if (divider != null) {
         IdeGlassPane glassPane = (IdeGlassPane)getRootPane().getGlassPane();
@@ -340,7 +338,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
         glassPane.addMouseMotionPreprocessor(listener, disposable);
         glassPane.addMousePreprocessor(listener, disposable);
       }
-    }
   }
 
   @Override
@@ -354,6 +351,30 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     }
   }
 
+  public void updateBounds(@NotNull MouseEvent dragEvent) {
+    //"Undock" mode only, for "Dock" mode processing see com.intellij.openapi.wm.impl.content.ToolWindowContentUi.initMouseListeners
+    ToolWindowAnchor anchor = toolWindow.getAnchor();
+    Container windowPane = getParent();
+    Point lastPoint = SwingUtilities.convertPoint(dragEvent.getComponent(), dragEvent.getPoint(), windowPane);
+    lastPoint.x = MathUtil.clamp(lastPoint.x, 0, windowPane.getWidth());
+    lastPoint.y = MathUtil.clamp(lastPoint.y, 0, windowPane.getHeight());
+
+    Rectangle bounds = getBounds();
+    if (anchor == ToolWindowAnchor.TOP) {
+      setBounds(0, 0, bounds.width, lastPoint.y);
+    }
+    else if (anchor == ToolWindowAnchor.LEFT) {
+      setBounds(0, 0, lastPoint.x, bounds.height);
+    }
+    else if (anchor == ToolWindowAnchor.BOTTOM) {
+      setBounds(0, lastPoint.y, bounds.width, windowPane.getHeight() - lastPoint.y);
+    }
+    else if (anchor == ToolWindowAnchor.RIGHT) {
+      setBounds(lastPoint.x, 0, windowPane.getWidth() - lastPoint.x, bounds.height);
+    }
+    validate();
+  }
+  
   private static final class ResizeOrMoveDocketToolWindowMouseListener extends MouseAdapter {
     private final JComponent divider;
     private final IdeGlassPane glassPane;
@@ -411,27 +432,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       if (!isDragging) {
         return;
       }
-      //"Undock" mode only, for "Dock" mode processing see com.intellij.openapi.wm.impl.content.ToolWindowContentUi.initMouseListeners
-      ToolWindowAnchor anchor = decorator.toolWindow.getAnchor();
-      Container windowPane = decorator.getParent();
-      Point lastPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), windowPane);
-      lastPoint.x = MathUtil.clamp(lastPoint.x, 0, windowPane.getWidth());
-      lastPoint.y = MathUtil.clamp(lastPoint.y, 0, windowPane.getHeight());
-
-      Rectangle bounds = decorator.getBounds();
-      if (anchor == ToolWindowAnchor.TOP) {
-        decorator.setBounds(0, 0, bounds.width, lastPoint.y);
-      }
-      else if (anchor == ToolWindowAnchor.LEFT) {
-        decorator.setBounds(0, 0, lastPoint.x, bounds.height);
-      }
-      else if (anchor == ToolWindowAnchor.BOTTOM) {
-        decorator.setBounds(0, lastPoint.y, bounds.width, windowPane.getHeight() - lastPoint.y);
-      }
-      else if (anchor == ToolWindowAnchor.RIGHT) {
-        decorator.setBounds(lastPoint.x, 0, windowPane.getWidth() - lastPoint.x, bounds.height);
-      }
-      decorator.validate();
+      decorator.updateBounds(e);
       e.consume();
     }
   }
