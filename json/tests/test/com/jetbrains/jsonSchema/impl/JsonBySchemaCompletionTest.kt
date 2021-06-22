@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest
@@ -345,5 +346,31 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
 }""","""{
   "severity": <caret>
 }""", "\"a\"", "\"b\"")
+  }
+
+  fun testFirstSentenceInCompletion() {
+    val schema = """{
+  "properties": {
+    "lint": {
+      "type": "string",
+      "description": "Run code quality tools, e.g. ESLint, TSLint, etc."
+    },
+    "lint2": {
+      "type": "string",
+      "description": "Run code quality tools. For example, ESLint, TSLint, etc."
+    }
+  }
+}"""
+    testImpl(schema, "{<caret>}", "\"lint\"", "\"lint2\"")
+    Assert.assertEquals(2, myItems.size.toLong())
+    val presentation1 = renderPresentation(myItems[0])
+    Assert.assertEquals("Run code quality tools, e.g. ESLint, TSLint, etc.", presentation1.typeText)
+
+    val presentation2 = renderPresentation(myItems[1])
+    Assert.assertEquals("Run code quality tools.", presentation2.typeText)
+  }
+
+  private fun renderPresentation(lookupElement: LookupElement): LookupElementPresentation = LookupElementPresentation().also {
+    lookupElement.renderElement(it)
   }
 }
