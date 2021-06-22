@@ -132,7 +132,9 @@ public final class SlowOperations {
       return true;
     }
 
-    boolean result = System.getenv("TEAMCITY_VERSION") != null || ApplicationManager.getApplication().isUnitTestMode();
+    boolean result = System.getenv("TEAMCITY_VERSION") != null ||
+                     ApplicationManager.getApplication().isUnitTestMode() ||
+                     ApplicationManager.getApplication().isCommandLine();
     ourAlwaysAllow = result ? 1 : 0;
     return result;
   }
