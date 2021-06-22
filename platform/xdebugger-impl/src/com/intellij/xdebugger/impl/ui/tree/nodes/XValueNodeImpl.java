@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,7 +152,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private boolean showAsInlay(XDebugSession session, XSourcePosition position, Document document) {
     if (Registry.is("debugger.show.values.use.inlays")) {
-      if (position.getLine() >= 0 && XDebuggerInlayUtil.createLineEndInlay(this, session, position.getFile(), position, document)) {
+      if (position.getLine() >= 0 &&
+          XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(this, session, position, document)) {
         return true;
       }
     }
