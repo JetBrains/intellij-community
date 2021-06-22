@@ -622,7 +622,7 @@ idea.fatal.error.notification=disabled
   //dbus-java is used only on linux for KWallet integration.
   //It relies on native libraries, causing notarization issues on mac.
   //So it is excluded from all distributions and manually re-included on linux.
-  static void addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
+  static List<String> addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
     JpsLibrary library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
     Path destLibDir = distDir.resolve("lib")
     List<String> extraJars = new ArrayList<>()
@@ -631,20 +631,25 @@ idea.fatal.error.notification=disabled
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
       extraJars += file.name
     }
+    return extraJars
+  }
+
+  static void appendLibsToClasspathJar(BuildContext buildContext, @NotNull Path distDir, @NotNull List<String> extraJars) {
     def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
+    Path destLibDir = distDir.resolve("lib")
     //no file in fleet
     if (Files.exists(srcClassPathTxt)) {
       def classPathTxt = destLibDir.resolve("classpath.txt")
       Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
       Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
-      buildContext.messages.warning("added dbus-java to classpath.txt")
+      buildContext.messages.warning("added ${extraJars.size()} extra jars to classpath.txt")
     }
     else {
       buildContext.messages.warning("no classpath.txt - no patching")
     }
   }
 
-  static void addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
+  static List<String> addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
     Path destLibDir = distDir.resolve("lib")
     Path destProjectorLibDir = destLibDir.resolve("projector")
     List<String> extraJars = new ArrayList<>()
@@ -672,16 +677,7 @@ idea.fatal.error.notification=disabled
       extraJars += "projector/" + file.name
     }
 
-    def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
-    //no file in fleet
-    if (Files.exists(srcClassPathTxt)) {
-      def classPathTxt = destLibDir.resolve("classpath.txt")
-      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
-      Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
-      buildContext.messages.warning("added projector-server to classpath.txt")
-    } else {
-      buildContext.messages.warning("no classpath.txt - no patching")
-    }
+    return extraJars
   }
 
   private void logFreeDiskSpace(String phase) {
