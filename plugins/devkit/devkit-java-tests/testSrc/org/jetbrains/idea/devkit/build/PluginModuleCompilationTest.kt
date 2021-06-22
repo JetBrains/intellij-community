@@ -58,10 +58,10 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
     sandbox.assertMatches(directoryContent {
       dir("plugins") {
         dir("pluginProject") {
-          dir("META-INF") {
-            file("plugin.xml")
-          }
           dir("classes") {
+            dir("META-INF") {
+              file("plugin.xml")
+            }
             dir("xxx") {
               file("MyAction.class")
             }
