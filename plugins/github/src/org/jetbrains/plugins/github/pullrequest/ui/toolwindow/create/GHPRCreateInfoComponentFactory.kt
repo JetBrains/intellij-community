@@ -6,20 +6,18 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsActions
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.components.ActionLink
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.*
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -33,6 +31,7 @@ import git4idea.ui.branch.MergeDirectionModel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
@@ -49,6 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFact
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
@@ -56,6 +56,7 @@ import java.awt.Container
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
+import javax.swing.event.HyperlinkEvent
 import javax.swing.text.Document
 
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
@@ -167,16 +168,17 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       add(createButton)
       add(cancelButton)
     }
-    val statusPanel = JPanel(VerticalLayout(8, SwingConstants.LEFT)).apply {
+    val statusPanel = JPanel().apply {
+      layout = MigLayout(LC().gridGap("0", "${JBUIScale.scale(8)}").insets("0").fill().flowY().hideMode(3))
       border = JBUI.Borders.empty(8)
 
-      add(createNoChangesWarningLabel(directionModel, commitsCountModel))
-      add(createErrorLabel(createLoadingModel))
-      add(createErrorLabel(existenceCheckLoadingModel))
-      add(createErrorAlreadyExistsLabel(existenceCheckLoadingModel))
-      add(createLoadingLabel(existenceCheckLoadingModel, existenceCheckProgressIndicator))
-      add(createLoadingLabel(createLoadingModel, progressIndicator))
-      add(actionsPanel)
+      add(createNoChangesWarningLabel(directionModel, commitsCountModel, createLoadingModel), CC().minWidth("0"))
+      add(createErrorLabel(createLoadingModel, GithubBundle.message("pull.request.create.error")), CC().minWidth("0"))
+      add(createErrorLabel(existenceCheckLoadingModel), CC().minWidth("0"))
+      add(createErrorAlreadyExistsLabel(existenceCheckLoadingModel), CC().minWidth("0"))
+      add(createLoadingLabel(existenceCheckLoadingModel, existenceCheckProgressIndicator), CC().minWidth("0"))
+      add(createLoadingLabel(createLoadingModel, progressIndicator), CC().minWidth("0"))
+      add(actionsPanel, CC().minWidth("0"))
     }
 
     return JPanel(null).apply {
@@ -325,17 +327,26 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
   }
 
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
-    val label = JLabel(AllIcons.Ide.FatalError).apply {
-      foreground = UIUtil.getErrorForeground()
-      text = GithubBundle.message("pull.request.create.already.exists")
+    val iconLabel = JLabel(AllIcons.Ide.FatalError)
+    val textPane = HtmlEditorPane().apply {
+      setBody(HtmlBuilder()
+                .append(GithubBundle.message("pull.request.create.already.exists"))
+                .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
+                .toString())
+      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+      addHyperlinkListener(object : HyperlinkAdapter() {
+        override fun hyperlinkActivated(e: HyperlinkEvent) {
+          if (e.description == "VIEW") {
+            loadingModel.result?.let(viewController::viewPullRequest)
+          }
+          else {
+            BrowserUtil.browse(e.description)
+          }
+        }
+      })
     }
-    val link = ActionLink(GithubBundle.message("pull.request.create.already.exists.view")) {
-      loadingModel.result?.let(viewController::viewPullRequest)
-    }
-    val panel = JPanel(HorizontalLayout(10)).apply {
-      add(label)
-      add(link)
-    }
+
+    val panel = textPaneWithIcon(iconLabel, textPane)
 
     fun update() {
       panel.isVisible = loadingModel.resultAvailable && loadingModel.result != null
@@ -352,37 +363,51 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     private val Document.text: String get() = getText(0, length)
 
     private fun createNoChangesWarningLabel(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
-                                            commitsCountModel: SingleValueModel<Int?>): JComponent {
-      val label = JLabel(AllIcons.General.Warning)
+                                            commitsCountModel: SingleValueModel<Int?>,
+                                            loadingModel: GHLoadingModel): JComponent {
+      val iconLabel = JLabel(AllIcons.General.Warning)
+      val textPane = HtmlEditorPane()
+
+      val panel = textPaneWithIcon(iconLabel, textPane)
       fun update() {
         val commits = commitsCountModel.value
-        label.isVisible = commits == 0
+        panel.isVisible = commits == 0 && loadingModel.error == null
         val base = directionModel.baseBranch?.name.orEmpty()
         val head = directionModel.headBranch?.name.orEmpty()
-        label.text = GithubBundle.message("pull.request.create.no.changes", base, head)
+        textPane.setBody(GithubBundle.message("pull.request.create.no.changes", base, head))
       }
 
-      commitsCountModel.addListener { update() }
       commitsCountModel.addAndInvokeListener { update() }
-      return label
+      loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+        override fun onLoadingCompleted() = update()
+      })
+      update()
+      return panel
     }
 
-    private fun createErrorLabel(loadingModel: GHLoadingModel): JLabel {
-      val label = JLabel(AllIcons.Ide.FatalError).apply {
-        foreground = UIUtil.getErrorForeground()
-      }
+    private fun createErrorLabel(loadingModel: GHLoadingModel, @Nls prefix: String? = null): JComponent {
+      val iconLabel = JLabel(AllIcons.Ide.FatalError)
+      val textPane = HtmlEditorPane()
+
+      val panel = textPaneWithIcon(iconLabel, textPane)
 
       fun update() {
-        label.isVisible = loadingModel.error != null
-        label.text = loadingModel.error?.message
+        panel.isVisible = loadingModel.error != null
+        textPane.setBody(prefix?.plus(" ").orEmpty() + loadingModel.error?.message.orEmpty())
       }
       loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
         override fun onLoadingStarted() = update()
         override fun onLoadingCompleted() = update()
       })
       update()
-      return label
+      return panel
     }
+
+    private fun textPaneWithIcon(iconLabel: JLabel, textPane: HtmlEditorPane) =
+      JPanel(MigLayout(LC().insets("0").gridGap("0", "0"))).apply {
+        add(iconLabel, CC().alignY("top").gapRight("${iconLabel.iconTextGap}"))
+        add(textPane, CC().minWidth("0"))
+      }
 
     private fun createLoadingLabel(loadingModel: GHLoadingModel, progressIndicator: ListenableProgressIndicator): JLabel {
       val label = JLabel(AnimatedIcon.Default())
