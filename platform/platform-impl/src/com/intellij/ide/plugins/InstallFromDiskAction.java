@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,14 @@ public class InstallFromDiskAction extends DumbAwareAction {
 
   public InstallFromDiskAction() {
     super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (!PluginManagerConfigurableForOrg.getInstance().allowInstallFromDisk()) {
+      getTemplatePresentation().setEnabled(false);
+      getTemplatePresentation().setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
+    }
   }
 
   @Override

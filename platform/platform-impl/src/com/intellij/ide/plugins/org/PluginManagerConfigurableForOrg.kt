@@ -30,6 +30,7 @@ class PluginManagerConfigurableForOrg {
     return descriptor.pluginId.idString.hashCode() % 2 == 0
   }
 
+  fun allowInstallFromDisk(): Boolean = false
 
   fun foo() {
     BorderLayoutPanel().apply {
