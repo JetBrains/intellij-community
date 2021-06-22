@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.Main
+import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
 import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.PathManager
@@ -66,6 +67,8 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     app.loadComponents(null)
 
     preloadServiceFuture.get(40, TimeUnit.SECONDS)
+    ForkJoinTask.invokeAll(callAppInitialized(app))
+
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
   catch (e: TimeoutException) {

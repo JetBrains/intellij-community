@@ -137,19 +137,14 @@ private fun startApp(app: ApplicationImpl,
     }, Executor(app::invokeLater))
 
   CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
-    .thenComposeAsync<Void?>({
+    .thenComposeAsync({
       val pool = ForkJoinPool.commonPool()
 
-      val future: CompletableFuture<Void?> = if (starter.commandName == null || starter.commandName == "buildAppcodeCache") {
-        CompletableFuture.runAsync({
-                                     initAppActivity.runChild("app initialized callback") {
-                                       ForkJoinTask.invokeAll(callAppInitialized(app))
-                                     }
-                                   }, pool)
-      }
-      else {
-        CompletableFuture.completedFuture(null)
-      }
+      val future = CompletableFuture.runAsync({
+        initAppActivity.runChild("app initialized callback") {
+          ForkJoinTask.invokeAll(callAppInitialized(app))
+        }
+      }, pool)
 
       if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
           java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
@@ -371,7 +366,7 @@ private fun processProgramArguments(args: List<String>): List<String> {
 }
 
 
-internal fun callAppInitialized(app: ApplicationImpl): List<ForkJoinTask<*>> {
+fun callAppInitialized(app: ApplicationImpl): List<ForkJoinTask<*>> {
   val extensionArea = app.extensionArea
   val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
   val result = ArrayList<ForkJoinTask<*>>(extensionPoint.size())
