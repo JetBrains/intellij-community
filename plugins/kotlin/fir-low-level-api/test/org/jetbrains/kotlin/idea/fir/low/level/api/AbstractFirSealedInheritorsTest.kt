@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api
 
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.util.KtTestUtil
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.flatMapToNullable
 import java.io.File
@@ -20,8 +20,8 @@ import java.io.File
  * compared with 'expected.txt'.
  */
 abstract class AbstractFirSealedInheritorsTest : AbstractFirMultiModuleLazyResolveTest() {
-    override fun getTestDataPath(): String =
-        "${KtTestUtil.getHomeDirectory()}/idea/idea-frontend-fir/idea-fir-low-level-api/testdata/resolveSealed/"
+    override fun getTestDataDirectory(): File =
+        KotlinRoot.DIR.resolve("fir-low-level-api").resolve("testdata").resolve("resolveSealed")
 
     override fun checkFirFile(firFile: FirFile, path: String) {
         val allClasses = firFile.listNestedClasses().closure { it.listNestedClasses() }
