@@ -55,14 +55,14 @@ final class PluginsCollector {
   }
 
   @NotNull Map<String, PluginDescriptor> collectPluginDescriptors(boolean skipImplementationDetailPlugins, boolean skipBundledPlugins,
-                                                                  boolean honorCompatiplePluginsToIgnore) {
+                                                                  boolean honorCompatiblePluginsToIgnore) {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
     def allBundledPlugins = productLayout.bundledPluginModules as Set<String>
     for (JpsModule  jpsModule : myBuildContext.project.modules) {
       if (skipBundledPlugins && allBundledPlugins.contains(jpsModule.name) ||
-          honorCompatiplePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
+          honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
         continue
       }
 
