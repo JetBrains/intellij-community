@@ -3,6 +3,10 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
+  <content>
+    <module name="ExtensionsDependencies-content"/>
+  </content>
+
   <dependencies>
     <!-- ExtensionsDependencies-plugin.xml -->
     <plugin id="com.intellij.myPlugin.plugin.dependency"/>
@@ -10,6 +14,10 @@
     <!-- ExtensionsDependencies-module.xml -->
     <module name="ExtensionsDependencies-module"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="mainPlugin" interface="java.lang.Number"/>
+  </extensionPoints>
 
   <!-- ExtensionsDependencies-plugin.xml -->
   <extensions defaultExtensionNs="com.intellij.myPlugin.plugin.dependency">

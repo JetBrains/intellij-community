@@ -34,6 +34,9 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
   @NonNls
   private static final String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
 
+  @NonNls
+  private static final String CONTENT_KEY_PREFIX = "___CONTENT_ID___";
+
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
@@ -72,7 +75,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       }
     }
 
-    // new model
+    // new model: dependencies
     final DependencyDescriptor dependencyDescriptor = plugin.getDependencies();
     for (DependencyDescriptor.PluginDescriptor pluginDescriptor : dependencyDescriptor.getPlugin()) {
       ContainerUtil.addIfNotNull(ids, pluginDescriptor.getId().getStringValue());
@@ -81,12 +84,20 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       ContainerUtil.addIfNotNull(ids, moduleDescriptor.getName().getStringValue());
     }
 
+    // new model: content
+    for (ContentDescriptor.ModuleDescriptor descriptor : plugin.getContent().getModuleEntry()) {
+      final String value = descriptor.getName().getStringValue();
+      if (StringUtil.isNotEmpty(value)) {
+        ids.add(getContentIndexingKey(value));
+      }
+    }
+
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
@@ -117,11 +128,24 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
   }
 
   public static Collection<VirtualFile> findDependsTo(Project project, VirtualFile file) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
-                                                           GlobalSearchScopesCore.projectProductionScope(project));
+    final Collection<VirtualFile> dependsFiles =
+      FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
+                                                      GlobalSearchScopesCore.projectProductionScope(project));
+
+    final Collection<VirtualFile> contentFiles =
+      FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
+                                                      GlobalSearchScopesCore.projectProductionScope(project));
+
+    Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
+    allFiles.addAll(contentFiles);
+    return allFiles;
   }
 
   private static String getDependsIndexingKey(@NotNull String filename) {
     return FILENAME_KEY_PREFIX + filename;
+  }
+
+  private static String getContentIndexingKey(@NotNull String value) {
+    return CONTENT_KEY_PREFIX + value;
   }
 }
