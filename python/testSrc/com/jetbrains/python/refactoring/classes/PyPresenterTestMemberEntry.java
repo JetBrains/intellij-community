@@ -5,9 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Test only {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo} representation.
+ *
  * @author Ilya.Kazakevich
  */
-public class PyPresenterTestMemberEntry {
+public final class PyPresenterTestMemberEntry {
   @NonNls @NotNull
   private final String myName;
   private final boolean myEnabled;
@@ -35,6 +36,16 @@ public class PyPresenterTestMemberEntry {
            ", myStaticEntry=" + myStaticEntry +
            ", myMayBeAbstract=" + myMayBeAbstract +
            '}';
+  }
+
+
+  public boolean mayBeAbstract() {
+    return myMayBeAbstract;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
   }
 
   @Override

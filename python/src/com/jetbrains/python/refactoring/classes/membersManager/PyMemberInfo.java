@@ -24,19 +24,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
+public final class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
   @NotNull
   private final MembersManager<T> myMembersManager;
   private final boolean myCouldBeAbstract;
+  @NotNull
+  private final PyElement myElementToStoreDependency;
+
 
   /**
-   * @param couldBeAbstract if element could be marked as abstract (like abstract method)
-   * @param member         element itself
-   * @param isStatic       is it static or not?
-   * @param displayName    element display name
-   * @param overrides      does it overrides something? TRUE if is overriden, FALSE if implemented, null if not implemented or overriden
-   *                       TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
-   * @param membersManager manager that knows how to handle this member
+   * @see #PyMemberInfo(PyElement, PyElement, boolean, String, Boolean, MembersManager, boolean)
    */
   PyMemberInfo(@NotNull final T member,
                final boolean isStatic,
@@ -44,12 +41,38 @@ public class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
                @Nullable final Boolean overrides,
                @NotNull final MembersManager<T> membersManager,
                final boolean couldBeAbstract) {
+    this(member, member, isStatic, displayName, overrides, membersManager, couldBeAbstract);
+  }
+
+  /**
+   * @param couldBeAbstract if element could be marked as abstract (like abstract method)
+   * @param member          element itself
+   * @param elementToStoreDependency if memeber's parent is copied and used to calculate dependency, provide it here
+   * @param isStatic        is it static or not?
+   * @param displayName     element display name
+   * @param overrides       does it overrides something? TRUE if is overriden, FALSE if implemented, null if not implemented or overriden
+   *                                              TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
+   * @param membersManager  manager that knows how to handle this member
+   */
+  PyMemberInfo(@NotNull final T member,
+               @NotNull PyElement elementToStoreDependency,
+               final boolean isStatic,
+               @NotNull final String displayName,
+               @Nullable final Boolean overrides,
+               @NotNull final MembersManager<T> membersManager,
+               final boolean couldBeAbstract) {
     super(member);
     this.isStatic = isStatic;
+    this.myElementToStoreDependency = elementToStoreDependency;
     this.displayName = displayName;
     this.overrides = overrides;
     myMembersManager = membersManager;
     myCouldBeAbstract = couldBeAbstract;
+  }
+
+  @NotNull
+  public PyElement getElementToStoreDependency() {
+    return myElementToStoreDependency;
   }
 
   @NotNull
