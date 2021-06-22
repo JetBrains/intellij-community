@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bulkOperation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -16,11 +19,13 @@ public final class BulkMethodInfo {
   private final String myClassName;
   private final String mySimpleName;
   private final String myBulkName;
+  private final String myBulkParameterType;
 
-  public BulkMethodInfo(String className, String simpleName, String bulkName) {
+  public BulkMethodInfo(String className, String simpleName, String bulkName, String bulkParameterType) {
     myClassName = className;
     mySimpleName = simpleName;
     myBulkName = bulkName;
+    myBulkParameterType = bulkParameterType;
   }
 
   public boolean isMyMethod(PsiReferenceExpression ref) {
@@ -29,13 +34,15 @@ public final class BulkMethodInfo {
     if (!(element instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod)element;
     PsiParameterList parameters = method.getParameterList();
-    if (parameters.getParametersCount() != (myClassName.equals(JAVA_UTIL_MAP) ? 2 : 1)) return false;
-    PsiParameter parameter = Objects.requireNonNull(parameters.getParameter(0));
-    PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameter.getType());
-    if (parameterClass == null ||
-        JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
-        JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) {
-      return false;
+    if (parameters.getParametersCount() != getSimpleParametersCount()) return false;
+    if (getSimpleParametersCount() == 1) {
+      PsiParameter parameter = Objects.requireNonNull(parameters.getParameter(0));
+      PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameter.getType());
+      if (parameterClass == null ||
+          JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
+          JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) {
+        return false;
+      }
     }
     PsiClass methodClass = method.getContainingClass();
     if (methodClass == null || !InheritanceUtil.isInheritor(methodClass, myClassName)) return false;
@@ -46,11 +53,7 @@ public final class BulkMethodInfo {
     return ContainerUtil.or(aClass.findMethodsByName(myBulkName, true), method -> {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length != 1) return false;
-      PsiParameter parameter = parameters[0];
-      if (myClassName.equals(JAVA_UTIL_MAP)) {
-        return TypeUtils.variableHasTypeOrSubtype(parameter, JAVA_UTIL_MAP);
-      }
-      return TypeUtils.variableHasTypeOrSubtype(parameter, JAVA_LANG_ITERABLE, JAVA_UTIL_COLLECTION);
+      return TypeUtils.variableHasTypeOrSubtype(parameters[0], getBulkParameterType(aClass.getProject()));
     });
   }
 
@@ -78,16 +81,8 @@ public final class BulkMethodInfo {
     }
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass == null) return false;
-    PsiClass commonParent;
-    if (myClassName.equals(JAVA_UTIL_MAP)) {
-      commonParent = psiFacade.findClass(JAVA_UTIL_MAP, aClass.getResolveScope());
-    } else {
-      commonParent = psiFacade.findClass(JAVA_LANG_ITERABLE, aClass.getResolveScope());
-      if (commonParent == null) {
-        // No Iterable class in Java 1.4
-        commonParent = psiFacade.findClass(JAVA_UTIL_COLLECTION, aClass.getResolveScope());
-      }
-    }
+    String bulkParameterType = getBulkParameterType(aClass.getProject());
+    PsiClass commonParent = psiFacade.findClass(bulkParameterType, aClass.getResolveScope());
     if (!InheritanceUtil.isInheritorOrSelf(aClass, commonParent, true)) return false;
     PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
     if (!(expression instanceof PsiMethodCallExpression)) return false;
@@ -101,10 +96,7 @@ public final class BulkMethodInfo {
     PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
     if (parameterClass == null) return false;
     String qualifiedName = parameterClass.getQualifiedName();
-    return (myClassName.equals(JAVA_UTIL_MAP)
-            ? JAVA_UTIL_MAP.equals(qualifiedName)
-            : (JAVA_LANG_ITERABLE.equals(qualifiedName) || JAVA_UTIL_COLLECTION.equals(qualifiedName))) &&
-           parameterType.isAssignableFrom(type);
+    return bulkParameterType.equals(qualifiedName) && parameterType.isAssignableFrom(type);
   }
 
   public String getClassName() {
@@ -115,8 +107,20 @@ public final class BulkMethodInfo {
     return mySimpleName;
   }
 
+  public int getSimpleParametersCount() {
+    return myBulkParameterType.equals(JAVA_UTIL_MAP) ? 2 : 1;
+  }
+
   public String getBulkName() {
     return myBulkName;
+  }
+
+  public String getBulkParameterType(@NotNull Project project) {
+    if (myBulkParameterType.equals(JAVA_LANG_ITERABLE) &&
+        PsiUtil.getLanguageLevel(project).isLessThan(LanguageLevel.JDK_1_5)) {
+      return JAVA_UTIL_COLLECTION;
+    }
+    return myBulkParameterType;
   }
 
   public String getReplacementName() {

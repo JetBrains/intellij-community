@@ -55,8 +55,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   @Nullable
   private static PsiExpression findIterable(PsiMethodCallExpression expression, BulkMethodInfo info) {
     PsiExpression[] args = expression.getArgumentList().getExpressions();
-    int simpleMethodParametersCount = info.getClassName().equals(CommonClassNames.JAVA_UTIL_MAP) ? 2 : 1;
-    if (args.length != simpleMethodParametersCount) return null;
+    if (args.length != info.getSimpleParametersCount()) return null;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression) {
       return findIterableForLambda((PsiLambdaExpression)parent, args, info);
@@ -78,7 +77,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
               if (args.length == 1 && ExpressionUtils.isReferenceTo(args[0], declaration.getNextElementVariable(statements[0]))) {
                 return declaration.getIterable();
               } else if (args.length == 2) {
-                if (isGetValueAndGetKey(args, declaration.getNextElementVariable(statements[0]))) {
+                if (isGetKeyAndGetValue(args, declaration.getNextElementVariable(statements[0]))) {
                   PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(declaration.getIterable(), PsiMethodCallExpression.class);
                   if (MAP_ENTRY_SET.test(entrySetCandidate)) {
                     return entrySetCandidate.getMethodExpression().getQualifierExpression();
@@ -115,7 +114,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     int lambdaParametersCount = parameterList.getParametersCount();
     if (info.getClassName().equals(CommonClassNames.JAVA_UTIL_MAP)) {
       if (lambdaParametersCount == 1) {
-        if (!isGetValueAndGetKey(args, parameters[0])) return null;
+        if (!isGetKeyAndGetValue(args, parameters[0])) return null;
       } else if (lambdaParametersCount == 2) {
         if (!ExpressionUtils.isReferenceTo(args[0], parameters[0]) ||
             !ExpressionUtils.isReferenceTo(args[1], parameters[1])) return null;
@@ -124,7 +123,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     return findIterableForFunction(lambda);
   }
 
-  private static boolean isGetValueAndGetKey(PsiExpression[] args, PsiVariable variable) {
+  private static boolean isGetKeyAndGetValue(PsiExpression[] args, PsiVariable variable) {
     PsiMethodCallExpression getKeyCandidate = ObjectUtils.tryCast(args[0], PsiMethodCallExpression.class);
     PsiMethodCallExpression getValueCandidate = ObjectUtils.tryCast(args[1], PsiMethodCallExpression.class);
     if (!ENTRY_GET_KEY.test(getKeyCandidate) || !ENTRY_GET_VALUE.test(getValueCandidate)) return false;
@@ -135,12 +134,13 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
   @Nullable
   private static PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression[] args) {
+    assert args.length == 1 || args.length == 2 : "The number of arguments must be either 1 or 2";
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiForeachStatement) {
       PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
       PsiExpression iteratedValue = foreachStatement.getIteratedValue();
       if (args.length == 2) {
-        if (isGetValueAndGetKey(args, foreachStatement.getIterationParameter())) {
+        if (isGetKeyAndGetValue(args, foreachStatement.getIterationParameter())) {
           PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(iteratedValue, PsiMethodCallExpression.class);
           if (MAP_ENTRY_SET.test(entrySetCandidate)) {
             return entrySetCandidate.getMethodExpression().getQualifierExpression();
