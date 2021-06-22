@@ -129,17 +129,21 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                 }.asString()
             )
 
-            return replaceElement(function)
-                .let {
-                    val parent = it.parent
-                    val grandParent = parent.parent
-                    if (parent is KtCallExpression && grandParent !is KtParenthesizedExpression && grandParent !is KtDeclaration) {
-                        it.replaced(psiFactory.createExpressionByPattern("($0)", it))
-                    } else {
-                        it
-                    }
-                }
-                .also { ShortenReferences.DEFAULT.process(it) }
+            val result = wrapInParenthesisIfNeeded(replaceElement(function), psiFactory)
+            ShortenReferences.DEFAULT.process(result)
+
+            return result
+        }
+
+        private fun wrapInParenthesisIfNeeded(expression: KtExpression, psiFactory: KtPsiFactory): KtExpression {
+            val parent = expression.parent ?: return expression
+            val grandParent = parent.parent ?: return expression
+
+            if (parent is KtCallExpression && grandParent !is KtParenthesizedExpression && grandParent !is KtDeclaration) {
+                return expression.replaced(psiFactory.createExpressionByPattern("($0)", expression))
+            }
+
+            return expression
         }
     }
 }
