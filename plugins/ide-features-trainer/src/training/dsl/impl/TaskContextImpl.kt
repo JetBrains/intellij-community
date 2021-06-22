@@ -53,25 +53,27 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     preparation(runtimeContext) // just call it here
   }
 
+  /**
+   * To work properly should not be called after [proposeRestore] or [showWarning] calls (only before)
+   */
   override fun restoreState(restoreId: TaskId?, delayMillis: Int, restoreRequired: TaskRuntimeContext.() -> Boolean) {
-    assert(lessonExecutor.currentTaskIndex == taskIndex)
-    data.delayMillis = delayMillis
-    val previous = data.shouldRestoreToTask
     val actualId = restoreId ?: TaskId(lessonExecutor.calculateRestoreIndex())
-    data.shouldRestoreToTask = { previous?.let { it() } ?: if (restoreRequired(runtimeContext)) actualId else null }
+    addRestoreCheck(delayMillis, restoreRequired) {
+      StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
+      lessonExecutor.applyRestore(this, actualId)
+    }
   }
 
   override fun restoreByTimer(delayMillis: Int, restoreId: TaskId?) {
     lessonExecutor.restoreByTimer(this, delayMillis, restoreId)
   }
 
+  /**
+   * Should not be called more then once in single task (even with [showWarning]
+   */
   override fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
-    restoreState {
-      // restoreState is used to trigger by any IDE state change and check restore proposal is needed
-      this@TaskContextImpl.checkAndShowNotificationIfNeeded(needToLog = true, restoreCheck) {
-        LessonManager.instance.setRestoreNotification(it)
-      }
-      return@restoreState false
+    checkAndShowNotificationIfNeeded(0, null, restoreCheck) {
+      LessonManager.instance.setRestoreNotification(it)
     }
   }
 
@@ -101,41 +103,43 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     return null
   }
 
+  /**
+   * Should not be called more then once in single task (even with [proposeRestore]
+   */
   override fun showWarning(text: String, restoreTaskWhenResolved: Boolean, warningRequired: TaskRuntimeContext.() -> Boolean) {
-    restoreState(taskId, delayMillis = defaultRestoreDelay) {
-      val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
-        if (warningRequired()) RestoreNotification(text) {} else null
-      }
-      val warningResolved = this@TaskContextImpl.checkAndShowNotificationIfNeeded(needToLog = !restoreTaskWhenResolved,
-                                                                                  notificationRequired) {
-        LessonManager.instance.setWarningNotification(it)
-      }
-      warningResolved && restoreTaskWhenResolved
+    val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
+      if (warningRequired()) RestoreNotification(text) {} else null
+    }
+    val restoreId = if (restoreTaskWhenResolved) taskId else null
+    checkAndShowNotificationIfNeeded(delayMillis = defaultRestoreDelay, restoreId, notificationRequired) {
+      LessonManager.instance.setWarningNotification(it)
     }
   }
 
-  /**
-   * Returns true if already shown notification has been cleared
-   */
-  private fun checkAndShowNotificationIfNeeded(needToLog: Boolean, notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
-                                               setNotification: (RestoreNotification) -> Unit): Boolean {
-    val proposal = checkEditor() ?: notificationRequired(runtimeContext)
-    if (proposal == null) {
-      if (LessonManager.instance.shownRestoreNotification != null) {
-        LessonManager.instance.clearRestoreMessage()
-        return true
-      }
-    }
-    else {
-      if (proposal.message != LessonManager.instance.shownRestoreNotification?.message) {
+  private fun checkAndShowNotificationIfNeeded(delayMillis: Int, restoreId: TaskId?,
+                                               notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
+                                               setNotification: (RestoreNotification) -> Unit) {
+    addRestoreCheck(delayMillis, { true }) {
+      val notification = notificationRequired(runtimeContext) ?: checkEditor()
+      val lessonManager = LessonManager.instance
+      val activeNotification = lessonManager.shownRestoreNotification
+      if (notification != null && notification.message != activeNotification?.message) {
         EditorNotifications.getInstance(runtimeContext.project).updateNotifications(lessonExecutor.virtualFile)
-        setNotification(proposal)
-        if(needToLog) {
-          StatisticBase.logRestorePerformed(lessonExecutor.lesson, lessonExecutor.currentTaskIndex)
-        }
+        setNotification(notification)
+        StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
+      }
+      else if (notification == null && activeNotification != null) {
+        lessonManager.clearRestoreMessage()  // clear message if resolved
+        if (restoreId != null) lessonExecutor.applyRestore(this, restoreId)  // and restore task if specified
       }
     }
-    return false
+  }
+
+  private fun addRestoreCheck(delayMillis: Int, check: TaskRuntimeContext.() -> Boolean, restore: () -> Unit) {
+    assert(lessonExecutor.currentTaskIndex == taskIndex)
+    data.delayMillis = delayMillis
+    val previous = data.shouldRestore
+    data.shouldRestore = { previous?.let { it() } ?: if (check(runtimeContext)) restore else null }
   }
 
   override fun text(@Language("HTML") text: String, useBalloon: LearningBalloonConfig?) {

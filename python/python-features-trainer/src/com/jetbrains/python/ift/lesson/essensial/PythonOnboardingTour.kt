@@ -550,6 +550,7 @@ class PythonOnboardingTour :
     }
 
     task {
+      transparentRestore = true
       before {
         if (backupPopupLocation != null) return@before
         val ui = previous.ui ?: return@before
