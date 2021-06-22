@@ -121,6 +121,16 @@ final class PluginsCollector {
           declaredModules.add(value)
         }
       }
+      def content = xml.getChild('content')
+      if (content) {
+        for (module in content.getChildren('module')) {
+          def moduleName = module.getAttributeValue('name')
+          if (moduleName) {
+            declaredModules += moduleName
+          }
+        }
+      }
+
       def requiredDependencies = new HashSet<String>()
       def optionalDependencies = new ArrayList<Pair<String, String>>()
       for (dependency in xml.getChildren('depends')) {
