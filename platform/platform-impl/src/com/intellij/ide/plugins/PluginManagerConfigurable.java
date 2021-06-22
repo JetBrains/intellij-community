@@ -10,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
+import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -1682,10 +1683,17 @@ public final class PluginManagerConfigurable
   }
 
   private final class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));}
+    private InstallFromDiskAction() {
+      super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!PluginManagerConfigurableForOrg.getInstance().allowInstallFromDisk()) {
+        Messages.showErrorDialog(e.getProject(), IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
+        return;
+      }
+
       PluginInstaller.chooseAndInstall(e.getProject(), myCardPanel, (file, parent) ->
         PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
           myPluginModel.pluginInstalledFromDisk(callbackData);
