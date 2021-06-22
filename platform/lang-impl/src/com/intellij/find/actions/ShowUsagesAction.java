@@ -997,7 +997,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
     if (savedSize != null) {
-      rectangle.height = Math.min(savedSize.height, rectangle.height);
       rectangle.width = Math.min(savedSize.width, rectangle.width);
     }
 
@@ -1012,7 +1011,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    int visibleRows = Math.min(20, modelRows);
+    int visibleRows = Math.min(30, modelRows);
     int rowHeight = table.getRowHeight();
     int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
     int height = visibleRows * rowHeight + minHeight + space;
