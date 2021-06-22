@@ -717,7 +717,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("nullReceiver.kt")
         public void testNullReceiver() throws Exception {
-            runTest("idea/testData/quickfix/addExclExclCall/nullReceiver.kt");
+            runTest("testData/quickfix/addExclExclCall/nullReceiver.kt");
         }
 
         @TestMetadata("operationBinary.kt")
@@ -754,7 +754,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
-                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/initializer.kt");
+                runTest("testData/quickfix/addExclExclCall/typeMismatch/initializer.kt");
             }
 
             @TestMetadata("memberAccessInExtension.kt")
@@ -769,7 +769,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @TestMetadata("memberAccessInExtensionAsInitializer.kt")
             public void testMemberAccessInExtensionAsInitializer() throws Exception {
-                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtensionAsInitializer.kt");
+                runTest("testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtensionAsInitializer.kt");
             }
 
             @TestMetadata("nullArgument.kt")
@@ -13070,7 +13070,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("callArgument.kt")
         public void testCallArgument() throws Exception {
-            runTest("idea/testData/quickfix/toString/callArgument.kt");
+            runTest("testData/quickfix/toString/callArgument.kt");
         }
 
         @TestMetadata("notNullableExpectedNullable.kt")
@@ -13090,17 +13090,17 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("propertyInitializer.kt")
         public void testPropertyInitializer() throws Exception {
-            runTest("idea/testData/quickfix/toString/propertyInitializer.kt");
+            runTest("testData/quickfix/toString/propertyInitializer.kt");
         }
 
         @TestMetadata("returnStatement.kt")
         public void testReturnStatement() throws Exception {
-            runTest("idea/testData/quickfix/toString/returnStatement.kt");
+            runTest("testData/quickfix/toString/returnStatement.kt");
         }
 
         @TestMetadata("variableAssignment.kt")
         public void testVariableAssignment() throws Exception {
-            runTest("idea/testData/quickfix/toString/variableAssignment.kt");
+            runTest("testData/quickfix/toString/variableAssignment.kt");
         }
     }
 

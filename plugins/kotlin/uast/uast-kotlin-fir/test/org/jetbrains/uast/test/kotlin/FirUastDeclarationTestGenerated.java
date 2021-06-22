@@ -28,7 +28,7 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
 
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
-        runTest("plugins/uast-kotlin-fir/testData/declaration/doWhile.kt");
+        runTest("testData/declaration/doWhile.kt");
     }
 
     @TestMetadata("facade.kt")
@@ -38,7 +38,7 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
 
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
-        runTest("plugins/uast-kotlin-fir/testData/declaration/if.kt");
+        runTest("testData/declaration/if.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
@@ -48,7 +48,7 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
 
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
-        runTest("plugins/uast-kotlin-fir/testData/declaration/labeledExpression.kt");
+        runTest("testData/declaration/labeledExpression.kt");
     }
 
     @TestMetadata("objects.kt")
