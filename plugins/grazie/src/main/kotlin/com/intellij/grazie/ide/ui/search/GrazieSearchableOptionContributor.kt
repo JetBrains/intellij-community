@@ -7,10 +7,11 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
+import com.intellij.openapi.options.OptionsBundle
 
 private class GrazieSearchableOptionContributor : SearchableOptionContributor() {
   private val proofreadId = "proofread"
-  private val proofreadName = msg("grazie.group.name")
+  private val proofreadName = OptionsBundle.message("configurable.group.proofread.settings.display.name")
 
   private val grammarId = "reference.settingsdialog.project.grazie"
   private val grammarName = GraziePlugin.name

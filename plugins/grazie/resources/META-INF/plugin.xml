@@ -14,7 +14,7 @@
     </ul>
 
     <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
-       and select <strong>Editor</strong> > <strong>Proofreading</strong>.</p>
+       and select <strong>Editor</strong> > <strong>Natural Languages</strong>.</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
