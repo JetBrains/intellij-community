@@ -31,10 +31,11 @@ public class JavaFilePasteProvider implements PasteProvider {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
-    String fileText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    String copied = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    if (copied == null) return;
+    String fileText = StringUtil.convertLineSeparators(copied);
     String className = detectClassName(project, fileText);
     if (className == null) return;
-    assert fileText != null;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
     WriteCommandAction.writeCommandAction(project).withName(
@@ -102,7 +103,7 @@ public class JavaFilePasteProvider implements PasteProvider {
   }
 
   @Nullable
-  static String detectClassName(Project project, String fileText) {
+  static String detectClassName(@NotNull Project project, @NotNull String fileText) {
     final PsiClass[] classes = getPastedClasses(project, fileText);
     if (classes.length < 1) return null;
     for (PsiClass aClass : classes) {
@@ -113,8 +114,7 @@ public class JavaFilePasteProvider implements PasteProvider {
     return classes[0].getName();
   }
 
-  private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @Nullable String pasteText) {
-    if (pasteText == null) return PsiClass.EMPTY_ARRAY;
+  private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
       "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW); // to parse records
