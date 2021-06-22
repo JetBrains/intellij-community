@@ -49,6 +49,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     else {
       text = "<html><body>$body</body></html>"
     }
+    setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
   }
 
   protected open fun createViewFactory(iconsClass: Class<*>): ViewFactory = HtmlEditorViewFactory(iconsClass)
