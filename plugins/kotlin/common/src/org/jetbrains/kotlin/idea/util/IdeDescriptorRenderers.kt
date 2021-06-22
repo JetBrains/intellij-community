@@ -48,6 +48,7 @@ object IdeDescriptorRenderers {
         modifiers = DescriptorRendererModifier.ALL
         renderUnabbreviatedType = false
         annotationArgumentsRenderingPolicy = AnnotationArgumentsRenderingPolicy.UNLESS_EMPTY
+        annotationFilter = { it.fqName?.isRedundantJvmAnnotation != true }
     }
 
     @JvmField
@@ -66,7 +67,7 @@ object IdeDescriptorRenderers {
     val SOURCE_CODE_TYPES: DescriptorRenderer = BASE.withOptions {
         classifierNamePolicy = ClassifierNamePolicy.SOURCE_CODE_QUALIFIED
         typeNormalizer = { APPROXIMATE_FLEXIBLE_TYPES(unwrapAnonymousType(it)) }
-        annotationFilter = { it !is BuiltInAnnotationDescriptor }
+        annotationFilter = { it !is BuiltInAnnotationDescriptor && it.fqName?.isRedundantJvmAnnotation != true }
         parameterNamesInFunctionalTypes = false
     }
 
