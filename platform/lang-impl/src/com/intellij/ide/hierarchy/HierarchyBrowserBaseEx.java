@@ -571,7 +571,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
-    if (!isValidBase()) return;
+    if (!isValidBase() || isDisposed()) return;
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
