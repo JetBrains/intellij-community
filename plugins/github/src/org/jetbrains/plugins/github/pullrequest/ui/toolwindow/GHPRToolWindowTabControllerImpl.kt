@@ -146,6 +146,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@create
       projectSettings.selectedRepoAndAccount = repo to account
       showPullRequestsComponent(repo, account, requestExecutor, false)
+      GHUIUtil.focusPanel(mainPanel)
     }
     with(mainPanel) {
       removeAll()

@@ -155,6 +155,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     }
 
     return
+      component instanceof JLabel ||
       component instanceof AbstractButton ||
       component instanceof JList ||
       component instanceof JTree ||
