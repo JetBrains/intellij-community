@@ -25,6 +25,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.*
+import kotlin.properties.Delegates
 
 class GitGpgConfigDialog(
   private val repository: GitRepository,
@@ -34,7 +35,9 @@ class GitGpgConfigDialog(
   private val uiDispatcher get() = AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()
   private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
-  private val checkBox = JCheckBox(message("settings.configure.sign.gpg.with.key.checkbox.text"))
+  private val checkBox = JCheckBox(message("settings.configure.sign.gpg.with.key.checkbox.text")).apply {
+    addChangeListener { updatePresentation() }
+  }
   private val comboBox = ComboBox<GpgKey>().apply {
     renderer = MyComboboxRenderer()
   }
@@ -49,11 +52,15 @@ class GitGpgConfigDialog(
     isVisible = false
   }
 
+  private var isLoading: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
+  private var hasLoadedKeys: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
+
   init {
     title = message("settings.configure.sign.gpg.for.repo.dialog.title", GitUtil.mention(repository))
 
     init()
     initComboBox()
+    updatePresentation()
   }
 
   override fun getPreferredFocusedComponent(): JComponent = comboBox
@@ -84,8 +91,6 @@ class GitGpgConfigDialog(
 
   private fun initComboBox() {
     launch("loading config") {
-      isOKActionEnabled = false
-
       val comboBoxModel = comboBox.model as DefaultComboBoxModel
 
       val config = repoConfig.load()
@@ -101,29 +106,30 @@ class GitGpgConfigDialog(
         reportError(message("settings.configure.sign.gpg.error.no.available.keys.found.text"))
       }
       else {
-        isOKActionEnabled = true
+        hasLoadedKeys = true
       }
     }
   }
 
+  private fun updatePresentation() {
+    loadingIcon.isVisible = isLoading
+    checkBox.isEnabled = !isLoading
+    comboBox.isEnabled = !isLoading && checkBox.isSelected
+    isOKActionEnabled = !isLoading && (hasLoadedKeys || !checkBox.isSelected)
+  }
+
   override fun doOKAction() {
     launch("writing result") {
-      isOKActionEnabled = false
-      try {
-        writeGitSettings(if (checkBox.isSelected) comboBox.item else null)
-        repoConfig.reload()
-        close(OK_EXIT_CODE)
-      }
-      finally {
-        isOKActionEnabled = true
-      }
+      writeGitSettings(if (checkBox.isSelected) comboBox.item else null)
+      repoConfig.reload()
+      close(OK_EXIT_CODE)
     }
   }
 
   private fun launch(action: @NonNls String, block: suspend CoroutineScope.() -> Unit) {
     scope.launch(uiDispatcher +
                  CoroutineName("GitDefineGpgConfigDialog - $action")) {
-      setLoading(true)
+      isLoading = true
       try {
         block()
       }
@@ -132,16 +138,9 @@ class GitGpgConfigDialog(
         reportError(e.message)
       }
       finally {
-        setLoading(false)
+        isLoading = false
       }
     }
-  }
-
-  private fun setLoading(isLoading: Boolean) {
-    loadingIcon.isVisible = isLoading
-
-    checkBox.isEnabled = !isLoading
-    comboBox.isEnabled = !isLoading
   }
 
   private fun reportError(message: @Nls String) {
