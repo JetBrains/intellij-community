@@ -127,12 +127,11 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
 
   @Override
   public void mousePressed(final MouseEvent e) {
-    if (!canStartDragging(e) || e.isConsumed()) return;
+    if (!canStartDragging(e)) return;
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressedOnScreenPoint = new Point(myPressPointScreen);
     processMousePressed(e);
-    e.consume();
   }
 
   @Override
