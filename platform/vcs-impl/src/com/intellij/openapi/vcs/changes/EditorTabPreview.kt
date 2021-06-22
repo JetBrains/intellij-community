@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -38,7 +37,6 @@ import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val vcsConfiguration = VcsConfiguration.getInstance(project)
   private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click")
   private val previewFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
@@ -72,7 +70,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   private fun installSelectionHandler(tree: ChangesTree) {
     installSelectionChangedHandler(tree) {
-      if (vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+      if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
       }
       else {
@@ -143,7 +141,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
-  private fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
+  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
 
   fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)

@@ -781,7 +781,7 @@ public class ShelvedChangesViewManager implements Disposable {
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-          if (!isEditorPreviewAllowed()) return true;
+          if (!isPreviewOpen() && !isEditorPreviewAllowed()) return true;
 
           return false;
         }
