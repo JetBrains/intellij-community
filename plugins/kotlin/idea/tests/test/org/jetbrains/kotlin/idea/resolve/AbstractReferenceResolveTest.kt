@@ -84,7 +84,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
 
     open val refMarkerText: String = "REF"
 
