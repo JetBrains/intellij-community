@@ -1195,11 +1195,19 @@ skip_ipr:
   ${LogText} "SystemParametersInfo(SPI_GETSCREENREADER): $0, value=$1"
   ${If} $0 <> 0
   ${AndIf} $1 == 1
-  ${AndIf} ${FileExists} "$INSTDIR\jbr\bin\jabswitch.exe"
-    ${LogText} "Executing '$\"$INSTDIR\jbr\bin\jabswitch.exe$\" /enable'"
-    ExecDos::exec /DETAILED '"$INSTDIR\jbr\bin\jabswitch.exe" /enable'
-    Pop $0
-    ${LogText} "Exit code: $0"
+    ${If} ${FileExists} "$INSTDIR\jbr\bin\jabswitch.exe"
+      ${LogText} "Executing '$\"$INSTDIR\jbr\bin\jabswitch.exe$\" /enable'"
+      ExecDos::exec /DETAILED '"$INSTDIR\jbr\bin\jabswitch.exe" /enable'
+      Pop $0
+      ${LogText} "Exit code: $0"
+    ${EndIf}
+    ${If} ${FileExists} "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll"
+    ${AndIfNot} ${FileExists} "$SYSDIR\WindowsAccessBridge-64.dll"
+      ${LogText} "Copying '$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll' into '$SYSDIR'"
+      ${DisableX64FSRedirection}
+      CopyFiles /SILENT "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll" "$SYSDIR"
+      ${EnableX64FSRedirection}
+    ${EndIf}
   ${EndIf}
 
   Call customPostInstallActions
