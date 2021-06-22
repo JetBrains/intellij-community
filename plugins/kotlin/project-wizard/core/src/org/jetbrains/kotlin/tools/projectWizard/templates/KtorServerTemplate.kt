@@ -28,7 +28,7 @@ class KtorServerTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
     @NonNls

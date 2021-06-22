@@ -21,7 +21,7 @@ class NativeConsoleApplicationTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.native.console.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.native.console.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.native
 
     override val id: String = "nativeConsoleApp"

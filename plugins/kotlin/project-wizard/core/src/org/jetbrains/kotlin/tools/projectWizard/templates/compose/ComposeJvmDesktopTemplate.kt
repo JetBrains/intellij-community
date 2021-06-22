@@ -25,7 +25,7 @@ class ComposeJvmDesktopTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm && projectKind == ProjectKind.COMPOSE
 
     override fun isApplicableTo(reader: Reader, module: Module): Boolean =

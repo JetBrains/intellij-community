@@ -170,7 +170,7 @@ private class ModuleTemplateComponent(
 private object NoneTemplate : Template() {
     override val title = KotlinNewProjectWizardUIBundle.message("module.settings.template.none")
     override val description: String = ""
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean = true
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean = true
 
     override val id: String = "none"
 }

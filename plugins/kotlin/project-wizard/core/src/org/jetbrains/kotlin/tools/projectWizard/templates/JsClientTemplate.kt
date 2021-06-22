@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.Templa
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.interceptTemplate
 
 abstract class JsClientTemplate : Template() {
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.js
 
     override fun isApplicableTo(

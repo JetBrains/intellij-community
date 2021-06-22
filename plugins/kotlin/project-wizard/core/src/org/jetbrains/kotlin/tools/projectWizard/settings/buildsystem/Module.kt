@@ -32,13 +32,18 @@ enum class ModuleKind(val isSingleplatform: Boolean) : DisplayableSettingItem {
 }
 
 
-// TODO separate to classes
+/**
+ * @param template selected by default if any, should be present in [permittedTemplateIds].
+ * @param permittedTemplateIds when specified the set restricts templates available for the module. Final decision (on whether a template
+ * is included) is made on a template level, see [Template.isSupportedByModuleType].
+ */
 class Module(
     @NonNls var name: String,
     val configurator: ModuleConfigurator,
-    var template: Template?,
-    val sourcesets: List<Sourceset>,
-    subModules: List<Module>,
+    var template: Template? = null,
+    val permittedTemplateIds: Set<String>? = null,
+    val sourcesets: List<Sourceset> = createDefaultSourceSets(),
+    subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,
     override val identificator: Identificator = GeneratedIdentificator(name)
@@ -96,14 +101,10 @@ class Module(
             val sourcesets = listOf(Sourceset(SourcesetType.main), Sourceset(SourcesetType.test))
             val (submodules) = map.parseValue(this, path, "subModules", listParser(Module.parser)) { emptyList() }
             val (dependencies) = map.parseValue(this, path, "dependencies", listParser(ModuleReference.ByPath.parser)) { emptyList() }
+
             Module(
-                name,
-                configurator,
-                template,
-                sourcesets,
-                submodules,
-                dependencies = dependencies.toMutableList(),
-                identificator = identificator
+                name, configurator, template = template, sourcesets = sourcesets, subModules = submodules,
+                dependencies = dependencies.toMutableList(), identificator = identificator
             )
         }
 
@@ -157,8 +158,10 @@ class Module(
         val subModulesValidator = inValidatorContext<Module> { module ->
             validateList(module.subModules)
         }
-    }
 
+        private fun createDefaultSourceSets() =
+            SourcesetType.values().map { sourceSetType -> Sourceset(sourceSetType, dependencies = emptyList()) }
+    }
 }
 
 val Module.path
@@ -177,30 +180,12 @@ val Module.isRootModule
 
 @Suppress("FunctionName")
 fun MultiplatformTargetModule(@NonNls name: String, configurator: ModuleConfigurator, sourcesets: List<Sourceset>) =
-    Module(
-        name,
-        configurator,
-        null,
-        sourcesets,
-        emptyList()
-    )
+    Module(name, configurator, sourcesets = sourcesets)
 
 @Suppress("FunctionName")
 fun MultiplatformModule(@NonNls name: String, template: Template? = null, targets: List<Module> = emptyList()) =
-    Module(
-        name,
-        MppModuleConfigurator,
-        template,
-        emptyList(),
-        targets
-    )
+    Module(name, MppModuleConfigurator, template = template, subModules = targets)
 
 @Suppress("FunctionName")
 fun SingleplatformModule(@NonNls name: String, sourcesets: List<Sourceset>) =
-    Module(
-        name,
-        JvmSinglePlatformModuleConfigurator,
-        null,
-        sourcesets,
-        emptyList()
-    )
+    Module(name, JvmSinglePlatformModuleConfigurator, sourcesets = sourcesets)

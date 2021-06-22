@@ -24,7 +24,7 @@ class ConsoleJvmApplicationTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.console.jvm.description")
 
 
-    override fun isSupportedByModuleType(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
         module.configurator.moduleType == ModuleType.jvm
 
     override fun Writer.getIrsToAddToBuildFile(

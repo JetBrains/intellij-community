@@ -413,24 +413,18 @@ object MultiplatformMobileLibraryProjectTemplate : ProjectTemplate() {
                     targets = listOf(
                         ModuleType.common.createDefaultTarget(),
                         Module(
-                            "android",
-                            AndroidTargetConfigurator,
-                            null,
-                            SourcesetType.ALL.map { type ->
+                            "android", AndroidTargetConfigurator,
+                            sourcesets = SourcesetType.ALL.map { type ->
                                 Sourceset(type, dependencies = emptyList())
-                            },
-                            emptyList()
+                            }
                         ).withConfiguratorSettings(AndroidTargetConfigurator) {
                             configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                         },
                         Module(
-                            "ios",
-                            RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosX64),
-                            null,
-                            SourcesetType.ALL.map { type ->
+                            "ios", RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosX64),
+                            sourcesets = SourcesetType.ALL.map { type ->
                                 Sourceset(type, dependencies = emptyList())
-                            },
-                            emptyList()
+                            }
                         )
                     )
                 )
