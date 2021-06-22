@@ -60,6 +60,7 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, notificationType)
     notification.setDisplayId(displayId)
     notificationActions.forEach { notification.addAction(it) }
+    notification.addAction(notifier.createShowDetailsAction())
     notification.notify(committer.project)
   }
 
