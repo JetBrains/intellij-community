@@ -4,7 +4,7 @@ class a {
     void g() {
         Exception e=null;
         Object o = null;
-        f(<caret>e,o);
+        f((Throwable) e,o);
     }
 }
 

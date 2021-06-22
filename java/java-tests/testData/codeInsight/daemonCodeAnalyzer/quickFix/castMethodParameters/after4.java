@@ -8,7 +8,7 @@ class a {
     private void test(int c, char f)  {}
 
     void f() {
-        test(<caret>0, 0);
+        test((char) 0, 0);
     }
 }
 
