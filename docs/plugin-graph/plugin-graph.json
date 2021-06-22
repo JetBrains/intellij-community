@@ -2541,6 +2541,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cnx",
+    "n": "com.intellij.spring.mvc"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "nx",
     "name": "intellij.spring.mvc.impl",
     "n": "i.spring.mvc.impl",
@@ -2548,7 +2554,20 @@
     "sourceModule": "intellij.spring.mvc.impl",
     "descriptor": "plugins/spring/spring-mvc-support/spring-mvc/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.spring.mvc",
-    "type": 1
+    "parent": "cnx",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xS",
+    "name": "intellij.spring.mvc.impl/el",
+    "n": "i.spring.mvc.impl/el",
+    "package": "com.intellij.spring.mvc.el",
+    "sourceModule": "intellij.spring.mvc.impl",
+    "descriptor": "plugins/spring/spring-mvc-support/spring-mvc/resources/intellij.spring.mvc.impl.el.xml",
+    "parent": "cnx",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -4204,6 +4223,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "nx_xS",
+    "source": "nx",
+    "target": "xS",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "ik_Tk",
     "source": "ik",
     "target": "Tk",
@@ -5556,14 +5583,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "T4_ZS",
-    "source": "T4",
-    "target": "ZS",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "j0_S9",
     "source": "j0",
     "target": "S9",
@@ -6511,6 +6530,14 @@
     "id": "nx_2Z",
     "source": "nx",
     "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xS_wC",
+    "source": "xS",
+    "target": "wC",
     "type": 0
   }
 }, {

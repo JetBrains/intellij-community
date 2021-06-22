@@ -23,10 +23,19 @@ export class GraphTextSearch {
 
     const newNodes = []
     if (text.length !== 0) {
-      for (const item of await index.search(text)) {
-        const node = cy.getElementById(item.id)
+      const originalText = text
+      const extraPrefix = "com.intellij."
+      // if (text.startsWith(extraPrefix) && text.length !== extraPrefix.length) {
+      //   // remove useless prefix to avoid a lot of results
+      //   text = text.substring(extraPrefix.length)
+      // }
+
+      const result = await index.search(text)
+      console.log(`Search result for "${text}`, result)
+      for (const id of result) {
+        const node = cy.getElementById(id)
         if (node == null) {
-          console.error(`Cannot find node by id ${item.id}`)
+          console.error(`Cannot find node by id ${id}`)
         }
         selectedNodes.delete(node)
         newNodes.push(node)
