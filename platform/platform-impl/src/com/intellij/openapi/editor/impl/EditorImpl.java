@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -3957,6 +3958,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
         if (range != null) {
           final boolean expansion = !range.isExpanded();
+          UIEventLogger.EditorFoldingIconClicked.log(expansion, e.isAltDown());
 
           int scrollShift = expansion ? 0 : visualLineToY(yToVisualLine(y)) - getScrollingModel().getVerticalScrollOffset();
           getFoldingModel().runBatchFoldingOperation(() -> {
