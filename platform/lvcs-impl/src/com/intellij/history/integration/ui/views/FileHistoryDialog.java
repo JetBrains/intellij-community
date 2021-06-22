@@ -146,8 +146,11 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   private void applyFilteredRevisions(Set<Long> revisions) {
+    boolean wasEmpty = myRevisionsList.isEmpty();
     myRevisionsList.setFilteredRevisions(revisions);
-    myModel.resetEntriesCache();
+    if (wasEmpty != myRevisionsList.isEmpty()) {
+      myForceUpdateDiff = true;
+    }
     updateEditorSearch();
   }
 

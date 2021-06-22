@@ -153,13 +153,13 @@ public abstract class HistoryDialogModel {
     resetEntriesCache();
   }
 
-  public void resetEntriesCache() {
+  private void resetEntriesCache() {
     myLeftEntryCache = null;
     myRightEntryCache = null;
   }
 
   public Revision getLeftRevision() {
-    if (getRevisions().isEmpty() || myLeftRevisionIndex == -1) return getCurrentRevision();
+    if (getRevisions().isEmpty()) return getCurrentRevision();
     return getRevisions().get(myLeftRevisionIndex).revision;
   }
 
@@ -190,7 +190,7 @@ public abstract class HistoryDialogModel {
     int l, r;
     if (first == second) {
       r = -1;
-      l = first;
+      l = first == -1 ? 0 : first;
     }
     else {
       r = first;

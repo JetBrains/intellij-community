@@ -71,6 +71,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected RevisionsList myRevisionsList;
   private JBLoadingPanel myDiffView;
   private ActionToolbar myToolBar;
+  protected boolean myForceUpdateDiff;
 
   protected T myModel;
 
@@ -235,6 +236,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     doScheduleUpdate(UPDATE_DIFFS, () -> {
       synchronized (myModel) {
         boolean changed = toSelect == null ? myModel.resetSelection() : myModel.selectRevisions(toSelect.first, toSelect.second);
+        changed |= myForceUpdateDiff;
+        myForceUpdateDiff = false;
         return changed ? doUpdateDiffs(myModel) : EmptyRunnable.getInstance();
       }
     });
