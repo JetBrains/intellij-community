@@ -431,7 +431,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
       Project project = myConfiguration.getProject();
       MavenBuildEventProcessor eventProcessor =
-        new MavenBuildEventProcessor(project, project.getBasePath(), viewManager, descriptor, taskId,
+        new MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
                                      targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
 
         );
@@ -454,7 +454,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
       Project project = myConfiguration.getProject();
       MavenBuildEventProcessor eventProcessor =
-        new MavenBuildEventProcessor(project, project.getBasePath(), buildView, descriptor, taskId, targetFileMapper, ctx ->
+        new MavenBuildEventProcessor(myConfiguration, buildView, descriptor, taskId, targetFileMapper, ctx ->
           new StartBuildEventImpl(descriptor, ""));
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));

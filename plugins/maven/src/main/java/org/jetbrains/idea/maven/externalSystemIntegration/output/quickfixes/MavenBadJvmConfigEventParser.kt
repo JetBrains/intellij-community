@@ -8,7 +8,8 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.build.output.BuildOutputInstantReader
-import com.intellij.execution.impl.EditConfigurationsDialog
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -19,12 +20,14 @@ import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQui
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenRunnerSettingsQuickFix
 import org.jetbrains.idea.maven.execution.MavenExternalParameters
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle.message
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.CompletableFuture
@@ -48,7 +51,8 @@ class MavenBadJvmConfigEventParser : MavenLoggedEventParser {
       }
       messageConsumer.accept(
         BuildIssueEventImpl(parentId,
-                            MavenJvmConfigBuildIssue.getRunnerIssue(logLine.line, errorLine, parsingContext.ideaProject),
+                            MavenJvmConfigBuildIssue
+                              .getRunnerIssue(logLine.line, errorLine, parsingContext.ideaProject, parsingContext.runConfiguration),
                             MessageEvent.Kind.ERROR)
       )
       return true
@@ -71,7 +75,7 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
         errorLine += "\n$causeLine"
       }
       messageConsumer.accept(BuildIssueEventImpl(Object(),
-                                              MavenJvmConfigBuildIssue.getImportIssue(logLine, errorLine, project),
+                                              MavenJvmConfigBuildIssue.getImportIssue(logLine, errorLine, project, null),
                                               MessageEvent.Kind.ERROR))
       return true
     }
@@ -90,12 +94,12 @@ class MavenJvmConfigOpenQuickFix(val jvmConfig: VirtualFile) : BuildIssueQuickFi
   }
 }
 
-class MavenRunConfigurationOpenQuickFix() : BuildIssueQuickFix {
+class MavenRunConfigurationOpenQuickFix(val runnerAndConfigurationSettings: RunnerAndConfigurationSettings) : BuildIssueQuickFix {
 
   override val id: String = "open_maven_run_configuration_open_quick_fix"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    EditConfigurationsDialog(project).show()
+    RunDialog.editConfiguration(project, runnerAndConfigurationSettings, message("maven.settings.runner.vm.options"))
     return CompletableFuture.completedFuture<Any>(null)
   }
 }
@@ -103,11 +107,16 @@ class MavenRunConfigurationOpenQuickFix() : BuildIssueQuickFix {
 object MavenJvmConfigBuildIssue {
   const val VM_INIT_ERROR:String = "Error occurred during initialization of VM"
 
-  fun getRunnerIssue(title: String, errorMessage: String, project: Project) = getBuildIssue(title, errorMessage, project, false)
+  fun getRunnerIssue(title: String, errorMessage: String, project: Project,
+                     runConfiguration: MavenRunConfiguration?) =
+    getBuildIssue(title, errorMessage, project, runConfiguration, false)
 
-  fun getImportIssue(title: String, errorMessage: String, project: Project) = getBuildIssue(title, errorMessage, project, true)
+  fun getImportIssue(title: String, errorMessage: String, project: Project,
+                     runConfiguration: MavenRunConfiguration?) =
+    getBuildIssue(title, errorMessage, project, runConfiguration, true)
 
-  private fun getBuildIssue(title: String, errorMessage: String, project: Project, import: Boolean): BuildIssue {
+  private fun getBuildIssue(title: String, errorMessage: String, project: Project,
+                            runConfiguration: MavenRunConfiguration?, import: Boolean): BuildIssue {
     val rootMavenProject = MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()
     val jvmConfig: VirtualFile? = rootMavenProject?.file?.path
       ?.let { MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(it) }
@@ -115,31 +124,38 @@ object MavenJvmConfigBuildIssue {
 
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
     val issueDescription = StringBuilder(errorMessage)
-    issueDescription.append("\n\nPossible solution:\n")
+    issueDescription.append("\n\n")
+    issueDescription.append(MavenProjectBundle.message("maven.quickfix.header.possible.solution"))
+    issueDescription.append("\n")
     if (import) {
       val openMavenImportingSettingsQuickFix = OpenMavenImportingSettingsQuickFix(message("maven.settings.importing.vm.options"))
       quickFixes.add(openMavenImportingSettingsQuickFix)
-      issueDescription.append(
-        " - Check your maven import VM options. <a href=\"${openMavenImportingSettingsQuickFix.id}\">Open maven import settings</a>.\n")
+      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.import.settings", openMavenImportingSettingsQuickFix.id))
+      issueDescription.append("\n")
     }
     else {
       val openMavenRunnerSettingsQuickFix = OpenMavenRunnerSettingsQuickFix(message("maven.settings.runner.vm.options"))
       quickFixes.add(openMavenRunnerSettingsQuickFix)
-      issueDescription.append(
-        " - Check your maven runner VM options. <a href=\"${openMavenRunnerSettingsQuickFix.id}\">Open maven runner settings</a>.\n")
-      val selectedConfiguration = RunManagerImpl.getInstanceImpl(project).selectedConfiguration
-      if (selectedConfiguration != null && selectedConfiguration.configuration is MavenRunConfiguration) {
-        val mavenRunConfigurationOpenQuickFix = MavenRunConfigurationOpenQuickFix()
-        quickFixes.add(mavenRunConfigurationOpenQuickFix)
-        issueDescription.append(
-          " - Check your maven run configuration. Tab runner - VM options. <a href=\"${mavenRunConfigurationOpenQuickFix.id}\">Open maven run configuration</a>.\n")
+      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.runner.settings", openMavenRunnerSettingsQuickFix.id))
+      issueDescription.append("\n")
+
+      val configurationById = runConfiguration
+        ?.let { RunManagerImpl.getInstanceImpl(project).findConfigurationByTypeAndName(MavenRunConfigurationType.getInstance(), it.name) }
+      if (configurationById != null && configurationById.configuration is MavenRunConfiguration) {
+        val configuration = configurationById.configuration as MavenRunConfiguration
+        if (!configuration.runnerSettings?.vmOptions.isNullOrBlank()) {
+          val mavenRunConfigurationOpenQuickFix = MavenRunConfigurationOpenQuickFix(configurationById)
+          quickFixes.add(mavenRunConfigurationOpenQuickFix)
+          issueDescription.append(MavenProjectBundle
+                                    .message("maven.quickfix.jvm.options.run.configuration", mavenRunConfigurationOpenQuickFix.id))
+          issueDescription.append("\n")
+        }
       }
     }
     if (jvmConfig != null) {
       val mavenJvmConfigOpenQuickFix = MavenJvmConfigOpenQuickFix(jvmConfig)
       quickFixes.add(mavenJvmConfigOpenQuickFix)
-      issueDescription.append(
-        " - Check your .mvn/jvm.config. <a href=\"${mavenJvmConfigOpenQuickFix.id}\">Open jvm config.</a>\n")
+      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.config.file", mavenJvmConfigOpenQuickFix.id))
     }
 
     return object : BuildIssue {

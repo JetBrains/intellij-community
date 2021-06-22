@@ -21,16 +21,13 @@ public class MavenSpyOutputParser {
   public static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
   private final Set<String> downloadingMap = new HashSet<>();
   private final MavenParsingContext myContext;
-  private final List<MavenSpyLoggedEventParser> mySpyLoggedEventParsers;
 
   public static boolean isSpyLog(String s) {
     return s != null && s.startsWith(PREFIX);
   }
 
-  public MavenSpyOutputParser(@NotNull MavenParsingContext context,
-                              @NotNull List<MavenSpyLoggedEventParser> spyLoggedEventParsers) {
+  public MavenSpyOutputParser(@NotNull MavenParsingContext context) {
     myContext = context;
-    mySpyLoggedEventParsers = spyLoggedEventParsers;
   }
 
 
@@ -164,7 +161,7 @@ public class MavenSpyOutputParser {
                                    MavenEventType eventType,
                                    Consumer<? super BuildEvent> messageConsumer) {
     if (errorLine == null) return;
-    for (MavenSpyLoggedEventParser eventParser : mySpyLoggedEventParsers) {
+    for (MavenSpyLoggedEventParser eventParser : MavenSpyLoggedEventParser.EP_NAME.getExtensionList()) {
       if (eventParser.supportsType(eventType)
           && eventParser.processLogLine(myContext.getLastId(), myContext, errorLine, messageConsumer)) {
         return;

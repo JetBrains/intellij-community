@@ -9,11 +9,11 @@ import com.intellij.build.output.BuildOutputInstantReaderImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
@@ -24,17 +24,13 @@ import java.util.function.Function;
 @ApiStatus.Experimental
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
   @NotNull private final BuildProgressListener myBuildProgressListener;
-  @NotNull private final Project myProject;
   @NotNull private final BuildOutputInstantReaderImpl myInstantReader;
-  @NotNull private final ExternalSystemTaskId myTaskId;
-  @NotNull private final String myWorkingDir;
   @NotNull private final MavenLogOutputParser myParser;
   private boolean closed = false;
   private final BuildDescriptor myDescriptor;
   @NotNull private final Function<MavenParsingContext, StartBuildEvent> myStartBuildEventSupplier;
 
-  public MavenBuildEventProcessor(@NotNull Project project,
-                                  @NotNull String workingDir,
+  public MavenBuildEventProcessor(@NotNull MavenRunConfiguration runConfiguration,
                                   @NotNull BuildProgressListener buildProgressListener,
                                   @NotNull BuildDescriptor descriptor,
                                   @NotNull ExternalSystemTaskId taskId,
@@ -42,17 +38,14 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
                                   @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier) {
 
     myBuildProgressListener = buildProgressListener;
-    myProject = project;
-    myTaskId = taskId;
-    myWorkingDir = workingDir;
     myDescriptor = descriptor;
     myStartBuildEventSupplier = startBuildEventSupplier != null
                                 ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "");
 
-    myParser = MavenOutputParserProvider.createMavenOutputParser(project, myTaskId, targetFileMapper);
+    myParser = MavenOutputParserProvider.createMavenOutputParser(runConfiguration, taskId, targetFileMapper);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
-      myTaskId, myTaskId,
+      taskId, taskId,
       myBuildProgressListener,
       Collections.singletonList(myParser));
   }

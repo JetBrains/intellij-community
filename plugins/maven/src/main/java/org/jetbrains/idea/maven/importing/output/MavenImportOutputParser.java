@@ -9,17 +9,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class MavenImportOutputParser implements BuildOutputParser {
 
-  private final List<MavenImportLoggedEventParser> myRegisteredEvents;
   private final Project myProject;
 
   public MavenImportOutputParser(@NotNull Project project) {
     myProject = project;
-    myRegisteredEvents = MavenImportLoggedEventParser.EP_NAME.getExtensionList();
   }
 
   @Override
@@ -30,7 +27,7 @@ public class MavenImportOutputParser implements BuildOutputParser {
       return false;
     }
 
-    for (MavenImportLoggedEventParser event : myRegisteredEvents) {
+    for (MavenImportLoggedEventParser event : MavenImportLoggedEventParser.EP_NAME.getExtensionList()) {
       if (event.processLogLine(myProject, line, reader, messageConsumer)) {
         return true;
       }

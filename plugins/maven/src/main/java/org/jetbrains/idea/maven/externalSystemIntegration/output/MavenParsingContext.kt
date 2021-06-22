@@ -3,17 +3,18 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 
-class MavenParsingContext(val ideaProject: Project,
+class MavenParsingContext(val runConfiguration : MavenRunConfiguration,
                           private val myTaskId: ExternalSystemTaskId,
                           val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
+  val ideaProject = runConfiguration.project
 
   private val context = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0

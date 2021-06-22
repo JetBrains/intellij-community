@@ -22,6 +22,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -204,8 +206,11 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     }
 
     private List<BuildEvent> collect() {
+      MavenRunConfiguration configuration =
+        (MavenRunConfiguration)new MavenRunConfigurationType.MavenRunConfigurationFactory(MavenRunConfigurationType.getInstance())
+          .createTemplateConfiguration(getProject());
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser = new MavenLogOutputParser(getProject(), myTaskId, myParsers);
+      MavenLogOutputParser parser = new MavenLogOutputParser(configuration, myTaskId, myParsers);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));

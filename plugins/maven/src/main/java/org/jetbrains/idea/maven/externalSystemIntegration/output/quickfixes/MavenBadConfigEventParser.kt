@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEven
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -118,7 +119,7 @@ object MavenConfigBuildIssue {
     val quickFixes = listOf<BuildIssueQuickFix>(mavenConfigOpenQuickFix)
     val issueDescription = StringBuilder(errorMessage)
     issueDescription.append("\n\n")
-    issueDescription.append("Error parsing '.mvn/maven.config' file. <a href=\"${mavenConfigOpenQuickFix.id}\">Open maven config</a>.\n")
+    issueDescription.append(MavenProjectBundle.message("maven.quickfix.maven.config.file", mavenConfigOpenQuickFix.id))
 
     return object : BuildIssue {
       override val title: String = title
