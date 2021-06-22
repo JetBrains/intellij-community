@@ -3,10 +3,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginConflictReporter;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -847,10 +844,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void setIgnoredFilesList(@NotNull String list) {
-    fireBeforeFileTypesChanged();
-    myIgnoredFileCache.clearCache();
-    myIgnoredPatterns.setIgnoreMasks(list);
-    fireFileTypesChanged();
+    makeFileTypesChange("ignored files list updated: " + list, () -> {
+      myIgnoredFileCache.clearCache();
+      myIgnoredPatterns.setIgnoreMasks(list);
+    });
   }
 
   @Override
@@ -919,6 +916,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void fireFileTypesChanged() {
     fireFileTypesChanged(null, null);
+  }
+
+  @Override
+  public void makeFileTypesChange(@NotNull String debugReasonMessage, @NotNull Runnable command) {
+    PluginId pluginId = PluginUtil.getInstance().findPluginId(new Throwable());
+    LOG.info("File types changed: " + debugReasonMessage + (pluginId != null ? ". Caused by plugin '" + pluginId.getIdString() + "'." : ""));
+    fireBeforeFileTypesChanged();
+    try {
+      command.run();
+    }
+    finally {
+      fireFileTypesChanged();
+    }
   }
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
@@ -1467,20 +1477,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   void setPatternsTable(@NotNull Set<? extends FileTypeWithDescriptor> fileTypes, @NotNull FileTypeAssocTable<FileTypeWithDescriptor> assocTable) {
     Map<FileNameMatcher, FileTypeWithDescriptor> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
-    fireBeforeFileTypesChanged();
-    for (FileTypeWithDescriptor existing : getRegisteredFileTypeWithDescriptors()) {
-      if (!fileTypes.contains(existing)) {
-        mySchemeManager.removeScheme(existing);
+    String message = "set patterns table called: file types " + fileTypes + ", ass. table:" + assocTable;
+    makeFileTypesChange(message, () -> {
+      for (FileTypeWithDescriptor existing : getRegisteredFileTypeWithDescriptors()) {
+        if (!fileTypes.contains(existing)) {
+          mySchemeManager.removeScheme(existing);
+        }
       }
-    }
-    for (FileTypeWithDescriptor ftd : fileTypes) {
-      mySchemeManager.addScheme(ftd);
-      if (ftd.fileType instanceof AbstractFileType) {
-        ((AbstractFileType)ftd.fileType).initSupport();
+      for (FileTypeWithDescriptor ftd : fileTypes) {
+        mySchemeManager.addScheme(ftd);
+        if (ftd.fileType instanceof AbstractFileType) {
+          ((AbstractFileType)ftd.fileType).initSupport();
+        }
       }
-    }
-    myPatternsTable = assocTable.copy();
-    fireFileTypesChanged();
+      myPatternsTable = assocTable.copy();
+    });
 
     myRemovedMappingTracker.removeIf(mapping -> {
       String fileTypeName = mapping.getFileTypeName();
@@ -1498,24 +1509,24 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // delete "this matcher is removed from this file type" record
     myRemovedMappingTracker.removeIf(mapping -> matcher.equals(mapping.getFileNameMatcher()) && fileType.getName().equals(mapping.getFileTypeName()));
     if (!myPatternsTable.isAssociatedWith(ftd, matcher)) {
+      Runnable command = () -> myPatternsTable.addAssociation(matcher, ftd);
       if (fireChange) {
-        fireBeforeFileTypesChanged();
+        makeFileTypesChange("file type '" + ftd.fileType + "' associated with '" + matcher + "'", command);
       }
-      myPatternsTable.addAssociation(matcher, ftd);
-      if (fireChange) {
-        fireFileTypesChanged();
+      else {
+        command.run();
       }
     }
   }
 
   private void removeAssociation(@NotNull FileTypeWithDescriptor ftd, @NotNull FileNameMatcher matcher, boolean fireChange) {
     if (myPatternsTable.isAssociatedWith(ftd, matcher)) {
+      Runnable command = () -> myPatternsTable.removeAssociation(matcher, ftd);
       if (fireChange) {
-        fireBeforeFileTypesChanged();
+        makeFileTypesChange("file type '" + ftd.fileType + "' association with '" + matcher + "' has been removed", command);
       }
-      myPatternsTable.removeAssociation(matcher, ftd);
-      if (fireChange) {
-        fireFileTypesChanged();
+      else {
+        command.run();
       }
     }
   }

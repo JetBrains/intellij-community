@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * If the override conditions for a given {@code FileTypeOverrider} change, it needs to call
  * {@link com.intellij.util.FileContentUtilCore#reparseFiles(VirtualFile...)} if it's possible to identify specific files affected
- * by the change, or {@link FileTypeManagerEx#fireFileTypesChanged()} if the change affects an unknown number of files.
+ * by the change, or {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} ()} if the change affects an unknown number of files.
  */
 @ApiStatus.Experimental
 public interface FileTypeOverrider {

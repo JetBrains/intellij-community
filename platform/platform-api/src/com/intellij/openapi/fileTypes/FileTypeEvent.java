@@ -15,16 +15,22 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
-public class FileTypeEvent extends EventObject {
+public final class FileTypeEvent extends EventObject {
   private final FileType myAddedFileType;
   private final FileType myRemovedFileType;
 
-  public FileTypeEvent(@NotNull Object source, @Nullable FileType addedFileType, @Nullable FileType removedFileType) {
+  @ApiStatus.Internal
+  public FileTypeEvent(@NotNull Object source,
+                       @Nullable FileType addedFileType,
+                       @Nullable FileType removedFileType) {
     super(source);
     myAddedFileType = addedFileType;
     myRemovedFileType = removedFileType;
@@ -46,5 +52,18 @@ public class FileTypeEvent extends EventObject {
   @Nullable
   public FileType getRemovedFileType() {
     return myRemovedFileType;
+  }
+
+  @Override
+  public String toString() {
+    var result = new SmartList<String>();
+    if (myAddedFileType != null) {
+      result.add("added file type = " + myAddedFileType);
+    }
+    if (myRemovedFileType != null) {
+      result.add("removed file type = " + myRemovedFileType);
+    }
+
+    return "FileTypeEvent[" + StringUtil.join(result, ", ") +  "]";
   }
 }

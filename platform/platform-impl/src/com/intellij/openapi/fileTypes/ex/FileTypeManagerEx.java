@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class FileTypeManagerEx extends FileTypeManager {
@@ -34,7 +35,18 @@ public abstract class FileTypeManagerEx extends FileTypeManager {
   @NotNull
   public abstract String getExtension(@NotNull String fileName);
 
+  /**
+   * Use {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} instead.
+   */
   public abstract void fireFileTypesChanged();
 
+  /**
+   * Use {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} instead.
+   */
   public abstract void fireBeforeFileTypesChanged();
+
+  /**
+   * Use this method to notify {@link FileTypeManager} that file type association has been changed.
+   */
+  public abstract void makeFileTypesChange(@NonNls @NotNull String debugReasonMessage, @NotNull Runnable command);
 }
