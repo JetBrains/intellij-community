@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -108,6 +109,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private LibraryTableTracker myLibraryTableTracker;
   private @Nullable CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   private AccessToken projectTracker;
@@ -279,6 +281,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     UIUtil.dispatchAllInvocationEvents();
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+    myLibraryTableTracker = new LibraryTableTracker();
   }
 
   public final Project getProject() {
@@ -514,6 +517,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> LightPlatformTestCase.checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
+      () -> myLibraryTableTracker.assertDisposed(),
       () -> {
         myModule = null;
         myEditorListenerTracker = null;

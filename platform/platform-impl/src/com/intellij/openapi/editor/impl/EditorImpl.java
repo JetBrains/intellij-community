@@ -84,10 +84,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -1000,16 +997,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
   }
 
-  /**
-   * To be called when editor was not disposed while it should
-   */
-  void throwEditorNotDisposedError(@NonNls @NotNull final String msg) {
-    myTraceableDisposable.throwObjectNotDisposedError(msg);
-  }
-
-  /**
-   * In case of "editor not disposed error" use {@link #throwEditorNotDisposedError(String)}
-   */
+  @Contract("_->fail")
   public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
   }
