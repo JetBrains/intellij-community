@@ -40,6 +40,15 @@ public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBa
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return lastParent == null || super.processDeclarations(processor, state, lastParent, place);
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    // Do not resolve variables that don't come from the body of this {@link PsiSwitchLabeledRuleStatement}
+    if (lastParent == null) return true;
+    // Do not resolve references that come from the list of elements in this case rule
+    if (lastParent instanceof PsiCaseLabelElementList) return true;
+
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
   }
 }

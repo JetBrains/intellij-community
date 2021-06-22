@@ -2,11 +2,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiCaseLabelElement;
-import com.intellij.psi.PsiCaseLabelElementList;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,5 +82,19 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
   @Override
   public String toString() {
     return "PsiCaseLabelElementList";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    // Do not resolve elements from the list of elements of the case rule
+    if (lastParent != null) return true;
+    for (PsiCaseLabelElement label : getElements()) {
+      boolean shouldKeepGoing = label.processDeclarations(processor, state, null, place);
+      if (!shouldKeepGoing) return false;
+    }
+    return true;
   }
 }
