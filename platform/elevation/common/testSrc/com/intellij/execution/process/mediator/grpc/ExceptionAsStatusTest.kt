@@ -39,6 +39,7 @@ internal class ExceptionAsStatusTest {
       .also { assertTrue(it === statusRuntimeException, it.toString()) }
   }
 
+  @ExperimentalStdlibApi
   @Test
   fun `unwraps wrapped exceptions`() {
     checkWrapAndUnwrap(IOException("IOE: ioe..."))
