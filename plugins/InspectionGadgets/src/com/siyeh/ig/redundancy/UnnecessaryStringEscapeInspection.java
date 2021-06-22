@@ -6,12 +6,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -103,6 +102,11 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             start = findUnnecessaryTextBlockEscapes(text, offset);
           }
           newExpression.append(text.substring(offset));
+          final Document document = element.getContainingFile().getViewProvider().getDocument();
+          assert document != null;
+          final TextRange replaceRange = element.getTextRange();
+          document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), newExpression.toString());
+          return;
         }
         else {
           boolean escaped = false;
