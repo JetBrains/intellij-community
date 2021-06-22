@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$InitializationActivity"/>
-    <advancedSetting id="kotlin.compiler.ref.index" default="true" groupKey="group.advanced.settings.kotlin" bundle="messages.KotlinReferenceIndexBundle"/>
+    <advancedSetting id="kotlin.compiler.ref.index" default="false" groupKey="group.advanced.settings.kotlin" bundle="messages.KotlinReferenceIndexBundle"/>
     <languageCompilerRefAdapter implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerRefHelper"/>
   </extensions>
   <resource-bundle>messages.KotlinReferenceIndexBundle</resource-bundle>
