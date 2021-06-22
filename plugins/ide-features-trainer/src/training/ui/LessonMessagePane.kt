@@ -169,7 +169,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
 
     StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
-    StyleConstants.setLeftIndent(BALLOON_STYLE, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setLeftIndent(BALLOON_STYLE, UISettings.instance.balloonIndent.toFloat())
 
     StyleConstants.setForeground(REGULAR, textColor)
     StyleConstants.setForeground(BOLD, textColor)

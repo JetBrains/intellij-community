@@ -70,6 +70,7 @@ internal object LessonExecutorUtil {
                                  useAnimationCycle: Boolean) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
+    messagesPane.border = UISettings.instance.balloonAdditionalBorder
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
     messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = visualIndexNumber))
