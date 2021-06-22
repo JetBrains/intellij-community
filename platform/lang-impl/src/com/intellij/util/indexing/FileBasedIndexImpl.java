@@ -2028,18 +2028,24 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Nullable
-  private static IdFilter extractFileEnumeration(@NotNull GlobalSearchScope scope) {
+  private IdFilter extractFileEnumeration(@NotNull GlobalSearchScope scope) {
     VirtualFileEnumeration hint = VirtualFileEnumeration.extract(scope);
-    return hint != null ? new IdFilter() {
-      @Override
-      public boolean containsFileId(int id) {
-        return hint.contains(id);
-      }
+    if (hint != null) {
+      return new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return hint.contains(id);
+        }
 
-      @Override
-      public String toString() {
-        return "IdFilter of " + scope;
-      }
-    } : null;
+        @Override
+        public String toString() {
+          return "IdFilter of " + scope;
+        }
+      };
+    }
+    Project project = scope.getProject();
+    if (project == null) return null;
+    // todo support project only content scope
+    return projectIndexableFiles(project);
   }
 }
