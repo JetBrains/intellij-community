@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports modifiable <code>public</code> <code>static</code> Collection fields. Often used
-to store collections of constant values, these fields nonetheless represent a security
-hazard, as their contents may be modified, even if the field is declared as <code>final</code>.
+Reports modifiable <code>public</code> <code>static</code> Collection fields.
+<p>Even though they are often used to store collections of constant values, these fields nonetheless represent a security
+  hazard, as their contents may be modified even if the field is declared as <code>final</code>.</p>
 <p><b>Example:</b></p>
 <pre><code>
   public static final List&lt;String&gt; EVENTS = new ArrayList&lt;&gt;();
@@ -10,7 +10,7 @@ hazard, as their contents may be modified, even if the field is declared as <cod
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the table below to specify methods returning unmodifiable collections.
-  <code>public</code> <code>static</code> Collection fields initialized with these methods will not be reported.
+  Use the table in the <b>Options</b> section to specify methods returning unmodifiable collections.
+  <code>public</code> <code>static</code> collection fields initialized with these methods will not be reported.
 </body>
 </html>

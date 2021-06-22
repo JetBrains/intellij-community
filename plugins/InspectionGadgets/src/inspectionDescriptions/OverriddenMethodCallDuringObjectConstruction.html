@@ -1,18 +1,18 @@
 <html>
 <body>
 Reports any calls to overridden methods of the current class during object construction.
-A call is during object construction if it is inside:
+This happens if an object construction is inside:
 <ul>
-  <li>A Constructor</li>
-  <li>A Non-static instance initializer</li>
-  <li>A Non-static field initializer</li>
+  <li>A constructor</li>
+  <li>A non-static instance initializer</li>
+  <li>A non-static field initializer</li>
   <li><code>clone()</code></li>
   <li><code>readObject()</code></li>
   <li><code>readObjectNoData()</code></li>
 </ul>
-Such calls may result in subtle bugs, as the object is not guaranteed to be initialized before the method call occurs.
+<p>Such calls may result in subtle bugs, as the object is not guaranteed to be initialized before the method call occurs.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   abstract class Parent {
     void someMethod() { }
   }
@@ -25,13 +25,13 @@ Such calls may result in subtle bugs, as the object is not guaranteed to be init
     @Override
     void someMethod() { }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-This inspection shares functionality with:
+<p>This inspection shares its functionality with:</p>
 <ul>
-  <li>Abstract method called during object construction inspection</li>
-  <li>Overridable method called during object construction inspection</li>
+  <li>The <b>Abstract method called during object construction</b> inspection</li>
+  <li>The <b>Overridable method called during object construction</b> inspection</li>
 </ul>
-Only one inspection should be enabled at the same time to prevent duplicate warnings.
+<p>Only one inspection should be enabled at the same time to prevent duplicate warnings.</p>
 </body>
 </html>

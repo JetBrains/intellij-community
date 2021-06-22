@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports uses of concrete classes, rather than interfaces.
-Such declarations may represent a failure of abstraction, and may make testing more difficult.
+Reports usages of concrete classes, rather than interfaces.
+Such declarations may represent a failure of abstraction and may make testing more difficult.
 <p>
 Declarations whose classes come from system or third-party libraries will not be reported by this inspection.
 Casts, instanceofs, and local variables are not reported in <code>equals()</code> method implementations.
@@ -26,8 +26,7 @@ Also, casts are not reported in <code>clone()</code> method implementations.
 </code></pre>
 <!-- tooltip end -->
 <p>
-  Use the first checkbox below to ignore casts to abstract classes.</p>
-<p>
-  Use the subsequent checkboxes to control contexts where the problem is reported.</p>
+  Use the <b>Ignore abstract class type</b> option to ignore casts to abstract classes.</p>
+<p>Use the subsequent options to control contexts where the problem is reported.</p>
 </body>
 </html>
