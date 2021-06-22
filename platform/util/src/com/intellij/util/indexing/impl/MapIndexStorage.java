@@ -105,7 +105,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     boolean compactOnClose,
     boolean keyIsUniqueForIndexedFile) throws IOException {
     PersistentMapImpl<Key, UpdatableValueContainer<Value>> persistentMap;
-    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
     if (keyIsUniqueForIndexedFile) {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
@@ -117,7 +116,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
                                                 .withCompactOnClose(compactOnClose));
     }
     finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
       if (myKeyIsUniqueForIndexedFile) {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
@@ -199,10 +197,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     catch (IOException e) {
       throw new StorageException(e);
     }
-  }
-
-  protected void checkCanceled() {
-    // Do nothing by default.
   }
 
   @NotNull

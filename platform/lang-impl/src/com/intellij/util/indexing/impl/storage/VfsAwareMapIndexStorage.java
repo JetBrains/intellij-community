@@ -2,7 +2,6 @@
 
 package com.intellij.util.indexing.impl.storage;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -61,11 +60,6 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
     else {
       myKeyHashToVirtualFileMapping = null;
     }
-  }
-
-  @Override
-  protected void checkCanceled() {
-    ProgressManager.checkCanceled();
   }
 
   @Override

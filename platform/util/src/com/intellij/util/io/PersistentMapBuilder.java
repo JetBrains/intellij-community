@@ -25,7 +25,6 @@ public final class PersistentMapBuilder<Key, Value> {
   private Boolean myInlineValues;
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
-  private IOCancellationCallback myCancellationCallback;
   private Boolean myCompactOnClose = null;
 
   private PersistentMapBuilder(@NotNull Path file,
@@ -51,11 +50,6 @@ public final class PersistentMapBuilder<Key, Value> {
     Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
     PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(myIsReadOnly);
 
-    IOCancellationCallback previousIoCancellationCallback = null;
-    if (myCancellationCallback != null) {
-      previousIoCancellationCallback = PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
-      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(myCancellationCallback);
-    }
     try {
       if (SystemProperties.getBooleanProperty("idea.use.in.memory.persistent.map", false)) {
         return new PersistentMapInMemory<>(this);
@@ -68,10 +62,6 @@ public final class PersistentMapBuilder<Key, Value> {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
       }
       PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(previousReadOnly);
-
-      if (myCancellationCallback != null) {
-        PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(previousIoCancellationCallback);
-      }
     }
   }
 
@@ -148,12 +138,6 @@ public final class PersistentMapBuilder<Key, Value> {
   @NotNull
   public PersistentMapBuilder<Key, Value> hasNoChunks() {
     myHasChunks = false;
-    return this;
-  }
-
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withIoCancellationCallback(@NotNull IOCancellationCallback ioCancellationCallback) {
-    myCancellationCallback = ioCancellationCallback;
     return this;
   }
 

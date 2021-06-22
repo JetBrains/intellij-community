@@ -187,11 +187,6 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     }
 
     @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
-
-    @Override
     public void clear() throws StorageException {
       LOG.warn("Clearing '" + myName + "' map index storage", new RuntimeException());
       super.clear();
