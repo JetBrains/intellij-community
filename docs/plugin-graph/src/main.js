@@ -5,10 +5,8 @@ import "../style.css"
 
 import graphData from "../plugin-graph.json"
 import cytoscape from "cytoscape"
-// noinspection SpellCheckingInspection
-import fCose from "cytoscape-fcose"
-
-cytoscape.use(fCose)
+import cola from "cytoscape-cola"
+cytoscape.use(cola)
 
 let cy = null
 
@@ -73,13 +71,11 @@ function getItemSizeStyle(factor) {
 }
 
 function initGraph(graph) {
-  // noinspection SpellCheckingInspection
   const layoutOptions = {
-    name: "fcose",
-    quality: "proof",
-    randomize: false,
+    name: "cola",
+    fit: true,
     nodeDimensionsIncludeLabels: true,
-    padding: 5,
+    flow: {axis: "y"},
   }
 
   // noinspection SpellCheckingInspection
@@ -169,6 +165,10 @@ function initGraph(graph) {
         selector: "node.found",
         style: {
           "font-weight": "600",
+          "background-color": "#FFFF00",
+          "text-background-color": "#FFFF00",
+          "text-background-opacity": 1,
+          "text-background-shape": "round-rectangle",
         },
       },
     ]
