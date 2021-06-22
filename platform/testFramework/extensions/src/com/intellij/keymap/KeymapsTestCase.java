@@ -239,6 +239,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt button1",      "EditorAddOrRemoveCaret", "UiInspector"},
     { "shift alt button1",        "EditorCreateRectangularSelection", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "ctrl PERIOD",              "EditorChooseLookupItemDot", "ShowIntentionActions"},
+    { "ctrl alt R",               "Diff.ApplyLeftSide", "Refresh"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
