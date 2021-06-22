@@ -74,10 +74,12 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         comboBox(
           DefaultComboBoxModel(emptyArray()),
           { settings.mavenVersion }, { settings.mavenVersion = it },
-          SimpleListCellRenderer.create("") { it?.versionString ?: "<unknown>" }
+          SimpleListCellRenderer.create(GroovyBundle.message("combo.box.null.value.placeholder")) { it?.versionString ?: "<unknown>" }
         ).applyToComponent {
           downloadableLibraryDescription.fetchVersions(object : FileSetVersionsCallback<FrameworkLibraryVersion>() {
-            override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater { versions.forEach(::addItem) }
+            override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+              versions.sortedWith(::moveUnstablesToTheEnd).forEach(::addItem)
+            }
           })
         }.enableIf(checkbox.selected)
       })
@@ -159,6 +161,18 @@ private fun generateCompositionSettings(settings: GroovyModuleSettings,
     compositionSettings.setNewLibraryEditor(libraryEditor)
   }
   return compositionSettings
+}
+
+private fun moveUnstablesToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
+  val leftVersion = left.versionString
+  val rightVersion = right.versionString
+  val leftUnstable = GroovyConfigUtils.isUnstable(leftVersion)
+  val rightUnstable = GroovyConfigUtils.isUnstable(rightVersion)
+  return when {
+    leftUnstable == rightUnstable -> -GroovyConfigUtils.compareSdkVersions(leftVersion, rightVersion)
+    leftUnstable -> 1
+    else -> -1
+  }
 }
 
 class GroovyModuleSettings {
