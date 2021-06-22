@@ -37,6 +37,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
       container.registerService(apiClass, implClass, pluginDescriptor, override = true, preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     }
     catch (ignored: Throwable) {
+      LOG.warn(ignored)
     }
   }
 }

@@ -2840,6 +2840,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             runTest("testData/basic/java/NonImportedPrefixMatching2.kt");
         }
 
+        @TestMetadata("NullableAnnotation.kt")
+        public void testNullableAnnotation() throws Exception {
+            runTest("testData/basic/java/NullableAnnotation.kt");
+        }
+
         @TestMetadata("Number.kt")
         public void testNumber() throws Exception {
             runTest("testData/basic/java/Number.kt");

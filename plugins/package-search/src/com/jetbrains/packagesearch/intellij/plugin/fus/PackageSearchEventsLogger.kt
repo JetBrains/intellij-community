@@ -57,7 +57,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val searchRequestField = EventFields.StringValidatedByCustomRule(FUSGroupIds.SEARCH_QUERY, FUSGroupIds.SEARCH_QUERY)
 
         // EVENTS
-        private val toolWindowFocusedEvent = GROUP.registerEvent(FUSGroupIds.TOOL_WINDOW_FOCUSED)
         private val packageInstalledEvent = GROUP.registerEvent(FUSGroupIds.PACKAGE_INSTALLED, coordinatesField, scopeField, buildSystemField)
         private val packageRemovedEvent = GROUP.registerEvent(FUSGroupIds.PACKAGE_REMOVED, coordinatesField, scopeField, buildSystemField)
         private val packageUpdatedEvent = GROUP.registerEvent(FUSGroupIds.PACKAGE_UPDATED, coordinatesField, scopeField, buildSystemField)
@@ -74,11 +73,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
         private val upgradeAllEvent = GROUP.registerEvent(FUSGroupIds.UPGRADE_ALL)
 
-        fun logToolWindowFocused() {
-            toolWindowFocusedEvent.log()
-        }
-
-        private fun EventId3<String?, String?, String?>.logPackage(dependency: UnifiedDependency, targetModule: ProjectModule) = ifLoggingEnabled {
+        private fun EventId3<String?, String?, String?>.logPackage(dependency: UnifiedDependency, targetModule: ProjectModule) = tryDoing {
             val coordinates = dependency.coordinates.displayName
             val scope = dependency.scope
             val buildSystem = targetModule.buildSystemType.name

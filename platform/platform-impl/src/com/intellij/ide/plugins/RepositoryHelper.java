@@ -72,7 +72,8 @@ public final class RepositoryHelper {
     Path pluginListFile;
     Url url;
     if (repositoryUrl == null) {
-      LOG.error("Using deprecated API for getting plugins from Marketplace");
+      String host = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
+      LOG.error("Using deprecated API for getting plugins from Marketplace. Host: " + host);
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
       url = Urls.newFromEncoded(base).addParameters(Map.of("uuid", PluginDownloader.getMarketplaceDownloadsUUID()));  // NON-NLS
       pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);

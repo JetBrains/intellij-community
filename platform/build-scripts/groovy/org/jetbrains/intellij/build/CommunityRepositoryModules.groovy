@@ -175,6 +175,7 @@ final class CommunityRepositoryModules {
       bundlingRestrictions.includeInEapOnly = true
     },
     plugin("intellij.ml.models.local") {
+      withModule("intellij.ml.models.local.java")
       bundlingRestrictions.includeInEapOnly = true
     },
     plugin("intellij.jps.cache"),

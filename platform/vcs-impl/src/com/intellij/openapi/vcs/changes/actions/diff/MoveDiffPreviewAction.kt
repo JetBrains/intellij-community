@@ -2,13 +2,13 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffContentVirtualFile
+import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffOpenedInNewWindow
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager.Companion.OPENED_IN_NEW_WINDOW
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.JBIterable
 
@@ -44,12 +44,10 @@ private fun AnActionEvent.findDiffPreviewFile(): VirtualFile? {
   return if (selectedFile is DiffContentVirtualFile) selectedFile else null
 }
 
-private fun VirtualFile.openedInNewWindow() = OPENED_IN_NEW_WINDOW.get(this, false)
-
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {
-  override fun isEnabledAndVisible(project: Project, file: VirtualFile): Boolean = file.openedInNewWindow()
+  override fun isEnabledAndVisible(project: Project, file: VirtualFile): Boolean = isDiffOpenedInNewWindow(file)
 }
 
 internal class MoveDiffPreviewToNewWindowAction : MoveDiffPreviewAction(true) {
-  override fun isEnabledAndVisible(project: Project, file: VirtualFile): Boolean = !file.openedInNewWindow()
+  override fun isEnabledAndVisible(project: Project, file: VirtualFile): Boolean = !isDiffOpenedInNewWindow(file)
 }
