@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -129,6 +129,21 @@ final class PluginsCollector {
         }
         else {
           optionalDependencies += new Pair(dependency.getTextTrim(), dependency.getAttributeValue("config-file"))
+        }
+      }
+      def dependencies = xml.getChild('dependencies')
+      if (dependencies != null) {
+        for (plugin in dependencies.getChildren('plugin')) {
+          def pluginId = plugin.getAttributeValue('id')
+          if (pluginId) {
+            requiredDependencies += pluginId
+          }
+        }
+        for (module in dependencies.getChildren('module')) {
+          def moduleName = module.getAttributeValue('name')
+          if (moduleName) {
+            requiredDependencies += moduleName
+          }
         }
       }
 
