@@ -22,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class MarkdownTextEditorProvider: PsiAwareTextEditorProvider() {
-
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (!super.accept(project, file)) {
       return false

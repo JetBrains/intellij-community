@@ -47,6 +47,61 @@ Includes the following features:</p>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableBackspaceHandler"/>
+    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableEnterHandler"/>
+    <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$Tab"/>
+    <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
+    <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
+    <editorActionHandler action="EditorDeleteToWordStart" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableReformatAfterActionHook"/>
+    <codeInsight.inlayProvider language="Markdown"
+                               implementationClass="org.intellij.plugins.markdown.editor.tables.ui.MarkdownTableInlayProvider"
+                               id="MarkdownTableInlayProvider"/>
+
+    <localInspection language="Markdown"
+                     shortName="MarkdownIncorrectTableFormatting"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.incorrect.table.formatting.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownIncorrectTableFormattingInspection"/>
+
+    <localInspection language="Markdown"
+                     shortName="MarkdownNoTableBorders"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.no.table.borders.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
+
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertBefore</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertAfter</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownSetColumnAlignmentIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveColumnIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveRowIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
     <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
@@ -186,6 +241,8 @@ Includes the following features:</p>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
+
+
     <notificationGroup id="Markdown" displayType="BALLOON"/>
 
     <registryKey key="markdown.clear.cache.interval"
@@ -214,6 +271,10 @@ Includes the following features:</p>
     <registryKey key="markdown.google.docs.import.action.enable"
                  defaultValue="false"
                  description="Temporarily disable the action of the import docs from google"/>
+
+    <registryKey key="markdown.tables.editing.support.enable"
+                 defaultValue="false"
+                 description="Enables Markdown tables editing support"/>
   </extensions>
 
   <applicationListeners>
@@ -252,6 +313,91 @@ Includes the following features:</p>
   </extensions>
 
   <actions>
+    <group id="Markdown.TableActions" compact="true" class="org.intellij.plugins.markdown.editor.tables.actions.TableActionsGroup">
+      <group id="Markdown.TableColumnActions" compact="true">
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithLeftColumn"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithLeftColumn"
+                icon="AllIcons.Actions.Back"/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithRightColumn"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction$SwapWithRightColumn"
+                icon="AllIcons.Actions.Forward"/>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertBefore"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertBefore"
+                icon="MarkdownIcons.EditorActions.AddColumnLeft"/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertAfter"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction$InsertAfter"
+                icon="MarkdownIcons.EditorActions.AddColumnRight"/>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction.SelectContentCells"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectContentCells"
+                icon="AllIcons.Actions.InSelection"/>
+        <separator/>
+        <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction.SelectWholeColumn"-->
+        <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SelectCurrentColumnAction$SelectWholeColumn"/>-->
+        <group id="Markdown.TableColumnActions.ColumnAlignmentActions"
+               compact="true"
+               class="org.intellij.plugins.markdown.editor.tables.actions.column.TableColumnAlignmentActionsGroup">
+          <!--<action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.None"-->
+          <!--        class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$None"/>-->
+          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Left"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Left"
+                  icon="MarkdownIcons.EditorActions.LeftAlign"/>
+          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Center"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Center"
+                  icon="MarkdownIcons.EditorActions.CenterAlign"/>
+          <action id="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction.Right"
+                  class="org.intellij.plugins.markdown.editor.tables.actions.column.SetColumnAlignmentAction$Right"
+                  icon="MarkdownIcons.EditorActions.RightAlign"/>
+        </group>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"
+                class="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"
+                icon="AllIcons.Actions.GC"/>
+      </group>
+      <group id="Markdown.TableRowActions" compact="true">
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction.SwapWithAbove"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithAbove"
+                icon="AllIcons.Actions.PreviousOccurence"/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction.SwapWithBelow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SwapRowsAction$SwapWithBelow"
+                icon="AllIcons.Actions.NextOccurence"/>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertAbove"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertAbove"
+                icon="MarkdownIcons.EditorActions.AddRowAbove"/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertBelow"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction$InsertBelow"
+                icon="MarkdownIcons.EditorActions.AddRowBelow"/>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.SelectRowAction"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.SelectRowAction"
+                icon="AllIcons.Actions.InSelection"/>
+        <separator/>
+        <action id="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"
+                class="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"
+                icon="AllIcons.Actions.GC"/>
+      </group>
+
+      <group id="Markdown.TableContextMenu" popup="true" compact="true">
+        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
+        <separator/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertBefore"/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.InsertTableColumnAction.InsertAfter"/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertAbove"/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.InsertRowAction.InsertBelow"/>
+        <separator/>
+        <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup" popup="true">
+          <reference id="Markdown.TableColumnActions.ColumnAlignmentActions"/>
+        </group>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithLeftColumn"/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.SwapColumnsAction.SwapWithRightColumn"/>
+        <separator/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.column.RemoveCurrentColumnAction"/>
+        <reference id="org.intellij.plugins.markdown.editor.tables.actions.row.RemoveCurrentRowAction"/>
+      </group>
+    </group>
+
     <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
@@ -302,6 +448,11 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               icon="AllIcons.General.LayoutPreviewOnly">
         <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
+      <action id="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+              class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
+              icon="MarkdownIcons.EditorActions.Table">
         <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
     </group>
