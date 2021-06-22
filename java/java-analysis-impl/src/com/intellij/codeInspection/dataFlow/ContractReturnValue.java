@@ -8,6 +8,8 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,11 @@ import java.util.stream.Stream;
 public abstract class ContractReturnValue {
   private static final int PARAMETER_ORDINAL_BASE = 10;
   private static final int MAX_SUPPORTED_PARAMETER = 100;
+
+  @Nullable
+  public PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
+    return null;
+  }
 
   private interface Validator extends Function<PsiMethod, @Nls @Nullable String> {}
 
@@ -461,6 +468,11 @@ public abstract class ContractReturnValue {
     }
 
     @Override
+    public @Nullable PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
+      return ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+    }
+
+    @Override
     public boolean isNotNull() {
       return true;
     }
@@ -531,6 +543,15 @@ public abstract class ContractReturnValue {
 
     public int getParameterNumber() {
       return myParamNumber;
+    }
+
+    @Override
+    public @Nullable PsiExpression findPlace(@NotNull PsiMethodCallExpression call) {
+      int number = this.getParameterNumber();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length <= number) return null;
+      if (args.length == number + 1 && MethodCallUtils.isVarArgCall(call)) return null;
+      return args[number];
     }
 
     @Override

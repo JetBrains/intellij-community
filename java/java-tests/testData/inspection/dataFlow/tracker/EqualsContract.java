@@ -1,6 +1,6 @@
 /*
 Value is always false (s.equals("."); line#20)
-  According to hard-coded contract, method 'equals' returns 'false' value when this != parameter (equals; line#20)
+  According to hard-coded contract, method 'equals' returns 'false' value when s != "." (equals; line#20)
     One of the following happens:
       Condition 's != "."' was deduced
         Values cannot be equal because "--".length != ".".length

@@ -21,10 +21,13 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +90,7 @@ public abstract class ContractValue {
     return arguments;
   }
 
-  public String getPresentationText(PsiMethod method) {
+  public String getPresentationText(PsiMethodCallExpression call) {
     return toString();
   }
 
@@ -150,6 +153,15 @@ public abstract class ContractValue {
     }
 
     @Override
+    public String getPresentationText(PsiMethodCallExpression call) {
+      PsiExpression place = findPlace(call);
+      if (place != null) {
+        return PsiExpressionTrimRenderer.render(place);
+      }
+      return super.getPresentationText(call);
+    }
+
+    @Override
     @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
       if (arguments.myQualifier instanceof DfaTypeValue) {
         DfType type = arguments.myQualifier.getDfType();
@@ -195,7 +207,13 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethod method) {
+    public String getPresentationText(PsiMethodCallExpression call) {
+      PsiExpression place = findPlace(call);
+      if (place != null && !ExpressionUtils.isNullLiteral(place)) {
+        return PsiExpressionTrimRenderer.render(place);
+      }
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return toString();
       PsiParameter[] params = method.getParameterList().getParameters();
       if (myIndex == 0 && params.length == 1) {
         return JavaElementKind.PARAMETER.subject();
@@ -311,8 +329,8 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethod method) {
-      return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
+    public String getPresentationText(PsiMethodCallExpression call) {
+      return JavaAnalysisBundle.message("dfa.find.cause.special.field.of.something", myField, myQualifier.getPresentationText(call));
     }
 
     @Override
@@ -423,11 +441,11 @@ public abstract class ContractValue {
     }
 
     @Override
-    public String getPresentationText(PsiMethod method) {
+    public String getPresentationText(PsiMethodCallExpression call) {
       if (myLeft instanceof IndependentValue) {
-        return myRight.getPresentationText(method) + " " + myRelationType.getFlipped() + " " + myLeft.getPresentationText(method);
+        return myRight.getPresentationText(call) + " " + myRelationType.getFlipped() + " " + myLeft.getPresentationText(call);
       }
-      return myLeft.getPresentationText(method) + " " + myRelationType + " " + myRight.getPresentationText(method);
+      return myLeft.getPresentationText(call) + " " + myRelationType + " " + myRight.getPresentationText(call);
     }
 
     /**
