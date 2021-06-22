@@ -10,11 +10,13 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -23,6 +25,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.io.File;
 import java.util.*;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
@@ -62,8 +65,9 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
         final ActionCallback resultWrapper = new ActionCallback();
         result.onSuccess(downloadResult -> {
+          HtmlBuilder builder = null;
           if (!downloadResult.unresolvedSources.isEmpty()) {
-            HtmlBuilder builder = new HtmlBuilder();
+            builder = new HtmlBuilder();
             builder.append(MavenProjectBundle.message("sources.not.found.for"));
             int count = 0;
             for (MavenId each : downloadResult.unresolvedSources) {
@@ -73,7 +77,9 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
               }
               builder.append(HtmlChunk.br()).append(each.getDisplayString());
             }
-
+          }
+          if (builder != null) {
+            cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources);
             Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                       MavenProjectBundle.message("maven.sources.cannot.download"),
                                                       builder.wrapWithHtmlBody().toString(),
@@ -91,6 +97,25 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         return resultWrapper;
       }
     });
+  }
+
+  private static void cleanUpUnresolvedSourceFiles(Project project, Collection<MavenId> mavenIds) {
+    for (MavenId mavenId : mavenIds) {
+      File parentFile = MavenUtil.getRepositoryParentFile(project, mavenId);
+      if (parentFile == null) continue;
+      File[] files = parentFile.listFiles((dir, name) -> isTargetFile(name, MavenExtraArtifactType.SOURCES));
+      if (files == null) continue;
+      for (File file : files) {
+        var deleted = FileUtil.delete(file);
+        if (!deleted) {
+          MavenLog.LOG.warn(file + " not deleted");
+        }
+      }
+    }
+  }
+
+  private static boolean isTargetFile(String name, MavenExtraArtifactType type) {
+    return name.contains("-" + type.getDefaultClassifier()) && name.contains("." + type.getDefaultExtension());
   }
 
   private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {

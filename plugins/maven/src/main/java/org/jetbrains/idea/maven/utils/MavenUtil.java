@@ -846,7 +846,9 @@ public class MavenUtil {
     return getParentFile(id, projectsManager.getLocalRepository());
   }
 
+  @NotNull
   private static File getParentFile(@NotNull MavenId id, File localRepository) {
+    assert id.getGroupId() != null;
     String[] pathParts = id.getGroupId().split("\\.");
     java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
     path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
