@@ -348,6 +348,7 @@ fun String.dropMnemonic(): String {
 val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
 fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
+  if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) return
   task {
     val step = CompletableFuture<Boolean>()
     addStep(step)
