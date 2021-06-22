@@ -88,6 +88,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ExtensionReceiverEnd.kt");
     }
 
+    @TestMetadata("Formatting.kt")
+    public void testFormatting() throws Exception {
+        runTest("testData/editor/quickDoc/Formatting.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");
@@ -195,7 +200,7 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
 
     @TestMetadata("OnFunctionDeclarationWithGFMTable.kt")
     public void testOnFunctionDeclarationWithGFMTable() throws Exception {
-        runTest("idea/testData/editor/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
+        runTest("testData/editor/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
     }
 
     @TestMetadata("OnFunctionDeclarationWithPackage.kt")
