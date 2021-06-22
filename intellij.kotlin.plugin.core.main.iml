@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />

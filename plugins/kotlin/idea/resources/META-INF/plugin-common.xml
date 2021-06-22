@@ -3,6 +3,7 @@
   <xi:include href="inspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="indexes.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

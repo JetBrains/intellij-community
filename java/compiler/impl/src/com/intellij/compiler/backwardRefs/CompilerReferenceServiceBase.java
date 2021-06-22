@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -26,9 +26,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -84,6 +84,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private int myActiveBuilds = 0;
 
   protected volatile Reader myReader;
+  private final ThreadLocal<Boolean> myIsInsideLibraryScope = ThreadLocal.withInitial(() -> false);
 
   public CompilerReferenceServiceBase(Project project,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
@@ -92,7 +93,15 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyScopeHolder = new DirtyScopeHolder(this, FileDocumentManager.getInstance(), PsiDocumentManager.getInstance(project), compilationAffectedModulesSubscription);
+    Set<FileType> affectedFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getAffectedFileTypes().stream()).collect(Collectors.toSet());
+    myDirtyScopeHolder = new DirtyScopeHolder(project,
+                                              affectedFileTypes,
+                                              myProjectFileIndex,
+                                              this,
+                                              this,
+                                              FileDocumentManager.getInstance(),
+                                              PsiDocumentManager.getInstance(project),
+                                              compilationAffectedModulesSubscription);
 
     if (!CompilerReferenceService.isEnabled()) {
       LOG.error("CompilerReferenceService is disabled, but service was requested");
@@ -131,12 +140,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
-    if (!isServiceEnabledFor(element)) return null;
+  public GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
+    if (!isServiceEnabledFor(element) || isInsideLibraryScope()) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFiles(element)),
+                                                () -> CachedValueProvider.Result.create(
+                                                  buildScopeWithReferences(getReferentFiles(element), element),
                                                   PsiModificationTracker.MODIFICATION_COUNT,
                                                   this));
     }
@@ -147,13 +157,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+  public GlobalSearchScope getScopeWithImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
     if (!isServiceEnabledFor(aClass)) return null;
 
     try {
       return CachedValuesManager.getCachedValue(aClass,
                                                 () -> CachedValueProvider.Result.create(
-                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  buildScopeWithReferences(getReferentFileIdsViaImplicitToString(aClass), aClass),
                                                   PsiModificationTracker.MODIFICATION_COUNT,
                                                   this));
     }
@@ -299,12 +309,27 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private GlobalSearchScope buildScopeWithoutReferences(@Nullable Set<VirtualFile> referentFiles) {
+  private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFiles, myProjectFileIndex).intersectWith(notScope(
-      myDirtyScopeHolder.getDirtyScope())),
-                                         myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(referentFiles);
+
+    GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
+    GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
+    GlobalSearchScope knownCleanScope = getScopeRestrictedByFileTypes(wholeClearScope, myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    GlobalSearchScope wholeDirtyScope = notScope(knownCleanScope);
+    GlobalSearchScope mayContainReferencesScope = referencesScope.uniteWith(wholeDirtyScope);
+    return scopeWithLibraryIfNeeded(myProject, myProjectFileIndex, mayContainReferencesScope, element);
+  }
+
+  @NotNull
+  public static GlobalSearchScope scopeWithLibraryIfNeeded(@NotNull Project project,
+                                                           @NotNull ProjectFileIndex fileIndex,
+                                                           @NotNull GlobalSearchScope baseScope,
+                                                           @NotNull PsiElement element) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null || !fileIndex.isInLibrary(file)) return baseScope;
+    return baseScope.uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
   }
 
   @VisibleForTesting
@@ -364,23 +389,25 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           return null;
         }
       }
-      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file);
+      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file, true);
       if (adapter == null) return null;
       final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
-        final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
-                                                                                        psiElement,
-                                                                                        myReader.getNameEnumerator(),
-                                                                                        LibraryScopeCache.getInstance(myProject)
-                                                                                       .getLibrariesOnlyScope());
-        final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
-        fullHierarchy[0] = ref;
-        int i = 1;
-        for (CompilerRef element : elements) {
-          fullHierarchy[i++] = element;
-        }
-        return new CompilerElementInfo(place, fullHierarchy);
+        return computeInLibraryScope(() -> {
+          final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
+                                                                                          psiElement,
+                                                                                          myReader.getNameEnumerator(),
+                                                                                          LibraryScopeCache.getInstance(myProject)
+                                                                                            .getLibrariesOnlyScope());
+          final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
+          fullHierarchy[0] = ref;
+          int i = 1;
+          for (CompilerRef element : elements) {
+            fullHierarchy[i++] = element;
+          }
+          return new CompilerElementInfo(place, fullHierarchy);
+        });
       }
       else {
         return new CompilerElementInfo(place, ref);
@@ -391,6 +418,21 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     } finally {
       myReadDataLock.unlock();
     }
+  }
+
+  @NotNull
+  public <T, E extends Throwable> T computeInLibraryScope(ThrowableComputable<T, E> action) throws E {
+    myIsInsideLibraryScope.set(true);
+    try {
+      return action.compute();
+    }
+    finally {
+      myIsInsideLibraryScope.set(false);
+    }
+  }
+
+  public boolean isInsideLibraryScope() {
+    return myIsInsideLibraryScope.get();
   }
 
   protected void closeReaderIfNeeded(IndexCloseReason reason) {
@@ -486,18 +528,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected static final class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
+  public static final class ScopeWithReferencesOnCompilation extends GlobalSearchScope {
     private final Set<VirtualFile> myReferentFiles;
-    private final ProjectFileIndex myIndex;
 
-    public ScopeWithoutReferencesOnCompilation(Set<VirtualFile> files, ProjectFileIndex index) {
+    public ScopeWithReferencesOnCompilation(Set<VirtualFile> files) {
       myReferentFiles = files;
-      myIndex = index;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && !myReferentFiles.contains(file);
+      return myReferentFiles.contains(file);
     }
 
     @Override
