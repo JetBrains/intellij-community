@@ -65,7 +65,7 @@ fun KotlinType.withoutRedundantAnnotations(): KotlinType {
     val newAnnotations = FilteredAnnotations(
         annotations,
         isDefinitelyNewInference = true,
-        fqNameFilter = { it !in NULLABILITY_ANNOTATIONS && it !in MUTABLE_ANNOTATIONS && it !in READ_ONLY_ANNOTATIONS },
+        fqNameFilter = { !it.isRedundantJvmAnnotation },
     )
 
     val annotationsWasChanged = newAnnotations.count() != annotations.count()
@@ -76,6 +76,10 @@ fun KotlinType.withoutRedundantAnnotations(): KotlinType {
         newAnnotations = newAnnotations.takeIf { annotationsWasChanged } ?: annotations,
     )
 }
+
+val FqName.isRedundantJvmAnnotation: Boolean get() = this in NULLABILITY_ANNOTATIONS ||
+        this in MUTABLE_ANNOTATIONS ||
+        this in READ_ONLY_ANNOTATIONS
 
 private fun KotlinType.approximateNonDynamicFlexibleTypes(
     preferNotNull: Boolean = false,
