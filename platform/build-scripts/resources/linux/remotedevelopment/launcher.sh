@@ -108,10 +108,18 @@ echo "> Setup Remote Development Host default configuration"
 IJ_HOST_CONFIG_DIR="$HOME/.CwmHost-IU-config"
 IJ_STORED_HOST_PASSWD="$IJ_HOST_CONFIG_DIR/cwm-passwd"
 
-# shellcheck disable=SC2016
-printf '\nidea.config.path=${user.home}/.CwmHost-IU-config\nidea.system.path=${user.home}/.CwmHost-IU-system\n' >> "$IDE_BIN_HOME/idea.properties"
-printf '\njb.privacy.policy.text="<!--999.999-->"\njb.consents.confirmation.enabled=false\nidea.initially.ask.config=force-not\nide.show.tips.on.startup.default.value=false' >> "$IDE_BIN_HOME/idea.properties"
-printf '\ncodeWithMe.voiceChat.enabled=false' >> "$IDE_BIN_HOME/idea.properties"
+PROPERTIES_MODIFIED_MARKER="$IDE_BIN_HOME/.pmdone"
+
+if [ ! -f "$PROPERTIES_MODIFIED_MARKER" ]; then
+
+  # shellcheck disable=SC2016
+  printf '\nidea.config.path=${user.home}/.CwmHost-IU-config\nidea.system.path=${user.home}/.CwmHost-IU-system\n' >> "$IDE_BIN_HOME/idea.properties"
+  printf '\njb.privacy.policy.text="<!--999.999-->"\njb.consents.confirmation.enabled=false\nidea.initially.ask.config=force-not\nide.show.tips.on.startup.default.value=false' >> "$IDE_BIN_HOME/idea.properties"
+  printf '\ncodeWithMe.voiceChat.enabled=false\neap.login.enabled=false' >> "$IDE_BIN_HOME/idea.properties"
+
+  echo "" > "$PROPERTIES_MODIFIED_MARKER"
+
+fi
 
 # Prevent config import dialog
 if [ ! -d "$IJ_HOST_CONFIG_DIR" ]; then
@@ -130,7 +138,7 @@ if [ -z "${1-}" ]; then
   exit 1
 fi
 
-if [ "$1" = "cwmHost" ] && [ ! -f "$IJ_STORED_HOST_PASSWD" ] && [ -z "${CWM_NO_PASSWORD-}" ]; then
+if [ "$1" = "cwmHost" ] && [ ! -f "$IJ_STORED_HOST_PASSWD" ] && [ -z "${CWM_NO_PASSWORD-}" ]  && [ -z "${CWM_HOST_PASSWORD-}" ]; then
   echo "Enter a password that will be used to connect to the host"
   stty -echo
   read -r CWM_HOST_PASSWORD
