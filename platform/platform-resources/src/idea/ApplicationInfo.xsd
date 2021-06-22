@@ -26,7 +26,6 @@
         </xs:element>
         <xs:element type="editorType" name="editor" minOccurs="0"/>
         <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
-        <xs:element type="evaluationType" name="evaluation" minOccurs="0"/>
         <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
         <xs:element type="helpType" name="help" minOccurs="0"/>
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
@@ -500,9 +499,6 @@
   <xs:complexType name="keymapType">
     <xs:attribute type="xs:string" name="win" use="required"/>
     <xs:attribute type="xs:string" name="mac" use="required"/>
-  </xs:complexType>
-  <xs:complexType name="evaluationType">
-    <xs:attribute type="xs:string" name="license-url"/>
   </xs:complexType>
   <xs:complexType name="subscriptionsType">
     <xs:attribute type="xs:string" name="formid"/>
