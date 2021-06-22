@@ -50,9 +50,9 @@ Var line_width
 Var extra_space
 
 ; position of controls for Installation Options dialog
-var launcherShortcut
-var addToPath
-var updateContextMenu
+Var launcherShortcut
+Var addToPath
+Var updateContextMenu
 
 ;------------------------------------------------------------------------------
 ; include "Modern User Interface"
