@@ -488,7 +488,7 @@ public class ChangesViewManager implements ChangesViewEx,
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-          if (!isEditorPreviewAllowed()) return true;
+          if (!isPreviewOpen() && !isEditorPreviewAllowed()) return true;
 
           return myModelUpdateInProgress;
         }
