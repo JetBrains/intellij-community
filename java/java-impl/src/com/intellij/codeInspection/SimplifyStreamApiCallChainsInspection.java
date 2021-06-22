@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.bugs.MismatchedCollectionQueryUpdateInspection;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -185,11 +186,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if(parameter instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
           ReplaceCollectorFix fix = ReplaceCollectorFix.COLLECTOR_TO_FIX_MAPPER.mapFirst(collectorCall);
-          PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
-          if (fix == null && !COLLECTION_STREAM.test(qualifier) && CollectCollectorsToListUtil.isUnmodified(methodCall)) {
-            fix = CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
-                  call -> new ReplaceCollectorFix("toList", "toList()", false)).apply(collectorCall);
-          }
           if (fix != null) {
             TextRange range = methodCall.getTextRange();
             PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
@@ -202,6 +198,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             if(!(PsiUtil.resolveClassInClassTypeOnly(methodCall.getType()) instanceof PsiTypeParameter)) {
               String replacement = SimplifyCollectionCreationFix.COLLECTOR_TO_CLASS_MAPPER.mapFirst(collectorCall);
               if (replacement != null) {
+                PsiMethodCallExpression qualifier = getQualifierMethodCall(methodCall);
                 if (COLLECTION_STREAM.test(qualifier)) {
                   PsiElement startElement = qualifier.getMethodExpression().getReferenceNameElement();
                   if (startElement != null) {
@@ -552,7 +549,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
       handler("summingDouble", 1, "mapToDouble({0}).sum()", false),
       CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
-                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)));
+                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)),
+      CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
+        PsiMethodCallExpression collectCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall)
+               ? new ReplaceCollectorFix("toList", "toList()", false)
+               : null;
+      }));
 
     private final String myCollector;
     private final String myStreamSequence;

@@ -4,8 +4,9 @@ import java.util.stream.Stream;
 
 class Test {
 
-  List<Integer> list1 = ((((List<Integer>) ((true ? ((Stream.of(1, 2, 3).<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>)) : Arrays.asList(1, 2))))));
-  List<Integer> list2 = ((((List<Integer>) ((true ? ((Stream.of(1, 2, 3).collect(Collectors.toList()))) : Arrays.asList(1, 2))))));
+  private List<Integer> list1 = ((((List<Integer>) ((true ? ((Stream.of(1, 2, 3).<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>)) : Arrays.asList(1, 2))))));
+  private List<Integer> list2 = ((((List<Integer>) ((true ? ((Stream.of(1, 2, 3).collect(Collectors.toList()))) : Arrays.asList(1, 2))))));
+  public List<Integer> list3 = ((((List<Integer>) ((true ? ((Stream.of(1, 2, 3).collect(Collectors.toList()))) : Arrays.asList(1, 2))))));
 
   void foo1() {
     List<Integer> list = Stream.of(1, 2, 3).<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>;
@@ -213,5 +214,12 @@ class TernaryTest {
 //    void test6(Stream<String> stream) {
 //        List<String> subList = stream.collect(Collectors.toList()).subList(0, 3);
 //        subList.forEach(System.out::println);
+//    }
+
+//    void test7(Stream<String> stream) {
+//        List<String> list = stream.collect(Collectors.toList());
+//        list.forEach(System.out::println);
+//        list = new ArrayList<>();
+//        list.add("foo");
 //    }
 //}
