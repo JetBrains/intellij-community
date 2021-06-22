@@ -97,10 +97,10 @@ public final class BeforeRunStepsPanel extends JPanel {
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
-              RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
-                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), providerForUpdate.getClass());
               updateText();
             }
+            RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+              myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), providerForUpdate.getClass());
           });
       }
     });
