@@ -475,7 +475,7 @@ object DynamicPlugins {
           unloadLoadedOptionalDependenciesOnPlugin(pluginDescriptor, pluginSet = pluginSet, classLoaders = classLoaders)
 
           unloadDependencyDescriptors(pluginDescriptor, pluginSet, classLoaders)
-          unloadPluginDescriptorNotRecursively(pluginDescriptor, true)
+          unloadPluginDescriptorNotRecursively(pluginDescriptor)
 
           clearPluginClassLoaderParentListCache()
 
@@ -622,7 +622,7 @@ object DynamicPlugins {
     val dependencyClassloader = dependencyPlugin.classLoader
     processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
       val classLoader = subDescriptor.classLoader
-      unloadPluginDescriptorNotRecursively(subDescriptor, false)
+      unloadPluginDescriptorNotRecursively(subDescriptor)
 
       // this additional code is required because in unit tests PluginClassLoader is not used
       if (mainDescriptor !== subDescriptor) {
@@ -660,7 +660,7 @@ object DynamicPlugins {
       }
 
       unloadDependencyDescriptors(subDescriptor, pluginSet, classLoaders)
-      unloadPluginDescriptorNotRecursively(subDescriptor, true)
+      unloadPluginDescriptorNotRecursively(subDescriptor)
       subDescriptor.classLoader = null
     }
 
@@ -672,7 +672,7 @@ object DynamicPlugins {
         classLoaders.add(classLoader)
       }
 
-      unloadPluginDescriptorNotRecursively(subDescriptor, true)
+      unloadPluginDescriptorNotRecursively(subDescriptor)
       subDescriptor.classLoader = null
     }
   }
@@ -687,7 +687,7 @@ object DynamicPlugins {
 
   // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors, each of them depends on presense of another plugin,
   // here not the whole plugin is unloaded, but only one part.
-  private fun unloadPluginDescriptorNotRecursively(pluginDescriptor: IdeaPluginDescriptorImpl, clearExtensionPoints: Boolean) {
+  private fun unloadPluginDescriptorNotRecursively(pluginDescriptor: IdeaPluginDescriptorImpl) {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
@@ -719,16 +719,12 @@ object DynamicPlugins {
     }
 
     // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
-    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.resetExtensionPoints(points, pluginDescriptor) }
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area ->
+      area.resetExtensionPoints(points, pluginDescriptor)
+    }
     // unregister plugin extension points
-    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points, pluginDescriptor) }
-
-    // Sub-descriptors remain in memory when the dependent plugin is unloaded, and the EP declarations will be needed again when
-    // we load the dependent plugin back, so we can't clear the EPs in this situation
-    if (clearExtensionPoints) {
-      pluginDescriptor.appContainerDescriptor.extensionPoints = null
-      pluginDescriptor.projectContainerDescriptor.extensionPoints = null
-      pluginDescriptor.moduleContainerDescriptor.extensionPoints = null
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area ->
+      area.unregisterExtensionPoints(points, pluginDescriptor)
     }
 
     val pluginId = pluginDescriptor.pluginId
