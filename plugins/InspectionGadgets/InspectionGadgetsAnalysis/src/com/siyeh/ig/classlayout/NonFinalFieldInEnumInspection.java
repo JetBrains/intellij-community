@@ -68,14 +68,14 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      if (onlyWarnWhenQuickFix && !FinalUtils.canBeFinal(field)) {
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || !containingClass.isEnum()) {
         return;
       }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null || !containingClass.isEnum()) {
+      if (onlyWarnWhenQuickFix && !FinalUtils.canBeFinal(field)) {
         return;
       }
       registerFieldError(field, containingClass, field);
