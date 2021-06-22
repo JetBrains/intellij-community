@@ -23,11 +23,6 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("backendApplication")
-    public void testBackendApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/backendApplication/");
-    }
-
     @TestMetadata("composeDesktopApplication")
     public void testComposeDesktopApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
@@ -41,6 +36,11 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
     @TestMetadata("consoleApplication")
     public void testConsoleApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+    }
+
+    @TestMetadata("emptyKotlinJvmApplication")
+    public void testEmptyKotlinJvmApplication() throws Exception {
+        runTest("testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
     }
 
     @TestMetadata("frontendApplication")

@@ -25,11 +25,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
         }
 
-        @TestMetadata("backendApplication")
-        public void testBackendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/backendApplication/");
-        }
-
         @TestMetadata("composeDesktopApplication")
         public void testComposeDesktopApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
@@ -43,6 +38,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        }
+
+        @TestMetadata("emptyKotlinJvmApplication")
+        public void testEmptyKotlinJvmApplication() throws Exception {
+            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
         }
 
         @TestMetadata("frontendApplication")
@@ -88,11 +88,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
         }
 
-        @TestMetadata("backendApplication")
-        public void testBackendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/backendApplication/");
-        }
-
         @TestMetadata("composeDesktopApplication")
         public void testComposeDesktopApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
@@ -106,6 +101,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        }
+
+        @TestMetadata("emptyKotlinJvmApplication")
+        public void testEmptyKotlinJvmApplication() throws Exception {
+            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
         }
 
         @TestMetadata("frontendApplication")
@@ -151,11 +151,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
         }
 
-        @TestMetadata("backendApplication")
-        public void testBackendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/backendApplication/");
-        }
-
         @TestMetadata("composeDesktopApplication")
         public void testComposeDesktopApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
@@ -169,6 +164,11 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        }
+
+        @TestMetadata("emptyKotlinJvmApplication")
+        public void testEmptyKotlinJvmApplication() throws Exception {
+            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
         }
 
         @TestMetadata("frontendApplication")
