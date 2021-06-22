@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics
 
 import com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.ID_FIELD
@@ -14,7 +14,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("run.configuration.ui.interactions", 10)
+    val GROUP = EventLogGroup("run.configuration.ui.interactions", 11)
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope", // junit
