@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -235,6 +235,15 @@ public final class JavaPsiMathUtil {
     return null;
   }
 
+  /**
+   * Returns long range set for expression compared to a constant  or null if comparison is unsupported.
+   * Supports int and long constants. Supports nonConstantOperand of any type.
+   * E.g. if comparison expression is nonConstantOperand < 0, the {Long.MIN_VALUE..0} will be returned.
+   * Note: returned LongRangeSet may contain numbers outside of int range, even if nonConstantOperand has int type
+   *
+   * @param nonConstantOperand expression which is compared to int or long constant.
+   * @return long range set
+   */
   @Nullable
   public static LongRangeSet getRangeFromComparison(@NotNull PsiExpression nonConstantOperand) {
     final PsiBinaryExpression binOp =
@@ -248,8 +257,8 @@ public final class JavaPsiMathUtil {
       PsiTreeUtil.isAncestor(binOp.getLOperand(), nonConstantOperand, false) ? binOp.getROperand() : binOp.getLOperand();
     if (constOperand == null) return null;
     final Object constantExpression = ExpressionUtils.computeConstantExpression(constOperand);
-    if (!(constantExpression instanceof Integer)) return null;
-    int value = ((Integer)constantExpression).intValue();
+    if (!(constantExpression instanceof Integer) && !(constantExpression instanceof Long)) return null;
+    long value = ((Number)constantExpression).longValue();
     boolean yodaCondition = constOperand == binOp.getLOperand();
     if (yodaCondition) {
       relation = relation.getFlipped();
