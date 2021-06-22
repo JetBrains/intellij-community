@@ -16,6 +16,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
+import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -39,7 +40,10 @@ import kotlin.math.min
 class AlertMessagesManager : MacMessages() {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", false)
+    fun isEnabled(): Boolean {
+      val app = ApplicationManager.getApplication()
+      return app != null && !app.isUnitTestMode && !app.isHeadlessEnvironment && Registry.`is`("ide.message.dialogs.as.swing.alert", true)
+    }
 
     @JvmStatic
     fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
@@ -54,7 +58,16 @@ class AlertMessagesManager : MacMessages() {
                                      doNotAskOption: DialogWrapper.DoNotAskOption?,
                                      icon: Icon?,
                                      helpId: String?): Int {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText, cancelText), 0, -1, icon, doNotAskOption, helpId)
+    val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
+                             helpId)
+    dialog.show()
+    val exitCode = when (dialog.exitCode) {
+      0 -> Messages.YES
+      2 -> Messages.NO
+      else -> Messages.CANCEL
+    }
+    doNotAskOption?.setToBeShown(dialog.toBeShown(), exitCode)
+    return exitCode
   }
 
   override fun showOkMessageDialog(title: String, message: String?, okText: String, window: Window?) {
@@ -69,7 +82,7 @@ class AlertMessagesManager : MacMessages() {
                                doNotAskDialogOption: DialogWrapper.DoNotAskOption?,
                                icon: Icon?,
                                helpId: String?): Boolean {
-    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, null, doNotAskDialogOption,
+    return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, icon, doNotAskDialogOption,
                              null) == Messages.YES
   }
 
@@ -131,14 +144,14 @@ private class AlertDialog(project: Project?,
                           val myOptions: Array<String>,
                           val myDefaultOptionIndex: Int,
                           val myFocusedOptionIndex: Int,
-                          val myIcon: Icon,
+                          icon: Icon,
                           doNotAskOption: DoNotAskOption?,
                           val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
   private val myRootLayout = RootLayout()
-  private val myIconComponent = JLabel(myIcon)
+  private val myIconComponent = JLabel(icon)
   private var myTitleComponent: JComponent? = null
   private var myMessageComponent: JComponent? = null
   private val mySouthPanel = JPanel(BorderLayout())
@@ -162,7 +175,10 @@ private class AlertDialog(project: Project?,
 
     if (SystemInfoRt.isMac) {
       setInitialLocationCallback {
-        val rootPane = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
+        val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
+        if (rootPane == null) {
+          return@setInitialLocationCallback null
+        }
         val location = rootPane.locationOnScreen
         Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
       }
@@ -316,7 +332,7 @@ private class AlertDialog(project: Project?,
     dialogPanel.add(textPanel)
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
-      val titleComponent = createTextComponent(JTextPane(), myTitle)
+      val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
       titleComponent.font = JBFont.h3().asBold()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
@@ -333,12 +349,12 @@ private class AlertDialog(project: Project?,
           }
           return super.getPreferredSize()
         }
-      }, myMessage)
+      }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
       messageComponent.font = JBFont.medium()
       myMessageComponent = messageComponent
 
-      val lines = myMessage!!.length / 100
+      val lines = myMessage.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
@@ -362,6 +378,7 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
+      myCheckBoxDoNotShowDialog.font = JBFont.medium()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
@@ -375,6 +392,16 @@ private class AlertDialog(project: Project?,
     for (button in myButtons) {
       button.parent.remove(button)
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
+    }
+
+    if (SystemInfoRt.isMac) {
+      for ((index, button) in myButtons.withIndex()) {
+        button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
+        val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
+        if (button.action.getValue(DEFAULT_ACTION) != null) {
+          descriptor.isDefault = true
+        }
+      }
     }
 
     mySouthPanel.add(myButtonsPanel)
@@ -456,7 +483,13 @@ private class AlertDialog(project: Project?,
     }
 
     button.preferredSize = size
-    myButtons.add(button)
+
+    if (SystemInfoRt.isMac) {
+      myButtons.add(0, button)
+    }
+    else {
+      myButtons.add(button)
+    }
 
     return button
   }
@@ -464,7 +497,16 @@ private class AlertDialog(project: Project?,
   override fun createDoNotAskCheckbox(): JComponent? = null
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return super.getPreferredFocusedComponent() ?: myCheckBoxDoNotShowDialog
+    val focusedComponent = super.getPreferredFocusedComponent()
+    if (SystemInfoRt.isMac && focusedComponent == null) {
+      if (myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible) {
+        return myCheckBoxDoNotShowDialog
+      }
+      if (myButtons.isNotEmpty()) {
+        return myButtons[0]
+      }
+    }
+    return focusedComponent
   }
 
   override fun doCancelAction() = close(-1)
@@ -476,4 +518,6 @@ private class AlertDialog(project: Project?,
   }
 
   override fun getHelpId(): String? = myHelpId
+
+  public override fun toBeShown(): Boolean = super.toBeShown()
 }
