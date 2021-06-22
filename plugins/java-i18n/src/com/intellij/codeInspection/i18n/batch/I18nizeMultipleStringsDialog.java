@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.batch;
 
 import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix;
@@ -16,6 +16,8 @@ import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -39,6 +41,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
@@ -128,16 +131,32 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable String getDimensionServiceKey() {
+  protected String getDimensionServiceKey() {
     return "i18nInBatch";
   }
 
-  @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    List<String> files = myResourceBundleManager != null ? myResourceBundleManager.suggestPropertiesFiles(myContextModules)
-                                                         : I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
-    myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
+    myPropertiesFile = new ComboBox<>();
+    SwingUtilities.invokeLater(() -> {
+      ReadAction.nonBlocking(() -> myResourceBundleManager != null ? myResourceBundleManager.suggestPropertiesFiles(myContextModules)
+                                                                   : I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules))
+        .finishOnUiThread(ModalityState.stateForComponent(myPropertiesFile), files -> {
+          myPropertiesFile.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(files)));
+          if (!files.isEmpty()) {
+            String contextString = getContextString();
+            @NlsSafe String preselectedFile;
+            if (contextString != null && contextString.equals(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_CONTEXT))) {
+              preselectedFile = PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE);
+            }
+            else {
+              preselectedFile = null;
+            }
+            myPropertiesFile.setSelectedItem(ObjectUtils.notNull(preselectedFile, files.get(0)));
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    });
     new ComboboxSpeedSearch(myPropertiesFile);
     LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
     component.setText(JavaI18nBundle.message("property.file"));
@@ -147,28 +166,22 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         PropertiesFile propertiesFile = getPropertiesFile();
         if (propertiesFile != null) {
-          for (int i = 0; i < myKeyValuePairs.size(); i++) {
-            I18nizedPropertyData<D> data = myKeyValuePairs.get(i);
-            I18nizedPropertyData<D> updated = data.changeKey(
-              I18nizeQuickFixDialog.suggestUniquePropertyKey(data.getValue(), data.getKey(), propertiesFile)
-            );
-            myKeyValuePairs.set(i, updated);
-          }
+          List<I18nizedPropertyData<D>> pairs = myKeyValuePairs;
+          ReadAction.nonBlocking(() -> {
+            List<I18nizedPropertyData<D>> result = new ArrayList<>();
+            for (I18nizedPropertyData<D> data : pairs) {
+              result.add(data.changeKey(I18nizeQuickFixDialog.suggestUniquePropertyKey(data.getValue(), data.getKey(), propertiesFile)));
+            }  
+            return result;
+          }).finishOnUiThread(ModalityState.stateForComponent(myPropertiesFile), datum -> {
+            for (int i = 0; i < datum.size(); i++) {
+              myKeyValuePairs.set(i, datum.get(i));
+            }
+          }).submit(AppExecutorUtil.getAppExecutorService());
         }
       }
     });
 
-    if (!files.isEmpty()) {
-      String contextString = getContextString();
-      @NlsSafe String preselectedFile;
-      if (contextString != null && contextString.equals(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_CONTEXT))) {
-        preselectedFile = PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE);
-      }
-      else {
-        preselectedFile = null;
-      }
-      myPropertiesFile.setSelectedItem(ObjectUtils.notNull(preselectedFile, files.get(0)));
-    }
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
 
