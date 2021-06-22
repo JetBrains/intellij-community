@@ -194,16 +194,17 @@ public final class OldDirectoryCleaner {
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-      if (indicator != null) indicator.checkCanceled();
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
       lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
-      size += attrs.size();
       entriesToDelete++;
       return FileVisitResult.CONTINUE;
     }
 
     @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+      if (indicator != null) indicator.checkCanceled();
+      lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
+      size += attrs.size();
       entriesToDelete++;
       return FileVisitResult.CONTINUE;
     }
