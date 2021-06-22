@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
@@ -28,23 +30,37 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
   override fun onFailure(errors: List<VcsException>) = reportResult()
 
   private fun reportResult() {
+    val message = getCommitSummary()
+
     val allExceptions = committer.exceptions
+    if (allExceptions.isEmpty()) {
+      notifier.notifySuccess(COMMIT_FINISHED, "", message)
+      return
+    }
+
     val errors = collectErrors(allExceptions)
     val errorsSize = errors.size
     val warningsSize = allExceptions.size - errorsSize
-    val message = getCommitSummary()
+    val notificationActions = allExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
 
-    when {
-      errorsSize > 0 -> {
-        val title = message("message.text.commit.failed.with.error", errorsSize)
-        notifier.notifyError(COMMIT_FAILED, title, message)
-      }
-      warningsSize > 0 -> {
-        val title = message("message.text.commit.finished.with.warning", warningsSize)
-        notifier.notifyImportantWarning(COMMIT_FINISHED_WITH_WARNINGS, title, message)
-      }
-      else -> notifier.notifySuccess(COMMIT_FINISHED, "", message)
+    val title: @NlsContexts.NotificationTitle String
+    val displayId: @NonNls String
+    val notificationType: NotificationType
+    if (errorsSize > 0) {
+      displayId = COMMIT_FAILED
+      title = message("message.text.commit.failed.with.error", errorsSize)
+      notificationType = NotificationType.ERROR
     }
+    else {
+      displayId = COMMIT_FINISHED_WITH_WARNINGS
+      title = message("message.text.commit.finished.with.warning", warningsSize)
+      notificationType = NotificationType.WARNING
+    }
+
+    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, notificationType)
+    notification.setDisplayId(displayId)
+    notificationActions.forEach { notification.addAction(it) }
+    notification.notify(committer.project)
   }
 
   @NlsContexts.NotificationContent
