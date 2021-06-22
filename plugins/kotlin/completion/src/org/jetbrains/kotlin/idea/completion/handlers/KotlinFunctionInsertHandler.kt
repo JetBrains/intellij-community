@@ -3,14 +3,18 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.SerializedInsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.SerializableInsertHandler
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
+import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -20,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
@@ -33,7 +38,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         val argumentText: String = "",
         val lambdaInfo: GenerateLambdaInfo? = null,
         val argumentsOnly: Boolean = false
-    ) : KotlinFunctionInsertHandler(callType) {
+    ) : KotlinFunctionInsertHandler(callType), SerializableInsertHandler {
         init {
             if (lambdaInfo != null) {
                 assert(argumentText == "")
@@ -49,6 +54,141 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             lambdaInfo: GenerateLambdaInfo? = this.lambdaInfo,
             argumentsOnly: Boolean = this.argumentsOnly
         ) = Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
+
+        override fun handlePostInsert(context: InsertionContext, element: LookupElement) {
+            addImport(context, element)
+        }
+
+        // TODO: should be extracted into separate thing
+        class DummyPayloadBuilder(): SerializedInsertHandler.InsertionPayloadBuilder {
+            var snippet: String = ""
+            var deleteAfterCursor: Int? = null
+            var callPostCompletion: Boolean = true
+
+            override fun build(): SerializedInsertHandler.InsertionPayload {
+                return object : SerializedInsertHandler.InsertionPayload {
+                    override fun snippetToInsert(): String = snippet
+
+                    override fun deleteAfterCursor(): Int? = deleteAfterCursor
+
+                    override fun shouldCallPostCompletion(): Boolean = callPostCompletion
+                }
+            }
+        }
+
+        override fun trySerialize(item: LookupElement, editor: Editor, file: PsiFile, insertionStart: Int, caretOffset: Int): SerializedInsertHandler? {
+
+            fun surroundWithBracesIfInStringTemplate(renderedText: String): String {
+                val document = editor.document
+                if (insertionStart > 0 && document.charsSequence[insertionStart - 1] == '$') {
+                    if (file.findElementAt(insertionStart - 1)?.node?.elementType == KtTokens.SHORT_TEMPLATE_ENTRY_START) {
+                        return "{${renderedText}}"
+                    }
+                }
+
+                return renderedText
+            }
+
+            fun constructSnippetForNormalCompletion(renderedName: String): SerializedInsertHandler.InsertionPayloadBuilder {
+                val payloadBuilder = DummyPayloadBuilder()
+
+                val snippetStringBuilder = StringBuilder().append(renderedName)
+
+                if (inputTypeArguments) {
+                    snippetStringBuilder.append("<\$1>")
+                }
+
+                val openingBracket = '('
+                val closingBracket = ')'
+                val foundOpeningBracket = editor.document.charsSequence.indexOfSkippingSpace(openingBracket, caretOffset)
+                val foundClosedBracket = foundOpeningBracket?.let { bracketPos -> editor.document.charsSequence.indexOfStopOnSpace(closingBracket, bracketPos + 1) }
+
+                payloadBuilder.deleteAfterCursor = foundClosedBracket?.let { it - caretOffset + 1 }
+
+                snippetStringBuilder.append(
+                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0")
+
+                payloadBuilder.snippet = surroundWithBracesIfInStringTemplate(snippetStringBuilder.toString())
+
+                return payloadBuilder
+            }
+
+            fun constructSnippetForReplaceCompletion(renderedName: String): SerializedInsertHandler.InsertionPayloadBuilder {
+                val payloadBuilder = DummyPayloadBuilder()
+                val snippetStringBuilder = StringBuilder().append(renderedName)
+
+                val chars = editor.document.charsSequence
+
+                var insertTypeArguments = inputTypeArguments
+
+                val offset1 = chars.skipSpaces(caretOffset)
+                if (offset1 < chars.length) {
+                    if (chars[offset1] == '<') {
+                        val token = file.findElementAt(offset1)!!
+                        if (token.node.elementType == KtTokens.LT) {
+                            val parent = token.parent
+                            /* if type argument list is on multiple lines this is more likely wrong parsing*/
+                            insertTypeArguments = false
+                            payloadBuilder.deleteAfterCursor = parent.endOffset - caretOffset + 1
+                        }
+                    }
+                }
+
+                if (inputTypeArguments) {
+                    snippetStringBuilder.append("<\$1>")
+                }
+
+                val openingBracket = '('
+                val closingBracket = ')'
+                val foundOpeningBracket = editor.document.charsSequence.indexOfSkippingSpace(openingBracket, caretOffset)
+                val foundClosedBracket = foundOpeningBracket
+                    ?.let { bracketPos -> editor.document.charsSequence.indexOfStopOnSpace(closingBracket, bracketPos + 1) }
+                    ?.let { it - caretOffset + 1 }
+
+                with(payloadBuilder) {
+                    if (deleteAfterCursor == null) {
+                        deleteAfterCursor = foundClosedBracket
+                    }
+                    else if (foundClosedBracket != null) {
+                        deleteAfterCursor = maxOf(deleteAfterCursor!!, foundClosedBracket)
+                    }
+                }
+
+                if (insertTypeArguments) {
+                    snippetStringBuilder.append("<\$1>")
+                }
+
+                snippetStringBuilder.append(
+                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0")
+
+                payloadBuilder.snippet = surroundWithBracesIfInStringTemplate(snippetStringBuilder.toString())
+
+                return payloadBuilder
+            }
+
+
+
+            val declarationLookupObjectName = (item.`object` as? DeclarationLookupObject)?.name
+
+            val nameIsCorrect = declarationLookupObjectName != null && !declarationLookupObjectName.isSpecial
+            val callTypeIsCorrect = callType is CallType.DOT
+            if (lambdaInfo == null && nameIsCorrect && callTypeIsCorrect) {
+
+                val renderedName = declarationLookupObjectName!!.render()
+
+                return object : SerializedInsertHandler {
+                    override fun snippetPerCompletionChar(): MutableMap<Char, SerializedInsertHandler.InsertionPayloadBuilder> {
+                        return mutableMapOf(
+                            Lookup.NORMAL_SELECT_CHAR to constructSnippetForNormalCompletion(renderedName),
+                            Lookup.REPLACE_SELECT_CHAR to constructSnippetForReplaceCompletion(renderedName)
+                        )
+                    }
+                }
+            }
+            else {
+                return null
+            }
+        }
 
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)

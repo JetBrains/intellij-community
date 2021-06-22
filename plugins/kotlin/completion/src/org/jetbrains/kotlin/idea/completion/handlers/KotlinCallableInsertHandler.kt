@@ -29,7 +29,7 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
         addImport(context, item)
     }
 
-    private fun addImport(context: InsertionContext, item: LookupElement) {
+    protected fun addImport(context: InsertionContext, item: LookupElement) {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
         psiDocumentManager.commitAllDocuments()
 
