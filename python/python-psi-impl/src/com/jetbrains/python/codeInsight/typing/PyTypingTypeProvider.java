@@ -1123,7 +1123,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (FINAL.equals(qualifiedName) || FINAL_EXT.equals(qualifiedName)) {
           return true;
         }
-        else if (pair.first != null && visited.add(resolved)) {
+        else if (pair.first != null && visited.add(resolved) && visited.add(pair.first)) {
           queue.add(resolved);
         }
       }
