@@ -29,6 +29,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiReference
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -196,15 +197,24 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testExtensionsDependencies() {
-    String moduleName = "ExtensionsDependencies-module"
-    String moduleDescriptorFilename = "ExtensionsDependencies-module.xml"
-    VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(moduleName)
-    myFixture.copyFileToProject(moduleDescriptorFilename, "/"+ moduleName+ "/" + moduleDescriptorFilename)
-    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, moduleRoot);
-    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+    addExtensionsModule("ExtensionsDependencies-module")
+    VirtualFile contentFile = addExtensionsModule("ExtensionsDependencies-content")
 
     doHighlightingTest("ExtensionsDependencies.xml",
                        "ExtensionsDependencies-plugin.xml")
+
+    myFixture.configureFromExistingVirtualFile(contentFile)
+    doHighlightingTest()
+  }
+
+  private VirtualFile addExtensionsModule(String name) {
+    String moduleDescriptorFilename = name+ ".xml"
+    VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(name)
+    VirtualFile file = myFixture.copyFileToProject(moduleDescriptorFilename, "/" + name + "/" + moduleDescriptorFilename)
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot);
+    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17());
+    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+    return file
   }
 
   void testDependsHighlighting() {
