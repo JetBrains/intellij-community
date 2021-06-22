@@ -7,7 +7,7 @@ Reports <code>return</code> expressions (one-liners or <code>when</code>) replac
 <pre><code>
 fun sign(x: Int): Int {
     return when { // &lt;== can be simplified
-        x < 0 -> -1
+        x &lt; 0 -> -1
         x > 0 -> 1
         else -> 0
     }
@@ -16,7 +16,7 @@ fun sign(x: Int): Int {
 <p>After the quick-fix is applied:</p>
 <pre><code>
 fun sign(x: Int): Int = when {
-    x < 0 -> -1
+    x &lt; 0 -> -1
     x > 0 -> 1
     else -> 0
 }
