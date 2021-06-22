@@ -31,29 +31,5 @@ class PluginManagerConfigurableForOrg {
   }
 
   fun allowInstallFromDisk(): Boolean = false
-
-  fun foo() {
-    BorderLayoutPanel().apply {
-      val customLine = when {
-        SystemInfo.isWindows -> JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
-        else -> JBUI.Borders.customLineBottom(JBColor.border())
-      }
-      border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
-      background = JBUI.CurrentTheme.Notification.BACKGROUND
-      foreground = JBUI.CurrentTheme.Notification.FOREGROUND
-
-      addToCenter(JBLabel().apply {
-        icon = AllIcons.General.Warning
-        verticalTextPosition = SwingConstants.TOP
-        text = HtmlChunk
-          .html()
-          .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName))
-          .toString()
-      })
-
-      withPreferredWidth(400)
-    }
-
-  }
 }
 
