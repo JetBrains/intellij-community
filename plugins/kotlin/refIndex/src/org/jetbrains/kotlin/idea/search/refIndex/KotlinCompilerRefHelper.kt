@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import java.io.IOException
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
@@ -24,8 +23,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = when (element) {
         is KtClassOrObject -> element.fqName
             ?.asString()
-            ?.let(names::tryEnumerate)
-            ?.takeUnless { it == 0 }
+            ?.tryEnumerate(names)
             ?.let(CompilerRef::JavaCompilerClassRef)
 
         else -> null
@@ -37,22 +35,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         names: NameEnumerator,
         libraryScope: GlobalSearchScope
     ): List<CompilerRef> {
-        basePsi as KtClassOrObject
-
         val overridden = mutableListOf<CompilerRef>()
-        var exception: IOException? = null
-        val processor = Processor { c: PsiClass ->
-            if (c.hasModifierProperty(PsiModifier.PRIVATE)) return@Processor true
-            val qName = runReadAction { c.qualifiedName } ?: return@Processor true
-            try {
-                val nameId = names.tryEnumerate(qName)
-                if (nameId != 0) {
-                    overridden.add(baseRef.override(nameId))
-                }
-            } catch (e: IOException) {
-                exception = e
-                return@Processor false
-            }
+        val processor = Processor { psiClass: PsiClass ->
+            psiClass.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
+                ?.let { runReadAction { it.qualifiedName } }
+                ?.tryEnumerate(names)
+                ?.let { overridden.add(baseRef.override(it)) }
+
             true
         }
 
@@ -62,8 +51,8 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
 
-        if (exception != null) throw exception!!
-
         return overridden
     }
 }
+
+private fun String.tryEnumerate(names: NameEnumerator): Int? = names.tryEnumerate(this).takeUnless { it == 0 }
