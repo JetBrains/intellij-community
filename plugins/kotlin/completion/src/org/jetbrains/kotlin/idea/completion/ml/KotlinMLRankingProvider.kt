@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.ml
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 
 class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
@@ -15,7 +14,7 @@ class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
 ) {
     override fun isLanguageSupported(language: Language): Boolean = language.id.equals("kotlin", ignoreCase = true)
 
-    override fun isEnabledByDefault(): Boolean = ApplicationInfoEx.getInstanceEx().isEAP
+    override fun isEnabledByDefault(): Boolean = true
 
     override fun getDecoratingPolicy(): DecoratingItemsPolicy = DecoratingItemsPolicy.Composite(
         DecoratingItemsPolicy.ByAbsoluteThreshold(3.0),
