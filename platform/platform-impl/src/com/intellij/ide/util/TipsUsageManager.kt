@@ -169,7 +169,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     override fun featureUsed(feature: FeatureDescriptor) {
       TipUIUtil.getTip(feature)?.let { tip ->
         shownTips[tip.fileName]?.let { timestamp ->
-          TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, timestamp)
+          TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, System.currentTimeMillis() - timestamp)
         }
       }
     }

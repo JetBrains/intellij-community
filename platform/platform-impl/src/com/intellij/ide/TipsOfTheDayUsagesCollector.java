@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 8);
 
   public enum DialogType {automatically, manually}
 
