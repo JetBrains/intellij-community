@@ -36,7 +36,7 @@ class UiDslBindingsTest : BasePlatformTestCase() {
     intValue = 2
     val dialogPanel = panel {
       row {
-        buttonGroup(::intValue) {
+        this@row.buttonGroup(::intValue) {
           radioButton("Foo", 0)
           radioButton("Bar", 1)
           radioButton("Baz", 2)
@@ -58,7 +58,7 @@ class UiDslBindingsTest : BasePlatformTestCase() {
     val dialogPanel = panel {
       row {
         cell {
-          buttonGroup(::intValue) {
+          this@cell.buttonGroup(::intValue) {
             radioButton("Foo", 0)
             radioButton("Bar", 1)
             radioButton("Baz", 2)

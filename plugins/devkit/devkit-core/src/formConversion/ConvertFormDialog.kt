@@ -37,7 +37,7 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
         textField(::boundInstanceExpression)
       }
       titledRow("Base class") {
-        buttonGroup(::baseClass) {
+        this@titledRow.buttonGroup(::baseClass) {
           row { radioButton("None", FormBaseClass.None) }
           row {
             radioButton("Configurable", FormBaseClass.Configurable)
