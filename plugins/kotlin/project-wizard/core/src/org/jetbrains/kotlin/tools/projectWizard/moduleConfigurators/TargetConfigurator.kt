@@ -154,7 +154,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
 
     override val text: String = KotlinNewProjectWizardBundle.message("module.configurator.jvm")
 
-    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
+    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT5
 
     override fun createInnerTargetIrs(
         reader: Reader,

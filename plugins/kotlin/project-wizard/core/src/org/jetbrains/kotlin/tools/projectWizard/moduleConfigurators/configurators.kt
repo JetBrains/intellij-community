@@ -87,7 +87,7 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.jvm")
 
 
-    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
+    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT5
 
     override val canContainSubModules = true
 
