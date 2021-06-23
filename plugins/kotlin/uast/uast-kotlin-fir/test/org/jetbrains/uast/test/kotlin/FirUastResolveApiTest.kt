@@ -23,7 +23,7 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
 
     // TODO: once call is supported, test labeledExpression.kt for labeled this and super
 
-    @TestMetadata("plugins/uast-kotlin/testData")
+    @TestMetadata("../uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : AbstractFirUastTest(), UastResolveApiTestBase {
@@ -35,17 +35,17 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
 
         @TestMetadata("MethodReference.kt")
         fun testMethodReference() {
-            doCheck("plugins/uast-kotlin/testData/MethodReference.kt", ::checkCallbackForMethodReference)
+            doCheck("../uast-kotlin/testData/MethodReference.kt", ::checkCallbackForMethodReference)
         }
 
         @TestMetadata("Imports.kt")
         fun testImports() {
-            doCheck("plugins/uast-kotlin/testData/Imports.kt", ::checkCallbackForImports)
+            doCheck("../uast-kotlin/testData/Imports.kt", ::checkCallbackForImports)
         }
 
         @TestMetadata("ReceiverFun.kt")
         fun testReceiverFun() {
-            doCheck("plugins/uast-kotlin/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
+            doCheck("../uast-kotlin/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
         }
     }
 }
