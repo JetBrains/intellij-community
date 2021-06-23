@@ -58,6 +58,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    */
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
+  @NotNull private final VcsLogUserResolver myUserResolver;
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
   @NotNull private final VcsLogRefresherImpl myRefresher;
@@ -113,6 +114,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myRefresher);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
+    myUserResolver = new MyVcsLogUserResolver();
 
     Disposer.register(parentDisposable, this);
     Disposer.register(this, () -> {
@@ -343,6 +345,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
+  public VcsLogUserResolver getUserNameResolver() {
+    return myUserResolver;
+  }
+
+  @NotNull
   public VcsLogProgress getProgress() {
     return myRefresher.getProgress();
   }
@@ -364,5 +371,33 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   private enum State {
     CREATED, INITIALIZED, DISPOSED
+  }
+
+  private class MyVcsLogUserResolver extends VcsLogUserResolverBase implements Disposable {
+    private final @NotNull DataPackChangeListener myListener = newDataPack -> {
+      clearCache();
+    };
+
+    MyVcsLogUserResolver() {
+      addDataPackChangeListener(myListener);
+      Disposer.register(VcsLogData.this, this);
+    }
+
+    @NotNull
+    @Override
+    public Map<VirtualFile, VcsUser> getCurrentUsers() {
+      return VcsLogData.this.getCurrentUser();
+    }
+
+    @NotNull
+    @Override
+    public Set<VcsUser> getAllUsers() {
+      return VcsLogData.this.getAllUsers();
+    }
+
+    @Override
+    public void dispose() {
+      removeDataPackChangeListener(myListener);
+    }
   }
 }
