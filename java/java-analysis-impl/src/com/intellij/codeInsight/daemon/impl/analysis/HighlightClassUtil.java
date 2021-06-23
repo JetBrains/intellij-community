@@ -34,6 +34,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -308,7 +310,11 @@ public final class HighlightClassUtil {
     return errorResult;
   }
   
-  static HighlightInfo checkClassMemberDeclaredOutside(@NotNull PsiErrorElement errorElement) { 
+  static HighlightInfo checkClassMemberDeclaredOutside(@NotNull PsiErrorElement errorElement) {
+    PsiJavaFile file = ObjectUtils.tryCast(errorElement.getContainingFile(), PsiJavaFile.class);
+    if (file == null) return null;
+    String fileName = FileUtilRt.getNameWithoutExtension(file.getName());
+    if (!StringUtil.isJavaIdentifier(fileName)) return null;
     MemberModel model = MemberModel.create(errorElement);
     if (model == null) return null;
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
