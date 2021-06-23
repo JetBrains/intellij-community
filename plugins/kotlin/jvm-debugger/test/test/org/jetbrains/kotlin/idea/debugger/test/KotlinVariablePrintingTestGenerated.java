@@ -23,6 +23,11 @@ public class KotlinVariablePrintingTestGenerated extends AbstractKotlinVariableP
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("nestedInlineFunctions.kt")
+    public void testNestedInlineFunctions() throws Exception {
+        runTest("testData/variables/nestedInlineFunctions.kt");
+    }
+
     @TestMetadata("optimisedVariablesInNestedFunctions.kt")
     public void testOptimisedVariablesInNestedFunctions() throws Exception {
         runTest("testData/variables/optimisedVariablesInNestedFunctions.kt");
