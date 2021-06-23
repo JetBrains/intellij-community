@@ -41,6 +41,7 @@ import com.intellij.util.Processor
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
+import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -52,18 +53,20 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.LookupStorage
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
-import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
-import org.jetbrains.kotlin.jps.incremental.KotlinDataContainerTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
@@ -87,7 +90,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         connect.subscribe(
             CustomBuilderMessageHandler.TOPIC,
             CustomBuilderMessageHandler { builderId, _, messageText ->
-                if (builderId == KotlinCompilerReferenceIndexBuilder.BUILDER_ID) {
+                if (builderId == SettingConstants.KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID) {
                     mutableSet += messageText
                 }
             },
@@ -115,7 +118,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         dirtyScopeHolder.installVFSListener(this)
 
         val compilerManager = CompilerManager.getInstance(project)
-        val isUpToDate = compilerManager.takeIf { kotlinDataContainer.exists() }
+        val isUpToDate = compilerManager.takeIf { kotlinDataContainer != null }
             ?.createProjectCompileScope(project)
             ?.let(compilerManager::isUpToDate)
             ?: false
@@ -177,15 +180,22 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         closeStorage()
     }
 
-    private val kotlinDataContainer: File
-        get() = BuildDataPathsImpl(
-            BuildManager.getInstance().getProjectSystemDirectory(project)
-        ).getTargetDataRoot(KotlinDataContainerTarget)
+    private val kotlinDataContainer: Path?
+        get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDirectory(project)).targetsDataRoot
+            .toPath()
+            .resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
+            .takeIf { it.exists() && it.isDirectory() }
+            ?.listDirectoryEntries("${SettingConstants.KOTLIN_DATA_CONTAINER_ID}*")
+            ?.firstOrNull()
 
     private fun openStorage() {
         val basePath = project.basePath ?: return
         val pathConverter = RelativeFileToPathConverter(File(basePath))
-        val targetDataDir = kotlinDataContainer
+        val targetDataDir = kotlinDataContainer?.toFile() ?: run {
+            LOG.warn("try to open storage without index directory")
+            return
+        }
+
         storage = LookupStorage(targetDataDir, pathConverter)
         LOG.info("kotlin compiler references index is opened")
     }
