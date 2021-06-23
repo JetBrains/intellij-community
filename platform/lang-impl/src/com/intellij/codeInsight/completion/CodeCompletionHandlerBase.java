@@ -51,7 +51,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NonNls;
@@ -640,7 +639,7 @@ public class CodeCompletionHandlerBase {
       ActionTracker tracker = new ActionTracker(indicator.getEditor(), indicator);
       Runnable wrapper = () -> {
         if (!Disposer.isDisposed(indicator) && !indicator.getProject().isDisposed() && !tracker.hasAnythingHappened()) {
-          SlowOperations.allowSlowOperations(() -> laterRunnable.run());
+          laterRunnable.run();
         }
         indicator.disposeIndicator();
       };
