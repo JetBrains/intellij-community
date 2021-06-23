@@ -589,7 +589,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
       if (target instanceof PsiMethod &&
-          (StringFlowUtil.isStringProcessingMethod((PsiMethod)target, NlsInfo.builder()) || StringFlowUtil.isPassthroughMethod((PsiMethod)target, null, null, NlsInfo.builder()))) {
+          (StringFlowUtil.isStringProcessingMethod((PsiMethod)target, NlsInfo.factory()) || StringFlowUtil.isPassthroughMethod((PsiMethod)target, null, null, NlsInfo.factory()))) {
         return;
       }
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
@@ -701,7 +701,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   static List<UExpression> findIndirectUsages(UExpression expression, boolean allowStringModifications) {
-    UExpression passThrough = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfo.builder());
+    UExpression passThrough = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfo.factory());
     ULocalVariable uVar = getVariableToSearch(passThrough);
     if (uVar != null && NlsInfo.fromUVariable(uVar).getNlsStatus() == ThreeState.UNSURE) {
       List<UExpression> usages = findUsages(passThrough, uVar);

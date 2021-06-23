@@ -22,9 +22,9 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
       public void visitElement(@NotNull PsiElement element) {
         UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(element, UCallExpression.class, UReferenceExpression.class);
         if (uExpression == null) return;
-        UExpression usage = StringFlowUtil.goUp(uExpression, true, TaintValueBuilder.INSTANCE);
+        UExpression usage = StringFlowUtil.goUp(uExpression, true, TaintValueFactory.INSTANCE);
         AnnotationContext annotationContext = AnnotationContext.fromExpression(usage);
-        TaintValue contextValue = TaintValueBuilder.INSTANCE.of(annotationContext);
+        TaintValue contextValue = TaintValueFactory.INSTANCE.of(annotationContext);
         if (contextValue != TaintValue.Untainted) return;
         TaintValue taintValue = TaintAnalyzer.getTaintValue(uExpression);
         if (taintValue == null) return;

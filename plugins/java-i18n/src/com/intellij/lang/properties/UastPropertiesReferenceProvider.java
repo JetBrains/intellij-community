@@ -36,7 +36,7 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
   public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression element,
                                                                 @NotNull PsiLanguageInjectionHost host,
                                                                 @NotNull ProcessingContext context) {
-    UExpression parent = StringFlowUtil.goUp(element, false, NlsInfo.builder());
+    UExpression parent = StringFlowUtil.goUp(element, false, NlsInfo.factory());
     if (!canBePropertyKeyRef(parent)) {
       return PsiReference.EMPTY_ARRAY;
     }

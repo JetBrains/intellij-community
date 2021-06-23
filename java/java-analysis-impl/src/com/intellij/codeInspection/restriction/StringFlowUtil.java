@@ -33,13 +33,13 @@ public class StringFlowUtil {
    * 
    * @param expression starting expression
    * @param allowStringTransformation true if transformations like concatenation are allowed
-   * @param builder restriction info builder. used to check if we can go up through some method calls
+   * @param factory restriction info factory. used to check if we can go up through some method calls
    *               (e.g. if this method return value is marked with some restriction or not)  
    * @return last expression that we can go through
    */
   public static @NotNull UExpression goUp(@NotNull UExpression expression,
                                           boolean allowStringTransformation,
-                                          @NotNull RestrictionInfoBuilder<? extends RestrictionInfo> builder) {
+                                          @NotNull RestrictionInfoFactory<?> factory) {
     UExpression parent = expression;
     while (true) {
       UElement parentElement = parent.getUastParent();
@@ -76,7 +76,7 @@ public class StringFlowUtil {
         UCallExpression uastParent = ObjectUtils.tryCast(lambda.getUastParent(), UCallExpression.class);
         if (uastParent == null) return parent;
         PsiMethod method = uastParent.resolve();
-        if (method == null || !isPassthroughMethod(method, uastParent, lambda, builder)) return parent;
+        if (method == null || !isPassthroughMethod(method, uastParent, lambda, factory)) return parent;
         next = uastParent;
       }
       if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())
@@ -92,8 +92,8 @@ public class StringFlowUtil {
           PsiMethod method = ((UCallExpression)next).resolve();
           boolean shouldGoThroughCall =
             TypeUtils.isJavaLangString(next.getExpressionType()) &&
-            (allowStringTransformation && isStringProcessingMethod(method, builder) ||
-             isPassthroughMethod(method, (UCallExpression)next, parent, builder));
+            (allowStringTransformation && isStringProcessingMethod(method, factory) ||
+             isPassthroughMethod(method, (UCallExpression)next, parent, factory));
           if (!shouldGoThroughCall) return parent;
         }
       }
@@ -123,14 +123,14 @@ public class StringFlowUtil {
    * @return true if method is detected to be a string-processing method
    */
   public static boolean isStringProcessingMethod(@Nullable PsiMethod method,
-                                                 @NotNull RestrictionInfoBuilder<? extends RestrictionInfo> builder) {
+                                                 @NotNull RestrictionInfoFactory<?> factory) {
     if (method == null) return false;
-    if (!(builder.fromModifierListOwner(method) instanceof RestrictionInfo.Unspecified)) return false;
+    if (!(factory.fromModifierListOwner(method) instanceof RestrictionInfo.Unspecified)) return false;
     if (!JavaMethodContractUtil.isPure(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
-      if (!(builder.fromModifierListOwner(parameter) instanceof RestrictionInfo.Unspecified)) return false;
+      if (!(factory.fromModifierListOwner(parameter) instanceof RestrictionInfo.Unspecified)) return false;
     }
     return true;
   }
@@ -148,12 +148,12 @@ public class StringFlowUtil {
    * @param method  method to check
    * @param call    this method call
    * @param arg     argument which is passed
-   * @param builder restriction builder to check if there's any restrictions related to method
+   * @param factory restriction factory to check if there's any restrictions related to method
    */
   public static boolean isPassthroughMethod(@Nullable PsiMethod method,
                                             @Nullable UCallExpression call,
                                             @Nullable UExpression arg,
-                                            @NotNull RestrictionInfoBuilder<? extends RestrictionInfo> builder) {
+                                            @NotNull RestrictionInfoFactory<?> factory) {
     if (method == null) return false;
     PsiType type = method.getReturnType();
     PsiTypeParameter typeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(type), PsiTypeParameter.class);
@@ -171,7 +171,7 @@ public class StringFlowUtil {
           PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
           parameterType = substitutor.substitute(parameterType);
         }
-        RestrictionInfo info = builder.fromAnnotationOwner(parameterType);
+        RestrictionInfo info = factory.fromAnnotationOwner(parameterType);
         if (!(info instanceof RestrictionInfo.Unspecified) || !((RestrictionInfo.Unspecified)info).isUnknown()) {
           return false;
         }

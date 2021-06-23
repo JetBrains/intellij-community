@@ -4,7 +4,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
-import com.intellij.codeInspection.restriction.RestrictionInfoBuilder;
+import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,8 +39,8 @@ public abstract class NlsInfo implements RestrictionInfo {
     myNls = nls;
   }
   
-  public static NlsInfoBuilder builder() {
-    return NlsInfoBuilder.INSTANCE;
+  public static NlsInfoFactory factory() {
+    return NlsInfoFactory.INSTANCE;
   }
   
 
@@ -88,7 +88,7 @@ public abstract class NlsInfo implements RestrictionInfo {
    * @return localization status
    */
   static @NotNull NlsInfo forExpression(@NotNull UExpression expression, boolean allowStringModifications) {
-    expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoBuilder.INSTANCE);
+    expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoFactory.INSTANCE);
     AnnotationContext context = AnnotationContext.fromExpression(expression);
     return fromAnnotationContext(expression.getUastParent(), context);
   }
@@ -109,9 +109,9 @@ public abstract class NlsInfo implements RestrictionInfo {
     return Capitalization.NotSpecified;
   }
   
-  private static class NlsInfoBuilder implements RestrictionInfoBuilder<NlsInfo> {
+  private static class NlsInfoFactory implements RestrictionInfoFactory<NlsInfo> {
 
-    private static final NlsInfoBuilder INSTANCE = new NlsInfoBuilder();
+    private static final NlsInfoFactory INSTANCE = new NlsInfoFactory();
 
     @Override
     public @NotNull NlsInfo fromAnnotationOwner(@Nullable PsiAnnotationOwner annotationOwner) {

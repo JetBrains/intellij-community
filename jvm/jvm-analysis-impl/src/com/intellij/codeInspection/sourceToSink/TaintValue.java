@@ -23,7 +23,7 @@ interface TaintValue extends RestrictionInfo {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String getAnnotationName() {
       return UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION;
     }
 
@@ -47,7 +47,7 @@ interface TaintValue extends RestrictionInfo {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String getAnnotationName() {
       return UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION;
     }
 
@@ -57,13 +57,13 @@ interface TaintValue extends RestrictionInfo {
     }
   };
   
-  Set<String> NAMES = Set.of(Tainted.getName(), Untainted.getName(), Unknown.getName());
+  Set<String> NAMES = Set.of(Tainted.getAnnotationName(), Untainted.getAnnotationName(), Unknown.getAnnotationName());
 
   @Nullable String getErrorMessage();
 
   @NotNull TaintValue and(@NotNull TaintValue other);
 
-  @NotNull String getName();
+  @NotNull String getAnnotationName();
 
   class TaintUnknown implements Unspecified, TaintValue {
 
@@ -83,7 +83,7 @@ interface TaintValue extends RestrictionInfo {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String getAnnotationName() {
       return UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION;
     }
 

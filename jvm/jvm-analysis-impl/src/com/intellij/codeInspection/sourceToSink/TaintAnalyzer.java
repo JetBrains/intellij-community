@@ -49,13 +49,13 @@ class TaintAnalyzer {
     TaintValue taintValue;
     if (target instanceof PsiModifierListOwner) {
       PsiModifierListOwner owner = (PsiModifierListOwner)target;
-      taintValue = TaintValueBuilder.INSTANCE.fromModifierListOwner(owner);
-      if (taintValue == TaintValue.Unknown) taintValue = TaintValueBuilder.of(owner);
+      taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
+      if (taintValue == TaintValue.Unknown) taintValue = TaintValueFactory.of(owner);
       if (taintValue != TaintValue.Unknown) return taintValue;
     }
     PsiType type = ((UExpression)ref).getExpressionType();
     if (type != null) {
-      taintValue = TaintValueBuilder.INSTANCE.fromAnnotationOwner(type);
+      taintValue = TaintValueFactory.INSTANCE.fromAnnotationOwner(type);
       if (taintValue != TaintValue.Unknown) return taintValue;
     }
     if (target instanceof PsiLocalVariable) {

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * 
  * @param <T> type of restriction info to construct
  */
-public interface RestrictionInfoBuilder<T extends RestrictionInfo> {
+public interface RestrictionInfoFactory<T extends RestrictionInfo> {
   
   @NotNull T fromAnnotationOwner(@Nullable PsiAnnotationOwner annotationOwner);
 

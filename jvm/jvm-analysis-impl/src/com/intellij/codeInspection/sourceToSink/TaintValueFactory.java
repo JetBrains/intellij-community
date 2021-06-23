@@ -4,7 +4,7 @@ package com.intellij.codeInspection.sourceToSink;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
-import com.intellij.codeInspection.restriction.RestrictionInfoBuilder;
+import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.ULocalVariable;
 import org.jetbrains.uast.UastContextKt;
 
-class TaintValueBuilder implements RestrictionInfoBuilder<TaintValue> {
+class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
-  static final TaintValueBuilder INSTANCE = new TaintValueBuilder();
+  static final TaintValueFactory INSTANCE = new TaintValueFactory();
 
   @Override
   public @NotNull TaintValue fromAnnotationOwner(@Nullable PsiAnnotationOwner annotationOwner) {
@@ -94,11 +94,11 @@ class TaintValueBuilder implements RestrictionInfoBuilder<TaintValue> {
   }
 
   private static @Nullable TaintValue fromAnnotation(@NotNull PsiAnnotation annotation) {
-    if (annotation.hasQualifiedName(TaintValue.Tainted.getName())) {
+    if (annotation.hasQualifiedName(TaintValue.Tainted.getAnnotationName())) {
       return TaintValue.Tainted;
     }
     if (annotation.hasQualifiedName(
-      TaintValue.Untainted.getName())) {
+      TaintValue.Untainted.getAnnotationName())) {
       return TaintValue.Untainted;
     }
     return null;

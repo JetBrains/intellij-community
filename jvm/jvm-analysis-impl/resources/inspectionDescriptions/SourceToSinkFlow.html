@@ -1,5 +1,5 @@
 <html><body>
-Reports cases when non-safe string is passed to a method with parameter marked as <code>@Untainted</code>.
+Reports cases when non-safe string is passed to a method with parameter marked with annotation <code>org.checkerframework.checker.tainting.qual.Untainted</code>.
 <p>
   Safe string is:
 <ul>
@@ -22,15 +22,15 @@ Example:
 </code>
 </pre>
 <p>
-Here we do not have non-safe string assigments to <code>s</code> so warning is not produced. On the other hand:
+Here we do not have non-safe string assignments to <code>s</code> so warning is not produced. On the other hand:
 <pre>
 <code>
   void doSmth(boolean b) {
-  String s = safe();
-  String s1 = "other";
-  s1 = foo();
-  if (b) s1 = s;
-  sink(s);        // warning here
+    String s = safe();
+    String s1 = "other";
+    s1 = foo();
+    if (b) s1 = s;
+    sink(s);        // warning here
   }
   
   String foo();

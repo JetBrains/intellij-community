@@ -72,7 +72,7 @@ public final class JavaI18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
-    expression = StringFlowUtil.goUp(expression, false, NlsInfo.builder());
+    expression = StringFlowUtil.goUp(expression, false, NlsInfo.factory());
     AnnotationContext context = AnnotationContext.fromExpression(expression);
     return context.allItems().anyMatch(owner -> {
       PsiAnnotation annotation = owner.findAnnotation(AnnotationUtil.PROPERTY_KEY);
