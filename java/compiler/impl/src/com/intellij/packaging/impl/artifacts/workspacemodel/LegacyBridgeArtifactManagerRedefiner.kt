@@ -11,6 +11,11 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * This class should be removed after enabling new [ArtifactManagerBridge] for the whole users without flag.
+ * Alongside with this Java plugin should be removed from the approved for usage of `projectServiceContainerCustomizer`
+ * at `projectLoader.kt`.  Dependency to `intellij.platform.serviceContainer` should also be removed from the module.
+ */
 @ApiStatus.Internal
 class LegacyBridgeArtifactManagerRedefiner : ProjectServiceContainerCustomizer {
   companion object {
