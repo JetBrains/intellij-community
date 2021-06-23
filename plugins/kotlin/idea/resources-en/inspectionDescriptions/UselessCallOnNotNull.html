@@ -3,7 +3,7 @@
 Reports calls on not-null receiver that make sense only for nullable receiver.
 <p>Several functions from the standard library such as <code>orEmpty()</code> or <code>isNullOrEmpty</code>
     have sense only when they are called on receivers of nullable types. Otherwise, they can be omitted or simplified as the result will be the same.</p>
-<p>'Remove redundant call' and 'Change call to …'  quick-fixes can be used to amend the code automatically.</p>
+<p><b>Remove redundant call</b> and <b>Change call to …</b>  quick-fixes can be used to amend the code automatically.</p>
 <p>Examples:</p>
 <pre><code>
 fun test(s: String) {

@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports <code>var</code> properties with default setter and getter that doesn't reference backing field.
-<p>A <code>var</code> property with default setter and getter that doesn't reference backing field have no effect on calling its setter,
-    therefore it will be more clear to change such property to <code>val</code> and delete the initializer.</p>
-<p>'Change to val and delete initializer' quick-fix can be used to amend the code automatically.</p>
+Reports <code>var</code> properties with default setter and getter that do not reference backing field.
+<p>
+Such properties do not affect calling its setter; therefore, it will be clearer to change such property to <code>val</code> and delete the initializer.
+</p>
+<p><b>Change to val and delete initializer</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
 // This property always returns '1' and it doesn't important that the property is a 'var'
