@@ -166,6 +166,25 @@ public final class JBCefApp {
     }
     if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 
+    // Add possibility to disable GPU (see IDEA-248140)
+    if (Registry.is("ide.browser.jcef.gpu.disable")) {
+      // NOTE: also can try
+      // --override-use-software-gl-for-tests - Forces the use of software GL instead of hardware gpu.
+      // --disable-gpu-rasterization - 	Disable GPU rasterization, i.e. rasterize on the CPU only. Overrides the kEnableGpuRasterization flag.
+      args = ArrayUtil.mergeArrays(args, new String[] {"--disable-gpu", "--disable-gpu-compositing"});
+    }
+
+    // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)
+    // NOTE: List of keys: https://peter.sh/experiments/chromium-command-line-switches/
+    String extraArgsProp = System.getProperty("ide.browser.jcef.extra.args", "");
+    if (!extraArgsProp.isEmpty()) {
+      String[] extraArgs = extraArgsProp.split(" ");
+      if (extraArgs != null && extraArgs.length > 0) {
+        LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
+        args = ArrayUtil.mergeArrays(args, extraArgs);
+      }
+    }
+
     CefApp.addAppHandler(new MyCefAppHandler(args));
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
