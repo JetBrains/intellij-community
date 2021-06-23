@@ -152,7 +152,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  private static boolean isExternalizableNoParameterConstructor(@NotNull UMethod method, RefClass refClass) {
+  private static boolean isExternalizableNoParameterConstructor(@NotNull UMethod method, @Nullable RefClass refClass) {
     if (!method.isConstructor()) return false;
     if (method.getVisibility() != UastVisibility.PUBLIC) return false;
     final List<UParameter> parameterList = method.getUastParameters();
@@ -191,7 +191,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isWriteReplaceMethod(@NotNull UMethod method, RefClass refClass) {
+  private static boolean isWriteReplaceMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     final String name = method.getName();
     if (!"writeReplace".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
@@ -202,7 +202,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadResolveMethod(@NotNull UMethod method, RefClass refClass) {
+  private static boolean isReadResolveMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
     final String name = method.getName();
     if (!"readResolve".equals(name)) return false;
     List<UParameter> parameters = method.getUastParameters();
@@ -426,14 +426,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
               processedSuspicious.add(refMethod);
               if (refMethod instanceof RefImplicitConstructor) {
                 RefClass ownerClass = refMethod.getOwnerClass();
-                LOG.assertTrue(ownerClass != null);
-                visitClass(ownerClass);
+                if (ownerClass != null) {
+                  visitClass(ownerClass);
+                }
                 return;
               }
               if (refMethod.isConstructor()) {
                 RefClass ownerClass = refMethod.getOwnerClass();
-                LOG.assertTrue(ownerClass != null);
-                queryQualifiedNameUsages(ownerClass);
+                if (ownerClass != null) {
+                  queryQualifiedNameUsages(ownerClass);
+                }
               }
               UMethod uMethod = (UMethod)refMethod.getUastElement();
               if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
@@ -504,7 +506,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return true;
   }
 
-  private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, RefClass refClass) {
+  private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, @Nullable RefClass refClass) {
     return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
            isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
   }
@@ -598,14 +600,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           else if (methodOwnerClass != null) {
             addInstantiatedClass(methodOwnerClass);
           }
-          else {
-            LOG.error("owner class is null for " + method.getPsiElement()
-                      + " is static ? " + method.isStatic()
-                      + "; is abstract ? " + method.isAbstract()
-                      + "; is main method ? " + method.isAppMain()
-                      + "; is constructor " + method.isConstructor()
-                      + "; containing file " + method.getPointer().getVirtualFile().getFileType());
-          }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
           makeClassInitializersReachable(methodOwnerClass);
@@ -616,7 +610,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             makeContentReachable((RefJavaElementImpl)method);
           }
           else {
-            addDelayedMethod(method);
+            addDelayedMethod(method, methodOwnerClass);
           }
 
           for (RefMethod refSub : method.getDerivedMethods()) {
@@ -676,8 +670,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void addDelayedMethod(@NotNull RefMethod refMethod) {
-      Set<RefMethod> methods = myClassIDtoMethods.computeIfAbsent(refMethod.getOwnerClass(), __ -> new HashSet<>());
+    private void addDelayedMethod(@NotNull RefMethod refMethod, @NotNull RefClass ownerClass) {
+      Set<RefMethod> methods = myClassIDtoMethods.computeIfAbsent(ownerClass, __ -> new HashSet<>());
       methods.add(refMethod);
     }
 

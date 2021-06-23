@@ -87,4 +87,8 @@ public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
   public void testClassLiteralRef() {
     doTest();
   }
+
+  public void testTopLevelFunction() {
+    doTest();
+  }
 }

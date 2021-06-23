@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -233,7 +233,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
         RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
                                                                : (RefClass)newEntryPoint;
-        if (!refClass.isAnonymous()) {
+        if (refClass != null && !refClass.isAnonymous()) {
           final ClassPattern classPattern = new ClassPattern();
           classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
           if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {

@@ -228,7 +228,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean hasBody() {
-    return !isAbstract() && !getOwnerClass().isInterface() || !isBodyEmpty();
+    if (!isAbstract()) {
+      RefClass ownerClass = getOwnerClass();
+      if (ownerClass != null && !ownerClass.isInterface()) {
+        return true;
+      }
+    }
+    return !isBodyEmpty();
   }
 
   private void initializeSuperMethods(PsiMethod method) {
@@ -416,11 +422,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Nullable
   @Override
   public RefClass getOwnerClass() {
-    WritableRefEntity owner = getOwner();
-    if (owner != null && !(owner instanceof RefClass)) {
-      LOG.error("Unexpected owner: " + owner.getExternalName());
-    }
-    return ObjectUtils.tryCast(owner, RefClass.class);
+    return ObjectUtils.tryCast(getOwner(), RefClass.class);
   }
 
   @NotNull
