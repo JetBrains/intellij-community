@@ -337,7 +337,7 @@
               class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
       <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
               class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
-      
+
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
@@ -602,7 +602,7 @@
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
-    <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
+      <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
@@ -931,15 +931,6 @@
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="FoldingGroup"/>
-
-      <add-to-group group-id="EditorPopupMenu1"/>
-    </group>
-
-    <group id="EditorLangPopupMenu">
-      <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
@@ -949,6 +940,15 @@
         <reference ref="GotoRelated"/>
         <reference ref="GotoTest"/>
       </group>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="FoldingGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu1"/>
+    </group>
+
+    <group id="EditorLangPopupMenu">
+      <separator/>
       <reference ref="Generate"/>
       <separator/>
 
@@ -1464,9 +1464,9 @@
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
-      <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
-      <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
       </group>
       <separator/>
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
@@ -1614,7 +1614,7 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
-    
+
     <group id="RunToolbarWidgetCustomizableActionGroup">
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
       <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
