@@ -993,7 +993,7 @@ final class DistributionJARsBuilder {
     "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
-    "winp", "junixsocket-core", "pty4j", // contains native library
+    "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
     "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
   )
 
@@ -1045,6 +1045,7 @@ final class DistributionJARsBuilder {
               !lowerCasedLibName.startsWith("cucumber-") &&
               !lowerCasedLibName.contains("groovy")) {
             key = "3rd-party"
+            buildContext.messages.debug("  pack $libName into $key")
           }
           else {
             key = null
@@ -1093,7 +1094,9 @@ final class DistributionJARsBuilder {
       for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
         List<Path> list = entry.value
         list.sort(null)
-        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key + ".jar"), list)
+        String fileName = entry.key + ".jar"
+        buildContext.messages.debug(" merge $list to $fileName")
+        mergeJarsMethod.invokeWithArguments(outputDir.resolve(fileName), list)
       }
     }
   }

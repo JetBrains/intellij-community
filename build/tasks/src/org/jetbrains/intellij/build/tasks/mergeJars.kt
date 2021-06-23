@@ -17,20 +17,29 @@ fun mergeJars(targetFile: Path, files: List<Path>) {
     for (file in files) {
       ImmutableZipFile.load(file).use { zipFile ->
         val entries = zipFile.entries.filter {
-          it.name != "META-INF/MANIFEST.MF" && it.name != PACKAGE_INDEX_NAME &&
-          it.name != "license" && !it.name.startsWith("license/") &&
-          it.name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
-          it.name != "META-INF/services/javax.xml.stream.XMLEventFactory" &&
-          it.name != "META-INF/services/javax.xml.parsers.DocumentBuilderFactory" &&
-          it.name != "META-INF/services/javax.xml.datatype.DatatypeFactory" &&
-          it.name != "native-image" && !it.name.startsWith("native-image/") &&
-          it.name != "native" && !it.name.startsWith("native/") &&
-          it.name != "licenses" && !it.name.startsWith("licenses/") &&
-          it.name != ".gitkeep" &&
-          it.name != "LICENSE" &&
-          it.name != "LICENSE.md" &&
-          it.name != "module-info.class" &&
-          it.name != "META-INF/maven" && !it.name.startsWith("META-INF/maven/")
+          val name = it.name
+          !name.endsWith(".kotlin_module") &&
+          !name.endsWith(".kotlin_metadata") &&
+          name != "META-INF/MANIFEST.MF" && name != PACKAGE_INDEX_NAME &&
+          name != "license" && !name.startsWith("license/") &&
+          name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
+          name != "META-INF/services/javax.xml.stream.XMLEventFactory" &&
+          name != "META-INF/services/javax.xml.parsers.DocumentBuilderFactory" &&
+          name != "META-INF/services/javax.xml.datatype.DatatypeFactory" &&
+          name != "native-image" && !name.startsWith("native-image/") &&
+          name != "native" && !name.startsWith("native/") &&
+          name != "licenses" && !name.startsWith("licenses/") &&
+          name != ".gitkeep" &&
+          name != "META-INF/README.md" &&
+          name != "META-INF/NOTICE" &&
+          name != "META-INF/NOTICE.txt" &&
+          name != "LICENSE" &&
+          name != "LICENSE.md" &&
+          name != "module-info.class" &&
+          name != "META-INF/maven" &&
+          !name.startsWith("META-INF/maven/") &&
+          !name.startsWith("META-INF/INDEX.LIST") &&
+          (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
         }
         writeEntries(entries, zipCreator, zipFile)
         packageIndexBuilder.add(entries)
