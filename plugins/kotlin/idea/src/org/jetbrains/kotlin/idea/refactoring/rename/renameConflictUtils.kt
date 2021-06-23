@@ -23,12 +23,16 @@ import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.and
+import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAwareReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -55,6 +59,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal fun ResolvedCall<*>.noReceivers() = dispatchReceiver == null && extensionReceiver == null
 
@@ -366,10 +371,18 @@ internal fun checkNewNameUsagesRetargeting(
         return
     }
 
+    val operator = declaration.safeAs<KtModifierListOwner>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
+
     for (candidateDescriptor in declaration.getResolutionScope().getRelevantDescriptors(declaration, newName)) {
         val candidate =
             DescriptorToSourceUtilsIde.getAnyDeclaration(declaration.project, candidateDescriptor) as? PsiNamedElement ?: continue
-        val usages = ReferencesSearch.search(candidate, candidate.useScope.restrictToKotlinSources() and declaration.useScope)
+        val searchParameters =
+            KotlinReferencesSearchParameters(
+                candidate,
+                scope = candidate.useScope.restrictToKotlinSources() and declaration.useScope,
+                kotlinOptions = KotlinReferencesSearchOptions(searchForOperatorConventions = !operator)
+            )
+        val usages = ReferencesSearch.search(searchParameters)
             .mapTo(SmartList<UsageInfo>()) { MoveRenameUsageInfo(it, candidate) }
         checkUsagesRetargeting(candidate, declaration, currentName, false, listOf(descriptor), usages, newUsages)
         usages.filterIsInstanceTo<KtResolvableCollisionUsageInfo, MutableList<UsageInfo>>(newUsages)
