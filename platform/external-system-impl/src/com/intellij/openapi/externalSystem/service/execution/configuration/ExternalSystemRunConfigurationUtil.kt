@@ -12,15 +12,24 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineIn
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionComboBox
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
+import com.intellij.openapi.externalSystem.service.ui.getModelPath
+import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
+import com.intellij.openapi.externalSystem.service.ui.util.EditorSettingsFragmentInfo
+import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
+import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -91,28 +100,13 @@ fun <C : RunConfigurationBase<*>> createCommandLineFragment(
   commandLineInfo: CommandLineInfo,
   getCommandLine: C.() -> String,
   setCommandLine: C.(String) -> Unit
-): SettingsEditorFragment<C, CommandLineField> {
-  val commandLineField = CommandLineField(project, commandLineInfo).apply {
-    CommonParameterFragments.setMonospaced(this)
-    FragmentedSettingsUtil.setupPlaceholderVisibility(this)
-  }
-  return SettingsEditorFragment<C, CommandLineField>(
-    "external.system.command.line.fragment",
-    commandLineInfo.settingsName,
-    commandLineInfo.settingsGroup,
-    commandLineField,
-    commandLineInfo.settingsPriority,
-    SettingsEditorFragmentType.COMMAND_LINE,
-    { it, c -> c.commandLine = it.getCommandLine() },
-    { it, c -> it.setCommandLine(c.commandLine) },
-    { true }
-  ).apply {
-    isCanBeHidden = false
-    isRemovable = false
-    setHint(commandLineInfo.settingsHint)
-    actionHint = commandLineInfo.settingsActionHint
-  }
-}
+) = createSettingsEditorFragment<C, CommandLineField>(
+  CommandLineField(project, commandLineInfo),
+  commandLineInfo,
+  { it, c -> c.commandLine = it.getCommandLine() },
+  { it, c -> it.setCommandLine(c.commandLine) },
+  { true }
+)
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
   project: Project,
@@ -133,35 +127,21 @@ fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addWorkingDirect
 
 fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
   project: Project,
-  projectPathInfo: WorkingDirectoryInfo,
+  workingDirectoryInfo: WorkingDirectoryInfo,
   getWorkingDirectory: C.() -> String,
   setWorkingDirectory: C.(String) -> Unit
-): SettingsEditorFragment<C, LabeledComponent<WorkingDirectoryField>> {
-  val workingDirectoryField = WorkingDirectoryField(project, projectPathInfo).apply {
-    CommonParameterFragments.setMonospaced(this)
-    FragmentedSettingsUtil.setupPlaceholderVisibility(this)
+) = createLabeledSettingsEditorFragment<C, WorkingDirectoryField>(
+  WorkingDirectoryField(project, workingDirectoryInfo),
+  workingDirectoryInfo,
+  { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
+  { it, c -> it.setWorkingDirectory(FileUtil.toCanonicalPath(c.workingDirectory)) },
+  { true }
+).addValidation {
+  if (it.component.workingDirectory.isBlank()) {
+    error(workingDirectoryInfo.emptyFieldError)
   }
-  return SettingsEditorFragment<C, LabeledComponent<WorkingDirectoryField>>(
-    "external.system.working.directory.fragment",
-    projectPathInfo.settingsName,
-    projectPathInfo.settingsGroup,
-    LabeledComponent.create(workingDirectoryField, projectPathInfo.settingsLabel, BorderLayout.WEST),
-    projectPathInfo.settingsPriority,
-    SettingsEditorFragmentType.EDITOR,
-    { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.component.workingDirectory = p } },
-    { it, c -> it.setWorkingDirectory(FileUtil.toCanonicalPath(c.component.workingDirectory)) },
-    { true }
-  ).apply {
-    isCanBeHidden = false
-    isRemovable = false
-    setValidation(workingDirectoryField) {
-      if (it.workingDirectory.isBlank()) {
-        error(projectPathInfo.settingsEmptyError)
-      }
-      else {
-        null
-      }
-    }
+  else {
+    null
   }
 }
 
@@ -169,43 +149,21 @@ fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addDistributionF
   project: Project,
   distributionsInfo: DistributionsInfo,
   getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit,
-  validate: ValidationInfoBuilder.(DistributionInfo) -> ValidationInfo?
-) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution, validate))
+  setDistribution: C.(DistributionInfo) -> Unit
+) = add(createDistributionFragment(project, distributionsInfo, getDistribution, setDistribution))
 
 fun <C : RunConfigurationBase<*>> createDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
   getDistribution: C.() -> DistributionInfo,
-  setDistribution: C.(DistributionInfo) -> Unit,
-  validate: ValidationInfoBuilder.(DistributionInfo) -> ValidationInfo?
-): SettingsEditorFragment<C, DistributionComboBox> {
-  val comboBox = DistributionComboBox(project, distributionsInfo).apply {
-    CommonParameterFragments.setMonospaced(this)
-  }
-  return SettingsEditorFragment<C, DistributionComboBox>(
-    "external.system.distribution.fragment",
-    distributionsInfo.settingsName,
-    distributionsInfo.settingsGroup,
-    comboBox,
-    distributionsInfo.settingsPriority,
-    SettingsEditorFragmentType.COMMAND_LINE,
-    { it, c -> c.selectedDistribution = it.getDistribution() },
-    { it, c -> it.setDistribution(c.selectedDistribution) },
-    { true }
-  ).apply {
-    isCanBeHidden = false
-    isRemovable = false
-    setHint(distributionsInfo.settingsHint)
-    actionHint = distributionsInfo.settingsActionHint
-    setValidation {
-      val validationInfoBuilder = ValidationInfoBuilder(comboBox)
-      val selectedDistribution = comboBox.selectedDistribution
-      val validationInfo = validationInfoBuilder.validate(selectedDistribution)
-      listOfNotNull(validationInfo)
-    }
-  }
-}
+  setDistribution: C.(DistributionInfo) -> Unit
+) = createSettingsEditorFragment<C, DistributionComboBox>(
+  DistributionComboBox(project, distributionsInfo),
+  distributionsInfo,
+  { it, c -> c.selectedDistribution = it.getDistribution() },
+  { it, c -> it.setDistribution(c.selectedDistribution) },
+  { true }
+)
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
   addVmOptionsFragment(
@@ -293,13 +251,87 @@ fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
   return fragment
 }
 
-fun <C : JComponent> SettingsEditorFragment<*, *>.setValidation(
-  component: C,
+fun <S: RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.addValidation(
   validate: ValidationInfoBuilder.(C) -> ValidationInfo?
-) {
+): SettingsEditorFragment<S, C> {
   setValidation {
-    val validationInfoBuilder = ValidationInfoBuilder(component)
-    val validationInfo = validationInfoBuilder.validate(component)
+    val validationInfoBuilder = ValidationInfoBuilder(component())
+    val validationInfo = validationInfoBuilder.validate(component())
     listOfNotNull(validationInfo)
+  }
+  return this
+}
+
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addPathFragment(
+  project: Project,
+  pathFragmentInfo: PathFragmentInfo,
+  getPath: C.() -> String,
+  setPath: C.(String) -> Unit
+) = add(createPathFragment(project, pathFragmentInfo, getPath, setPath))
+
+fun <C : RunConfigurationBase<*>> createPathFragment(
+  project: Project,
+  pathFragmentInfo: PathFragmentInfo,
+  getPath: C.() -> String,
+  setPath: C.(String) -> Unit
+): SettingsEditorFragment<C, LabeledComponent<TextFieldWithBrowseButton>> {
+  val userSettingsEditor = ExtendableTextField(10).apply {
+    MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
+  }
+  val userSettingsField = textFieldWithBrowseButton(
+    project,
+    pathFragmentInfo.fileChooserTitle,
+    pathFragmentInfo.fileChooserDescription,
+    userSettingsEditor,
+    pathFragmentInfo.fileChooserDescriptor,
+  ) { getUiPath(it.path) }
+  return createLabeledSettingsEditorFragment(
+    userSettingsField,
+    pathFragmentInfo,
+    { it, c -> c.text = getUiPath(it.getPath()) },
+    { it, c -> it.setPath(if (c.isVisible) getModelPath(c.text) else "") },
+    { it.getPath().isNotBlank() }
+  )
+}
+
+fun <S : RunConfigurationBase<*>, C : JComponent> createLabeledSettingsEditorFragment(
+  component: C,
+  info: EditorSettingsFragmentInfo,
+  reset: (S, C) -> Unit,
+  apply: (S, C) -> Unit,
+  initialSelection: (S) -> Boolean,
+) = createSettingsEditorFragment(
+  LabeledComponent.create(component, info.editorLabel, BorderLayout.WEST),
+  info,
+  { it, c -> reset(it, c.component) },
+  { it, c -> apply(it, c.component) },
+  initialSelection
+)
+
+fun <S : RunConfigurationBase<*>, C : JComponent> createSettingsEditorFragment(
+  component: C,
+  settingsFragmentInfo: SettingsFragmentInfo,
+  reset: (S, C) -> Unit,
+  apply: (S, C) -> Unit,
+  initialSelection: (S) -> Boolean,
+) = SettingsEditorFragment(
+  settingsFragmentInfo.settingsId,
+  settingsFragmentInfo.settingsName,
+  settingsFragmentInfo.settingsGroup,
+  component,
+  settingsFragmentInfo.settingsType,
+  reset,
+  apply,
+  initialSelection
+).apply {
+  isCanBeHidden = settingsFragmentInfo.settingsIsRemovable
+  isRemovable = settingsFragmentInfo.settingsIsRemovable
+  setHint(settingsFragmentInfo.settingsHint)
+  actionHint = settingsFragmentInfo.settingsActionHint
+
+  val editorComponent = editorComponent
+  CommonParameterFragments.setMonospaced(editorComponent)
+  if (editorComponent is JBTextField) {
+    FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
   }
 }

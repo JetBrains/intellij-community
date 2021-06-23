@@ -5,25 +5,21 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.*
-import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
-import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
+import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -64,9 +60,10 @@ class MavenRunConfigurationSettingsEditor(
       project,
       MavenDistributionsInfo(),
       { asDistributionInfo(settings.mavenHome) },
-      { settings.mavenHome = asMavenHome(it) },
-      { validateMavenHome(it) }
-    )
+      { settings.mavenHome = asMavenHome(it) }
+    ).addValidation {
+      validateMavenHome(it.selectedDistribution)
+    }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment() =
     addWorkingDirectoryFragment(
@@ -161,61 +158,37 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() = add(createUserSettingsFragment())
-
-  private fun createUserSettingsFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>> {
-    val userSettingsField = textFieldWithBrowseButton(
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
+    addPathFragment(
       project,
-      MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"),
-      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-    ) { getUiPath(it.path) }
-    (userSettingsField.textField as ExtendableTextField).apply {
-      CommonParameterFragments.setMonospaced(this)
-      MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
-      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
-    }
-    val userSettingsLabel = MavenConfigurableBundle.message("maven.run.configuration.user.settings.label")
-    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>>(
-      "maven.user.settings.fragment",
-      MavenConfigurableBundle.message("maven.run.configuration.user.settings.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
-      LabeledComponent.create(userSettingsField, userSettingsLabel, BorderLayout.WEST),
-      SettingsEditorFragmentType.EDITOR,
-      { it, c -> c.component.text = getUiPath(it.settings.userSettings) },
-      { it, c -> it.settings.userSettings = if (c.isVisible) getModelPath(c.component.text) else "" },
-      { it.settings.userSettings.isNotBlank() }
-    ).apply {
-      isCanBeHidden = true
-      isRemovable = true
-    }
-  }
+      object : PathFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.label")
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment() = add(createLocalRepositoryFragment())
+        override val settingsId: String = "maven.user.settings.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.options.group")
 
-  private fun createLocalRepositoryFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>> {
-    val userSettingsField = textFieldWithBrowseButton(
+        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.title")
+        override val fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      },
+      { settings.userSettings },
+      { settings.userSettings = it }
+    )
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment() =
+    addPathFragment(
       project,
-      MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"),
-      FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    ) { getUiPath(it.path) }
-    (userSettingsField.textField as ExtendableTextField).apply {
-      CommonParameterFragments.setMonospaced(this)
-      MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
-      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
-    }
-    val userSettingsLabel = MavenConfigurableBundle.message("maven.run.configuration.local.repository.label")
-    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>>(
-      "maven.local.repository.fragment",
-      MavenConfigurableBundle.message("maven.run.configuration.local.repository.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
-      LabeledComponent.create(userSettingsField, userSettingsLabel, BorderLayout.WEST),
-      SettingsEditorFragmentType.EDITOR,
-      { it, c -> c.component.text = getUiPath(it.settings.localRepository) },
-      { it, c -> it.settings.localRepository = if (c.isVisible) getModelPath(c.component.text) else "" },
-      { it.settings.localRepository.isNotBlank() }
-    ).apply {
-      isCanBeHidden = true
-      isRemovable = true
-    }
-  }
+      object : PathFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.label")
+
+        override val settingsId: String = "maven.local.repository.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.options.group")
+
+        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.title")
+        override val fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      },
+      { settings.localRepository },
+      { settings.localRepository = it }
+    )
 }

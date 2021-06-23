@@ -15,15 +15,9 @@ import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.getGradleTasks
 import javax.swing.Icon
 
-class GradleCommandLineInfo(
-  project: Project,
-  workingDirectoryField: WorkingDirectoryField
-) : CommandLineInfo {
+class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDirectoryField) : CommandLineInfo {
   override val settingsName: String = GradleBundle.message("gradle.run.configuration.command.line.name")
-  override val settingsGroup: String? = null
-  override val settingsPriority: Int = 100
   override val settingsHint: String = GradleBundle.message("gradle.run.configuration.command.line.hint")
-  override val settingsActionHint: String? = null
 
   override val dialogTitle: String = GradleBundle.message("gradle.run.configuration.command.line.title")
   override val dialogTooltip: String = GradleBundle.message("gradle.run.configuration.command.line.tooltip")

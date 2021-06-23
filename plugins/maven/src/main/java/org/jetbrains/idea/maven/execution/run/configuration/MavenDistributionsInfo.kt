@@ -17,10 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDistributionsInfo : DistributionsInfo {
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
-  override val settingsGroup: String? = null
-  override val settingsPriority: Int = 90
   override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.hint")
-  override val settingsActionHint: String? = null
 
   override val comboBoxPreferredWidth: Int = JBUI.scale(120)
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")

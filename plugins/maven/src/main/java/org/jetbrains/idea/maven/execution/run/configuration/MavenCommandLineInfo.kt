@@ -14,15 +14,9 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import javax.swing.Icon
 
-class MavenCommandLineInfo(
-  project: Project,
-  projectPathField: WorkingDirectoryField
-) : CommandLineInfo {
+class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryField) : CommandLineInfo {
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.name")
-  override val settingsGroup: String? = null
-  override val settingsPriority: Int = 100
   override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.hint")
-  override val settingsActionHint: String? = null
 
   override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.title")
   override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.tooltip")

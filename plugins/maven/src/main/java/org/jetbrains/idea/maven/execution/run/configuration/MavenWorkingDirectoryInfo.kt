@@ -12,18 +12,14 @@ import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
-  override val settingsLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
-  override val settingsEmptyError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
+  override val editorLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
 
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
-  override val settingsGroup: String? = null
-  override val settingsPriority: Int = -10
-  override val settingsHint: String? = null
-  override val settingsActionHint: String? = null
 
   override val fileChooserTitle: String = RunnerBundle.message("maven.select.working.directory")
-  override val fileChooserDescription: String? = null
   override val fileChooserDescriptor: FileChooserDescriptor = MavenPomFileChooserDescriptor(project)
+
+  override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
   override val externalProjects: List<ExternalProject> by lazy {
     ArrayList<ExternalProject>().apply {

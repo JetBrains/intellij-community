@@ -245,13 +245,28 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+  installFileCompletionAndBrowseDialog(
+    project, component, textField, browseDialogTitle, null, fileChooserDescriptor, textComponentAccessor, fileChosen)
+}
+
+@JvmOverloads
+fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
+                                                          component: ComponentWithBrowseButton<T>,
+                                                          textField: JTextField,
+                                                          @DialogTitle browseDialogTitle: String?,
+                                                          @Label browseDialogDescription: String?,
+                                                          fileChooserDescriptor: FileChooserDescriptor,
+                                                          textComponentAccessor: TextComponentAccessor<T>,
+                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
   if (ApplicationManager.getApplication() == null) {
     // tests
     return
   }
 
   component.addActionListener(
-    object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
+    object : BrowseFolderActionListener<T>(
+      browseDialogTitle, browseDialogDescription, component, project, fileChooserDescriptor, textComponentAccessor
+    ) {
       override fun onFileChosen(chosenFile: VirtualFile) {
         if (fileChosen == null) {
           super.onFileChosen(chosenFile)
@@ -310,7 +325,17 @@ fun textFieldWithBrowseButton(project: Project?,
 
 @JvmOverloads
 fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String,
+                              @DialogTitle browseDialogTitle: String?,
+                              textField: JTextField,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  return textFieldWithBrowseButton(project, browseDialogTitle, null, textField, fileChooserDescriptor, fileChosen)
+}
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              @DialogTitle browseDialogTitle: String?,
+                              @Label browseDialogDescription: String?,
                               textField: JTextField,
                               fileChooserDescriptor: FileChooserDescriptor,
                               fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
@@ -320,6 +345,7 @@ fun textFieldWithBrowseButton(project: Project?,
     component = component,
     textField = component.textField,
     browseDialogTitle = browseDialogTitle,
+    browseDialogDescription = browseDialogDescription,
     fileChooserDescriptor = fileChooserDescriptor,
     textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
     fileChosen = fileChosen

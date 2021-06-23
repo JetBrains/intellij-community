@@ -1,23 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui.distribution
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.execution.ui.SettingsEditorFragmentType
+import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
+import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import org.jetbrains.annotations.Nls
 
-interface DistributionsInfo {
-  val settingsName: @Nls(capitalization = Nls.Capitalization.Sentence) String?
-  val settingsGroup: @Nls(capitalization = Nls.Capitalization.Title) String?
-  val settingsPriority: Int
-  val settingsHint: @Nls String?
-  val settingsActionHint: @Nls String?
+interface DistributionsInfo : FileChooserInfo, SettingsFragmentInfo {
+  override val settingsId: String get() = "external.system.distribution.fragment"
+  override val settingsGroup: String? get() = null
+  override val settingsPriority: Int get() = 90
+  override val settingsType get() = SettingsEditorFragmentType.COMMAND_LINE
+  override val settingsIsRemovable: Boolean get() = false
+  override val settingsActionHint: String? get() = null
 
   val comboBoxPreferredWidth: Int?
   val comboBoxActionName: @Nls(capitalization = Nls.Capitalization.Sentence) String
-
-  val fileChooserTitle: @NlsContexts.DialogTitle String?
-  val fileChooserDescription: @NlsContexts.Label String?
-  val fileChooserDescriptor: FileChooserDescriptor
 
   val distributions: List<DistributionInfo>
 }
