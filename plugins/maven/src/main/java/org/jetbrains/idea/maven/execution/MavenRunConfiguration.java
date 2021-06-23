@@ -121,7 +121,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenRunnerSettings originalSettings = mavenRunner.getSettings();
     MavenRunnerSettings settings = originalSettings.clone();
     ObjectUtils.consumeIfNotNull(this.settings.getJreName(), settings::setJreName);
-    ObjectUtils.consumeIfNotNull(this.settings.getVmOptions(), settings::setVmOptions);
+    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getVmOptions(), null, getProject()), settings::setVmOptions);
     ObjectUtils.consumeIfNotNull(this.settings.getEnvironment(), settings::setEnvironmentProperties);
     ObjectUtils.consumeIfNotNull(this.settings.isPassParentEnvs(), settings::setPassParentEnv);
     return settings.equals(originalSettings) ? null : settings;
