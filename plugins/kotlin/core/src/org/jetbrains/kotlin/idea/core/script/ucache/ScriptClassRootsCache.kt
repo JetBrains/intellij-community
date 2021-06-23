@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
+import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependencies.Companion.scriptCacheDependencies
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.core.util.readObject
@@ -270,6 +271,7 @@ internal class ScriptCacheDependencies(
 class ScriptCacheDependenciesFileInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
         ProjectManager.getInstance().openProjects.forEach {
+            ScriptClassRootsStorage.getInstance(it).clear()
             ScriptCacheDependencies(ScriptClassRootsCache.EMPTY).save(it)
         }
     }

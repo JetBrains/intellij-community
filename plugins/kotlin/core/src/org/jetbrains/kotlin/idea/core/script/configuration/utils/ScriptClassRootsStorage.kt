@@ -28,6 +28,13 @@ class ScriptClassRootsStorage : PersistentStateComponent<ScriptClassRootsStorage
         XmlSerializerUtil.copyBean(state, this)
     }
 
+    fun clear() {
+        classpath = hashSetOf()
+        sources = hashSetOf()
+        sdks = hashSetOf()
+        defaultSdkUsed = false
+    }
+
     companion object {
         fun getInstance(project: Project): ScriptClassRootsStorage = project.getServiceSafe()
     }
