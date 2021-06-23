@@ -3,13 +3,234 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
+import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.sun.jdi.LocalVariable
+import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
+import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 
-val INLINED_THIS_REGEX = getLocalVariableNameRegexInlineAware(AsmUtil.INLINE_DECLARATION_SITE_THIS)
+val INLINED_THIS_REGEX = run {
+    val escapedName = Regex.escape(AsmUtil.INLINE_DECLARATION_SITE_THIS)
+    val escapedSuffix = Regex.escape(INLINE_FUN_VAR_SUFFIX)
+    Regex("^$escapedName(?:$escapedSuffix)*$")
+}
 
+/**
+ * An inline function aware view of a JVM stack frame.
+ *
+ * Due to inline functions in Kotlin, a single JVM stack frame maps
+ * to multiple Kotlin stack frames. The Kotlin compiler emits metadata
+ * in the form of local variables in order to allow the debugger to
+ * invert this mapping.
+ *
+ * This class encapsulates the mapping from visible variables in a
+ * JVM stack frame to a list of Kotlin stack frames and strips away
+ * the additional metadata that is only used for disambiguating inline
+ * stack frames.
+ */
+class InlineStackFrame private constructor(
+    // Visible variables sorted by start offset.
+    private val sortedVariables: List<LocalVariableProxyImpl>,
+    // Map from variable index to frame id. Every frame corresponds to a call to
+    // a Kotlin (inline) function.
+    private val variableFrameIds: IntArray,
+    private val currentFrameId: Int,
+) {
+    // Returns all variables which are visible in the scope of the current (inline) function.
+    // This function hides scope introduction variables and strips inline metadata suffixes.
+    val visibleVariables: List<LocalVariableProxyImpl>
+        get() = sortedVariables.mapIndexedNotNull { index, variable ->
+            if (variableFrameIds[index] == currentFrameId && !isFakeLocalVariableForInline(variable.name())) {
+                val name = dropInlineSuffix(variable.name())
+                if (name != variable.name()) {
+                    object : LocalVariableProxyImpl(variable.frame, variable.variable) {
+                        override fun name() = name
+                    }
+                } else variable
+            } else null
+        }
+
+    val parentFrame: InlineStackFrame?
+        get() {
+            val scopeVariableIndex = sortedVariables.indexOfLast {
+                isFakeLocalVariableForInline(it.name())
+            }
+            if (scopeVariableIndex < 0) {
+                return null
+            }
+
+            val parentSortedVariables = sortedVariables.subList(0, scopeVariableIndex)
+            val parentVariableFrameIds = variableFrameIds.sliceArray(0 until scopeVariableIndex)
+            val parentFrameId = parentSortedVariables.indexOfLast {
+                isFakeLocalVariableForInline(it.name())
+            }.takeIf { it >= 0 }?.let { variableFrameIds[it] } ?: 0
+            return InlineStackFrame(parentSortedVariables, parentVariableFrameIds, parentFrameId)
+        }
+
+    companion object {
+        // Constructs an inline stack frame from a list of currently visible variables
+        // in introduction order.
+        //
+        // In order to construct the inline stack frame we need to associate each variable
+        // with a call to an inline function (frameId) and determine (the frameId of) the
+        // currently active inline function. Consider the following code.
+        //
+        //   fun f() {
+        //       val x = 0
+        //       g {
+        //           h(2)
+        //       }
+        //   }
+        //
+        //   inline fun g(block: () -> Unit) {
+        //       var y = 1
+        //       block()
+        //   }
+        //
+        //   inline fun h(a: Int) {
+        //       var z = 3
+        //       /* breakpoint */ ...
+        //   }
+        //
+        // When stopped at the breakpoint in `h`, we have the following visible variables.
+        //
+        //   |      Variable     | Depth | Scope | Frame Id |
+        //   |-------------------|-------|-------|----------|
+        //   | x                 |     0 |     f |        0 |
+        //   | $i$f$g            |     1 |     g |        1 |
+        //   | y$iv              |     1 |     g |        1 |
+        //   | $i$a$-g-Class$f$1 |     0 |   f$1 |        0 |
+        //   | a$iv              |     1 |     h |        2 |
+        //   | $i$f$h            |     1 |     h |        2 |
+        //   | z$iv              |     1 |     h |        2 |
+        //
+        // There are two kinds of variables. Scope introduction variables are prefixed with
+        // $i$f or $i$a and represent calls to inline functions or calls to function arguments
+        // of inline functions respectively. All remaining variables represent source code
+        // variables along with an inline depth represented by the number of `$iv` suffixes.
+        //
+        // This function works by iterating over the variables in introduction order with
+        // a list of currently active stack frames. New frames are introduced or removed
+        // when encountering a scope introduction variable. Each variable encountered
+        // is either associated to one of the currently active stack frames or to the next
+        // inline function call (since the arguments of inline functions appear before the
+        // corresponding scope introduction variable).
+        private fun fromSortedVisibleVariables(sortedVariables: List<LocalVariableProxyImpl>): InlineStackFrame {
+            // Map from variables to frame ids
+            val variableFrameIds = IntArray(sortedVariables.size)
+            // Stack of currently active frames
+            var activeFrames = mutableListOf(0)
+            // Indices of variables representing arguments to the next function call
+            val pendingVariables = mutableListOf<Int>()
+            // Next unused frame id
+            var nextFrameId = 1
+
+            for ((currentIndex, variable) in sortedVariables.withIndex()) {
+                val name = variable.name()
+                val depth = getInlineDepth(name)
+                when {
+                    // When we encounter a call to an inline function, we start a new frame
+                    // using the next free frameId and assign this frame to both the scope
+                    // introduction variable as well as all pending variables.
+                    name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) -> {
+                        val frameId = nextFrameId++
+                        activeFrames += frameId
+                        for (pending in pendingVariables) {
+                            variableFrameIds[pending] = frameId
+                        }
+                        pendingVariables.clear()
+                        variableFrameIds[currentIndex] = frameId
+                    }
+                    // When we encounter a call to an inline function argument, we are
+                    // moving up the call stack up to the depth of the function argument.
+                    // This is why there should not be any pending variables at this
+                    // point, since arguments to an inline function argument would be
+                    // associated with a previous active frame.
+                    name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) -> {
+                        assert(pendingVariables.isEmpty())
+                        activeFrames = activeFrames.subList(0, depth + 1)
+                        variableFrameIds[currentIndex] = activeFrames.last()
+                    }
+                    // Process variables in the current frame or a previous frame (for
+                    // arguments to an inline function argument).
+                    depth < activeFrames.size -> {
+                        variableFrameIds[currentIndex] = activeFrames[depth]
+                    }
+                    // Process arguments to the next inline function call.
+                    else -> {
+                        assert(depth == activeFrames.size)
+                        pendingVariables += currentIndex
+                    }
+                }
+            }
+
+            return InlineStackFrame(sortedVariables, variableFrameIds, activeFrames.last())
+        }
+
+        fun fromStackFrame(frame: StackFrameProxyImpl): InlineStackFrame {
+            val allVariables = if (frame.virtualMachine.virtualMachine.isDexDebug()) {
+                frame.location().method().safeVariables()
+            } else null
+
+            // On the JVM the variable start offsets correspond to the introduction order,
+            // so we can proceed directly.
+            if (allVariables == null) {
+                val sortedVariables = frame.visibleVariables().sortedBy { it.variable }
+                return fromSortedVisibleVariables(sortedVariables)
+            }
+
+            // On dex, there are no separate slots for local variables. Instead, local variables
+            // are kept in registers and are subject to spilling. When a variable is spilled,
+            // its start offset is reset. In order to sort variables by introduction order,
+            // we need to identify spilled variables.
+            //
+            // The heuristic we use for this is to look for pairs of variables with the same
+            // name and type for which one begins exactly one instruction after the other ends.
+            //
+            // Unfortunately, this needs access to the private [scopeStart] and [scopeEnd] fields
+            // in [LocationImpl], but this is the only way to obtain the information we need.
+            val startOffsets = mutableMapOf<Long, MutableList<LocalVariable>>()
+            val replacements = mutableMapOf<LocalVariable, LocalVariable>()
+            for (variable in allVariables) {
+                val startOffset = variable.getFieldValue("scopeStart") as Location
+                startOffsets.computeIfAbsent(startOffset.codeIndex()) { mutableListOf() } += variable
+            }
+            for (variable in allVariables) {
+                val endOffset = variable.getFieldValue("scopeEnd") as Location
+                val otherVariables = startOffsets[endOffset.codeIndex() + 1] ?: continue
+                for (other in otherVariables) {
+                    if (variable.name() == other.name() && variable.type() == other.type()) {
+                        replacements[other] = variable
+                    }
+                }
+            }
+
+            // Replace each visible variable by its first visible alias when sorting.
+            val sortedVariables = frame.visibleVariables().sortedBy { proxy ->
+                var variable = proxy.variable
+                while (true) { variable = replacements[variable] ?: break }
+                variable
+            }
+
+            return fromSortedVisibleVariables(sortedVariables)
+        }
+
+        private fun LocalVariable.getFieldValue(name: String): Any? =
+            Class.forName("com.jetbrains.jdi.LocalVariableImpl")
+                .declaredFields
+                .single { it.name == name }
+                .also { it.isAccessible = true }
+                .get(this)
+    }
+}
+
+// Compute the current inline depth given a list of visible variables.
+// All usages of this function should probably use [InlineStackFrame] instead,
+// since the inline depth does not suffice to determine which variables
+// are visible and this function will not work on a dex VM.
 fun getInlineDepth(variables: List<LocalVariableProxyImpl>): Int {
     val rawInlineFunDepth = variables.count { it.name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) }
 
@@ -50,10 +271,4 @@ fun dropInlineSuffix(name: String): String {
     }
 
     return name.dropLast(depth * INLINE_FUN_VAR_SUFFIX.length)
-}
-
-private fun getLocalVariableNameRegexInlineAware(name: String): Regex {
-    val escapedName = Regex.escape(name)
-    val escapedSuffix = Regex.escape(INLINE_FUN_VAR_SUFFIX)
-    return Regex("^$escapedName(?:$escapedSuffix)*$")
 }
