@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 @ApiStatus.Experimental
 public interface AdditionalLibraryRootsListener {
@@ -31,6 +30,10 @@ public interface AdditionalLibraryRootsListener {
    * this method should be invoked multiple times, once for each library.
    * Due to some listeners method should be invoked under write lock.
    *
+   * This method may also be used in a bit different way, with empty `oldRoots` and some (probably empty) `newRoots` to result in rereading
+   * values from instances of {@link AdditionalLibraryRootsProvider} and {@link DirectoryIndexExcludePolicy}. In this case `newRoots`
+   * is expected to contain those roots that should be added to indexes.
+   *
    * @param presentableLibraryName name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider}, may be omitted.
    *                               Used for UI only: in progress titles of indexing, see AdditionalLibraryIndexableAddedFilesIterator.kt
    * @param oldRoots               roots that were in {@link SyntheticLibrary} before
@@ -43,7 +46,6 @@ public interface AdditionalLibraryRootsListener {
                                            @NotNull Collection<? extends VirtualFile> oldRoots,
                                            @NotNull Collection<? extends VirtualFile> newRoots,
                                            @NotNull String libraryNameForDebug) {
-    if (new HashSet<>(newRoots).equals(new HashSet<>(oldRoots))) return;
     project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
 }
