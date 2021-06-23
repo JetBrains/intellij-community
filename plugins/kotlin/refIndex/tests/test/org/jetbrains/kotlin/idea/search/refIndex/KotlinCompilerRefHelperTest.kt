@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
+import com.intellij.testFramework.SkipSlowTestLocally
 
+@SkipSlowTestLocally
 class KotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
     fun `test dirty scope`() {
         installCompiler()
