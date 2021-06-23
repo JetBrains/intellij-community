@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports calls to Java <code>get</code> and <code>set</code> methods that can be replaced with the use of Kotlin synthetic properties.
-<p>'Use property access syntax' quick-fix can be used to amen the code automatically.</p>
+Reports Java <code>get</code> and <code>set</code> method calls that can be replaced with the Kotlin synthetic properties.
+<p><b>Use property access syntax</b> quick-fix can be used to amen the code automatically.</p>
 <p>Example:</p>
 <pre><code>
 // Java:
@@ -19,7 +19,7 @@ public class JavaClassWithGetter {
 // Kotlin:
 fun test(j: JavaClassWithGetter) {
     // ...
-    j.getExpr() // &lt;== quick-fix simplifies the expression to 'j.expr'
+    j.getExpr() // &lt;== A quick-fix simplifies the expression to 'j.expr'
 }
 </code></pre>
 </body>
