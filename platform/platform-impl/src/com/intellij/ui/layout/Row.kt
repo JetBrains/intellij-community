@@ -75,11 +75,11 @@ interface RowBuilder : BaseBuilder {
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(prop.toBinding(), init)
+  this.buttonGroup(prop.toBinding(), init)
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), init)
+  this.buttonGroup(PropertyBinding(getter, setter), init)
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {

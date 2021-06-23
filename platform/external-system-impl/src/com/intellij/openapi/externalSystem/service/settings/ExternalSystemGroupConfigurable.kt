@@ -17,7 +17,7 @@ class ExternalSystemGroupConfigurable(private val project: Project) : BoundConfi
   override fun createPanel() = panel {
     val settings = ExternalSystemProjectTrackerSettings.getInstance(project)
     row {
-      buttonGroup(settings::autoReloadType, message("settings.build.tools.auto.reload.radio.button.group.title"), NONE) {
+      this@row.buttonGroup(settings::autoReloadType, message("settings.build.tools.auto.reload.radio.button.group.title"), NONE) {
         row {
           radioButton(message("settings.build.tools.auto.reload.radio.button.all.label"), ALL)
         }
@@ -37,7 +37,7 @@ class ExternalSystemGroupConfigurable(private val project: Project) : BoundConfi
   ) {
     val key = ExternalSystemGroupConfigurable::class.jvmName
     val propertiesComponent = PropertiesComponent.getInstance(project)
-    buttonGroup(prop, title, defaultValue, key, propertiesComponent, init)
+    this.buttonGroup(prop, title, defaultValue, key, propertiesComponent, init)
   }
 
   private inline fun <reified T : Enum<T>> Row.buttonGroup(
@@ -54,7 +54,7 @@ class ExternalSystemGroupConfigurable(private val project: Project) : BoundConfi
     checkBox(title)
       .apply { attachSubRowsEnabled(component) }
       .withSelectedBinding(PropertyBinding({ isEnabled }, { isEnabled = it }))
-    buttonGroup(PropertyBinding({ value }, { value = it }), init)
+    this.buttonGroup(PropertyBinding({ value }, { value = it }), init)
     onGlobalApply {
       prop.set(if (isEnabled) value else defaultValue)
       propertiesComponent.setValue(name, value.toString())
