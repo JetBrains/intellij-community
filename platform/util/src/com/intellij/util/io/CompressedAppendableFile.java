@@ -456,8 +456,6 @@ public class CompressedAppendableFile {
       });
     }
 
-    private final FileChunkKey<CompressedAppendableFile> myKey = new FileChunkKey<>(null, 0);
-
     FileChunkReadCache() {
       super(64, 64);
     }
@@ -465,8 +463,7 @@ public class CompressedAppendableFile {
     byte @NotNull [] get(CompressedAppendableFile file, int page) throws IOException {
       byte[] bytes;
       synchronized (this) {
-        myKey.setup(file, page);
-        bytes = get(myKey);
+        bytes = get(new FileChunkKey<>(file, page));
         if (bytes != null) return bytes;
       }
 
@@ -479,8 +476,7 @@ public class CompressedAppendableFile {
 
     void put(CompressedAppendableFile file, long page, byte[] bytes) {
       synchronized (this) {
-        myKey.setup(file, page);
-        put(myKey, bytes);
+        put(new FileChunkKey<>(file, page), bytes);
       }
     }
 

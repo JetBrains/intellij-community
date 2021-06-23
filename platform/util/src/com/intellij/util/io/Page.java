@@ -18,8 +18,8 @@ public class Page {
   private final PoolPageKey myKey;
 
   private ByteBuffer buf;
-  private boolean read = false;
-  private boolean dirty = false;
+  private boolean read;
+  private boolean dirty;
   private int myFinalizationId;
   private BitSet myWriteMask;
 
