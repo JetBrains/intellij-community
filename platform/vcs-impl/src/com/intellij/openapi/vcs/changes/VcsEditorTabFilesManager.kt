@@ -42,7 +42,7 @@ class VcsEditorTabFilesManager :
 
   var shouldOpenInNewWindow: Boolean
     get() = state.openInNewWindow
-    set(value) {
+    private set(value) {
       state.openInNewWindow = value
     }
 

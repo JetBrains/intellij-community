@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -169,7 +170,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   companion object {
     fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-      return VcsEditorTabFilesManager.getInstance().openFile(project, file, focusEditor)
+      return DiffEditorTabFilesManager.getInstance(project).showDiffFile(file, focusEditor)
     }
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {

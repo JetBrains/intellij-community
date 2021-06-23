@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -42,13 +42,13 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
-      VcsEditorTabFilesManager.getInstance().openFile(project, it, requestFocus)
+      DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)
     }
   }
 
   override fun openNewPRDiffFile(requestFocus: Boolean) {
-    VcsEditorTabFilesManager.getInstance().openFile(project, newPRDiffFile, requestFocus)
+    DiffEditorTabFilesManager.getInstance(project).showDiffFile(newPRDiffFile, requestFocus)
   }
 
   override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[SimpleGHPRIdentifier(pullRequest)]
