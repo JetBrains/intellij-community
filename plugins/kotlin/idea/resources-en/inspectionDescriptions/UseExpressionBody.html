@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports <code>return</code> expressions (one-liners or <code>when</code>) replaceable by expression body syntax.
-<p>Expression body syntax is recommended by the <a href="https://kotlinlang.org/docs/coding-conventions.html#functions">style guide</a></p>
-<p>'Convert to expression body' quick-fix can be used to amend the code automatically.</p>
+Reports <code>return</code> expressions (one-liners or <code>when</code>) that can be replaced with expression body syntax.
+<p>Expression body syntax is recommended by the <a href="https://kotlinlang.org/docs/coding-conventions.html#functions">style guide</a>.</p>
+<p><b>Convert to expression body</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
 fun sign(x: Int): Int {
-    return when { // &lt;== can be simplified
+    return when { // <== can be simplified
         x < 0 -> -1
         x > 0 -> 1
         else -> 0

@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports unlabeled <code>return</code> expression inside inline lambda.
-<p>Unlabeled <code>return</code> expressions in lambdas can be confusing because it might be unclear
-    to which scope belongs particular <code>return</code>.</p>
-<p>'Change to return@…' quick-fix can be used to amend the code automatically.</p>
+Reports unlabeled <code>return</code> expressions inside inline lambda.
+<p>Such expressions can be confusing because it might be unclear which scope belongs to <code>return</code>.</p>
+<p><b>Change to return@…</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
 fun test(list: List&lt;Int&gt;) {

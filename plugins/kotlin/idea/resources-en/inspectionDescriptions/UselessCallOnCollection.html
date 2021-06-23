@@ -4,7 +4,7 @@ Reports <code>filter…</code> calls from the standard library on already filter
 <p>Several functions from the standard library such as <code>filterNotNull()</code> or <code>filterIsInstance</code>
     have sense only when they are called on receivers that have types distinct from the resulting one. Otherwise,
     such calls can be omitted as the result will be the same.</p>
-<p>'Remove redundant call' quick-fix can be used to amend the code automatically.</p>
+<p><b>Remove redundant call</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
 fun test(list: List&lt;String&gt;) {
