@@ -92,7 +92,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                                              @NotNull GlobalInspectionContext globalContext,
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     final boolean requests = super.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
-    if (!requests) {
+    if (!requests && myLocalInspectionBase.PARAMETER) {
       myUnusedParameters.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
     }
     return requests;
