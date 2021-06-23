@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -194,9 +193,8 @@ public class RemoteConnectionBuilder {
       ParametersList parametersList = parameters.getVMParametersList();
       if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_ARTIFACT_NAME + ".jar"))) {
         Sdk jdk = parameters.getJdk();
-        String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
-        if (version != null) {
-          JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
+        if (jdk != null) {
+          JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
             String classesRoot = PathUtil.getJarPathForClass(DebuggerManagerImpl.class);
             Path agentArtifactPath = PathManager.getJarArtifactPath(classesRoot, AGENT_ARTIFACT_NAME);
@@ -213,7 +211,7 @@ public class RemoteConnectionBuilder {
             }
           }
           else {
-            LOG.warn("Capture agent is not supported for jre " + version);
+            LOG.warn("Capture agent is not supported for JRE " + sdkVersion);
           }
         }
       }
