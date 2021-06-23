@@ -55,14 +55,14 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
+import com.intellij.util.*;
 import com.intellij.util.IconUtil.IconSizeWrapper;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.containers.UtilKt;
@@ -92,6 +92,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
+import static com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
@@ -307,9 +308,9 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
-    DiffPreview diffPreview = myPanel.myDiffPreview;
-    if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).closePreview();
+    EditorTabPreview diffPreview = myPanel.myEditorDiffPreview;
+    if (diffPreview != null) {
+      diffPreview.closePreview();
     }
   }
 
@@ -648,8 +649,10 @@ public class ShelvedChangesViewManager implements Disposable {
     private final ActionToolbar myToolbar;
     @NotNull private final JPanel myRootPanel = new JPanel(new BorderLayout());
 
-    private MyShelvedPreviewProcessor myChangeProcessor;
-    private DiffPreview myDiffPreview;
+    private MyShelvedPreviewProcessor myEditorChangeProcessor;
+    private MyShelvedPreviewProcessor mySplitterChangeProcessor;
+    private EditorTabPreview myEditorDiffPreview;
+    private PreviewDiffSplitterComponent mySplitterDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
       myProject = project;
@@ -707,7 +710,7 @@ public class ShelvedChangesViewManager implements Disposable {
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          if (!isSplitterPreview()) setDiffPreview(true);
+          if (myEditorDiffPreview != null) setDiffPreview();
         }
       }, this);
       myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
@@ -738,22 +741,29 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview() {
-      setDiffPreview(false);
-    }
+      boolean isEditorPreview = isEditorPreview(myProject);
+      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
-    private void setDiffPreview(boolean force) {
-      boolean isEditorPreview = EditorTabDiffPreviewManager.getInstance(myProject).isEditorDiffPreviewAvailable();
-      if (!force) {
-        if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-        if (!isEditorPreview && isSplitterPreview()) return;
+      if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
+      if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
+
+      if (isEditorPreview) {
+        myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        Disposer.register(this, myEditorChangeProcessor);
+        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor);
+      }
+      else {
+        myEditorDiffPreview = null;
       }
 
-      if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
-
-      myChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
-      Disposer.register(this, myChangeProcessor);
-
-      myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
+      if (hasSplitterPreview) {
+        mySplitterChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+        Disposer.register(this, mySplitterChangeProcessor);
+        mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
+      }
+      else {
+        mySplitterDiffPreview = null;
+      }
     }
 
     @NotNull
@@ -819,19 +829,15 @@ public class ShelvedChangesViewManager implements Disposable {
       return previewSplitter;
     }
 
-    private boolean isSplitterPreview() {
-      return myDiffPreview instanceof PreviewDiffSplitterComponent;
-    }
-
     private boolean isEditorPreviewAllowed() {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
 
     private void openEditorPreview(boolean focusEditor) {
-      if (isSplitterPreview()) return;
+      if (myEditorDiffPreview == null) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(focusEditor);
+      myEditorDiffPreview.openPreview(focusEditor);
     }
 
     @Nullable
@@ -853,7 +859,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
       if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
-        return myDiffPreview instanceof EditorTabPreview ? myDiffPreview : null;
+        return myEditorDiffPreview;
       }
       return myTree.getData(dataId);
     }
@@ -862,12 +868,12 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabledAndVisible(isSplitterPreview() || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myDiffPreview.setPreviewVisible(state, false);
+        ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview).setPreviewVisible(state, false);
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 
