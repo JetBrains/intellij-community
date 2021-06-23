@@ -461,12 +461,50 @@ class Main {
       default -> "def";
     };
   }
+
+  void completeness(Day d) {
+    // old style switch, no completeness check
+    switch (d) {
+      case MONDAY, TUESDAY -> System.out.println("ok");
+    }
+
+    String str;
+    <error descr="The switch statement does not cover all possible input values">switch</error> (d) {
+      case Day dd && dd != null:
+        System.out.println("ok");
+      case MONDAY:
+        System.out.println("mon");
+    };
+
+    str = <error descr="The switch expression does not cover all possible input values">switch</error> (d) {
+      case MONDAY, TUESDAY -> System.out.println("ok");
+    };
+    str = switch (d) {
+      case MONDAY, TUESDAY, WEDNESDAY -> "ok";
+    };
+    str = switch (d) {
+      case MONDAY, TUESDAY, default -> "ok";
+    };
+
+    switch (d) {
+      case <error descr="Switch has both a total pattern and a default label">((Day dd && true))</error>:
+        System.out.println("ok");
+      <error descr="Switch has both a total pattern and a default label">default:</error>
+        System.out.println("mon");
+    };
+    switch (d) {
+      case ((Day dd && dd != null)):
+        System.out.println("ok");
+      default:
+        System.out.println("mon");
+    };
+  }
 }
 
 sealed interface I permits Sub1, Sub2, Sub3 {
 }
 
-enum Days {
+enum Day {
   MONDAY, TUESDAY, WEDNESDAY
 }
 
