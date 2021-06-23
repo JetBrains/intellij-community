@@ -695,6 +695,7 @@
 
     <usageFilteringRuleProvider implementation="com.intellij.usages.impl.UsageFilteringRuleProviderImpl"/>
     <usageFilteringRuleProvider implementation="com.intellij.usages.impl.UsageInGeneratedCodeFilteringRuleProvider"/>
+    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
     <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
 
     <projectService serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -32,7 +32,7 @@ public final class ImportUsageFilteringRuleProvider implements UsageFilteringRul
 
   @Override
   public AnAction @NotNull [] createFilteringActions(@NotNull UsageView view) {
-    if (view.getPresentation().isCodeUsages()) {
+    if (view.getPresentation().isCodeUsages() && ImportFilteringRule.EP_NAME.hasAnyExtensions()) {
       JComponent component = view.getComponent();
       UsageViewImpl impl = (UsageViewImpl)view;
       ShowImportsAction showImportsAction = new ShowImportsAction();
