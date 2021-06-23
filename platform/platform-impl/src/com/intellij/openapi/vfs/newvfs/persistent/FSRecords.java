@@ -659,9 +659,7 @@ public final class FSRecords {
 
   static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
     writeAndHandleErrors(() -> {
-      if (ourContentAccessor.writeContent(fileId, bytes, readOnly)) {
-        incModCount(fileId);
-      }
+      ourContentAccessor.writeContent(fileId, bytes, readOnly);
     });
   }
 
