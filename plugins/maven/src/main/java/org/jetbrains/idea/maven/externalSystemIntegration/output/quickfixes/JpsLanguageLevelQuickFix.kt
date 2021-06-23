@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.concurrent.CompletableFuture
 
@@ -21,7 +22,8 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
   private val matchersList = listOf(
     listOf("source release", "requires target release"),
     listOf("release version", "not supported"),
-    listOf("invalid source release:")
+    listOf("invalid source release:"),
+    listOf("invalid target release")
   )
 
   override fun createBuildIssue(project: Project,
@@ -68,15 +70,13 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
                                               errorMessage: String,
                                               moduleRootManager: ModuleRootManager): BuildIssue {
     val moduleName = moduleRootManager.module.name
-    val quickFixes = mutableListOf<BuildIssueQuickFix>()
-    val issueDescription = StringBuilder(errorMessage)
-    issueDescription.append("\n\nModule $moduleName project JDK ${moduleProjectLanguageLevel.toJavaVersion()} " +
-                            "is lower then source version ${sourceLanguageLevel.toJavaVersion()}.")
     val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName, moduleRootManager.isSdkInherited)
-    quickFixes.add(setupModuleSdkQuickFix)
-    issueDescription.append(
-      "\nUpgrade module JDK in project settings to ${sourceLanguageLevel.toJavaVersion()} or higher." +
-      " <a href=\"${setupModuleSdkQuickFix.id}\">Open project settings</a>.\n")
+    val quickFixes = listOf(setupModuleSdkQuickFix)
+    val issueDescription = StringBuilder(errorMessage)
+    issueDescription.append("\n\n")
+    issueDescription.append(message("maven.quickfix.source.version.great", moduleName,
+                                    moduleProjectLanguageLevel.toJavaVersion(), sourceLanguageLevel.toJavaVersion(),
+                                    setupModuleSdkQuickFix.id))
 
     return object : BuildIssue {
       override val title: String = errorMessage
@@ -94,19 +94,19 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
     val moduleName = moduleRootManager.module.name
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
     val issueDescription = StringBuilder(errorMessage)
-    issueDescription.append("\n\nModule $moduleName project JDK ${moduleProjectLanguageLevel.toJavaVersion()} " +
-                            "is not supported source version ${sourceLanguageLevel.toJavaVersion()}. " +
-                            "\nPossible solution:\n")
+    issueDescription.append("\n\n")
+    issueDescription.append(message("maven.quickfix.source.version.less.header", moduleName,
+                                    moduleProjectLanguageLevel.toJavaVersion(), sourceLanguageLevel.toJavaVersion()))
     val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName, moduleRootManager.isSdkInherited)
     quickFixes.add(setupModuleSdkQuickFix)
-    issueDescription.append(
-      " - Downgrade project JDK in settings to ${sourceLanguageLevel.toJavaVersion()} or compatible." +
-      " <a href=\"${setupModuleSdkQuickFix.id}\">Open project settings</a>.\n")
+    issueDescription.append("\n")
+    issueDescription.append(message("maven.quickfix.source.version.less.part1",
+                                    sourceLanguageLevel.toJavaVersion(), setupModuleSdkQuickFix.id))
     val updateSourceLevelQuickFix = UpdateSourceLevelQuickFix(mavenProject)
     quickFixes.add(updateSourceLevelQuickFix)
-    issueDescription.append(
-      " - Upgrade JDK version in source to ${moduleProjectLanguageLevel.toJavaVersion()}." +
-      " <a href=\"${updateSourceLevelQuickFix.id}\">Update pom.xml</a>.\n")
+    issueDescription.append("\n")
+    issueDescription.append(message("maven.quickfix.source.version.less.part2",
+                                    moduleProjectLanguageLevel.toJavaVersion(), updateSourceLevelQuickFix.id))
 
     return object : BuildIssue {
       override val title: String = errorMessage
