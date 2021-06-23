@@ -6,7 +6,6 @@ enum class MyEnum {
 fun foo() {
     val a = MyEnum.FIRST
     when (a) {
-        <caret> -> {
-        }
+        MyEnum.FIRST -> <caret>TODO()
     }
 }
