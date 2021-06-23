@@ -657,7 +657,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         myDimensionServiceKey = dialogWrapper.getDimensionKey();
 
         if (myDimensionServiceKey != null) {
-          final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+          Project projectGuess = null;
+          if (!myDimensionServiceKey.startsWith(WindowStateService.PERSIST_INDEPENDENTLY_FROM_PROJECT)) {
+            projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+          }
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
           if (size != null) {
@@ -815,8 +818,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null &&
             myInitialSize != null &&
             myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
-          final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
+          Project projectGuess = null;
 
+          if (!myDimensionServiceKey.startsWith(WindowStateService.PERSIST_INDEPENDENTLY_FROM_PROJECT)) {
+            projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
+          }
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
