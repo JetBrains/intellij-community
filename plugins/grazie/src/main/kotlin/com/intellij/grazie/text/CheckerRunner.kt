@@ -128,7 +128,7 @@ internal class CheckerRunner(val text: TextContent) {
     }
 
     result.add(GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline))
-    result.add(GrazieDisableRuleQuickFix(problem.shortMessage, problem.rule))
+    result.add(GrazieDisableRuleQuickFix(problem.rule.presentableName, problem.rule))
     return result.toTypedArray()
   }
 

@@ -13,11 +13,11 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-internal class GrazieDisableRuleQuickFix(private val message: String, private val rule: Rule) : IntentionAndQuickFixAction(), Iconable {
+internal class GrazieDisableRuleQuickFix(private val ruleName: String, private val rule: Rule) : IntentionAndQuickFixAction(), Iconable {
 
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.Cancel
 
-  override fun getName() = msg("grazie.grammar.quickfix.suppress.rule.text", message)
+  override fun getName() = msg("grazie.grammar.quickfix.suppress.rule.text", ruleName)
 
   override fun getFamilyName(): String = msg("grazie.grammar.quickfix.suppress.rule.family")
 
