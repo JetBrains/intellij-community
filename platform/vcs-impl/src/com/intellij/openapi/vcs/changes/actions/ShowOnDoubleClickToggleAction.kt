@@ -4,28 +4,48 @@ package com.intellij.openapi.vcs.changes.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 
-private abstract class ShowOnDoubleClickToggleAction(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
+private object ShowOnDoubleClickToggleAction {
 
-    val changeListManager = e.project?.let { ChangeListManager.getInstance(it) }
-    val isEditorPreview = e.project?.let { isEditorPreview(it) } == true
+  sealed class CommitView(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
 
-    e.presentation.isEnabledAndVisible =
-      isEditorPreview || changeListManager?.areChangeListsEnabled() == false
+    override fun isSelected(e: AnActionEvent): Boolean =
+      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK == isEditorPreview
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = isEditorPreview
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+
+      val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
+      e.presentation.isEnabledAndVisible = isCommitToolwindowShown
+    }
+
+    class EditorPreview : CommitView(true)
+    class Source : CommitView(false)
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean =
-    VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK == isEditorPreview
+  sealed class LocalChangesView(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
 
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = isEditorPreview
+    override fun isSelected(e: AnActionEvent): Boolean =
+      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK == isEditorPreview
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = isEditorPreview
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+
+      val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
+      e.presentation.isEnabledAndVisible = !isCommitToolwindowShown
+    }
+
+    class EditorPreview : LocalChangesView(true)
+    class Source : LocalChangesView(false)
   }
-
-  class EditorPreview : ShowOnDoubleClickToggleAction(true)
-
-  class Source : ShowOnDoubleClickToggleAction(false)
 }
+

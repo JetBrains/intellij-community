@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -13,6 +13,13 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
+  override fun init(window: ToolWindow) {
+    super.init(window)
+
+    window as ToolWindowEx
+    window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
+  }
+
   override fun updateState(project: Project, toolWindow: ToolWindow) {
     super.updateState(project, toolWindow)
     toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ChangesViewContentManager.TOOLWINDOW_ID
