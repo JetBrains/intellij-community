@@ -458,6 +458,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
   }
 
+  protected Artifact findArtifact(Project project, String artifactName) {
+    return ReadAction.compute(() -> ArtifactsTestUtil.findArtifact(project, artifactName));
+  }
+
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk();
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
