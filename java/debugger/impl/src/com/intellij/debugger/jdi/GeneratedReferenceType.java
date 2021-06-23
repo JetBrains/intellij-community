@@ -246,7 +246,7 @@ public class GeneratedReferenceType implements ReferenceType {
 
   @Override
   public int compareTo(@NotNull ReferenceType o) {
-    return 0;
+    throw new IllegalStateException("not implemented");
   }
 
   @Override
