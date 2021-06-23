@@ -11,6 +11,11 @@ import java.awt.*;
 public abstract class WindowStateService {
   private final Project project;
 
+  /**
+   * (DialogWrapper.getDimensionServiceKey()) Start your key with this string to store state independently of the project
+   */
+  public static final String PERSIST_INDEPENDENTLY_FROM_PROJECT = "PERSIST_INDEPENDENTLY_FROM_PROJECT";
+
   protected WindowStateService(@Nullable Project project) {
     this.project = project;
   }
