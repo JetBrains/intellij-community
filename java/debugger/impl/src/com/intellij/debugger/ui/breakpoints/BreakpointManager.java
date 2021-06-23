@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
@@ -48,6 +47,7 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -545,6 +545,9 @@ public class BreakpointManager {
         Stream<CompletableFuture> futures = requests
           .map(r -> newFilterThread != null ? r.addThreadFilterAsync(newFilterThread) : r.removeThreadFilterAsync(oldFilterThread));
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+      }
+      catch (VMDisconnectedException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(new Exception(e));
