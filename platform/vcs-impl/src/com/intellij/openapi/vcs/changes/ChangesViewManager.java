@@ -507,12 +507,14 @@ public class ChangesViewManager implements ChangesViewEx,
 
         @Override
         protected boolean isPreviewOnDoubleClickAllowed() {
-          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
         }
 
         @Override
         protected boolean isPreviewOnEnterAllowed() {
-          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
         }
       };
       editorPreview.setEscapeHandler(() -> {
