@@ -184,8 +184,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
                                           Collections.singletonList(ref),
                                           null,
                                           null,
-                                          null,
-                                          ProgressManager::checkCanceled);
+                                          null);
     }
 
     @NotNull

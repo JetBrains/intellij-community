@@ -101,8 +101,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
                                                               keys,
                                                               null,
                                                               null,
-                                                              null,
-                                                              ProgressManager::checkCanceled);
+                                                              null);
   }
 
   private void iterateCommitIds(int key, @NotNull IntConsumer consumer) throws StorageException {

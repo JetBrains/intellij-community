@@ -4,7 +4,7 @@ package com.intellij.util.io
 import java.util.*
 
 internal object IOCancellationCallbackHolder {
-  val usedIoCallback = loadSingleCallback()
+  val usedIoCallback by lazy { loadSingleCallback() }
 
   private fun loadSingleCallback(): IOCancellationCallback {
     val serviceLoader = ServiceLoader.load(IOCancellationCallback::class.java, IOCancellationCallback::class.java.classLoader)
@@ -14,4 +14,7 @@ internal object IOCancellationCallbackHolder {
     }
     return allCallbacks.firstOrNull() ?: IOCancellationCallback {  }
   }
+
+  @JvmStatic
+  fun checkCancelled() = usedIoCallback.checkCancelled()
 }

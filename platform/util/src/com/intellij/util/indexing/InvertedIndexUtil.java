@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.io.IOCancellationCallbackHolder;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -18,29 +19,24 @@ public final class InvertedIndexUtil {
                                                                   @NotNull Collection<? extends K> dataKeys,
                                                                   @Nullable Condition<? super K> keyChecker,
                                                                   @Nullable Condition<? super V> valueChecker,
-                                                                  @Nullable IntPredicate idChecker,
-                                                                  @Nullable Runnable checkCancelledRunnable)
+                                                                  @Nullable IntPredicate idChecker)
     throws StorageException {
     IntSet mainIntersection = null;
 
     for (K dataKey : dataKeys) {
+      IOCancellationCallbackHolder.checkCancelled();
+
       if (keyChecker != null && !keyChecker.value(dataKey)) continue;
 
       IntSet copy = new IntOpenHashSet();
       ValueContainer<V> container = index.getData(dataKey);
-
-      if (checkCancelledRunnable != null) {
-        checkCancelledRunnable.run();
-      }
 
       for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
         if (valueChecker != null && !valueChecker.value(value)) {
           continue;
         }
-        if (checkCancelledRunnable != null) {
-          checkCancelledRunnable.run();
-        }
+        IOCancellationCallbackHolder.checkCancelled();
 
         ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
 
