@@ -368,17 +368,21 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     for (FilePatch patch : patches) {
-      patch.setBeforeName(patch.getBeforeName() == null
-                          ? null
-                          : getRelativePath(oldBase, newBase, patch.getBeforeName()));
-      patch.setAfterName((patch.getAfterFileName() == null
-                          ? null
-                          : getRelativePath(oldBase, newBase, patch.getAfterName())));
+      patch.setBeforeName(getRelativePath(oldBase, newBase, patch.getBeforeName()));
+      patch.setAfterName(getRelativePath(oldBase, newBase, patch.getAfterName()));
     }
   }
 
   @SystemIndependent
-  private static @NotNull String getRelativePath(@NotNull Path oldBase, @NotNull Path newBase, @NotNull String name) {
-    return newBase.relativize(oldBase.resolve(name)).toString().replace(File.separatorChar, '/');
+  private static @Nullable String getRelativePath(@NotNull Path oldBase, @NotNull Path newBase, @Nullable String name) {
+    if (name == null) return null;
+    try {
+      Path path = oldBase.resolve(name);
+      return newBase.relativize(path).toString().replace(File.separatorChar, '/');
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(String.format("Can't update patch base: base1: %s; base2: %s; path: %s", oldBase, newBase, name), e);
+      return name;
+    }
   }
 }
