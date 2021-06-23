@@ -30,6 +30,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   private final String myProjectPath;
   private final String myProjectName;
   private boolean myIsRemoved = false;
+  @Nullable private Runnable myProjectOpenedLogger;
 
   public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, @NlsSafe String projectName, @NlsSafe String displayName) {
     myProjectPath = projectPath;
@@ -65,6 +66,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
                                   || e.getPlace() == ActionPlaces.WELCOME_SCREEN
                                   || LightEdit.owns(project);
     RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame).withRunConfigurators());
+    if (myProjectOpenedLogger != null) {
+      myProjectOpenedLogger.run();
+    }
   }
 
   @SystemIndependent
@@ -100,5 +104,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   @Override
   public String getTemplateText() {
     return IdeBundle.message("action.ReopenProject.reopen.project.text");
+  }
+
+  public void setProjectOpenedLogger(Runnable projectOpenedLogger) {
+    myProjectOpenedLogger = projectOpenedLogger;
   }
 }
