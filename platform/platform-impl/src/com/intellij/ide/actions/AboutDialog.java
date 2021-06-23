@@ -46,7 +46,7 @@ import java.util.Properties;
 public class AboutDialog extends DialogWrapper {
   private final List<String> myInfo = new ArrayList<>();
 
-  public AboutDialog(Project project) {
+  public AboutDialog(@Nullable Project project) {
     this(project, false);
   }
 
@@ -104,7 +104,7 @@ public class AboutDialog extends DialogWrapper {
     catch (Exception ignore) { }
   }
 
-  private String getExtendedAboutText() {
+  public String getExtendedAboutText() {
     return StringUtil.join(myInfo, "\n") + "\n" + AboutPopup.getExtraInfo();
   }
 
