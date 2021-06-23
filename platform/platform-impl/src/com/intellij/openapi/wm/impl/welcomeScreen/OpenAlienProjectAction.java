@@ -38,6 +38,7 @@ public class OpenAlienProjectAction extends AnAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ProjectUtil.openOrImport(Path.of(path));
+          projectOpened();
         }
       });
     }
@@ -45,4 +46,6 @@ public class OpenAlienProjectAction extends AnAction {
       .createActionGroupPopup(IdeBundle.message("popup.title.open.project"), actionGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                               false).showUnderneathOf(Objects.requireNonNull(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)));
   }
+
+  protected void projectOpened() {}
 }

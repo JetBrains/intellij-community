@@ -13,10 +13,16 @@ class EclipseProjectDetectorUsagesCollector : CounterUsagesCollector() {
     val GROUP = EventLogGroup("eclipse.projects.detector", 1)
 
     private val projectsDetected = GROUP.registerEvent("detected", EventFields.Int("projectsCount"))
+    private val projectOpened = GROUP.registerEvent("opened", EventFields.Boolean("fromEmptyState"))
 
     @JvmStatic
     fun logProjectsDetected(projectsCount: Int) {
       projectsDetected.log(projectsCount)
+    }
+
+    @JvmStatic
+    fun logProjectOpened(fromEmptyState: Boolean) {
+      projectOpened.log(fromEmptyState)
     }
   }
 }

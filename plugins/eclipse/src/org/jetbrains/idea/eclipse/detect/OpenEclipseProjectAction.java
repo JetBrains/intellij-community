@@ -8,4 +8,9 @@ public class OpenEclipseProjectAction extends OpenAlienProjectAction {
   public OpenEclipseProjectAction() {
     super(new EclipseProjectDetector());
   }
+
+  @Override
+  protected void projectOpened() {
+    EclipseProjectDetectorUsagesCollector.logProjectOpened(true);
+  }
 }
