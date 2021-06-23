@@ -8,17 +8,18 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 interface DiffEditorTabFilesManager {
 
-  fun isEditorDiffAvailable(): Boolean = AdvancedSettings.getBoolean(SHOW_DIFF_IN_EDITOR_SETTING)
-
-  fun showDiffFile(diffFile: ChainDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor>
+  fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor>
 
   companion object {
-    const val SHOW_DIFF_IN_EDITOR_SETTING = "show.diff.as.editor.tab"
+    private const val SHOW_DIFF_IN_EDITOR_SETTING = "show.diff.as.editor.tab"
+
+    @JvmStatic
+    var isDiffInEditor: Boolean
+      get() = AdvancedSettings.getBoolean(SHOW_DIFF_IN_EDITOR_SETTING)
+      set(value) = AdvancedSettings.setBoolean(SHOW_DIFF_IN_EDITOR_SETTING, value)
 
     @JvmStatic
     fun isDiffOpenedInNewWindow(file: VirtualFile): Boolean = DIFF_OPENED_IN_NEW_WINDOW.get(file, false)
@@ -33,7 +34,7 @@ val DIFF_OPENED_IN_NEW_WINDOW = Key<Boolean>("DIFF_OPENED_IN_NEW_WINDOW")
 
 class DefaultDiffTabFilesManager(private val project: Project) : DiffEditorTabFilesManager {
 
-  override fun showDiffFile(diffFile: ChainDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+  override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     return FileEditorManager.getInstance(project).openFile(diffFile, true)
   }
 }
