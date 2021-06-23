@@ -3,30 +3,26 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.ChainDiffVirtualFile
 import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.SHOW_DIFF_IN_EDITOR_SETTING
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 
 class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabFilesManager {
 
-  fun isEditorDiffPreviewAvailable() = isEditorDiffAvailable()
+  fun isEditorDiffPreviewAvailable() = isEditorDiffPreview.asBoolean()
 
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
-    ApplicationManager.getApplication().messageBus.connect(disposable)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC,
-                 object : AdvancedSettingsChangeListener {
-                   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-                     if (id == SHOW_DIFF_IN_EDITOR_SETTING && oldValue != newValue) {
-                       onVisibilityChange.run()
-                     }
-                   }
-                 })
+    isEditorDiffPreview.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        onVisibilityChange.run()
+      }
+    }, disposable)
     project.messageBus.connect(disposable)
       .subscribe(ChangesViewContentManagerListener.TOPIC,
                  object : ChangesViewContentManagerListener {
@@ -45,6 +41,8 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
   }
 
   companion object {
+    private val isEditorDiffPreview = Registry.get("show.editor.diff.preview")
+
     @JvmField
     val EDITOR_TAB_DIFF_PREVIEW = DataKey.create<DiffPreview>("EditorTabDiffPreview")
 
