@@ -14,5 +14,8 @@
       <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
     </group>
+    <group id="UsageFilteringActionGroup">
+      <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
+    </group>
   </actions>
 </idea-plugin>

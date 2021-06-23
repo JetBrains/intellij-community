@@ -78,6 +78,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
+import static com.intellij.usages.impl.rules.UsageFilteringRules.usageFilteringRules;
+
 public class UsageViewImpl implements UsageViewEx {
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
@@ -92,7 +95,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] myTargets;
   protected UsageGroupingRule[] myGroupingRules;
-  protected UsageFilteringRule[] myFilteringRules;
+  private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
   private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
   private final Project myProject;
 
@@ -188,10 +191,7 @@ public class UsageViewImpl implements UsageViewEx {
     myRoot = (GroupNode)myModel.getRoot();
 
     myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings(), getPresentation());
-    myFilteringRules = getActiveFilteringRules(project);
-
-    myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, myFilteringRules, myRoot, myProject);
-
+    myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, getActiveFilteringRules(myProject), myRoot, myProject);
     myProject.getMessageBus().connect(this).subscribe(UsageFilteringRuleProvider.RULES_CHANGED, this::rulesChanged);
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
@@ -784,15 +784,20 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
+  @SuppressWarnings("deprecation")
   protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
+    for (UsageFilteringRule rule : usageFilteringRules(project)) {
+      if (myFilteringRulesState.isActive(rule.ruleId())) {
+        list.add(rule);
+      }
+    }
     for (UsageFilteringRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
-
 
   protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(
     @NotNull Project project,
@@ -921,10 +926,19 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * Creates filtering actions for the toolbar
    */
+  @SuppressWarnings("deprecation")
   protected void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
-    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
-      AnAction[] actions = provider.createFilteringActions(this);
+    if (getPresentation().isCodeUsages()) {
+      JComponent component = getComponent();
+      List<AnAction> actions = usageFilteringRuleActions(myProject, myFilteringRulesState);
       for (AnAction action : actions) {
+        action.registerCustomShortcutSet(component, this);
+        group.add(action);
+      }
+    }
+    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
+      AnAction[] providerActions = provider.createFilteringActions(this);
+      for (AnAction action : providerActions) {
         group.add(action);
       }
     }
@@ -1089,10 +1103,9 @@ public class UsageViewImpl implements UsageViewEx {
     Set<Usage> excludedUsages = getExcludedUsages();
     reset();
     myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings(), getPresentation());
-    myFilteringRules = getActiveFilteringRules(myProject);
 
     myBuilder.setGroupingRules(myGroupingRules);
-    myBuilder.setFilteringRules(myFilteringRules);
+    myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
 
     for (int i = allUsages.size() - 1; i >= 0; i--) {
       Usage usage = allUsages.get(i);
