@@ -8,10 +8,12 @@ package org.jetbrains.uast.test.kotlin;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
-@TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
+@TestRoot("uast/uast-kotlin-fir")
+@TestMetadata("uast-kotlin-fir/testData/declaration")
 @TestDataPath("$PROJECT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public class FirUastCommentsTest extends AbstractFirUastCommentsTest {
@@ -21,11 +23,11 @@ public class FirUastCommentsTest extends AbstractFirUastCommentsTest {
 
     @TestMetadata("facade.kt")
     public void testFacade() throws Exception {
-        runTest("plugins/uast-kotlin-fir/testData/declaration/facade.kt");
+        runTest("testData/declaration/facade.kt");
     }
 
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
-        runTest("plugins/uast-kotlin-fir/testData/declaration/objects.kt");
+        runTest("testData/declaration/objects.kt");
     }
 }
