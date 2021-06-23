@@ -29,6 +29,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
@@ -1381,8 +1383,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiMethodCallExpression call,
                                        @NotNull PsiMethod method, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
-    String conditionsText = StringUtil.join(conditions, c -> c.getPresentationText(call),
-                                            JavaAnalysisBundle.message("dfa.find.cause.condition.joiner"));
+    String conditionsText = conditions.stream().map(c -> c.getPresentationText(call)).collect(NlsMessages.joiningAnd());
     String message;
     if (contract.getReturnValue().isFail()) {
       message = JavaAnalysisBundle.message("dfa.find.cause.contract.throws.on.condition",
@@ -1390,8 +1391,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     }
     else {
       PsiExpression place = contract.getReturnValue().findPlace(call);
-      String placeText = place == null ? JavaAnalysisBundle.message("dfa.find.cause.contract.returns.x.value", contract.getReturnValue()) :
-                         "'" + PsiExpressionTrimRenderer.render(place) + "'";
+      String placeText = place == null ? contract.getReturnValue().toString() : PsiExpressionTrimRenderer.render(place);
       message = JavaAnalysisBundle.message("dfa.find.cause.contract.returns.on.condition",
                                            getContractKind(call), method.getName(), placeText, conditionsText);
     }

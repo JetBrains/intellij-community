@@ -9,7 +9,7 @@ Value is always true (counter == 0 || batches.hasNext() || pending.isEmpty(); li
         'batches.hasNext == true' was established from condition (counter > 0 && batches.hasNext(); line#27)
         or 'batches.hasNext == true' was established from condition (counter == 0; line#41)
     or operand #3 of or-chain is true (pending.isEmpty(); line#41)
-      According to hard-coded contract, method 'isEmpty' returns 'true' value when size of pending == 0 (isEmpty; line#41)
+      According to hard-coded contract, method 'isEmpty' returns 'true' when size of pending == 0 (isEmpty; line#41)
         Left operand is 0 (pending; line#41)
           Range is known from line #41 (counter == 0; line#41)
  */
