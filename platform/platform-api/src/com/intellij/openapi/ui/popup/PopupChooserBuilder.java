@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
@@ -32,6 +33,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private @PopupTitle String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
+  private JBSplitter myContentSplitter;
   private JComponent myNorthComponent;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
@@ -196,6 +198,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  public PopupChooserBuilder<T> setContentSplitter(@NotNull JBSplitter splitter) {
+    myContentSplitter = splitter;
+    return this;
+  }
+
   @Override
   public PopupChooserBuilder<T> setCouldPin(@Nullable Processor<? super JBPopup> callback){
     myCouldPin = callback;
@@ -346,11 +353,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(
       BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
-    if (myChooserComponent.hasOwnScrollPane()) {
-      addCenterComponentToContentPane(contentPane, myPreferableFocusComponent);
+    JComponent contentComponent = myChooserComponent.hasOwnScrollPane() ? myPreferableFocusComponent : myScrollPane;
+
+    if (myContentSplitter != null) {
+      myContentSplitter.setFirstComponent(contentComponent);
+      addCenterComponentToContentPane(contentPane, myContentSplitter);
     }
     else {
-      addCenterComponentToContentPane(contentPane, myScrollPane);
+      addCenterComponentToContentPane(contentPane, contentComponent);
     }
 
     if (myNorthComponent != null) {

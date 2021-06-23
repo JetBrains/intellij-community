@@ -20,6 +20,7 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -38,6 +39,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -66,10 +69,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -77,6 +77,8 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -99,6 +101,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
+  private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
 
   private static int ourPopupDelayTimeout = 300;
 
@@ -641,16 +644,28 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                           @NotNull ShowUsagesActionHandler actionHandler) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = parameters.project;
-
-    PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
     String title = actionHandler.getPresentation().getSearchString();
-    builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>")).
+
+    PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
+      setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>")).
       setAdText(getSecondInvocationHint(actionHandler)).
       setMovable(true).
       setResizable(true).
-      setItemChoosenCallback(itemChoseCallback).
-      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
+      setCancelKeyEnabled(true).
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY).
+      setItemChoosenCallback(itemChoseCallback);
 
+    boolean addCodePreview = Registry.is("ide.show.usages.code.preview");
+    JBSplitter contentSplitter = null;
+    if (addCodePreview) {
+      contentSplitter = new OnePixelSplitter(true, .5f);
+      contentSplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+      contentSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+      contentSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+      builder.setContentSplitter(contentSplitter);
+    }
+
+    Disposable contentDisposable = Disposer.newDisposable();
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
@@ -714,6 +729,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
       }
     });
+
+    Disposer.register(contentDisposable, scopeChooserCombo);
     scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     scopeChooserCombo.setButtonVisible(false);
     northPanel.add(scopeChooserCombo, gc.next());
@@ -732,18 +749,77 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     builder.setNorthComponent(northPanel);
 
-    builder.setCancelKeyEnabled(false);
-
     PopupUpdateProcessor processor = new PopupUpdateProcessor(usageView.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {/*not used*/}
     };
     builder.addListener(processor);
 
+    if (addCodePreview) {
+      SimpleColoredComponent previewTitle = new SimpleColoredComponent();
+      previewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+      UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(project, usageView.getPresentation(), false) {
+        @Override
+        public Dimension getPreferredSize() {
+          return new Dimension(table.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
+        }
+      };
+
+      Disposer.register(contentDisposable, usagePreviewPanel);
+
+      JPanel previewPanel = new JPanel(new BorderLayout());
+      previewPanel.add(previewTitle, BorderLayout.NORTH);
+      previewPanel.add(usagePreviewPanel.createComponent(), BorderLayout.CENTER);
+      contentSplitter.setSecondComponent(previewPanel);
+
+      Runnable updatePreviewRunnable = () -> {
+        if (Disposer.isDisposed(popupRef.get())) return;
+        int[] selectedRows = table.getSelectedRows();
+        final List<Promise<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+        String file = null;
+        for (int row : selectedRows) {
+          Object value = table.getModel().getValueAt(row, 0);
+
+          if (value instanceof UsageNode) {
+            Usage usage = ((UsageNode)value).getUsage();
+            if (usage instanceof UsageInfoAdapter) {
+              UsageInfoAdapter adapter = (UsageInfoAdapter)usage;
+              file = adapter.getPath();
+              if (adapter.isValid()) {
+                selectedUsagePromises.add(adapter.getMergedInfosAsync());
+              }
+            }
+          }
+        }
+
+        String selectedFile = file;
+        Promises.collectResults(selectedUsagePromises).onSuccess(data -> {
+          final List<UsageInfo> selectedUsages = new SmartList<>();
+          for (UsageInfo[] usageInfos : data) {
+            Collections.addAll(selectedUsages, usageInfos);
+          }
+
+          usagePreviewPanel.updateLayout(selectedUsages);
+          previewTitle.clear();
+
+          if (usagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
+            previewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        });
+      };
+
+      Alarm previewUpdater = new Alarm(contentDisposable);
+
+      table.getSelectionModel().addListSelectionListener(e -> {
+        if (!e.getValueIsAdjusting() && !Disposer.isDisposed(previewUpdater)) {
+          previewUpdater.addRequest(updatePreviewRunnable, 50);
+        }
+      });
+    }
+
     popupRef.set((AbstractPopup)builder.createPopup());
     JComponent content = popupRef.get().getContent();
-
-    Disposer.register(popupRef.get(), scopeChooserCombo);
+    Disposer.register(popupRef.get(), contentDisposable);
 
     // Set title text alignment
     CaptionPanel caption = popupRef.get().getTitle();
@@ -764,7 +840,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
-    popupRef.get().setUserData(Collections.singletonList(filteringGroup));
+    popupRef.get().setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
     return popupRef.get();
   }
 
@@ -1000,6 +1076,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       rectangle.width = Math.min(savedSize.width, rectangle.width);
     }
 
+    JBSplitter splitter = popup.getUserData(JBSplitter.class);
+    Dimension previewSize = JBUI.emptySize();
+    if (splitter != null) {
+      JComponent second = splitter.getSecondComponent();
+      Rectangle bounds = second.getBounds();
+      previewSize = bounds.isEmpty() ? second.getPreferredSize() : bounds.getSize();
+    }
+
+    rectangle.height += previewSize.height;
+
     popup.setSize(rectangle.getSize());
   }
 
@@ -1011,7 +1097,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    int visibleRows = Math.min(30, modelRows);
+    int visibleRows = Math.min(Registry.is("ide.show.usages.code.preview") ? 20 : 30, modelRows);
     int rowHeight = table.getRowHeight();
     int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
     int height = visibleRows * rowHeight + minHeight + space;
