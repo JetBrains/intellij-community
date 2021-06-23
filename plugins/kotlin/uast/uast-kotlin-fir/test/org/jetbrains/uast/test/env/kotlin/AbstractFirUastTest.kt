@@ -26,6 +26,7 @@ import org.jetbrains.uast.kotlin.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.FirUastPluginSelection
 import java.io.File
+import java.nio.file.Paths
 
 abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), FirUastPluginSelection {
     companion object {
@@ -82,14 +83,15 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Fi
     abstract fun check(filePath: String, file: UFile)
 
     protected fun doCheck(filePath: String, checkCallback: (String, UFile) -> Unit = { _filePath, file -> check(_filePath, file) }) {
-        val virtualFile = getVirtualFile(filePath)
+        val normalizedFile = Paths.get(filePath).normalize()
+        val virtualFile = getVirtualFile(normalizedFile.toString())
 
-        val testName = filePath.substring(filePath.lastIndexOf('/') + 1).removeSuffix(".kt")
+        val testName = normalizedFile.fileName.toString().removeSuffix(".kt")
         val fileContent = File(virtualFile.canonicalPath!!).readText()
         if (isFirPlugin && fileContent.withIgnoreFirDirective) return
 
         val psiFile = myFixture.configureByText(virtualFile.name, fileContent)
         val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
-        checkCallback(filePath, uFile as UFile)
+        checkCallback(normalizedFile.toString(), uFile as UFile)
     }
 }

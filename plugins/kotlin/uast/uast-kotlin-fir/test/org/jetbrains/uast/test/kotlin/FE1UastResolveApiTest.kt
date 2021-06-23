@@ -23,7 +23,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestMetadata("plugins/uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     class Legacy : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = File("plugins/uast-kotlin/testData")
+        override var testDataDir = File("../uast-kotlin/testData").normalize()
 
         override val isFirUastPlugin: Boolean = false
 
