@@ -75,6 +75,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import static com.intellij.execution.util.ProgramParametersUtil.expandPathAndMacros;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -102,12 +103,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenGeneralSettings originalSettings = projectsManager.getGeneralSettings();
     MavenGeneralSettings settings = originalSettings.clone();
     ObjectUtils.consumeIfNotNull(this.settings.getMavenHome(), settings::setMavenHome);
+    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getUserSettings(), null, getProject()), settings::setUserSettingsFile);
+    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getLocalRepository(), null, getProject()), settings::setLocalRepository);
     return settings.equals(originalSettings) ? null : settings;
   }
 
   public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
     if (settings != null) {
       this.settings.setMavenHome(settings.getMavenHome());
+      this.settings.setUserSettings(settings.getUserSettingsFile());
+      this.settings.setLocalRepository(settings.getLocalRepository());
     }
   }
 

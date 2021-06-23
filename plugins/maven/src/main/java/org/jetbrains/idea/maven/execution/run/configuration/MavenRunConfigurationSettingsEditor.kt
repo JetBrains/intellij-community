@@ -5,21 +5,25 @@ import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.*
+import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
-import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
+import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
+import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
-import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -42,46 +46,41 @@ class MavenRunConfigurationSettingsEditor(
       addBeforeRunFragment(CompileStepBeforeRun.ID)
       addAll(BeforeRunFragment.createGroup())
       add(CommonTags.parallelRun())
-      addDistributionFragment(project, MavenDistributionsInfo())
-      val workingDirectoryFragment =
-        addWorkingDirectoryFragment(project, MavenWorkingDirectoryInfo(project))
-      val workingDirectoryField = workingDirectoryFragment.component().component
-      addCommandLineFragment(project, MavenCommandLineInfo(project, workingDirectoryField))
+      addDistributionFragment()
+      val workingDirectoryFragment = addWorkingDirectoryFragment()
+      addCommandLineFragment(workingDirectoryFragment)
       addJreFragment()
       addEnvironmentFragment()
       addVmOptionsFragment()
-      addMavenProfilesFragment(project, workingDirectoryField)
+      addMavenProfilesFragment(workingDirectoryFragment)
+      addUserSettingsFragment()
+      addLocalRepositoryFragment()
       add(LogsGroupFragment())
     }
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment(
-    project: Project,
-    distributionsInfo: DistributionsInfo
-  ) = addDistributionFragment(
-    project,
-    distributionsInfo,
-    { asDistributionInfo(settings.mavenHome) },
-    { settings.mavenHome = asMavenHome(it) },
-    { validateMavenHome(it) }
-  )
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment() =
+    addDistributionFragment(
+      project,
+      MavenDistributionsInfo(),
+      { asDistributionInfo(settings.mavenHome) },
+      { settings.mavenHome = asMavenHome(it) },
+      { validateMavenHome(it) }
+    )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment(
-    project: Project,
-    workingDirectoryInfo: WorkingDirectoryInfo
-  ) = addWorkingDirectoryFragment(
-    project,
-    workingDirectoryInfo,
-    { settings.workingDirectory },
-    { settings.workingDirectory = it }
-  )
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment() =
+    addWorkingDirectoryFragment(
+      project,
+      MavenWorkingDirectoryInfo(project),
+      { settings.workingDirectory },
+      { settings.workingDirectory = it }
+    )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addCommandLineFragment(
-    project: Project,
-    commandLineInfo: CommandLineInfo
+    workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
   ) = addCommandLineFragment(
     project,
-    commandLineInfo,
+    MavenCommandLineInfo(project, workingDirectoryFragment.component().component),
     { settings.commandLine },
     { settings.commandLine = it }
   )
@@ -134,9 +133,8 @@ class MavenRunConfigurationSettingsEditor(
   }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenProfilesFragment(
-    project: Project,
-    workingDirectoryField: WorkingDirectoryField
-  ) = add(createMavenProfilesFragment(project, workingDirectoryField))
+    workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
+  ) = add(createMavenProfilesFragment(project, workingDirectoryFragment.component().component))
 
   private fun createMavenProfilesFragment(
     project: Project,
@@ -148,7 +146,7 @@ class MavenRunConfigurationSettingsEditor(
     }
     val mavenProfilesLabel = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
     return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<MavenProfilesFiled>>(
-      "external.system.command.line.fragment",
+      "maven.profiles.fragment",
       MavenConfigurableBundle.message("maven.run.configuration.profiles.name"),
       MavenConfigurableBundle.message("maven.run.configuration.options.group"),
       LabeledComponent.create(mavenProfilesFiled, mavenProfilesLabel, BorderLayout.WEST),
@@ -160,6 +158,64 @@ class MavenRunConfigurationSettingsEditor(
       isCanBeHidden = true
       isRemovable = true
       setHint(MavenConfigurableBundle.message("maven.run.configuration.profiles.hint"))
+    }
+  }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() = add(createUserSettingsFragment())
+
+  private fun createUserSettingsFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>> {
+    val userSettingsField = textFieldWithBrowseButton(
+      project,
+      MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"),
+      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+    ) { getUiPath(it.path) }
+    (userSettingsField.textField as ExtendableTextField).apply {
+      CommonParameterFragments.setMonospaced(this)
+      MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
+      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
+    }
+    val userSettingsLabel = MavenConfigurableBundle.message("maven.run.configuration.user.settings.label")
+    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>>(
+      "maven.user.settings.fragment",
+      MavenConfigurableBundle.message("maven.run.configuration.user.settings.name"),
+      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
+      LabeledComponent.create(userSettingsField, userSettingsLabel, BorderLayout.WEST),
+      SettingsEditorFragmentType.EDITOR,
+      { it, c -> c.component.text = getUiPath(it.settings.userSettings) },
+      { it, c -> it.settings.userSettings = if (c.isVisible) getModelPath(c.component.text) else "" },
+      { it.settings.userSettings.isNotBlank() }
+    ).apply {
+      isCanBeHidden = true
+      isRemovable = true
+    }
+  }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addLocalRepositoryFragment() = add(createLocalRepositoryFragment())
+
+  private fun createLocalRepositoryFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>> {
+    val userSettingsField = textFieldWithBrowseButton(
+      project,
+      MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"),
+      FileChooserDescriptorFactory.createSingleFolderDescriptor()
+    ) { getUiPath(it.path) }
+    (userSettingsField.textField as ExtendableTextField).apply {
+      CommonParameterFragments.setMonospaced(this)
+      MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
+      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
+    }
+    val userSettingsLabel = MavenConfigurableBundle.message("maven.run.configuration.local.repository.label")
+    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<TextFieldWithBrowseButton>>(
+      "maven.local.repository.fragment",
+      MavenConfigurableBundle.message("maven.run.configuration.local.repository.name"),
+      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
+      LabeledComponent.create(userSettingsField, userSettingsLabel, BorderLayout.WEST),
+      SettingsEditorFragmentType.EDITOR,
+      { it, c -> c.component.text = getUiPath(it.settings.localRepository) },
+      { it, c -> it.settings.localRepository = if (c.isVisible) getModelPath(c.component.text) else "" },
+      { it.settings.localRepository.isNotBlank() }
+    ).apply {
+      isCanBeHidden = true
+      isRemovable = true
     }
   }
 }

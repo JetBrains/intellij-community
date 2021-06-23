@@ -142,7 +142,7 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
     FragmentedSettingsUtil.setupPlaceholderVisibility(this)
   }
   return SettingsEditorFragment<C, LabeledComponent<WorkingDirectoryField>>(
-    "external.system.project.path.fragment",
+    "external.system.working.directory.fragment",
     projectPathInfo.settingsName,
     projectPathInfo.settingsGroup,
     LabeledComponent.create(workingDirectoryField, projectPathInfo.settingsLabel, BorderLayout.WEST),
@@ -207,7 +207,6 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
   }
 }
 
-
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
   addVmOptionsFragment(
     { settings.vmOptions },
@@ -230,7 +229,7 @@ fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
   }
   val vmOptionsLabel = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
   return SettingsEditorFragment<C, LabeledComponent<RawCommandLineEditor>>(
-    "external.system.vm.parameters.fragment",
+    "external.system.vm.options.fragment",
     ExecutionBundle.message("run.configuration.java.vm.parameters.name"),
     ExecutionBundle.message("group.java.options"),
     LabeledComponent.create(vmOptions, vmOptionsLabel, BorderLayout.WEST),

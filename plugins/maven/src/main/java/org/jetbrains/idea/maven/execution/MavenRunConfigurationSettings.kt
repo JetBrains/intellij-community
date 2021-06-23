@@ -14,6 +14,8 @@ class MavenRunConfigurationSettings : Cloneable {
   var vmOptions: String = ""
   var jreName: String? = null
   var profiles: Map<String, Boolean> = HashMap()
+  var userSettings: String = ""
+  var localRepository: String = ""
 
   public override fun clone(): MavenRunConfigurationSettings {
     val clone = super.clone() as MavenRunConfigurationSettings
@@ -30,6 +32,8 @@ class MavenRunConfigurationSettings : Cloneable {
     commandLine = settings.commandLine
     workingDirectory = settings.workingDirectory
     profiles = settings.profiles
+    userSettings = settings.userSettings
+    localRepository = settings.localRepository
   }
 
   fun readExternal(element: Element) {
