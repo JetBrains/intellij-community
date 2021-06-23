@@ -102,9 +102,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
     MavenGeneralSettings originalSettings = projectsManager.getGeneralSettings();
     MavenGeneralSettings settings = originalSettings.clone();
-    ObjectUtils.consumeIfNotNull(this.settings.getMavenHome(), settings::setMavenHome);
-    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getUserSettings(), null, getProject()), settings::setUserSettingsFile);
-    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getLocalRepository(), null, getProject()), settings::setLocalRepository);
+    settings.setMavenHome(this.settings.getMavenHome());
+    settings.setUserSettingsFile(expandPathAndMacros(this.settings.getUserSettings(), null, getProject()));
+    settings.setLocalRepository(expandPathAndMacros(this.settings.getLocalRepository(), null, getProject()));
     return settings.equals(originalSettings) ? null : settings;
   }
 
@@ -120,10 +120,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenRunner mavenRunner = MavenRunner.getInstance(getProject());
     MavenRunnerSettings originalSettings = mavenRunner.getSettings();
     MavenRunnerSettings settings = originalSettings.clone();
-    ObjectUtils.consumeIfNotNull(this.settings.getJreName(), settings::setJreName);
-    ObjectUtils.consumeIfNotNull(expandPathAndMacros(this.settings.getVmOptions(), null, getProject()), settings::setVmOptions);
-    ObjectUtils.consumeIfNotNull(this.settings.getEnvironment(), settings::setEnvironmentProperties);
-    ObjectUtils.consumeIfNotNull(this.settings.isPassParentEnvs(), settings::setPassParentEnv);
+    settings.setJreName(this.settings.getJreName());
+    settings.setVmOptions(expandPathAndMacros(this.settings.getVmOptions(), null, getProject()));
+    settings.setEnvironmentProperties(this.settings.getEnvironment());
+    settings.setPassParentEnv(this.settings.isPassParentEnvs());
     return settings.equals(originalSettings) ? null : settings;
   }
 
@@ -138,9 +138,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   public @NotNull MavenRunnerParameters getRunnerParameters() {
     MavenRunnerParameters parameters = new MavenRunnerParameters();
-    ObjectUtils.consumeIfNotNull(settings.getCommandLine(), parameters::setCommandLine);
-    ObjectUtils.consumeIfNotNull(settings.getWorkingDirectory(), parameters::setWorkingDirPath);
-    ObjectUtils.consumeIfNotNull(settings.getProfiles(), parameters::setProfilesMap);
+    parameters.setCommandLine(settings.getCommandLine());
+    parameters.setWorkingDirPath(settings.getWorkingDirectory());
+    parameters.setProfilesMap(settings.getProfiles());
     return parameters;
   }
 
