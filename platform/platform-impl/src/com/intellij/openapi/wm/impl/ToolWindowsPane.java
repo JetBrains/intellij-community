@@ -245,17 +245,20 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         setComponent(null, info.getAnchor(), 0);
       }
       else {
-        ToolWindowAnchor anchor = info.getAnchor();
-        JComponent c = getComponentAt(anchor);
-        if (c instanceof Splitter) {
-          Splitter splitter = (Splitter)c;
-          InternalDecoratorImpl component1 = (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
-          state.addSplitProportion(info, component1, splitter);
-          setComponent(component1, anchor,
-                       component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
-        }
-        else {
-          setComponent(null, anchor, 0);
+        if (component != null && component.isShowing()) {
+          ToolWindowAnchor anchor = info.getAnchor();
+          JComponent c = getComponentAt(anchor);
+          if (c instanceof Splitter) {
+            Splitter splitter = (Splitter)c;
+            InternalDecoratorImpl component1 =
+              (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+            state.addSplitProportion(info, component1, splitter);
+            setComponent(component1, anchor,
+                         component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
+          }
+          else {
+            setComponent(null, anchor, 0);
+          }
         }
       }
 
