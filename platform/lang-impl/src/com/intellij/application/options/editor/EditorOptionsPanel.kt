@@ -168,16 +168,16 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       }
       titledRow(message("group.caret.movement")) {
         row(message("label.word.move.caret.actions.behavior")) {
-          caretStopComboBox(CaretOptionMode.WORD, WordBoundary.values())
+          this@row.caretStopComboBox(CaretOptionMode.WORD, WordBoundary.values())
         }
         row(message("label.word.move.caret.actions.behavior.at.line.break")) {
-          caretStopComboBox(CaretOptionMode.LINE, LineBoundary.values())
+          this@row.caretStopComboBox(CaretOptionMode.LINE, LineBoundary.values())
         }
       }
       titledRow(message("editor.options.scrolling")) {
         row { checkBox(cdSmoothScrolling) }
         row {
-          buttonGroup(editorSettings::isRefrainFromScrolling,
+          this@row.buttonGroup(editorSettings::isRefrainFromScrolling,
                       editorSettings::setRefrainFromScrolling) {
             checkBoxGroup(message("editor.options.prefer.scrolling.editor.label")) {
               row { radioButton(message("editor.options.prefer.scrolling.editor.canvas.to.keep.caret.line.centered"), value = false) }
@@ -293,8 +293,8 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
       }
       titledRow(message("group.refactorings")) {
         row {
-          buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
-                      editorSettings::setVariableInplaceRenameEnabled) {
+          this@row.buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
+                               editorSettings::setVariableInplaceRenameEnabled) {
             checkBoxGroup(message("radiogroup.rename.local.variables")) {
               row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
               row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()

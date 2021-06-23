@@ -94,7 +94,7 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
           }
         }
         row {
-          buttonGroup(ui::closeNonModifiedFilesFirst) {
+          this@row.buttonGroup(ui::closeNonModifiedFilesFirst) {
             checkBoxGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
               row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
               row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }.largeGapAfter()

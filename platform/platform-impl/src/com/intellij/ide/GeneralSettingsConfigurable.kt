@@ -59,7 +59,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
       row {
         cell {
           label(IdeBundle.message("group.settings.process.tab.close"))
-          buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
+          this@cell.buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
             radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
             radioButton(IdeBundle.message("radio.process.close.disaconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
             radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
@@ -73,7 +73,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         row {
           cell(isFullWidth = true) {
             label(IdeUICustomization.getInstance().projectMessage("label.open.project.in"))
-            buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
+            this@cell.buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK)
