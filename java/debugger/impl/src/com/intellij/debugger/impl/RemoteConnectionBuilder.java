@@ -26,7 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,13 +185,13 @@ public class RemoteConnectionBuilder {
   }
 
   private static final String AGENT_ARTIFACT_NAME = "debugger-agent";
-  @NonNls private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
+  private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   private static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project) {
     if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
-      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_ARTIFACT_NAME + ".jar"))) {
+      if (!ContainerUtil.exists(parametersList.getParameters(), p -> p.startsWith(prefix) && p.contains(AGENT_ARTIFACT_NAME + ".jar"))) {
         Sdk jdk = parameters.getJdk();
         if (jdk != null) {
           JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
