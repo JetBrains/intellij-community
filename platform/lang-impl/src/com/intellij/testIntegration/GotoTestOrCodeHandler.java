@@ -54,7 +54,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
             ReadAction.compute(() -> TestFinderHelper.findClassesForTest(selectedElement));
           candidates.addAll(classes);
         },
-        LangBundle.message("progress.title.searching.for.classes.for.test"), false, file.getProject());
+        LangBundle.message("progress.title.searching.for.classes.for.test"), true, file.getProject());
     }
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -63,7 +63,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
             ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
           candidates.addAll(tests);
         },
-        LangBundle.message("progress.title.searching.for.tests.for.class"), false, file.getProject());
+        LangBundle.message("progress.title.searching.for.tests.for.class"), true, file.getProject());
 
       if (candidates.size() != 1) {
         for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
