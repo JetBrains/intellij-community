@@ -79,7 +79,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
   protected void preLoadCommitData(@NotNull IntSet commits, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
 
-    IndexDataGetter dataGetter = myIndex.getDataGetter();
+    IndexDataGetter dataGetter = getIndex().getDataGetter();
     if (dataGetter == null) {
       super.preLoadCommitData(commits, consumer);
       return;
@@ -88,7 +88,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
     IntSet notIndexed = new IntOpenHashSet();
 
     commits.forEach(commit -> {
-      VcsCommitMetadata metadata = IndexedDetails.createMetadata(commit, dataGetter, myStorage, myFactory);
+      VcsCommitMetadata metadata = IndexedDetails.createMetadata(commit, dataGetter, getStorage(), myFactory);
       if (metadata == null) {
         notIndexed.add(commit);
       }
