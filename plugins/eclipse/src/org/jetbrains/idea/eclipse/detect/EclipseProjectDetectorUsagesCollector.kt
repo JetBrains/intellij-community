@@ -10,7 +10,7 @@ class EclipseProjectDetectorUsagesCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("eclipse.projects.detector", 1)
+    val GROUP = EventLogGroup("eclipse.projects.detector", 2)
 
     private val projectsDetected = GROUP.registerEvent("detected", EventFields.Int("projectsCount"))
     private val projectOpened = GROUP.registerEvent("opened", EventFields.Boolean("fromEmptyState"))
