@@ -110,6 +110,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         val appWasNull = ApplicationManager.getApplication() == null
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
+        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.instance.kotlinCompiler)
 
         val parentDisposable = Disposer.newDisposable()
         val kotlinCoreEnvironment =
