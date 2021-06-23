@@ -112,8 +112,6 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.select.word");
-
     int caretOffset = adjustCaretOffset(caret);
 
     PsiElement element = findElementAt(file, caretOffset);
