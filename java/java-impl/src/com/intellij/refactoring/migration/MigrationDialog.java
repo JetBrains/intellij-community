@@ -171,7 +171,7 @@ public class MigrationDialog extends DialogWrapper {
       if (e.getStateChange() == ItemEvent.SELECTED && moduleComboBox.isVisible()) {
         Module module = (Module)moduleComboBox.getSelectedItem();
         if (module != null) {
-          myMigrationScope = module.getModuleContentScope();
+          myMigrationScope = module.getModuleScope();
         } else {
           myMigrationScope = null;
         }
