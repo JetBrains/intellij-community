@@ -14,7 +14,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.SelectionAwareListCellRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -189,7 +191,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         Icon icon = null;
         final GutterIconRenderer renderer = dom.createGutterRenderer();
         if (renderer != null) {
-          icon = renderer.getIcon();
+          Icon originalIcon = renderer.getIcon();
+          icon = IconUtil.scale(originalIcon, null, JBUIScale.scale(16f) / originalIcon.getIconWidth());
         }
         PsiElement element = dom.getElement();
         @NlsSafe String elementPresentation;
