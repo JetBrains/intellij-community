@@ -47,23 +47,26 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
     final List<PsiElement> candidates = Collections.synchronizedList(new ArrayList<>());
     if (TestFinderHelper.isTest(selectedElement)) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> {
           Collection<PsiElement> classes =
             ReadAction.compute(() -> TestFinderHelper.findClassesForTest(selectedElement));
           candidates.addAll(classes);
         },
-        LangBundle.message("progress.title.searching.for.classes.for.test"), true, file.getProject());
+        LangBundle.message("progress.title.searching.for.classes.for.test"), true, file.getProject())) {
+        return null;
+      }
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> {
           Collection<PsiElement> tests =
             ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
           candidates.addAll(tests);
         },
-        LangBundle.message("progress.title.searching.for.tests.for.class"), true, file.getProject());
+        LangBundle.message("progress.title.searching.for.tests.for.class"), true, file.getProject())) {
+        return null;
+      }
 
       if (candidates.size() != 1) {
         for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
