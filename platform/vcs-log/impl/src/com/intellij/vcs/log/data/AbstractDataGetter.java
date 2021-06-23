@@ -206,6 +206,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @Nullable
   public T getCommitDataIfAvailable(int hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
     T details = getFromCache(hash);
     if (details != null) {
       if (details instanceof LoadingDetails) {
