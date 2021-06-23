@@ -5,7 +5,6 @@ import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.FeaturesRegistryListener
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.TipsOfTheDayUsagesCollector
-import com.intellij.ide.util.TipAndTrickBean.findByFileName
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -42,6 +41,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
       for (featureId in featuresRegistry.featureIds) {
         val feature = featuresRegistry.getFeatureDescriptor(featureId)
         val tip = TipUIUtil.getTip(feature) ?: continue
+        if (!tips.contains(tip)) continue
         if (System.currentTimeMillis() - feature.lastTimeUsed < DateFormatUtil.MONTH) {
           usedTips.add(tip)
           unusedTips.remove(tip) // some tips correspond to multiple features
@@ -78,7 +78,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     }
     if (wereTipsShownToday()) {
       shownTips.maxByOrNull { it.value }?.let {
-        findByFileName(it.key)?.let { tip ->
+        resultTips.find { tip -> tip.fileName == it.key }?.let { tip ->
           resultTips.remove(tip)
           resultTips.add(0, tip)
         }
