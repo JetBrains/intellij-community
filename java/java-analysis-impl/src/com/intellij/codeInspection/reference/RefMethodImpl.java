@@ -416,7 +416,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Nullable
   @Override
   public RefClass getOwnerClass() {
-    return ObjectUtils.tryCast(getOwner(), RefClass.class);
+    WritableRefEntity owner = getOwner();
+    if (owner != null && !(owner instanceof RefClass)) {
+      LOG.error("Unexpected owner: " + owner.getExternalName());
+    }
+    return ObjectUtils.tryCast(owner, RefClass.class);
   }
 
   @NotNull
