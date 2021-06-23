@@ -60,6 +60,7 @@ import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
 import java.net.URI
+import java.net.URISyntaxException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
 import kotlin.time.hours
@@ -383,10 +384,18 @@ internal class PackageSearchDataService(
 
     private fun areEquivalentUrls(first: String?, second: String?): Boolean {
         if (first == null || second == null) return false
-        val firstUri = URI(first.trim().trimEnd('/', '?', '#'))
-        val secondUri = URI(second.trim().trimEnd('/', '?', '#'))
+        val firstUri = tryParsingAsURI(first) ?: return false
+        val secondUri = tryParsingAsURI(second) ?: return false
         return firstUri.normalize() == secondUri.normalize()
     }
+
+    private fun tryParsingAsURI(rawValue: String): URI? =
+        try {
+            URI(rawValue.trim().trimEnd('/', '?', '#'))
+        } catch (e: URISyntaxException) {
+            logInfo("PackageSearchDataService#tryParsingAsURI") { "Unable to parse URI: '$rawValue'" }
+            null
+        }
 
     private fun computePackageUpdates(
         installedPackages: List<PackageModel.Installed>,
