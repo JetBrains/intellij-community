@@ -200,9 +200,7 @@ public final class BeforeRunStepsPanel extends JPanel {
   }
 
   private void updateText() {
-    int count = (myShowSettingsBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + (myActivateToolWindowBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + myModel.getSize();
+    int count = myModel.getSize();
     String title = ExecutionBundle.message("before.launch.panel.title");
     String suffix = count == 0 || isVisible() ? "" : ExecutionBundle.message("before.launch.panel.title.suffix", count);
     myListener.titleChanged(title + suffix);
