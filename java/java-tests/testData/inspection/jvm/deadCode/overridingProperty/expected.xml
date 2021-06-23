@@ -29,4 +29,13 @@
     <entry_point TYPE="field" FQNAME="Nullability Nullable"/>
     <description>Field has no usages.</description>
   </problem>
+
+  <!-- wrong, to be removed later -->
+  <problem>
+    <file>In.kt</file>
+    <line>2</line>
+    <entry_point TYPE="method" FQNAME="In java.lang.String getPr()" />
+    <description>Method is never used.</description>
+  </problem>
+
 </problems>
