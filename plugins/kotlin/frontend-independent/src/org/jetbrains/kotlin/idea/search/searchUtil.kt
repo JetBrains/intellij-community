@@ -96,6 +96,8 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
     return searchScope is LocalSearchScope && searchScope.scope.all { it.containingFile is KtFile }
 }
 
+fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
+
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
     scope: GlobalSearchScope,
