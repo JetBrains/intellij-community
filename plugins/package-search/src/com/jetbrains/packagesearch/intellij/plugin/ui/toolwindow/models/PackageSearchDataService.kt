@@ -1,7 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -23,7 +22,6 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
-import com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -66,9 +64,6 @@ import java.util.Locale
 import java.util.concurrent.TimeoutException
 import kotlin.time.hours
 import kotlin.time.milliseconds
-
-private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
-    UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
 
 internal class PackageSearchDataService(
     override val project: Project
@@ -267,19 +262,11 @@ internal class PackageSearchDataService(
     }
 
     private fun ProjectModule.declaredRepositories(): List<RepositoryDeclaration> = runReadAction {
-        val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
             ?.listRepositoriesInModule(this)
+            ?.map { RepositoryDeclaration(it.id, it.name, it.url, this) }
             ?.toList()
-            ?: emptyList())
-
-        // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
-        if (moduleType == MavenProjectModuleType && declaredRepositories.none { it.id == "central" }) {
-            declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
-        } else {
-            declaredRepositories
-        }.map { repository ->
-            RepositoryDeclaration(repository.id, repository.name, repository.url, this)
-        }
+            ?: emptyList()
     }
 
     private suspend fun installedPackages(projectModules: List<ProjectModule>, traceInfo: TraceInfo): List<PackageModel.Installed> {
