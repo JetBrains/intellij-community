@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class GeneratedLocation implements Location {
-  private final VirtualMachine myVirtualMachine;
   private final int myLineNumber;
-  private final ReferenceType myReferenceType;
-  private final Method myMethod;
+  private final @NotNull ReferenceType myReferenceType;
+  private final @Nullable Method myMethod;
+  private final @NotNull String myMethodName;
 
-  public GeneratedLocation(DebugProcessImpl debugProcess, @NotNull ReferenceType type, String methodName, int lineNumber) {
-    myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
+  public GeneratedLocation(@NotNull ReferenceType type, @NotNull String methodName, int lineNumber) {
     myLineNumber = lineNumber;
     myReferenceType = type;
+    myMethodName = methodName;
     myMethod = DebuggerUtils.findMethod(myReferenceType, methodName, null);
   }
 
@@ -29,6 +29,11 @@ public class GeneratedLocation implements Location {
   @Override
   public Method method() {
     return myMethod;
+  }
+
+  @NotNull
+  public String methodName() {
+    return myMethodName;
   }
 
   @Override
@@ -68,22 +73,23 @@ public class GeneratedLocation implements Location {
 
   @Override
   public VirtualMachine virtualMachine() {
-    return myVirtualMachine;
+    return myReferenceType.virtualMachine();
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    GeneratedLocation location = (GeneratedLocation)o;
-    return Objects.equals(myMethod, location.myMethod) &&
-           myLineNumber == location.myLineNumber &&
-           Objects.equals(myVirtualMachine, location.myVirtualMachine);
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (other == null || getClass() != other.getClass()) return false;
+    GeneratedLocation location = (GeneratedLocation)other;
+    return myLineNumber == location.myLineNumber &&
+           myReferenceType.equals(location.myReferenceType) &&
+           myMethodName.equals(location.myMethodName) &&
+           Objects.equals(virtualMachine(), location.virtualMachine());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMethod, myLineNumber);
+    return Objects.hash(myMethodName, myLineNumber);
   }
 
   // Same as in LocationImpl
@@ -97,6 +103,6 @@ public class GeneratedLocation implements Location {
   }
 
   public String toString() {
-    return myReferenceType.name() + ":" + myLineNumber;
+    return myReferenceType.name() + "." + myMethodName + ":" + myLineNumber;
   }
 }

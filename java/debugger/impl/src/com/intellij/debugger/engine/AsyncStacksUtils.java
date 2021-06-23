@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -6,10 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.ClassesByNameProvider;
-import com.intellij.debugger.jdi.GeneratedLocation;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
@@ -111,18 +108,13 @@ public final class AsyncStacksUtils {
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
       try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
         while (dis.available() > 0) {
-          ProcessStackFrameItem item = null;
+          StackFrameItem item = null;
           if (dis.readBoolean()) {
             String className = dis.readUTF();
             String methodName = dis.readUTF();
             int line = dis.readInt();
-            ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
-            if (classType == null) {
-              LOG.error("Unable to find loaded class " + className);
-              return null;
-            }
-            Location location = findLocation(process, classType, methodName, line);
-            item = new ProcessStackFrameItem(location, className, methodName);
+            Location location = findLocation(process, classesByName, className, methodName, line);
+            item = new StackFrameItem(location, null);
           }
           res.add(item);
         }
@@ -201,44 +193,25 @@ public final class AsyncStacksUtils {
     }
   }
 
-  private static class ProcessStackFrameItem extends StackFrameItem {
-    final String myClass;
-    final String myMethod;
-
-    ProcessStackFrameItem(Location location, String aClass, String method) {
-      super(location, null);
-      myClass = aClass;
-      myMethod = method;
+  @NotNull
+  private static Location findLocation(DebugProcessImpl debugProcess,
+                                       @NotNull ClassesByNameProvider classesByName,
+                                       @NotNull String className,
+                                       @NotNull String methodName,
+                                       int line) {
+    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+    if (classType == null) {
+      classType = new GeneratedReferenceType(debugProcess.getVirtualMachineProxy().getVirtualMachine(), className);
     }
-
-    @NotNull
-    @Override
-    public String path() {
-      return myClass;
-    }
-
-    @NotNull
-    @Override
-    public String method() {
-      return myMethod;
-    }
-
-    @Override
-    public String toString() {
-      return myClass + "." + myMethod + ":" + line();
-    }
-  }
-
-  private static Location findLocation(DebugProcessImpl debugProcess, @NotNull ReferenceType type, String methodName, int line) {
-    if (line >= 0) {
-      for (Method method : DebuggerUtilsEx.declaredMethodsByName(type, methodName)) {
+    else if (line >= 0) {
+      for (Method method : DebuggerUtilsEx.declaredMethodsByName(classType, methodName)) {
         List<Location> locations = DebuggerUtilsEx.locationsOfLine(method, line);
         if (!locations.isEmpty()) {
           return locations.get(0);
         }
       }
     }
-    return new GeneratedLocation(debugProcess, type, methodName, line);
+    return new GeneratedLocation(classType, methodName, line);
   }
 
   public static void addAgentCapturePoints(EvaluationContextImpl evalContext, Properties properties) {
