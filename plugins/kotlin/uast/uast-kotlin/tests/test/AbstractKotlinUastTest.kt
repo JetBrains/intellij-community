@@ -45,7 +45,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
     private lateinit var compilerConfiguration: CompilerConfiguration
     private var kotlinCoreEnvironment: KotlinCoreEnvironment? = null
 
-    open var testDataDir: File = File("testData")
+    open var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/testData")
 
     override fun getVirtualFile(testName: String): VirtualFile {
         val testFile = testDataDir.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()
