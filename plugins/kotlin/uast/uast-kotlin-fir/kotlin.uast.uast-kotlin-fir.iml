@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.java.uast" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
   </component>
 </module>
