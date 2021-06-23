@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
@@ -117,37 +118,41 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
 
             if (!options.searchForOperatorConventions) return null
 
+            // Java has no operator modifier
+            val operator = declaration !is KtElement ||
+                declaration.safeAs<KtModifierListOwner>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
+
             val binaryOp = OperatorConventions.BINARY_OPERATION_NAMES.inverse()[name]
             val assignmentOp = OperatorConventions.ASSIGNMENT_OPERATIONS.inverse()[name]
             val unaryOp = OperatorConventions.UNARY_OPERATION_NAMES.inverse()[name]
 
-            when {
-                binaryOp != null -> {
+            return when {
+                operator && binaryOp != null -> {
                     val counterpartAssignmentOp = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.inverse()[binaryOp]
                     val operationTokens = listOfNotNull(binaryOp, counterpartAssignmentOp)
-                    return BinaryOperatorReferenceSearcher(declaration, operationTokens, searchScope, consumer, optimizer, options)
+                    BinaryOperatorReferenceSearcher(declaration, operationTokens, searchScope, consumer, optimizer, options)
                 }
 
-                assignmentOp != null ->
-                    return BinaryOperatorReferenceSearcher(declaration, listOf(assignmentOp), searchScope, consumer, optimizer, options)
+                operator && assignmentOp != null ->
+                    BinaryOperatorReferenceSearcher(declaration, listOf(assignmentOp), searchScope, consumer, optimizer, options)
 
-                unaryOp != null ->
-                    return UnaryOperatorReferenceSearcher(declaration, unaryOp, searchScope, consumer, optimizer, options)
+                operator && unaryOp != null ->
+                    UnaryOperatorReferenceSearcher(declaration, unaryOp, searchScope, consumer, optimizer, options)
 
-                name == OperatorNameConventions.INVOKE ->
-                    return InvokeOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
+                operator && name == OperatorNameConventions.INVOKE ->
+                    InvokeOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
-                name == OperatorNameConventions.GET ->
-                    return IndexingOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options, isSet = false)
+                operator && name == OperatorNameConventions.GET ->
+                    IndexingOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options, isSet = false)
 
-                name == OperatorNameConventions.SET ->
-                    return IndexingOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options, isSet = true)
+                operator && name == OperatorNameConventions.SET ->
+                    IndexingOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options, isSet = true)
 
                 name == OperatorNameConventions.CONTAINS ->
-                    return ContainsOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
+                    ContainsOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
                 name == OperatorNameConventions.EQUALS ->
-                    return BinaryOperatorReferenceSearcher(
+                    BinaryOperatorReferenceSearcher(
                         declaration,
                         listOf(KtTokens.EQEQ, KtTokens.EXCLEQ),
                         searchScope,
@@ -157,7 +162,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                     )
 
                 name == OperatorNameConventions.COMPARE_TO ->
-                    return BinaryOperatorReferenceSearcher(
+                    BinaryOperatorReferenceSearcher(
                         declaration,
                         listOf(KtTokens.LT, KtTokens.GT, KtTokens.LTEQ, KtTokens.GTEQ),
                         searchScope,
@@ -167,13 +172,12 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                     )
 
                 name == OperatorNameConventions.ITERATOR ->
-                    return IteratorOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
+                    IteratorOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
                 name == OperatorNameConventions.GET_VALUE || name == OperatorNameConventions.SET_VALUE || name == OperatorNameConventions.PROVIDE_DELEGATE ->
-                    return PropertyDelegationOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
+                    PropertyDelegationOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
-                else ->
-                    return null
+                else -> null
             }
 
         }
@@ -223,24 +227,30 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     private fun doPlainSearch(scope: SearchScope) {
         testLog { "Used plain search of ${logPresentation(targetDeclaration)} in ${scope.logPresentation()}" }
 
+        val progress = ProgressWrapper.unwrap(ProgressIndicatorProvider.getGlobalProgressIndicator())
+
         if (scope is LocalSearchScope) {
             for (element in scope.scope) {
                 if (element is KtElement) {
                     runReadAction {
                         if (element.isValid) {
+                            progress?.checkCanceled()
                             val refs = ArrayList<PsiReference>()
                             val elements = element.collectDescendantsOfType<KtElement> {
                                 val ref = extractReference(it) ?: return@collectDescendantsOfType false
                                 refs.add(ref)
                                 true
-                            }
+                            }.takeIf { it.isNotEmpty() } ?: return@runReadAction
 
                             // resolve all references at once
-                            (element.containingFile as? KtFile)?.forceResolveReferences(elements)
+                            element.containingFile.safeAs<KtFile>()?.forceResolveReferences(elements)
 
-                            refs
-                                .filter { it.isReferenceTo(targetDeclaration) }
-                                .forEach { consumer.process(it) }
+                            for (ref in refs) {
+                                progress?.checkCanceled()
+                                if (ref.isReferenceTo(targetDeclaration)) {
+                                    consumer.process(ref)
+                                }
+                            }
                         }
                     }
                 }
@@ -267,7 +277,6 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
             } else {
                 val psiManager = PsiManager.getInstance(project)
                 // we must unwrap progress indicator because ProgressWrapper does not do anything on changing text and fraction
-                val progress = ProgressWrapper.unwrap(ProgressIndicatorProvider.getGlobalProgressIndicator())
                 progress?.pushState()
                 progress?.text = KotlinIdeaAnalysisBundleIndependent.message("searching.for.implicit.usages")
                 progress?.isIndeterminate = false
@@ -280,9 +289,8 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                             if (file.isValid) {
                                 progress?.fraction = index / files.size.toDouble()
                                 progress?.text2 = file.path
-                                val psiFile = psiManager.findFile(file) as? KtFile
-                                if (psiFile != null) {
-                                    doPlainSearch(LocalSearchScope(psiFile))
+                                psiManager.findFile(file).safeAs<KtFile>()?.let {
+                                    doPlainSearch(LocalSearchScope(it))
                                 }
                             }
                         }
