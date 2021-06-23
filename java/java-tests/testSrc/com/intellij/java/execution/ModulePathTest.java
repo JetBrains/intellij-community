@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 public class ModulePathTest extends BaseConfigurationTestCase {
 
@@ -121,15 +122,15 @@ public class ModulePathTest extends BaseConfigurationTestCase {
 
     PathsList modulePath = params4Tests.getModulePath();
 
-    checkLibrariesOnPathList(module, params4Tests.getModulePath());
-
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().stream().anyMatch(filePath -> filePath.contains("junit-jupiter-api")));
     //production module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(getCompilerOutputPath(module)));
     //test module output is on the module path
-    modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
+    assertSize(3, modulePath.getPathList());
 
     //launcher should be put on the classpath
     assertTrue(params4Tests.getClassPath().getPathList().stream().anyMatch(filePath -> filePath.contains("launcher")));
@@ -146,22 +147,20 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     assertEquals("--add-modules m1" +
                  " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
-    checkLibrariesOnPathList(module, params4Tests.getModulePath());
-
-    //ensure downloaded junit launcher dependencies are in module path as well
     PathsList classPath = params4Tests.getClassPath();
-    assertSize(3, classPath.getPathList());
     assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
     assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
 
-    //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
+    checkLibrariesOnPathList(module, modulePath);
+    //production module output is on the module path
+    List<String> modulePathList = modulePath.getPathList();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(getCompilerOutputPath(module)));
+               modulePathList.contains(getCompilerOutputPath(module)));
     //test module output is on the module path
-    modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
+               modulePathList.contains(getCompilerOutputPath(module, true)));
+    assertTrue(modulePathList.stream().anyMatch(filePath -> filePath.contains("launcher")));
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
