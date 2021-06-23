@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.*
+import org.jetbrains.kotlin.idea.debugger.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.safeVisibleVariables
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.psi.KtProperty
@@ -35,7 +37,8 @@ class FrameInfo private constructor(val project: Project, thisObject: Value?, va
             }
 
             val variableValues = collectVariableValues(frameProxy)
-            return FrameInfo(project, frameProxy.thisObject(), variableValues)
+            val thisObject = frameProxy.safeThisObject() ?: throw AbsentInformationException()
+            return FrameInfo(project, thisObject, variableValues)
         }
 
         private fun collectVariableValues(frameProxy: StackFrameProxyImpl): Map<LocalVariableProxyImpl, Value> {

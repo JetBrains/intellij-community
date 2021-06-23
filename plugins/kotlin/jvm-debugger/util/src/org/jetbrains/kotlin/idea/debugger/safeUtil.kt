@@ -79,6 +79,10 @@ fun StackFrameProxyImpl.safeThreadProxy(): ThreadReferenceProxyImpl? {
     return wrapEvaluateException { this.threadProxy() }
 }
 
+fun StackFrameProxyImpl.safeThisObject(): ObjectReference? {
+    return wrapEvaluateException { thisObject() }
+}
+
 fun Location.safeSourceName(): String? {
     return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName() } }
 }
