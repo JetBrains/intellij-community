@@ -347,98 +347,106 @@ static int _getBorder(int layoutBits) {
 static void _setButtonData(NSButtonJAction *button, int updateOptions, int layoutBits, int buttonFlags,
                            NSString *nstext, NSString *nshint, int isHintDisabled, NSImage *img, execute jaction
 ) {
-    if (updateOptions & BUTTON_UPDATE_ACTION) {
-        button.jaction = jaction;
-        if (jaction) {
-            [button setTarget:button];
-            [button setAction:@selector(doAction)];
-        } else {
-            [button setTarget:nil];
-            [button setAction:NULL];
-        }
-    }
-
-    if (updateOptions & BUTTON_UPDATE_TEXT) {
-        [button setTextAndHint:nstext hint:nshint isHintDisabled:isHintDisabled];
-        button.needsDisplay = YES; // to induce update event (otherwise drawInteriorWithFrame with new text won't be invoked)
-    }
-
-    if (updateOptions & BUTTON_UPDATE_IMG)
-        [button setImage:img];
-
-    if (updateOptions & BUTTON_UPDATE_LAYOUT) {
-        [button disableAllConstraints];
-        const int width = _getWidth(layoutBits);
-        button.bwidth = width;
-        if (width > 0) {
-            bool isMinWidth = (layoutBits & LAYOUT_FLAG_MIN_WIDTH) != 0;
-            bool isMaxWidth = (layoutBits & LAYOUT_FLAG_MAX_WIDTH) != 0;
-            if (isMinWidth && isMaxWidth) {
-                nserror(@"invalid arguments specified: both min and max bits are 1");
-            }
-            if (isMinWidth) {
-                //NSLog(@"set min width %d", width);
-                button.constraintGreaterThanOrEqualToConstant = [button.widthAnchor constraintGreaterThanOrEqualToConstant:button.bwidth];
-                button.constraintGreaterThanOrEqualToConstant.active = YES;
-            } else if (isMaxWidth) {
-                //NSLog(@"set max width %d", width);
-                button.constraintLessThanOrEqualToConstant = [button.widthAnchor constraintLessThanOrEqualToConstant:button.bwidth];
-                button.constraintLessThanOrEqualToConstant.active = YES;
+    // Suppress intermittent exceptions, for example:
+    // from [NSView(NSConstraintBasedLayout) _tryToAddConstraint] with message
+    // "Should translate autoresizing mask into constraints if _didChangeHostsAutolayoutEngineTo:YES."
+    // Workaround for IDEA-272131 macOS: SIGILL at [libsystem_kernel] __kill
+    @try {
+        if (updateOptions & BUTTON_UPDATE_ACTION) {
+            button.jaction = jaction;
+            if (jaction) {
+                [button setTarget:button];
+                [button setAction:@selector(doAction)];
             } else {
-                //NSLog(@"set const width %d", width);
-                button.constraintEqualToConstant = [button.widthAnchor constraintEqualToConstant:button.bwidth];
-                button.constraintEqualToConstant.active = YES;
-            }
-        } else {
-            // NSLog(@"set floating width");
-            // everything is done inside [button disableAllConstraints];
-        }
-
-        { // process margins
-            const int margin = _getMargin(layoutBits);
-            const int border = _getBorder(layoutBits);
-            if (margin > 0 || border > 0) {
-                [button setMargins:margin border:border];
-                //NSLog(@"set insets: m=%d b=%d", margin, border);
+                [button setTarget:nil];
+                [button setAction:NULL];
             }
         }
-    }
 
-    if (updateOptions & BUTTON_UPDATE_FLAGS) {
-        const bool toggle = (buttonFlags & BUTTON_FLAG_TOGGLE) != 0;
-        const enum NSButtonType btype = toggle ? NSButtonTypePushOnPushOff : NSButtonTypeMomentaryLight;
-        if (btype != button.btype) {
-            [button setButtonType:btype];
-            if (toggle) {
-                button.bezelColor = NSColor.selectedControlColor;
+        if (updateOptions & BUTTON_UPDATE_TEXT) {
+            [button setTextAndHint:nstext hint:nshint isHintDisabled:isHintDisabled];
+            button.needsDisplay = YES; // to induce update event (otherwise drawInteriorWithFrame with new text won't be invoked)
+        }
+
+        if (updateOptions & BUTTON_UPDATE_IMG)
+            [button setImage:img];
+
+        if (updateOptions & BUTTON_UPDATE_LAYOUT) {
+            [button disableAllConstraints];
+            const int width = _getWidth(layoutBits);
+            button.bwidth = width;
+            if (width > 0) {
+                bool isMinWidth = (layoutBits & LAYOUT_FLAG_MIN_WIDTH) != 0;
+                bool isMaxWidth = (layoutBits & LAYOUT_FLAG_MAX_WIDTH) != 0;
+                if (isMinWidth && isMaxWidth) {
+                    nserror(@"invalid arguments specified: both min and max bits are 1");
+                }
+                if (isMinWidth) {
+                    //NSLog(@"set min width %d", width);
+                    button.constraintGreaterThanOrEqualToConstant = [button.widthAnchor constraintGreaterThanOrEqualToConstant:button.bwidth];
+                    button.constraintGreaterThanOrEqualToConstant.active = YES;
+                } else if (isMaxWidth) {
+                    //NSLog(@"set max width %d", width);
+                    button.constraintLessThanOrEqualToConstant = [button.widthAnchor constraintLessThanOrEqualToConstant:button.bwidth];
+                    button.constraintLessThanOrEqualToConstant.active = YES;
+                } else {
+                    //NSLog(@"set const width %d", width);
+                    button.constraintEqualToConstant = [button.widthAnchor constraintEqualToConstant:button.bwidth];
+                    button.constraintEqualToConstant.active = YES;
+                }
             } else {
-                button.bezelColor = NSColor.controlColor;
+                // NSLog(@"set floating width");
+                // everything is done inside [button disableAllConstraints];
+            }
+
+            { // process margins
+                const int margin = _getMargin(layoutBits);
+                const int border = _getBorder(layoutBits);
+                if (margin > 0 || border > 0) {
+                    [button setMargins:margin border:border];
+                    //NSLog(@"set insets: m=%d b=%d", margin, border);
+                }
             }
         }
 
-        if (buttonFlags & BUTTON_FLAG_COLORED) {
-            button.bezelColor = [NSColor colorWithRed:0 green:130/255.f blue:215/255.f alpha:1];
-        } else if (buttonFlags & BUTTON_FLAG_SELECTED) {
-            if (toggle) {
-                button.state = NSControlStateValueOn;
+        if (updateOptions & BUTTON_UPDATE_FLAGS) {
+            const bool toggle = (buttonFlags & BUTTON_FLAG_TOGGLE) != 0;
+            const enum NSButtonType btype = toggle ? NSButtonTypePushOnPushOff : NSButtonTypeMomentaryLight;
+            if (btype != button.btype) {
+                [button setButtonType:btype];
+                if (toggle) {
+                    button.bezelColor = NSColor.selectedControlColor;
+                } else {
+                    button.bezelColor = NSColor.controlColor;
+                }
+            }
+
+            if (buttonFlags & BUTTON_FLAG_COLORED) {
+                button.bezelColor = [NSColor colorWithRed:0 green:130/255.f blue:215/255.f alpha:1];
+            } else if (buttonFlags & BUTTON_FLAG_SELECTED) {
+                if (toggle) {
+                    button.state = NSControlStateValueOn;
+                } else {
+                    button.bezelColor = NSColor.selectedControlColor;
+                }
             } else {
-                button.bezelColor = NSColor.selectedControlColor;
+                if (toggle) {
+                    button.state = NSControlStateValueOff;
+                } else {
+                    button.bezelColor = NSColor.controlColor;
+                }
             }
-        } else {
-            if (toggle) {
-                button.state = NSControlStateValueOff;
-            } else {
-                button.bezelColor = NSColor.controlColor;
+
+            const bool enabled = (buttonFlags & BUTTON_FLAG_DISABLED) == 0;
+            if (enabled != button.enabled) {
+                [button setEnabled:enabled];
             }
-        }
 
-        const bool enabled = (buttonFlags & BUTTON_FLAG_DISABLED) == 0;
-        if (enabled != button.enabled) {
-            [button setEnabled:enabled];
+            if (buttonFlags & BUTTON_FLAG_TRANSPARENT_BG)
+                [button setBordered:NO];
         }
-
-        if (buttonFlags & BUTTON_FLAG_TRANSPARENT_BG)
-            [button setBordered:NO];
+    } @catch (NSException *ex) {
+        nstrace(@"WARNING: suppressed exception from _setButtonData (workaround for IDEA-272131)");
     }
 }
 
