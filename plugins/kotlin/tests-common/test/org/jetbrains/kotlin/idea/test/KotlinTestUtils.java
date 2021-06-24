@@ -303,6 +303,7 @@ public class KotlinTestUtils {
             JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinStdlib());
             JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinScriptRuntime());
             JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinTest());
+            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, artifacts.getKotlinCompiler());
         }
 
         if (configurationKind.getKotlinReflect()) {
