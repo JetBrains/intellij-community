@@ -18,7 +18,9 @@ internal class FirOverrideImplementWithLibTest : OverrideImplementWithLibTest<Kt
     override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
+        // If we pass something as a context, then the DependencyListForCliModule will be built with dependencies from the previous test
+        // and will not be reinitialized later on. Because of that the first test might pass, but the other ones probably won't
+        project.invalidateCaches(context = null)
         super.tearDown()
     }
 }
