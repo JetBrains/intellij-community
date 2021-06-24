@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.kotlin.internal.toPsiMethod
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     override val baseKotlinConverter: BaseKotlinConverter

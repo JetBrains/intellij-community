@@ -3,13 +3,14 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.uast.kotlin
+package org.jetbrains.uast.kotlin.declarations
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
+import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.visitor.UastVisitor
 
 sealed class AbstractFirKotlinUVariable(
