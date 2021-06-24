@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports <code>runCatching</code> call that is immediately followed by <code>getOrThrow</code>.
-Such a call can be replaced with just <code>run</code> call.
+Reports <code>runCatching</code> calls that are immediately followed by <code>getOrThrow</code>.
+Such calls can be replaced with just <code>run</code>.
 <p><b>Example:</b></p>
 <pre><code>
 fun foo() = runCatching { doSomething() }.getOrThrow()
