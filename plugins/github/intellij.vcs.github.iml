@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
