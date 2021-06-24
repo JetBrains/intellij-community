@@ -4,12 +4,9 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -25,23 +22,9 @@ public class VcsBackgroundOperationsConfigurationPanel {
   private JCheckBox myCbAddRemoveInBackground;
   private JCheckBox myCbCheckoutInBackground;
   private JCheckBox myPerformRevertInBackgroundCheckBox;
-  private JCheckBox myTrackChangedOnServer;
-  private JSpinner myChangedOnServerInterval;
 
   public VcsBackgroundOperationsConfigurationPanel(final Project project) {
     myProject = project;
-
-    if (!myProject.isDefault()) {
-      final VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-      myChangedOnServerInterval.setModel(new SpinnerNumberModel(settings.CHANGED_ON_SERVER_INTERVAL, 5, 48 * 10 * 60, 5));
-
-      myTrackChangedOnServer.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          myChangedOnServerInterval.setEnabled(myTrackChangedOnServer.isSelected());
-        }
-      });
-    }
   }
 
   public void apply() throws ConfigurationException {
@@ -55,17 +38,9 @@ public class VcsBackgroundOperationsConfigurationPanel {
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.PERFORM_ROLLBACK_IN_BACKGROUND = myPerformRevertInBackgroundCheckBox.isSelected();
 
-    boolean remoteCacheStateChanged = settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected();
-    if (!myProject.isDefault()) {
-      settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = myTrackChangedOnServer.isSelected();
-      settings.CHANGED_ON_SERVER_INTERVAL = ((Number) myChangedOnServerInterval.getValue()).intValue();
-    }
-
     for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
     }
-    // will check if should + was started -> inside
-    RemoteRevisionsCache.getInstance(myProject).updateAutomaticRefreshAlarmState(remoteCacheStateChanged);
   }
 
   public boolean isModified() {
@@ -93,12 +68,6 @@ public class VcsBackgroundOperationsConfigurationPanel {
       return true;
     }
 
-    if (!myProject.isDefault()) {
-      if (settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected()) {
-        return true;
-      }
-      if (settings.CHANGED_ON_SERVER_INTERVAL != ((Number) myChangedOnServerInterval.getValue()).intValue()) return true;
-    }
     return false;
   }
 
@@ -112,12 +81,6 @@ public class VcsBackgroundOperationsConfigurationPanel {
     myPerformRevertInBackgroundCheckBox.setSelected(settings.PERFORM_ROLLBACK_IN_BACKGROUND);
     for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
-    }
-
-    if (!myProject.isDefault()) {
-      myTrackChangedOnServer.setSelected(settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND);
-      myChangedOnServerInterval.setValue(settings.CHANGED_ON_SERVER_INTERVAL);
-      myChangedOnServerInterval.setEnabled(myTrackChangedOnServer.isSelected());
     }
   }
 

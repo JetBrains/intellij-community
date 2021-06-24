@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsEP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
-    result.add(new VcsGeneralConfigurationConfigurable(myProject, this));
+    result.add(new VcsGeneralSettingsConfigurable(myProject));
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
     boolean ignoreSettingsAvailable = Registry.is("vcs.ignorefile.generation", true);
     if (!myProject.isDefault() && ignoreSettingsAvailable) {
@@ -129,11 +128,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     }
 
     return result.toArray(new Configurable[0]);
-  }
-
-  @Nullable
-  public VcsDirectoryConfigurationPanel getMappings() {
-    return myMappings;
   }
 
   @NotNull

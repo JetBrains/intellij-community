@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts
 
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -9,9 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
+import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
 import javax.swing.DefaultListModel
@@ -25,6 +29,7 @@ class ChangelistConflictConfigurable(val project: Project)
     val appSettings = VcsApplicationSettings.getInstance()
     val conflictTracker = ChangelistConflictTracker.getInstance(project)
     val conflictOptions = conflictTracker.options
+    val vcsConfiguration = VcsConfiguration.getInstance(project)
 
     val changeListsEnabledPredicate = ChangeListsEnabledPredicate(project, disposable!!)
 
@@ -55,6 +60,20 @@ class ChangelistConflictConfigurable(val project: Project)
         row {
           checkBox(message("settings.show.conflict.resolve.dialog.checkbox"), conflictOptions::SHOW_DIALOG)
             .onApply { conflictTracker.optionsChanged() }
+        }
+
+        fullRow {
+          label(message("settings.label.when.empty.changelist.becomes.inactive"))
+          comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java), vcsConfiguration::REMOVE_EMPTY_INACTIVE_CHANGELISTS,
+                   renderer = listCellRenderer { value, _, _ ->
+                     setText(when (value) {
+                               VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("remove.changelist.combobox.show.options")
+                               VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("remove.changelist.combobox.remove.silently")
+                               VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("remove.changelist.combobox.do.not.remove")
+                               else -> ""
+                             })
+                   }
+          )
         }
       }
 
