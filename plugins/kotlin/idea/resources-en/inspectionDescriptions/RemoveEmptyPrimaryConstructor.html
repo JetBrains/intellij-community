@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports an empty primary constructor when it would be implicitly available anyway.
+Reports empty primary constructors when they are implicitly available anyway.
 <p>
-    Primary constructor can be safely omitted when it does not have any annotations or visibility modifiers.
-    The inspection is paired with 'Remove empty primary constructor' quick-fix.
+    A primary constructor is redundant and can be safely omitted when it does not have any annotations or visibility modifiers.
+    Use the 'Remove empty primary constructor' quick-fix to clean up the code.
 </p>
-<p>Examples:</p>
+<p><b>Examples:</b></p>
 <pre><code>
   class MyClassA constructor() //  redundant, can be replaced with 'class MyClassA'
 
@@ -14,6 +14,5 @@ Reports an empty primary constructor when it would be implicitly available anywa
 
   class MyClassC private constructor() // required because of visibility modifier
 </code></pre>
-
 </body>
 </html>

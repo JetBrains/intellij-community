@@ -3,12 +3,11 @@
 Reports <code>super</code> member calls with redundant supertype qualification.
 <p>
     Code in a derived class can call its superclass functions and property accessors implementations using the <code>super</code> keyword.
-    To denote the supertype from which the inherited implementation is taken, <code>super</code> is qualified by the supertype name in
-    angle brackets, e.g. super&lt;Base&gt;. Sometimes this qualification is redundant can be omitted.
-    'Remove explicit supertype qualification' quick-fix can be used to amend your code.
+    To specify the supertype from which the inherited implementation is taken, <code>super</code> can be qualified by the supertype name in
+    angle brackets, e.g. <code>super&lt;Base&gt;</code>. Sometimes this qualification is redundant and can be omitted.
+    Use the 'Remove explicit supertype qualification' quick-fix to clean up the code.
 </p>
-<p>Examples:</p>
-
+<p><b>Examples:</b></p>
 <pre><code>
   open class B {
       open fun foo(){}
@@ -16,7 +15,7 @@ Reports <code>super</code> member calls with redundant supertype qualification.
 
   class A : B() {
       override fun foo() {
-         super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the only supertype
+         super&lt;B&gt;.foo() // &lt;== redundant because 'B' is the only supertype
       }
   }
 
@@ -26,7 +25,7 @@ Reports <code>super</code> member calls with redundant supertype qualification.
 
   class C : B(), I {
       override fun foo() {
-          super&lt;B&gt;.foo() // &lt;== here &lt;B&gt; qualifier is needed to denote 'B.foo()' from 'I.foo()'
+          super&lt;B&gt;.foo() // &lt;== here &lt;B&gt; qualifier is needed to distinguish 'B.foo()' from 'I.foo()'
       }
   }
 </code></pre>

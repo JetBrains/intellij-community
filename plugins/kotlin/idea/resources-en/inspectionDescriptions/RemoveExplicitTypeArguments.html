@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports function calls with type arguments that can be automatically inferred and safely omitted.
-<p>Inspection is paired with 'Remove explicit type arguments' quick-fix allowing to amend the code.</p>
-<p>Examples:</p>
+Reports function calls with type arguments that can be automatically inferred. Such type arguments are redundant and can be safely omitted.
+<p>Use the 'Remove explicit type arguments' quick-fix to clean up the code.</p>
+<p><b>Examples:</b></p>
 <pre><code>
   // 'String' type can be inferred here
   fun foo(): MutableList&lt;String&gt; = mutableListOf&lt;String&gt;()
@@ -16,6 +16,5 @@ Reports function calls with type arguments that can be automatically inferred an
 
   fun bar() = mutableListOf&lt;String&gt;()
 </code></pre>
-
 </body>
 </html>

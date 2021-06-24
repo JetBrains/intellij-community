@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports redundant qualifiers (or their parts) as a part of a class name, function or property.
+Reports redundant qualifiers (or their parts) on class names, functions, and properties.
 <p>
     A fully qualified name is an unambiguous identifier that specifies which object, function, or property a call refers to.
     In the contexts where the name can be shortened, the inspection informs on the opportunity and the associated
     'Remove redundant qualifier name' quick-fix allows amending the code.
 </p>
-<p>Examples:</p>
+<p><b>Examples:</b></p>
 <pre><code>
   package my.simple.name
   import kotlin.Int.Companion.MAX_VALUE
@@ -19,7 +19,6 @@ Reports redundant qualifiers (or their parts) as a part of a class name, functio
       val c = kotlin.Double.MAX_VALUE // Can be replaced with 'Double.MAX_VALUE' since built-in types are imported automatically
   }
 </code></pre>
-
 <p>After the quick-fix is applied:</p>
 <pre><code>
   package my.simple.name

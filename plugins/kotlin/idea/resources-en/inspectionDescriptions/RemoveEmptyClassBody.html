@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports an empty class body.
-<p>'Remove redundant empty class body' quick-fix can be used to clean up the code.</p>
-<p>Examples:</p>
+Reports declarations of classes and objects with an empty body.
+<p>Use the 'Remove redundant empty class body' quick-fix to clean up the code.</p>
+<p><b>Examples:</b></p>
 <pre><code>
   class EmptyA() {} // &lt;== empty body
 
@@ -14,7 +14,6 @@ Reports an empty class body.
      object {} // &lt;== anonymous object, it's ok (not reported)
   }
 </code></pre>
-
 <p>After the quick fix is applied:</p>
 <pre><code>
   class EmptyA()
