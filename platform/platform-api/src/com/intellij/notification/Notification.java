@@ -35,6 +35,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.</p>
  *
  * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} instead.</p>
+ * <p>Use {@link Notifications.Bus} to show notifications.</p>
  *
  * @see NotificationAction
  * @see com.intellij.notification.SingletonNotificationManager
