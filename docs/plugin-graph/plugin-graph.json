@@ -1173,6 +1173,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "k9",
+    "name": "intellij.javaee.ejb.impl/intellijLang",
+    "n": "i.javaee.ejb.impl/intellijLang",
+    "package": "com.intellij.javaee.ejb.intelliLang",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.intellijLang.xml",
+    "parent": "cXe",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cX0",
     "n": "com.jetbrains.restWebServices"
   }
@@ -1433,7 +1445,7 @@
     "id": "2z",
     "name": "intellij.maven.ext",
     "n": "i.maven.ext",
-    "package": null,
+    "package": "org.jetbrains.idea.maven.ext",
     "sourceModule": "intellij.maven.ext",
     "descriptor": "plugins/maven-ext/src/main/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.idea.maven.ext",
@@ -1449,6 +1461,66 @@
     "package": "org.jetbrains.idea.maven.ext.profiler",
     "sourceModule": "intellij.maven.ext",
     "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.profiler.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7j",
+    "name": "intellij.maven.ext/remoteRun",
+    "n": "i.maven.ext/remoteRun",
+    "package": "org.jetbrains.idea.maven.ext.remoteRun",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.remoteRun.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "WW",
+    "name": "intellij.maven.ext/javaee",
+    "n": "i.maven.ext/javaee",
+    "package": "org.jetbrains.idea.maven.ext.jee",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "og",
+    "name": "intellij.maven.ext/javaee-ejb",
+    "n": "i.maven.ext/javaee-ejb",
+    "package": "org.jetbrains.idea.maven.ext.javaee.ejb",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee-ejb.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "h4",
+    "name": "intellij.maven.ext/javaee-web",
+    "n": "i.maven.ext/javaee-web",
+    "package": "org.jetbrains.idea.maven.ext.javaee.web",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee-web.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "BV",
+    "name": "intellij.maven.ext/uml",
+    "n": "i.maven.ext/uml",
+    "package": "org.jetbrains.idea.maven.ext.uml",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.uml.xml",
     "parent": "c2z",
     "type": 0
   }
@@ -3755,6 +3827,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Xe_k9",
+    "source": "Xe",
+    "target": "k9",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "X0_g2",
     "source": "X0",
     "target": "g2",
@@ -3822,6 +3902,46 @@
     "id": "2z_wG",
     "source": "2z",
     "target": "wG",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_7j",
+    "source": "2z",
+    "target": "7j",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_WW",
+    "source": "2z",
+    "target": "WW",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_og",
+    "source": "2z",
+    "target": "og",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_h4",
+    "source": "2z",
+    "target": "h4",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_BV",
+    "source": "2z",
+    "target": "BV",
     "type": 1
   }
 }, {
@@ -5043,6 +5163,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "k9_HN",
+    "source": "k9",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "X0_S9",
     "source": "X0",
     "target": "S9",
@@ -5427,9 +5555,73 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "2z_Up",
+    "source": "2z",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "wG_Se",
     "source": "wG",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7j_xs",
+    "source": "7j",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "WW_s7",
+    "source": "WW",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "og_WW",
+    "source": "og",
+    "target": "WW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "og_Xe",
+    "source": "og",
+    "target": "Xe",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "h4_WW",
+    "source": "h4",
+    "target": "WW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "h4_fx",
+    "source": "h4",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "BV_Bv",
+    "source": "BV",
+    "target": "Bv",
     "type": 0
   }
 }, {
