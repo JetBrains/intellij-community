@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.avatar
 
-import com.intellij.ui.DeferredIconImpl
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -16,8 +16,8 @@ class ScalingDeferredSquareImageIcon<K : Any>(size: Int, defaultIcon: Icon,
                                               imageLoader: (K) -> Image?) : Icon {
   private val baseIcon = IconUtil.resizeSquared(defaultIcon, size)
 
-  private val scaledIconCache = ScaleContext.Cache<Icon> { scaleCtx ->
-    DeferredIconImpl(baseIcon, key, false) {
+  private val scaledIconCache = ScaleContext.Cache { scaleCtx ->
+    IconDeferrer.getInstance().defer(baseIcon, key) {
       try {
         val image = imageLoader(it)
         val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
