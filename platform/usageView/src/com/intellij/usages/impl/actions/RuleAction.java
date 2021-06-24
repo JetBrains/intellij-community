@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -21,11 +22,11 @@ import java.util.function.Supplier;
  */
 @ApiStatus.Internal
 public abstract class RuleAction extends ToggleAction implements DumbAware {
-  protected RuleAction(@NotNull String text, @NotNull Icon icon) {
+  protected RuleAction(@ActionText @NotNull String text, @NotNull Icon icon) {
     this(() -> text, icon);
   }
 
-  protected RuleAction(@NotNull Supplier<String> text, @NotNull Icon icon) {
+  protected RuleAction(@NotNull Supplier<@ActionText @NotNull String> text, @NotNull Icon icon) {
     super(text, icon);
   }
 
