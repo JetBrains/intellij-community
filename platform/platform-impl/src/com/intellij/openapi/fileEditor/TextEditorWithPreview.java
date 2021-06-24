@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
-    myDefaultLayout = defaultLayout;
+    myDefaultLayout = ObjectUtils.notNull(getLayoutForFile(myEditor.getFile()), defaultLayout);
     myIsVerticalSplit = isVerticalSplit;
   }
 
@@ -518,6 +519,14 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myToolbarWrapper.refresh();
     mySplitter.setOrientation(myIsVerticalSplit);
     myComponent.repaint();
+  }
+
+  @Nullable
+  private static Layout getLayoutForFile(@Nullable VirtualFile file) {
+    if (file != null) {
+      return file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
+    }
+    return null;
   }
 
   public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
