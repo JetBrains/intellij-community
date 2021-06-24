@@ -115,7 +115,7 @@ final class NST {
     ourNSTLibrary.releaseTouchBar(tbObj);
   }
 
-  static void setTouchBar(@Nullable Window window, TouchBar tb) {
+  static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
     long nsViewPtr = 0;
     if (window != null) {
       final ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
@@ -153,7 +153,7 @@ final class NST {
           LOG.debug("frame peer isn't instance of sun.lwawt.LWWindowPeer, class of peer: %s", peer.getClass());
       }
     }
-    ourNSTLibrary.setTouchBar(new ID(nsViewPtr), tb == null ? ID.NIL : tb.getNativePeer());
+    ourNSTLibrary.setTouchBar(new ID(nsViewPtr), touchBarNativePeer);
   }
 
   static void selectItemsToShow(ID tbObj, String[] ids, int count) {
