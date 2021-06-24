@@ -2204,6 +2204,7 @@
     <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Java Preview Features" displayType="BALLOON"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON"/>
+    <notificationGroup id="Setup SDK" displayType="BALLOON"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
