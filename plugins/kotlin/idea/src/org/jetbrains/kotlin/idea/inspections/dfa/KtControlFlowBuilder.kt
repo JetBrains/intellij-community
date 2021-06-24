@@ -36,10 +36,12 @@ import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
@@ -102,13 +104,53 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtLambdaExpression -> processLambda(expr)
             is KtStringTemplateExpression -> processStringTemplate(expr)
             is KtArrayAccessExpression -> processArrayAccess(expr)
-            // try/catch/finally, anonymous classes, local functions
+            is KtAnnotatedExpression -> processExpression(expr.baseExpression)
+            is KtClassLiteralExpression -> processClassLiteralExpression(expr)
+            is KtLabeledExpression -> processExpression(expr.baseExpression)
+            is KtThisExpression -> processThisExpression(expr)
+            // KtSuperExpression, KtTryExpression
+            // KtCallableReferenceExpression, KtObjectLiteralExpression
+            // KtDestructuringDeclaration, KtNamedFunction, KtClass
             else -> {
                 // unsupported construct
+                if (LOG.isDebugEnabled) {
+                    val className = expr.javaClass.name
+                    if (unsupported.add(className)) {
+                        LOG.debug("Unsupported expression in control flow: $className")
+                    }
+                }
                 broken = true
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processThisExpression(expr: KtThisExpression) {
+        val dfType = expr.getKotlinType().toDfType(expr)
+        val descriptor = expr.analyze(BodyResolveMode.FULL)[BindingContext.REFERENCE_TARGET, expr.instanceReference]
+        if (descriptor != null) {
+            val varDesc = KtThisDescriptor(descriptor, dfType)
+            addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+        } else {
+            addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
+        }
+    }
+
+    private fun processClassLiteralExpression(expr: KtClassLiteralExpression) {
+        val kotlinType = expr.getKotlinType()
+        if (kotlinType != null) {
+            val arguments = kotlinType.arguments
+            if (arguments.size == 1) {
+                val kType = arguments[0].type
+                val kClassPsiType = kotlinType.toPsiType(expr)
+                if (kClassPsiType != null) {
+                    val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
+                    addInstruction(PushValueInstruction(kClassConstant, KotlinExpressionAnchor(expr)))
+                    return
+                }
+            }
+        }
+        addInstruction(PushValueInstruction(kotlinType.toDfType(expr)))
     }
 
     private fun processAsExpression(expr: KtBinaryExpressionWithTypeRHS) {
@@ -218,7 +260,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processLambda(expr: KtLambdaExpression) {
-        addInstruction(ClosureInstruction(listOf(expr)))
+        val element = expr.bodyExpression
+        if (element != null) {
+            addInstruction(ClosureInstruction(listOf(element)))
+        }
         pushUnknown()
     }
 
@@ -245,16 +290,32 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         // TODO: support qualified references as variables
-        processExpression(expr.receiverExpression)
+        val receiver = expr.receiverExpression
+        val selector = expr.selectorExpression
+        if (pushJavaClassConstant(receiver, selector, expr)) return
+        processExpression(receiver)
         val specialField = if (expr is KtDotQualifiedExpression) findSpecialField(expr) else null
         if (specialField != null) {
             addInstruction(UnwrapDerivedVariableInstruction(specialField))
         } else {
             addInstruction(PopInstruction())
-            processExpression(expr.selectorExpression)
+            processExpression(selector)
             addInstruction(PopInstruction())
             pushUnknown()
         }
+    }
+
+    private fun pushJavaClassConstant(receiver: KtExpression, selector: KtExpression?, expr: KtQualifiedExpression): Boolean {
+        // TODO: a special instruction that converts KClass constant to Class constant
+        if (receiver !is KtClassLiteralExpression || selector == null || !selector.textMatches("java")) return false
+        val kotlinType = expr.getKotlinType() ?: return false
+        val arguments = kotlinType.arguments
+        if (arguments.size != 1) return false
+        val psiType = arguments[0].type.toPsiType(expr) ?: return false
+        val classPsiType = kotlinType.toPsiType(expr) ?: return false
+        val classConstant: DfType = DfTypes.referenceConstant(psiType, classPsiType)
+        addInstruction(PushValueInstruction(classConstant, KotlinExpressionAnchor(expr)))
+        return true
     }
 
     private fun findSpecialField(expr: KtQualifiedExpression): SpecialField? {
@@ -908,5 +969,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         private val ASSIGNMENT_TOKENS = TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
         private val totalCount = AtomicInteger()
         private val successCount = AtomicInteger()
+        private val unsupported = ConcurrentHashMap.newKeySet<String>()
     }
 }

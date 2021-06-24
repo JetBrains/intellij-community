@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import com.intellij.codeInspection.dataFlow.lang.DfaListener
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
@@ -122,11 +123,31 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = namedFunctionVisitor(fun(function) {
         val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
         val factory = DfaValueFactory(holder.project)
+        processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
+    })
+
+    private fun processDataflowAnalysis(
+        factory: DfaValueFactory,
+        body: KtExpression,
+        holder: ProblemsHolder,
+        states: Collection<DfaMemoryState>
+    ) {
         val flow = KtControlFlowBuilder(factory, body).buildFlow() ?: return
-        val state = JvmDfaMemoryStateImpl(factory)
         val listener = KotlinDfaListener()
         val interpreter = StandardDataFlowInterpreter(flow, listener)
-        if (interpreter.interpret(state) != RunnerResult.OK) return
+        if (interpreter.interpret(states.map { s -> DfaInstructionState(flow.getInstruction(0), s) }) != RunnerResult.OK) return
+        reportProblems(listener, holder)
+        for ((closure, closureStates) in interpreter.closures.entrySet()) {
+            if (closure is KtExpression) {
+                processDataflowAnalysis(factory, closure, holder, closureStates)
+            }
+        }
+    }
+
+    private fun reportProblems(
+        listener: KotlinDfaListener,
+        holder: ProblemsHolder
+    ) {
         listener.constantConditions.forEach { (anchor, cv) ->
             if (cv != ConstantValue.UNKNOWN) {
                 when (anchor) {
@@ -170,7 +191,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
-    })
+    }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {
         val entry = condition.parent as? KtWhenEntry ?: return false

@@ -204,7 +204,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     return joinInstructions;
   }
 
-  public MultiMap<PsiElement, DfaMemoryState> getClosures() {
+  public @NotNull MultiMap<@NotNull PsiElement, @NotNull DfaMemoryState> getClosures() {
     return myNestedClosures;
   }
 

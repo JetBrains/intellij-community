@@ -4571,6 +4571,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("alwaysZero.kt")
+        public void testAlwaysZero() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/alwaysZero.kt");
+        }
+
         @TestMetadata("andRange.kt")
         public void testAndRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/andRange.kt");
@@ -4671,6 +4676,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
         }
 
+        @TestMetadata("basicThis.kt")
+        public void testBasicThis() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicThis.kt");
+        }
+
         @TestMetadata("basicWhen.kt")
         public void testBasicWhen() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicWhen.kt");
@@ -4759,6 +4769,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("intBoxed.kt")
         public void testIntBoxed() throws Exception {
             runTest("testData/inspectionsLocal/dfa/intBoxed.kt");
+        }
+
+        @TestMetadata("javaClassRef.kt")
+        public void testJavaClassRef() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/javaClassRef.kt");
+        }
+
+        @TestMetadata("kotlinClassRef.kt")
+        public void testKotlinClassRef() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/kotlinClassRef.kt");
+        }
+
+        @TestMetadata("nullAsNullable.kt")
+        public void testNullAsNullable() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/nullAsNullable.kt");
         }
 
         @TestMetadata("orRange.kt")
