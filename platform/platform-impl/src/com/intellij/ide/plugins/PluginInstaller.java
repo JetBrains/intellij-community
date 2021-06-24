@@ -245,7 +245,7 @@ public final class PluginInstaller {
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(pluginDescriptor))) {
         return false;
       }
-      
+
       if (!PluginManagerConfigurableForOrg.getInstance().allowInstallingPlugin(pluginDescriptor)) {
         String message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
         MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
