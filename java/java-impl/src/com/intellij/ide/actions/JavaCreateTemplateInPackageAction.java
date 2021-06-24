@@ -86,12 +86,12 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
     Module module = ModuleUtilCore.findModuleForPsiElement(dir);
     if (file != null && module != null && ModuleRootManager.getInstance(module).getSdk() == null) {
       Project project = dir.getProject();
+      ModuleRootModificationUtil.setSdkInherited(module);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaBundle.message("progress.title.looking.for.jdk"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           SdkLookupUtil.findAndSetupSdk(project, indicator, JavaSdk.getInstance(), sdk -> {
             JavaSdkUtil.applyJdkToProject(project, sdk);
-            ModuleRootModificationUtil.setModuleSdk(module, sdk);
             Notifications.Bus.notify(new Notification("Setup SDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
               new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
                 @Override
