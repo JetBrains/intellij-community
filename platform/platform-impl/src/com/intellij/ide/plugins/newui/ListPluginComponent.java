@@ -89,7 +89,7 @@ public class ListPluginComponent extends JPanel {
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
-    myIsAllowed = PluginManagerConfigurableForOrg.getInstance().isPluginAllowed(plugin);
+    myIsAllowed = PluginManagerConfigurableForOrg.getInstance().isPluginAllowed(!marketplace, plugin);
     pluginModel.addComponent(this);
 
     setOpaque(true);

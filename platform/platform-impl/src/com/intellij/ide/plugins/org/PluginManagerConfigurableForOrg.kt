@@ -1,19 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.org
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
-import javax.swing.SwingConstants
 
 /**
  * This is the common service to deal with organizational
@@ -26,10 +16,12 @@ class PluginManagerConfigurableForOrg {
     fun getInstance(): PluginManagerConfigurableForOrg = service()
   }
 
-  fun isPluginAllowed(descriptor: IdeaPluginDescriptor) : Boolean {
+  fun isPluginAllowed(isLocalPlugin: Boolean,
+                      descriptor: IdeaPluginDescriptor) : Boolean {
+
+    if (isLocalPlugin) return true
     return descriptor.pluginId.idString.hashCode() % 2 == 0
   }
 
   fun allowInstallFromDisk(): Boolean = false
 }
-

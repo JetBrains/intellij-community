@@ -526,8 +526,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
   public void showPluginImpl(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     myPlugin = pluginDescriptor;
     PluginManagerConfigurableForOrg org = PluginManagerConfigurableForOrg.getInstance();
-    myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(updateDescriptor) ? updateDescriptor : null;
-    myIsPluginAllowed = org.isPluginAllowed(pluginDescriptor);
+    myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
+    myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();
     select(0, true);
   }
