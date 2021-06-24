@@ -1,0 +1,30 @@
+KotlinUFile(
+    FirKotlinUClass(
+        FirKotlinUField(
+            UComment(// Single-line comment bound to top-level property)
+        )
+        FirKotlinUMethod(
+            UComment(// Single-line comment bound to top-level property)
+        )
+        FirKotlinUMethod(
+        )
+    )
+    FirKotlinUClass(
+        UComment(// Single-line comment bound to object)
+        FirKotlinUField(
+            UComment(// Single-line comment bound to object)
+        )
+        FirKotlinUField(
+        )
+        FirKotlinConstructorUMethod(
+        )
+        FirKotlinUMethod(
+        )
+        FirKotlinUMethod(
+            FirKotlinUParameter(
+            )
+        )
+        FirKotlinUMethod(
+        )
+    )
+)
