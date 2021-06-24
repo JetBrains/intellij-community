@@ -1,6 +1,0 @@
-// WITH_RUNTIME
-fun String.test(): String {
-    return ifBlank {
-        "foo"
-    }
-}
