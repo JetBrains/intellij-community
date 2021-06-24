@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerManager;
@@ -32,7 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
@@ -58,7 +57,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.jar.Attributes;
 
 public final class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
@@ -80,8 +78,8 @@ public final class MemoryAgentUtil {
       return;
     }
 
-    if (isIbmJdk(parameters)) {
-      LOG.info("Do not attach memory agent for IBM jdk");
+    if (isJ9VM(parameters)) {
+      LOG.info("The agent is unable to calculate retained memory on [Open]J9 VMs");
       return;
     }
 
@@ -184,10 +182,15 @@ public final class MemoryAgentUtil {
            SystemInfo.isLinux && CpuArch.isIntel64();
   }
 
-  private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
+  private static boolean isJ9VM(@NotNull JavaParameters parameters) {
     Sdk jdk = parameters.getJdk();
-    String vendor = jdk == null ? null : JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
+    if (jdk != null && jdk.getHomePath() != null) {
+      JdkVersionDetector.JdkVersionInfo info = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdk.getHomePath());
+      if (info != null && (info.variant == JdkVersionDetector.Variant.IBM || info.variant == JdkVersionDetector.Variant.AdoptOpenJdk_J9)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Path getAgentFile(boolean isInDebugMode, String jdkPath)
