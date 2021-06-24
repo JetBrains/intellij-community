@@ -3,10 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.uast.kotlin
+package org.jetbrains.uast.kotlin.expressions
 
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.kotlin.KotlinAbstractUBlockExpression
 
 class FirKotlinUBlockExpression(
     override val sourcePsi: KtBlockExpression,
