@@ -17,32 +17,29 @@ class GradleRunConfigurationExtension
       addWorkingDirectoryFragment(project, ExternalSystemWorkingDirectoryInfo(project, SYSTEM_ID))
     val workingDirectoryField = workingDirectoryFragment.component().component
     addCommandLineFragment(project, GradleCommandLineInfo(project, workingDirectoryField))
-    addSettingsTag(
+    addTag(
       "gradle.tasks.script.debugging.fragment",
       GradleBundle.message("gradle.tasks.script.debugging"),
       GradleBundle.message("gradle.settings.title.debug"),
       null,
       GradleRunConfiguration::isScriptDebugEnabled,
-      GradleRunConfiguration::setScriptDebugEnabled,
-      200
+      GradleRunConfiguration::setScriptDebugEnabled
     )
-    addSettingsTag(
+    addTag(
       "gradle.tasks.reattach.debug.process.fragment",
       GradleBundle.message("gradle.tasks.reattach.debug.process"),
       GradleBundle.message("gradle.settings.title.debug"),
       GradleBundle.message("gradle.tasks.reattach.debug.process.comment"),
       GradleRunConfiguration::isReattachDebugProcess,
-      GradleRunConfiguration::setReattachDebugProcess,
-      200
+      GradleRunConfiguration::setReattachDebugProcess
     )
-    addSettingsTag(
+    addTag(
       "gradle.tasks.debugging.all.fragment",
       GradleBundle.message("gradle.tasks.debugging.all"),
       GradleBundle.message("gradle.settings.title.debug"),
       GradleBundle.message("gradle.tasks.debugging.all.comment"),
       GradleRunConfiguration::isDebugAllEnabled,
-      GradleRunConfiguration::setDebugAllEnabled,
-      200
+      GradleRunConfiguration::setDebugAllEnabled
     )
   }
 }

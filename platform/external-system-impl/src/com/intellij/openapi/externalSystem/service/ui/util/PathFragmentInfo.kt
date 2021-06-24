@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.service.ui.util
 
 interface PathFragmentInfo : FileChooserInfo, EditorSettingsFragmentInfo {
-  override val settingsIsRemovable: Boolean get() = true
   override val settingsHint: String? get() = null
   override val settingsActionHint: String? get() = null
 

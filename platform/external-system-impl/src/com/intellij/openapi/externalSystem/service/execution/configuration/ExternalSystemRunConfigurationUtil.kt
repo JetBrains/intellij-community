@@ -25,14 +25,15 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.util.*
 import javax.swing.JComponent
 
 
@@ -47,33 +48,50 @@ fun <C : RunConfigurationBase<*>> createBeforeRunFragment(buildTaskKey: Key<*>):
   return beforeRunFragment
 }
 
-fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addSettingsTag(
+@Suppress("HardCodedStringLiteral")
+inline fun <S, reified V : Enum<V>> SettingsFragmentsContainer<S>.addVariantTag(
   id: String,
-  @Nls name: String,
-  @Nls group: String,
-  @Nls hint: String?,
-  getter: (C) -> Boolean,
-  setter: (C, Boolean) -> Unit,
-  menuPosition: Int
-) = add(createSettingsTag(id, name, group, hint, getter, setter, menuPosition))
+  @Nls(capitalization = Nls.Capitalization.Sentence) name: String,
+  @Nls(capitalization = Nls.Capitalization.Title) group: String?,
+  crossinline getter: S.() -> V?,
+  crossinline setter: S.(V?) -> Unit,
+  crossinline getText: (V) -> String
+): VariantTagFragment<S, V?> = add(VariantTagFragment.createFragment(
+  id,
+  name,
+  group,
+  { EnumSet.allOf(V::class.java).toTypedArray() },
+  { it.getter() },
+  { it, v -> it.setter(v) },
+  { it.getter() != null }
+)).apply {
+  setVariantNameProvider { it?.let(getText) ?: "" }
+  setDefaultVariant(null)
+}
 
-@Suppress("UNCHECKED_CAST")
-fun <C : RunConfigurationBase<*>> createSettingsTag(
+fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addTag(
   id: String,
   @Nls name: String,
   @Nls group: String,
   @Nls hint: String?,
-  getter: (C) -> Boolean,
-  setter: (C, Boolean) -> Unit,
-  menuPosition: Int
-): SettingsEditorFragment<C, *> =
-  RunConfigurationEditorFragment.createSettingsTag<C>(
+  getter: C.() -> Boolean,
+  setter: C.(Boolean) -> Unit
+) = add(createTag(id, name, group, hint, getter, setter))
+
+fun <C : RunConfigurationBase<*>> createTag(
+  id: String,
+  @Nls name: String,
+  @Nls group: String,
+  @Nls hint: String?,
+  getter: C.() -> Boolean,
+  setter: C.(Boolean) -> Unit
+): SettingsEditorFragment<C, TagButton> =
+  SettingsEditorFragment.createTag<C>(
     id,
     name,
     group,
-    { getter(it.configuration as C) },
-    { it, v -> setter(it.configuration as C, v) },
-    menuPosition
+    { it.getter() },
+    { it, v -> it.setter(v) }
   ).apply {
     actionHint = hint
   }
@@ -134,7 +152,7 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
   WorkingDirectoryField(project, workingDirectoryInfo),
   workingDirectoryInfo,
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
-  { it, c -> it.setWorkingDirectory(FileUtil.toCanonicalPath(c.workingDirectory)) },
+  { it, c -> it.setWorkingDirectory(c.workingDirectory) },
   { true }
 ).addValidation {
   if (it.component.workingDirectory.isBlank()) {
@@ -172,84 +190,72 @@ fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOpti
   )
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addVmOptionsFragment(
-  getVmOptions: C.() -> String,
-  setVmOptions: C.(String) -> Unit
+  getVmOptions: C.() -> String?,
+  setVmOptions: C.(String?) -> Unit
 ) = add(createVmOptionsFragment(getVmOptions, setVmOptions))
 
 fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
-  getVmOptions: C.() -> String,
-  setVmOptions: C.(String) -> Unit
-): SettingsEditorFragment<C, LabeledComponent<RawCommandLineEditor>> {
-  val vmOptions = RawCommandLineEditor().apply {
-    CommonParameterFragments.setMonospaced(textField)
+  getVmOptions: C.() -> String?,
+  setVmOptions: C.(String?) -> Unit
+) = createLabeledTextSettingsEditorFragment(
+  RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
-    FragmentedSettingsUtil.setupPlaceholderVisibility(editorField)
-  }
-  val vmOptionsLabel = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
-  return SettingsEditorFragment<C, LabeledComponent<RawCommandLineEditor>>(
-    "external.system.vm.options.fragment",
-    ExecutionBundle.message("run.configuration.java.vm.parameters.name"),
-    ExecutionBundle.message("group.java.options"),
-    LabeledComponent.create(vmOptions, vmOptionsLabel, BorderLayout.WEST),
-    { it, c -> c.component.text = it.getVmOptions() },
-    { it, c -> it.setVmOptions(if (c.isVisible) c.component.text else "") },
-    { it.getVmOptions().isNotBlank() }
-  ).apply {
-    isCanBeHidden = true
-    isRemovable = true
-    setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"))
-    actionHint = ExecutionBundle.message("specify.vm.options.for.running.the.application")
-  }
-}
+  },
+  object : EditorSettingsFragmentInfo {
+    override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
+    override val settingsId: String = "external.system.vm.options.fragment"
+    override val settingsName: String = ExecutionBundle.message("run.configuration.java.vm.parameters.name")
+    override val settingsGroup: String = ExecutionBundle.message("group.java.options")
+    override val settingsHint: String = ExecutionBundle.message("run.configuration.java.vm.parameters.hint")
+    override val settingsActionHint: String = ExecutionBundle.message("specify.vm.options.for.running.the.application")
+  },
+  getVmOptions,
+  setVmOptions
+)
 
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnvironmentFragment() =
   addEnvironmentFragment(
     { settings.env },
-    { settings.env = it },
+    { settings.env = it ?: emptyMap() },
     { settings.isPassParentEnvs },
-    { settings.isPassParentEnvs = it }
+    { settings.isPassParentEnvs = it ?: true }
   )
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addEnvironmentFragment(
-  getEnvs: C.() -> Map<String, String>,
-  setEnvs: C.(Map<String, String>) -> Unit,
-  isPassParentEnvs: C.() -> Boolean,
-  setPassParentEnvs: C.(Boolean) -> Unit
+  getEnvs: C.() -> Map<String, String>?,
+  setEnvs: C.(Map<String, String>?) -> Unit,
+  isPassParentEnvs: C.() -> Boolean?,
+  setPassParentEnvs: C.(Boolean?) -> Unit
 ) = add(createEnvironmentFragment(getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
 
 fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
-  getEnvs: C.() -> Map<String, String>,
-  setEnvs: C.(Map<String, String>) -> Unit,
-  isPassParentEnvs: C.() -> Boolean,
-  setPassParentEnvs: C.(Boolean) -> Unit
-): SettingsEditorFragment<C, EnvironmentVariablesComponent> {
-  val environmentVariablesComponent = EnvironmentVariablesComponent().apply {
+  getEnvs: C.() -> Map<String, String>?,
+  setEnvs: C.(Map<String, String>?) -> Unit,
+  isPassParentEnvs: C.() -> Boolean?,
+  setPassParentEnvs: C.(Boolean?) -> Unit
+) = createSettingsEditorFragment<C, EnvironmentVariablesComponent>(
+  EnvironmentVariablesComponent().apply {
     labelLocation = BorderLayout.WEST
-    CommonParameterFragments.setMonospaced(component.textField)
-  }
-  val fragment = SettingsEditorFragment<C, EnvironmentVariablesComponent>(
-    "environmentVariables",
-    ExecutionBundle.message("environment.variables.fragment.name"),
-    ExecutionBundle.message("group.operating.system"),
-    environmentVariablesComponent,
-    { it, c ->
-      c.envs = getEnvs(it)
-      c.isPassParentEnvs = isPassParentEnvs(it)
-    },
-    { it, c ->
-      setEnvs(it, if (c.isVisible) c.envs else emptyMap())
-      setPassParentEnvs(it, if (c.isVisible) c.isPassParentEnvs else true)
-    },
-    { true }
-  ).apply {
-    isCanBeHidden = true
-    isRemovable = true
-    setHint(ExecutionBundle.message("environment.variables.fragment.hint"))
-    actionHint = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
-  }
-  return fragment
-}
+  },
+  object : EditorSettingsFragmentInfo {
+    override val editorLabel: String = ExecutionBundle.message("environment.variables.component.title")
+    override val settingsId: String = "external.system.environment.variables.fragment"
+    override val settingsName: String = ExecutionBundle.message("environment.variables.fragment.name")
+    override val settingsGroup: String = ExecutionBundle.message("group.operating.system")
+    override val settingsHint: String = ExecutionBundle.message("environment.variables.fragment.hint")
+    override val settingsActionHint: String = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
+  },
+  { it, c ->
+    c.envs = getEnvs(it) ?: emptyMap()
+    c.isPassParentEnvs = isPassParentEnvs(it) ?: true
+  },
+  { it, c ->
+    setEnvs(it, if (c.isVisible) c.envs else null)
+    setPassParentEnvs(it, if (c.isVisible) c.isPassParentEnvs else null)
+  },
+  { getEnvs(it) == null && isPassParentEnvs(it) == null }
+)
 
 fun <S: RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.addValidation(
   validate: ValidationInfoBuilder.(C) -> ValidationInfo?
@@ -265,34 +271,45 @@ fun <S: RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.ad
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addPathFragment(
   project: Project,
   pathFragmentInfo: PathFragmentInfo,
-  getPath: C.() -> String,
-  setPath: C.(String) -> Unit
+  getPath: C.() -> String?,
+  setPath: C.(String?) -> Unit
 ) = add(createPathFragment(project, pathFragmentInfo, getPath, setPath))
 
 fun <C : RunConfigurationBase<*>> createPathFragment(
   project: Project,
   pathFragmentInfo: PathFragmentInfo,
-  getPath: C.() -> String,
-  setPath: C.(String) -> Unit
-): SettingsEditorFragment<C, LabeledComponent<TextFieldWithBrowseButton>> {
-  val userSettingsEditor = ExtendableTextField(10).apply {
-    MacrosDialog.addMacroSupport(this, MacrosDialog.Filters.DIRECTORY_PATH) { false }
-  }
-  val userSettingsField = textFieldWithBrowseButton(
+  getPath: C.() -> String?,
+  setPath: C.(String?) -> Unit
+) = createLabeledTextSettingsEditorFragment<C, TextFieldWithBrowseButton>(
+  textFieldWithBrowseButton(
     project,
     pathFragmentInfo.fileChooserTitle,
     pathFragmentInfo.fileChooserDescription,
-    userSettingsEditor,
-    pathFragmentInfo.fileChooserDescriptor,
-  ) { getUiPath(it.path) }
-  return createLabeledSettingsEditorFragment(
-    userSettingsField,
-    pathFragmentInfo,
-    { it, c -> c.text = getUiPath(it.getPath()) },
-    { it, c -> it.setPath(if (c.isVisible) getModelPath(c.text) else "") },
-    { it.getPath().isNotBlank() }
-  )
-}
+    ExtendableTextField(10).apply {
+      val fileChooserMacroFilter = pathFragmentInfo.fileChooserMacroFilter
+      if (fileChooserMacroFilter != null) {
+        MacrosDialog.addMacroSupport(this, fileChooserMacroFilter) { false }
+      }
+    },
+    pathFragmentInfo.fileChooserDescriptor
+  ) { getUiPath(it.path) },
+  pathFragmentInfo,
+  { getPath()?.let(::getUiPath) },
+  { setPath(it?.let(::getModelPath)) }
+)
+
+fun <S : RunConfigurationBase<*>, C> createLabeledTextSettingsEditorFragment(
+  component: C,
+  info: EditorSettingsFragmentInfo,
+  getText: S.() -> String?,
+  setText: S.(String?) -> Unit,
+) where C : JComponent, C : TextAccessor = createLabeledSettingsEditorFragment<S, C>(
+  component,
+  info,
+  { it, c -> c.text = it.getText() ?: "" },
+  { it, c -> it.setText(if (c.isVisible) c.text else null) },
+  { it.getText() != null }
+)
 
 fun <S : RunConfigurationBase<*>, C : JComponent> createLabeledSettingsEditorFragment(
   component: C,

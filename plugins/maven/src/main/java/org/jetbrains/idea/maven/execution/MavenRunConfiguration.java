@@ -60,7 +60,6 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingCon
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -75,7 +74,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.intellij.execution.util.ProgramParametersUtil.expandPathAndMacros;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -99,55 +97,31 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
   public @Nullable MavenGeneralSettings getGeneralSettings() {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
-    MavenGeneralSettings originalSettings = projectsManager.getGeneralSettings();
-    MavenGeneralSettings settings = originalSettings.clone();
-    settings.setMavenHome(this.settings.getMavenHome());
-    settings.setUserSettingsFile(expandPathAndMacros(this.settings.getUserSettings(), null, getProject()));
-    settings.setLocalRepository(expandPathAndMacros(this.settings.getLocalRepository(), null, getProject()));
-    return settings.equals(originalSettings) ? null : settings;
+    return settings.getGeneralSettings(getProject());
   }
 
   public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
     if (settings != null) {
-      this.settings.setMavenHome(settings.getMavenHome());
-      this.settings.setUserSettings(settings.getUserSettingsFile());
-      this.settings.setLocalRepository(settings.getLocalRepository());
+      this.settings.setGeneralSettings(settings);
     }
   }
 
   public @Nullable MavenRunnerSettings getRunnerSettings() {
-    MavenRunner mavenRunner = MavenRunner.getInstance(getProject());
-    MavenRunnerSettings originalSettings = mavenRunner.getSettings();
-    MavenRunnerSettings settings = originalSettings.clone();
-    settings.setJreName(this.settings.getJreName());
-    settings.setVmOptions(expandPathAndMacros(this.settings.getVmOptions(), null, getProject()));
-    settings.setEnvironmentProperties(this.settings.getEnvironment());
-    settings.setPassParentEnv(this.settings.isPassParentEnvs());
-    return settings.equals(originalSettings) ? null : settings;
+    return settings.getRunnerSettings(getProject());
   }
 
   public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
     if (settings != null) {
-      this.settings.setJreName(settings.getJreName());
-      this.settings.setVmOptions(settings.getVmOptions());
-      this.settings.setEnvironment(settings.getEnvironmentProperties());
-      this.settings.setPassParentEnvs(settings.isPassParentEnv());
+      this.settings.setRunnerSettings(settings);
     }
   }
 
   public @NotNull MavenRunnerParameters getRunnerParameters() {
-    MavenRunnerParameters parameters = new MavenRunnerParameters();
-    parameters.setCommandLine(settings.getCommandLine());
-    parameters.setWorkingDirPath(settings.getWorkingDirectory());
-    parameters.setProfilesMap(settings.getProfiles());
-    return parameters;
+    return settings.getRunnerParameters();
   }
 
   public void setRunnerParameters(@NotNull MavenRunnerParameters parameters) {
-    settings.setCommandLine(parameters.getCommandLine());
-    settings.setWorkingDirectory(parameters.getWorkingDirPath());
-    settings.setProfiles(parameters.getProfilesMap());
+    settings.setRunnerParameters(parameters);
   }
 
   @Override

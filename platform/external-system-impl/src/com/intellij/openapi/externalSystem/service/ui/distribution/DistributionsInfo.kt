@@ -14,6 +14,8 @@ interface DistributionsInfo : FileChooserInfo, SettingsFragmentInfo {
   override val settingsIsRemovable: Boolean get() = false
   override val settingsActionHint: String? get() = null
 
+  override val fileChooserMacroFilter get() = FileChooserInfo.DIRECTORY_PATH
+
   val comboBoxPreferredWidth: Int?
   val comboBoxActionName: @Nls(capitalization = Nls.Capitalization.Sentence) String
 

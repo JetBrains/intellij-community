@@ -9,4 +9,5 @@ interface EditorSettingsFragmentInfo : SettingsFragmentInfo {
 
   override val settingsPriority: Int get() = 0
   override val settingsType get() = SettingsEditorFragmentType.EDITOR
+  override val settingsIsRemovable get() = true
 }

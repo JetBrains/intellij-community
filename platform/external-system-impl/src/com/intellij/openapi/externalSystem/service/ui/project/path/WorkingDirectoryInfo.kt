@@ -14,6 +14,7 @@ interface WorkingDirectoryInfo : FileChooserInfo, EditorSettingsFragmentInfo {
   override val settingsActionHint: String? get() = null
 
   override val fileChooserDescription: String? get() = null
+  override val fileChooserMacroFilter get() = FileChooserInfo.DIRECTORY_PATH
 
   val emptyFieldError: @Nls(capitalization = Nls.Capitalization.Sentence) String
 
