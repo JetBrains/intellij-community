@@ -802,4 +802,32 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
             runTest("../idea/tests/testData/intentions/convertToBlockBody/whenUnit.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/addWhenRemainingBranches")
+    public static class AddWhenRemainingBranches extends AbstractHLIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("emptyWhen.kt")
+        public void testEmptyWhen() throws Exception {
+            runTest("../idea/tests/testData/intentions/addWhenRemainingBranches/emptyWhen.kt");
+        }
+
+        @TestMetadata("noElse.kt")
+        public void testNoElse() throws Exception {
+            runTest("../idea/tests/testData/intentions/addWhenRemainingBranches/noElse.kt");
+        }
+
+        @TestMetadata("noRemainingBranches.kt")
+        public void testNoRemainingBranches() throws Exception {
+            runTest("../idea/tests/testData/intentions/addWhenRemainingBranches/noRemainingBranches.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/addWhenRemainingBranches/simple.kt");
+        }
+    }
 }
