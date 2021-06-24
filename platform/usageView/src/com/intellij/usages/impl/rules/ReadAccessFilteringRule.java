@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReadAccessFilteringRule implements UsageFilteringRule {
 
   @Override
-  public boolean isVisible(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {
     if (usage instanceof ReadWriteAccessUsage) {
       return ((ReadWriteAccessUsage)usage).isAccessedForWriting();
     }
