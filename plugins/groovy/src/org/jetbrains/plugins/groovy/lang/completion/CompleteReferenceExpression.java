@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -215,7 +215,7 @@ public final class CompleteReferenceExpression {
 
   @Nullable
   public static LookupElementBuilder createPropertyLookupElement(@NotNull PsiMethod accessor,
-                                                                 @Nullable GroovyResolveResult resolveResult,
+                                                                 @Nullable PsiSubstitutor substitutor,
                                                                  @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
@@ -244,7 +244,7 @@ public final class CompleteReferenceExpression {
       propType = accessor.getParameterList().getParameters()[0].getType();
     }
 
-    final PsiType substituted = resolveResult != null ? resolveResult.getSubstitutor().substitute(propType) : propType;
+    final PsiType substituted = substitutor != null ? substitutor.substitute(propType) : propType;
 
     LookupElementBuilder builder =
       LookupElementBuilder.create(generatePropertyElement(propName, accessor, propType), propName)
@@ -503,7 +503,7 @@ public final class CompleteReferenceExpression {
 
     private void processProperty(@NotNull PsiMethod method, @NotNull GroovyResolveResult resolveResult) {
       if (myIsMap) return;
-      final LookupElementBuilder lookup = createPropertyLookupElement(method, resolveResult, myMatcher);
+      final LookupElementBuilder lookup = createPropertyLookupElement(method, resolveResult.getSubstitutor(), myMatcher);
       if (lookup != null) {
         if (myPropertyNames.add(lookup.getLookupString())) {
           myConsumer.consume(lookup);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -1465,5 +1465,19 @@ public final class PsiUtil {
       return false;
     }
     return candidate.getArgumentMapping() instanceof NullArgumentMapping<?>;
+  }
+
+  public static boolean isEligibleForSpreadWithDot(@NotNull PsiType type) {
+    return InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION) || type instanceof PsiArrayType;
+  }
+
+  public static @Nullable PsiType getComponentForSpreadWithDot(@NotNull PsiType type) {
+    if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
+      return com.intellij.psi.util.PsiUtil.substituteTypeParameter(type, JAVA_UTIL_COLLECTION, 0, false);
+    } else if (type instanceof PsiArrayType) {
+      return ((PsiArrayType)type).getComponentType();
+    } else {
+      return null;
+    }
   }
 }
