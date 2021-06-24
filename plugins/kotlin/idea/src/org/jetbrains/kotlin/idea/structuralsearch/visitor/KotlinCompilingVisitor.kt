@@ -16,7 +16,6 @@ import com.intellij.structuralsearch.impl.matcher.compiler.WordOptimizer
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
 import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
@@ -65,13 +64,6 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         override fun visitProperty(property: KtProperty) {
             if (!handleWord(property.name, CODE, myCompilingVisitor.context)) return
             super.visitProperty(property)
-        }
-
-        override fun visitConstantExpression(expression: KtConstantExpression) {
-            val type = expression.elementType
-            if (type == KtNodeTypes.BOOLEAN_CONSTANT || type == KtNodeTypes.NULL)
-                if (!handleWord(expression.text, CODE, myCompilingVisitor.context)) return
-            super.visitConstantExpression(expression)
         }
 
         override fun visitReferenceExpression(expression: KtReferenceExpression) {
