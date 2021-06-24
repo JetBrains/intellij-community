@@ -15237,17 +15237,17 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("addRemainingBranchesMissingLeftBracket.kt")
         public void testAddRemainingBranchesMissingLeftBracket() throws Exception {
-            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingLeftBracket.kt");
+            runTest("testData/quickfix/when/addRemainingBranchesMissingLeftBracket.kt");
         }
 
         @TestMetadata("addRemainingBranchesMissingRightBracket.kt")
         public void testAddRemainingBranchesMissingRightBracket() throws Exception {
-            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingRightBracket.kt");
+            runTest("testData/quickfix/when/addRemainingBranchesMissingRightBracket.kt");
         }
 
         @TestMetadata("addRemainingBranchesMissingRightParenthesis.kt")
         public void testAddRemainingBranchesMissingRightParenthesis() throws Exception {
-            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingRightParenthesis.kt");
+            runTest("testData/quickfix/when/addRemainingBranchesMissingRightParenthesis.kt");
         }
 
         @TestMetadata("addRemainingBranchesSealed.kt")
