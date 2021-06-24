@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
@@ -51,8 +52,14 @@ class KotlinClassRenderer : ClassRenderer() {
             createNodesToShow(fields, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, value)
                 .thenAccept { nodesToShow ->
                     if (nodesToShow.isEmpty()) {
-                        setClassHasNoFieldsToDisplayMessage(builder, nodeManager)
-                        builder.setChildren(getterNodes)
+                        val classHasNoFieldsToDisplayMessage =
+                            nodeManager.createMessageNode(
+                                JavaDebuggerBundle.message("message.node.class.no.fields.to.display")
+                            )
+                        builder.setChildren(
+                            listOf(classHasNoFieldsToDisplayMessage) +
+                            getterNodes
+                        )
                         return@thenAccept
                     }
                     builder.setChildren(mergeNodesLists(nodesToShow, getterNodes))
