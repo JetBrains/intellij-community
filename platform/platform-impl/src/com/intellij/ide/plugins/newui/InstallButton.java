@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -28,6 +28,10 @@ public class InstallButton extends ColorButton {
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
 
   public InstallButton(boolean fill) {
+    setButtonColors(fill);
+  }
+
+  public void setButtonColors(boolean fill) {
     if (fill) {
       setTextColor(FillForegroundColor);
       setBgColor(FillBackgroundColor);

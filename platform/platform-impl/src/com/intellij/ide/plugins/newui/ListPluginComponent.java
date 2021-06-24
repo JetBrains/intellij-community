@@ -170,11 +170,29 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void createNotAllowedMarker() {
-    myInstallButton = new InstallButton(true);
-    myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.not.allowed"));
-    myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
-    ColorButton.setWidth72(myInstallButton);
+    myInstallButton = new InstallButton(false);
+    setupNotAllowedMarkerButton();
     myLayout.addButtonComponent(myInstallButton);
+  }
+
+  private void setupNotAllowedMarkerButton() {
+    if (myMarketplace || myPluginModel.getState(myPlugin).isDisabled()) {
+      myInstallButton.setButtonColors(false);
+      myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.not.allowed"));
+      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
+    } else {
+      myInstallButton.setButtonColors(false);
+      myInstallButton.setEnabled(true, IdeBundle.message("plugin.status.not.allowed.but.enabled"));
+      myInstallButton.setText(IdeBundle.message("plugin.status.not.allowed.but.enabled"));
+      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
+      myInstallButton.setBorderColor(JBColor.red);
+      myInstallButton.setTextColor(JBColor.red);
+      myInstallButton.addActionListener(e -> {
+        myPluginModel.setEnabledState(List.of(myPlugin), PluginEnableDisableAction.globally(false));
+        setupNotAllowedMarkerButton();
+      });
+    }
+    ColorButton.setWidth72(myInstallButton);
   }
 
   private void createButtons() {
