@@ -85,7 +85,7 @@ private fun PluginManagerConfigurableForOrgStateRule.matches(descriptor: IdeaPlu
   }
 
   vendorRegex?.let {
-    if (!safeMatch(descriptor.vendor, it)) return false
+    if (!safeMatch(descriptor.vendor ?: descriptor.organization, it)) return false
   }
 
   versionRegex?.let {
