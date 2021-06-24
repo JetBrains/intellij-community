@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter" />
+    <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>
   </extensions>
   <actions>
     <group id="UsageGroupingActionGroup">
