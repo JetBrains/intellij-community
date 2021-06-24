@@ -3,8 +3,8 @@
 <p>Reports inline functions with non-nullable extension receivers which don't use the fact that extension receiver is not nullable.</p>
 <p>
     Before Kotlin 1.2, calls of <code>inline fun</code> with flexible nullable extension receiver (a platform type with an unknown 
-    nullability) did not include nullability checks in bytecode. In Kotlin 1.2 this problem was fixed
-    (see <a href="https://youtrack.jetbrains.com/issue/KT-12899">KT-12899</a>), including nullability checks into the bytecode.
+    nullability) did not include nullability checks in bytecode. Since Kotlin 1.2, nullability checks are included into the bytecode
+    (see <a href="https://youtrack.jetbrains.com/issue/KT-12899">KT-12899</a>).
 </p>
 <p>
     Thus functions which do not use the fact that extension receiver is not nullable are dangerous in Kotlin until 1.2 and it's
