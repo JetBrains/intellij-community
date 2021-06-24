@@ -1,5 +1,5 @@
 // "Change type of 'x' to 'String?'" "false"
-// ACTION: Convert assignment to assignment expression
+// ACTION: Converts the assignment statement to an expression
 // ACTION: Convert to 'buildString' call
 // ACTION: Remove braces from 'if' statement
 // ACTION: To raw string literal
