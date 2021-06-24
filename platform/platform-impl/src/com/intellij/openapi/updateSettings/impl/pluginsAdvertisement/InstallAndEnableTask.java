@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -47,8 +48,9 @@ final class InstallAndEnableTask extends Task.Modal {
       List<IdeaPluginDescriptor> descriptors =
         new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
 
+      var org = PluginManagerConfigurableForOrg.getInstance();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor)) {
+        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor) && org.allowInstallingPlugin(descriptor)) {
           descriptors.add(descriptor);
         }
       }

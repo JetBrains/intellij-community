@@ -16,6 +16,10 @@ class PluginManagerConfigurableForOrg {
     fun getInstance(): PluginManagerConfigurableForOrg = service()
   }
 
+  fun allowInstallingPlugin(descriptor: IdeaPluginDescriptor) : Boolean {
+    return true
+  }
+
   fun isPluginAllowed(isLocalPlugin: Boolean,
                       descriptor: IdeaPluginDescriptor) : Boolean {
 

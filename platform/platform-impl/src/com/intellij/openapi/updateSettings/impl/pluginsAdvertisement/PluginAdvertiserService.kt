@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -66,6 +67,8 @@ open class PluginAdvertiserService {
       }
     }
 
+    val org = PluginManagerConfigurableForOrg.getInstance()
+
     //include disabled plugins
     ids.filter { (pluginId, _) ->
       PluginManagerCore.isDisabled(pluginId)
@@ -73,6 +76,8 @@ open class PluginAdvertiserService {
       PluginManagerCore.getPlugin(pluginId)?.let {
         plugin to it
       }
+    }.filter {
+      org.allowInstallingPlugin(it.second)
     }.forEach { (plugin, pluginDescriptor) ->
       disabledPlugins[plugin] = pluginDescriptor
     }
@@ -95,6 +100,8 @@ open class PluginAdvertiserService {
         || !ids.containsKey(pluginId)
         || PluginManagerCore.isDisabled(pluginId)
         || PluginManagerCore.isBrokenPlugin(loadedPlugin)
+      }.filter {
+        org.allowInstallingPlugin(it)
       }.map { PluginDownloader.createDownloader(it) }
 
     invokeLater(ModalityState.NON_MODAL) {
