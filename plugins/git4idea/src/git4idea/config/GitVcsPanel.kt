@@ -177,7 +177,7 @@ internal class GitVcsPanel(private val project: Project) :
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
 
-  private fun LayoutBuilder.gitExecutableRow() = row {
+  private fun RowBuilder.gitExecutableRow() = row {
     pathSelector.mainPanel(growX)
       .onReset {
         resetPathSelector()
@@ -252,7 +252,7 @@ internal class GitVcsPanel(private val project: Project) :
     }
   }
 
-  private fun LayoutBuilder.branchUpdateInfoRow() {
+  private fun RowBuilder.branchUpdateInfoRow() {
     branchUpdateInfoRow = row {
       supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
       cell {
@@ -276,7 +276,7 @@ internal class GitVcsPanel(private val project: Project) :
     }
   }
 
-  private fun LayoutBuilder.protectedBranchesRow() {
+  private fun RowBuilder.protectedBranchesRow() {
     row {
       cell {
         label(message("settings.protected.branched"))
@@ -309,10 +309,64 @@ internal class GitVcsPanel(private val project: Project) :
 
   override fun createPanel(): DialogPanel = panel {
     gitExecutableRow()
-    row {
-      checkBox(cdEnableStagingArea)
-        .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
+    titledRow(message("settings.commit.group.title")) {
+      row {
+        checkBox(cdEnableStagingArea)
+          .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
+      }
+      row {
+        checkBox(cdWarnAboutCrlf(project))
+      }
+      row {
+        checkBox(cdWarnAboutDetachedHead(project))
+      }
+      row {
+        checkBox(cdAddCherryPickSuffix(project))
+      }
+      createGpgSignRow(project, disposable!!)
     }
+
+    titledRow(message("settings.push.group.title")) {
+      row {
+        checkBox(cdAutoUpdateOnPush(project))
+      }
+      row {
+        val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+        row {
+          checkBox(cdHidePushDialogForNonProtectedBranches(project))
+            .enableIf(previewPushOnCommitAndPush.selected)
+        }
+      }
+      protectedBranchesRow()
+    }
+
+    titledRow(message("settings.update.group.title")) {
+      row {
+        cell {
+          label(message("settings.update.method"))
+          comboBox(
+            CollectionComboBoxModel(getUpdateMethods()),
+            { projectSettings.updateMethod },
+            { projectSettings.updateMethod = it!! },
+            renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
+          )
+        }
+      }
+      row {
+        cell {
+          label(message("settings.clean.working.tree"))
+          buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
+            GitSaveChangesPolicy.values().forEach { saveSetting ->
+              radioButton(saveSetting.text, saveSetting)
+            }
+          }
+        }
+      }
+      row {
+        checkBox(cdAutoUpdateOnPush(project))
+      }
+    }
+
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
@@ -320,40 +374,7 @@ internal class GitVcsPanel(private val project: Project) :
         }
       }
     }
-    row {
-      checkBox(cdAddCherryPickSuffix(project))
-    }
-    row {
-      checkBox(cdWarnAboutCrlf(project))
-    }
-    row {
-      checkBox(cdWarnAboutDetachedHead(project))
-    }
     branchUpdateInfoRow()
-    row {
-      cell {
-        label(message("settings.update.method"))
-        comboBox(
-          CollectionComboBoxModel(getUpdateMethods()),
-          { projectSettings.updateMethod },
-          { projectSettings.updateMethod = it!! },
-          renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
-        )
-      }
-    }
-    row {
-      cell {
-        label(message("settings.clean.working.tree"))
-        buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
-          GitSaveChangesPolicy.values().forEach { saveSetting ->
-            radioButton(saveSetting.text, saveSetting)
-          }
-        }
-      }
-    }
-    row {
-      checkBox(cdAutoUpdateOnPush(project))
-    }
     row {
       val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
       row {
@@ -361,7 +382,6 @@ internal class GitVcsPanel(private val project: Project) :
           .enableIf(previewPushOnCommitAndPush.selected)
       }
     }
-    protectedBranchesRow()
     row {
       checkBox(cdOverrideCredentialHelper)
     }
@@ -372,10 +392,9 @@ internal class GitVcsPanel(private val project: Project) :
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
       updateProjectInfoFilter()
     }
-    createGpgSignRow(project, disposable!!)
   }
 
-  private fun LayoutBuilder.updateProjectInfoFilter() {
+  private fun RowBuilder.updateProjectInfoFilter() {
     row {
       cell {
         val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()

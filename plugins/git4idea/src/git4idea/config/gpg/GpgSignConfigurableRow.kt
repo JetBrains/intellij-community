@@ -27,7 +27,7 @@ import javax.swing.JLabel
 
 class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
   companion object {
-    fun LayoutBuilder.createGpgSignRow(project: Project, disposable: Disposable) {
+    fun RowBuilder.createGpgSignRow(project: Project, disposable: Disposable) {
       if (project.isDefault) return
       val panel = GpgSignConfigurableRow(project, disposable)
       with(panel) {
@@ -71,7 +71,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     reloadSecretKeys()
   }
 
-  private fun LayoutBuilder.createRow() {
+  private fun RowBuilder.createRow() {
     row {
       cell(isFullWidth = true) {
         button(message("settings.sign.gpg.configure.link.text")) {
