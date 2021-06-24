@@ -1,19 +1,19 @@
 <html>
 <body>
-Reports dangerous operations with <code>this</code> inside constructors including:
+Reports unsafe operations with <code>this</code> during object construction including:
 
 <ul>
-  <li>Accessing a non-final property during class initialization: from a constructor or from property initialization</li>
+  <li>Accessing a non-final property during class initialization: from a constructor or property initialization</li>
   <li>Calling a non-final function during class initialization</li>
   <li>Using <code>this</code> as a function argument in a constructor of a non-final class</li>
 </ul>
 
-These operations are dangerous because your class can be inherited,
-and a derived class is not fully initialized yet at this moment.
-<br /><br />
+<p>
+    If other classes inherit from the given class,
+    they may not be fully initialized at the moment when an unsafe operation is carried out.
+</p>
 <p><b>Example:</b></p>
-<pre><code>
-<b>abstract class</b> Base {
+<pre><code><b>abstract class</b> Base {
     <b>val</b> code = calculate()
     <b>abstract fun</b> calculate(): Int
 }

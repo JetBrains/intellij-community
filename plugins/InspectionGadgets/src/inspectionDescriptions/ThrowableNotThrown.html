@@ -1,9 +1,9 @@
 <html>
 <body>
-<p>Reports instantiations of <code>Throwable</code> or a subclass, when the created <code>Throwable</code>
+<p>Reports instantiations of <code>Throwable</code> or its subclasses, when the created <code>Throwable</code>
   is never actually thrown.</p>
 <p>These reports indicate mistakes that are hard to catch in tests.</p>
-<p>Also, this inspection reports method calls that return instances of <code>Throwable</code> or a subclass,
+<p>Also, this inspection reports method calls that return instances of <code>Throwable</code> or its subclasses,
   when the result of the method call is not thrown.</p>
 <p>Calls to methods annotated with the Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.</p>
 <p><b>Example:</b></p>

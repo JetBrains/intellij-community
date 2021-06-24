@@ -1,18 +1,15 @@
 <html>
 <body>
 Reports calls to <code>toString()</code> in string templates that can be safely removed.
-<p>"Remove 'toString()' call" quick-fix can be used to amend the code.</p>
-<p>Examples:</p>
-<pre><code>
-  fun foo(a: Int, b: Int) = a + b
+<p><b>Example:</b></p>
+<pre><code>  fun foo(a: Int, b: Int) = a + b
 
   fun test(): String {
       return "Foo: ${foo(0, 4).toString()}" // 'toString()' is redundant
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
-  fun foo(a: Int, b: Int) = a + b
+<pre><code>  fun foo(a: Int, b: Int) = a + b
 
   fun test(): String {
       return "Foo: ${foo(0, 4)}"
