@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import kotlin.test.assertTrue
 
@@ -29,7 +30,14 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     protected open fun doTest(path: String) {
         assert(path.endsWith(".kt")) { path }
         myFixture.configureWithExtraFile(path, ".Data")
-        performChecks()
+        val controlDirective = if (isFirPlugin()) {
+            IgnoreTests.DIRECTIVES.IGNORE_FIR
+        } else {
+            IgnoreTests.DIRECTIVES.IGNORE_FE10
+        }
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testDataFile().toPath(), controlDirective) {
+            performChecks()
+        }
     }
 
     protected fun performChecks() {
