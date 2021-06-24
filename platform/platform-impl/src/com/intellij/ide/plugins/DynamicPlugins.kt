@@ -1161,6 +1161,12 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
   val seenPlugins: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   epLoop@ for (epName in extensions.keys) {
     seenPlugins.clear()
+
+    fun getNonDynamicUnloadError(optionalDependencyPluginId: PluginId?): String =
+      optionalDependencyPluginId?.let {
+        "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $it that optionally depends on it"
+      } ?: "Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName"
+
     val result = findLoadedPluginExtensionPointRecursive(pluginDescriptor = baseDescriptor ?: descriptor,
                                                          epName = epName,
                                                          pluginSet = pluginSet,
@@ -1171,11 +1177,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
       // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
       // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
       if (baseDescriptor != null && (!isSubDescriptor || foundInDependencies) && !pluginExtensionPoint.isDynamic) {
-        if (foundInDependencies) {
-          return "Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName"
-        }
-        return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
-               " in optional dependency on it: ${descriptor.pluginId}"
+        return getNonDynamicUnloadError(if (foundInDependencies) null else descriptor.pluginId)
       }
       continue
     }
@@ -1186,7 +1188,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
              ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
     if (ep != null) {
       if (!ep.isDynamic) {
-        return getNonDynamicUnloadError(epName, baseDescriptor, descriptor, optionalDependencyPluginId)
+        return getNonDynamicUnloadError(optionalDependencyPluginId)
       }
       continue
     }
@@ -1197,7 +1199,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
         val coreEP = findPluginExtensionPoint(corePlugin, epName)
         if (coreEP != null) {
           if (!coreEP.isDynamic) {
-            return getNonDynamicUnloadError(epName, baseDescriptor, descriptor, optionalDependencyPluginId)
+            return getNonDynamicUnloadError(optionalDependencyPluginId)
           }
           continue
         }
@@ -1207,7 +1209,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
     for (contextPlugin in context) {
       val contextEp = findPluginExtensionPoint(contextPlugin, epName) ?: continue
       if (!contextEp.isDynamic) {
-        return "Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName"
+        return getNonDynamicUnloadError(null)
       }
       continue@epLoop
     }
@@ -1220,18 +1222,6 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
     return "Plugin ${descriptor.id} is not unload-safe because of unresolved extension $epName"
   }
   return null
-}
-
-private fun getNonDynamicUnloadError(epName: String,
-                                     baseDescriptor: IdeaPluginDescriptorImpl?,
-                                     descriptor: IdeaPluginDescriptorImpl,
-                                     optionalDependencyPluginId: PluginId?): String {
-  if (optionalDependencyPluginId != null) {
-    return "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $optionalDependencyPluginId that optionally depends on it"
-  }
-  else {
-    return "Plugin ${descriptor.id} is not unload-safe because of extension to non-dynamic EP $epName"
-  }
 }
 
 private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointDescriptor? {
