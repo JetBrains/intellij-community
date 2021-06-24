@@ -240,7 +240,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                                 val ref = extractReference(it) ?: return@collectDescendantsOfType false
                                 refs.add(ref)
                                 true
-                            }.takeIf { it.isNotEmpty() } ?: return@runReadAction
+                            }.ifEmpty { return@runReadAction }
 
                             // resolve all references at once
                             element.containingFile.safeAs<KtFile>()?.forceResolveReferences(elements)
