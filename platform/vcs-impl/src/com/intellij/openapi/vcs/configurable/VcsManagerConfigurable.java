@@ -103,7 +103,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     List<Configurable> result = new ArrayList<>();
 
     result.add(new VcsGeneralSettingsConfigurable(myProject));
-    result.add(new VcsBackgroundOperationsConfigurable(myProject));
     boolean ignoreSettingsAvailable = Registry.is("vcs.ignorefile.generation", true);
     if (!myProject.isDefault() && ignoreSettingsAvailable) {
       result.add(new IgnoredSettingsPanel(myProject));

@@ -294,7 +294,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
                    final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
                    final ActionInfo actionInfo,
                    final @NlsContexts.ProgressTitle String actionName) {
-      super(project, actionName, true, VcsConfiguration.getInstance(project).getUpdateOption());
+      super(project, actionName, true);
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;
