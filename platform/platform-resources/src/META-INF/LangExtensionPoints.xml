@@ -423,6 +423,8 @@
       <with attribute="builderClass" implements="com.intellij.ide.util.projectWizard.ModuleBuilder"/>
     </extensionPoint>
 
+    <extensionPoint name="moduleNameGenerator" interface="com.intellij.ide.util.projectWizard.ModuleNameGenerator" dynamic="true"/>
+
     <extensionPoint name="projectTemplateParameterFactory" interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory" dynamic="true"/>
     <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor" dynamic="true"/>
 

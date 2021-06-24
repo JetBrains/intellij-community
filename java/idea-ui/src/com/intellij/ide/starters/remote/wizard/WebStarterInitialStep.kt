@@ -181,6 +181,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
     progressIcon.toolTipText = JavaStartersBundle.message("message.state.connecting.and.retrieving.options")
 
+    val nameGenerator = StarterModuleBuilder.getNameGenerator()
+
     return panel {
       row {
         cell(isFullWidth = true) {
@@ -197,6 +199,12 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
+
+        if (nameGenerator != null) {
+          component(nameGenerator.getButton {
+            entityNameProperty.set(it)
+          }).constraints(pushX)
+        }
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.location.label")) {
