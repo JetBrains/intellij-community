@@ -276,6 +276,31 @@ internal class GitVcsPanel(private val project: Project) :
     }
   }
 
+  private fun LayoutBuilder.protectedBranchesRow() {
+    row {
+      cell {
+        label(message("settings.protected.branched"))
+        val sharedSettings = gitSharedSettings(project)
+        val protectedBranchesField =
+          ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+        if (sharedSettings.isSynchronizeBranchProtectionRules) {
+          protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
+        }
+        protectedBranchesField(growX)
+          .withBinding<List<String>>(
+            { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
+            { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
+            PropertyBinding(
+              { sharedSettings.forcePushProhibitedPatterns },
+              { sharedSettings.forcePushProhibitedPatterns = it })
+          )
+      }
+      row {
+        checkBox(synchronizeBranchProtectionRules(project))
+      }
+    }
+  }
+
   override fun getId() = "vcs.${GitVcs.NAME}"
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
@@ -336,28 +361,7 @@ internal class GitVcsPanel(private val project: Project) :
           .enableIf(previewPushOnCommitAndPush.selected)
       }
     }
-    row {
-      cell {
-        label(message("settings.protected.branched"))
-        val sharedSettings = gitSharedSettings(project)
-        val protectedBranchesField =
-          ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
-        if (sharedSettings.isSynchronizeBranchProtectionRules) {
-          protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
-        }
-        protectedBranchesField(growX)
-          .withBinding<List<String>>(
-            { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
-            { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
-            PropertyBinding(
-              { sharedSettings.forcePushProhibitedPatterns },
-              { sharedSettings.forcePushProhibitedPatterns = it })
-          )
-      }
-      row {
-        checkBox(synchronizeBranchProtectionRules(project))
-      }
-    }
+    protectedBranchesRow()
     row {
       checkBox(cdOverrideCredentialHelper)
     }
