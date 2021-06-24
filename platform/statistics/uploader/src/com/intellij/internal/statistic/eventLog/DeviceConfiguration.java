@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class DeviceConfiguration {
+public class DeviceConfiguration implements DeviceConfigurationHolder {
   private final String myDeviceId;
   private final int myBucket;
   private final MachineId myMachineId;
@@ -16,14 +16,17 @@ public class DeviceConfiguration {
     myMachineId = machineId;
   }
 
+  @Override
   public String getDeviceId() {
     return myDeviceId;
   }
 
+  @Override
   public int getBucket() {
     return myBucket;
   }
 
+  @Override
   @NotNull
   public MachineId getMachineId() {
     return myMachineId;

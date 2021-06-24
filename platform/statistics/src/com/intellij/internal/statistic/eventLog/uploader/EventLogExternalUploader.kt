@@ -68,10 +68,9 @@ object EventLogExternalUploader {
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
     val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
-    val device = DeviceConfiguration(config.deviceId, config.bucket, config.machineId)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
-      val command = prepareUploadCommand(device, recorder, application)
+      val command = prepareUploadCommand(config, recorder, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
       Runtime.getRuntime().exec(command)
       LOG.info("Started external process for uploading event log")
@@ -82,7 +81,7 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun prepareUploadCommand(device: DeviceConfiguration,
+  private fun prepareUploadCommand(device: EventLogRecorderConfiguration,
                                    recorder: EventLogRecorderConfig,
                                    applicationInfo: EventLogApplicationInfo): Array<out String> {
     val logFiles = logsToSend(recorder)

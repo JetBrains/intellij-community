@@ -61,7 +61,7 @@ class EventLogConfiguration {
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
 
   @Deprecated("Use bucket from configuration created with getOrCreate method")
-  val bucket: Int = defaultConfiguration.bucket
+  val bucket: Int by lazy { defaultConfiguration.bucket }
 
   @Deprecated("Call method on configuration created with getOrCreate method")
   fun anonymize(data: String): String {
@@ -107,18 +107,20 @@ class EventLogConfiguration {
 }
 
 class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
-                                                         private val eventLogConfiguration: EventLogConfiguration) {
+                                                         private val eventLogConfiguration: EventLogConfiguration) : DeviceConfigurationHolder {
   val sessionId: String = generateSessionId()
 
-  val deviceId: String = getOrGenerateDeviceId()
-  val bucket: Int = deviceId.asBucket()
+  private val _deviceId: String by lazy { getOrGenerateDeviceId() }
+  override fun getDeviceId(): String = _deviceId
+
+  private val _bucket: Int by lazy { _deviceId.asBucket() }
+  override fun getBucket(): Int = _bucket
 
   private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = ConcurrentHashMap<String, String>()
   private val machineIdReference: AtomicLazyValue<MachineId>
 
-  val machineId: MachineId
-    get() = machineIdReference.getValue()
+  override fun getMachineId(): MachineId = machineIdReference.getValue()
 
   init {
     val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
