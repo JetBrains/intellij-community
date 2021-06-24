@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.build.events.BuildEventsNls
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 class RunToolbarExtraSlotsAction: AnAction(), CustomComponentAction {

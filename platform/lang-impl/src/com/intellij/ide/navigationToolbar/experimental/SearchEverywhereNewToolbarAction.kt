@@ -83,7 +83,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
       override fun actionPerformed(e: AnActionEvent) {
         super.actionPerformed(AnActionEvent(
-          e.inputEvent, e.dataContext, ActionPlaces.NEW_TOOLBAR, templatePresentation,
+          e.inputEvent, e.dataContext, ActionPlaces.RUN_TOOLBAR, templatePresentation,
           ActionManager.getInstance(), 0))
       }
 

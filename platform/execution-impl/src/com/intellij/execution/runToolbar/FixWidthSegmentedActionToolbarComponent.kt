@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
-import com.intellij.execution.stateWidget.ExecutorRunToolbarAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
@@ -25,7 +23,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
 
     val controlButtonsPrefWidth = ((0 until componentCount).map {
       getComponent(it)
-    }.firstOrNull { it is ActionButton }?.preferredSize?.height ?: 0) * StateWidgetProcess.ACTIVE_STATE_BUTTONS_COUNT
+    }.firstOrNull { it is ActionButton }?.preferredSize?.height ?: 0) * RunToolbarProcess.ACTIVE_STATE_BUTTONS_COUNT
     val executorButtonsPrefWidth = (0 until componentCount).mapNotNull {
       val actionComponent = getComponent(it) as JComponent
       val anAction = actionComponent.getClientProperty(RUN_TOOLBAR_COMPONENT_ACTION)

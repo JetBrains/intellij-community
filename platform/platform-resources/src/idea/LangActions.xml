@@ -639,7 +639,7 @@
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
-        <action id="RunToolbarWidgetAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarWidgetAction"/>
+        <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
@@ -649,26 +649,26 @@
     </group>
 
     <group id="RunToolbarActionsGroup" popup="false">
-      <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarProcessStartedAction"/>
-      <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarRunConfigurationsAction"/>
-      <action id="RunToolbarRerunAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarRerunAction"/>
+      <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarProcessStartedAction"/>
+      <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarRunConfigurationsAction"/>
+      <action id="RunToolbarRerunAction" class="com.intellij.execution.runToolbar.RunToolbarRerunAction"/>
       <group id="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessActionGroup"/>
-      <action id="RunToolbarStopAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarStopAction"/>
-      <group id="RunWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.segmentedRunDebugWidget.RunWidgetMoreActionGroup"/>
+      <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>
+      <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
     </group>
 
     <group id="RunToolbarMainActionsGroup" popup="false">
-      <action id="RunToolbarExtraSlotsAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarExtraSlotsAction" icon="AllIcons.Toolbar.AddSlot"/>
+      <action id="RunToolbarExtraSlotsAction" class="com.intellij.execution.runToolbar.RunToolbarExtraSlotsAction" icon="AllIcons.Toolbar.AddSlot"/>
       <reference id="RunToolbarProcessStartedAction"/>
-      <action id="RunToolbarMainMultipleProcessStartedAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarMainMultipleProcessStartedAction"/>
+      <action id="RunToolbarMainMultipleProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleProcessStartedAction"/>
       <reference id="RunToolbarRunConfigurationsAction"/>
       <reference id="RunToolbarRerunAction"/>
       <reference id="RunToolbarAdditionalProcessActions"/>
       <reference id="RunToolbarProcessActionGroup"/>
       <reference id="RunToolbarStopAction"/>
-      <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.segmentedRunDebugWidget.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
-      <reference id="RunWidgetMoreActionGroup"/>
+      <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
+      <reference id="RunToolbarMoreActionGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">

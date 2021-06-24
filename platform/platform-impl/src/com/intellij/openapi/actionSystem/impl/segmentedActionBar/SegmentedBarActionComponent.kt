@@ -2,19 +2,14 @@
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
-import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics2D
+import java.awt.Paint
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.border.Border
 
-open class SegmentedBarActionComponent(private val place: String = ActionPlaces.NEW_TOOLBAR) : AnAction(), CustomComponentAction, DumbAware {
+open class SegmentedBarActionComponent(private val place: String = ActionPlaces.RUN_TOOLBAR) : AnAction(), CustomComponentAction, DumbAware {
   companion object {
     @Deprecated("Use {@link SegmentedActionToolbarComponent#Companion#isCustomBar(Component)}",
                 ReplaceWith("SegmentedActionToolbarComponent.isCustomBar(component)"))

@@ -1,18 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import javax.swing.SwingUtilities
 
-class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.NEW_TOOLBAR) {
+class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
   companion object {
     const val runDebugKey = "ide.new.navbar"
 

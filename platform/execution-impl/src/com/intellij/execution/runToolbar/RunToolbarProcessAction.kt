@@ -1,17 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionTargetManager
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
-import com.intellij.execution.stateWidget.ExecutorRunToolbarAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 
-open class RunToolbarProcessAction(override val process: StateWidgetProcess, val executor: Executor) : ExecutorRegistryImpl.ExecutorAction(executor), ExecutorRunToolbarAction, RunToolbarAction, DumbAware {
+open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorRegistryImpl.ExecutorAction(executor), ExecutorRunToolbarAction, RunToolbarAction, DumbAware {
 
   override fun displayTextInToolbar(): Boolean {
     return true
@@ -63,7 +61,7 @@ open class RunToolbarProcessAction(override val process: StateWidgetProcess, val
   }
 }
 
-class RunToolbarGroupProcessAction(process: StateWidgetProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
+class RunToolbarGroupProcessAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled

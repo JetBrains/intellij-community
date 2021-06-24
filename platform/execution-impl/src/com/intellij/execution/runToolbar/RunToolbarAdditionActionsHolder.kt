@@ -1,20 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.stateWidget
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.runToolbar
 
-import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarProcessAction
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-internal class RunToolbarAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: StateWidgetProcess) {
+internal class RunToolbarAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: RunToolbarProcess) {
   companion object {
     @JvmStatic
-    fun getAdditionActionId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionAction"
+    fun getAdditionActionId(process: RunToolbarProcess) = "${process.moreActionSubGroupName}_additionAction"
 
     @JvmStatic
-    fun getAdditionActionChooserGroupId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionActionChooserGroupId"
+    fun getAdditionActionChooserGroupId(process: RunToolbarProcess) = "${process.moreActionSubGroupName}_additionActionChooserGroupId"
   }
 
   private var selectedAction: AnAction? = null

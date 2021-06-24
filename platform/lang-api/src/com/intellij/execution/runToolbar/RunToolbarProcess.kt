@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.stateExecutionWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
@@ -8,10 +8,9 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 
-interface StateWidgetProcess {
+interface RunToolbarProcess {
   companion object {
     private const val runDebugKey = "ide.new.navbar"
-    private const val runDebugRerunAvailable = "ide.new.navbar.rerun.available"
 
     const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
     const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
@@ -23,17 +22,13 @@ interface StateWidgetProcess {
       return Registry.get(runDebugKey).asBoolean()
     }
 
-    fun isRerunAvailable(): Boolean {
-      return Registry.get(runDebugRerunAvailable).asBoolean()
-    }
-
-    val EP_NAME: ExtensionPointName<StateWidgetProcess> = ExtensionPointName("com.intellij.stateWidgetProcess")
+    val EP_NAME: ExtensionPointName<RunToolbarProcess> = ExtensionPointName("com.intellij.runToolbarProcess")
 
     @JvmStatic
-    fun getProcesses(): List<StateWidgetProcess> = EP_NAME.extensionList
+    fun getProcesses(): List<RunToolbarProcess> = EP_NAME.extensionList
 
     @JvmStatic
-    fun getProcessesByExecutorId(executorId: String): List<StateWidgetProcess> {
+    fun getProcessesByExecutorId(executorId: String): List<RunToolbarProcess> {
       return getProcesses().filter { it.executorId == executorId }.toList()
     }
 
@@ -43,7 +38,6 @@ interface StateWidgetProcess {
   val ID: String
   val executorId: String
   val name: @Nls String
-
 
   val actionId: String
   val moreActionGroupName: String

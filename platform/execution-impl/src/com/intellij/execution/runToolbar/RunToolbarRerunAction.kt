@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.FakeRerunAction
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -17,7 +16,6 @@ open class RunToolbarRerunAction() : FakeRerunAction(), RunToolbarAction, DumbAw
     event.presentation.isEnabledAndVisible =
       event.presentation.isEnabled
       && event.presentation.isVisible
-      && StateWidgetProcess.isRerunAvailable()
       && getDescriptor(event) != null
       && event.presentation.isVisible
       && if(event.isItRunToolbarMainSlot() && !event.isOpened()) event.project?.let {

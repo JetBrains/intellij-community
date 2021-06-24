@@ -1,15 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
-import com.intellij.CommonBundle
-import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.event.MouseAdapter
@@ -125,7 +121,7 @@ class RunToolbarExtraSlotPane(val project: Project) {
 
   private fun createComponent(): SlotComponent {
     val group = DefaultActionGroup()
-    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.NEW_TOOLBAR, group)
+    val bar = FixWidthSegmentedActionToolbarComponent(ActionPlaces.RUN_TOOLBAR, group)
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot))
 
     bar.targetComponent = bar

@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
@@ -80,14 +79,14 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RunToolbarAction {
 
       override fun presentationChanged(event: PropertyChangeEvent?) {
         isVisible = presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
-          environment.getStateWidgetProcess()?.let {
+          environment.getRunToolbarProcess()?.let {
             updatePresentation(it)
             true
           }
         } ?: false
       }
 
-      private fun updatePresentation(it: StateWidgetProcess) {
+      private fun updatePresentation(it: RunToolbarProcess) {
         putClientProperty("JButton.backgroundColor", it.pillColor)
         setting.text = presentation.text
         presentation.icon?.let {

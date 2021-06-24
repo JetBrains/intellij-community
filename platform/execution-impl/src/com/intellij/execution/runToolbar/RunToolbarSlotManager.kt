@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionBundle
@@ -7,7 +7,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -171,7 +170,7 @@ class RunToolbarSlotManager(val project: Project) {
 }
 
 class ActiveProcesses {
-  val processes = mutableMapOf<StateWidgetProcess, MutableList<ExecutionEnvironment>>()
+  val processes = mutableMapOf<RunToolbarProcess, MutableList<ExecutionEnvironment>>()
   private var activeCount = 0
 
   fun getEnvironmentCount(): Int = activeCount
@@ -195,7 +194,7 @@ class ActiveProcesses {
   internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
     processes.clear()
     slotsData.values.mapNotNull { it.environment }.forEach{ environment ->
-      environment.getStateWidgetProcess()?.let {
+      environment.getRunToolbarProcess()?.let {
         processes.computeIfAbsent(it, Function { mutableListOf() }).add(environment)
       }
     }

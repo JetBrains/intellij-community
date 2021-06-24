@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.execution.KillableProcess
 import com.intellij.execution.impl.ExecutionManagerImpl
@@ -23,7 +23,7 @@ class RunToolbarStopAction() : AnAction(AllIcons.Actions.Suspend), DumbAware, Ru
          && !e.isOpened()
       ) return@let false
 
-      e.presentation.icon = e.environment()?.getStateWidgetProcess()?.getStopIcon() ?: templatePresentation.icon
+      e.presentation.icon = e.environment()?.getRunToolbarProcess()?.getStopIcon() ?: templatePresentation.icon
       it.contentToReuse?.let {
         canBeStopped(it)
       }

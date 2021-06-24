@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 
@@ -58,13 +57,13 @@ internal fun AnActionEvent.id(): String? {
   return runToolbarData()?.id
 }
 
-internal fun ExecutionEnvironment.getStateWidgetProcess(): StateWidgetProcess? {
+internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
   return ExecutorGroup.getGroupIfProxy(this.executor)?.let { executorGroup ->
-    StateWidgetProcess.getProcesses().firstOrNull{
+    RunToolbarProcess.getProcesses().firstOrNull{
       it.executorId == executorGroup.id
     }
   } ?: run {
-    StateWidgetProcess.getProcesses().firstOrNull{
+    RunToolbarProcess.getProcesses().firstOrNull{
       it.executorId == this.executor.id
     }
   }

@@ -10,7 +10,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.NEW_TOOLBAR) {
+class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
   init {
     ActionManager.getInstance().getAction("SegmentedVcsActionsBarGroup")?.let {
       if(it is ActionGroup) {

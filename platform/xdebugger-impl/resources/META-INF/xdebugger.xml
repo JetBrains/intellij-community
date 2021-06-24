@@ -50,7 +50,7 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
 
-    <stateWidgetProcess implementation="com.intellij.xdebugger.impl.stateWidget.StateWidgetDebugProcess"/>
+    <runToolbarProcess implementation="com.intellij.xdebugger.impl.runToolbar.RunToolbarDebugProcess"/>
 
     <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
 
@@ -97,12 +97,12 @@
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunWidgetMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMoreActionGroup"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">
-      <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.stateWidget.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
-      <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.stateWidget.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </group>
 

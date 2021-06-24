@@ -61,7 +61,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String , vararg children: AnAction) {
     for (c in children) {
-      val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
+      val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.RUN_TOOLBAR,
                                                                         if (c is ActionGroup) c else DefaultActionGroup(c),
                                                                         true) as ActionToolbarImpl
       toolbar.targetComponent = panel

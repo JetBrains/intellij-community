@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.segmentedRunDebugWidget
+package com.intellij.execution.runToolbar
 
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
@@ -14,7 +13,7 @@ import javax.swing.JComponent
 
 class RunToolbarMainMultipleProcessStartedAction() : ComboBoxAction(), RunToolbarAction {
   companion object {
-    private val PROP_ACTIVE_PROCESS = Key<StateWidgetProcess>("ACTIVE_PROCESS")
+    private val PROP_ACTIVE_PROCESS = Key<RunToolbarProcess>("ACTIVE_PROCESS")
   }
 
   override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Fixed
