@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class EliminateWhenSubjectIntention :
-    SelfTargetingIntention<KtWhenExpression>(KtWhenExpression::class.java, KotlinBundle.lazyMessage("eliminate.argument.of.when")),
+    SelfTargetingIntention<KtWhenExpression>(KtWhenExpression::class.java, KotlinBundle.lazyMessage("inline.when.argument")),
     LowPriorityAction {
     override fun isApplicableTo(element: KtWhenExpression, caretOffset: Int): Boolean {
         if (element.subjectExpression !is KtNameReferenceExpression) return false
