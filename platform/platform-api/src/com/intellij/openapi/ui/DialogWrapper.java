@@ -1785,6 +1785,10 @@ public abstract class DialogWrapper {
     };
   }
 
+  protected @NotNull Map<Action, JButton> getButtonMap() {
+    return myButtonMap;
+  }
+
   private void focusButton(boolean next) {
     List<JButton> buttons = new ArrayList<>(myButtonMap.values());
     int focusedIndex = ContainerUtil.indexOf(buttons, (Condition<? super Component>)Component::hasFocus);

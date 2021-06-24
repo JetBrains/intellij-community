@@ -395,7 +395,11 @@ private class AlertDialog(project: Project?,
     }
 
     if (SystemInfoRt.isMac) {
+      val buttonMap = buttonMap
+      buttonMap.clear()
+
       for ((index, button) in myButtons.withIndex()) {
+        buttonMap[button.action] = button
         button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
         val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
         if (button.action.getValue(DEFAULT_ACTION) != null) {
