@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -89,7 +89,7 @@ public class ListPluginComponent extends JPanel {
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
-    myIsAllowed = PluginManagerConfigurableForOrg.getInstance().isPluginAllowed(!marketplace, plugin);
+    myIsAllowed = PluginManagerFilters.getInstance().isPluginAllowed(!marketplace, plugin);
     pluginModel.addComponent(this);
 
     setOpaque(true);

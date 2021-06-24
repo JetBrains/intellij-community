@@ -8,7 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -525,7 +524,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void showPluginImpl(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     myPlugin = pluginDescriptor;
-    PluginManagerConfigurableForOrg org = PluginManagerConfigurableForOrg.getInstance();
+    PluginManagerFilters org = PluginManagerFilters.getInstance();
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();

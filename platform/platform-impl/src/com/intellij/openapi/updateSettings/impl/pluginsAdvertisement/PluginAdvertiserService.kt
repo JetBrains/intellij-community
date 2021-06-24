@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg
+import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -67,7 +67,7 @@ open class PluginAdvertiserService {
       }
     }
 
-    val org = PluginManagerConfigurableForOrg.getInstance()
+    val org = PluginManagerFilters.getInstance()
 
     //include disabled plugins
     ids.filter { (pluginId, _) ->

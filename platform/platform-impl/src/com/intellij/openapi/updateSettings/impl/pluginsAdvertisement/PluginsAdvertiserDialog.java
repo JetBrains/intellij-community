@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -94,7 +94,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       return false;
     }
 
-    var org = PluginManagerConfigurableForOrg.getInstance();
+    var org = PluginManagerFilters.getInstance();
     var notAllowedToInstallPlugins = nodes
       .stream()
       .filter(descriptor -> !org.allowInstallingPlugin(descriptor))

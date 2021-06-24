@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerConfigurableForOrg;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -236,7 +236,7 @@ public final class PluginInstallOperation {
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
-    if (!PluginManagerConfigurableForOrg.getInstance().allowInstallingPlugin(pluginNode)) {
+    if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginNode)) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
     }

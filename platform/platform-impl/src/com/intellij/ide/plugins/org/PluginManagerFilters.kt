@@ -13,10 +13,10 @@ import com.intellij.util.xmlb.annotations.XCollection
  * restrictions in the UI for the plugin management.
  */
 @Service(Service.Level.APP)
-class PluginManagerConfigurableForOrg {
+class PluginManagerFilters {
   companion object {
     @JvmStatic
-    fun getInstance(): PluginManagerConfigurableForOrg = service()
+    fun getInstance(): PluginManagerFilters = service()
   }
 
   private val state
