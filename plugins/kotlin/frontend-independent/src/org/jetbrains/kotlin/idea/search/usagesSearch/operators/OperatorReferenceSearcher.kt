@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forc
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinRequestResultProcessor
+import org.jetbrains.kotlin.idea.search.isPotentiallyOperator
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor.Companion.logPresentation
@@ -119,8 +120,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
             if (!options.searchForOperatorConventions) return null
 
             // Java has no operator modifier
-            val operator = declaration !is KtElement ||
-                declaration.safeAs<KtModifierListOwner>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
+            val operator = declaration !is KtElement || declaration.isPotentiallyOperator()
 
             val binaryOp = OperatorConventions.BINARY_OPERATION_NAMES.inverse()[name]
             val assignmentOp = OperatorConventions.ASSIGNMENT_OPERATIONS.inverse()[name]
@@ -148,7 +148,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                 operator && name == OperatorNameConventions.SET ->
                     IndexingOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options, isSet = true)
 
-                name == OperatorNameConventions.CONTAINS ->
+                operator && name == OperatorNameConventions.CONTAINS ->
                     ContainsOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
                 name == OperatorNameConventions.EQUALS ->
@@ -161,7 +161,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                         options
                     )
 
-                name == OperatorNameConventions.COMPARE_TO ->
+                operator && name == OperatorNameConventions.COMPARE_TO ->
                     BinaryOperatorReferenceSearcher(
                         declaration,
                         listOf(KtTokens.LT, KtTokens.GT, KtTokens.LTEQ, KtTokens.GTEQ),
@@ -171,10 +171,10 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                         options
                     )
 
-                name == OperatorNameConventions.ITERATOR ->
+                operator && name == OperatorNameConventions.ITERATOR ->
                     IteratorOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
-                name == OperatorNameConventions.GET_VALUE || name == OperatorNameConventions.SET_VALUE || name == OperatorNameConventions.PROVIDE_DELEGATE ->
+                operator && (name == OperatorNameConventions.GET_VALUE || name == OperatorNameConventions.SET_VALUE || name == OperatorNameConventions.PROVIDE_DELEGATE) ->
                     PropertyDelegationOperatorReferenceSearcher(declaration, searchScope, consumer, optimizer, options)
 
                 else -> null
