@@ -386,7 +386,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected Map<VirtualFile, T> getNewMappings() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myModel == null) {
-      throw new AssertionError("createComponent() was not called first");
+      throw new AssertionError("createComponent() was not called first on " + getClass().getName());
     }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
