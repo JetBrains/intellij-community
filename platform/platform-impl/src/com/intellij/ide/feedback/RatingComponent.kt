@@ -15,9 +15,10 @@ class RatingComponent : JComponent() {
   private val myIconCount = 5
   private val myActiveIcon = AllIcons.Nodes.Favorite
   private val myInactiveIcon = AllIcons.Nodes.NotFavoriteOnHover
-  private var myRating = 0
   private var myHoverRating = 0
   private var myMouseInside = false
+
+  var rating = 0
 
   init {
     addMouseListener(object : MouseAdapter() {
@@ -32,22 +33,26 @@ class RatingComponent : JComponent() {
       }
 
       override fun mouseClicked(e: MouseEvent) {
-        myRating = ratingFromPoint(e)
+        val oldRating = rating
+        rating = ratingFromPoint(e)
+        if (rating != oldRating) {
+          firePropertyChange("rating", oldRating, rating)
+        }
       }
     })
 
     addMouseMotionListener(object : MouseMotionAdapter() {
-     override fun mouseMoved(e: MouseEvent) {
-       val newHoverRating = ratingFromPoint(e)
-       if (newHoverRating != myHoverRating) {
-         myHoverRating = newHoverRating
-         repaint()
-       }
-     }
-   })
+      override fun mouseMoved(e: MouseEvent) {
+        val newHoverRating = ratingFromPoint(e)
+        if (newHoverRating != myHoverRating) {
+          myHoverRating = newHoverRating
+          repaint()
+        }
+      }
+    })
   }
 
-  protected fun ratingFromPoint(e: MouseEvent) = e.x / (myIconSize + myIconGap) + 1
+  private fun ratingFromPoint(e: MouseEvent) = (e.x / (myIconSize + myIconGap) + 1).coerceAtMost(myIconCount)
 
   override fun getPreferredSize(): Dimension {
     return Dimension(myIconCount * myIconSize + myIconGap * (myIconSize - 1), myIconSize)
@@ -58,7 +63,7 @@ class RatingComponent : JComponent() {
   }
 
   override fun paintComponent(g: Graphics) {
-    val ratingToShow = if (myMouseInside) myHoverRating else myRating
+    val ratingToShow = if (myMouseInside) myHoverRating else rating
     for (i in 0 until myIconCount) {
       val icon = if (i < ratingToShow) myActiveIcon else myInactiveIcon
       icon.paintIcon(this, g, i * myIconSize + (i - 1) * myIconGap, 0)
