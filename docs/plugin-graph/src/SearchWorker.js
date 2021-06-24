@@ -15,7 +15,7 @@ const index = new Document({
 expose({
   add(data) {
     for (const document of data) {
-      index.addFixed(document.id, document)
+      index.add(document.id, document)
     }
   },
   search(query) {
@@ -29,41 +29,3 @@ expose({
     return ids
   }
 })
-
-// fix adding null fields
-Document.prototype.addFixed = function (id, content) {
-  for (let i = 0, tree, field; i < this.field.length; i++) {
-    field = this.field[i]
-    tree = this.tree[i]
-    if (is_string(tree)) {
-      tree = [tree]
-    }
-
-    add_index(content, tree, this.marker, 0, this.index[field], id, tree[0], false)
-  }
-}
-
-function add_index(obj, tree, marker, pos, index, id, key, _append) {
-  obj = obj[key]
-  if (obj == null) {
-    return
-  }
-
-  // reached target field
-  if (pos === (tree.length - 1)) {
-    // handle target value
-    index.add(id, obj, _append, /* skip_update: */ true)
-  }
-  else if (obj) {
-    if (Array.isArray(obj)) {
-      for (let i = 0; i < obj.length; i++) {
-        // do not increase index, an array is not a field
-        add_index(obj, tree, marker, pos, index, id, i, _append)
-      }
-    }
-    else {
-      key = tree[++pos]
-      add_index(obj, tree, marker, pos, index, id, key, _append)
-    }
-  }
-}

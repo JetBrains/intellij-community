@@ -16,7 +16,7 @@
     "cytoscape-expand-collapse": "^4.1.0",
     "cytoscape-fcose": "^2.0.0",
     "cytoscape-popper": "^2.0.0",
-    "flexsearch": "^0.7.1",
+    "flexsearch": "^0.7.11",
     "p-debounce": "^4.0.0",
     "tippy.js": "^6.3.1"
   },

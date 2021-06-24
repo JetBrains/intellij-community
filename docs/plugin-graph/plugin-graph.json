@@ -1161,6 +1161,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "mi",
+    "name": "intellij.javaee.ejb.impl/jpa",
+    "n": "i.javaee.ejb.impl/jpa",
+    "package": "com.intellij.javaee.ejb.ql",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.jpa.xml",
+    "parent": "cXe",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cX0",
     "n": "com.jetbrains.restWebServices"
   }
@@ -3735,6 +3747,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Xe_mi",
+    "source": "Xe",
+    "target": "mi",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "X0_g2",
     "source": "X0",
     "target": "g2",
@@ -4431,6 +4451,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "e7_7x",
+    "source": "e7",
+    "target": "7x",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "HS_S9",
     "source": "HS",
     "target": "S9",
@@ -5002,6 +5030,14 @@
     "id": "pA_Bv",
     "source": "pA",
     "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mi_oF",
+    "source": "mi",
+    "target": "oF",
     "type": 0
   }
 }, {
