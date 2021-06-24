@@ -1,6 +1,7 @@
 <html>
 <body>
 <p>Reports redundant <code>asSequence()</code> call that can never have a positive performance effect.</p>
+<p><code>asSequence</code> can speed up collection processing that includes multiple operations by performing them lazily.</p>
 <p><b>Example:</b></p>
 <pre><code>
 fun test(list: List&lt;String&gt;) {

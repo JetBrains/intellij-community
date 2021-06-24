@@ -1,9 +1,9 @@
 <html>
 <body>
-<p>Reports recursive <code>equals</code> calls.</p>
+    <p>Reports recursive <code>equals</code>(<code>==</code>) calls.</p>
 <p>
-    <code>==</code> can be mistakenly interpreted as reference comparison by Java developers.
-    So the inspection reports such cases and suggests to replace<code>==</code> with <code>===</code>.
+    <code>==</code> (Kotlin's structural comparison) can be mistakenly interpreted as reference comparison by Java developers.
+    So the inspection reports such cases and suggests to replace <code>==</code> with <code>===</code> (Kotlin's referrence comparison).
 </p>
 <p><b>Example:</b></p>
 <pre><code>
