@@ -36,8 +36,6 @@ abstract class KotlinVersionProviderService : WizardService {
         "dev" in version.toString().toLowerCase() -> KotlinVersionKind.DEV
         "m" in version.toString().toLowerCase() -> KotlinVersionKind.M
         else -> KotlinVersionKind.STABLE
-
-
     }
 
     companion object {

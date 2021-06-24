@@ -12,6 +12,7 @@ object Services {
         BuildSystemAvailabilityWizardServiceImpl(),
         DummyFileFormattingService(),
         CoreKotlinVersionProviderService(),
+        CoreJvmTargetVersionsProviderService(),
         RunConfigurationsServiceImpl(),
         SettingSavingWizardServiceImpl(),
         VelocityTemplateEngineServiceImpl()

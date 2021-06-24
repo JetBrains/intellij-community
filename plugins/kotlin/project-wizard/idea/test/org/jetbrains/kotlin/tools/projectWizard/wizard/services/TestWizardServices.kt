@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.services
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.kotlin.tools.projectWizard.cli.TestWizardService
+import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaJvmTargetVersionProviderService
 
 object TestWizardServices {
     fun createProjectDependent(project: Project): List<TestWizardService> = listOf(
@@ -13,6 +14,7 @@ object TestWizardServices {
 
     val PROJECT_INDEPENDENT = listOf(
         FormattingTestWizardService(),
-        IdeaKotlinVersionProviderService()
+        IdeaKotlinVersionProviderService(),
+        IdeaJvmTargetVersionProviderService()
     )
 }

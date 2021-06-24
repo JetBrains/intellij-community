@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.service.JvmTargetVersionsProviderService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
@@ -13,10 +14,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIRsConverter
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrsState
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
@@ -29,6 +27,13 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
         ) {
             description = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.description")
             defaultValue = value(TargetJvmVersion.JVM_1_8)
+            filter = { _, targetJvmVersion ->
+                // we need to make sure that kotlin compiler supports this target
+                val projectKind = KotlinPlugin.projectKind.settingValue
+                val service = service<JvmTargetVersionsProviderService>()
+                val jvmTargetVersions = service.listSupportedJvmTargetVersions(projectKind)
+                targetJvmVersion in jvmTargetVersions
+            }
         }
     }
 
@@ -39,13 +44,15 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
 }
 
 enum class TargetJvmVersion(@NonNls val value: String) : DisplayableSettingItem {
-    JVM_1_6("1.6"),
     JVM_1_8("1.8"),
     JVM_9("9"),
     JVM_10("10"),
     JVM_11("11"),
     JVM_12("12"),
-    JVM_13("13");
+    JVM_13("13"),
+    JVM_14("14"),
+    JVM_15("15"),
+    JVM_16("16");
 
     override val text: String
         get() = value

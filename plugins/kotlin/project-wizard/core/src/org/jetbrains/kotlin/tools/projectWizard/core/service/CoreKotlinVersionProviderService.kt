@@ -3,13 +3,18 @@ package org.jetbrains.kotlin.tools.projectWizard.core.service
 
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
 class CoreKotlinVersionProviderService : KotlinVersionProviderService(), IdeaIndependentWizardService {
-    override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
-        val version = when (projectKind) {
+    companion object {
+        internal fun getKotlinVersion(projectKind: ProjectKind): Version = when (projectKind) {
             ProjectKind.COMPOSE -> Versions.KOTLIN_VERSION_FOR_COMPOSE
             else -> Versions.KOTLIN
         }
+    }
+
+    override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
+        val version = CoreKotlinVersionProviderService.getKotlinVersion(projectKind)
         return kotlinVersionWithDefaultValues(version)
     }
 }

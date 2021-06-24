@@ -25,12 +25,15 @@ private const val SNAPSHOT_TAG = "snapshot"
 class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         if (projectKind == ProjectKind.COMPOSE) {
-            return kotlinVersionWithDefaultValues(Versions.KOTLIN_VERSION_FOR_COMPOSE)
+            val version = Versions.KOTLIN_VERSION_FOR_COMPOSE
+            return kotlinVersionWithDefaultValues(version)
         }
         val version = getPatchedKotlinVersion()
             ?: getKotlinVersionFromCompiler()
             ?: VersionsDownloader.downloadLatestEapOrStableKotlinVersion()
             ?: Versions.KOTLIN
+
+        val jvmTargetVersions = JvmTarget.values().map { it.description }.toSet()
         return kotlinVersionWithDefaultValues(version)
     }
 

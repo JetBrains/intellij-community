@@ -12,6 +12,7 @@ object IdeaServices {
         IdeaFileSystemWizardService(),
         IdeaBuildSystemAvailabilityWizardService(),
         IdeaKotlinVersionProviderService(),
+        IdeaJvmTargetVersionProviderService(),
         IdeaSettingSavingWizardService(),
         IdeaVelocityEngineTemplateService()
     )

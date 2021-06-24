@@ -53,13 +53,13 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val version by property(
             // todo do not hardcode kind & repository
             WizardKotlinVersion(
-                Versions.KOTLIN,
-                KotlinVersionKind.M,
-                Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
-                KotlinVersionProviderService.getBuildSystemPluginRepository(
-                    KotlinVersionKind.M,
-                    devRepository = Repositories.JETBRAINS_KOTLIN_DEV
-                )
+              Versions.KOTLIN,
+              KotlinVersionKind.M,
+              Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
+              KotlinVersionProviderService.getBuildSystemPluginRepository(
+                  KotlinVersionKind.M,
+                  devRepository = Repositories.JETBRAINS_KOTLIN_DEV
+              )
             )
         )
 
