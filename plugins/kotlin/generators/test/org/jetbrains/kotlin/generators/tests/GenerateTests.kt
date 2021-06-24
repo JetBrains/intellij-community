@@ -204,7 +204,7 @@ import org.jetbrains.uast.test.kotlin.*
 import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly
 import org.jetbrains.uast.test.comparasion.*
 
-fun main() {
+fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace())
 }
