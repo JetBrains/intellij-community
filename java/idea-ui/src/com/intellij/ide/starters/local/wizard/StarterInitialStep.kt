@@ -16,8 +16,8 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
 import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.ui.DialogPanel
@@ -116,12 +116,20 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
     updateStartersDependencies(starterPack)
 
+    val nameGenerator = StarterModuleBuilder.getNameGenerator()
+
     return panel {
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
+
+        if (nameGenerator != null) {
+          component(nameGenerator.getButton {
+            entityNameProperty.set(it)
+          }).constraints(pushX)
+        }
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.location.label")) {
