@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin
+package org.jetbrains.uast.kotlin.declarations
 
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -9,6 +9,8 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.kotlin.BaseKotlinSecondaryConstructorWithInitializersUMethod
+import org.jetbrains.uast.kotlin.lz
 
 class FirKotlinSecondaryConstructorWithInitializersUMethod(
     ktClass: KtClassOrObject?,
