@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin
+package org.jetbrains.uast.kotlin.declarations
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.BaseKotlinUMethod
+import org.jetbrains.uast.kotlin.getKotlinMemberOrigin
 
 class FirKotlinUMethod(
     psi: PsiMethod,
@@ -20,7 +22,7 @@ class FirKotlinUMethod(
         givenParent: UElement?
     ) : this(psi, getKotlinMemberOrigin(psi), givenParent)
 
-    override val uastParameters: List<UParameter> by lz { produceUastParameters(this, receiverTypeReference) }
+    override val uastParameters: List<UParameter> by org.jetbrains.uast.kotlin.lz { produceUastParameters(this, receiverTypeReference) }
 
     companion object {
         fun create(
