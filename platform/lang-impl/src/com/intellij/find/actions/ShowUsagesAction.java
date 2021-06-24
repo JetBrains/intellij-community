@@ -41,6 +41,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -84,6 +85,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -653,8 +655,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
-      setDimensionServiceKey(DIMENSION_SERVICE_KEY).
-      setItemChoosenCallback(itemChoseCallback);
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
     PropertiesComponent properties = PropertiesComponent.getInstance(project);
     boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
@@ -662,6 +663,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (addCodePreview) {
       contentSplitter = new OnePixelSplitter(true, .6f);
       contentSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+      contentSplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.DISTRIBUTE);
       contentSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
       builder.setContentSplitter(contentSplitter);
     }
@@ -786,6 +788,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       previewPanel.add(usagePreviewPanel.createComponent(), BorderLayout.CENTER);
       contentSplitter.setSecondComponent(previewPanel);
 
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
+          if (event.getSource() != table) return false;
+          itemChoseCallback.run();
+          return true;
+        }
+      }.installOn(table);
+
+      builder.setAutoselectOnMouseMove(false).setCloseOnEnter(false);
+
       Runnable updatePreviewRunnable = () -> {
         if (Disposer.isDisposed(popupRef.get())) return;
         int[] selectedRows = table.getSelectedRows();
@@ -829,6 +842,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
           previewUpdater.addRequest(updatePreviewRunnable, 50);
         }
       });
+    }
+    else {
+      builder.setAutoselectOnMouseMove(true).setItemChoosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
     popupRef.set((AbstractPopup)builder.createPopup());

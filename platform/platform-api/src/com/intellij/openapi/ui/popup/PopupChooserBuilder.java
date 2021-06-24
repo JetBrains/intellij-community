@@ -320,19 +320,21 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       myChooserComponent.autoSelect();
     }
 
-    myChooserComponent.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-          if (myCloseOnEnter) {
-            closePopup(e, true);
-          }
-          else {
-            myItemChosenRunnable.run();
+    if (myCloseOnEnter || myItemChosenRunnable != null) {
+      myChooserComponent.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
+            if (myCloseOnEnter) {
+              closePopup(e, true);
+            }
+            else {
+              myItemChosenRunnable.run();
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
     if (myCloseOnEnter) {
