@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.jps.model.java.impl
+package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -11,7 +11,7 @@ import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
-class JdkVendorDetectorTest {
+class JdkVariantDetectorTest {
   @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_OPEN_1_8_0_41 =
     """|JAVA_VERSION="1.8.0_41"
        |OS_NAME="Windows"
