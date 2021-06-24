@@ -446,7 +446,7 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int layou
                 [button setBordered:NO];
         }
     } @catch (NSException *ex) {
-        nstrace(@"WARNING: suppressed exception from _setButtonData (workaround for IDEA-272131)");
+        NSLog(@"WARNING: suppressed exception from _setButtonData (workaround for IDEA-272131)");
     }
 }
 
