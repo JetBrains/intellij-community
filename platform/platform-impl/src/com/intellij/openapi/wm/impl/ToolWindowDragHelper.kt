@@ -123,7 +123,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     myLastStripe = pane.getStripeFor(toolWindow.anchor)
     myInitialButton = pane.getStripeFor(toolWindow.anchor).getButtonFor(toolWindow.id)
     myInitialSize = toolWindow.getBoundsOnScreen(toolWindow.anchor, relativePoint.screenPoint).size
-    val dragOutImage = if (decorator != null) createDragImage(decorator) else null
+    val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createDragImage(decorator) else null
     val dragImage = if (myInitialButton != null) myInitialButton!!.createDragImage() else dragOutImage
     val point = relativePoint.getPoint(pane)
     val component = SwingUtilities.getDeepestComponentAt(pane, point.x, point.y)
@@ -375,6 +375,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     if (stripe == null && getToolWindow()!!.getBoundsOnScreen(myInitialAnchor!!, screenPoint).contains(screenPoint)) {
       stripe = pane.getStripeFor(myInitialAnchor!!)
     }
+    if (stripe?.anchor == TOP) return null
     return stripe
   }
 
