@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -71,7 +71,8 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
-      if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (place.parent !is GrMethodCall &&
+          (qualifierType is PsiArrayType || isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION))) {
         return qualifierType.processSpread(processor, state, place, true)
       }
     }
