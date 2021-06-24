@@ -53,20 +53,6 @@ private class PluginManagerConfigurableForOrgState : BaseState() {
    */
   @get:XCollection
   var denyRules by list<PluginManagerConfigurableForOrgStateRule>()
-
-  fun isAllowed(descriptor: IdeaPluginDescriptor) : Boolean {
-    for (denyRule in denyRules) {
-      if (denyRule.matches(descriptor)) return false
-    }
-
-    if (allowRules.isEmpty()) return true
-
-    for (allowRule in allowRules) {
-      if (allowRule.matches(descriptor)) return true
-    }
-
-    return false
-  }
 }
 
 @Tag("rule")
@@ -74,43 +60,58 @@ private class PluginManagerConfigurableForOrgStateRule : BaseState() {
   var pluginIdRegex by string()
   var vendorRegex by string()
   var versionRegex by string()
-  
+
   var versionFromInclusive by string()
   var versionToInclusive by string()
+}
 
-  private fun safeMatch(value: String?, regex: String) : Boolean {
-    if (value == null) return false
-
-    runCatching {
-      return regex.toRegex(RegexOption.IGNORE_CASE).matchEntire(value) != null
-    }
-
-    return false
+private fun PluginManagerConfigurableForOrgState.isAllowed(descriptor: IdeaPluginDescriptor): Boolean {
+  for (denyRule in denyRules) {
+    if (denyRule.matches(descriptor)) return false
   }
 
-  fun matches(descriptor: IdeaPluginDescriptor) : Boolean {
-    pluginIdRegex?.let {
-      if (!safeMatch(descriptor.pluginId.idString, it)) return false
-    }
+  if (allowRules.isEmpty()) return true
 
-    vendorRegex?.let {
-      if (!safeMatch(descriptor.vendor, it)) return false
-    }
-
-    versionRegex?.let {
-      if (!safeMatch(descriptor.version, it)) return false
-    }
-
-    versionFromInclusive?.let {
-      if (descriptor.version == null) return false
-      if (VersionComparatorUtil.compare(it, descriptor.version) > 0) return false
-    }
-
-    versionToInclusive?.let {
-      if (descriptor.version == null) return false
-      if (VersionComparatorUtil.compare(descriptor.version, it) > 0) return false
-    }
-
-    return true
+  for (allowRule in allowRules) {
+    if (allowRule.matches(descriptor)) return true
   }
+
+  return false
+}
+
+private fun PluginManagerConfigurableForOrgStateRule.matches(descriptor: IdeaPluginDescriptor): Boolean {
+  pluginIdRegex?.let {
+    if (!safeMatch(descriptor.pluginId.idString, it)) return false
+  }
+
+  vendorRegex?.let {
+    if (!safeMatch(descriptor.vendor, it)) return false
+  }
+
+  versionRegex?.let {
+    if (!safeMatch(descriptor.version, it)) return false
+  }
+
+  versionFromInclusive?.let {
+    if (descriptor.version == null) return false
+    if (VersionComparatorUtil.compare(it, descriptor.version) > 0) return false
+  }
+
+  versionToInclusive?.let {
+    if (descriptor.version == null) return false
+    if (VersionComparatorUtil.compare(descriptor.version, it) > 0) return false
+  }
+
+  return true
+}
+
+
+private fun safeMatch(value: String?, regex: String): Boolean {
+  if (value == null) return false
+
+  runCatching {
+    return regex.toRegex(RegexOption.IGNORE_CASE).matchEntire(value) != null
+  }
+
+  return false
 }
