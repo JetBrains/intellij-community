@@ -31,7 +31,7 @@ public final class RefactoringChangeUtil {
 
       if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
         PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)PsiTreeUtil.skipParentsOfType(expr.getParent(), PsiParenthesizedExpression.class);
+          (PsiAssignmentExpression)PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
         return getTypeByExpression(Objects.requireNonNull(assignmentExpression).getRExpression());
       }
       return null;
