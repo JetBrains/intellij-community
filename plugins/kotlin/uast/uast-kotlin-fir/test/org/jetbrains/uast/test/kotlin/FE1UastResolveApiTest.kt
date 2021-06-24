@@ -20,11 +20,11 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         // Bogus
     }
 
-    @TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
+    @TestMetadata("uast-kotlin-fir/testData/declaration")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = File("plugins/uast-kotlin-fir/testData/declaration")
+        override var testDataDir = File("../uast-kotlin-fir/testData/declaration")
 
         override val isFirUastPlugin: Boolean = false
 
@@ -43,7 +43,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         }
     }
 
-    @TestMetadata("plugins/uast-kotlin/testData")
+    @TestMetadata("uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     class Legacy : AbstractFE1UastTest(), UastResolveApiTestBase {
         override var testDataDir = File("../uast-kotlin/testData").normalize()
