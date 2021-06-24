@@ -3,12 +3,9 @@ package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,10 +44,10 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
     return AllIcons.Nodes.Module;
   }
 
-  private static class GeneralModuleBuilder extends ModuleBuilder {
+  protected static class GeneralModuleBuilder extends ModuleBuilder {
     private static final Logger LOG = Logger.getInstance(GeneralModuleBuilder.class);
 
-    private GeneralModuleBuilder() {
+    protected GeneralModuleBuilder() {
       addModuleConfigurationUpdater(new ModuleConfigurationUpdater() {
         @Override
         public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
@@ -62,13 +59,6 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
         }
       });
     }
-
-    @Override
-    public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext,
-                                                @NotNull ModulesProvider modulesProvider) {
-      return ModuleWizardStep.EMPTY_ARRAY;
-    }
-
 
     @Override
     public ModuleType<?> getModuleType() {
