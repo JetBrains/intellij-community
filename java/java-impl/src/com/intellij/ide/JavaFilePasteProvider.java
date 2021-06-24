@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,6 +13,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -38,14 +40,23 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (className == null) return;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
+    String fileName = className + ".java";
+    PsiFile existingFile = targetDir.findFile(fileName);
+    if (existingFile != null && 
+        !MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
+                                    CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project)) {
+      return;
+    }
     WriteCommandAction.writeCommandAction(project).withName(
       JavaBundle.message("paste.class.command.name", className)).run(() -> {
-      PsiFile file;
-      try {
-        file = targetDir.createFile(className + ".java");
-      }
-      catch (IncorrectOperationException e) {
-        return;
+      PsiFile file = existingFile;
+      if (file == null) {
+        try {
+          file = targetDir.createFile(fileName);
+        }
+        catch (IncorrectOperationException e) {
+          return;
+        }
       }
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document != null) {
