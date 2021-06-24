@@ -51,10 +51,8 @@ public class RunOnTargetPanel {
         TargetEnvironmentsConfigurable targetEnvironmentsConfigurable =
           new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
         if (targetEnvironmentsConfigurable.openForEditing()) {
-          TargetEnvironmentConfiguration lastEdited = targetEnvironmentsConfigurable.getSelectedTargetConfig();
-          String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
-          resetRunOnComboBox(chosenTargetName);
-          setTargetName(chosenTargetName);
+          resetRunOnComboBox(selectedName);
+          setTargetName(selectedName);
         }
       });
     actionLink.setBorder(JBUI.Borders.emptyLeft(5));
