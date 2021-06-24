@@ -12,11 +12,7 @@ public interface UsageFilteringRule {
     return isVisible(usage);
   }
 
-  /**
-   * @deprecated implement {@link #isVisible(Usage, UsageTarget[])} instead
-   */
-  @Deprecated
   default boolean isVisible(@NotNull Usage usage) {
-    throw new UnsupportedOperationException();
+    throw new AbstractMethodError("isVisible(Usage) or isVisible(Usage, UsageTarget[]) must be implemented");
   }
 }
