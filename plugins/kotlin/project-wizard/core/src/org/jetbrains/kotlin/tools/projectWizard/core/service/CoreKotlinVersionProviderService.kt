@@ -8,7 +8,7 @@ class CoreKotlinVersionProviderService : KotlinVersionProviderService(), IdeaInd
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         val version = when (projectKind) {
             ProjectKind.COMPOSE -> Versions.KOTLIN_VERSION_FOR_COMPOSE
-            else -> getKotlinVersionFromCompiler() ?: Versions.KOTLIN
+            else -> Versions.KOTLIN
         }
         return kotlinVersionWithDefaultValues(version)
     }
