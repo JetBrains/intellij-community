@@ -93,14 +93,13 @@ public final class BeforeRunStepsPanel extends JPanel {
           clonedTasks.add(task);
           myModel.setElementAt(task, selection.getIndex());
         }
-        final BeforeRunTaskProvider<BeforeRunTask<?>> providerForUpdate = selection.getProvider();
+        RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+          myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), task.getProviderId().getClass());
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
               updateText();
             }
-            RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
-              myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), providerForUpdate.getClass());
           });
       }
     });
