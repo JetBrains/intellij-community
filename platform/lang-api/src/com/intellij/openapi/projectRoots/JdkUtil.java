@@ -40,21 +40,9 @@ public final class JdkUtil {
 
   private JdkUtil() { }
 
-  /**
-   * Returns the specified attribute of the JDK (examines 'rt.jar'), or {@code null} if cannot determine the value.
-   */
+  /** @deprecated outdated, please use {@link org.jetbrains.jps.model.java.JdkVersionDetector} instead */
+  @Deprecated
   public static @Nullable String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
-    if (attribute == Attributes.Name.IMPLEMENTATION_VERSION) {
-      // optimization: JDK version string is cached
-      String versionString = jdk.getVersionString();
-      if (versionString != null) {
-        int start = versionString.indexOf('"'), end = versionString.lastIndexOf('"');
-        if (start >= 0 && end > start) {
-          return versionString.substring(start + 1, end);
-        }
-      }
-    }
-
     String homePath = jdk.getHomePath();
     if (homePath != null) {
       File signatureJar = FileUtil.findFirstThatExist(
