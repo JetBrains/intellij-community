@@ -96,10 +96,6 @@ class DependencyUnavailable(
 
 object DependencyAvailable : DependencyState()
 
-fun addStarterNetworkDelay() {
-  // todo remove
-}
-
 @Throws(IOException::class)
 fun unzipSubfolder(tempZipFile: File, contentEntryDir: File) {
   var rootFolderName: String

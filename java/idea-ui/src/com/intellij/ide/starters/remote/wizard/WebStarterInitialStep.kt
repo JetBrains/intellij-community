@@ -397,8 +397,6 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     serverOptionsLoadingSemaphore.down()
 
     currentRequest = ApplicationManager.getApplication().executeOnPooledThread {
-      addStarterNetworkDelay()
-
       val readyServerOptions = try {
         moduleBuilder.getServerOptions(starterContext.serverUrl)
       }

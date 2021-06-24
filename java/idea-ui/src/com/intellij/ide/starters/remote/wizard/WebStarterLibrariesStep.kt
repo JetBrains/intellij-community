@@ -199,8 +199,6 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
 
   @RequiresBackgroundThread
   private fun downloadResult(progressIndicator: ProgressIndicator): DownloadResult {
-    addStarterNetworkDelay()
-
     val tempFile = FileUtil.createTempFile(moduleBuilder.builderId, ".tmp", true)
     val log = logger<WebStarterLibrariesStep>()
 
