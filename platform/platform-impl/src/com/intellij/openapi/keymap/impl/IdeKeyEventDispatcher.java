@@ -655,6 +655,12 @@ public final class IdeKeyEventDispatcher {
 
       AnActionEvent actionEvent = chosen.second.withDataContext(context); // use not frozen data context
       long startedAt = chosen.third;
+      if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
+          !ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
+        LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + action.getClass() + ") " +
+                 "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
+        return;
+      }
       processor.onUpdatePassed(e, action, actionEvent);
 
       int eventCount = IdeEventQueue.getInstance().getEventCount();

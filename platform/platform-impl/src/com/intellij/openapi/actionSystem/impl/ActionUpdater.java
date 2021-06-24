@@ -103,13 +103,15 @@ final class ActionUpdater {
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
+    Op updateOp = myEventTransform == null || Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") ?
+                  Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> updateActionReal(action, myEventTransform == null ? Op.update : Op.beforeActionPerformedUpdate),
+      action -> updateActionReal(action, updateOp),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
-    LOG.assertTrue(myEventTransform == null || ActionPlaces.isShortcutPlace(myPlace),
+    LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
                    "beforeActionPerformed requested in '" + myPlace + "'");
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
@@ -122,7 +124,7 @@ final class ActionUpdater {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
-    if (!isBeforePerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
+    if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
     Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), isBeforePerformed);
     boolean success = callAction(action, operation, doUpdate);
     return success ? presentation : null;
