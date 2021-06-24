@@ -55,7 +55,7 @@ final class PersistentFSRecordAccessor {
     final int free = connection.getFreeRecord();
     if (free == 0) {
       final int fileLength = length();
-      LOG.assertTrue(fileLength % RECORD_SIZE == 0);
+      LOG.assertTrue(fileLength % RECORD_SIZE == 0, "record file length = " + fileLength + ", record size = " + RECORD_SIZE);
       int newRecord = fileLength / RECORD_SIZE;
       connection.getRecords().cleanRecord(newRecord);
       assert fileLength + RECORD_SIZE == length();
