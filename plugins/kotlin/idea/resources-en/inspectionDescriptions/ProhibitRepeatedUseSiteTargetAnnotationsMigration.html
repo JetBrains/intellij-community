@@ -1,7 +1,7 @@
 <html>
 <body>
-<p>Reports repeated annotation on property accessors which are not marked with <code>@Repeatable</code> annotation and <code>SOURCE</code> retention.</p>
-<p>As a result, those annotations will be compiled to the bytecode and it will be unclear which one will be loaded via reflection later.</p>
+<p>Reports the repeated use of a non-<code>@Repeatable</code> annotation without <code>SOURCE</code> retention on property accessors.</p>
+<p>As a result, both annotation usages will appeas in the bytecode leading to an ambiguity in reflection calls.</p>
 <p><b>Example:</b></p>
 <pre><code>
 annotation class Foo(val x: Int)
