@@ -10,10 +10,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +64,7 @@ abstract class SwitchBlockHighlightingModel {
   @NotNull
   List<HighlightInfo> checkIfAccessibleType(@NotNull PsiExpression selector, @NotNull PsiType selectorType) {
     PsiClass member = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    Object o = new Object();
     if (member != null && !PsiUtil.isAccessible(member.getProject(), member, selector, null)) {
       String className = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
       String message = JavaErrorBundle.message("inaccessible.type", className);
@@ -562,20 +566,18 @@ class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingMode
     }
     PsiElement elementCoversType = findElementCoversType(selectorType, elements);
     PsiElement defaultElement = findDefaultElement();
-    if (defaultElement != null) {
-      if (elementCoversType != null) {
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(defaultElement)
-                      .descriptionAndTooltip(JavaErrorBundle.message("switch.17.total.pattern.and.default.exist")).create());
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementCoversType)
-                      .descriptionAndTooltip(JavaErrorBundle.message("switch.17.total.pattern.and.default.exist")).create());
-        return;
-      }
+    if (defaultElement != null && elementCoversType != null) {
+      results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(defaultElement)
+                    .descriptionAndTooltip(JavaErrorBundle.message("switch.17.total.pattern.and.default.exist")).create());
+      results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementCoversType)
+                    .descriptionAndTooltip(JavaErrorBundle.message("switch.17.total.pattern.and.default.exist")).create());
+      return;
     }
+    if (defaultElement != null || elementCoversType != null) return;
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (selectorClass == null) return;
     if (getSwitchSelectorKind(selectorType) == SelectorKind.ENUM) {
-      if (defaultElement != null || elementCoversType != null) return;
-      PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
-      if (enumClass == null) return;
-      Set<PsiEnumConstant> missingConstants = StreamEx.of(enumClass.getFields()).select(PsiEnumConstant.class).toSet();
+      Set<PsiEnumConstant> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toSet();
       for (PsiCaseLabelElement element : elements) {
         if (element instanceof PsiReferenceExpression) {
           PsiElement resolved = ((PsiReferenceExpression)element).resolve();
@@ -594,6 +596,55 @@ class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingMode
           createAddMissingEnumBranchesFix(myBlock, ContainerUtil.map2Set(missingConstants, constant -> constant.getName())));
       }
       QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddSwitchDefaultFix(myBlock, null));
+      results.add(info);
+    }
+    else if (selectorClass.hasModifierProperty(PsiModifier.SEALED) && selectorClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      Set<PsiClass> patternClasses = new SmartHashSet<>();
+      for (PsiCaseLabelElement element : elements) {
+        if (element instanceof PsiPattern) {
+          PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
+          if (patternClass != null) {
+            patternClasses.add(patternClass);
+          }
+        }
+      }
+      // for now javac just looks check completeness using only the direct inherited classes of selector class.
+      // but here is a new PR https://github.com/openjdk/jdk17/pull/78 that extends that functionality
+      List<PsiClass> directInheritedClasses =
+        new ArrayList<>(DirectClassInheritorsSearch.search(selectorClass, selectorClass.getUseScope(), false).findAll());
+      while (!patternClasses.isEmpty() && !directInheritedClasses.isEmpty()) {
+        Iterator<PsiClass> inheritedClassesIterator = directInheritedClasses.iterator();
+        List<PsiClass> newDirectInheritedClasses = new SmartList<>();
+        while (inheritedClassesIterator.hasNext()) {
+          PsiClass nextInheritedClass = inheritedClassesIterator.next();
+          if (patternClasses.remove(nextInheritedClass)) {
+            inheritedClassesIterator.remove();
+          }
+          else {
+            Collection<PsiClass> newInheritedClasses =
+              DirectClassInheritorsSearch.search(nextInheritedClass, selectorClass.getUseScope(), false).findAll();
+            if (!newInheritedClasses.isEmpty()) {
+              inheritedClassesIterator.remove();
+              newDirectInheritedClasses.addAll(newInheritedClasses);
+            }
+          }
+        }
+        directInheritedClasses.addAll(newDirectInheritedClasses);
+      }
+      if (!directInheritedClasses.isEmpty()) {
+        // todo maybe it's possible to deduplicate
+        String message = JavaErrorBundle.message(myBlock instanceof PsiExpression ? "switch.17.expression.cover.not.all.cases"
+                                                                                  : "switch.17.statement.cover.not.all.cases");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(myBlock.getFirstChild())
+          .descriptionAndTooltip(message).create();
+        results.add(info);
+      }
+    }
+    else {
+      String message = JavaErrorBundle.message(myBlock instanceof PsiExpression ? "switch.17.expression.cover.not.all.cases"
+                                                                                : "switch.17.statement.cover.not.all.cases");
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(myBlock.getFirstChild())
+        .descriptionAndTooltip(message).create();
       results.add(info);
     }
   }
@@ -622,7 +673,7 @@ class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingMode
   @Nullable
   private static PsiElement findElementCoversType(@NotNull PsiType type, @NotNull List<PsiCaseLabelElement> labelElements) {
     return ContainerUtil.find(labelElements, element -> element instanceof PsiPattern
-                                                          && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
+                                                        && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
   }
 
   private static boolean isNullType(@NotNull PsiElement element) {
