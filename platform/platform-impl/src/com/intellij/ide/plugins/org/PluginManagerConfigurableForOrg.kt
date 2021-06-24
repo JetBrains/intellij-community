@@ -21,11 +21,12 @@ class PluginManagerConfigurableForOrg {
   }
 
   fun isPluginAllowed(isLocalPlugin: Boolean,
-                      descriptor: IdeaPluginDescriptor) : Boolean {
-
-    if (isLocalPlugin) return true
-    return descriptor.pluginId.idString.hashCode() % 2 == 0
+                      descriptor: IdeaPluginDescriptor
+  ) : Boolean {
+    return true
+    //if (isLocalPlugin) return false
+    //return descriptor.pluginId.idString.hashCode() % 2 == 0
   }
 
-  fun allowInstallFromDisk(): Boolean = false
+  fun allowInstallFromDisk(): Boolean = true
 }
