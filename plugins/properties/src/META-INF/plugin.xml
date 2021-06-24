@@ -90,7 +90,7 @@
                      implementationClass="com.intellij.lang.properties.codeInspection.TrailingSpacesInPropertyInspection"/>
     <localInspection language="Properties" shortName="UseEllipsisInPropertyInspection" bundle="messages.PropertiesBundle"
                      key="use.ellipsis.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.lang.properties.codeInspection.UseEllipsisInPropertyInspection"/>
     <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
