@@ -46,6 +46,8 @@ internal fun KotlinType?.toDfType(context: KtElement) : DfType {
         }
         return if (notNullableType is DfReferenceType) {
             notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
+        } else if (notNullableType == DfType.BOTTOM) {
+            DfTypes.NULL
         } else {
             notNullableType
         }

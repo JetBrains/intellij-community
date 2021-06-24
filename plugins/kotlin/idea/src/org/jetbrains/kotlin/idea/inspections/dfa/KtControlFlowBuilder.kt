@@ -210,6 +210,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(expr, idx), null))
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
+                // TODO: support string index (charAt)
                 addInstruction(EvalUnknownInstruction(anchor, 2))
                 addInstruction(FlushFieldsInstruction())
             }
