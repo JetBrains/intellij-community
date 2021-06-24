@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -121,7 +120,7 @@ public class UndoManagerImpl extends UndoManager {
       return;
     }
 
-    myEditorProvider = new FocusBasedCurrentEditorProvider();
+    myEditorProvider = () -> ApplicationManager.getApplication().getService(CurrentEditorProvider.class).getCurrentEditor();
 
     MessageBus messageBus = myProject == null ? ApplicationManager.getApplication().getMessageBus() : myProject.getMessageBus();
     messageBus.connect().subscribe(CommandListener.TOPIC, new CommandListener() {
