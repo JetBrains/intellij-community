@@ -1,35 +1,68 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl
 
-
-import com.intellij.testFramework.assertions.Assertions.assertThat
-import org.jetbrains.jps.model.java.impl.JdkVendorDetector.*
+import com.intellij.testFramework.rules.TempDirectory
+import org.jetbrains.jps.model.java.JdkVersionDetector
+import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.*
+import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
-import java.io.StringReader
-import java.util.*
+import java.util.jar.Attributes
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 
-
-@Suppress("SpellCheckingInspection")
 class JdkVendorDetectorTest {
-
-  private /*const*/ val RELEASE_ORACLE_1_7_0_40 =
-    """|JAVA_VERSION="1.7.0"
-       |OS_NAME="Darwin"
-       |OS_VERSION="11.2"
-       |OS_ARCH="x86_64"
-       |SOURCE=" .:1d53bd8fd2a6 corba:e29ea0b297e5 deploy:b85f185c8ae5 hotspot:eceae0478243 hotspot/make/closed:6bd65eae6152 hotspot/src/closed:75561b86f615 hotspot/test/closed:fc4f796b9fb4 install:df46e3cf2551 jaxp:c0bd71414ea5 jaxws:3ee85b3793de jdk:fb25cdef17e9 jdk/make/closed:d514b7bf8658 jdk/src/closed:adcdaaa030f5 jdk/test/closed:a8d6b800ea6b langtools:988ece7b6865 pubs:0c966c422c8a sponsors:9b375572541c"
+  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_OPEN_1_8_0_41 =
+    """|JAVA_VERSION="1.8.0_41"
+       |OS_NAME="Windows"
+       |OS_VERSION="5.1"
+       |OS_ARCH="i586"
+       |SOURCE=""
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ORACLE_1_8_0_102 =
-    """|JAVA_VERSION="1.8.0_102"
-       |OS_NAME="Darwin"
-       |OS_VERSION="11.2"
-       |OS_ARCH="x86_64"
-       |SOURCE=" .:daafd7d3a76a corba:56b133772ec1 deploy:de4043049895 hotspot:ac29c9c1193a hotspot/make/closed:c65fdf789fd7 hotspot/src/closed:60c728d85221 hotspot/test/closed:1e18c2279cc4 install:6f5ea1d3b6a0 jaxp:1f032000ff4b jaxws:81f2d81a48d7 jdk:48c99b423839 jdk/make/closed:e4e4e633f6e0 jdk/src/closed:e49a105b44cf jdk/test/closed:410f3c278e89 langtools:0549bf2f507d nashorn:0948e61a3722 pubs:6b7e6c06ce51 sponsors:b2b1e386c6b3"
+  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_OPEN_1_8_0_41 =
+    """|Manifest-Version: 1.0
+       |Implementation-Vendor: N/A
+       |Implementation-Title: Java Runtime Environment
+       |Implementation-Version: 1.8.0_41
+       |Specification-Vendor: Oracle Corporation
+       |Created-By: 1.7.0_07 (Oracle Corporation)
+       |Specification-Title: Java Platform API Specification
+       |Specification-Version: 1.8
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_1_8_0_291 =
+    """|JAVA_VERSION="1.8.0_291"
+       |OS_NAME="Linux"
+       |OS_VERSION="2.6"
+       |OS_ARCH="amd64"
+       |SOURCE=" .:06b604e7edd4 hotspot:7c09263ba3e2 hotspot/src/closed:573e10ede63c ..."
        |BUILD_TYPE="commercial"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ADOPT_HOTSPOT_1_8_0_282 =
+  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_1_8_0_291 =
+    """|Manifest-Version: 1.0
+       |Implementation-Vendor: Oracle Corporation
+       |Implementation-Title: Java Runtime Environment
+       |Implementation-Version: 1.8.0_291
+       |Specification-Vendor: Oracle Corporation
+       |Created-By: 1.7.0_07 (Oracle Corporation)
+       |Specification-Title: Java Platform API Specification
+       |Specification-Version: 1.8
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_16_0_1 =
+    """|IMPLEMENTOR="Oracle Corporation"
+       |JAVA_VERSION="16.0.1"
+       |JAVA_VERSION_DATE="2021-04-20"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Windows"
+       |SOURCE=".:git:ba7c640201ba"
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val RELEASE_ADOPT_HOTSPOT_1_8_0_282 =
     """|JAVA_VERSION="1.8.0_282"
        |OS_NAME="Darwin"
        |OS_VERSION="11.2"
@@ -45,47 +78,12 @@ class JdkVendorDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ADOPT_J9_1_8_0_282 =
-    """|JAVA_VERSION="1.8.0_282"
-       |OS_NAME="Darwin"
-       |OS_VERSION="11.2"
-       |OS_ARCH="x86_64"
-       |SOURCE="OpenJDK:ab07c6a8fd OpenJ9:345e1b09e OMR:741e94ea8"
-       |IMPLEMENTOR="AdoptOpenJDK"
-       |BUILD_SOURCE="git:10223734"
-       |FULL_VERSION="1.8.0_282-b08"
-       |SEMANTIC_VERSION="8.0.282+8"
-       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
-       |JVM_VARIANT="Openj9"
-       |JVM_VERSION="openj9-0.24.0"
-       |HEAP_SIZE="Standard"
-       |IMAGE_TYPE="JDK"
-    """.trimMargin()
-
-  private /*const*/ val RELEASE_ADOPT_HOTSPOT_11_0_10 =
+  @Suppress("SpellCheckingInspection") private val RELEASE_ADOPT_J9_11_0_10 =
     """|IMPLEMENTOR="AdoptOpenJDK"
        |IMPLEMENTOR_VERSION="AdoptOpenJDK"
        |JAVA_VERSION="11.0.10"
        |JAVA_VERSION_DATE="2021-01-19"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.ldap jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs"
-       |OS_ARCH="x86_64"
-       |OS_NAME="Darwin"
-       |SOURCE=".:git:f16a065dd6d5"
-       |BUILD_SOURCE="git:10223734"
-       |FULL_VERSION="11.0.10+9"
-       |SEMANTIC_VERSION="11.0.10+9"
-       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
-       |JVM_VARIANT="Hotspot"
-       |JVM_VERSION="11.0.10+9"
-       |IMAGE_TYPE="JDK"
-    """.trimMargin()
-
-  private /*const*/ val RELEASE_ADOPT_J9_11_0_10 =
-    """|IMPLEMENTOR="AdoptOpenJDK"
-       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
-       |JAVA_VERSION="11.0.10"
-       |JAVA_VERSION_DATE="2021-01-19"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.httpserver jdk.internal.le jdk.internal.opt jdk.jartool jdk.javadoc jdk.jcmd jdk.management jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jlink jdk.jshell jdk.jsobject jdk.localedata jdk.naming.dns jdk.naming.ldap jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported jdk.unsupported.desktop jdk.xml.dom jdk.zipfs openj9.cuda openj9.dataaccess openj9.traceformat openj9.dtfj openj9.dtfjview openj9.gpu openj9.jvm openj9.sharedclasses openj9.zosconditionhandling"
+       |MODULES="java.base ..."
        |OS_ARCH="x86_64"
        |OS_NAME="Darwin"
        |SOURCE="OpenJDK:0a86953833 OpenJ9:345e1b09e OMR:741e94ea8"
@@ -99,92 +97,92 @@ class JdkVendorDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ADOPT_HOTSPOT_16 =
-    """|IMPLEMENTOR="AdoptOpenJDK"
-       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
-       |JAVA_VERSION="16"
-       |JAVA_VERSION_DATE="2021-03-16"
-       |LIBC="default"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.incubator.foreign jdk.incubator.vector jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jpackage jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.rmi jdk.net jdk.nio.mapmode jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs"
-       |OS_ARCH="x86_64"
-       |OS_NAME="Darwin"
-       |SOURCE=".:git:cb2add2cb483"
-       |BUILD_SOURCE="git:8b51068"
-       |FULL_VERSION="16+36"
-       |SEMANTIC_VERSION="16+36"
-       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
-       |JVM_VARIANT="Hotspot"
-       |JVM_VERSION="16+36"
-       |IMAGE_TYPE="JDK"
+  @Suppress("SpellCheckingInspection") private val RELEASE_CORRETTO_1_8_0_292 =
+    """|JAVA_VERSION="1.8.0_292"
+       |OS_NAME="Windows"
+       |OS_VERSION="5.2"
+       |OS_ARCH="amd64"
+       |SOURCE=""
+       |LIBC=""
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ADOPT_J9_16 =
-    """|IMPLEMENTOR="AdoptOpenJDK"
-       |IMPLEMENTOR_VERSION="AdoptOpenJDK"
-       |JAVA_VERSION="16"
-       |JAVA_VERSION_DATE="2021-03-16"
-       |LIBC="default"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.httpserver jdk.incubator.foreign jdk.incubator.vector jdk.internal.le jdk.internal.opt jdk.jartool jdk.javadoc jdk.jcmd jdk.management jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jlink jdk.jpackage jdk.jshell jdk.jsobject jdk.localedata jdk.naming.dns jdk.naming.rmi jdk.net jdk.nio.mapmode jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported jdk.unsupported.desktop jdk.xml.dom jdk.zipfs openj9.cuda openj9.dataaccess openj9.traceformat openj9.dtfj openj9.dtfjview openj9.gpu openj9.jvm openj9.sharedclasses openj9.zosconditionhandling"
-       |OS_ARCH="x86_64"
-       |OS_NAME="Darwin"
-       |SOURCE="OpenJDK:0c11227a21a OpenJ9:022d65424 OMR:09514431e"
-       |BUILD_SOURCE="git:8b51068"
-       |FULL_VERSION="16+36"
-       |SEMANTIC_VERSION="16+36"
-       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
-       |JVM_VARIANT="Openj9"
-       |JVM_VERSION="openj9-0.25.0"
-       |HEAP_SIZE="Standard"
-       |IMAGE_TYPE="JDK"
+  @Suppress("SpellCheckingInspection") private val MANIFEST_CORRETTO_1_8_0_292 =
+    """|Manifest-Version: 1.0
+       |Implementation-Title: Java Runtime Environment
+       |Implementation-Version: 1.8.0_292
+       |Specification-Vendor: Oracle Corporation
+       |Specification-Title: Java Platform API Specification
+       |Specification-Version: 1.8
+       |Created-By: 1.8.0_222 (Amazon.com Inc.)
+       |Implementation-Vendor: Amazon.com Inc.
     """.trimMargin()
 
-  private /*const*/ val RELEASE_CORRETTO_11_0_8_10_1 =
+  @Suppress("SpellCheckingInspection") private val RELEASE_CORRETTO_11_0_8_10_1 =
     """|IMPLEMENTOR="Amazon.com Inc."
        |IMPLEMENTOR_VERSION="Corretto-11.0.8.10.1"
        |JAVA_VERSION="11.0.8"
        |JAVA_VERSION_DATE="2020-07-14"
        |LIBC="default"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.internal.ed jdk.editpad jdk.hotspot.agent jdk.httpserver jdk.internal.le jdk.internal.opt jdk.internal.vm.compiler.management jdk.jartool jdk.javadoc jdk.jcmd jdk.management.agent jdk.jconsole jdk.jdeps jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jlink jdk.jshell jdk.jsobject jdk.jstatd jdk.localedata jdk.management.jfr jdk.naming.dns jdk.naming.rmi jdk.net jdk.pack jdk.rmic jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.unsupported.desktop jdk.xml.dom jdk.zipfs"
+       |MODULES="java.base ..."
        |OS_ARCH="x86_64"
        |OS_NAME="Darwin"
        |SOURCE=""
     """.trimMargin()
 
-  private /*const*/ val RELEASE_LIBRICA_11_0_8 =
+  private val RELEASE_LIBERICA_11_0_8 =
     """|IMPLEMENTOR="BellSoft"
        |JAVA_VERSION="11.0.8"
        |JAVA_VERSION_DATE="2020-07-14"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset jav
+       |MODULES="java.base ..."
        |OS_ARCH="x86_64"
        |OS_NAME="Darwin"
        |SOURCE=".:hg:030bc020dc04+"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_SAP_11_0_8 =
+  private val RELEASE_SAP_MACHINE_11_0_8 =
     """|IMPLEMENTOR="SAP SE"
        |IMPLEMENTOR_VERSION="SapMachine"
        |JAVA_VERSION="11.0.8"
        |JAVA_VERSION_DATE="2020-07-15"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset jav
+       |MODULES="java.base ..."
        |OS_ARCH="x86_64"
        |OS_NAME="Darwin"
        |SOURCE=".:git:21ef36a0f46a+"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_ZULU_11_0_8 =
+  @Suppress("SpellCheckingInspection") private val RELEASE_ZULU_11_0_8 =
     """|IMPLEMENTOR="Azul Systems, Inc."
        |IMPLEMENTOR_VERSION="Zulu11.41+23-CA"
        |JAVA_VERSION="11.0.8"
        |JAVA_VERSION_DATE="2020-07-14"
        |LIBC="default"
-       |MODULES="java.base java.compiler java.datatransfer java.xml java.prefs java.desktop java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset jav
+       |MODULES="java.base ..."
        |OS_ARCH="x86_64"
        |OS_NAME="Darwin"
        |SOURCE=".:hg:5b0e54350bbc"
     """.trimMargin()
 
-  private /*const*/ val RELEASE_JBR_11_0_10 =
-    """|MODULES="java.base java.datatransfer java.xml java.prefs java.desktop gluegen.rt java.compiler java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jogl.all jcef jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.hotspot.agent jdk.httpserver jdk.internal.ed jdk.internal.le jdk.internal.vm.compiler.management jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jsobject jdk.localedata jdk.management.agent jdk.management.jfr jdk.naming.dns jdk.naming.rmi jdk.net jdk.pack jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.xml.dom jdk.zipfs"
+  @Suppress("SpellCheckingInspection") private val RELEASE_ZULU_1_8_0_292 =
+    """|JAVA_VERSION="1.8.0_292"
+       |OS_NAME="Windows"
+       |OS_VERSION="5.2"
+       |OS_ARCH="amd64"
+       |SOURCE=" .:ddbdd8cb2baa hotspot:19eb9031626c ..."
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val MANIFEST_ZULU_1_8_0_292 =
+    """|Manifest-Version: 1.0
+       |Implementation-Title: Java Runtime Environment
+       |Implementation-Version: 1.8.0_292
+       |Specification-Vendor: Oracle Corporation
+       |Specification-Title: Java Platform API Specification
+       |Specification-Version: 1.8
+       |Created-By: 1.8.0_282 (Azul Systems, Inc.)
+       |Implementation-Vendor: N/A
+    """.trimMargin()
+
+  private val RELEASE_JBR_11_0_10 =
+    """|MODULES="java.base ..."
        |IMPLEMENTOR="JetBrains s.r.o."
        |SOURCE=".\:git\:58e267d9f35a+ jcef_git\:git\:e09d9c4a783e"
        |OS_ARCH="x86_64"
@@ -193,39 +191,100 @@ class JdkVendorDetectorTest {
        |JAVA_VERSION="11.0.10"
     """.trimMargin()
 
+  @Suppress("SpellCheckingInspection") private val RELEASE_IBM_1_8_0_291 =
+    """|JAVA_VERSION="1.8.0_291"
+       |OS_NAME="Windows"
+       |OS_VERSION="5.2"
+       |OS_ARCH="amd64"
+       |SOURCE=""
+    """.trimMargin()
 
-  // %formatter:off
+  @Suppress("SpellCheckingInspection") private val MANIFEST_IBM_1_8_0_291 =
+    """|Manifest-Version: 1.0
+       |Ant-Version: Apache Ant 1.7.1
+       |Created-By: 1.8.0 (IBM Corporation)
+       |Implementation-Title: Java Runtime Environment
+       |Implementation-Version: 1.8.0
+       |Specification-Vendor: Oracle Corporation
+       |Specification-Title: Java Platform API Specification
+       |Specification-Version: 1.8
+       |Implementation-Vendor: IBM
+       |Build-level: 20210507_01
+    """.trimMargin()
 
-  @Test fun checkOracle07()   = checkVendor(RELEASE_ORACLE_1_7_0_40,         ORACLE)
-  @Test fun checkOracle08()   = checkVendor(RELEASE_ORACLE_1_8_0_102,        ORACLE)
-  @Test fun checkAdopt08hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_1_8_0_282, ADOPT_OPEN_HS)
-  @Test fun checkAdopt08j9()  = checkVendor(RELEASE_ADOPT_J9_1_8_0_282,      ADOPT_OPEN_J9)
-  @Test fun checkAdopt11hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_11_0_10,   ADOPT_OPEN_HS)
-  @Test fun checkAdopt11j9()  = checkVendor(RELEASE_ADOPT_J9_11_0_10,        ADOPT_OPEN_J9)
-  @Test fun checkAdopt16hs()  = checkVendor(RELEASE_ADOPT_HOTSPOT_16,        ADOPT_OPEN_HS)
-  @Test fun checkAdopt16j9()  = checkVendor(RELEASE_ADOPT_J9_16,             ADOPT_OPEN_J9)
-  @Test fun checkCorretto11() = checkVendor(RELEASE_CORRETTO_11_0_8_10_1,    CORRETTO)
-  @Test fun checkLiberica11() = checkVendor(RELEASE_LIBRICA_11_0_8,          LIBERICA)
-  @Test fun checkSap11()      = checkVendor(RELEASE_SAP_11_0_8,              SAP)
-  @Test fun checkZulu11()     = checkVendor(RELEASE_ZULU_11_0_8,             AZUL)
-  @Test fun checkJbr11()      = checkVendor(RELEASE_JBR_11_0_10,             JBR)
+  @Suppress("SpellCheckingInspection") private val RELEASE_IBM_11_0_11 =
+    """|IMPLEMENTOR="IBM Corporation"
+       |IMPLEMENTOR_VERSION="11.0.11.0-IBM"
+       |JAVA_VERSION="11.0.11"
+       |JAVA_VERSION_DATE="2021-04-20"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Linux"
+       |SOURCE="OpenJDK:9110d0b174 OpenJ9:b4cc246d9 OMR:162e6f729"
+       |BUILD_SOURCE="git:efe243d"
+       |FULL_VERSION="11.0.11+9"
+       |SEMANTIC_VERSION="11.0.11+9"
+       |BUILD_INFO="OS: Linux Version: 3.10.0-327.el7.x86_64"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.26.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
 
-  // %formatter:on
+  @Suppress("SpellCheckingInspection") private val RELEASE_GRAALVM_1_8_0_292 =
+    """|JAVA_VERSION="1.8.0_292"
+       |OS_NAME="Windows"
+       |OS_VERSION="5.2"
+       |OS_ARCH="amd64"
+       |SOURCE=" substratevm:dc4d2d6bdda1e7262bbae3291475e02fd498f382 truffle:dc4d2d6bdda1e7262bbae3291475e02fd498f382 ..."
+       |GRAALVM_VERSION="21.1.0"
+       |COMMIT_INFO={}
+       |component_catalog="..."
+    """.trimMargin()
 
+  @Suppress("SpellCheckingInspection") private val RELEASE_GRAALVM_16_0_1 =
+    """|IMPLEMENTOR="GraalVM Community"
+       |JAVA_VERSION="16.0.1"
+       |JAVA_VERSION_DATE="2021-04-20"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Windows"
+       |SOURCE=".:git:8387de06b765+ substratevm:dc4d2d6bdda1e7262bbae3291475e02fd498f382 truffle:dc4d2d6bdda1e7262bbae3291475e02fd498f382 ..."
+       |GRAALVM_VERSION="21.1.0"
+       |COMMIT_INFO={}
+       |component_catalog="..."
+    """.trimMargin()
 
-  private fun checkVendor(releaseText: String, expectedVendor: Vendor) {
-    val releaseProperties = Properties()
-    StringReader(releaseText).use { reader ->
-      releaseProperties.load(reader)
+  @Rule @JvmField val tempDir = TempDirectory()
+
+  @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
+  @Test fun `Oracle Commercial 8`() = assertVariant(Oracle, RELEASE_ORACLE_1_8_0_291, MANIFEST_ORACLE_1_8_0_291)
+  @Test fun `Oracle 16`() = assertVariant(Oracle, RELEASE_ORACLE_16_0_1)
+  @Test fun `AdoptOpenJDK 8 (HotSpot)`() = assertVariant(AdoptOpenJdk_HS, RELEASE_ADOPT_HOTSPOT_1_8_0_282)
+  @Test fun `AdoptOpenJDK 11 (OpenJ9)`() = assertVariant(AdoptOpenJdk_J9, RELEASE_ADOPT_J9_11_0_10)
+  @Test fun `Corretto 8`() = assertVariant(Corretto, RELEASE_CORRETTO_1_8_0_292, MANIFEST_CORRETTO_1_8_0_292)
+  @Test fun `Corretto 11`() = assertVariant(Corretto, RELEASE_CORRETTO_11_0_8_10_1)
+  @Test fun `Liberica 11`() = assertVariant(Liberica, RELEASE_LIBERICA_11_0_8)
+  @Test fun `SapMachine 11`() = assertVariant(SapMachine, RELEASE_SAP_MACHINE_11_0_8)
+  @Test fun `Zulu 8`() = assertVariant(Unknown, RELEASE_ZULU_1_8_0_292, MANIFEST_ZULU_1_8_0_292)  // no vendor info
+  @Test fun `Zulu 11`() = assertVariant(Zulu, RELEASE_ZULU_11_0_8)
+  @Test fun `JetBrains Runtime 11`() = assertVariant(JBR, RELEASE_JBR_11_0_10)
+  @Test fun `IBM JDK 8`() = assertVariant(IBM, RELEASE_IBM_1_8_0_291, MANIFEST_IBM_1_8_0_291)
+  @Test fun `IBM JDK 11`() = assertVariant(IBM, RELEASE_IBM_11_0_11)
+  @Test fun `GraalVM 8`() = assertVariant(GraalVM, RELEASE_GRAALVM_1_8_0_292)
+  @Test fun `GraalVM 16`() = assertVariant(GraalVM, RELEASE_GRAALVM_16_0_1)
+
+  private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
+    tempDir.newFile("release", releaseText.toByteArray())
+
+    if (manifestText.isNotEmpty()) {
+      val manifest = Manifest()
+      manifest.mainAttributes.putAll(manifestText.splitToSequence("\n").map { it.split(": ", limit = 2) }.map { Attributes.Name(it[0]) to it[1] })
+      JarOutputStream(tempDir.newFile("jre/lib/rt.jar").outputStream(), manifest).close()
     }
-    assertThat(releaseProperties.isNotEmpty())
 
-    val detectedVendor = detectJdkVendorByReleaseFile(releaseProperties)
-
-    assertThat(detectedVendor)
-      .withFailMessage("Java Vendor for $expectedVendor should be detected").isNotNull
-      .withFailMessage("Java Vendor expected $expectedVendor but got $detectedVendor").isEqualTo(expectedVendor)
+    val versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(tempDir.rootPath.toString())
+    assertEquals(expectedVariant, versionInfo!!.variant)
   }
-
-
 }

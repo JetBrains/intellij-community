@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.ExecutionException;
@@ -142,7 +142,7 @@ public final class JdkBundle {
 
     JdkVersionInfo versionInfo;
     if (boot) {
-      versionInfo = new JdkVersionInfo(JavaVersion.current(), SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32);
+      versionInfo = new JdkVersionInfo(JavaVersion.current(), SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32, null);
     }
     else {
       versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(actualHome.getPath());

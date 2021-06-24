@@ -237,10 +237,7 @@ public final class JavaSdkImpl extends JavaSdk {
     var info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
-    String vendorPrefix = info.vendorPrefix;
-    if (!Registry.is("use.jdk.vendor.in.suggested.jdk.name", true)) {
-      vendorPrefix = null;
-    }
+    String vendorPrefix = Registry.is("use.jdk.vendor.in.suggested.jdk.name", true) ? info.variant.prefix : null;
     String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
     if (WslDistributionManager.isWslPath(sdkHome)) {
       return name + " (WSL)";
