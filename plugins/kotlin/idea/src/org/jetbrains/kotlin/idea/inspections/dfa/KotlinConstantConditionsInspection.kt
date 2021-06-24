@@ -24,14 +24,16 @@ import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditio
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
-        TRUE, FALSE, UNKNOWN
+        TRUE, FALSE, NULL, ZERO, UNKNOWN
     }
 
     private class KotlinDfaListener : DfaListener {
@@ -56,6 +58,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             var newVal = when (state.getDfType(value)) {
                 DfTypes.TRUE -> ConstantValue.TRUE
                 DfTypes.FALSE -> ConstantValue.FALSE
+                DfTypes.NULL -> ConstantValue.NULL
+                DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
                 else -> ConstantValue.UNKNOWN
             }
             if (oldVal != null && oldVal != newVal) {
@@ -65,16 +69,39 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun shouldSuppress(expression: KtExpression): Boolean {
+    private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
+        var parent = expression.parent
+        while (parent is KtParenthesizedExpression) {
+            parent = parent.parent
+        }
         if (expression is KtConstantExpression ||
             // If result of initialization is constant, then the initializer will be reported
             expression is KtProperty ||
             // If result of assignment is constant, then the right-hand part will be reported
             expression is KtBinaryExpression && expression.operationToken == KtTokens.EQ ||
             // Negation operand: negation itself will be reported
-            (expression.parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
+            (parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
         ) {
             return true
+        }
+        if (value == ConstantValue.ZERO && expression.readWriteAccess(false).isWrite) {
+            // like if (x == 0) x++, warning would be somewhat annoying
+            return true
+        }
+        if (value == ConstantValue.NULL && parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
+            // initialize other variable with null to copy type, like
+            // var x1 : X = null
+            // var x2 = x1 -- let's suppress this
+            return true
+        }
+        if (value == ConstantValue.NULL && parent is KtBinaryExpression) {
+            val token = parent.operationToken
+            if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
+                (parent.left?.isNull() == true || parent.right?.isNull() == true)
+            ) {
+                // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                return true
+            }
         }
         if (expression is KtSimpleNameExpression) {
             val target = expression.mainReference.resolve()
@@ -85,7 +112,8 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         }
         val context = expression.analyze(BodyResolveMode.FULL)
         if (context.diagnostics.forElement(expression)
-            .any { it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }) {
+                .any { it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }
+        ) {
             return true
         }
         return expression.isUsedAsStatement(context)
@@ -104,9 +132,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 when (anchor) {
                     is KotlinExpressionAnchor -> {
                         val expr = anchor.expression
-                        if (!shouldSuppress(expr)) {
-                            val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true"
-                            else "inspection.message.condition.always.false"
+                        if (!shouldSuppress(cv, expr)) {
+                            val key = when (cv) {
+                                ConstantValue.TRUE -> "inspection.message.condition.always.true"
+                                ConstantValue.FALSE -> "inspection.message.condition.always.false"
+                                ConstantValue.NULL -> "inspection.message.value.always.null"
+                                ConstantValue.ZERO -> "inspection.message.value.always.zero"
+                                else -> throw IllegalStateException("Unexpected constant: $cv")
+                            }
                             val highlightType =
                                 if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
@@ -115,7 +148,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     }
                     is KotlinWhenConditionAnchor -> {
                         val condition = anchor.condition
-                        if (cv != ConstantValue.TRUE || !isLastCondition(condition)) {
+                        if (cv == ConstantValue.FALSE || (cv == ConstantValue.TRUE && !isLastCondition(condition))) {
                             val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
                             else "inspection.message.when.condition.always.false"
                             holder.registerProblem(condition, KotlinBundle.message(key))
@@ -130,7 +163,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     is KotlinArrayIndexProblem ->
                         holder.registerProblem(problem.index, JavaAnalysisBundle.message("dataflow.message.array.index.out.of.bounds"))
                     is KotlinCastProblem ->
-                        holder.registerProblem(problem.cast, KotlinBundle.message("inspection.message.cast.will.always.fail"))
+                        holder.registerProblem(
+                            (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast,
+                            KotlinBundle.message("inspection.message.cast.will.always.fail")
+                        )
                 }
             }
         }
