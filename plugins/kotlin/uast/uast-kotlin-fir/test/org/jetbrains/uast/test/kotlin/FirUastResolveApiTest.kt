@@ -33,12 +33,12 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
 
         @TestMetadata("doWhile.kt")
         fun testDoWhile() {
-            doCheck("plugins/uast-kotlin-fir/testData/declaration/doWhile.kt", ::checkCallbackForDoWhile)
+            doCheck("../uast-kotlin-fir/testData/declaration/doWhile.kt", ::checkCallbackForDoWhile)
         }
 
         @TestMetadata("if.kt")
         fun testIf() {
-            doCheck("plugins/uast-kotlin-fir/testData/declaration/if.kt", ::checkCallbackForIf)
+            doCheck("../uast-kotlin-fir/testData/declaration/if.kt", ::checkCallbackForIf)
         }
 
         // TODO: once call is supported, test labeledExpression.kt for labeled this and super
