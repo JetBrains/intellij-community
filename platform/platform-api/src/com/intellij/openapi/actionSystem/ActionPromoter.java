@@ -26,9 +26,9 @@ import java.util.List;
  * configured to be inapplicable in modal dialog context).
  * <p/>
  * However, there is a possible case that there is still more than one action applicable for particular keyboard shortcut
- * after filtering. The first one is executed then. Hence, actions processing order becomes very important.
+ * after filtering. The first one is executed then. Hence, action processing order becomes very important.
  * <p/>
- * Current key allows specifying custom actions sorter to use if any. I.e., every component can define its custom
+ * Current key allows specifying custom action sorter to use if any. I.e., every component can define its custom
  * sorting rule to define priorities for target actions (classes of actions).
  *
  * @author Konstantin Bulenkov

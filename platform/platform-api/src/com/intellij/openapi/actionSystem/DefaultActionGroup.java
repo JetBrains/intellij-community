@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * to add children actions and separators between them. In most of the
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
- * on rules different than just positional constraints, that's when you need
+ * on rules different from just positional constraints, that's when you need
  * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
@@ -288,7 +288,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Replaces specified action with the a one.
+   * Replaces the specified action with another.
    */
   public boolean replaceAction(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
     int index = mySortedChildren.indexOf(oldAction);
@@ -463,8 +463,9 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Creates an action group with specified template text. It is necessary to redefine template text if group contains
-   * user specific data such as Project name, file name, etc
+   * Creates an action group with specified template text.
+   * It is necessary to redefine template text if the group contains
+   * user-specific data such as Project name, file name, etc.
    * @param templateText template text which will be used in statistics
    * @return action group
    */

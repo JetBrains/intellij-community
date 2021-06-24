@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * This class purpose is to reserve action-id in a plugin.xml so the action appears in Keymap.
+ * The purpose of this class is to reserve action-id in a plugin.xml so the action appears in Keymap.
  * Then Keymap assignments can be used for non-registered actions created on runtime.
  * <p>
  * Another usage is to override (hide) already registered actions by means of plugin.xml, see {@link EmptyActionGroup} as well.
@@ -75,7 +75,7 @@ public final class EmptyAction extends AnAction {
   /**
    * Creates proxy action
    * <p>
-   * It allows to alter template presentation and shortcut set without affecting original action,
+   * It allows altering template presentation and shortcut set without affecting the original action.
    */
   public static AnAction wrap(final AnAction action) {
     return action instanceof ActionGroup ?

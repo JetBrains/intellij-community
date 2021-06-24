@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Normally ActionButton (a button in toolbar) has tooltip with action text and shortcut (if assigned).
- * AnAction that implements this interface also has the second line in tooltip, a link to call some activity
+ * Normally, an ActionButton (a button in the toolbar) has a tooltip with action text and shortcut (if assigned).
+ * AnAction that implements this interface also has the second line in the tooltip, a link to call some activity
  * (e.g. to show help article or wide description related to the action)
  */
 public interface TooltipLinkProvider {

@@ -379,7 +379,7 @@ public final class ActionUtil {
   }
 
   /**
-   * Convenience method for merging not null properties from a registered action
+   * Convenience method for merging non-null properties from a registered action
    *
    * @param action action to merge to
    * @param actionId action id to merge from
