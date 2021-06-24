@@ -1,16 +1,13 @@
 <html>
 <body>
-Reports guard clause that can be replaced with kotlin's function call.
-<p>"Replace with ..." quick-fix can be used to amend the code snippet.</p>
-<p>Example:</p>
-<pre><code>
-  fun test(foo: Int?) {
+Reports guard clauses that can be replaced with a function call.
+<p><b>Example:</b></p>
+<pre><code>  fun test(foo: Int?) {
       if (foo == null) throw IllegalArgumentException("foo") // replaceable clause
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
-  fun test(foo: Int?) {
+<pre><code>  fun test(foo: Int?) {
       checkNotNull(foo)
   }
 </code></pre>
