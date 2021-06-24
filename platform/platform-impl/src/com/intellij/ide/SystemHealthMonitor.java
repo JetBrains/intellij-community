@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.VMOptions;
@@ -137,7 +137,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
-      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), SystemInfo.JAVA_VENDOR, jreHome);
+      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), System.getProperty("java.vendor"), jreHome);
     }
   }
 
