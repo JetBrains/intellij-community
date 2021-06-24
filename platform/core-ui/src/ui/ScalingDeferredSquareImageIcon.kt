@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.ui.codereview.avatar
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui
 
-import com.intellij.ui.IconDeferrer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil

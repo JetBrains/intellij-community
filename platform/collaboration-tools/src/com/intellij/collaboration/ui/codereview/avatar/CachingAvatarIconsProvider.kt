@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.avatar
 
 import com.google.common.cache.CacheBuilder
+import com.intellij.ui.ScalingDeferredSquareImageIcon
 import com.intellij.util.IconUtil
 import java.awt.Image
 import java.util.concurrent.TimeUnit
