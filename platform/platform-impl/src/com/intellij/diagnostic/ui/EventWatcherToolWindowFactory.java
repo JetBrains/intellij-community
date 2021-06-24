@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 
 @ApiStatus.Experimental
-public final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
+final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   @Override
   public void createToolWindowContent(@NotNull Project project,
@@ -59,15 +59,17 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
 
-    @NotNull
-    private final List<Content> myContents;
+    private final @NotNull List<Content> myContents;
 
     TableProvidingListener() {
       myInvocationsModel = new ListTableModel<>(
         new ColumnInfo[]{
-          FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"), InvocationsInfo::getFQN),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"), Double.TYPE, InvocationsInfo::getAverageDuration),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"), Integer.TYPE, InvocationsInfo::getCount)
+          FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
+                                              InvocationsInfo::getFQN),
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"), Double.TYPE,
+                                        InvocationsInfo::getAverageDuration),
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"), Integer.TYPE,
+                                        InvocationsInfo::getCount)
         },
         new ArrayList<>(),
         1,
@@ -75,16 +77,20 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       );
 
       myRunnablesModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"), InvocationDescription::getProcessId),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"), Long.TYPE, InvocationDescription::getDuration),
+        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"),
+                                            InvocationDescription::getProcessId),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"), Long.TYPE,
+                                      InvocationDescription::getDuration),
         new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.started.at"), String.class,
                                       description -> new SimpleDateFormat().format(new Date(description.getStartedAt())),
                                       Comparator.comparingLong(InvocationDescription::getStartedAt))
       );
 
       myWrappersModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"), WrapperDescription::getFQN),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"), Integer.TYPE, WrapperDescription::getUsagesCount)
+        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
+                                            WrapperDescription::getFQN),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"), Integer.TYPE,
+                                      WrapperDescription::getUsagesCount)
       );
 
       myContents = Arrays.asList(
@@ -103,19 +109,15 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       myWrappersModel.setItems(new ArrayList<>(wrappers));
     }
 
-    @NotNull
-    List<Content> getContents() {
+    @NotNull List<? extends Content> getContents() {
       return myContents;
     }
 
-    @NotNull
-    private static Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
-                                              @NotNull ListTableModel<?> tableModel) {
+    private static @NotNull Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
+                                                       @NotNull ListTableModel<?> tableModel) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(
-        new JBScrollPane(new TableView<>(tableModel)),
-        BorderLayout.CENTER
-      );
+      panel.add(new JBScrollPane(new TableView<>(tableModel)),
+                BorderLayout.CENTER);
 
       return ContentFactory.SERVICE
         .getInstance()
@@ -125,12 +127,9 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     private static final class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
       extends ColumnInfo<Item, Aspect> {
 
-      @NotNull
-      private final Class<? extends Aspect> myColumnClass;
-      @NotNull
-      private final Function<? super Item, ? extends Aspect> myExtractor;
-      @NotNull
-      private final Comparator<Item> myComparator;
+      private final @NotNull Class<? extends Aspect> myColumnClass;
+      private final @NotNull Function<? super Item, ? extends Aspect> myExtractor;
+      private final @NotNull Comparator<Item> myComparator;
 
       private FunctionBasedColumnInfo(@NotNull @Nls String name,
                                       @NotNull Class<? extends Aspect> columnClass,
@@ -148,21 +147,18 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         this(name, columnClass, extractor, Comparator.comparing(extractor));
       }
 
-      @Nullable
       @Override
-      public Aspect valueOf(@NotNull Item item) {
+      public @Nullable Aspect valueOf(@NotNull Item item) {
         return myExtractor.apply(item);
       }
 
-      @NotNull
       @Override
-      public Class<? extends Aspect> getColumnClass() {
+      public @NotNull Class<? extends Aspect> getColumnClass() {
         return myColumnClass;
       }
 
-      @NotNull
       @Override
-      public Comparator<Item> getComparator() {
+      public @NotNull Comparator<Item> getComparator() {
         return myComparator;
       }
 

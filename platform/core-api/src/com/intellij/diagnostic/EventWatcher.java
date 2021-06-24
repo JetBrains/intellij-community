@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public interface EventWatcher {
 
   final class InstanceHolder {
@@ -20,24 +20,24 @@ public interface EventWatcher {
     private InstanceHolder() {}
   }
 
-  @NotNull InstanceHolder HOLDER = new InstanceHolder();
+  @NotNull InstanceHolder ourInstance = new InstanceHolder();
 
   static boolean isEnabled() {
-    return HOLDER.myIsEnabled;
+    return ourInstance.myIsEnabled;
   }
 
-  @Nullable
-  static EventWatcher getInstance() {
+  static @Nullable EventWatcher getInstanceOrNull() {
     if (!isEnabled()) return null;
 
-    EventWatcher result = HOLDER.myInstance;
-    if (result != null) return result;
-
-    Application application = getApplication();
-    if (application == null || application.isDisposed()) return null;
-
-    HOLDER.myInstance = result = application.getService(EventWatcher.class);
-
+    EventWatcher result = ourInstance.myInstance;
+    if (result == null) {
+      Application application = ApplicationManager.getApplication();
+      if (application != null &&
+          !application.isDisposed() &&
+          LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+        ourInstance.myInstance = result = application.getService(EventWatcher.class);
+      }
+    }
     return result;
   }
 

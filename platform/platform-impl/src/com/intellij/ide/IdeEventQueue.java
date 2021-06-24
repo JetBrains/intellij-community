@@ -367,7 +367,7 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
-    EventWatcher eventWatcher = EventWatcher.getInstance();
+    EventWatcher eventWatcher = EventWatcher.getInstanceOrNull();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted();
@@ -1449,7 +1449,7 @@ public final class IdeEventQueue extends EventQueue {
       postDelayedKeyEvents();
     }
 
-    EventWatcher watcher = EventWatcher.getInstance();
+    EventWatcher watcher = EventWatcher.getInstanceOrNull();
     if (watcher != null) {
       watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }

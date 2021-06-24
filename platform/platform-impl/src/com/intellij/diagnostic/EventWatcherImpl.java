@@ -1,16 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,61 +27,55 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.diagnostic.RunnablesListener.*;
 import static com.intellij.util.ReflectionUtil.*;
 
 @ApiStatus.Experimental
-public final class EventWatcherImpl implements EventWatcher, Disposable {
+@ApiStatus.Internal
+final class EventWatcherImpl implements EventWatcher, Disposable {
+
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 
-  @NotNull
   private static final Logger LOG = Logger.getInstance(EventWatcherImpl.class);
-  @NotNull
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
   );
 
-  @NotNull
   private final ConcurrentMap<String, WrapperDescription> myWrappers = new ConcurrentHashMap<>();
-  @NotNull
   private final ConcurrentMap<String, InvocationsInfo> myDurationsByFqn = new ConcurrentHashMap<>();
-  @NotNull
   private final ConcurrentLinkedQueue<InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
-  @NotNull
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
-  private final @NotNull ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
-
-  @NotNull
-  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
-    "EDT Events Logger",
-    1
-  );
-  @NotNull
-  private final ScheduledFuture<?> myThread = myExecutor.scheduleWithFixedDelay(
-    this::dumpDescriptions,
-    PUBLISHER_INITIAL_DELAY,
-    PUBLISHER_PERIOD,
-    TimeUnit.MILLISECONDS
-  );
+  private final ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
 
   private final @NotNull LogFileWriter myWriter = new LogFileWriter();
-  private final @NotNull MessageBus myMessageBus;
+  private final @NotNull RegistryValue myThreshold;
+  private final @NotNull ScheduledExecutorService myExecutor;
+  private final @NotNull ScheduledFuture<?> myThread;
 
-  @Nullable
-  private MatchResult myCurrentResult = null;
+  private @Nullable MatchResult myCurrentResult = null;
 
-  public EventWatcherImpl(@NotNull MessageBus messageBus) {
-    myMessageBus = messageBus;
-    myMessageBus.connect(this).subscribe(TOPIC, myWriter);
+  EventWatcherImpl() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null ||
+        application.isDisposed() ||
+        application.isHeadlessEnvironment()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
+    RegistryManager registryManager = application.getService(RegistryManager.class);
+    myThreshold = registryManager.get("ide.event.queue.dispatch.threshold");
+
+    myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Events Logger", 1);
+    myThread = myExecutor.scheduleWithFixedDelay(this::dumpDescriptions,
+                                                 PUBLISHER_INITIAL_DELAY,
+                                                 PUBLISHER_PERIOD,
+                                                 TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -96,10 +94,8 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
       Field field = findCallableOrRunnableField(rootClass);
 
       if (field != null) {
-        myWrappers.compute(
-          rootClass.getName(),
-          WrapperDescription::computeNext
-        );
+        myWrappers.compute(rootClass.getName(),
+                           WrapperDescription::computeNext);
         current = getFieldValue(field, current);
       }
       else {
@@ -107,10 +103,8 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
       }
     }
 
-    myRunnablesOrCallablesInProgress.put(
-      startedAt,
-      (current != null ? current : runnable).getClass()
-    );
+    myRunnablesOrCallablesInProgress.put(startedAt,
+                                         (current != null ? current : runnable).getClass());
   }
 
   @Override
@@ -120,10 +114,8 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
 
     InvocationDescription description = new InvocationDescription(fqn, startedAt);
     myRunnables.offer(description);
-    myDurationsByFqn.compute(
-      fqn,
-      (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info)
-    );
+    myDurationsByFqn.compute(fqn,
+                             (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info));
 
     logTimeMillis(description, runnableOrCallableClass);
   }
@@ -158,23 +150,24 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
   }
 
   private void dumpDescriptions() {
-    if (myMessageBus.isDisposed()) return;
+    Application application = ApplicationManager.getApplication();
+    RunnablesListener publisher = application != null && !application.isDisposed() ?
+                                  application.getMessageBus().syncPublisher(TOPIC) :
+                                  null;
+    if (publisher == null) {
+      return;
+    }
 
-    RunnablesListener publisher = myMessageBus.syncPublisher(TOPIC);
     myEventsByClass.forEach((eventClass, events) ->
                               publisher.eventsProcessed(eventClass, joinPolling(events)));
-    publisher.runnablesProcessed(
-      joinPolling(myRunnables),
-      myDurationsByFqn.values(),
-      myWrappers.values()
-    );
+    publisher.runnablesProcessed(joinPolling(myRunnables),
+                                 myDurationsByFqn.values(),
+                                 myWrappers.values());
   }
 
   private static @Nullable Field findCallableOrRunnableField(@NotNull Class<?> rootClass) {
-    return findFieldInHierarchy(
-      rootClass,
-      field -> isInstanceField(field) && isCallableOrRunnable(field)
-    );
+    return findFieldInHierarchy(rootClass,
+                                field -> isInstanceField(field) && isCallableOrRunnable(field));
   }
 
   private static boolean isCallableOrRunnable(@NotNull Field field) {
@@ -183,8 +176,7 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
            isAssignable(Callable.class, fieldType);
   }
 
-  @NotNull
-  private static <T> List<T> joinPolling(@NotNull Queue<? extends T> queue) {
+  private static @NotNull <T> List<T> joinPolling(@NotNull Queue<? extends T> queue) {
     ArrayList<T> builder = new ArrayList<>();
     while (!queue.isEmpty()) {
       builder.add(queue.poll());
@@ -192,11 +184,9 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
     return Collections.unmodifiableList(builder);
   }
 
-  private static void logTimeMillis(@NotNull InvocationDescription description,
-                                    @NotNull Class<?> runnableClass) {
-    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-
-    int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
+  private void logTimeMillis(@NotNull InvocationDescription description,
+                             @NotNull Class<?> runnableClass) {
+    int threshold = myThreshold.asInteger();
     if (threshold < 0 ||
         threshold > description.getDuration()) {
       return; // do not measure a time if the threshold is too small
@@ -216,76 +206,67 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
                       ((PluginAwareClassLoader)loader).getPluginId().getIdString() :
                       PluginManagerCore.CORE_PLUGIN_ID;
 
-    StartUpMeasurer.addPluginCost(
-      pluginId,
-      "invokeLater",
-      TimeUnit.MILLISECONDS.toNanos(duration)
-    );
+    StartUpMeasurer.addPluginCost(pluginId,
+                                  "invokeLater",
+                                  TimeUnit.MILLISECONDS.toNanos(duration));
   }
 
   private static final class LogFileWriter implements RunnablesListener, Disposable {
 
-    private final @NotNull File myLogDir = new File(
-      new File(PathManager.getLogPath(), "edt-log"),
-      String.format("%tY%<tm%<td-%<tH%<tM%<tS", System.currentTimeMillis())
-    );
+    private final File myLogDir = new File(new File(PathManager.getLogPath(), "edt-log"),
+                                           String.format("%tY%<tm%<td-%<tH%<tM%<tS", System.currentTimeMillis()));
 
-    private final @NotNull Map<String, InvocationsInfo> myInfos = new HashMap<>();
-    private final @NotNull Map<String, WrapperDescription> myWrappers = new HashMap<>();
+    private final ArrayList<InvocationsInfo> myInfos = new ArrayList<>();
+    private final ArrayList<WrapperDescription> myWrappers = new ArrayList<>();
 
     @Override
     public void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
                                 @NotNull Collection<InvocationDescription> descriptions) {
-      appendToFile(eventClass.getSimpleName(), descriptions.stream());
+      appendToFile(eventClass.getSimpleName(), descriptions);
     }
 
     @Override
     public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
                                    @NotNull Collection<InvocationsInfo> infos,
                                    @NotNull Collection<WrapperDescription> wrappers) {
-      appendToFile("Runnables", invocations.stream());
-
-      putAllTo(infos, InvocationsInfo::getFQN, myInfos);
-      putAllTo(wrappers, WrapperDescription::getFQN, myWrappers);
+      appendToFile("Runnables", invocations);
+      myInfos.addAll(infos);
+      myWrappers.addAll(wrappers);
     }
 
     @Override
     public void dispose() {
-      writeToFile("Timings", myInfos);
-      writeToFile("Wrappers", myWrappers);
+      sortAndDumpToFile("Timings", myInfos);
+      sortAndDumpToFile("Wrappers", myWrappers);
     }
 
-    private <T> void appendToFile(@NotNull String kind,
-                                  @NotNull Stream<T> lines) {
+    private <T> void appendToFile(@NotNull String fileName,
+                                  @NotNull Collection<? extends T> entities) {
+      writeToFile(fileName, entities, true);
+    }
+
+    private <T> void writeToFile(@NotNull String fileName,
+                                 @NotNull Collection<? extends T> entities,
+                                 boolean append) {
       if (!(myLogDir.isDirectory() || myLogDir.mkdirs())) {
         LOG.debug(myLogDir.getAbsolutePath() + " cannot be created");
         return;
       }
 
       try {
-        FileUtil.writeToFile(
-          new File(myLogDir, kind + ".log"),
-          lines.map(Objects::toString).collect(Collectors.joining("\n")),
-          true
-        );
+        FileUtil.writeToFile(new File(myLogDir, fileName + ".log"),
+                             StringUtil.join(entities, Objects::toString, "\n"),
+                             append);
       }
       catch (IOException e) {
         LOG.debug(e);
       }
     }
 
-    private <K, V> void writeToFile(@NotNull String kind,
-                                    @NotNull Map<K, V> entities) {
-      appendToFile(kind, entities.values().stream().sorted());
-    }
-
-    private static <E> void putAllTo(@NotNull Collection<? extends E> entities,
-                                     @NotNull Function<? super E, String> mapper,
-                                     @NotNull Map<String, E> map) {
-      Map<String, E> entitiesMap = entities
-        .stream()
-        .collect(Collectors.toMap(mapper, Function.identity()));
-      map.putAll(entitiesMap);
+    private <T extends Comparable<? super T>> void sortAndDumpToFile(@NotNull String fileName,
+                                                                     @NotNull List<? extends T> entities) {
+      Collections.sort(entities);
+      writeToFile(fileName, entities, false);
     }
   }
 }

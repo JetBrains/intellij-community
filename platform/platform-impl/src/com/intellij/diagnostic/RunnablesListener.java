@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
@@ -13,26 +13,26 @@ import java.util.Map;
 import java.util.Objects;
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public interface RunnablesListener {
 
-  Topic<RunnablesListener> TOPIC = Topic.create(
-    "RunnableListener",
-    RunnablesListener.class
-  );
+  @Topic.AppLevel
+  Topic<RunnablesListener> TOPIC = new Topic<>(RunnablesListener.class,
+                                               Topic.BroadcastDirection.NONE,
+                                               true);
 
   default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
-                               @NotNull Collection<InvocationDescription> descriptions) {}
+                               @NotNull Collection<InvocationDescription> descriptions) { }
 
   default void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
                                   @NotNull Collection<InvocationsInfo> infos,
-                                  @NotNull Collection<WrapperDescription> wrappers) {}
+                                  @NotNull Collection<WrapperDescription> wrappers) { }
 
-  default void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) {}
+  default void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) { }
 
   final class InvocationDescription implements Comparable<InvocationDescription> {
 
-    @NotNull
-    private final String myProcessId;
+    private final @NotNull String myProcessId;
     private final long myStartedAt;
     private final long myFinishedAt;
 
@@ -49,8 +49,7 @@ public interface RunnablesListener {
       this(processId, startedAt, System.currentTimeMillis());
     }
 
-    @NotNull
-    public String getProcessId() {
+    public @NotNull String getProcessId() {
       return myProcessId;
     }
 
@@ -92,32 +91,26 @@ public interface RunnablesListener {
     }
 
     @Override
-    public String toString() {
-      return String.format(
-        "%dms to process %s; started at: %tc; finished at: %tc",
-        getDuration(),
-        myProcessId,
-        myStartedAt,
-        myFinishedAt
-      );
+    public @NotNull String toString() {
+      return String.format("%dms to process %s; started at: %tc; finished at: %tc",
+                           getDuration(),
+                           myProcessId,
+                           myStartedAt,
+                           myFinishedAt);
     }
   }
 
   final class InvocationsInfo implements Comparable<InvocationsInfo> {
 
-    @NotNull
-    static InvocationsInfo computeNext(@NotNull String fqn,
-                                       long duration,
-                                       @Nullable InvocationsInfo info) {
-      return new InvocationsInfo(
-        fqn,
-        info != null ? info.myCount : 0,
-        (info != null ? info.myDuration : 0) + duration
-      );
+    static @NotNull InvocationsInfo computeNext(@NotNull String fqn,
+                                                long duration,
+                                                @Nullable InvocationsInfo info) {
+      return new InvocationsInfo(fqn,
+                                 info != null ? info.myCount : 0,
+                                 (info != null ? info.myDuration : 0) + duration);
     }
 
-    @NotNull
-    private final String myFQN;
+    private final @NotNull String myFQN;
     private final int myCount;
     private final long myDuration;
 
@@ -129,8 +122,7 @@ public interface RunnablesListener {
       myDuration = duration;
     }
 
-    @NotNull
-    public String getFQN() {
+    public @NotNull String getFQN() {
       return myFQN;
     }
 
@@ -167,31 +159,24 @@ public interface RunnablesListener {
       return Objects.hash(myFQN, myCount, myDuration);
     }
 
-    @NotNull
     @Override
-    public String toString() {
-      return String.format(
-        "%s=[average: %.2f; count: %d]",
-        myFQN,
-        getAverageDuration(),
-        myCount
-      );
+    public @NotNull String toString() {
+      return String.format("%s=[average: %.2f; count: %d]",
+                           myFQN,
+                           getAverageDuration(),
+                           myCount);
     }
   }
 
   final class WrapperDescription implements Comparable<WrapperDescription> {
 
-    @NotNull
-    static WrapperDescription computeNext(@NotNull String fqn,
-                                          @Nullable WrapperDescription description) {
-      return new WrapperDescription(
-        fqn,
-        description != null ? description.myUsagesCount : 0
-      );
+    static @NotNull WrapperDescription computeNext(@NotNull String fqn,
+                                                   @Nullable WrapperDescription description) {
+      return new WrapperDescription(fqn,
+                                    description != null ? description.myUsagesCount : 0);
     }
 
-    @NotNull
-    private final String myFQN;
+    private final @NotNull String myFQN;
     private final int myUsagesCount;
 
     private WrapperDescription(@NotNull String fqn, int count) {
@@ -199,8 +184,7 @@ public interface RunnablesListener {
       myUsagesCount = 1 + count;
     }
 
-    @NotNull
-    public String getFQN() {
+    public @NotNull String getFQN() {
       return myFQN;
     }
 
@@ -229,12 +213,10 @@ public interface RunnablesListener {
     }
 
     @Override
-    public String toString() {
-      return String.format(
-        "%s; usages: %d",
-        myFQN,
-        myUsagesCount
-      );
+    public @NotNull String toString() {
+      return String.format("%s; usages: %d",
+                           myFQN,
+                           myUsagesCount);
     }
   }
 
@@ -247,13 +229,9 @@ public interface RunnablesListener {
                                              createMapWithDefaultValue() :
                                              new EnumMap<>(description.myAcquirements);
 
-      acquirements.compute(
-        lockKind,
-        (ignored, count) -> {
-          //noinspection ConstantConditions
-          return count + 1;
-        }
-      );
+      //noinspection ConstantConditions
+      acquirements.compute(lockKind,
+                           (ignored, count) -> count + 1);
       return new LockAcquirementDescription(fqn, acquirements);
     }
 
@@ -308,7 +286,7 @@ public interface RunnablesListener {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       StringBuilder builder = new StringBuilder(myFQN);
       for (Map.Entry<LockKind, Long> entry : myAcquirements.entrySet()) {
         builder.append("; ")
