@@ -605,6 +605,7 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
 
     <editorSmartKeysConfigurable instance="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsConfigurable"/>
+    <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings"/>
 
