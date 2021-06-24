@@ -103,11 +103,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   private static void checkRuntime() {
     if (isUnderRosetta()) {
-      NotificationAction downloadAction =
-        NotificationAction.createSimpleExpiring(
-          IdeBundle.message("bundled.jre.m1.arch.message.download"), () ->
-            BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide")
-          );
+      NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
+        IdeBundle.message("bundled.jre.m1.arch.message.download"),
+        () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));
       showNotification("bundled.jre.m1.arch.message", true, downloadAction, ApplicationNamesInfo.getInstance().getFullProductName());
     }
 

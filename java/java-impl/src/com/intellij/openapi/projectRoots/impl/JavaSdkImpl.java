@@ -234,14 +234,12 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
-    var info = getInfo(sdkHome);
+    JdkVersionDetector.JdkVersionInfo info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
     String vendorPrefix = Registry.is("use.jdk.vendor.in.suggested.jdk.name", true) ? info.variant.prefix : null;
     String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
-    if (WslDistributionManager.isWslPath(sdkHome)) {
-      return name + " (WSL)";
-    }
+    if (WslDistributionManager.isWslPath(sdkHome)) name += " (WSL)";
     return name;
   }
 

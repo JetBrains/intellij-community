@@ -11,16 +11,13 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.util.concurrent.ExecutorService;
 
 public abstract class JdkVersionDetector {
-
   public static JdkVersionDetector getInstance() {
     return JpsServiceManager.getInstance().getService(JdkVersionDetector.class);
   }
 
-  @Nullable
-  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);
+  public abstract @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);
 
-  @Nullable
-  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService actionRunner);
+  public abstract @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService actionRunner);
 
 
   /** Known OpenJDK builds */
@@ -47,7 +44,6 @@ public abstract class JdkVersionDetector {
   }
 
   public static final class JdkVersionInfo {
-
     public final JavaVersion version;
     public final Bitness bitness;
     public final Variant variant;
@@ -58,25 +54,23 @@ public abstract class JdkVersionDetector {
       this.variant = variant != null ? variant : Variant.Unknown;
     }
 
-    @NotNull
-    public String suggestedName() {
+    public @NotNull String suggestedName() {
       String f = version.toFeatureString();
       return variant.prefix != null ? variant.prefix + '-' + f : f;
+    }
+
+    public @NotNull String displayVersionString() {
+      String s = "version " + version;
+      return variant.displayName != null ? variant.displayName + ' ' + s : s;
     }
 
     @Override
     public String toString() {
       return version + " " + bitness;
     }
-
-    public String displayVersionString() {
-      String s = "version " + version;
-      return variant.displayName != null ? variant.displayName + ' ' + s : s;
-    }
   }
 
-  @NotNull
-  public static String formatVersionString(@NotNull JavaVersion version) {
+  public static @NotNull String formatVersionString(@NotNull JavaVersion version) {
     return "java version \"" + version + '"';
   }
 

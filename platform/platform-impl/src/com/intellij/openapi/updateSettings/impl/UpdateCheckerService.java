@@ -147,9 +147,7 @@ final class UpdateCheckerService {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ourStarted.getAndSet(true)) {
-        return;
-      }
+      if (ourStarted.getAndSet(true)) return;
 
       checkIfPreviousUpdateFailed();
 

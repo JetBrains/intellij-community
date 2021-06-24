@@ -29,15 +29,13 @@ import java.util.jar.Manifest;
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static final Logger LOG = Logger.getInstance(JdkVersionDetectorImpl.class);
 
-  @Nullable
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
+  public @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
     return detectJdkVersionInfo(homePath, SharedThreadPool.getInstance());
   }
 
-  @Nullable
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService runner) {
+  public @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService runner) {
     // Java 1.7+
     JdkVersionInfo version = detectFromRelease(homePath);
     if (version != null) return version;
@@ -203,9 +201,8 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
       start("java -version");
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return myRunner.submit(runnable);
     }
 
