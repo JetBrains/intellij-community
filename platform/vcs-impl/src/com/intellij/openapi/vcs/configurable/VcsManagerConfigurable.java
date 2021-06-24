@@ -33,7 +33,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
-  private VcsGeneralConfigurationConfigurable myGeneralPanel;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -80,9 +79,6 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     if (myMappings != null) {
       myMappings.disposeUIResources();
     }
-    if (myGeneralPanel != null) {
-      myGeneralPanel.disposeUIResources();
-    }
     myMappings = null;
   }
 
@@ -105,11 +101,9 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   protected Configurable[] buildConfigurables() {
-    myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
-
     List<Configurable> result = new ArrayList<>();
 
-    result.add(myGeneralPanel);
+    result.add(new VcsGeneralConfigurationConfigurable(myProject, this));
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
     boolean ignoreSettingsAvailable = Registry.is("vcs.ignorefile.generation", true);
     if (!myProject.isDefault() && ignoreSettingsAvailable) {
