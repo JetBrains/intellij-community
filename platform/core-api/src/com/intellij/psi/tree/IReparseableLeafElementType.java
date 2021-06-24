@@ -33,7 +33,7 @@ public interface IReparseableLeafElementType<T extends ASTNode> {
    * the new one. Otherwise, null should be returned, and a full-blown reparse process will happen instead.
    * @param leaf the leaf element where the text change has occurred
    * @param newText the updated text inside the leaf's range
-   * @return a replacement leaf with newText text, if it's correct to do such replacement, or null otherwise
+   * @return a replacement leaf with newText text, if it's correct to do such a replacement, or null otherwise
    */
   @Nullable
   T reparseLeaf(@NotNull T leaf, @NotNull CharSequence newText);

@@ -26,7 +26,7 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 public interface ILightLazyParseableElementType {
   /**
    * Parses the contents of the specified chameleon node and returns the lightweight tree
-   * representing parsed contents.
+   * representing the parsed contents.
    *
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.

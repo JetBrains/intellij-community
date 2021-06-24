@@ -102,7 +102,7 @@ public class IElementType {
   }
 
   /**
-   * Allows to construct element types for some temporary purposes without registering them.
+   * Allows constructing element types for some temporary purposes without registering them.
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
