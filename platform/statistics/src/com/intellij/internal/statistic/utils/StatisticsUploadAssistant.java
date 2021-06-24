@@ -66,7 +66,7 @@ public final class StatisticsUploadAssistant {
 
     EventLogRecorderConfiguration configuration = EventLogConfiguration.getInstance().getOrCreate(recorderId);
     return new EventLogStatisticsService(
-      configuration,
+      new DeviceConfiguration(configuration.getDeviceId(), configuration.getBucket(), configuration.getMachineId()),
       new EventLogInternalRecorderConfig(recorderId),
       new EventLogInternalApplicationInfo(recorderId, false), listener
     );

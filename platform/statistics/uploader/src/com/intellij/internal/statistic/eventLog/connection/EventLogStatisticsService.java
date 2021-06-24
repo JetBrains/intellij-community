@@ -29,13 +29,13 @@ public class EventLogStatisticsService implements StatisticsService {
 
   private static final int MAX_FILES_TO_SEND = 5;
 
-  private final DeviceConfigurationHolder myDeviceConfiguration;
+  private final DeviceConfiguration myDeviceConfiguration;
   private final EventLogSettingsService mySettingsService;
   private final EventLogRecorderConfig myRecorderConfiguration;
 
   private final EventLogSendListener mySendListener;
 
-  public EventLogStatisticsService(@NotNull DeviceConfigurationHolder device,
+  public EventLogStatisticsService(@NotNull DeviceConfiguration device,
                                    @NotNull EventLogRecorderConfig config,
                                    @NotNull EventLogApplicationInfo application,
                                    @Nullable EventLogSendListener listener) {
@@ -46,7 +46,7 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @TestOnly
-  public EventLogStatisticsService(@NotNull DeviceConfigurationHolder device,
+  public EventLogStatisticsService(@NotNull DeviceConfiguration device,
                                    @NotNull EventLogRecorderConfig config,
                                    @Nullable EventLogSendListener listener,
                                    @Nullable EventLogUploadSettingsService settingsService) {
@@ -65,7 +65,7 @@ public class EventLogStatisticsService implements StatisticsService {
     return send(myDeviceConfiguration, myRecorderConfiguration, mySettingsService, decorator);
   }
 
-  public static StatisticsResult send(@NotNull DeviceConfigurationHolder device,
+  public static StatisticsResult send(@NotNull DeviceConfiguration device,
                                       @NotNull EventLogRecorderConfig config,
                                       @NotNull EventLogSettingsService settings,
                                       @NotNull EventLogResultDecorator decorator) {
@@ -161,7 +161,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  private static MachineId getMachineId(@NotNull DeviceConfigurationHolder device, @NotNull EventLogSettingsService settings) {
+  private static MachineId getMachineId(@NotNull DeviceConfiguration device, @NotNull EventLogSettingsService settings) {
     if (device.getMachineId() == MachineId.DISABLED) {
       return MachineId.DISABLED;
     }
