@@ -154,7 +154,7 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerat
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
 
-fun main() {
+fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace())
 }
