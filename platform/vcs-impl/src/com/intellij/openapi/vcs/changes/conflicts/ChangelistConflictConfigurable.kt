@@ -29,17 +29,19 @@ class ChangelistConflictConfigurable(val project: Project)
     val changeListsEnabledPredicate = ChangeListsEnabledPredicate(project, disposable!!)
 
     return panel {
-      row {
-        enableIf(changeListsEnabledPredicate)
-        checkBox(message("settings.changelists.create.automatically.checkbox"), appSettings::CREATE_CHANGELISTS_AUTOMATICALLY)
-      }
+      blockRow {
+        row {
+          enableIf(changeListsEnabledPredicate)
+          checkBox(message("settings.changelists.create.automatically.checkbox"), appSettings::CREATE_CHANGELISTS_AUTOMATICALLY)
+        }
 
-      row {
-        enableIf(changeListsEnabledPredicate)
-        checkBox(message("settings.partial.changelists.enable.checkbox"), appSettings::ENABLE_PARTIAL_CHANGELISTS)
-          .onApply {
-            ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-          }
+        row {
+          enableIf(changeListsEnabledPredicate)
+          checkBox(message("settings.partial.changelists.enable.checkbox"), appSettings::ENABLE_PARTIAL_CHANGELISTS)
+            .onApply {
+              ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+            }
+        }
       }
 
       titledRow(message("settings.inactive.changelist.group.title")) {
