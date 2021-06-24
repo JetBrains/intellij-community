@@ -16,10 +16,6 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         myFixture.testDataPath = getTestDataPath("compilerIndex") + name
     }
 
-    override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
-        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
-    }
-
     fun testIsNotReady() {
         myFixture.configureByFile("Main.kt")
         assertIndexNotReady()

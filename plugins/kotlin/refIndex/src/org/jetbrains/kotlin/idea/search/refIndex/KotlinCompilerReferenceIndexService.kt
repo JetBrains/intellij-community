@@ -293,7 +293,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         if (virtualFiles == null) return null
 
         // knows everything
-        val referencesScope = ScopeWithReferencesOnCompilation(virtualFiles)
+        val referencesScope = ScopeWithReferencesOnCompilation(project, virtualFiles)
 
         /***
          * can contain all languages, but depends on [supportedFileTypes]

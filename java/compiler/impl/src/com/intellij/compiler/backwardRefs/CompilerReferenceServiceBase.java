@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,6 +47,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -312,7 +314,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(referentFiles);
+    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(myProject, referentFiles);
 
     GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
     GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
@@ -529,9 +531,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   public static final class ScopeWithReferencesOnCompilation extends GlobalSearchScope {
-    private final Set<VirtualFile> myReferentFiles;
+    private final @NotNull Set<VirtualFile> myReferentFiles;
 
-    public ScopeWithReferencesOnCompilation(Set<VirtualFile> files) {
+    public ScopeWithReferencesOnCompilation(@NotNull Project project, @NotNull Set<VirtualFile> files) {
+      super(project);
       myReferentFiles = files;
     }
 
@@ -548,6 +551,18 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @Override
+    public String toString() {
+      assert getProject() != null;
+      String basePath = StringUtil.defaultIfEmpty(getProject().getBasePath(), "");
+
+      return "Referent files: [" + StringUtil.join(
+        myReferentFiles,
+        (file) -> StringsKt.removePrefix(file.getPresentableUrl(), basePath),
+        ", "
+      ) + "]";
     }
   }
 

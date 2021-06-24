@@ -6,7 +6,10 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.runAll
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.test.KotlinRoot
 import kotlin.properties.Delegates
@@ -18,6 +21,10 @@ abstract class KotlinCompilerReferenceTestBase : AbstractCompilerAwareTest() {
         .resolve("refIndex/tests/testData/")
         .resolve(testDirectory)
         .path + "/"
+
+    override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
+    }
 
     override fun setUp() {
         super.setUp()

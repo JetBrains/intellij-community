@@ -40,5 +40,8 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

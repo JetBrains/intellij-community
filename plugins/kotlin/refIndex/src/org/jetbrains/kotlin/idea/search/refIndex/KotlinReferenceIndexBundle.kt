@@ -5,11 +5,19 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.util.AbstractKotlinBundle
+import java.util.function.Supplier
 
 @NonNls
 private const val BUNDLE = "messages.KotlinReferenceIndexBundle"
 
 object KotlinReferenceIndexBundle : AbstractKotlinBundle(BUNDLE) {
-    @Nls
-    operator fun get(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+    fun message(
+        @NonNls @PropertyKey(resourceBundle = BUNDLE) key: String,
+        vararg params: Any,
+    ): @Nls String = getMessage(key, *params)
+
+    fun lazyMessage(
+        @NonNls @PropertyKey(resourceBundle = BUNDLE) key: String,
+        vararg params: Any,
+    ): Supplier<@Nls String> = getLazyMessage(key, *params)
 }
