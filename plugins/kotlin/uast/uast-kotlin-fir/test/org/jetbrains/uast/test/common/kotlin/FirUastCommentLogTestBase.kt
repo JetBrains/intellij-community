@@ -6,11 +6,11 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.uast.UComment
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.asRecursiveLogString
+import org.jetbrains.uast.*
 import org.jetbrains.uast.test.common.kotlin.FirUastTestSuffix.TXT
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
+import org.jetbrains.uast.psi.UElementWithLocation
+import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
 interface FirUastCommentLogTestBase : FirUastPluginSelection, FirUastFileComparisonTestBase {
@@ -24,36 +24,14 @@ interface FirUastCommentLogTestBase : FirUastPluginSelection, FirUastFileCompari
         return getCommentsFile(filePath, "$pluginSuffix$TXT")
     }
 
-    private fun UComment.testLog(): String {
-        return "UComment(${text})"
+    private fun UComment.testLog(indent: String): String {
+        return "UComment(${text})".replace("\n", "\n" + indent)
     }
 
     fun check(filePath: String, file: UFile) {
+        val comments = printComments(file)
+
         val commentsFile = getPluginCommentsFile(filePath)
-
-        val comments = file.asRecursiveLogString { uElement ->
-            val stringBuilder = StringBuilder()
-            when (uElement) {
-                is UFile -> {
-                    if (uElement.allCommentsInFile.isNotEmpty()) {
-                        stringBuilder.append("UFile(allCommentsInFile:\n")
-                        stringBuilder.append(uElement.allCommentsInFile.joinToString(separator = "\n") { it.testLog() })
-                        stringBuilder.append("\n)")
-                    }
-                }
-                is KotlinUElementWithComments -> {
-                    if (uElement.comments.isNotEmpty()) {
-                        stringBuilder.append("${uElement::class.java.simpleName}(\n")
-                        uElement.comments.joinToString(separator = "\n") { it.testLog() }
-                        stringBuilder.append("\n)")
-                    }
-                }
-            }
-            stringBuilder.toString()
-        }
-        // No comments in the file
-        if (comments.isEmpty()) return
-
         KotlinTestUtils.assertEqualsToFile(commentsFile, comments)
 
         cleanUpIdenticalFile(
@@ -62,5 +40,43 @@ interface FirUastCommentLogTestBase : FirUastPluginSelection, FirUastFileCompari
             getIdenticalCommentsFile(filePath),
             kind = "comments"
         )
+    }
+
+    private fun printComments(file: UFile): String = buildString {
+        val indent = "    "
+        file.accept(object : UastVisitor {
+            private var level = 0
+
+            private fun printIndent() {
+                append(indent.repeat(level))
+            }
+
+            private fun renderComments(comments: List<UComment>) {
+                comments.forEach { comment ->
+                    printIndent()
+                    appendLine(comment.testLog(indent.repeat(level)))
+                }
+            }
+
+
+            override fun visitElement(node: UElement): Boolean {
+                if (node is UDeclaration || node is UFile) {
+                    printIndent()
+                    appendLine("${node::class.java.simpleName}(")
+                    level++
+                    if (node is KotlinUElementWithComments) renderComments(node.comments)
+                }
+                return false
+            }
+
+            override fun afterVisitElement(node: UElement) {
+                super.afterVisitElement(node)
+                if (node is UDeclaration || node is UFile) {
+                    level--
+                    printIndent()
+                    appendLine(")")
+                }
+            }
+        })
     }
 }
