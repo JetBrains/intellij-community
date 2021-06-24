@@ -2,9 +2,9 @@
 <body>
 <p>Reports potentially unsafe calls of inline functions with flexible nullable (platform type with unknown nullability) extension receivers.</p>
 <p>
-    In Kotlin 1.0 or 1.1, calls of <code>inline fun</code> with flexible nullable extension (platform type with unknown nullability)
-    receiver did not include nullability check in bytecode, but in Kotlin 1.2 this problem is fixed
-    (see <a href="https://youtrack.jetbrains.com/issue/KT-12899">KT-12899</a>), nullability check is included into bytecode.
+    Before Kotlin 1.2, calls of <code>inline fun</code> with flexible nullable extension receiver (a platform type with an unknown
+    nullability) did not include nullability checks in bytecode. Since Kotlin 1.2, nullability checks are included into the bytecode
+    (see <a href="https://youtrack.jetbrains.com/issue/KT-12899">KT-12899</a>).
 </p>
 <p>
     It's recommended to add explicit <code>!!</code> if exception is what you want,
