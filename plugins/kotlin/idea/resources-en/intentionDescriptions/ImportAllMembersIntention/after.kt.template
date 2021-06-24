@@ -2,6 +2,6 @@ import javax.swing.SwingUtilities
 <spot>import javax.swing.SwingUtilities.*</spot>
 
 fun foo() {
-    SwingUtilities.invokeLater { }
-    SwingUtilities.invokeAndWait()
+    invokeLater { }
+    invokeAndWait { }
 }

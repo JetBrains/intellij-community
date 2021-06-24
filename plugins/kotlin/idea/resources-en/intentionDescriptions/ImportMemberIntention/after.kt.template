@@ -3,5 +3,6 @@ import javax.swing.SwingUtilities
 
 fun foo() {
     <spot>invokeLater</spot> { }
-    <spot>invokeLater</spot>()
+    <spot>invokeLater</spot> { }
+    SwingUtilities.invokeAndWait { }
 }
