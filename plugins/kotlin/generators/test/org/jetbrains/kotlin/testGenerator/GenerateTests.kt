@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.*
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByReferenceTest
 import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionTest
@@ -47,7 +46,6 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractSmartCompletio
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.configuration.AbstractGradleConfigureProjectByChangingFileTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByFqNameTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralTextToKotlinCopyPasteTest
@@ -91,13 +89,9 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdl
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.*
 import org.jetbrains.kotlin.idea.fir.frontend.api.fir.AbstractResolveCallTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractFileScopeTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractMemberScopeByFqNameTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractMemoryLeakInSymbolsTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByFqNameTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByPsiTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByReferenceTest
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
@@ -105,15 +99,12 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.*
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractExpectedExpressionTypeTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractHLExpressionTypeTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractRendererTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.fir.AbstractResolveCallTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractFileScopeTest
-import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractMemberScopeByFqNameTest
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
@@ -190,7 +181,6 @@ import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
-import org.jetbrains.kotlin.idea.fir.uast.test.*
 import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
 import org.jetbrains.kotlin.spec.utils.GeneralConfiguration
 import org.jetbrains.kotlin.test.TargetBackend
@@ -219,7 +209,6 @@ import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDi
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
 import org.jetbrains.uast.test.kotlin.*
 import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly
-import org.jetbrains.uast.test.kotlin.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
