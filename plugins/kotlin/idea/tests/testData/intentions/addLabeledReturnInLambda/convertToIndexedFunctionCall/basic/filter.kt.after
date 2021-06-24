@@ -1,7 +1,0 @@
-// INTENTION_TEXT: "Convert to 'filterIndexed'"
-// WITH_RUNTIME
-fun test(list: List<String>) {
-    list.filterIndexed { index, s ->
-        s == "a"
-    }
-}
