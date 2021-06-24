@@ -8,16 +8,21 @@ import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpre
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import com.intellij.codeInspection.dataFlow.lang.DfaListener
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.java.analysis.JavaAnalysisBundle
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -31,10 +36,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
     private class KotlinDfaListener : DfaListener {
         val constantConditions = hashMapOf<KotlinAnchor, ConstantValue>()
+        val problems = hashMapOf<KotlinProblem, ThreeState>()
 
         override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
             if (anchor is KotlinAnchor) {
                 recordExpressionValue(anchor, state, value)
+            }
+        }
+
+        override fun onCondition(problem: UnsatisfiedConditionProblem, value: DfaValue, failed: ThreeState, state: DfaMemoryState) {
+            if (problem is KotlinProblem) {
+                problems.merge(problem, failed, ThreeState::merge)
             }
         }
 
@@ -109,6 +121,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             holder.registerProblem(condition, KotlinBundle.message(key))
                         }
                     }
+                }
+            }
+        }
+        listener.problems.forEach { (problem, state) ->
+            if (state == ThreeState.YES) {
+                when (problem) {
+                    is KotlinArrayIndexProblem ->
+                        holder.registerProblem(problem.index, JavaAnalysisBundle.message("dataflow.message.array.index.out.of.bounds"))
+                    is KotlinCastProblem ->
+                        holder.registerProblem(problem.cast, KotlinBundle.message("inspection.message.cast.will.always.fail"))
                 }
             }
         }

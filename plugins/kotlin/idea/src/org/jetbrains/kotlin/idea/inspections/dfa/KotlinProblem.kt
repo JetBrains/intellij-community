@@ -5,4 +5,7 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
-class KotlinArrayIndexProblem(val arrayAccess: KtArrayAccessExpression, val index: KtExpression): UnsatisfiedConditionProblem
+sealed class KotlinProblem: UnsatisfiedConditionProblem {
+    data class KotlinCastProblem(val operand: KtExpression, val cast: KtExpression): KotlinProblem()
+    data class KotlinArrayIndexProblem(val arrayAccess: KtArrayAccessExpression, val index: KtExpression): KotlinProblem()
+}

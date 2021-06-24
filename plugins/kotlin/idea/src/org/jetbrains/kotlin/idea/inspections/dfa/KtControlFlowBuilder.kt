@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
@@ -78,6 +80,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtBlockExpression -> processBlock(expr)
             is KtParenthesizedExpression -> processExpression(expr.expression)
             is KtBinaryExpression -> processBinaryExpression(expr)
+            is KtBinaryExpressionWithTypeRHS -> processAsExpression(expr)
             is KtPrefixExpression -> processPrefixExpression(expr)
             is KtPostfixExpression -> processPostfixExpression(expr)
             is KtIsExpression -> processIsExpression(expr)
@@ -99,13 +102,53 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtLambdaExpression -> processLambda(expr)
             is KtStringTemplateExpression -> processStringTemplate(expr)
             is KtArrayAccessExpression -> processArrayAccess(expr)
-            // try, anonymous classes, local functions, as, as?
+            // try/catch/finally, anonymous classes, local functions
             else -> {
                 // unsupported construct
                 broken = true
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processAsExpression(expr: KtBinaryExpressionWithTypeRHS) {
+        val operand = expr.left
+        val typeReference = expr.right
+        val type = getTypeCheckDfType(typeReference)
+        val ref = expr.operationReference
+        if (ref.text != "as?" && ref.text != "as") {
+            broken = true
+            return
+        }
+        processExpression(operand)
+        val operandType = operand.getKotlinType()
+        if (operandType.toDfType(expr) is DfPrimitiveType) {
+            addInstruction(WrapDerivedVariableInstruction(DfTypes.NOT_NULL_OBJECT, SpecialField.UNBOX))
+        }
+        if (ref.text == "as?") {
+            val tempVariable: DfaVariableValue = flow.createTempVariable(DfTypes.OBJECT_OR_NULL)
+            addInstruction(SimpleAssignmentInstruction(null, tempVariable))
+            addInstruction(PushValueInstruction(type, null))
+            addInstruction(InstanceofInstruction(null, false))
+            val offset = DeferredOffset()
+            addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
+            val anchor = KotlinExpressionAnchor(expr)
+            addInstruction(PushInstruction(tempVariable, anchor))
+            val endOffset = DeferredOffset()
+            addInstruction(GotoInstruction(endOffset))
+            setOffset(offset)
+            addInstruction(PushValueInstruction(DfTypes.NULL, anchor))
+            setOffset(endOffset)
+        } else {
+            val transfer = createTransfer("java.lang.ClassCastException")
+            addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
+            if (typeReference != null) {
+                val castType = typeReference.getAbbreviatedTypeOrType(typeReference.analyze(BodyResolveMode.FULL))
+                if (castType.toDfType(typeReference) is DfPrimitiveType) {
+                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                }
+            }
+        }
     }
 
     private fun processArrayAccess(expr: KtArrayAccessExpression) {
@@ -661,8 +704,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
         }
         else if (expectedPsiType !is PsiPrimitiveType && actualPsiType is PsiPrimitiveType) {
-            addInstruction(WrapDerivedVariableInstruction(
-                expectedType.toDfType(expression).meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX))
+            val boxedType = actualPsiType.getBoxedType(expression)
+            val dfType = if (boxedType != null) DfTypes.typedObject(boxedType, Nullability.NOT_NULL) else DfTypes.NOT_NULL_OBJECT
+            addInstruction(WrapDerivedVariableInstruction(expectedType.toDfType(expression).meet(dfType), SpecialField.UNBOX))
         }
         if (actualPsiType is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
             addInstruction(PrimitiveConversionInstruction(expectedPsiType, null))
@@ -843,15 +887,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val skipThenOffset = DeferredOffset()
         val thenStatement = ifExpression.then
         val elseStatement = ifExpression.`else`
+        val exprType = ifExpression.getKotlinType()
         addInstruction(ConditionalGotoInstruction(skipThenOffset, DfTypes.FALSE, condition))
         addInstruction(FinishElementInstruction(null))
         processExpression(thenStatement)
+        addImplicitConversion(thenStatement, exprType)
 
         val skipElseOffset = DeferredOffset()
         addInstruction(GotoInstruction(skipElseOffset))
         setOffset(skipThenOffset)
         addInstruction(FinishElementInstruction(null))
         processExpression(elseStatement)
+        addImplicitConversion(elseStatement, exprType)
         setOffset(skipElseOffset)
         addInstruction(FinishElementInstruction(ifExpression))
     }

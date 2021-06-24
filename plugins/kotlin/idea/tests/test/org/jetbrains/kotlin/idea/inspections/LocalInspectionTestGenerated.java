@@ -4601,6 +4601,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/arrayIndex2.kt");
         }
 
+        @TestMetadata("arrayIndexGtLength.kt")
+        public void testArrayIndexGtLength() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayIndexGtLength.kt");
+        }
+
+        @TestMetadata("arrayIndexNegative.kt")
+        public void testArrayIndexNegative() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/arrayIndexNegative.kt");
+        }
+
         @TestMetadata("assertNotNull.kt")
         public void testAssertNotNull() throws Exception {
             runTest("testData/inspectionsLocal/dfa/assertNotNull.kt");
@@ -4786,6 +4796,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/returnLiteral.kt");
         }
 
+        @TestMetadata("safeAsAndNullCheck.kt")
+        public void testSafeAsAndNullCheck() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/safeAsAndNullCheck.kt");
+        }
+
         @TestMetadata("senselessDiagnosticDuplicate.kt")
         public void testSenselessDiagnosticDuplicate() throws Exception {
             runTest("testData/inspectionsLocal/dfa/senselessDiagnosticDuplicate.kt");
@@ -4794,6 +4809,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("shiftLeft.kt")
         public void testShiftLeft() throws Exception {
             runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");
+        }
+
+        @TestMetadata("simpleAs.kt")
+        public void testSimpleAs() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/simpleAs.kt");
+        }
+
+        @TestMetadata("simpleAsReportCCE.kt")
+        public void testSimpleAsReportCCE() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/simpleAsReportCCE.kt");
+        }
+
+        @TestMetadata("simpleAsSafe.kt")
+        public void testSimpleAsSafe() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/simpleAsSafe.kt");
         }
 
         @TestMetadata("stringConcat.kt")
