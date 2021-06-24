@@ -16,7 +16,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.kotlin.declarations.FirKotlinUAnnotation
+import org.jetbrains.uast.kotlin.declarations.*
+import org.jetbrains.uast.kotlin.expressions.FirKotlinUArrayAccessExpression
+import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
+import org.jetbrains.uast.kotlin.expressions.FirKotlinUBlockExpression
+import org.jetbrains.uast.kotlin.expressions.FirKotlinUSimpleReferenceExpression
+import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 
 internal object FirKotlinConverter : BaseKotlinConverter {
     override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
@@ -123,9 +128,9 @@ internal object FirKotlinConverter : BaseKotlinConverter {
     ): Sequence<UElement> {
         return requiredTypes.accommodate(
             // File
-            alternative { KotlinUFile(element, firKotlinUastPlugin) },
+          alternative { KotlinUFile(element, firKotlinUastPlugin) },
             // Facade
-            alternative { element.findFacadeClass()?.let { FirKotlinUClass.create(it, givenParent) } }
+          alternative { element.findFacadeClass()?.let { FirKotlinUClass.create(it, givenParent) } }
         )
     }
 
