@@ -19,10 +19,6 @@ class HLAddWhenRemainingBranchesIntention : AbstractHLIntention<KtWhenExpression
 
     override val inputProvider: HLApplicatorInputProvider<KtWhenExpression, AddWhenRemainingBranchFixFactories.Input>
         get() = inputProvider { element ->
-            // TODO: consider removing the condition below so that this intention also works if there is no else. Currently we only offer
-            //  this intention if there is an `else` branch so that it behaves identically with FE1.0 (because FE1.0 reports warnings for
-            //  non-exhaustive when, which then results in a quickfix).
-            if (element.entries.none { it.isElse }) return@inputProvider null
             val whenMissingCases = element.getMissingCases().takeIf {
                 it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
             } ?: return@inputProvider null
