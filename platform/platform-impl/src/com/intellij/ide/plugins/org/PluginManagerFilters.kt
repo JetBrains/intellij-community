@@ -2,8 +2,11 @@
 package com.intellij.ide.plugins.org
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StoragePathMacros.NON_ROAMABLE_FILE
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -63,6 +66,38 @@ private class PluginManagerConfigurableForOrgStateRule : BaseState() {
 
   var versionFromInclusive by string()
   var versionToInclusive by string()
+}
+
+private abstract class PluginManagerFiltersConfigureDebugActionBase : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+  }
+
+  protected abstract fun updateState(state: PluginManagerConfigurableForOrgState)
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val state = service<PluginManagerConfigurableForOrgConfig>().state
+    updateState(state)
+    state.intIncrementModificationCount()
+  }
+}
+
+private class PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
+  override fun updateState(state: PluginManagerConfigurableForOrgState) {
+    state.denyRules.clear()
+    state.allowRules.clear()
+    state.allowRules.add(PluginManagerConfigurableForOrgStateRule().apply {
+      vendorRegex = ".*JetBrains.*"
+    })
+  }
+}
+
+private class PluginManagerFiltersConfigureResetTrustDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
+  override fun updateState(state: PluginManagerConfigurableForOrgState) {
+    state.allowRules.clear()
+    state.denyRules.clear()
+    state.allowInstallFromDisk = true
+  }
 }
 
 private fun PluginManagerConfigurableForOrgState.isAllowed(descriptor: IdeaPluginDescriptor): Boolean {

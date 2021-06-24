@@ -410,6 +410,9 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction"/>
+    <action id="PluginManagerFiltersConfigureResetTrustDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureResetTrustDebugAction"/>
+
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
