@@ -33,7 +33,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     panel {
       row {
         component = buttonSelector(settings.buildSystemButtons.value, settings.buildSystemProperty) { it.name }.component
-      }
+      }.largeGapAfter()
     }
 
     settings.propertyGraph.afterPropagation {

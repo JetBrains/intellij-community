@@ -44,7 +44,7 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSyste
                         )
                     }
                 }
-            }
+            }.largeGapAfter()
         }
 }
 

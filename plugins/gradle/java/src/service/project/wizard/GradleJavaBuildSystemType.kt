@@ -37,7 +37,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType<GradleJavaBuildSystemSetti
                                       FileChooserDescriptorFactory.createSingleFolderDescriptor())
           }
         }
-      }
+      }.largeGapAfter()
     }
 }
 

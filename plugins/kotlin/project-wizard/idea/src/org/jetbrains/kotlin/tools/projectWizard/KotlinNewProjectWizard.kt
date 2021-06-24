@@ -28,7 +28,7 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       panel {
           row {
               component = buttonSelector(settings.buildSystems.value, settings.buildSystemProperty) { it.name }.component
-          }
+          }.largeGapAfter()
       }
 
       settings.propertyGraph.afterPropagation {
