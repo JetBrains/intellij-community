@@ -6,13 +6,18 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.test.common.kotlin.FirLegacyUastValuesTestBase
+import java.nio.file.Paths
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolute
 
 abstract class AbstractFE1LegacyUastValuesTest : AbstractFE1UastValuesTest(), FirLegacyUastValuesTestBase {
     // TODO: better not to see exceptions from legacy UAST
-    private val whitelist : Set<String> = setOf(
+    @OptIn(ExperimentalPathApi::class)
+    private val whitelist: Set<String> = listOf(
         // TODO: div-by-zero error!
-        "plugins/uast-kotlin/testData/Bitwise.kt",
-    )
+        "uast-kotlin/testData/Bitwise.kt",
+    ).mapTo(mutableSetOf()) { Paths.get("..").resolve(it).absolute().normalize().toString() }
+
     override fun isExpectedToFail(filePath: String): Boolean {
         return filePath in whitelist
     }
