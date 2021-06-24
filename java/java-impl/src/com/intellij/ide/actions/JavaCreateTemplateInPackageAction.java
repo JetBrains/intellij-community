@@ -102,6 +102,7 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
                     .withProject(project)
                     .withSdkTypeFilter(type -> type instanceof JavaSdkType)
                     .updateProjectSdkFromSelection()
+                    .onPopupClosed(() -> notification.hideBalloon())
                     .buildPopup()
                     .showPopup(e);
                 }
