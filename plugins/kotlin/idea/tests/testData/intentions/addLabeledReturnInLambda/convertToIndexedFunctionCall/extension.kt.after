@@ -1,7 +1,0 @@
-// INTENTION_TEXT: "Convert to 'forEachIndexed'"
-// WITH_RUNTIME
-fun List<String>.test() {
-    <caret>forEachIndexed { index, s ->
-        println(s)
-    }
-}
