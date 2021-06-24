@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.jackson.JacksonUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
 import java.io.Reader;
@@ -296,21 +297,26 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(1).setPreferredWidth(JBUI.scale(300));
       table.getColumnModel().getColumn(2).setPreferredWidth(JBUI.scale(120));
       table.getColumnModel().getColumn(3).setPreferredWidth(JBUI.scale(120));
-      TableCellRenderer renderer = (tbl, value, selected, focused, row, col) -> {
-        int alignment = col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT;
-        JBLabel label = new JBLabel((String)value, alignment).withBorder(JBUI.Borders.empty(0, 5));
-        if (row >= 0) {
-          DirectoryGroup group = myModel.myGroups.get(row);
-          if (col == 1) {
-            @NlsSafe String paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
-            label.setToolTipText(paths);
+      JBEmptyBorder border = JBUI.Borders.empty(0, 5);
+      DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+          JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, selected, focused, row, col);
+          label.setBorder(border);
+          label.setHorizontalAlignment(col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+          if (row >= 0) {
+            DirectoryGroup group = myModel.myGroups.get(row);
+            if (col == 1) {
+              @NlsSafe String paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
+              label.setToolTipText(paths);
+            }
+            else if (col == 2) {
+              @NlsSafe String isoDate = FileTime.fromMillis(group.lastUpdated).toString();
+              label.setToolTipText(isoDate);
+            }
           }
-          else if (col == 2) {
-            @NlsSafe String isoDate = FileTime.fromMillis(group.lastUpdated).toString();
-            label.setToolTipText(isoDate);
-          }
+          return label;
         }
-        return label;
       };
       table.getColumnModel().getColumn(1).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(1).setCellRenderer(renderer);
