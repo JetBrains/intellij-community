@@ -31,6 +31,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -89,33 +90,40 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
-        final ModuleManager moduleManager = ModuleManager.getInstance(project);
-        final Module[] currentModules = moduleManager.getModules();
-        final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
-        final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
-        Set<String> moduleNamesToDelete = moduleDescriptions.stream().map(ModuleDescription::getName).collect(Collectors.toSet());
-        for (final Module otherModule : currentModules) {
-          if (!moduleNamesToDelete.contains(otherModule.getName())) {
-            otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
-          }
-        }
-        removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
-        if (modules != null) {
-          for (final Module module : modules) {
-            for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
-              processor.beforeDetach(module);
-            }
-            modifiableModuleModel.disposeModule(module);
-          }
-        }
-        final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[0]);
-        ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
-        if (unloadedModules != null) {
-          moduleManager.removeUnloadedModules(unloadedModules);
-        }
+        detachModules(project, moduleDescriptions, modules, unloadedModules);
       };
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
+  }
+
+  public static void detachModules(@NotNull Project project,
+                                   @NotNull List<ModuleDescription> moduleDescriptions,
+                                   Module @Nullable [] modules,
+                                   @Nullable List<UnloadedModuleDescription> unloadedModules) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    final Module[] currentModules = moduleManager.getModules();
+    final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
+    final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
+    Set<String> moduleNamesToDelete = moduleDescriptions.stream().map(ModuleDescription::getName).collect(Collectors.toSet());
+    for (final Module otherModule : currentModules) {
+      if (!moduleNamesToDelete.contains(otherModule.getName())) {
+        otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
+      }
+    }
+    removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
+    if (modules != null) {
+      for (final Module module : modules) {
+        for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
+          processor.beforeDetach(module);
+        }
+        modifiableModuleModel.disposeModule(module);
+      }
+    }
+    final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[0]);
+    ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
+    if (unloadedModules != null) {
+      moduleManager.removeUnloadedModules(unloadedModules);
+    }
   }
 
   protected @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
