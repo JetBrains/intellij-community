@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.idea.fir.addExternalTestFiles
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.idea.fir.withPossiblyDisabledDuplicatedFirSourceElementsException
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -33,9 +32,7 @@ abstract class AbstractFirHighlightingTest : AbstractHighlightingTest() {
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(testDataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
             // warnings are not supported yet
-            withPossiblyDisabledDuplicatedFirSourceElementsException(fileText) {
-                myFixture.checkHighlighting(/* checkWarnings= */ false, checkInfos, /* checkWeakWarnings= */ false)
-            }
+            myFixture.checkHighlighting(/* checkWarnings= */ false, checkInfos, /* checkWeakWarnings= */ false)
         }
     }
 }
