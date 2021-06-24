@@ -72,6 +72,11 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
   }
 
   @Override
+  public String getHelpTopic() {
+    return "settings.actions.on.save";
+  }
+
+  @Override
   public @Nullable JComponent createComponent() {
     myTable = createTable();
 
