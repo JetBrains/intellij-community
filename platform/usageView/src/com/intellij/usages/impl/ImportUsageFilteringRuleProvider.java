@@ -7,11 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.actions.RuleAction;
 import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,11 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
+
   @Override
   public UsageFilteringRule @NotNull [] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<>();
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
-      rules.addAll(ImportFilteringRule.EP_NAME.getExtensionList());
+      rules.add(ImportUsageFilteringRule.INSTANCE);
     }
     return rules.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
@@ -43,6 +47,16 @@ public final class ImportUsageFilteringRuleProvider implements UsageFilteringRul
     else {
       return AnAction.EMPTY_ARRAY;
     }
+  }
+}
+
+final class ImportUsageFilteringRule implements UsageFilteringRule {
+
+  static final UsageFilteringRule INSTANCE = new ImportUsageFilteringRule();
+
+  @Override
+  public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {
+    return ContainerUtil.all(ImportFilteringRule.EP_NAME.getExtensionList(), rule -> rule.isVisible(usage, targets));
   }
 }
 

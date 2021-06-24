@@ -31,7 +31,7 @@ import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProvider
-import com.intellij.usages.rules.UsageFilteringRule
+import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
@@ -224,7 +224,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
         val SUPPORTED_EXTENSIONS = setOf("kt", "kts", "java", "xml", "properties", "txt", "groovy")
 
         internal fun getUsageAdapters(
-            filters: Collection<UsageFilteringRule>,
+            filters: Collection<ImportFilteringRule>,
             usageInfos: Collection<UsageInfo>
         ): Collection<UsageInfo2UsageAdapter> {
             return usageInfos
@@ -297,7 +297,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
     }
 
-    val filteringRules = AbstractFindUsagesTest.instantiateClasses<UsageFilteringRule>(mainFileText, "// FILTERING_RULES: ")
+    val filteringRules = AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
     val groupingRules = AbstractFindUsagesTest.instantiateClasses<UsageGroupingRule>(mainFileText, "// GROUPING_RULES: ")
 
     val filteredUsages = AbstractFindUsagesTest.getUsageAdapters(filteringRules, usageInfos)
