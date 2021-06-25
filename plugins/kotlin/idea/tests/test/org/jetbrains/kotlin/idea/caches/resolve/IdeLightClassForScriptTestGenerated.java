@@ -24,6 +24,12 @@ public class IdeLightClassForScriptTestGenerated extends AbstractIdeLightClassFo
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/script/ide");
+        super.setUp();
+    }
+
     @TestMetadata("HelloWorld.kts")
     public void testHelloWorld() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/script/ide/HelloWorld.kts"));
