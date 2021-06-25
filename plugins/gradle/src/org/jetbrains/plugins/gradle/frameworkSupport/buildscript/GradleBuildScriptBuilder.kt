@@ -16,6 +16,9 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun addApiDependency(dependency: String, sourceSet: String? = null): BSB
   fun addApiDependency(dependency: Expression, sourceSet: String? = null): BSB
 
+  fun addCompileOnlyDependency(dependency: String, sourceSet: String? = null): BSB
+  fun addCompileOnlyDependency(dependency: Expression, sourceSet: String? = null): BSB
+
   fun addImplementationDependency(dependency: String, sourceSet: String? = null): BSB
   fun addImplementationDependency(dependency: Expression, sourceSet: String? = null): BSB
 

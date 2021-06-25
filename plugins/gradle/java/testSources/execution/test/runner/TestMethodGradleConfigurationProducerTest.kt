@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.junit.Test
 
@@ -45,12 +46,10 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     """.trimIndent())
 
     createProjectSubFile("settings.gradle", "")
-    importProject("""
-      apply plugin: 'java'
-      dependencies {
-        testCompile 'junit:junit:4.11'
-      }
-""")
+    importProject(buildscript {
+      withJavaPlugin()
+      addTestImplementationDependency("junit:junit:4.11")
+    })
     assertModules("project", "project.main", "project.test")
 
     currentExternalProjectSettings.testRunner = TestRunner.GRADLE

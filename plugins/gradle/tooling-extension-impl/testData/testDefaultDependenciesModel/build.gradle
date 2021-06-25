@@ -6,6 +6,6 @@ allprojects{
 
 project("dependentProject") {
   dependencies {
-    compile project(":dependencyProject")
+    <<compile>> project(":dependencyProject")
   }
 }

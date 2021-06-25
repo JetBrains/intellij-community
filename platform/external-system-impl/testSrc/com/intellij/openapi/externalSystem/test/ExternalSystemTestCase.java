@@ -179,8 +179,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void tearDownFixtures() throws Exception {
-    myTestFixture.tearDown();
-    myTestFixture = null;
+    RunAll.runAll(
+      () -> myTestFixture.tearDown(),
+      () -> myTestFixture = null
+    );
   }
 
   private void resetClassFields(final Class<?> aClass) {

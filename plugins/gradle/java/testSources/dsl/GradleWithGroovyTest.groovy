@@ -24,7 +24,10 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
 
   @Test
   void artifactsTest() {
-    importProject("apply plugin: 'java'; dependencies { compile 'org.codehaus.groovy:groovy:2.5.6' }")
+    importProject(script {
+      it.withJavaPlugin()
+        .addImplementationDependency("org.codehaus.groovy:groovy:2.5.6", null)
+    })
     new RunAll(
       { 'Project#allprojects call'() },
       { 'DomainObjectCollection#all call'() },

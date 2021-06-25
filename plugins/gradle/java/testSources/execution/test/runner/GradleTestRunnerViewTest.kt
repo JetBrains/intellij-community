@@ -24,6 +24,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -66,16 +67,15 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
                          "    }\n" +
                          "}\n")
 
-    val buildScript = createBuildScriptBuilder()
-      .withJavaPlugin()
-      .withJUnit4()
-      .withTask("additionalTest", "Test") {
+    importProject(buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      withTask("additionalTest", "Test") {
         assign("testClassesDirs", code("sourceSets.test.output.classesDirs"))
         assign("classpath", code("sourceSets.test.runtimeClasspath"))
         plusAssign("jvmArgs", "-Dprop='integ test error'")
       }
-
-    importProject(buildScript.generate())
+    })
 
     val treeStringPresentation = runTasksAndGetTestRunnerTree(listOf("clean", "test", "additionalTest"))
 

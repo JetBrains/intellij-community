@@ -4,15 +4,17 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
-  override val scriptBuilder = GroovyScriptBuilder()
+class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent: Int = 0) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
+  override val scriptBuilder = GroovyScriptBuilder(indent)
 
   override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
@@ -26,6 +28,65 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBui
         else -> call("tasks.create", string(name), code(type), configure = configure)
       }
     }
+
+  override fun withJavaPlugin(): GradleBuildScriptBuilder =
+    if (indent == 0)
+      super.withJavaPlugin()
+    else
+      applyPlugin("'java'")
+
+  override fun withJavaLibraryPlugin(): GradleBuildScriptBuilder =
+    if (indent == 0)
+      super.withJavaLibraryPlugin()
+    else
+      if (isSupportedJavaLibraryPlugin(gradleVersion))
+        applyPlugin("'java-library'")
+      else
+        applyPlugin("'java'")
+
+  override fun withIdeaPlugin() =
+    if (indent == 0)
+      super.withIdeaPlugin()
+    else
+      applyPlugin("'idea'")
+
+  fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("project", name) {
+        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+      }
+    }
+
+  fun configure(expression: ScriptElement.Statement.Expression, configure: Consumer<GradleBuildScriptBuilder>) =
+    configure(expression) { configure.accept(this) }
+
+  fun configure(expression: ScriptElement.Statement.Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("configure", expression) {
+        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+      }
+    }
+
+  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
+
+
+  fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix() {
+      call("allprojects") {
+        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+      }
+    }
+
+  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
+
+  fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("subprojects") {
+        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+      }
+    }
+
+  fun subprojects(configure: Consumer<GradleBuildScriptBuilder>) = subprojects { configure.accept(this) }
 
   fun withGradleIdeaExtPluginIfCan() = apply {
     val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)

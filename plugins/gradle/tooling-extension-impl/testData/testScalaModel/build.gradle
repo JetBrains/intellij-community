@@ -31,7 +31,7 @@ Closure compilerPlugins = {
   ]
 }
 dependencies {
-  compile 'org.scala-lang:scala-library:2.11.0'
+    <<compile>> 'org.scala-lang:scala-library:2.11.0'
 }
 compileScala compilerPlugins
 compileTestScala compilerPlugins

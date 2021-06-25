@@ -73,6 +73,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
@@ -313,8 +314,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
-    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion(), 0)
       .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
+  }
+
+  protected @NotNull String script(@NotNull Consumer<GradleBuildScriptBuilder> configure) {
+    return GradleBuildScriptBuilder.Companion.buildscript(this, configure);
   }
 
   protected @NotNull String getJUnitTestAnnotationClass() {
@@ -437,6 +442,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     else {
       assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
     }
+  }
+
+  protected boolean isJavaLibraryPluginSupported() {
+    return GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(getCurrentGradleVersion());
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {

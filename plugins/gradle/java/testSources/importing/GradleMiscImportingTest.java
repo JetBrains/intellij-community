@@ -309,7 +309,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
-  public void testImportProjectWithExistingFakeModule() {
+  public void testImportProjectWithExistingFakeModule() throws IOException {
     // After first opening of the project, IJ creates a fake module at the project root
     edt(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -325,7 +325,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertFalse(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module));
 
-    assertNoThrowable(() -> importProject());
+    importProject("");
 
     Module moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));

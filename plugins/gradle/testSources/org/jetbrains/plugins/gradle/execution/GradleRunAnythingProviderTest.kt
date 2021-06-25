@@ -215,13 +215,24 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "  Unknown command-line option '--unknown-option'"
       )
 
-    executeAndWait("taskWithArgs")
-      .assertExecutionTree(
-        "-\n" +
-        " -failed\n" +
-        "  :taskWithArgs\n" +
-        "  No value has been specified for property 'myArgs'"
-      )
+    if (isGradleNewerOrSameAs("7.0")) {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask')."
+        )
+    }
+    else {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  No value has been specified for property 'myArgs'"
+        )
+    }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
