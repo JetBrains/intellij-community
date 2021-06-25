@@ -44,6 +44,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -404,7 +405,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
                                    @Nullable Editor editor,
                                    @NotNull List<SmartPsiElementPointer<PsiExpression>> exprs) {
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiExpression[] occurrences = ContainerUtil.map2Array(exprs, new PsiExpression[exprs.size()], SmartPsiElementPointer::getElement);
+      PsiExpression[] occurrences = StreamEx.of(exprs).map(SmartPsiElementPointer::getElement).nonNull().toArray(PsiExpression.EMPTY_ARRAY);
       HighlightManager.getInstance(project).addOccurrenceHighlights(editor, occurrences, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       if (exprs.size() > 1) {
         Shortcut shortcut = KeymapUtil.getPrimaryShortcut("FindNext");
