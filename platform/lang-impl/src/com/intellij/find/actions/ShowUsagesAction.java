@@ -1103,24 +1103,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
 
-    Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
-    if (savedSize != null) {
-      rectangle.width = Math.min(savedSize.width, rectangle.width);
-    }
-
     JBSplitter splitter = popup.getUserData(JBSplitter.class);
-    Dimension previewSize = JBUI.emptySize();
-    if (splitter != null) {
-      JComponent second = splitter.getSecondComponent();
-      //Rectangle bounds = second.getBounds();
-      //previewSize = bounds.isEmpty() ? second.getPreferredSize() : bounds.getSize();
-      previewSize = second.getPreferredSize();
-      previewSize.height += splitter.getDividerWidth();
+    if (splitter == null) {
+      Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
+      if (savedSize != null) {
+        rectangle.width = Math.min(savedSize.width, rectangle.width);
+      }
+
+      popup.setSize(rectangle.getSize());
     }
-
-    rectangle.height += previewSize.height;
-
-    popup.setSize(rectangle.getSize());
   }
 
   private static boolean isCodeWithMeClientInstance(@NotNull JBPopup popup) {
