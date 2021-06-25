@@ -1424,6 +1424,42 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "Hm",
+    "name": "intellij.jboss.seam",
+    "n": "i.jboss.seam",
+    "package": "com.intellij.seam",
+    "sourceModule": "intellij.jboss.seam",
+    "descriptor": "plugins/frameworks/jboss/seam/seam-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.seam",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ng",
+    "name": "intellij.jboss.seam.navigation",
+    "n": "i.jboss.seam.navigation",
+    "package": "com.intellij.seam.pages",
+    "sourceModule": "intellij.jboss.seam.navigation",
+    "descriptor": "plugins/frameworks/jboss/seam/seam-navigation/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.seam.pages",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "vY",
+    "name": "intellij.jboss.seam.pageflow",
+    "n": "i.jboss.seam.pageflow",
+    "package": "com.intellij.seam.pageflow",
+    "sourceModule": "intellij.jboss.seam.pageflow",
+    "descriptor": "plugins/frameworks/jboss/seam/seam-pageflow/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.seam.pageflow",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "v4",
     "name": "intellij.less",
     "n": "i.less",
@@ -2490,6 +2526,30 @@
     "package": "com.intellij.spring.boot.mvc",
     "sourceModule": "intellij.spring.boot.core",
     "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.mvc.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "oO1",
+    "name": "intellij.spring.boot.core/cloud-stream",
+    "n": "i.spring.boot.core/cloud-stream",
+    "package": "com.intellij.spring.boot.cloud.stream",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.cloud-stream.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eo",
+    "name": "intellij.spring.boot.core/cloud-stream-el",
+    "n": "i.spring.boot.core/cloud-stream-el",
+    "package": "com.intellij.spring.boot.cloud.stream.el",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.cloud-stream-el.xml",
     "parent": "cLR",
     "type": 0
   }
@@ -4315,6 +4375,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "LR_oO1",
+    "source": "LR",
+    "target": "oO1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_eo",
+    "source": "LR",
+    "target": "eo",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "LR_5v",
     "source": "LR",
     "target": "5v",
@@ -5547,6 +5623,54 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Hm_s7",
+    "source": "Hm",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_Xe",
+    "source": "Hm",
+    "target": "Xe",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_RM",
+    "source": "Hm",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_FR",
+    "source": "Hm",
+    "target": "FR",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ng_Hm",
+    "source": "Ng",
+    "target": "Hm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vY_Hm",
+    "source": "vY",
+    "target": "Hm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "v4_Pn",
     "source": "v4",
     "target": "Pn",
@@ -6542,6 +6666,38 @@
     "id": "Kg_nx",
     "source": "Kg",
     "target": "nx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oO1_nQ",
+    "source": "oO1",
+    "target": "nQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eo_wC",
+    "source": "eo",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eo_nQ",
+    "source": "eo",
+    "target": "nQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eo_RM",
+    "source": "eo",
+    "target": "RM",
     "type": 0
   }
 }, {
