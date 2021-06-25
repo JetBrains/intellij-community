@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -21,13 +21,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
@@ -202,7 +204,12 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
-    setModel(createModel(psiElement, null, ownerExtension));
+    ReadAction.nonBlocking(() -> createModel(psiElement, null, ownerExtension))
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.current(), model -> {
+        setModel(model);
+      })
+      .submit(ourExecutor);
   }
 
   @NotNull
