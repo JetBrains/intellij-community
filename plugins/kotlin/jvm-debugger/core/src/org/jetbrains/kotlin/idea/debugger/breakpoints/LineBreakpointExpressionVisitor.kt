@@ -138,9 +138,9 @@ class LineBreakpointExpressionVisitor private constructor(
         return ApplicabilityResult.UNKNOWN
     }
 
-    override fun visitWhenEntry(jetWhenEntry: KtWhenEntry, data: Unit?): ApplicabilityResult {
-        jetWhenEntry.expression?.accept(this, data)?.handle()?.let { return it }
-        return ApplicabilityResult.maybe(jetWhenEntry.conditions.isNotEmpty() || jetWhenEntry.isElse)
+    override fun visitWhenEntry(ktWhenEntry: KtWhenEntry, data: Unit?): ApplicabilityResult {
+        ktWhenEntry.expression?.accept(this, data)?.handle()?.let { return it }
+        return ApplicabilityResult.maybe(ktWhenEntry.conditions.isNotEmpty() || ktWhenEntry.isElse)
     }
 
     override fun visitDestructuringDeclaration(multiDeclaration: KtDestructuringDeclaration, data: Unit?): ApplicabilityResult {

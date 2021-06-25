@@ -169,7 +169,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
     @Nullable
     private static KtNamedDeclaration getDeclarationToRun(@NotNull PsiElement leaf) {
         if (!(leaf.getContainingFile() instanceof KtFile)) return null;
-        KtFile jetFile = (KtFile) leaf.getContainingFile();
+        KtFile ktFile = (KtFile) leaf.getContainingFile();
 
         KtNamedFunction function = PsiTreeUtil.getParentOfType(leaf, KtNamedFunction.class, false);
         if (function != null) return function;
@@ -177,7 +177,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
         KtClass ktClass = PsiTreeUtil.getParentOfType(leaf, KtClass.class, false);
         if (ktClass != null) return ktClass;
 
-        return getClassDeclarationInFile(jetFile);
+        return getClassDeclarationInFile(ktFile);
     }
 
     private boolean configure(
@@ -205,10 +205,10 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
     }
 
     @Nullable
-    static KtClass getClassDeclarationInFile(KtFile jetFile) {
+    static KtClass getClassDeclarationInFile(KtFile ktFile) {
         KtClass tempSingleDeclaration = null;
 
-        for (KtDeclaration ktDeclaration : jetFile.getDeclarations()) {
+        for (KtDeclaration ktDeclaration : ktFile.getDeclarations()) {
             if (ktDeclaration instanceof KtClass) {
                 KtClass declaration = (KtClass) ktDeclaration;
 

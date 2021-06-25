@@ -14,8 +14,8 @@ class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibrar
     fun testFindUsagesForLocalClassProperty() {
         val libraryFile = FilenameIndex.getFilesByName(project, "library.kt", GlobalSearchScope.everythingScope(project)).first()
         val indexOf = libraryFile.text.indexOf("localClassProperty")
-        val jetParameter = libraryFile.findElementAt(indexOf)!!.getStrictParentOfType<KtParameter>()!!
-        val usages = findUsages(jetParameter.originalElement, null, false, project)
+        val ktParameter = libraryFile.findElementAt(indexOf)!!.getStrictParentOfType<KtParameter>()!!
+        val usages = findUsages(ktParameter.originalElement, null, false, project)
         assertEquals(2, usages.size)
     }
 }

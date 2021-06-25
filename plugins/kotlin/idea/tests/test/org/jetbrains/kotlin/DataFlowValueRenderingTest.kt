@@ -42,8 +42,8 @@ abstract class AbstractDataFlowValueRenderingTest: KotlinLightCodeInsightFixture
         val fixture = myFixture
         fixture.configureByFile(fileName())
 
-        val jetFile = fixture.file as KtFile
-        val element = jetFile.findElementAt(fixture.caretOffset)!!
+        val ktFile = fixture.file as KtFile
+        val element = ktFile.findElementAt(fixture.caretOffset)!!
         val expression = element.getStrictParentOfType<KtExpression>()!!
         val info = expression.analyze().getDataFlowInfoAfter(expression)
 

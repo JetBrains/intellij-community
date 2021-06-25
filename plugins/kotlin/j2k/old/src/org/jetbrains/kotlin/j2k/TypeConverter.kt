@@ -451,8 +451,8 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
 
         override fun fromAnnotations(owner: PsiModifierListOwner): Mutability {
             if (owner is KtLightElement<*, *>) {
-                val jetDeclaration = owner.kotlinOrigin as? KtCallableDeclaration ?: return Mutability.Default
-                val descriptor = converter.resolverForConverter.resolveToDescriptor(jetDeclaration) as? CallableDescriptor ?: return Mutability.Default
+                val ktCallableDeclaration = owner.kotlinOrigin as? KtCallableDeclaration ?: return Mutability.Default
+                val descriptor = converter.resolverForConverter.resolveToDescriptor(ktCallableDeclaration) as? CallableDescriptor ?: return Mutability.Default
                 val type = descriptor.returnType ?: return Mutability.Default
                 val classDescriptor = TypeUtils.getClassDescriptor(type) ?: return Mutability.Default
                 return if (DescriptorUtils.getFqName(classDescriptor).asString() in mutableKotlinClasses)

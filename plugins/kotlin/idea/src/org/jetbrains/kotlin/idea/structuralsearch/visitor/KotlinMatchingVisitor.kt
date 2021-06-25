@@ -13,7 +13,6 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.util.containers.reverse
-import groovy.util.GroovyCollections.sum
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
@@ -988,18 +987,18 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         }
     }
 
-    override fun visitWhenEntry(jetWhenEntry: KtWhenEntry) {
+    override fun visitWhenEntry(ktWhenEntry: KtWhenEntry) {
         val other = getTreeElementDepar<KtWhenEntry>() ?: return
 
         // $x$ -> $y$ should match else branches
-        val bypassElseTest = jetWhenEntry.firstChild is KtWhenConditionWithExpression
-                && jetWhenEntry.firstChild.children.size == 1
-                && jetWhenEntry.firstChild.firstChild is KtNameReferenceExpression
+        val bypassElseTest = ktWhenEntry.firstChild is KtWhenConditionWithExpression
+                && ktWhenEntry.firstChild.children.size == 1
+                && ktWhenEntry.firstChild.firstChild is KtNameReferenceExpression
 
         myMatchingVisitor.result =
-            (bypassElseTest && other.isElse || myMatchingVisitor.matchInAnyOrder(jetWhenEntry.conditions, other.conditions))
-                    && myMatchingVisitor.match(jetWhenEntry.expression, other.expression)
-                    && (bypassElseTest || jetWhenEntry.isElse == other.isElse)
+            (bypassElseTest && other.isElse || myMatchingVisitor.matchInAnyOrder(ktWhenEntry.conditions, other.conditions))
+                    && myMatchingVisitor.match(ktWhenEntry.expression, other.expression)
+                    && (bypassElseTest || ktWhenEntry.isElse == other.isElse)
     }
 
     override fun visitWhenExpression(expression: KtWhenExpression) {

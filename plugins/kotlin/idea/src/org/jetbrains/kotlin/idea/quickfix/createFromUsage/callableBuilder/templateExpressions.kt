@@ -71,8 +71,8 @@ internal class ParameterNameExpression(
         }
 
         // remember other parameter names for later use
-        val parameterNames = parameterList.parameters.mapNotNullTo(HashSet<String>()) { jetParameter ->
-            if (jetParameter == parameter) null else jetParameter.name
+        val parameterNames = parameterList.parameters.mapNotNullTo(HashSet<String>()) { ktParameter ->
+            if (ktParameter == parameter) null else ktParameter.name
         }
 
         // add fallback parameter name

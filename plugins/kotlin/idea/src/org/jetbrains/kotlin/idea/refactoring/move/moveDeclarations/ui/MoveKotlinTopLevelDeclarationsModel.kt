@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getFileOrScriptDeclarations
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
@@ -152,12 +153,11 @@ internal class MoveKotlinTopLevelDeclarationsModel(
 
         checkTargetFileName(targetFile.name)
 
-        val jetFile = targetFile.toPsiFile(project) as? KtFile
-        if (jetFile != null) {
-            if (sourceFiles.singleOrNull() == jetFile) {
+        targetFile.toPsiFile(project).safeAs<KtFile>()?.let {
+            if (sourceFiles.singleOrNull() == it) {
                 throw ConfigurationException(KotlinBundle.message("text.cannot.move.to.original.file"))
             }
-            return KotlinMoveTargetForExistingElement(jetFile)
+            return KotlinMoveTargetForExistingElement(it)
         }
 
         val targetDirectoryPath = targetFile.toPath().parent

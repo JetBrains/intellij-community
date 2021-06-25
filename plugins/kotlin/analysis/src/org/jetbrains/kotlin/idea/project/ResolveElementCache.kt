@@ -511,8 +511,8 @@ class ResolveElementCache(
         return trace
     }
 
-    private fun typeConstraintAdditionalResolve(analyzer: KotlinCodeAnalyzer, jetTypeConstraint: KtTypeConstraint): BindingTrace {
-        val declaration = jetTypeConstraint.getParentOfType<KtDeclaration>(true)!!
+    private fun typeConstraintAdditionalResolve(analyzer: KotlinCodeAnalyzer, typeConstraint: KtTypeConstraint): BindingTrace {
+        val declaration = typeConstraint.getParentOfType<KtDeclaration>(true)!!
         val descriptor = analyzer.resolveToDescriptor(declaration) as ClassifierDescriptorWithTypeParameters
 
         for (parameterDescriptor in descriptor.declaredTypeParameters) {

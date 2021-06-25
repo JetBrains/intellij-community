@@ -609,13 +609,13 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings"/>
 
-    <statementUpDownMover id="jetExpression"
+    <statementUpDownMover id="ktExpression"
                           implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinExpressionMover"
                           order="before declaration" />
 
-    <statementUpDownMover id="jetDeclaration"
+    <statementUpDownMover id="ktDeclaration"
                           implementation="org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover"
-                          order="before jetExpression" />
+                          order="before ktExpression" />
 
     <moveLeftRightHandler language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinMoveLeftRightHandler"/>
 

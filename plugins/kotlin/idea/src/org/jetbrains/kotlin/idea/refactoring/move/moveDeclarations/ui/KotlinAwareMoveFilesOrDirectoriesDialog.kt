@@ -153,14 +153,14 @@ class KotlinAwareMoveFilesOrDirectoriesDialog(
         validateOKButton()
 
         with(updatePackageDirectiveCb) {
-            val jetFiles = psiElements.filterIsInstance<KtFile>().filter(KtFile::isInKotlinAwareSourceRoot)
+            val ktFiles = psiElements.filterIsInstance<KtFile>().filter(KtFile::isInKotlinAwareSourceRoot)
 
-            if (jetFiles.isEmpty()) {
+            if (ktFiles.isEmpty()) {
                 parent.remove(updatePackageDirectiveCb)
                 return
             }
 
-            val singleFile = jetFiles.singleOrNull()
+            val singleFile = ktFiles.singleOrNull()
             isSelected = singleFile == null || singleFile.packageMatchesDirectoryOrImplicit()
             text = KotlinBundle.message("checkbox.text.update.package.directive")
         }

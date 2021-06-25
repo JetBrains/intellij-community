@@ -476,11 +476,11 @@ internal class MutableParameter(
 
     var refCount: Int = 0
 
-    fun addDefaultType(jetType: KotlinType) {
+    fun addDefaultType(kotlinType: KotlinType) {
         assert(writable) { "Can't add type to non-writable parameter $currentName" }
 
-        if (jetType in possibleTypes) {
-            defaultTypes.add(jetType)
+        if (kotlinType in possibleTypes) {
+            defaultTypes.add(kotlinType)
         }
     }
 
