@@ -2,7 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
@@ -53,7 +52,7 @@ internal class PackagesTable(
     private val operationExecutor: OperationExecutor,
     operationFactory: PackageSearchOperationFactory,
     private val onItemSelectionChanged: SelectedPackageModelListener
-) : JBTable(), DataProvider, CopyProvider {
+) : JBTable(), CopyProvider {
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -80,8 +79,8 @@ internal class PackagesTable(
     }
 
     private val actionsColumn = ActionsColumn(
-      operationExecutor = ::executeUpdateActionColumnOperations,
-      operationFactory = operationFactory
+        operationExecutor = ::executeUpdateActionColumnOperations,
+        operationFactory = operationFactory
     )
 
     private val actionsColumnIndex: Int
@@ -296,24 +295,6 @@ internal class PackagesTable(
                 clearSelection()
             }
         }
-
-    override fun getData(dataId: String): Any? {
-        val item = getSelectedTableItem() ?: return null
-
-        return when {
-            !item.canProvideDataFor(dataId) -> null
-            item is PackagesTableItem.InstalledPackage -> {
-                val targetModules = latestTargetModules
-                if (targetModules is TargetModules.One) {
-                    item.getData(dataId, targetModules.module.projectModule)
-                } else {
-                    item.getData(dataId) // Fallback strategy
-                }
-            }
-            item is PackagesTableItem.InstallablePackage -> item.getData(dataId)
-            else -> null
-        }
-    }
 
     override fun performCopy(dataContext: DataContext) {
         getSelectedTableItem()?.performCopy(dataContext)
