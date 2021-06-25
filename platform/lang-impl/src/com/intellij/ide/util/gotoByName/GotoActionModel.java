@@ -615,7 +615,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull private final MatchMode myMode;
     @Nullable private final GroupMapping myGroupMapping;
     private final GotoActionModel myModel;
-    private volatile Presentation myPresentation;
+    private final Presentation myPresentation;
     private final String myActionText;
 
     public ActionWrapper(@NotNull AnAction action,
@@ -626,10 +626,14 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       myMode = mode;
       myGroupMapping = groupMapping;
       myModel = model;
-
-      Presentation presentation = action.getTemplatePresentation().clone();
-      action.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-      myActionText = presentation.getText();
+      myPresentation = ReadAction.nonBlocking(() -> {
+          if (myGroupMapping != null) {
+            myGroupMapping.updateBeforeShow(myModel.getUpdateSession());
+          }
+          return myModel.getUpdateSession().presentation(myAction);
+        })
+        .executeSynchronously();
+      myActionText = GotoActionItemProvider.getActionText(action);
     }
 
     public String getActionText() {
@@ -675,16 +679,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @NotNull
     public Presentation getPresentation() {
-      if (myPresentation != null) {
-        return myPresentation;
-      }
-      myPresentation = ReadAction.nonBlocking(() -> {
-        if (myGroupMapping != null) {
-          myGroupMapping.updateBeforeShow(myModel.getUpdateSession());
-        }
-        return myModel.getUpdateSession().presentation(myAction);
-      })
-        .executeSynchronously();
       return myPresentation;
     }
 
