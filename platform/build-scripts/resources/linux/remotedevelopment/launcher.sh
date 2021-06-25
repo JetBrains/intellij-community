@@ -21,6 +21,23 @@ message()
   fi
 }
 
+usage()
+{
+  echo "Usage: $0 [idea commands]"
+  echo "Examples:"
+  echo "  $0 run /pat/to/project"
+  echo "  $0 cwmHost /path/to/project"
+  echo "  $0 cwmHostNoLobby /path/to/project"
+  echo "  $0 cwmHostStatus /path/to/project"
+}
+
+# most portable solution... To enable remote hosts on macs we probably want it in future
+#internal_abspath() {
+#  cd "$(dirname "$1")"
+#  printf "%s/%s\n" "$(pwd)" "$(basename "$1")"
+#  cd "$OLDPWD"
+#}
+
 if [ -z "$(command -v uname)" ] || [ -z "$(command -v realpath)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ] || \
    [ -z "$(command -v egrep)" ]; then
   TOOLS_MSG="Required tools are missing:"
@@ -105,7 +122,35 @@ echo "XDG_DATA_HOME=$XDG_DATA_HOME"
 # Set default config and system dirs
 # ---------------------------------------------------------------------
 echo "> Setup Remote Development Host default configuration"
+# todo: actually not only IU
 IJ_HOST_CONFIG_DIR="$HOME/.CwmHost-IU-config"
+IJ_HOST_SYSTEM_DIR="$HOME/.CwmHost-IU-system"
+
+STARTER_COMMAND="$1"
+
+if [ "$STARTER_COMMAND" = "run" ]; then
+  STARTER_COMMAND="cwmHostNoLobby"
+fi
+
+if [ "$STARTER_COMMAND" = "cwmHost" ] || [ "$STARTER_COMMAND" = "cwmHostNoLobby" ] || [ "$STARTER_COMMAND" = "cwmHostStatus" ]; then
+  if [ -z "$2" ]; then
+    usage
+    exit 1
+  fi
+  if [ ! -d "$2" ]; then
+    echo "\"$2\" is not a directory" >&2
+    usage
+    exit 1
+  fi
+  PROJECT_PATH="$(realpath "$2")"
+
+  # /path/to/project -> _path_to_project
+  PER_PROJECT_CONFIG_DIR="$(printf '%s' "$PROJECT_PATH" | sed 's|/|_|g')"
+
+  IJ_HOST_CONFIG_DIR="$IJ_HOST_CONFIG_DIR/$PER_PROJECT_CONFIG_DIR"
+  IJ_HOST_SYSTEM_DIR="$IJ_HOST_SYSTEM_DIR/$PER_PROJECT_CONFIG_DIR"
+fi
+
 IJ_STORED_HOST_PASSWD="$IJ_HOST_CONFIG_DIR/cwm-passwd"
 
 REMOTE_DEV_PROPERTIES="$IDE_HOME/remotedevelopment/idea.remotedev.properties"
@@ -116,7 +161,7 @@ if [ ! -f "$REMOTE_DEV_PROPERTIES" ]; then
   #TODO: use IDE-specific properties file
   cat "$IDE_BIN_HOME/idea.properties" > "$REMOTE_DEV_PROPERTIES"
   #TODO: use IDE-specific folder
-  printf '\nidea.config.path=${user.home}/.CwmHost-IU-config\nidea.system.path=${user.home}/.CwmHost-IU-system\n' >> "$REMOTE_DEV_PROPERTIES"
+  printf '\nidea.config.path=%s\nidea.system.path=%s' "$IJ_HOST_CONFIG_DIR" "$IJ_HOST_SYSTEM_DIR" >> "$REMOTE_DEV_PROPERTIES"
 
   #TODO: remove once all of this is disabled for remote dev
   printf '\njb.privacy.policy.text="<!--999.999-->"\njb.consents.confirmation.enabled=false\nidea.initially.ask.config=force-not\nide.show.tips.on.startup.default.value=false' >> "$REMOTE_DEV_PROPERTIES"
@@ -133,23 +178,21 @@ fi
 export IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$REMOTE_DEV_PROPERTIES"
 
 # Prevent config import dialog
-if [ ! -d "$IJ_HOST_CONFIG_DIR" ]; then
-  mkdir "$IJ_HOST_CONFIG_DIR"
-fi
+
+mkdir -p "$IJ_HOST_CONFIG_DIR" || (echo "Failed to create $IJ_HOST_CONFIG_DIR"; exit 1)
+mkdir -p "$IJ_HOST_SYSTEM_DIR" || (echo "Failed to create $IJ_HOST_SYSTEM_DIR"; exit 1)
+
 
 # ---------------------------------------------------------------------
 # Process command line arguments
 # ---------------------------------------------------------------------
 echo "> Start processing command line arguments"
 if [ -z "${1-}" ]; then
-  echo "Usage: $0 [idea commands]"
-  echo "Examples:"
-  echo "  $0 cwmHost /path/to/project"
-  echo "  $0 cwmHostStatus"
+  usage
   exit 1
 fi
 
-if [ "$1" = "cwmHost" ] && [ ! -f "$IJ_STORED_HOST_PASSWD" ] && [ -z "${CWM_NO_PASSWORD-}" ]  && [ -z "${CWM_HOST_PASSWORD-}" ]; then
+if [ "$STARTER_COMMAND" = "cwmHost" ] && [ ! -f "$IJ_STORED_HOST_PASSWD" ] && [ -z "${CWM_NO_PASSWORD-}" ]  && [ -z "${CWM_HOST_PASSWORD-}" ]; then
   echo "Enter a password that will be used to connect to the host"
   stty -echo
   read -r CWM_HOST_PASSWORD
