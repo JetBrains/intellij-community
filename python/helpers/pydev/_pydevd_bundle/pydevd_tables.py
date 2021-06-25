@@ -25,6 +25,8 @@ def is_error_on_eval(val):
 
 
 def exec_table_command(init_command, command_type, f_globals, f_locals):
+    # noinspection PyUnresolvedReferences
+    import pandas as pd
     res = ""
     if command_type == TableCommandType.DF_INFO:
         tmp_var = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
