@@ -31,6 +31,7 @@ import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
+import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.dsl.*
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
@@ -66,6 +67,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     prepareRuntimeTask {
       modifyFiles()
     }
+
+    showWarningIfModalCommitEnabled()
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {

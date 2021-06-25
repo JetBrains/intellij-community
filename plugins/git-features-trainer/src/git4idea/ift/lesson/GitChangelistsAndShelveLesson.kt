@@ -25,6 +25,7 @@ import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
+import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
@@ -58,6 +59,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       removeShelvedChangeLists(project)
       modifyFile(virtualFile)
     }
+
+    showWarningIfModalCommitEnabled()
 
     lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
