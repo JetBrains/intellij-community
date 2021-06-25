@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImp
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
@@ -34,7 +35,9 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity {
         })
 
         notifyNewJVMBackendIfNeeded(project)
-        KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
+        DumbService.getInstance(project).runWhenSmart {
+            KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
+        }
     }
 }
 
