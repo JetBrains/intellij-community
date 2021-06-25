@@ -76,7 +76,7 @@ class ActionsLoader {
       null /*project-default touchbar never replaces esc-button*/,
       null /*project-default touchbar mustn't be closed because of auto-close actions*/,
       (parentInfo, butt, presentation) -> {
-        final @NotNull String actId = butt.getActionId();
+        final String actId = ActionManager.getInstance().getId(butt.getAnAction());
 
         final boolean isRunConfigPopover = "RunConfiguration".equals(actId);
         final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
