@@ -4,6 +4,8 @@
 <p>Normally, <code>asSequence</code> speeds up collection processing that includes multiple operations by performing them lazily.
 However, if a terminal operation (such as <code>toList()</code>) is used right after <code>asSequence()</code>, this doesn't give
 you any positive performance effect.</p>
+However, if a terminal operation (such as <code>toList()</code>) is used right after <code>asSequence()</code>, this doesn't give
+you any positive performance effect.</p>
 <p><b>Example:</b></p>
 <pre><code>
 fun test(list: List&lt;String&gt;) {
