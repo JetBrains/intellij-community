@@ -1594,6 +1594,66 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "V3",
+    "name": "intellij.micronaut/javaee-jpa",
+    "n": "i.micronaut/javaee-jpa",
+    "package": "com.intellij.micronaut.data",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.javaee-jpa.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6K",
+    "name": "intellij.micronaut/maven",
+    "n": "i.micronaut/maven",
+    "package": "com.intellij.micronaut.run.maven",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.maven.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "de1",
+    "name": "intellij.micronaut/gradle",
+    "n": "i.micronaut/gradle",
+    "package": "com.intellij.micronaut.run.gradle",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.gradle.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "8C",
+    "name": "intellij.micronaut/restClient",
+    "n": "i.micronaut/restClient",
+    "package": "com.intellij.micronaut.provider.http.httpClient",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.restClient.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "U5",
+    "name": "intellij.micronaut/intelliLang",
+    "n": "i.micronaut/intelliLang",
+    "package": "com.intellij.micronaut.intelliLang",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.intelliLang.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cJI",
     "n": "com.intellij.microservices.config"
   }
@@ -1845,6 +1905,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cgk",
+    "n": "idea.plugin.protoeditor"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "gk",
     "name": "intellij.protoeditor",
     "n": "i.protoeditor",
@@ -1852,7 +1918,44 @@
     "sourceModule": "intellij.protoeditor",
     "descriptor": "contrib/protobuf/resources/META-INF/plugin.xml",
     "pluginId": "idea.plugin.protoeditor",
-    "type": 1
+    "parent": "cgk",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "IF",
+    "name": "intellij.protoeditor.go",
+    "n": "i.protoeditor.go",
+    "package": "com.intellij.protobuf.go",
+    "sourceModule": "intellij.protoeditor.go",
+    "descriptor": "contrib/protobuf/protoeditor-go/resources/intellij.protoeditor.go.xml",
+    "parent": "cgk",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "AZ",
+    "name": "intellij.protoeditor.python",
+    "n": "i.protoeditor.python",
+    "package": "com.intellij.protobuf.python",
+    "sourceModule": "intellij.protoeditor.python",
+    "descriptor": "contrib/protobuf/protoeditor-python/resources/intellij.protoeditor.python.xml",
+    "parent": "cgk",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mN",
+    "name": "intellij.protoeditor.jvm",
+    "n": "i.protoeditor.jvm",
+    "package": "com.intellij.protobuf.jvm",
+    "sourceModule": "intellij.protoeditor.jvm",
+    "descriptor": "contrib/protobuf/protoeditor-jvm/resources/intellij.protoeditor.jvm.xml",
+    "parent": "cgk",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2269,7 +2372,7 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "V3",
+    "id": "V31",
     "name": "intellij.profiler.ruby",
     "n": "i.profiler.ruby",
     "package": "com.intellij.profiler.ruby",
@@ -3375,6 +3478,17 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "43",
+    "name": "com.intellij.modules.python",
+    "n": "c.i.m.python",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Fa",
     "name": "com.intellij.modules.database",
     "n": "c.i.m.database",
@@ -3406,17 +3520,6 @@
     "descriptor": "community/plugins/xpath/xpath-view/src/META-INF/plugin.xml",
     "pluginId": "XPathView",
     "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "43",
-    "name": "com.intellij.modules.python",
-    "n": "c.i.m.python",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
   }
 }, {
   "group": "nodes",
@@ -4015,6 +4118,46 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "aK_V3",
+    "source": "aK",
+    "target": "V3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_6K",
+    "source": "aK",
+    "target": "6K",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_de1",
+    "source": "aK",
+    "target": "de1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_8C",
+    "source": "aK",
+    "target": "8C",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_U5",
+    "source": "aK",
+    "target": "U5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "JI_60",
     "source": "JI",
     "target": "60",
@@ -4066,6 +4209,30 @@
     "id": "T4_j0",
     "source": "T4",
     "target": "j0",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_IF",
+    "source": "gk",
+    "target": "IF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_AZ",
+    "source": "gk",
+    "target": "AZ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_mN",
+    "source": "gk",
+    "target": "mN",
     "type": 1
   }
 }, {
@@ -4279,9 +4446,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "2K_V3",
+    "id": "2K_V31",
     "source": "2K",
-    "target": "V3",
+    "target": "V31",
     "type": 1
   }
 }, {
@@ -5807,6 +5974,46 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "V3_oF",
+    "source": "V3",
+    "target": "oF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6K_Up",
+    "source": "6K",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "de1_87",
+    "source": "de1",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "8C_Yg1",
+    "source": "8C",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "U5_HN",
+    "source": "U5",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "JI_S9",
     "source": "JI",
     "target": "S9",
@@ -6058,6 +6265,30 @@
     "id": "3J_It",
     "source": "3J",
     "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IF_ae",
+    "source": "IF",
+    "target": "ae",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "AZ_43",
+    "source": "AZ",
+    "target": "43",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mN_S9",
+    "source": "mN",
+    "target": "S9",
     "type": 0
   }
 }, {
@@ -6423,8 +6654,8 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "V3_TN",
-    "source": "V3",
+    "id": "V31_TN",
+    "source": "V31",
     "target": "TN",
     "type": 0
   }
