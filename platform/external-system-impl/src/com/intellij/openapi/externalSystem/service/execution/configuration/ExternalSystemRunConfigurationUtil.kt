@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.execution.configuration
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -22,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -31,7 +31,6 @@ import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
-import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.*
@@ -156,11 +155,8 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
 ).apply {
   isRemovable = false
 }.addValidation {
-  if (it.component.workingDirectory.isBlank()) {
-    error(workingDirectoryInfo.emptyFieldError)
-  }
-  else {
-    null
+  if (it.getWorkingDirectory().isBlank()) {
+    throw RuntimeConfigurationError(workingDirectoryInfo.emptyFieldError)
   }
 }
 
@@ -253,17 +249,6 @@ fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
     setPassParentEnvs(it, c.isPassParentEnvs)
   }
 )
-
-fun <S : RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.addValidation(
-  validate: ValidationInfoBuilder.(C) -> ValidationInfo?
-): SettingsEditorFragment<S, C> {
-  setValidation {
-    val validationInfoBuilder = ValidationInfoBuilder(component())
-    val validationInfo = validationInfoBuilder.validate(component())
-    listOfNotNull(validationInfo)
-  }
-  return this
-}
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addPathFragment(
   project: Project,

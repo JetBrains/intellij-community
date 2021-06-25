@@ -18,6 +18,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +43,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
-  private @Nullable Function<Settings, List<ValidationInfo>> myValidation;
+  private List<Function<Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
   private final @NotNull SettingsEditorFragmentType myType;
   private final int myPriority;
   private final Predicate<? super Settings> myInitialSelection;
@@ -221,13 +224,35 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setValidation(@Nullable Function<Settings, List<ValidationInfo>> validation) {
-    myValidation = validation;
+    myValidation.clear();
+    if (validation != null) {
+      myValidation.add(validation);
+    }
+  }
+
+  private SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
+    myValidation.add(it -> Collections.singletonList(validation.apply(it)));
+    return this;
+  }
+
+  public SettingsEditorFragment<Settings, C> addValidation(
+    @NotNull ThrowableConsumer<? super Settings, ? extends ConfigurationException> validation
+  ) {
+    return addValidation(settings -> {
+      try {
+        validation.consume(settings);
+        return new ValidationInfo("", getEditorComponent());
+      }
+      catch (ConfigurationException exception) {
+        return new ValidationInfo(exception.getMessage(), getEditorComponent());
+      }
+    });
   }
 
   protected void validate(Settings s) {
-    if (myValidation == null) return;
+    if (myValidation.isEmpty()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<ValidationInfo> infos = myValidation.apply(s);
+      List<ValidationInfo> infos = ContainerUtil.flatMap(myValidation, it -> it.apply(s));
       if (infos.isEmpty()) return;
       UIUtil.invokeLaterIfNeeded(() -> {
         if (Disposer.isDisposed(this)) return;

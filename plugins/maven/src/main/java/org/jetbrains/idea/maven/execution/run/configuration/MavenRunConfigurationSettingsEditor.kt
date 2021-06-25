@@ -4,24 +4,21 @@ package org.jetbrains.idea.maven.execution.run.configuration
 import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
-import com.intellij.openapi.externalSystem.service.ui.distribution.DistributionInfo
-import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
-import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
+import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
@@ -29,7 +26,6 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsIn
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
 
 class MavenRunConfigurationSettingsEditor(
   runConfiguration: MavenRunConfiguration
@@ -145,7 +141,9 @@ class MavenRunConfigurationSettingsEditor(
       { asDistributionInfo(settings.mavenHome ?: MavenServerManager.BUNDLED_MAVEN_3) },
       { settings.mavenHome = asMavenHome(it) }
     ).addValidation {
-      validateMavenHome(it.selectedDistribution)
+      if (!MavenUtil.isValidMavenHome(it.settings.mavenHome)) {
+        throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
+      }
     }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addWorkingDirectoryFragment() =
@@ -199,16 +197,6 @@ class MavenRunConfigurationSettingsEditor(
           { settings.jreName = it }
         ))
       }
-
-  private fun ValidationInfoBuilder.validateMavenHome(distribution: DistributionInfo): ValidationInfo? {
-    return when {
-      distribution is MavenDistributionsInfo.Bundled2DistributionInfo -> null
-      distribution is MavenDistributionsInfo.Bundled3DistributionInfo -> null
-      distribution is MavenDistributionsInfo.WrappedDistributionInfo -> null
-      distribution is LocalDistributionInfo && MavenUtil.isValidMavenHome(File(distribution.path)) -> null
-      else -> error(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
-    }
-  }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>

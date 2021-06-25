@@ -706,6 +706,14 @@ public class MavenUtil {
     return str == null || str.length() == 0 || str.trim().length() == 0;
   }
 
+  public static boolean isValidMavenHome(@Nullable String mavenHome) {
+    if (mavenHome == null) return false;
+    if (mavenHome.equals(MavenServerManager.BUNDLED_MAVEN_2)) return true;
+    if (mavenHome.equals(MavenServerManager.BUNDLED_MAVEN_3)) return true;
+    if (mavenHome.equals(MavenServerManager.WRAPPED_MAVEN)) return true;
+    return isValidMavenHome(new File(mavenHome));
+  }
+
   public static boolean isValidMavenHome(@Nullable File home) {
     if (home == null) return false;
     return getMavenConfFile(home).exists();
