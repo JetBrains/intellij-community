@@ -113,12 +113,12 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                         Scratches and Consoles
                       Intersection: 
                         Union: 
-                          Referent files: [/one/JavaClass2.java, /one/JavaClass.java]
+                          Files: [/one/JavaClass2.java, /one/JavaClass.java]
                           NOT: 
                             restricted by file types: [com.intellij.ide.highlighter.JavaFileType@6f940297, com.intellij.ide.highlighter.JavaClassFileType@51d6ced9] in NOT: EMPTY
                           Libraries only in [Project and Libraries]
                         Union: 
-                          Referent files: [/two/KotlinClass.kt, /two/Main.kt]
+                          Files: [/two/KotlinClass.kt, /two/Main.kt]
                           NOT: 
                             restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@e1715c6] in NOT: EMPTY
                           Libraries only in [Project and Libraries]
@@ -151,11 +151,11 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                         Scratches and Consoles
                       Intersection: 
                         Union: 
-                          Referent files: [/one/JavaClass.java]
+                          Files: [/one/JavaClass.java]
                           NOT: 
                             restricted by file types: [com.intellij.ide.highlighter.JavaClassFileType@4b8b8d4f, com.intellij.ide.highlighter.JavaFileType@4cecc653] in NOT: EMPTY
                         Union: 
-                          Referent files: [/two/KotlinClass.kt]
+                          Files: [/two/KotlinClass.kt]
                           NOT: 
                             restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@5cf4beea] in NOT: EMPTY
                     

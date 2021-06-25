@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,7 +46,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -314,7 +312,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(myProject, referentFiles);
+    GlobalSearchScope referencesScope = GlobalSearchScope.filesWithoutLibrariesScope(myProject, referentFiles);
 
     GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
     GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
@@ -527,42 +525,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     public static ElementPlace get(VirtualFile file, ProjectFileIndex index) {
       if (file == null) return null;
       return index.isInSourceContent(file) ? SRC : (index.isInLibrary(file) ? LIB : null);
-    }
-  }
-
-  public static final class ScopeWithReferencesOnCompilation extends GlobalSearchScope {
-    private final @NotNull Set<VirtualFile> myReferentFiles;
-
-    public ScopeWithReferencesOnCompilation(@NotNull Project project, @NotNull Set<VirtualFile> files) {
-      super(project);
-      myReferentFiles = files;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return myReferentFiles.contains(file);
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      assert getProject() != null;
-      String basePath = StringUtil.defaultIfEmpty(getProject().getBasePath(), "");
-
-      return "Referent files: [" + StringUtil.join(
-        myReferentFiles,
-        (file) -> StringsKt.removePrefix(file.getPresentableUrl(), basePath),
-        ", "
-      ) + "]";
     }
   }
 

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
-import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.ScopeWithReferencesOnCompilation
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
@@ -293,7 +292,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         if (virtualFiles == null) return null
 
         // knows everything
-        val referencesScope = ScopeWithReferencesOnCompilation(project, virtualFiles)
+        val referencesScope = GlobalSearchScope.filesWithoutLibrariesScope(project, virtualFiles)
 
         /***
          * can contain all languages, but depends on [supportedFileTypes]
