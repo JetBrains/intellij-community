@@ -20,6 +20,7 @@ import java.util.Map;
 class ActionsLoader {
   private static final Logger LOG = Logger.getInstance(ActionsLoader.class);
   private static final boolean ENABLE_FN_MODE = Boolean.getBoolean("touchbar.fn.mode.enable");
+  private static final String FN_KEYS = "FN-keys";
   private static int FN_WIDTH = Integer.getInteger("touchbar.fn.width", 68);
 
   private static final boolean TOOLWINDOW_CROSS_ESC = !Boolean.getBoolean("touchbar.toolwindow.esc");
@@ -183,7 +184,7 @@ class ActionsLoader {
   }
 
   static @NotNull Pair<Map<Long, ActionGroup>, Customizer> getFnActionGroup() {
-    final DefaultActionGroup result = new DefaultActionGroup("FN-keys", false);
+    final DefaultActionGroup result = new DefaultActionGroup(FN_KEYS, false);
     for (int c = 1; c <= 12; ++c) {
       result.add(new FNKeyAction(c));
     }
