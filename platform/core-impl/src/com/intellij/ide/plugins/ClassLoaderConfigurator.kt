@@ -332,7 +332,7 @@ class ClassLoaderConfigurator(
       dependencies.add(plugin)
     }
 
-    assert(module.pluginDependencies.isEmpty())
+    assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
 
     val array = if (dependencies.isEmpty()) {
       EMPTY_DESCRIPTOR_ARRAY
