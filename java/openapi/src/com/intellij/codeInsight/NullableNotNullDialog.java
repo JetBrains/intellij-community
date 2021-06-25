@@ -4,10 +4,11 @@ package com.intellij.codeInsight;
 import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +38,17 @@ public class NullableNotNullDialog extends DialogWrapper {
     myNullablePanel = new AnnotationsPanel(project,
                                            "Nullable",
                                            manager.getDefaultNullable(),
-                                           manager.getNullablesWithNickNames(), manager.getDefaultNullables(),
-                                           Collections.emptySet(), false, true);
+                                           manager.getNullables(), manager.getDefaultNullables(),
+                                           Collections.emptySet(),
+                                           ActionUtil.isDumbMode(project) ? manager.getNullables() : manager.getNullablesWithNickNames(),
+                                           false, true);
     myNotNullPanel = new AnnotationsPanel(project,
                                           "NotNull",
                                           manager.getDefaultNotNull(),
-                                          manager.getNotNullsWithNickNames(), manager.getDefaultNotNulls(),
-                                          new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
+                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
+                                          new HashSet<>(manager.getInstrumentedNotNulls()),
+                                          ActionUtil.isDumbMode(project) ? manager.getNotNulls() : manager.getNotNullsWithNickNames(),
+                                          showInstrumentationOptions, true);
 
     init();
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
@@ -82,12 +87,10 @@ public class NullableNotNullDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(myNullablePanel.getComponent());
-    splitter.setSecondComponent(myNotNullPanel.getComponent());
-    splitter.setHonorComponentsMinimumSize(true);
-    splitter.setPreferredSize(JBUI.size(300, 400));
-    return splitter;
+    final var pane = new JBTabbedPane();
+    pane.insertTab("Nullable", null, myNullablePanel.getComponent(), "", 0);
+    pane.insertTab("NotNull", null, myNotNullPanel.getComponent(), "", 1);
+    return pane;
   }
 
   @Override
