@@ -1,0 +1,11 @@
+LineBreakpoint created at getterOfLateinitVariableIsNotShown.kt:13
+Run Java
+Connected to the target VM
+getterOfLateinitVariableIsNotShown.kt:13
+KotlinStackFrame (getterOfLateinitVariableIsNotShown.kt:13)
+    JavaValue[local] instance: getterOfLateinitVariableIsNotShown.TestClass = getterOfLateinitVariableIsNotShown.TestClass@hashCode (getterOfLateinitVariableIsNotShown.kt:11)
+        JavaValue[field] lateinitVar: java.lang.Object = 1 (getterOfLateinitVariableIsNotShown.kt:4)
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
+Disconnected from the target VM
+
+Process finished with exit code 0

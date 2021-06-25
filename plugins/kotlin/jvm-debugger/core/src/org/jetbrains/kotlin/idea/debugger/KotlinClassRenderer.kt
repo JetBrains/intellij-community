@@ -16,7 +16,6 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.KotlinSimpleGetterDetector.isSimpleGetter
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
@@ -110,7 +109,8 @@ class KotlinClassRenderer : ClassRenderer() {
             method.name() != "getClass" &&
             !method.name().endsWith("\$annotations") &&
             method.declaringType().isInKotlinSources() &&
-            !method.isSimpleGetter()
+            !method.isSimpleGetter() &&
+            !method.isLateinitVariableGetter()
         }
         .distinctBy { it.name() }
         .toList()
