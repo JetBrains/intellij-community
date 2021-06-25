@@ -220,12 +220,14 @@ public interface Application extends ComponentManager {
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
-   * Saves all open documents and projects.
+   * Saves all open documents, settings of all opened projects and application settings.
+   * @see #saveSettings()
    */
   void saveAll();
 
   /**
-   * Saves application settings.
+   * Saves application settings. Note that settings for non-roamable components aren't saved by default if they were saved less than
+   * 5 minutes ago, see {@link com.intellij.openapi.components.Storage#useSaveThreshold() useSaveThreshold} for details.
    */
   void saveSettings();
 

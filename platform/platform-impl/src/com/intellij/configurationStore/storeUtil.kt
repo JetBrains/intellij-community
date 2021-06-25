@@ -67,7 +67,7 @@ class StoreUtil private constructor() {
      * Save all unsaved documents, project and application settings. Must be called from EDT.
      * Use with care because it blocks EDT. Any new usage should be reviewed.
      *
-     * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
+     * @param forceSavingAllSettings if `true` [Storage.useSaveThreshold] attribute will be ignored and settings of all components will be saved
      */
     @RequiresEdt
     @JvmStatic
