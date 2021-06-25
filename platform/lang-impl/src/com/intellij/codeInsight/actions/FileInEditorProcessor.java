@@ -136,23 +136,25 @@ public class FileInEditorProcessor {
 
   @NotNull
   private AbstractLayoutCodeProcessor mixWithReformatProcessor(@Nullable AbstractLayoutCodeProcessor processor) {
+    ReformatCodeProcessor reformatCodeProcessor;
     if (processor != null) {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
+        reformatCodeProcessor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+        reformatCodeProcessor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
       }
     }
     else {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
       }
     }
-    return processor;
+    reformatCodeProcessor.setDoNotKeepLineBreaks(myOptions.doNotKeepLineBreaks());
+    return reformatCodeProcessor;
   }
 
   @NotNull
