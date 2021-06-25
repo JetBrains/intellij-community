@@ -210,10 +210,6 @@
     },
 
     "Tree": {
-      "collapsedIcon": "/icons/treeCollapsed.svg",
-      "collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
-      "expandedIcon": "/icons/treeExpanded.svg",
-      "expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
       "hash": "#E6E6E6",
       "paintLines": false
     },
