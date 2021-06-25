@@ -18,6 +18,8 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -34,11 +36,15 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (ThemeJsonUtil.isThemeFilename(file.getName())) {
-      EditorNotificationPanel panel = new EditorNotificationPanel(new JBColor(() -> ExperimentalUI.isNewEditorTabs()
-                                                                                    ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground() : JBColor.PanelBackground));
+      JBColor bg = new JBColor(() -> ExperimentalUI.isNewEditorTabs()
+                                        ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()
+                                        : JBColor.PanelBackground);
+      EditorNotificationPanel panel = new EditorNotificationPanel(bg);
       panel.removeAll();
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");
-      panel.add(ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true).getComponent());
+      JComponent toolbar = ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true).getComponent();
+      toolbar.setBackground(bg);
+      panel.add(toolbar);
       DataManager.registerDataProvider(panel, dataId -> CommonDataKeys.VIRTUAL_FILE.is(dataId) ? fileEditor.getFile() : null);
       return panel;
     }
