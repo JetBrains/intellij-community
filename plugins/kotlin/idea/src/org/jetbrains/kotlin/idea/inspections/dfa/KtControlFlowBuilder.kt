@@ -34,10 +34,12 @@ import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
@@ -138,19 +140,25 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processClassLiteralExpression(expr: KtClassLiteralExpression) {
         val kotlinType = expr.getKotlinType()
+        val receiver = expr.receiverExpression
         if (kotlinType != null) {
-            val arguments = kotlinType.arguments
-            if (arguments.size == 1) {
-                val kType = arguments[0].type
-                val kClassPsiType = kotlinType.toPsiType(expr)
-                if (kClassPsiType != null) {
-                    val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
-                    addInstruction(PushValueInstruction(kClassConstant, KotlinExpressionAnchor(expr)))
-                    return
+            if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
+                val arguments = kotlinType.arguments
+                if (arguments.size == 1) {
+                    val kType = arguments[0].type
+                    val kClassPsiType = kotlinType.toPsiType(expr)
+                    if (kClassPsiType != null) {
+                        val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
+                        addInstruction(PushValueInstruction(kClassConstant, KotlinExpressionAnchor(expr)))
+                        return
+                    }
                 }
             }
         }
+        processExpression(receiver)
+        addInstruction(PopInstruction())
         addInstruction(PushValueInstruction(kotlinType.toDfType(expr)))
+        // TODO: support kotlin-class as a variable; link to TypeConstraint
     }
 
     private fun processAsExpression(expr: KtBinaryExpressionWithTypeRHS) {
@@ -292,9 +300,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         // TODO: support qualified references as variables
         val receiver = expr.receiverExpression
-        val selector = expr.selectorExpression
-        if (pushJavaClassConstant(receiver, selector, expr)) return
         processExpression(receiver)
+        val selector = expr.selectorExpression
+        if (pushJavaClassField(receiver, selector, expr)) return
         val specialField = if (expr is KtDotQualifiedExpression) findSpecialField(expr) else null
         if (specialField != null) {
             addInstruction(UnwrapDerivedVariableInstruction(specialField))
@@ -306,16 +314,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    private fun pushJavaClassConstant(receiver: KtExpression, selector: KtExpression?, expr: KtQualifiedExpression): Boolean {
-        // TODO: a special instruction that converts KClass constant to Class constant
-        if (receiver !is KtClassLiteralExpression || selector == null || !selector.textMatches("java")) return false
+    private fun pushJavaClassField(receiver: KtExpression, selector: KtExpression?, expr: KtQualifiedExpression): Boolean {
+        if (selector == null || !selector.textMatches("java")) return false
+        if (receiver.getKotlinType()?.constructor?.declarationDescriptor?.fqNameUnsafe?.asString() != "kotlin.reflect.KClass") return false
         val kotlinType = expr.getKotlinType() ?: return false
-        val arguments = kotlinType.arguments
-        if (arguments.size != 1) return false
-        val psiType = arguments[0].type.toPsiType(expr) ?: return false
         val classPsiType = kotlinType.toPsiType(expr) ?: return false
-        val classConstant: DfType = DfTypes.referenceConstant(psiType, classPsiType)
-        addInstruction(PushValueInstruction(classConstant, KotlinExpressionAnchor(expr)))
+        if (!classPsiType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) return false
+        addInstruction(KotlinClassToJavaClassInstruction(KotlinExpressionAnchor(expr), classPsiType))
         return true
     }
 

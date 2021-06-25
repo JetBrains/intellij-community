@@ -2,7 +2,8 @@
 // FIX: none
 // WITH_RUNTIME
 fun test() {
-    val x = X::class.java
+    val xKClass = X::class
+    val x = xKClass.java
     val y = Y::class.java
     if (<caret>x === y) {}
 }

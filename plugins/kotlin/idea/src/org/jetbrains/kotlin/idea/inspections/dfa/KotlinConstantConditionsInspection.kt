@@ -85,23 +85,36 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         ) {
             return true
         }
-        if (value == ConstantValue.ZERO && expression.readWriteAccess(false).isWrite) {
-            // like if (x == 0) x++, warning would be somewhat annoying
-            return true
-        }
-        if (value == ConstantValue.NULL && parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
-            // initialize other variable with null to copy type, like
-            // var x1 : X = null
-            // var x2 = x1 -- let's suppress this
-            return true
-        }
-        if (value == ConstantValue.NULL && parent is KtBinaryExpression) {
-            val token = parent.operationToken
-            if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
-                (parent.left?.isNull() == true || parent.right?.isNull() == true)
-            ) {
-                // like if (x == null) when 'x' is known to be null: report 'always true' instead
+        if (value == ConstantValue.ZERO) {
+            if (expression.readWriteAccess(false).isWrite) {
+                // like if (x == 0) x++, warning would be somewhat annoying
                 return true
+            }
+            if (expression is KtSimpleNameExpression &&
+                (parent is KtValueArgument || parent is KtContainerNode && parent.parent is KtArrayAccessExpression)) {
+                // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
+                return true
+            }
+        }
+        if (value == ConstantValue.NULL) {
+            if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
+                // initialize other variable with null to copy type, like
+                // var x1 : X = null
+                // var x2 = x1 -- let's suppress this
+                return true
+            }
+            if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {
+                // like (null as? X)
+                return true
+            }
+            if (parent is KtBinaryExpression) {
+                val token = parent.operationToken
+                if ((token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) &&
+                    (parent.left?.isNull() == true || parent.right?.isNull() == true)
+                ) {
+                    // like if (x == null) when 'x' is known to be null: report 'always true' instead
+                    return true
+                }
             }
         }
         if (expression is KtSimpleNameExpression) {
@@ -169,7 +182,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     }
                     is KotlinWhenConditionAnchor -> {
                         val condition = anchor.condition
-                        if (cv == ConstantValue.FALSE || (cv == ConstantValue.TRUE && !isLastCondition(condition))) {
+                        if (!shouldSuppressWhenCondition(cv, condition)) {
                             val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
                             else "inspection.message.when.condition.always.false"
                             holder.registerProblem(condition, KotlinBundle.message(key))
@@ -191,6 +204,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
         }
+    }
+
+    private fun shouldSuppressWhenCondition(
+        cv: ConstantValue,
+        condition: KtWhenCondition
+    ): Boolean {
+        if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
+        if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
+        val context = condition.analyze(BodyResolveMode.FULL)
+        if (context.diagnostics.forElement(condition).any { it.factory == Errors.USELESS_IS_CHECK }) return true
+        return false
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {

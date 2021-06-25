@@ -4721,6 +4721,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/changeLocalInLambda.kt");
         }
 
+        @TestMetadata("classNotOnLiteral.kt")
+        public void testClassNotOnLiteral() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/classNotOnLiteral.kt");
+        }
+
         @TestMetadata("classParameter.kt")
         public void testClassParameter() throws Exception {
             runTest("testData/inspectionsLocal/dfa/classParameter.kt");
@@ -4831,6 +4836,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/senselessDiagnosticDuplicate.kt");
         }
 
+        @TestMetadata("senselessDiagnosticDuplicateWhen.kt")
+        public void testSenselessDiagnosticDuplicateWhen() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/senselessDiagnosticDuplicateWhen.kt");
+        }
+
         @TestMetadata("shiftLeft.kt")
         public void testShiftLeft() throws Exception {
             runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");
@@ -4919,6 +4929,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("whileStatement.kt")
         public void testWhileStatement() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whileStatement.kt");
+        }
+
+        @TestMetadata("zeroSuppress.kt")
+        public void testZeroSuppress() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/zeroSuppress.kt");
         }
     }
 
