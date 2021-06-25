@@ -1037,6 +1037,10 @@ public final class UIUtil {
     return UIManager.getColor("TextField.background");
   }
 
+  public static Color getTextFieldDisabledBackground() {
+    return UIManager.getColor("TextField.disabledBackground");
+  }
+
   public static Font getButtonFont() {
     return UIManager.getFont("Button.font");
   }
