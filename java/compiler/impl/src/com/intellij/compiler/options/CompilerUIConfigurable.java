@@ -22,8 +22,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,9 +59,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           mySharedHeapSizeField;
-  private JTextField           mySharedVMOptionsField;
+  private ExpandableTextField  mySharedVMOptionsField;
   private JTextField           myHeapSizeField;
-  private JTextField           myVMOptionsField;
+  private ExpandableTextField  myVMOptionsField;
   private JLabel               mySharedHeapSizeLabel;
   private JLabel               mySharedVMOptionsLabel;
   private JLabel               myHeapSizeLabel;
@@ -86,7 +88,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     DocumentAdapter updateStateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        mySharedVMOptionsField.setEnabled(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setEditable(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setBackground(myVMOptionsField.getDocument().getLength() == 0 ?
+                                             UIUtil.getTextFieldBackground() : UIUtil.getTextFieldDisabledBackground());
         mySharedHeapSizeField.setEnabled(
           myHeapSizeField.getDocument().getLength() == 0 &&
           ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
