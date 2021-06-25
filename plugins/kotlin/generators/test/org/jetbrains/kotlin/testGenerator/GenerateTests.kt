@@ -1319,7 +1319,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKeywordCompletionTest> {
-            model("keywords", isRecursive = false)
+            model("keywords", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
         testClass<AbstractJvmWithLibBasicCompletionTest> {
