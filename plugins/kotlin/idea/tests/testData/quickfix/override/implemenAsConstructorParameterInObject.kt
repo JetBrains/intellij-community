@@ -10,4 +10,3 @@ interface I {
 }
 
 <caret>object A : I
-/* IGNORE_FIR */
