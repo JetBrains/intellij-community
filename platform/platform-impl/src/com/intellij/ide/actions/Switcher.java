@@ -709,7 +709,7 @@ public final class Switcher extends BaseSwitcherAction {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
+                manager.openFile(file, true, true);
                 if (LightEdit.owns(project)) {
                   LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
                 }
