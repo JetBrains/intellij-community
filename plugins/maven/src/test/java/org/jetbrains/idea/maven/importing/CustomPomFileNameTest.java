@@ -125,7 +125,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
 
       "<parent>" +
       "  <groupId>test</groupId>" +
-      "  <artifactId>project</artifactId>" +
+      "  <artifactId>m1</artifactId>" +
       "  <version>1</version>" +
       "  <relativePath>../customPom.xml</relativePath>" +
       "</parent>"));
