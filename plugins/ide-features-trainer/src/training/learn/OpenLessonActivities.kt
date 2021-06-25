@@ -4,19 +4,15 @@ package training.learn
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -279,16 +275,7 @@ internal object OpenLessonActivities {
   private fun openReadme(project: Project) {
     val root = ProjectUtils.getProjectRoot(project)
     val readme = root.findFileByRelativePath("README.md") ?: return
-    val editors = FileEditorManager.getInstance(project).openFile(readme, true, true)
-    (editors.singleOrNull() as? TextEditor)?.editor?.let {
-      val action = ActionManager.getInstance().getAction(
-        "org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction")
-      invokeLater {
-        val dataContext = EditorUtil.getEditorDataContext(it)
-        val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.LEARN_TOOLWINDOW, dataContext)
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-      }
-    }
+    TextEditorWithPreview.openPreviewForFile(project, readme)
   }
 
   fun openOnboardingFromWelcomeScreen(onboarding: Lesson) {
