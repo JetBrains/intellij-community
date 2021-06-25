@@ -49,7 +49,7 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
                 return false
               }
 
-              return@dropMappings shouldDrop(artifactEntity.rootElement)
+              return@dropMappings shouldDrop(artifactEntity.rootElement!!)
             }
           }
         }

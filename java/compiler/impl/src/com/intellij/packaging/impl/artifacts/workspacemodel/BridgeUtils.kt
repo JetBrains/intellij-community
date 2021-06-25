@@ -45,7 +45,7 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
     return null
   }
 
-  val missingArtifactType = findMissingArtifactType(it.rootElement)
+  val missingArtifactType = findMissingArtifactType(it.rootElement!!)
   if (missingArtifactType != null) {
     return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
                                  JavaCompilerBundle.message("unknown.element.0", missingArtifactType))

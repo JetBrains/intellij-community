@@ -7,8 +7,10 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class OneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val childClass: Class<Child>,
-                                                                     private val isParentInChildNullable: Boolean) : ReadOnlyProperty<Parent, Sequence<Child>> {
+class OneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(
+  private val childClass: Class<Child>,
+  private val isParentInChildNullable: Boolean,
+) : ReadOnlyProperty<Parent, Sequence<Child>> {
 
   private var connectionId: ConnectionId? = null
 

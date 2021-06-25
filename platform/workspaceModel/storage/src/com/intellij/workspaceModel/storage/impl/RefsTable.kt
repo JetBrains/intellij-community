@@ -207,6 +207,10 @@ internal class MutableRefsTable(
     getOneToOneMutableMap(connectionId).removeValue(parentId)
   }
 
+  fun removeOneToAbstractOneRefByParent(connectionId: ConnectionId, parentId: ParentEntityId) {
+    getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
+  }
+
   fun removeOneToOneRefByChild(connectionId: ConnectionId, childId: Int) {
     getOneToOneMutableMap(connectionId).removeKey(childId)
   }

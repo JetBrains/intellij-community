@@ -110,7 +110,7 @@ open class ArtifactBridge(
   override fun getRootElement(): CompositePackagingElement<*> {
     val current = entityStorage.current
     val artifactEntity = current.get(artifactId)
-    val rootElement = artifactEntity.rootElement
+    val rootElement = artifactEntity.rootElement!!
     val compositeElement = rootElement.toCompositeElement(project, entityStorage.base)
     if (!compositeElement.hasStorage() || (compositeElement.storageIsStore() && diffOrNull != null)) {
       compositeElement.setStorage(entityStorage, project, elementsWithDiff, PackagingElementInitializer)
@@ -163,7 +163,7 @@ open class ArtifactBridge(
     val outputUrl = artifactEntity.outputUrl
     if (outputUrl == null) return null
 
-    val rootElement = artifactEntity.rootElement
+    val rootElement = artifactEntity.rootElement!!
     val path = JpsPathUtil.urlToPath(outputUrl.url)
     return if (rootElement is ArchivePackagingElementEntity) path + "/" + rootElement.fileName else path
   }
@@ -203,7 +203,7 @@ open class ArtifactBridge(
         elementsWithDiff += it
       }
     }
-    val oldRootElement = entity.rootElement
+    val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
       diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
         this.rootElement = rootEntity

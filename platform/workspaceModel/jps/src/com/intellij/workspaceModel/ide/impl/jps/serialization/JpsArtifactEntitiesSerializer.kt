@@ -53,7 +53,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
       builder.changeSource(it, artifactSource)
 
       // Convert it's packaging elements
-      it.rootElement.forThisAndFullTree {
+      it.rootElement!!.forThisAndFullTree {
         builder.changeSource(it, artifactSource)
       }
     }
@@ -281,7 +281,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         options = it.propertiesXmlTag?.let { JDOMUtil.load(it) }
       }
     }
-    artifactState.rootElement = savePackagingElement(artifact.rootElement)
+    artifactState.rootElement = savePackagingElement(artifact.rootElement!!)
     val externalSystemId = getExternalSystemId(artifact)
     if (externalSystemId != null) {
       if (isExternalStorage)
@@ -390,12 +390,12 @@ internal class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<Artifact
 internal class ArtifactExternalSystemIdEntity(
   val externalSystemId: String
 ) : WorkspaceEntityBase() {
-  val artifact: ArtifactEntity by OneToOneChild.NotNull(ArtifactEntity::class.java, true)
+  val artifact: ArtifactEntity by OneToOneChild.NotNull(ArtifactEntity::class.java)
 }
 
 internal class ModifiableArtifactExternalSystemIdEntity : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>() {
   var externalSystemId: String by EntityDataDelegation()
-  var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java, true)
+  var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java)
 }
 
 private val ArtifactEntity.externalSystemId get() = referrers(ArtifactExternalSystemIdEntity::artifact).firstOrNull()

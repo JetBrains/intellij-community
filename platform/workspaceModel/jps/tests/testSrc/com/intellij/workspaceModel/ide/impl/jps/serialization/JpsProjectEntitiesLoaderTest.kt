@@ -153,7 +153,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("dir", artifacts[0].name)
     assertTrue(artifacts[0].includeInProjectBuild)
     assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl!!.url))
-    val children = artifacts[0].rootElement.children.sortedBy { it::class.qualifiedName }.toList()
+    val children = artifacts[0].rootElement!!.children.sortedBy { it::class.qualifiedName }.toList()
     assertEquals(2, children.size)
     val innerJar = children[0] as ArchivePackagingElementEntity
     assertEquals("x.jar", innerJar.fileName)
@@ -173,7 +173,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
     assertEquals("jar", artifacts[1].name)
     assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl!!.url))
-    val archiveRoot = artifacts[1].rootElement as ArchivePackagingElementEntity
+    val archiveRoot = artifacts[1].rootElement!! as ArchivePackagingElementEntity
     assertEquals("jar.jar", archiveRoot.fileName)
     val archiveChildren = archiveRoot.children.toList()
     assertEquals(3, archiveChildren.size)
@@ -187,7 +187,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val artifacts = storage.entities(ArtifactEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(6, artifacts.size)
     assertEquals("javaeeSampleProject:war exploded", artifacts[5].name)
-    val artifactChildren = artifacts[5].rootElement.children.toList().sortedBy { it::class.qualifiedName }
+    val artifactChildren = artifacts[5].rootElement!!.children.toList().sortedBy { it::class.qualifiedName }
     assertEquals(2, artifactChildren.size)
     val customElement = artifactChildren.filterIsInstance<CustomPackagingElementEntity>().single()
     assertEquals("javaee-facet-resources", customElement.typeId)

@@ -218,7 +218,7 @@ class ArtifactsPropertyTest {
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
 
-        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement!!)
 
         codeMaker.scope("$foundArtifactVal.rootElement.forThisAndFullTree") {
           codeMaker.scope("if (it === ${codeMaker.v("happyResult")}.third)") {
@@ -265,7 +265,7 @@ class ArtifactsPropertyTest {
 
         assertElementsEquals(rootElement, foundArtifact.rootElement)
 
-        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, foundArtifact.rootElement, artifactEntity.rootElement!!)
       }
     }
 
@@ -555,7 +555,7 @@ class ArtifactsPropertyTest {
         val artifactEntity = artifactEntity(projectModel.project, newArtifactName)
 
         codeMaker.addLine("assertTreesEquals(project, $bridgeVal.rootElement, $artifactEntityVal.rootElement)")
-        assertTreesEquals(projectModel.project, bridgeArtifact.rootElement, artifactEntity.rootElement)
+        assertTreesEquals(projectModel.project, bridgeArtifact.rootElement, artifactEntity.rootElement!!)
       }
     }
   }

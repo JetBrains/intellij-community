@@ -387,7 +387,7 @@ class ArtifactTest : ArtifactsTestCase() {
     val bridgeArtifact = artifact(project, "Artifact-0")
     (bridgeArtifact.rootElement.children.single() as MyCompositeWorkspacePackagingElement).children
     val artifactEntity = artifactEntity(project, "Artifact-0")
-    assertTreesEquals(project, bridgeArtifact.rootElement, artifactEntity.rootElement)
+    assertTreesEquals(project, bridgeArtifact.rootElement, artifactEntity.rootElement!!)
   }
 
   fun `test async artifacts requesting`() {

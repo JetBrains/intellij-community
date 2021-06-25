@@ -42,7 +42,7 @@ class ModifiableJavaModuleSettingsEntity : ModifiableWorkspaceEntityBase<JavaMod
   var compilerOutputForTests: VirtualFileUrl? by VirtualFileUrlNullableProperty()
   var languageLevelId: String? by EntityDataDelegation()
 
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(JavaModuleSettingsEntity::class.java, ModuleEntity::class.java, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(JavaModuleSettingsEntity::class.java, ModuleEntity::class.java)
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
@@ -64,7 +64,7 @@ fun WorkspaceEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompi
 class ModifiableModuleCustomImlDataEntity : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity>() {
   var rootManagerTagCustomData: String? by EntityDataDelegation()
   var customModuleOptions: MutableMap<String, String> by EntityDataDelegation()
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleCustomImlDataEntity::class.java, ModuleEntity::class.java, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleCustomImlDataEntity::class.java, ModuleEntity::class.java)
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String?,
@@ -79,7 +79,7 @@ fun WorkspaceEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTa
 
 class ModifiableModuleGroupPathEntity : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>() {
   var path: List<String> by EntityDataDelegation()
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleGroupPathEntity::class.java, ModuleEntity::class.java, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleGroupPathEntity::class.java, ModuleEntity::class.java)
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String>,
@@ -196,7 +196,7 @@ fun WorkspaceEntityStorageDiffBuilder.addLibraryEntity(name: String, tableId: Li
 }
 
 class ModifiableLibraryPropertiesEntity : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity>() {
-  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryPropertiesEntity::class.java, LibraryEntity::class.java, true)
+  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryPropertiesEntity::class.java, LibraryEntity::class.java)
   var libraryType: String by EntityDataDelegation()
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
@@ -216,7 +216,7 @@ fun WorkspaceEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: Librar
 }
 
 class ModifiableSdkEntity : ModifiableWorkspaceEntityBase<SdkEntity>() {
-  var library: LibraryEntity by MutableOneToOneChild.NotNull(SdkEntity::class.java, LibraryEntity::class.java, true)
+  var library: LibraryEntity by MutableOneToOneChild.NotNull(SdkEntity::class.java, LibraryEntity::class.java)
   var homeUrl: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
@@ -228,7 +228,7 @@ fun WorkspaceEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
 }
 
 class ModifiableExternalSystemModuleOptionsEntity : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>() {
-  var module: ModuleEntity by MutableOneToOneChild.NotNull(ExternalSystemModuleOptionsEntity::class.java, ModuleEntity::class.java, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(ExternalSystemModuleOptionsEntity::class.java, ModuleEntity::class.java)
   var externalSystem: String? by EntityDataDelegation()
   var externalSystemModuleVersion: String? by EntityDataDelegation()
 
@@ -272,8 +272,8 @@ class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
   var outputUrl: VirtualFileUrl? by VirtualFileUrlNullableProperty()
-  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneParent(ArtifactEntity::class.java,
-                                                                                    CompositePackagingElementEntity::class.java)
+  var rootElement: CompositePackagingElementEntity? by MutableOneToAbstractOneParent(ArtifactEntity::class.java,
+                                                                                     CompositePackagingElementEntity::class.java)
   var customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {
