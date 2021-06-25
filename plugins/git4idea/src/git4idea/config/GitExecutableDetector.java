@@ -266,7 +266,7 @@ public class GitExecutableDetector {
 
     File gitFile = new File(gitExecutable.trim());
     File gitDirFile = gitFile.getParentFile();
-    if (WIN_BIN_DIRS.contains(gitDirFile.getName())) {
+    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getName())) {
       File bashFile = new File(gitDirFile.getParentFile(), "bin/bash.exe");
       if (bashFile.exists()) return bashFile.getPath();
     }
