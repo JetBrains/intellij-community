@@ -26,6 +26,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors");
+            super.setUp();
+        }
+
         @TestMetadata("ActualClass.kt")
         public void testActualClass() throws Exception {
             runTest("testData/compiler/asJava/lightClasses/compilationErrors/ActualClass.kt");
@@ -129,6 +135,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/delegation");
+            super.setUp();
+        }
+
         @TestMetadata("Function.kt")
         public void testFunction() throws Exception {
             runTest("testData/compiler/asJava/lightClasses/delegation/Function.kt");
@@ -150,6 +162,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public static class Facades extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/facades");
+            super.setUp();
         }
 
         @TestMetadata("AllPrivate.kt")
@@ -183,6 +201,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public static class IdeRegression extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/ideRegression");
+            super.setUp();
         }
 
         @TestMetadata("AllOpenAnnotatedClasses.kt")
@@ -246,6 +270,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public static class NullabilityAnnotations extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/nullabilityAnnotations");
+            super.setUp();
         }
 
         @TestMetadata("Class.kt")
@@ -346,6 +376,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/object");
+            super.setUp();
+        }
+
         @TestMetadata("SimpleObject.kt")
         public void testSimpleObject() throws Exception {
             runTest("testData/compiler/asJava/lightClasses/object/SimpleObject.kt");
@@ -357,6 +393,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public static class PublicField extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/publicField");
+            super.setUp();
         }
 
         @TestMetadata("CompanionObject.kt")
@@ -375,6 +417,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public static class Script extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/script");
+            super.setUp();
         }
 
         @TestMetadata("HelloWorld.kts")

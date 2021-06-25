@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
+import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
@@ -96,6 +98,20 @@ class SuiteElement private constructor(
                         methods += RunTestMethod(model)
                     }
                 }
+            }
+
+            if (methods.isNotEmpty() && group.isCompilerTestData) {
+                methods += SetUpMethod(
+                    listOf(
+                        "${AdditionalKotlinArtifacts::compilerTestData.name}(\"${
+                            File(
+                                group.testDataRoot,
+                                model.path
+                            ).toRelativeStringSystemIndependent(group.moduleRoot)
+                                .substringAfter(AdditionalKotlinArtifacts.compilerTestDataDir.name + "/")
+                        }\");"
+                    )
+                )
             }
 
             val suiteElement = SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
