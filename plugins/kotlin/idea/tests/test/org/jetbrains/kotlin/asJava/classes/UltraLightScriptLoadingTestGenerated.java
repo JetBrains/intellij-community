@@ -24,6 +24,12 @@ public class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScri
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/ultraLightScripts");
+        super.setUp();
+    }
+
     @TestMetadata("FunsPropsAndFields.kts")
     public void testFunsPropsAndFields() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/FunsPropsAndFields.kts"));

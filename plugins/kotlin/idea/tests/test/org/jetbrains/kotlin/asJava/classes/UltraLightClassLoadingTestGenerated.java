@@ -24,6 +24,12 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/ultraLightClasses");
+        super.setUp();
+    }
+
     @TestMetadata("annotationTargets_1_6.kt")
     public void testAnnotationTargets_1_6() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/annotationTargets_1_6.kt"));

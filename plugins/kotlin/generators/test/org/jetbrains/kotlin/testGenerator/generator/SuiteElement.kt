@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
+import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
@@ -18,7 +20,7 @@ fun File.toRelativeStringSystemIndependent(base: File): String {
     } else path
 }
 
-interface TestMethod: RenderElement {
+interface TestMethod : RenderElement {
     val methodName: String
 }
 
@@ -26,7 +28,7 @@ class SuiteElement private constructor(
     private val group: TGroup, private val suite: TSuite, private val model: TModel,
     private val className: String, private val isNested: Boolean,
     methods: List<TestMethod>, nestedSuites: List<SuiteElement>
-): RenderElement {
+) : RenderElement {
     private val methods = methods.sortedBy { it.methodName }
     private val nestedSuites = nestedSuites.sortedBy { it.className }
 
@@ -44,7 +46,8 @@ class SuiteElement private constructor(
             for (file in rootFile.listFiles().orEmpty()) {
                 if (depth > 0 && file.isDirectory && file.name !in model.excludedDirectories) {
                     val nestedClassName = file.toJavaIdentifier().capitalize()
-                    val nestedModel = model.copy(path = file.toRelativeStringSystemIndependent(group.testDataRoot), testClassName = nestedClassName)
+                    val nestedModel =
+                        model.copy(path = file.toRelativeStringSystemIndependent(group.testDataRoot), testClassName = nestedClassName)
                     val nestedElement = collect(group, suite, nestedModel, depth - 1, nestedClassName, isNested = true)
                     if (nestedElement.methods.isNotEmpty() || nestedElement.nestedSuites.isNotEmpty()) {
                         if (model.flatten) {
@@ -69,6 +72,20 @@ class SuiteElement private constructor(
 
             if (methods.isNotEmpty()) {
                 methods += RunTestMethod(model)
+            }
+
+            if (methods.isNotEmpty() && group.isCompilerTestData) {
+                methods += SetUpMethod(
+                    listOf(
+                        "${AdditionalKotlinArtifacts::compilerTestData.name}(\"${
+                            File(
+                                group.testDataRoot,
+                                model.path
+                            ).toRelativeStringSystemIndependent(group.moduleRoot)
+                                .substringAfter(AdditionalKotlinArtifacts.compilerTestDataDir.name + "/")
+                        }\");"
+                    )
+                )
             }
 
             return SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)

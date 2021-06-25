@@ -24,6 +24,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/lightClasses");
+        super.setUp();
+    }
+
     @TestMetadata("AnnotatedParameterInEnumConstructor.kt")
     public void testAnnotatedParameterInEnumConstructor() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotatedParameterInEnumConstructor.kt"));
@@ -176,6 +182,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/delegation");
+            super.setUp();
+        }
+
         @TestMetadata("Function.kt")
         public void testFunction() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/delegation/Function.kt"));
@@ -192,6 +204,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
     public static class Facades extends AbstractIdeCompiledLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/facades");
+            super.setUp();
         }
 
         @TestMetadata("AllPrivate.kt")
@@ -220,6 +238,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
     public static class NullabilityAnnotations extends AbstractIdeCompiledLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/nullabilityAnnotations");
+            super.setUp();
         }
 
         @TestMetadata("Class.kt")
@@ -320,6 +344,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/object");
+            super.setUp();
+        }
+
         @TestMetadata("SimpleObject.kt")
         public void testSimpleObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/object/SimpleObject.kt"));
@@ -331,6 +361,12 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
     public static class PublicField extends AbstractIdeCompiledLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/publicField");
+            super.setUp();
         }
 
         @TestMetadata("CompanionObject.kt")
