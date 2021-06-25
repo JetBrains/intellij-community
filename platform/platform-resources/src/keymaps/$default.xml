@@ -1247,6 +1247,12 @@
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control alt D"/>
   </action>
+  <action id="UsageFiltering.ReadAccess">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
+  <action id="UsageFiltering.WriteAccess">
+    <keyboard-shortcut first-keystroke="control W"/>
+  </action>
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="F10"/>
   </action>

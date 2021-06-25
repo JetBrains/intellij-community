@@ -510,6 +510,12 @@
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="UsageFiltering.ReadAccess">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
+  <action id="UsageFiltering.WriteAccess">
+    <keyboard-shortcut first-keystroke="control W"/>
+  </action>
   <action id="UiInspector">
     <mouse-shortcut keystroke="control alt button1"/>
   </action>

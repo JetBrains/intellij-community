@@ -15,6 +15,12 @@
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
     </group>
     <group id="UsageFilteringActionGroup">
+      <action id="UsageFiltering.ReadAccess"
+              icon="com.intellij.icons.AllIcons.Actions.ShowReadAccess"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.WriteAccess"
+              icon="com.intellij.icons.AllIcons.Actions.ShowWriteAccess"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
     </group>
   </actions>

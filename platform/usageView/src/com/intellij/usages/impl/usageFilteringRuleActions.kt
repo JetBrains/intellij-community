@@ -10,13 +10,14 @@ import com.intellij.usages.impl.rules.usageFilteringRules
 import com.intellij.usages.rules.UsageFilteringRuleProvider
 
 internal fun usageFilteringRuleActions(project: Project, ruleState: UsageFilteringRuleState): List<AnAction> {
+  val rwAwareState = UsageFilteringRuleStateRWAware(ruleState)
   val actionManager = ActionManager.getInstance()
   val result = ArrayList<AnAction>()
   for (rule in usageFilteringRules(project)) {
     val action: AnAction = actionManager.getAction(rule.actionId)
                            ?: continue
     check(action is EmptyAction)
-    result.add(UsageFilteringRuleAction(action, ruleState, rule.ruleId()))
+    result.add(UsageFilteringRuleAction(action, rwAwareState, rule.ruleId()))
   }
   return result
 }

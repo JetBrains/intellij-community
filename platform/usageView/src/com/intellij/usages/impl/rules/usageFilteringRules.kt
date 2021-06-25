@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 fun usageFilteringRules(project: Project): List<UsageFilteringRule> {
   val result = ArrayList<UsageFilteringRule>()
+  result.add(ReadAccessFilteringRule)
+  result.add(WriteAccessFilteringRule)
   fromExtensions(project, result)
   return ContainerUtil.immutableCopy(result)
 }

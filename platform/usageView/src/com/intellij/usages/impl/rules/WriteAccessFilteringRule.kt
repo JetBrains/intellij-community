@@ -8,6 +8,8 @@ import com.intellij.usages.rules.UsageFilteringRule
 
 internal object WriteAccessFilteringRule : UsageFilteringRule {
 
+  override fun getActionId(): String = "UsageFiltering.WriteAccess"
+
   override fun isVisible(usage: Usage, targets: Array<UsageTarget>): Boolean {
     return usage !is ReadWriteAccessUsage || usage.isAccessedForReading
   }
