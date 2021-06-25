@@ -5,12 +5,14 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -27,6 +29,8 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.subscribeForMessageBus
+import training.learn.lesson.LessonManager
+import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 
@@ -164,6 +168,28 @@ object GitLessonsUtil {
                                                         restoreTaskWhenResolved: Boolean) {
     showWarning(warningMessage, restoreTaskWhenResolved) {
       ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.isVisible != true
+    }
+  }
+
+  fun LessonContext.showWarningIfModalCommitEnabled() {
+    if (VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) return
+    task {
+      val step = stateCheck {
+        VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
+      }
+      before {
+        val callbackId = LearningUiManager.addCallback {
+          CommitModeManager.setCommitFromLocalChanges(project, true)
+          step.complete(true)
+        }
+        LessonManager.instance.setWarningNotification(TaskContext.RestoreNotification(
+          GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
+                                   action("ShowSettings"),
+                                   strong(VcsBundle.message("version.control.main.configurable.name")),
+                                   strong(VcsBundle.message("commit.dialog.configurable")),
+                                   strong(VcsBundle.message("settings.commit.without.dialog")),
+                                   callbackId), callback = {}))
+      }
     }
   }
 }

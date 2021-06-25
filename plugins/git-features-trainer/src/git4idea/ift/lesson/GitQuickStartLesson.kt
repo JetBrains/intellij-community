@@ -31,6 +31,7 @@ import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.gotItStep
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
+import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
@@ -53,6 +54,9 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
   override val lessonContent: LessonContext.() -> Unit = {
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
+
+    showWarningIfModalCommitEnabled()
+
     lateinit var findActionTaskId: TaskContext.TaskId
     task("GotoAction") {
       findActionTaskId = taskId
