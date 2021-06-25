@@ -309,7 +309,7 @@ public class WSLDistribution {
       if (options.isExecuteCommandInShell()) {
         // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
         if (options.getSleepTimeoutSec() > 0 && getVersion() == 1) {
-          linuxCommandStr += " && sleep " + options.getSleepTimeoutSec();
+          linuxCommandStr += "; sleep " + options.getSleepTimeoutSec();
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
