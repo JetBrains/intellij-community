@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.FileTypeIndex
@@ -22,6 +23,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinCompilerReferenceIndexVerifierAction : AnAction(
@@ -38,12 +40,14 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             return
         }
 
-        ReadAction.nonBlocking<CompilerReferenceData> {
-            val codeUsageScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(element)
-            val useScope = PsiSearchHelper.getInstance(project).getUseScope(element)
+        val pointToElement = element.createSmartPointer()
+        ReadAction.nonBlocking<CompilerReferenceData?> {
+            val psiElement = pointToElement.element ?: return@nonBlocking null
+            val codeUsageScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(psiElement)
+            val useScope = PsiSearchHelper.getInstance(project).getUseScope(psiElement)
 
             CompilerReferenceData(
-                elementText = "${element::class.simpleName}:${element.safeAs<PsiNamedElement>()?.name}",
+                elementText = "${psiElement::class.simpleName}:${psiElement.safeAs<PsiNamedElement>()?.name}",
                 codeUsageScopeText = codeUsageScope.toHumanReadableString(),
                 numberOfKotlinFilesInCodeUsageScope = codeUsageScope.countOfFileType(KotlinFileType.INSTANCE),
                 numberOfJavaFilesInCodeUsageScope = codeUsageScope.countOfFileType(JavaFileType.INSTANCE),
@@ -52,6 +56,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             )
         }
             .finishOnUiThread(ModalityState.current()) { context ->
+                if (context == null) return@finishOnUiThread
                 dialog(
                     title = KotlinReferenceIndexBundle.message("dialog.title.compiler.index.status"),
                     project = project,
@@ -83,6 +88,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             }
             .coalesceBy(this)
             .inSmartMode(project)
+            .expireWhen { pointToElement.element == null || Disposer.isDisposed(project) }
             .submit(AppExecutorUtil.getAppExecutorService())
     }
 
