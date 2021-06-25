@@ -110,8 +110,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtClassLiteralExpression -> processClassLiteralExpression(expr)
             is KtLabeledExpression -> processExpression(expr.baseExpression)
             is KtThisExpression -> processThisExpression(expr)
-            // KtSuperExpression, KtTryExpression
-            // KtCallableReferenceExpression, KtObjectLiteralExpression
+            is KtSuperExpression -> pushUnknown()
+            is KtCallableReferenceExpression -> processCallableReference(expr)
+            // KtTryExpression, KtObjectLiteralExpression
             // KtDestructuringDeclaration, KtNamedFunction, KtClass
             else -> {
                 // unsupported construct
@@ -125,6 +126,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processCallableReference(expr: KtCallableReferenceExpression) {
+        processExpression(expr.receiverExpression)
+        addInstruction(PopInstruction())
+        val dfType = expr.getKotlinType().toDfType(expr)
+        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
     }
 
     private fun processThisExpression(expr: KtThisExpression) {
