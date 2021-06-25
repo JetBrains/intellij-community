@@ -46,12 +46,12 @@ internal class WorkspaceEntityStorageImpl constructor(
 
   @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULl_ENTITY }
-    return if (entity !== NULl_ENTITY) entity as E else null
+    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
+    return if (entity !== NULL_ENTITY) entity as E else null
   }
 
   companion object {
-    private val NULl_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
+    private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY
     )
   }
