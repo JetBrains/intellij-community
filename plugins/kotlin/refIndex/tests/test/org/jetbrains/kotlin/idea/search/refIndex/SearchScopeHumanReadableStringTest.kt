@@ -107,19 +107,19 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
             .getCodeUsageScope(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST))
             .assertWithExpected(
                 """
-                    Intersection: 
-                      Union: 
+                    Intersection:
+                      Union:
                         Project and Libraries
                         Scratches and Consoles
-                      Intersection: 
-                        Union: 
+                      Intersection:
+                        Union:
                           Files: [/one/JavaClass2.java, /one/JavaClass.java]
-                          NOT: 
+                          NOT:
                             restricted by file types: [com.intellij.ide.highlighter.JavaFileType@6f940297, com.intellij.ide.highlighter.JavaClassFileType@51d6ced9] in NOT: EMPTY
                           Libraries only in [Project and Libraries]
-                        Union: 
+                        Union:
                           Files: [/two/KotlinClass.kt, /two/Main.kt]
-                          NOT: 
+                          NOT:
                             restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@e1715c6] in NOT: EMPTY
                           Libraries only in [Project and Libraries]
                     
@@ -130,7 +130,7 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
     fun `test array list with use scope`() {
         PsiSearchHelper.getInstance(project).getUseScope(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST)).assertWithExpected(
             """
-               Union: 
+               Union:
                  Project and Libraries
                  Scratches and Consoles
                
@@ -143,20 +143,20 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
             .getCodeUsageScope(myFixture.findClass("one.JavaClass"))
             .assertWithExpected(
                 """
-                    Intersection: 
-                      Union: 
-                        Modules with dependents: 
+                    Intersection:
+                      Union:
+                        Modules with dependents:
                           roots: [0]
                           including dependents: [0, myModule]
                         Scratches and Consoles
-                      Intersection: 
-                        Union: 
+                      Intersection:
+                        Union:
                           Files: [/one/JavaClass.java]
-                          NOT: 
+                          NOT:
                             restricted by file types: [com.intellij.ide.highlighter.JavaClassFileType@4b8b8d4f, com.intellij.ide.highlighter.JavaFileType@4cecc653] in NOT: EMPTY
-                        Union: 
+                        Union:
                           Files: [/two/KotlinClass.kt]
-                          NOT: 
+                          NOT:
                             restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@5cf4beea] in NOT: EMPTY
                     
                 """.trimIndent(),
@@ -166,8 +166,8 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
     fun `test java class with use scope`() {
         PsiSearchHelper.getInstance(project).getUseScope(myFixture.findClass("one.JavaClass")).assertWithExpected(
             """
-               Union: 
-                 Modules with dependents: 
+               Union:
+                 Modules with dependents:
                    roots: [3]
                    including dependents: [3, myModule]
                  Scratches and Consoles

@@ -103,10 +103,10 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
         )
 
         /**
-         * `[()]` – to find parenthesis
+         * `( *\\( *)` and `( *\\) *)` – to find parenthesis
          * `( *, *(?![^\\[]*]))` – to find commas outside square brackets
          */
-        private val parenthesisRegex = Regex("[()]|( *, *(?![^\\[]*]))")
+        private val parenthesisRegex = Regex("( *\\( *)|( *\\) *)|( *, *(?![^\\[]*]))")
 
         fun SearchScope.toHumanReadableString(): String = buildString {
             val scopeText = this@toHumanReadableString.toString()
@@ -119,9 +119,10 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
                     appendLine(it)
                 }
 
-                when (parenthesis.value) {
-                    "(" -> currentIndent += 2
-                    ")" -> currentIndent -= 2
+                val value = parenthesis.value
+                when {
+                    "(" in value -> currentIndent += 2
+                    ")" in value -> currentIndent -= 2
                 }
 
                 lastIndex = parenthesis.range.last + 1
