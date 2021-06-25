@@ -100,7 +100,6 @@ class CtxDialogs {
 
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
     final DefaultActionGroup result = new DefaultActionGroup();
-    result.getTemplatePresentation().setText("dialog"); // just for convenience debug
 
     // 1. add (at left) option buttons of dialog (from south panel)
     if (EXPAND_OPTION_BUTTONS && hasSouthPanelButtons) {
