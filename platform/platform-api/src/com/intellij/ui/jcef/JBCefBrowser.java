@@ -13,7 +13,10 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.handler.*;
+import org.cef.handler.CefFocusHandler;
+import org.cef.handler.CefFocusHandlerAdapter;
+import org.cef.handler.CefKeyboardHandler;
+import org.cef.handler.CefKeyboardHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -371,7 +374,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }
   }
 
-  private class MyPanel extends JPanel {
+  public class MyPanel extends JPanel {
     private final Component myUiComp;
 
     private MyPanel(Component uiComp) {
@@ -412,6 +415,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
       if (e.getID() == FocusEvent.FOCUS_GAINED) {
         myUiComp.requestFocusInWindow();
       }
+    }
+
+    @NotNull
+    public JBCefBrowser getJBCefBrowser() {
+      return JBCefBrowser.this;
     }
   }
 }
