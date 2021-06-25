@@ -2,9 +2,12 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
+import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.runAll
 import kotlin.properties.Delegates
@@ -70,6 +73,26 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
             """.trimIndent()
         )
 
+        val myModule = PsiTestUtil.addModule(
+            project,
+            JavaModuleType.getModuleType(),
+            "myModule",
+            myFixture.tempDirFixture.findOrCreateDir("myModule"),
+        )
+
+        ModuleRootModificationUtil.addDependency(myModule, module)
+        myFixture.addFileToProject("myModule/JavaClass.java",
+            """
+                package three;
+                import two.KotlinClass;
+                public class JavaClass {
+                  void test() {
+                    new KotlinClass();
+                  }
+                }
+            """.trimIndent()
+        )
+
         installCompiler()
         rebuildProject()
     }
@@ -122,7 +145,9 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                 """
                     Intersection: 
                       Union: 
-                        Modules with dependents:0
+                        Modules with dependents: 
+                          roots: [0]
+                          including dependents: [0, myModule]
                         Scratches and Consoles
                       Intersection: 
                         Union: 
@@ -142,7 +167,9 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
         PsiSearchHelper.getInstance(project).getUseScope(myFixture.findClass("one.JavaClass")).assertWithExpected(
             """
                Union: 
-                 Modules with dependents:3
+                 Modules with dependents: 
+                   roots: [3]
+                   including dependents: [3, myModule]
                  Scratches and Consoles
                
             """.trimIndent(),
