@@ -157,12 +157,10 @@
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="P"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="alt G"/>

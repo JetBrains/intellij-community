@@ -228,14 +228,10 @@
     <keyboard-shortcut first-keystroke="control F7"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="shift control F6"/>
-    <keyboard-shortcut first-keystroke="control alt RIGHT"/>
-    <keyboard-shortcut first-keystroke="control PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="control alt shift RIGHT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="control F6"/>
-    <keyboard-shortcut first-keystroke="control alt LEFT"/>
-    <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt shift LEFT"/>
   </action>
   <action id="Diff.ApplyLeftSide"/>
   <action id="Diff.ApplyRightSide"/>
