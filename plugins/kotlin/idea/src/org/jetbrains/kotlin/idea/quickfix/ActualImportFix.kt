@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix(expression, MyFactory) {
@@ -12,7 +12,7 @@ internal class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix
         if (isOutdated()) return false
         val element = element ?: return false
         val project = element.project
-        if (!KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) return false
+        if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(element.containingFile)) return false
         val addImportAction = createAction(project, editor, element)
         if (addImportAction.isUnambiguous()) {
             addImportAction.execute()
