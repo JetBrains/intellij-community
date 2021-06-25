@@ -14,7 +14,7 @@ public abstract class WindowStateService {
   /**
    * (DialogWrapper.getDimensionServiceKey()) Start your key with this string to store state independently of the project
    */
-  public static final String PERSIST_INDEPENDENTLY_FROM_PROJECT = "PERSIST_INDEPENDENTLY_FROM_PROJECT";
+  public static final String USE_APPLICATION_WIDE_STORE_KEY_PREFIX = "APPLICATION_WIDE_STORE_";
 
   protected WindowStateService(@Nullable Project project) {
     this.project = project;

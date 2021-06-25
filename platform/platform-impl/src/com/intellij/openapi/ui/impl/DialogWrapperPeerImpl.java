@@ -657,10 +657,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         myDimensionServiceKey = dialogWrapper.getDimensionKey();
 
         if (myDimensionServiceKey != null) {
-          Project projectGuess = null;
-          if (!myDimensionServiceKey.startsWith(WindowStateService.PERSIST_INDEPENDENTLY_FROM_PROJECT)) {
-            projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-          }
+          final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
           if (size != null) {
@@ -700,6 +697,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       setBackground(UIUtil.getPanelBackground());
       super.show();
+    }
+
+    private @Nullable Project guessProjectDependingOnKey(String key) {
+      return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ?
+             CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this)) : null;
     }
 
     private static void maximize(@NotNull Dimension size, @Nullable Dimension alternativeSize) {
@@ -818,11 +820,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null &&
             myInitialSize != null &&
             myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
-          Project projectGuess = null;
-
-          if (!myDimensionServiceKey.startsWith(WindowStateService.PERSIST_INDEPENDENTLY_FROM_PROJECT)) {
-            projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
-          }
+          final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
