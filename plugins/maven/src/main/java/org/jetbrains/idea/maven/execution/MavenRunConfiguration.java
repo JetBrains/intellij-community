@@ -82,7 +82,8 @@ import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationEx
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
 
-  private MavenRunConfigurationSettings settings = new MavenRunConfigurationSettings();
+  private @Nullable MavenRunConfigurationSettings previousSettings = null;
+  private @NotNull MavenRunConfigurationSettings settings = new MavenRunConfigurationSettings();
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
@@ -199,6 +200,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       ObjectUtils.consumeIfNotNull(settings.myGeneralSettings, this::setGeneralSettings);
       ObjectUtils.consumeIfNotNull(settings.myRunnerSettings, this::setRunnerSettings);
       ObjectUtils.consumeIfNotNull(settings.myRunnerParameters, this::setRunnerParameters);
+
+      previousSettings = this.settings.clone();
     }
     settings.readExternal(element);
     getExtensionsManager().readExternal(this, element);
@@ -207,7 +210,13 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    settings.writeExternal(element);
+    if (Objects.equals(previousSettings, settings)) {
+      element.addContent(XmlSerializer.serialize(getMavenSettings()));
+    }
+    else {
+      previousSettings = null;
+      settings.writeExternal(element);
+    }
     getExtensionsManager().writeExternal(this, element);
   }
 
