@@ -186,7 +186,7 @@ public final class DfaBinOpValue extends DfaValue {
           long value = rightConst.longValue();
           if (value == 0) return left;
           if (op == LongRangeBinOp.MINUS) {
-            right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(-value)));
+            right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(value).negate(resultType.getLongRangeType())));
           }
           return doCreate((DfaVariableValue)left, right, resultType, LongRangeBinOp.PLUS);
         }
@@ -196,13 +196,14 @@ public final class DfaBinOpValue extends DfaValue {
         if (sumValue.getOperation() != LongRangeBinOp.PLUS && sumValue.getOperation() != LongRangeBinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {
-            long value1 = extractLong((DfaTypeValue)sumValue.getRight());
-            long value2 = rightConst.longValue();
+            DfType rightType = sumValue.getRight().getDfType();
+            LongRangeSet value1 = ((DfIntegralType)rightType).getRange();
+            LongRangeSet value2 = LongRangeSet.point(rightConst.longValue());
             if (op == LongRangeBinOp.MINUS) {
-              value2 = -value2;
+              value2 = value2.negate(resultType.getLongRangeType());
             }
-            long res = value1 + value2;
-            right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(res)));
+            LongRangeSet res = value1.plus(value2, resultType.getLongRangeType());
+            right = myFactory.fromDfType(resultType.meetRange(res));
             return create(sumValue.getLeft(), right, state, resultType, LongRangeBinOp.PLUS);
           }
         }
