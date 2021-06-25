@@ -37,7 +37,7 @@ class Main {
     return i1 + i2 + i3 + i4 + i5 + i6;
   }
 
-  void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s) {
+  void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s, boolean b) {
     switch (n) {
       case <error descr="Incompatible types. Found: 'int', required: 'java.lang.Number'">1</error>:
         System.out.println("ok");
@@ -272,6 +272,28 @@ class Main {
       default:
         System.out.println("ok");
     }
+    // switch expressions
+    str = switch (o) {
+      case null, Integer i:
+        if (o != null) {
+          throw new IllegalArgumentException("");
+        }
+      case <error descr="Illegal fall-through to a pattern">Float d</error>:
+        System.out.println("float");
+      default:
+        yield "1";
+    };
+    str = switch (o) {
+      case null:
+        if (o != null) {
+          throw new IllegalArgumentException("");
+        }
+        yield "1";
+      case Float d:
+        System.out.println("float");
+      default:
+        yield "1";
+    };
   }
 
   void dominance(Object o, Integer ii) {
@@ -280,7 +302,7 @@ class Main {
       case List n:
         System.out.println("num");
         break;
-      case <error descr="This case label is dominated by a preceding case label">List i</error>:
+      case <error descr="This case label is dominated by a preceding case label 'List n'">List i</error>:
         System.out.println("int");
         break;
       default:
@@ -290,7 +312,7 @@ class Main {
     String str;
     str = switch (o) {
       case List n -> "num";
-      case <error descr="This case label is dominated by a preceding case label">List i</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label 'List n'">List i</error> -> "int";
       default -> "def";
     };
 
@@ -298,7 +320,7 @@ class Main {
       case Number n:
         System.out.println("num");
         break;
-      case <error descr="This case label is dominated by a preceding case label">Integer i</error>:
+      case <error descr="This case label is dominated by a preceding case label 'Number n'">Integer i</error>:
         System.out.println("int");
         break;
       default:
@@ -307,7 +329,7 @@ class Main {
     }
     str = switch (o) {
       case Number n -> "num";
-      case <error descr="This case label is dominated by a preceding case label">Integer i</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label 'Number n'">Integer i</error> -> "int";
       default -> "def";
     };
 
@@ -333,7 +355,7 @@ class Main {
       case (Integer i):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label">Integer o1 && o1 != null</error>:
+      case <error descr="This case label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error>:
         System.out.println("num");
         break;
       default:
@@ -342,7 +364,7 @@ class Main {
     }
     str = switch (o) {
       case (Integer i) -> "num";
-      case <error descr="This case label is dominated by a preceding case label">Integer o1 && o1 != null</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error> -> "int";
       default -> "def";
     };
 
@@ -384,7 +406,7 @@ class Main {
       case (Integer i && true):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label">(Integer o2 && o2 != null)</error>:
+      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error>:
         System.out.println("num");
         break;
       default:
@@ -393,7 +415,7 @@ class Main {
     }
     str = switch (o) {
       case (Integer i && true) -> "num";
-      case <error descr="This case label is dominated by a preceding case label">(Integer o2 && o2 != null)</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error> -> "int";
       default -> "def";
     };
 
@@ -403,7 +425,7 @@ class Main {
       case Object obj:
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label">null</error>:
+      case <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error>:
         System.out.println("num");
         break;
       default:
@@ -412,12 +434,12 @@ class Main {
     }
     str = switch (ii) {
       case Object obj -> "num";
-      case <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
       default -> "def";
     };
 
     switch (ii) {
-      case Object obj, <error descr="This case label is dominated by a preceding case label">null</error>:
+      case Object obj, <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error>:
         System.out.println("int");
         break;
       default:
@@ -425,7 +447,7 @@ class Main {
         break;
     }
     str = switch (ii) {
-      case Object obj, <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      case Object obj, <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
       default -> "def";
     };
 
@@ -433,7 +455,7 @@ class Main {
       case (Integer i && true):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label">null</error>:
+      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">null</error>:
         System.out.println("num");
         break;
       default:
@@ -442,7 +464,7 @@ class Main {
     }
     str = switch (ii) {
       case (Integer i && true) -> "int";
-      case <error descr="This case label is dominated by a preceding case label">null</error> -> "int";
+      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">null</error> -> "int";
       default -> "def";
     };
 
@@ -472,14 +494,14 @@ class Main {
 
     // If the type of the selector expression is an enum type E
     String str;
-    <error descr="The switch statement does not cover all possible input values">switch</error> (d) {
+    <error descr="'switch' statement does not cover all possible input values">switch</error> (d) {
       case Day dd && dd != null:
         System.out.println("ok");
       case MONDAY:
         System.out.println("mon");
     };
 
-    str = <error descr="The switch expression does not cover all possible input values">switch</error> (d) {
+    str = <error descr="'switch' expression does not cover all possible input values">switch</error> (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
     };
     str = switch (d) {
@@ -490,9 +512,9 @@ class Main {
     };
 
     switch (d) {
-      case <error descr="Switch has both a total pattern and a default label">((Day dd && true))</error>:
+      case <error descr="'switch' has both a total pattern and a default label">((Day dd && true))</error>:
         System.out.println("ok");
-      <error descr="Switch has both a total pattern and a default label">default:</error>
+      <error descr="'switch' has both a total pattern and a default label">default:</error>
         System.out.println("mon");
     };
     switch (d) {
@@ -520,7 +542,7 @@ class Main {
       case Sub3 s3 -> "ok";
     };
 
-    <error descr="The switch statement does not cover all possible input values">switch</error> (i) {
+    <error descr="'switch' statement does not cover all possible input values">switch</error> (i) {
       case Sub1 s1:
         System.out.println("ok");
         break;
@@ -528,7 +550,7 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = <error descr="The switch expression does not cover all possible input values">switch</error>(i) {
+    str = <error descr="'switch' expression does not cover all possible input values">switch</error>(i) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
     };
@@ -554,7 +576,7 @@ class Main {
     };
 
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
-    <error descr="The switch statement does not cover all possible input values">switch</error> (i2) {
+    <error descr="'switch' statement does not cover all possible input values">switch</error> (i2) {
       case Sub7 s1:
         System.out.println("ok");
         break;
@@ -562,9 +584,25 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = <error descr="The switch expression does not cover all possible input values">switch</error> (i2) {
+    str = <error descr="'switch' expression does not cover all possible input values">switch</error> (i2) {
       case Sub7 s1 -> "ok";
       case Sub8 s2 -> "ok";
+    };
+
+    // empty switches
+    switch (d) {
+    }
+    str = <error descr="'switch' expression does not have any case clauses">switch</error> (d) {
+    };
+
+    <error descr="'switch' statement does not cover all possible input values">switch</error> (i) {
+    }
+    str = <error descr="'switch' expression does not have any case clauses">switch</error> (i) {
+    };
+
+    <error descr="'switch' statement does not cover all possible input values">switch</error> (i2) {
+    }
+    str = <error descr="'switch' expression does not have any case clauses">switch</error> (i2) {
     };
   }
 }

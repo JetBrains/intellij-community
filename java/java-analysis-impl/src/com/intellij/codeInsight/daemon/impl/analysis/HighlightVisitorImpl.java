@@ -1807,6 +1807,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private void checkSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
     SwitchBlockHighlightingModel model = SwitchBlockHighlightingModel.createInstance(myLanguageLevel, switchBlock, myFile);
+    if (model == null) return;
     if (!myHolder.hasErrorResults()) myHolder.addAll(model.checkSwitchBlockStatements());
     if (!myHolder.hasErrorResults()) myHolder.addAll(model.checkSwitchSelectorType());
     if (!myHolder.hasErrorResults()) myHolder.addAll(model.checkSwitchLabelValues());

@@ -75,6 +75,10 @@ public final class JavaPsiPatternUtil {
     return pattern;
   }
 
+  /**
+   * @param pattern
+   * @return type of variable in pattern, or null if pattern is incomplete
+   */
   @Contract(value = "null -> null", pure = true)
   @Nullable
   public static PsiType getPatternType(@Nullable PsiPattern pattern) {
@@ -94,7 +98,6 @@ public final class JavaPsiPatternUtil {
 
   /**
    * 14.30.3 Pattern Totality and Dominance
-   * http://cr.openjdk.java.net/~gbierman/jep406/jep406-20210527/specs/patterns-switch-jls.html#jls-14.30.3
    */
   @Contract(value = "null, _ -> false", pure = true)
   public static boolean isTotalForType(@Nullable PsiPattern pattern, @NotNull PsiType type) {
@@ -110,6 +113,7 @@ public final class JavaPsiPatternUtil {
     else if (pattern instanceof PsiTypeTestPattern) {
       PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
       if (checkType == null) return false;
+      // todo we need to support arrays and primitive types here as well
       PsiClass baseClass = PsiTypesUtil.getPsiClass(TypeConversionUtil.erasure(checkType.getType()));
       PsiClass typeClass = PsiTypesUtil.getPsiClass(TypeConversionUtil.erasure(type));
       return typeClass != null && baseClass != null && InheritanceUtil.isInheritorOrSelf(typeClass, baseClass, true);
@@ -119,7 +123,6 @@ public final class JavaPsiPatternUtil {
 
   /**
    * 14.30.3 Pattern Totality and Dominance
-   * http://cr.openjdk.java.net/~gbierman/jep406/jep406-20210527/specs/patterns-switch-jls.html#jls-14.30.3
    */
   @Contract(value = "null, _ -> false", pure = true)
   public static boolean dominates(@Nullable PsiPattern who, @NotNull PsiPattern overWhom) {
