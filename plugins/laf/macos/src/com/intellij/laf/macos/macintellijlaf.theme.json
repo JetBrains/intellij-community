@@ -81,6 +81,8 @@
       "yOffset": 1
     },
 
+    "Label.background": "#ececec",
+
     "Link": {
       "activeForeground": "#2470B3",
       "hoverForeground": "#2470B3",
