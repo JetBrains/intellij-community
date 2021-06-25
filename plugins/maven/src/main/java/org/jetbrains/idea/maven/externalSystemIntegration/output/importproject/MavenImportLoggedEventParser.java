@@ -14,6 +14,14 @@ import java.util.function.Consumer;
 public interface MavenImportLoggedEventParser {
   ExtensionPointName<MavenImportLoggedEventParser> EP_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.log.import.parser");
 
+  /**
+   * processing log line from vm process - maven server.
+   * @param project - project
+   * @param logLine - log line
+   * @param reader - log reader
+   * @param messageConsumer - message consumer (MavenSyncConsole)
+   * @return true if log line consumed by messageConsumer
+   */
   boolean processLogLine(
     @NotNull Project project,
     @NotNull String logLine,
