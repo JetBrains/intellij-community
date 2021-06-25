@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts

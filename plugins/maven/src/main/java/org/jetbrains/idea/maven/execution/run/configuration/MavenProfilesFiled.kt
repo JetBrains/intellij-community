@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.transform

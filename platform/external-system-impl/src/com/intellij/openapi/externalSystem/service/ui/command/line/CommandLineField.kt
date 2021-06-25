@@ -3,8 +3,8 @@ package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.project.Project
 import org.apache.commons.cli.Option

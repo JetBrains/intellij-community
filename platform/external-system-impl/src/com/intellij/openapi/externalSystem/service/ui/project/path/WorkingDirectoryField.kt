@@ -3,11 +3,11 @@ package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.service.ui.*
-import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor.CompletionType
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
+import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor.CompletionType
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph

@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui.completetion
+package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
@@ -12,7 +11,6 @@ import javax.swing.JComponent
  * if file path completion for a text field then use [com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl.installFileCompletion]
  * @see TextCompletionPopup
  */
-@ApiStatus.Experimental
 interface TextCompletionContributor<C : JComponent> {
 
   fun getTextToComplete(owner: C): @NlsSafe String
