@@ -24,6 +24,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/lightClasses");
+        super.setUp();
+    }
+
     @TestMetadata("AnnotatedParameterInEnumConstructor.kt")
     public void testAnnotatedParameterInEnumConstructor() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotatedParameterInEnumConstructor.kt"));
@@ -176,6 +182,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors");
+            super.setUp();
+        }
+
         @TestMetadata("ActualClass.kt")
         public void testActualClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/compilationErrors/ActualClass.kt"));
@@ -279,6 +291,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/facades");
+            super.setUp();
+        }
+
         @TestMetadata("AllPrivate.kt")
         public void testAllPrivate() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/facades/AllPrivate.kt"));
@@ -305,6 +323,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
     public static class IdeRegression extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/ideRegression");
+            super.setUp();
         }
 
         @TestMetadata("AllOpenAnnotatedClasses.kt")
@@ -353,6 +377,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
     public static class NullabilityAnnotations extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/nullabilityAnnotations");
+            super.setUp();
         }
 
         @TestMetadata("Class.kt")
@@ -453,6 +483,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/object");
+            super.setUp();
+        }
+
         @TestMetadata("SimpleObject.kt")
         public void testSimpleObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/object/SimpleObject.kt"));
@@ -464,6 +500,12 @@ public class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
     public static class PublicField extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/publicField");
+            super.setUp();
         }
 
         @TestMetadata("CompanionObject.kt")
