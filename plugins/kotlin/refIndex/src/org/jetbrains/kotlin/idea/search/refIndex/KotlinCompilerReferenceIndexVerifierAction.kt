@@ -126,7 +126,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             takeIf(CharSequence::isNotBlank)?.let(action)
         }
 
-        fun SearchScope.countOfFileType(fileType: FileType): String = safeAs<GlobalSearchScope>()?.let {
+        private fun SearchScope.countOfFileType(fileType: FileType): String = safeAs<GlobalSearchScope>()?.let {
             FileTypeIndex.getFiles(fileType, it).size.toString()
         } ?: "Non global scope"
     }
