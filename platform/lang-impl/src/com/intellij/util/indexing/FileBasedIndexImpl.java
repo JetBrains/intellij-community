@@ -229,6 +229,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myTraceIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
+  @ApiStatus.Internal
+  boolean doTraceSharedIndexUpdates() {
+    return myTraceIndexUpdates && SystemProperties.getBooleanProperty("trace.shared.index.updates", false);
+  }
+
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
     cleanupProcessedFlag();
     doClearIndices(id -> indexesToRebuild.contains(id));
@@ -1396,6 +1401,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               indexesProvidedByExtensions.add(indexId);
             }
             else {
+              if (doTraceSharedIndexUpdates()) {
+                LOG.info("shared index " + indexId + " is not provided for file " + fc.getFileName());
+              }
               wasFullyIndexedByInfrastructureExtensions.set(false);
             }
           }
@@ -1419,6 +1427,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       fileTypeRef.set(fc != null ? fc.getFileType() : file.getFileType());
+
+      if (indexesProvidedByExtensions.isEmpty() && doTraceSharedIndexUpdates()) {
+        LOG.info("no shared indexes were provided for file " + (fc != null ? fc.getFileName() : file.getName()));
+      }
     });
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
