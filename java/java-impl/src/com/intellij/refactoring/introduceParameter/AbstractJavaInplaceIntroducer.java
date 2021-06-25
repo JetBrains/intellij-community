@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -142,14 +142,14 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
-    PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression
+    PsiElement expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression
                                ? (PsiNewExpression)refVariableElementParent
                                : refVariableElementParent instanceof PsiParenthesizedExpression
                                  ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression()
-                                 : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
-      final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
-      if (((PsiReferenceExpression)expression).resolve() == psiVariable ||
+                                 : PsiTreeUtil.getParentOfType(refVariableElement, PsiJavaCodeReferenceElement.class);
+    if (expression instanceof PsiJavaCodeReferenceElement && !(expression.getParent() instanceof PsiMethodCallExpression)) {
+      final String referenceName = ((PsiJavaCodeReferenceElement)expression).getReferenceName();
+      if (((PsiJavaCodeReferenceElement)expression).resolve() == psiVariable ||
           Comparing.strEqual(psiVariable.getName(), referenceName) ||
           Comparing.strEqual(exprText, referenceName)) {
         return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
@@ -164,9 +164,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
         if (parent.getText().equals(exprText)) return (PsiExpression)parent;
       }
       if (parent instanceof PsiExpression) {
-        expression = (PsiExpression)parent;
+        expression = parent;
         if (expression.getText().equals(exprText)) {
-          return expression;
+          return (PsiExpression)expression;
         }
       } else if (expression instanceof PsiReferenceExpression) {
         return null;
@@ -174,8 +174,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
         break;
       }
     }
-    if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {
-      return expression;
+    if (expression instanceof PsiExpression && expression.isValid() && expression.getText().equals(exprText)) {
+      return (PsiExpression)expression;
     }
 
     if (refVariableElementParent instanceof PsiExpression && refVariableElementParent.getText().equals(exprText)) {
