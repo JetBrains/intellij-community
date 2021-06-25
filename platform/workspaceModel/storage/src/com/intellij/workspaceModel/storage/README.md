@@ -2,6 +2,13 @@
 
 ## Hard references
 
+Hard reference is a usual way to connect entities. This mechanism provides several types of entities connection,
+including `One-To-One` and `One-To-Many`. Entities in the connection are defined as parent and child.
+The parent entity may be optional for the child (nullable).
+When the parent entity is removed, the child references are also cascade removed. The workspace model **guarantees**
+that hard reference is always resolved (including resolution to null for nullable references).
+It's not needed to define the connection on both entities, defining the connection only on one side is enough.
+
 #### TODO questions and improvements
 
 **Optional parent**  
@@ -65,6 +72,30 @@ This is made because of the following reasons:
   the IDE changes depending on persistence of this external plugin.
 
   _This issue makes the behaviour of workspace model more unpredictable for the users._
+
+
+## Soft references
+
+Soft reference (or reference by `PersistentId`) a second option to define a connection between entities.
+Only entities with a `PersistentId` may be referred with a soft reference. To define a soft reference,
+put a `PersistentId` (e.g. `ModuleId` or `LibraryId`) as a property of your entity.
+Workspace model **guarantees** that in case of the `PersistentId` of the referred entity changes, the entity
+with an id updates as well to keep the reference actual. So, if you have a reference to a module with name `A`: `ModuleId(A)`,
+the reference will be automatically updated if the module is renamed from `A` to `B`.
+
+Workspace Model **does not guarantee** that the referred entities are really exist in the store.
+So, the accessing the entity by soft reference may return null.
+
+Workspace Model **does not** perform cascade removing for soft references, as it does for hard references.
+
+## Entities removing
+
+TODO
+
+## Events
+
+TODO
+
   
 ## `replaceBySource`
 
