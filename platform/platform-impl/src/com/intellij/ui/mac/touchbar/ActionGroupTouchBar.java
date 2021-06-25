@@ -370,6 +370,7 @@ class ActionGroupTouchBar extends TouchBar {
   @NotNull TBItemAnActionButton createActionButton(@NotNull AnAction action) {
     TBItemAnActionButton cached = myActionButtonPool.remove(action);
     if (cached != null) {
+      cached.setAnAction(action);
       return cached;
     }
 
@@ -377,8 +378,9 @@ class ActionGroupTouchBar extends TouchBar {
     for(Iterator<Map.Entry<AnAction, TBItemAnActionButton>> it = myActionButtonPool.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<AnAction, TBItemAnActionButton> entry = it.next();
       final TBItemAnActionButton butt = entry.getValue();
-      if (Objects.equals(entry.getKey().getTemplateText(), butt.getAnAction().getTemplateText())) {
+      if (Objects.equals(action.getTemplateText(), butt.getAnAction().getTemplateText())) {
         it.remove();
+        butt.setAnAction(action);
         return butt;
       }
     }
