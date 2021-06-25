@@ -1,18 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
-import icons.CollaborationToolsIcons
 import org.jetbrains.annotations.Nls
 import java.awt.Graphics
 import java.awt.Shape
-import javax.swing.Icon
 import javax.swing.JEditorPane
 import javax.swing.SizeRequirements
 import javax.swing.text.DefaultCaret
@@ -60,9 +57,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
         val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)?.let {
           val path = it as String
 
-          tryLoadIcon(path, iconsClass)
-          ?: tryLoadIcon(path, CollaborationToolsIcons::class.java)
-          ?: tryLoadIcon(path, AllIcons::class.java)
+          IconLoader.findIcon(path, iconsClass)
         }
 
         if (icon != null) {
@@ -88,15 +83,6 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
         return MyParagraphView(elem)
       }
       return view
-    }
-
-    private fun tryLoadIcon(path: String, iconsClass: Class<*>): Icon? {
-      return try {
-        IconLoader.getIcon(path, iconsClass)
-      }
-      catch (_: Exception) {
-        null
-      }
     }
   }
 
