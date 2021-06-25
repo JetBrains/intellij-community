@@ -7,19 +7,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface RunnablesListener {
 
   @Topic.AppLevel
   Topic<RunnablesListener> TOPIC = new Topic<>(RunnablesListener.class,
-                                               Topic.BroadcastDirection.NONE,
+                                               Topic.BroadcastDirection.TO_DIRECT_CHILDREN,
                                                true);
+
+  SimpleDateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  DecimalFormat DEFAULT_DURATION_FORMAT = new DecimalFormat("#.00");
 
   default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
                                @NotNull Collection<InvocationDescription> descriptions) { }
@@ -57,8 +63,16 @@ public interface RunnablesListener {
       return myStartedAt;
     }
 
+    public @NotNull Date getStartDateTime() {
+      return new Date(getStartedAt());
+    }
+
     public long getFinishedAt() {
       return myFinishedAt;
+    }
+
+    public @NotNull Date getFinishDateTime() {
+      return new Date(getFinishedAt());
     }
 
     public long getDuration() {
@@ -92,15 +106,20 @@ public interface RunnablesListener {
 
     @Override
     public @NotNull String toString() {
-      return String.format("%dms to process %s; started at: %tc; finished at: %tc",
-                           getDuration(),
-                           myProcessId,
-                           myStartedAt,
-                           myFinishedAt);
+      return "InvocationDescription{" +
+             "processId='" + myProcessId + '\'' +
+             ", started=" + DEFAULT_DATE_FORMAT.format(getStartDateTime()) +
+             ", finished=" + DEFAULT_DATE_FORMAT.format(getFinishDateTime()) +
+             '}';
     }
   }
 
   final class InvocationsInfo implements Comparable<InvocationsInfo> {
+
+    static {
+      //DEFAULT_DURATION_FORMAT.setMinimumFractionDigits(2);
+      //DEFAULT_DURATION_FORMAT.setMaximumFractionDigits(2);
+    }
 
     static @NotNull InvocationsInfo computeNext(@NotNull String fqn,
                                                 long duration,
@@ -161,10 +180,11 @@ public interface RunnablesListener {
 
     @Override
     public @NotNull String toString() {
-      return String.format("%s=[average: %.2f; count: %d]",
-                           myFQN,
-                           getAverageDuration(),
-                           myCount);
+      return "InvocationsInfo{" +
+             "FQN='" + myFQN + '\'' +
+             ", count=" + myCount +
+             ", averageDuration=" + DEFAULT_DURATION_FORMAT.format(getAverageDuration()) +
+             '}';
     }
   }
 
@@ -214,9 +234,10 @@ public interface RunnablesListener {
 
     @Override
     public @NotNull String toString() {
-      return String.format("%s; usages: %d",
-                           myFQN,
-                           myUsagesCount);
+      return "WrapperDescription{" +
+             "FQN='" + myFQN + '\'' +
+             ", usagesCount=" + myUsagesCount +
+             '}';
     }
   }
 
@@ -248,16 +269,8 @@ public interface RunnablesListener {
       return myFQN;
     }
 
-    public long getReads() {
-      return getCount(LockKind.READ);
-    }
-
-    public long getWrites() {
-      return getCount(LockKind.WRITE);
-    }
-
-    public long getWriteIntents() {
-      return getCount(LockKind.WRITE_INTENT);
+    public long getCount(@NotNull LockKind lockKind) {
+      return myAcquirements.get(lockKind);
     }
 
     @Override
@@ -287,18 +300,10 @@ public interface RunnablesListener {
 
     @Override
     public @NotNull String toString() {
-      StringBuilder builder = new StringBuilder(myFQN);
-      for (Map.Entry<LockKind, Long> entry : myAcquirements.entrySet()) {
-        builder.append("; ")
-          .append(entry.getKey())
-          .append("=")
-          .append(entry.getValue());
-      }
-      return builder.toString();
-    }
-
-    private long getCount(@NotNull LockKind lockKind) {
-      return myAcquirements.get(lockKind);
+      return "LockAcquirementDescription{" +
+             "FQN='" + myFQN + '\'' +
+             ", acquirements=" + myAcquirements +
+             '}';
     }
 
     private static @NotNull EnumMap<LockKind, Long> createMapWithDefaultValue() {

@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +22,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -53,7 +53,7 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
     new ConcurrentHashMap<>();
   private final ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
 
-  private final @NotNull LogFileWriter myWriter = new LogFileWriter();
+  private final @NotNull LogFileWriter myLogFileWriter = new LogFileWriter();
   private final @NotNull RegistryValue myThreshold;
   private final @NotNull ScheduledExecutorService myExecutor;
   private final @NotNull ScheduledFuture<?> myThread;
@@ -67,6 +67,10 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
         application.isHeadlessEnvironment()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
+
+    application.getMessageBus()
+      .connect(this)
+      .subscribe(TOPIC, myLogFileWriter);
 
     RegistryManager registryManager = application.getService(RegistryManager.class);
     myThreshold = registryManager.get("ide.event.queue.dispatch.threshold");
@@ -143,7 +147,7 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
 
   @Override
   public void dispose() {
-    Disposer.dispose(myWriter);
+    myLogFileWriter.dump();
 
     myThread.cancel(true);
     myExecutor.shutdownNow();
@@ -211,10 +215,10 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
                                   TimeUnit.MILLISECONDS.toNanos(duration));
   }
 
-  private static final class LogFileWriter implements RunnablesListener, Disposable {
+  private static final class LogFileWriter implements RunnablesListener {
 
     private final File myLogDir = new File(new File(PathManager.getLogPath(), "edt-log"),
-                                           String.format("%tY%<tm%<td-%<tH%<tM%<tS", System.currentTimeMillis()));
+                                           new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(System.currentTimeMillis())));
 
     private final ArrayList<InvocationsInfo> myInfos = new ArrayList<>();
     private final ArrayList<WrapperDescription> myWrappers = new ArrayList<>();
@@ -234,8 +238,7 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
       myWrappers.addAll(wrappers);
     }
 
-    @Override
-    public void dispose() {
+    private void dump() {
       sortAndDumpToFile("Timings", myInfos);
       sortAndDumpToFile("Wrappers", myWrappers);
     }

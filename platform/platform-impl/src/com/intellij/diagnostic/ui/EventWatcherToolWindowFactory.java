@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -66,9 +65,12 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
         new ColumnInfo[]{
           FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
                                               InvocationsInfo::getFQN),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"), Double.TYPE,
-                                        InvocationsInfo::getAverageDuration),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"), Integer.TYPE,
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"),
+                                        String.class,
+                                        info -> DEFAULT_DURATION_FORMAT.format(info.getAverageDuration()),
+                                        Comparator.comparingDouble(InvocationsInfo::getAverageDuration)),
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"),
+                                        Integer.TYPE,
                                         InvocationsInfo::getCount)
         },
         new ArrayList<>(),
@@ -79,17 +81,20 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       myRunnablesModel = new ListTableModel<>(
         FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"),
                                             InvocationDescription::getProcessId),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"), Long.TYPE,
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"),
+                                      Long.TYPE,
                                       InvocationDescription::getDuration),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.started.at"), String.class,
-                                      description -> new SimpleDateFormat().format(new Date(description.getStartedAt())),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.started.at"),
+                                      String.class,
+                                      description -> DEFAULT_DATE_FORMAT.format(description.getStartDateTime()),
                                       Comparator.comparingLong(InvocationDescription::getStartedAt))
       );
 
       myWrappersModel = new ListTableModel<>(
         FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
                                             WrapperDescription::getFQN),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"), Integer.TYPE,
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"),
+                                      Integer.TYPE,
                                       WrapperDescription::getUsagesCount)
       );
 
