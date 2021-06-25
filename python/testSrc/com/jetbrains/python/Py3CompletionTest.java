@@ -517,6 +517,15 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
   }
 
+  // PY-49156
+  public void testHaveCompletionVariantsForOsPath() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertTrue(variants.length > 0);
+    assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("join")));
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
