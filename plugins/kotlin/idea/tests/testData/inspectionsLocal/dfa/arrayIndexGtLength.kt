@@ -1,4 +1,4 @@
-// PROBLEM: Array index is out of bounds
+// PROBLEM: Index is always out of bounds
 // FIX: none
 fun test(x : Array<Int>, y : Int) {
     if (y >= x.size) {

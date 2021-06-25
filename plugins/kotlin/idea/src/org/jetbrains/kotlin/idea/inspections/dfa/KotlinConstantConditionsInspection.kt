@@ -195,7 +195,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (state == ThreeState.YES) {
                 when (problem) {
                     is KotlinArrayIndexProblem ->
-                        holder.registerProblem(problem.index, JavaAnalysisBundle.message("dataflow.message.array.index.out.of.bounds"))
+                        holder.registerProblem(problem.index, KotlinBundle.message("inspection.message.index.out.of.bounds"))
                     is KotlinCastProblem ->
                         holder.registerProblem(
                             (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast,

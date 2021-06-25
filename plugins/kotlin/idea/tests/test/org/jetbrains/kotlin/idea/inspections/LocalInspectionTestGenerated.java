@@ -4786,6 +4786,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/kotlinClassRef.kt");
         }
 
+        @TestMetadata("listAccess.kt")
+        public void testListAccess() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/listAccess.kt");
+        }
+
         @TestMetadata("nullAsNullable.kt")
         public void testNullAsNullable() throws Exception {
             runTest("testData/inspectionsLocal/dfa/nullAsNullable.kt");
@@ -4866,9 +4871,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/stringConcat.kt");
         }
 
+        @TestMetadata("stringIndex.kt")
+        public void testStringIndex() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/stringIndex.kt");
+        }
+
         @TestMetadata("stringTemplate.kt")
         public void testStringTemplate() throws Exception {
             runTest("testData/inspectionsLocal/dfa/stringTemplate.kt");
+        }
+
+        @TestMetadata("stringTemplateSimple.kt")
+        public void testStringTemplateSimple() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/stringTemplateSimple.kt");
         }
 
         @TestMetadata("unaryMinus.kt")

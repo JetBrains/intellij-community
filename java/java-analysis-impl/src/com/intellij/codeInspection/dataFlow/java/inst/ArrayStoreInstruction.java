@@ -72,8 +72,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
     DfaInstructionState[] states =
-      ArrayAccessInstruction.processOutOfBounds(myOutOfBoundsTransfer, interpreter, stateBefore, index, array,
-                                                new ArrayIndexProblem(myExpression));
+      new ArrayIndexProblem(myExpression).processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
     if (states != null) return states;
 
     checkArrayElementAssignability(interpreter, stateBefore, valueToStore, array);

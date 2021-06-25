@@ -223,12 +223,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
                 val transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException")
-                addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(expr, idx), null))
+                addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), null))
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
-                // TODO: support string index (charAt)
-                addInstruction(EvalUnknownInstruction(anchor, 2))
-                addInstruction(FlushFieldsInstruction())
+                if (KotlinBuiltIns.isString(kotlinType)) {
+                    val transfer = createTransfer("java.lang.StringIndexOutOfBoundsException")
+                    addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
+                    addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
+                } else if (kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
+                    kotlinType.supertypes().any { type -> KotlinBuiltIns.isListOrNullableList(type) })) {
+                    val transfer = createTransfer("java.lang.IndexOutOfBoundsException")
+                    addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
+                    pushUnknown()
+                } else {
+                    addInstruction(EvalUnknownInstruction(anchor, 2))
+                    addInstruction(FlushFieldsInstruction())
+                }
             }
         }
     }
@@ -273,6 +283,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(StringConcatInstruction(anchor, stringType))
             }
             first = false
+        }
+        if (entries.size == 1) {
+            // Implicit toString conversion for "$myVar" string
+            addInstruction(PushValueInstruction(DfTypes.constant("", stringType)))
+            addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType))
         }
     }
 
@@ -342,7 +357,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) -> {
                         return SpecialField.ARRAY_LENGTH
                     }
-                    KotlinBuiltIns.isCollectionOrNullableCollection(type) || KotlinBuiltIns.isMapOrNullableMap(type) -> {
+                    KotlinBuiltIns.isCollectionOrNullableCollection(type) || KotlinBuiltIns.isMapOrNullableMap(type) ||
+                    type.supertypes().any {
+                            st -> KotlinBuiltIns.isCollectionOrNullableCollection(st) || KotlinBuiltIns.isMapOrNullableMap(st)} -> {
                         return SpecialField.COLLECTION_SIZE
                     }
                     else -> return null
@@ -702,6 +719,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(right)
             addImplicitConversion(right, leftType)
             // TODO: support qualified assignments
+            // TODO: support array stores
             addInstruction(FlushFieldsInstruction())
             return
         }
