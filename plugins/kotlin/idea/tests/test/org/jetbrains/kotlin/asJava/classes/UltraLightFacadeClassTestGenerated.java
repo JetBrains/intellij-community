@@ -24,6 +24,12 @@ public class UltraLightFacadeClassTestGenerated extends AbstractUltraLightFacade
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @Override
+    protected void setUp() {
+        compilerTestData("compiler/testData/asJava/ultraLightFacades");
+        super.setUp();
+    }
+
     @TestMetadata("coroutines.kt")
     public void testCoroutines() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/coroutines.kt"));
