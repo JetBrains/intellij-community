@@ -161,7 +161,7 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-
+                     "<packaging>pom</packaging>" +
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
