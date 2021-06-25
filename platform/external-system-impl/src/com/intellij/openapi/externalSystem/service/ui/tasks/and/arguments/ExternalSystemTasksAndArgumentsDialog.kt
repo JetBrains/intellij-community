@@ -18,12 +18,15 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 
+
+@ApiStatus.Experimental
 class ExternalSystemTasksAndArgumentsDialog(
   private val project: Project,
   private val externalSystemId: ProjectSystemId,
