@@ -7,11 +7,9 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.StringUtil
@@ -24,7 +22,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
@@ -41,20 +38,16 @@ import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
-import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import java.awt.Rectangle
-import java.io.File
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message("git.quick.start.lesson.name")) {
-  override val existedFile = "feature-trainer-version.txt"
-  private val fileToChangePath = "git/puss_in_boots.yml"
-  private val fileToChange = fileToChangePath.substringAfterLast('/')
+  override val existedFile = "git/puss_in_boots.yml"
+  private val fileToChange = existedFile.substringAfterLast('/')
   private val textToHighlight = "green"
-  private lateinit var remoteProjectRoot: File
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -87,7 +80,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       before {
         adjustPopupPosition("") // Clone dialog is not saving the state now
       }
-      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
       gotItStep(Balloon.Position.below, 300, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.1"))
       restoreByUi(findActionTaskId)
     }
@@ -103,7 +95,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
       gotItStep(Balloon.Position.atRight, 400, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.2"))
       restoreByUi(findActionTaskId)
     }
@@ -116,15 +107,9 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      text(GitLessonsBundle.message("git.quick.start.close.clone.dialog", strong(cancelButtonText)))
+      text(GitLessonsBundle.message("git.quick.start.close.clone.dialog", strong(cancelButtonText)),
+           LearningBalloonConfig(Balloon.Position.above, 400, true))
       stateCheck { previous.ui?.isShowing != true }
-    }
-
-    prepareRuntimeTask(ModalityState.NON_MODAL) {
-      val root = ProjectUtils.getProjectRoot(project)
-      root.refresh(false, true)
-      val fileToOpen = root.findFileByRelativePath(fileToChangePath) ?: error("Failed to find file: $fileToChangePath")
-      FileEditorManager.getInstance(project).openFile(fileToOpen, true, true)
     }
 
     prepareRuntimeTask {
@@ -238,7 +223,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
       gotItStep(Balloon.Position.atRight, 400, GitLessonsBundle.message("git.quick.start.commit.window.got.it"))
     }
 
@@ -269,6 +253,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
   override fun prepare(project: Project) {
     super.prepare(project)
-    remoteProjectRoot = GitProjectUtil.createRemoteProject("origin", project)
+    GitProjectUtil.createRemoteProject("origin", project)
   }
 }
