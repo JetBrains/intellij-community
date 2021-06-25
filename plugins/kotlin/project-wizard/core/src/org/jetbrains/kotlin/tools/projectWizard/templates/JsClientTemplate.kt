@@ -42,7 +42,7 @@ abstract class JsClientTemplate : Template() {
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
-        if (module.originalModule.kind == ModuleKind.singleplatformJsBrowser) {
+        if (module.originalModule.kind == ModuleKind.singlePlatformJsBrowser) {
             +WizardGradleRunConfiguration(
                 org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle.message("module.template.js.simple.run.configuration.dev"),
                 "browserDevelopmentRun",

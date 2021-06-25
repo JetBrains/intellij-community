@@ -77,7 +77,7 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
     SinglePlatformModuleConfigurator,
     ModuleConfiguratorWithModuleType {
     override val moduleType get() = ModuleType.jvm
-    override val moduleKind: ModuleKind get() = ModuleKind.singleplatformJvm
+    override val moduleKind: ModuleKind get() = ModuleKind.singlePlatformJvm
 
     @NonNls
     override val suggestedModuleName = "jvm"

@@ -41,7 +41,7 @@ class ComposeAndroidTemplate : Template() {
         module.configurator.moduleType == ModuleType.android && projectKind == ProjectKind.COMPOSE
 
     override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singleplatformAndroid
+        module.kind == ModuleKind.singlePlatformAndroid
 
     override fun Writer.getIrsToAddToBuildFile(
         module: ModuleIR

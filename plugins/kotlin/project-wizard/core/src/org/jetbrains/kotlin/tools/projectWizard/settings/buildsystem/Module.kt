@@ -18,13 +18,13 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
 
 @Suppress("EnumEntryName")
-enum class ModuleKind(val isSingleplatform: Boolean) : DisplayableSettingItem {
-    multiplatform(isSingleplatform = false),
-    target(isSingleplatform = false),
-    singleplatformJvm(isSingleplatform = true),
-    singleplatformAndroid(isSingleplatform = true),
-    singleplatformJsBrowser(isSingleplatform = true),
-    singleplatformJsNode(isSingleplatform = true),
+enum class ModuleKind(val isSinglePlatform: Boolean) : DisplayableSettingItem {
+    multiplatform(isSinglePlatform = false),
+    target(isSinglePlatform = false),
+    singlePlatformJvm(isSinglePlatform = true),
+    singlePlatformAndroid(isSinglePlatform = true),
+    singlePlatformJsBrowser(isSinglePlatform = true),
+    singlePlatformJsNode(isSinglePlatform = true),
     ;
 
     override val text: String
@@ -42,7 +42,7 @@ class Module(
     val configurator: ModuleConfigurator,
     var template: Template? = null,
     val permittedTemplateIds: Set<String>? = null,
-    val sourcesets: List<Sourceset> = createDefaultSourceSets(),
+    val sourceSets: List<Sourceset> = createDefaultSourceSets(),
     subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,
@@ -65,12 +65,12 @@ class Module(
 
     init {
         subModules.forEach { it.parent = this }
-        sourcesets.forEach { it.parent = this }
+        sourceSets.forEach { it.parent = this }
     }
 
 
     override val text: String get() = name
-    override val greyText: String?
+    override val greyText: String
         get() = when {
             kind == ModuleKind.target -> configurator.text + " " + KotlinNewProjectWizardBundle.message("module.kind.target")
             configurator == MppModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.mpp.module")
@@ -92,19 +92,19 @@ class Module(
 
         val parser: Parser<Module> = mapParser { map, path ->
             val (name) = map.parseValue<String>(path, "name")
-            val identificator = GeneratedIdentificator(name)
-            val (configurator) = map.parseValue(this, path, "type", ModuleConfigurator.getParser(identificator))
+            val identifier = GeneratedIdentificator(name)
+            val (configurator) = map.parseValue(this, path, "type", ModuleConfigurator.getParser(identifier))
 
             val template = map["template"]?.let {
-                Template.parser(identificator).parse(this, it, "$path.template")
+                Template.parser(identifier).parse(this, it, "$path.template")
             }.nullableValue()
-            val sourcesets = listOf(Sourceset(SourcesetType.main), Sourceset(SourcesetType.test))
+            val sourceSets = listOf(Sourceset(SourcesetType.main), Sourceset(SourcesetType.test))
             val (submodules) = map.parseValue(this, path, "subModules", listParser(Module.parser)) { emptyList() }
             val (dependencies) = map.parseValue(this, path, "dependencies", listParser(ModuleReference.ByPath.parser)) { emptyList() }
 
             Module(
-                name, configurator, template = template, sourcesets = sourcesets, subModules = submodules,
-                dependencies = dependencies.toMutableList(), identificator = identificator
+                name, configurator, template = template, sourceSets = sourceSets, subModules = submodules,
+                dependencies = dependencies.toMutableList(), identificator = identifier
             )
         }
 
@@ -133,7 +133,7 @@ class Module(
                                 setting.title.capitalize()
                             )
                         )
-                    (setting.validator as SettingValidator<Any>).validate(this@settingValidator, value)
+                    setting.validator.validate(this@settingValidator, value)
                 }.fold()
             }
         }
@@ -179,13 +179,13 @@ val Module.isRootModule
     get() = parent == null
 
 @Suppress("FunctionName")
-fun MultiplatformTargetModule(@NonNls name: String, configurator: ModuleConfigurator, sourcesets: List<Sourceset>) =
-    Module(name, configurator, sourcesets = sourcesets)
+fun MultiplatformTargetModule(@NonNls name: String, configurator: ModuleConfigurator, sourceSets: List<Sourceset>) =
+    Module(name, configurator, sourceSets = sourceSets)
 
 @Suppress("FunctionName")
 fun MultiplatformModule(@NonNls name: String, template: Template? = null, targets: List<Module> = emptyList()) =
     Module(name, MppModuleConfigurator, template = template, subModules = targets)
 
 @Suppress("FunctionName")
-fun SingleplatformModule(@NonNls name: String, sourcesets: List<Sourceset>) =
-    Module(name, JvmSinglePlatformModuleConfigurator, sourcesets = sourcesets)
+fun SinglePlatformModule(@NonNls name: String, sourceSets: List<Sourceset>) =
+    Module(name, JvmSinglePlatformModuleConfigurator, sourceSets = sourceSets)

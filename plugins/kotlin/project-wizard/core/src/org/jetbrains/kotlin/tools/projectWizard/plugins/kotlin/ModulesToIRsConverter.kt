@@ -170,7 +170,7 @@ class ModulesToIRsConverter(
                 dependenciesIRs,
                 module.template,
                 module,
-                module.sourcesets.map { sourceset ->
+                module.sourceSets.map { sourceset ->
                     val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name else null
                     SingleplatformSourcesetIR(
                         sourceset.sourcesetType,
@@ -276,7 +276,7 @@ class ModulesToIRsConverter(
     private fun Writer.createTargetModule(target: Module, modulePath: Path): TaskResult<MultiplatformModuleIR> = compute {
         val (moduleDependencies) = createModuleDependencies(target)
         mutateProjectStructureByModuleConfigurator(target, modulePath)
-        val sourcesetss = target.sourcesets.map { sourceset ->
+        val sourcesetss = target.sourceSets.map { sourceset ->
             val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize()
             val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourcesetName else null
             MultiplatformSourcesetIR(

@@ -29,7 +29,7 @@ class ComposeJvmDesktopTemplate : Template() {
         module.configurator.moduleType == ModuleType.jvm && projectKind == ProjectKind.COMPOSE
 
     override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singleplatformJvm
+        module.kind == ModuleKind.singlePlatformJvm
                 || module.kind == ModuleKind.target
 
     override fun Writer.getIrsToAddToBuildFile(

@@ -26,7 +26,7 @@ class TargetsModel(
             DefaultMutableTreeNode(moduleToAdd).apply {
                 val userObject = parentToAdd.userObject
                 when {
-                    userObject is Module && userObject.kind == ModuleKind.singleplatformJvm -> {
+                    userObject is Module && userObject.kind == ModuleKind.singlePlatformJvm -> {
                         val indexOfLastModule = parentToAdd.children()
                             .toList()
                             .indexOfLast {

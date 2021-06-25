@@ -93,11 +93,11 @@ val ModuleSubType.icon: Icon
 val ModuleKind.icon: Icon
     get() = when (this) {
         ModuleKind.multiplatform -> KotlinIcons.MPP
-        ModuleKind.singleplatformJsBrowser -> KotlinIcons.Wizard.JS
-        ModuleKind.singleplatformJsNode -> KotlinIcons.Wizard.NODE_JS
-        ModuleKind.singleplatformJvm -> KotlinIcons.Wizard.JVM
+        ModuleKind.singlePlatformJsBrowser -> KotlinIcons.Wizard.JS
+        ModuleKind.singlePlatformJsNode -> KotlinIcons.Wizard.NODE_JS
+        ModuleKind.singlePlatformJvm -> KotlinIcons.Wizard.JVM
         ModuleKind.target -> AllIcons.Nodes.Module
-        ModuleKind.singleplatformAndroid -> KotlinIcons.Wizard.ANDROID
+        ModuleKind.singlePlatformAndroid -> KotlinIcons.Wizard.ANDROID
     }
 
 val ModuleConfigurator.icon: Icon

@@ -65,10 +65,10 @@ class ModulesEditorToolbarDecorator(
                 }
                 val moduleKindTextToAdd = when (tree.selectedSettingItem?.safeAs<Module>()?.kind) {
                     ModuleKind.multiplatform -> KotlinNewProjectWizardBundle.message("module.kind.target")
-                    ModuleKind.singleplatformJvm -> KotlinNewProjectWizardBundle.message("module.kind.module")
-                    ModuleKind.singleplatformJsBrowser -> KotlinNewProjectWizardBundle.message("module.kind.js.browser.module")
-                    ModuleKind.singleplatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.js.node.module")
-                    ModuleKind.singleplatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
+                    ModuleKind.singlePlatformJvm -> KotlinNewProjectWizardBundle.message("module.kind.module")
+                    ModuleKind.singlePlatformJsBrowser -> KotlinNewProjectWizardBundle.message("module.kind.js.browser.module")
+                    ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.js.node.module")
+                    ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
                     ModuleKind.target -> ""
                     null -> ""
                 }
@@ -119,9 +119,9 @@ class ModulesEditorToolbarDecorator(
 private val Module.kindText
     get() = when (kind) {
         ModuleKind.multiplatform -> KotlinNewProjectWizardBundle.message("module.kind.module")
-        ModuleKind.singleplatformJvm -> KotlinNewProjectWizardBundle.message("module.kind.module")
-        ModuleKind.singleplatformJsBrowser -> KotlinNewProjectWizardBundle.message("module.kind.module")
-        ModuleKind.singleplatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.module")
-        ModuleKind.singleplatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
+        ModuleKind.singlePlatformJvm -> KotlinNewProjectWizardBundle.message("module.kind.module")
+        ModuleKind.singlePlatformJsBrowser -> KotlinNewProjectWizardBundle.message("module.kind.module")
+        ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.module")
+        ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
         ModuleKind.target -> KotlinNewProjectWizardBundle.message("module.kind.target")
     }

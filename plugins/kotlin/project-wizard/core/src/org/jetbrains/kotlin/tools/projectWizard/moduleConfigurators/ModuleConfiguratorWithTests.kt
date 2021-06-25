@@ -73,7 +73,7 @@ interface ModuleConfiguratorWithTests : ModuleConfiguratorWithSettings {
         val buildSystemType = reader { buildSystemType }
         if (testFramework != KotlinTestFramework.NONE) {
             when {
-                module.kind.isSingleplatform && buildSystemType.isGradle -> {
+                module.kind.isSinglePlatform && buildSystemType.isGradle -> {
                     testFramework.usePlatform?.let { usePlatform ->
                         val testTaskAccess = if (buildSystemType == BuildSystemType.GradleKotlinDsl) "tasks.test" else "test"
                         testTaskAccess {
