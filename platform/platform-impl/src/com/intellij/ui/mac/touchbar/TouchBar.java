@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
@@ -45,7 +46,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
            @Nullable CrossEscInfo crossEscInfo,
            boolean closeOnItemEvent) {
     if (closeOnItemEvent) {
-      myItemListener = (src, evcode) -> {
+      myItemListener = (src, eventCode) -> {
         // NOTE: called from AppKit thread
         _closeSelf();
       };
@@ -96,7 +97,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   private ID createItemImpl(@NotNull String uid) {
     final TBItem item;
-    if (myCustomEsc != null && myCustomEsc.getUid().equals(uid)) {
+    if (myCustomEsc != null && uid.equals(myCustomEsc.getUid())) {
       item = myCustomEsc;
     } else {
       item = myItems.findItem(uid);
@@ -117,7 +118,11 @@ class TouchBar implements NSTLibrary.ItemCreator {
     return item.createNativePeer();
   }
 
-  ID getNativePeer() { return myNativePeer; }
+  void setTo(@Nullable Window window) {
+    synchronized (this) {
+      NST.setTouchBar(window, myNativePeer);
+    }
+  }
 
   void release() {
     final long startNs = myStats != null ? System.nanoTime() : 0;
@@ -171,7 +176,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
   void selectVisibleItemsToShow() {
     if (myItems.isEmpty()) {
       if (myVisibleIds != null && myVisibleIds.length > 0) {
-        NST.selectItemsToShow(myNativePeer, null, 0);
+        synchronized (this) {
+          NST.selectItemsToShow(myNativePeer, null, 0);
+        }
       }
       myVisibleIds = null;
       return;
@@ -183,12 +190,16 @@ class TouchBar implements NSTLibrary.ItemCreator {
     }
 
     myVisibleIds = ids;
-    NST.selectItemsToShow(myNativePeer, ids, ids.length);
+    synchronized (this) {
+      NST.selectItemsToShow(myNativePeer, ids, ids.length);
+    }
   }
 
   void setPrincipal(@NotNull TBItem item) {
-    // TODO: cache principal items to avoid unnecessary native calls
-    NST.setPrincipal(myNativePeer, item.getUid());
+    // NOTE: we can cache principal items to avoid unnecessary native calls
+    synchronized (this) {
+      NST.setPrincipal(myNativePeer, item.getUid());
+    }
   }
 
   void _closeSelf() {

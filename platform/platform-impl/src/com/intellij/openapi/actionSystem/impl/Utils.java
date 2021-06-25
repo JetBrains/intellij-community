@@ -454,22 +454,25 @@ public final class Utils {
         try {
           Ref<T> ref = Ref.create();
           Ref<UpdateSession> sessionRef = Ref.create();
+          Runnable runnable = () -> {
+            Set<String> missedKeys = ContainerUtil.newConcurrentSet();
+            UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+            T fastResult = function.apply(fastSession);
+            sessionRef.set(fastSession);
+            if (fastResult != null) {
+              ref.set(fastResult);
+            }
+            else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+              UpdateSession slowSession = actionUpdater.asUpdateSession();
+              T slowResult = function.apply(slowSession);
+              ref.set(slowResult);
+              sessionRef.set(slowSession);
+            }
+          };
+          boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              Set<String> missedKeys = ContainerUtil.newConcurrentSet();
-              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              T fastResult = function.apply(fastSession);
-              sessionRef.set(fastSession);
-              if (fastResult != null) {
-                ref.set(fastResult);
-              }
-              else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
-                UpdateSession slowSession = actionUpdater.asUpdateSession();
-                T slowResult = function.apply(slowSession);
-                ref.set(slowResult);
-                sessionRef.set(slowSession);
-              }
-            }, new EmptyProgressIndicator());
+            ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
+              ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable), new EmptyProgressIndicator());
             return ref.get();
           });
           queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);

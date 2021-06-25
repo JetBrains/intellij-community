@@ -1,19 +1,18 @@
 <html>
 <body>
-Reports explicit calls of <code>get</code> or <code>set</code> functions which can be replaced by an indexing operator <code>[]</code>.
+Reports explicit calls to <code>get</code> or <code>set</code> functions which can be replaced by an indexing operator <code>[]</code>.
 <p>
-    Kotlin allows to provide custom implementations for the predefined set of operators on types.
-    To overload an operator one can mark the corresponding function with the <code>operator</code> modifier:
+    Kotlin allows custom implementations for the predefined set of operators on types.
+    To overload an operator, you can mark the corresponding function with the <code>operator</code> modifier:
     <pre><code>
   operator fun get(index: Int) {}
   operator fun set(index: Int, value: Int) {}
     </code></pre>
 
-Since operators have predefined symbolic representation the functions above correspond to the indexing one.
+The functions above correspond to the indexing operator.
 
-<p>Example:</p>
-<pre><code>
-  class Test {
+<p><b>Example:</b></p>
+<pre><code>  class Test {
       operator fun get(i: Int): Int = 0
   }
 
@@ -22,8 +21,7 @@ Since operators have predefined symbolic representation the functions above corr
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
-  class Test {
+<pre><code>  class Test {
       operator fun get(i: Int): Int = 0
   }
 

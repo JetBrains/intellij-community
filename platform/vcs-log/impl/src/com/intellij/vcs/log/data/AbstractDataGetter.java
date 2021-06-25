@@ -96,7 +96,13 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @NotNull
   public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
-    LOG.assertTrue(EventQueue.isDispatchThread());
+    if (!EventQueue.isDispatchThread()) {
+      LOG.warn("Accessing AbstractDataGetter from background thread");
+      T commitFromCache = getFromCache(hash);
+      if (commitFromCache == null) return createPlaceholderCommit(hash, 0 /*not used as this commit is not cached*/);
+      return commitFromCache;
+    }
+
     T details = getCommitDataIfAvailable(hash);
     if (details != null) {
       return details;
@@ -200,6 +206,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @Nullable
   public T getCommitDataIfAvailable(int hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
     T details = getFromCache(hash);
     if (details != null) {
       if (details instanceof LoadingDetails) {
@@ -239,18 +246,23 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoader.queue(new TaskDescriptor(toLoad));
   }
 
-  @SuppressWarnings("unchecked")
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (getFromCache(commitId) == null) {
-      IndexDataGetter dataGetter = myIndex.getDataGetter();
-      if (dataGetter != null && Registry.is("vcs.log.use.indexed.details")) {
-        myCache.put(commitId, (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber));
-      }
-      else {
-        myCache.put(commitId, (T)new LoadingDetails(() -> myStorage.getCommitId(commitId), taskNumber));
-      }
+      myCache.put(commitId, createPlaceholderCommit(commitId, taskNumber));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private T createPlaceholderCommit(int commitId, long taskNumber) {
+    IndexDataGetter dataGetter = myIndex.getDataGetter();
+    if (dataGetter != null && Registry.is("vcs.log.use.indexed.details")) {
+      return (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber);
+    }
+    else {
+      return (T)new LoadingDetails(() -> myStorage.getCommitId(commitId), taskNumber);
     }
   }
 

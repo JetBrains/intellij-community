@@ -15,7 +15,7 @@ kotlin {
             kotlinOptions.jvmTarget = "1.8"
         }
         testRuns["test"].executionTask.configure {
-            useJUnit()
+            useJUnitPlatform()
         }
     }
     js(LEGACY) {
@@ -46,7 +46,8 @@ kotlin {
         val jvmMain by getting
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test-junit"))
+                implementation(kotlin("test-junit5"))
+                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
             }
         }
         val jsMain by getting

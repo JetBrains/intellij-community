@@ -33,14 +33,16 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
     gitCheckbox()
     row(UIBundle.message("label.project.wizard.new.project.language")) {
       buttonSelector(languages, settings.languageProperty) { it }
-    }
+    }.largeGapAfter()
 
     settingsMap.entries.forEach {
-      rows[it.key] = it.value.map { lc ->
-        row(lc.label) {
-          component(lc.component)
-        }.apply { visible = false }
-      }
+      rows[it.key] =
+        it.value.map { lc ->
+          row(lc.label) {
+            component(lc.component)
+          }.apply { visible = false }
+            .apply { largeGapAfter() }
+        }
     }
 
     settings.languageProperty.set(languages.first())

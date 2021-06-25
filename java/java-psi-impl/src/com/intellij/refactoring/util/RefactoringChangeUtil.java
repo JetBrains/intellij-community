@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class RefactoringChangeUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
@@ -28,7 +30,9 @@ public final class RefactoringChangeUtil {
       }
 
       if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
-        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+        PsiAssignmentExpression assignmentExpression =
+          (PsiAssignmentExpression)PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+        return getTypeByExpression(Objects.requireNonNull(assignmentExpression).getRExpression());
       }
       return null;
     }

@@ -333,7 +333,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (isModularized) {
           //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
           for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
-            putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
+            JavaParametersUtil.putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
           }
         }
       }

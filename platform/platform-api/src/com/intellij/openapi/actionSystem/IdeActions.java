@@ -247,7 +247,7 @@ public interface IdeActions {
 
   String GROUP_RUN = "RunMenu";
   String GROUP_RUNNER_ACTIONS = "RunnerActions";
-  String STATE_WIDGET_PROCESSES_ACTION_GROUP = "StateWidgetProcessesActionGroup";
+  String RUN_TOOLBAR_PROCESSES_ACTION_GROUP = "RunToolbarProcessesActionGroup";
   String ACTION_DEFAULT_RUNNER = "Run";
   String ACTION_DEFAULT_DEBUGGER = "Debug";
   String ACTION_EDIT_RUN_CONFIGURATIONS = "editRunConfigurations";

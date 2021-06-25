@@ -18,7 +18,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class purpose is to override (hide) already registered action groups by means of plugin.xml.
+ * The purpose of this class is to override (hide) already registered action groups by means of plugin.xml.
  *
  * @author gregsh
  * @see EmptyAction

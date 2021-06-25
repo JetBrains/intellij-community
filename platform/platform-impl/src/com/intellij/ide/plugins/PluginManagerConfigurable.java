@@ -198,9 +198,7 @@ public final class PluginManagerConfigurable
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
-    });
+    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
 
     createMarketplaceTab();
     createInstalledTab();
@@ -1592,9 +1590,9 @@ public final class PluginManagerConfigurable
 
   @Override
   public void disposeUIResources() {
+    InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     if (myPluginModel.toBackground()) {
-      InstallPluginInfo.showRestart();
-      InstalledPluginsState.getInstance().clearShutdownCallback();
+      pluginsState.clearShutdownCallback();
     }
 
     myMarketplaceTab.dispose();
@@ -1610,9 +1608,8 @@ public final class PluginManagerConfigurable
     myPluginUpdatesService.dispose();
     PluginPriceService.cancel();
 
-    InstalledPluginsState.getInstance().runShutdownCallback();
-
-    InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+    pluginsState.runShutdownCallback();
+    pluginsState.resetChangesAppliedWithoutRestart();
   }
 
   @Override

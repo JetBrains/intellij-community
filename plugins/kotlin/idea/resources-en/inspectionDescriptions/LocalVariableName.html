@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports local variable names that do not follow the naming conventions specified by a regular expression pattern.
+Reports local variables that do not follow the naming conventions.
+<p>You can specify the required pattern in the inspection options.</p>
 <p><a href="https://kotlinlang.org/docs/coding-conventions.html#function-names">Recommended naming conventions</a>: it has to start with a lowercase letter, use camel case and no underscores.</p>
 <p><b>Example:</b></p>
-<pre><code>
-fun fibonacciNumber(index: Int): Long = when(index) {
+<pre><code>fun fibonacciNumber(index: Int): Long = when(index) {
     0 -> 0
     else -> {
         // does not follow naming conventions: contains underscore symbol (`_`)

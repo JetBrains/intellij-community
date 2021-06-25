@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -359,10 +360,16 @@ public final class TextPatchBuilder {
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
+  @SystemIndependent
   public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
-    Path path = filePath.getIOFile().toPath();
-    if (!path.isAbsolute()) return filePath.getPath();
-    return basePath.relativize(path).toString().replace(File.separatorChar, '/');
+    try {
+      Path path = filePath.getIOFile().toPath();
+      if (!path.isAbsolute()) return filePath.getPath();
+      return basePath.relativize(path).toString().replace(File.separatorChar, '/');
+    }
+    catch (IllegalArgumentException e) {
+      return filePath.getPath();
+    }
   }
 
   @Nullable

@@ -37,6 +37,11 @@ public class TestClassNamingConvention extends NamingConvention<PsiClass> {
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   public boolean isApplicable(PsiClass member) {
     if (member instanceof PsiTypeParameter) return false;
     TestFramework framework = TestFrameworks.detectFramework(member);

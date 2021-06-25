@@ -24,8 +24,8 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
   private val customSettings2Executor = mutableMapOf<Settings, ProxyExecutor>() //guarded by lock
   private val nextCustomExecutorId = AtomicLong()
 
-  abstract fun getStateWidgetActionText(param: String): @NlsActions.ActionText String
-  abstract fun getStateWidgetChooserText(): @NlsActions.ActionText String
+  abstract fun getRunToolbarActionText(param: String): @NlsActions.ActionText String
+  abstract fun getRunToolbarChooserText(): @NlsActions.ActionText String
 
   protected fun registerSettings(settings: Settings) {
     customSettingsLock.write {

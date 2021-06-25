@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -163,7 +164,7 @@ public final class NamePathComponent extends JPanel {
       String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
       File projectFile = new File(projectDirectory, fileName);
       if (projectFile.exists()) {
-        message = JavaUiBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
+        message = CoreBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
         shouldContinue = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"), message).show() == Messages.YES;
       }
     }

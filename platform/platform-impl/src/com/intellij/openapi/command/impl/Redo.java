@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -15,13 +16,23 @@ class Redo extends UndoRedo {
   }
 
   @Override
-  protected UndoRedoStacksHolder getStackHolder() {
+  protected UndoRedoStacksHolder getStacksHolder() {
     return myManager.getRedoStacksHolder();
   }
 
   @Override
-  protected UndoRedoStacksHolder getReverseStackHolder() {
+  protected UndoRedoStacksHolder getReverseStacksHolder() {
     return myManager.getUndoStacksHolder();
+  }
+
+  @Override
+  protected SharedUndoRedoStacksHolder getSharedStacksHolder() {
+    return myManager.getSharedRedoStacksHolder();
+  }
+
+  @Override
+  protected SharedUndoRedoStacksHolder getSharedReverseStacksHolder() {
+    return myManager.getSharedUndoStacksHolder();
   }
 
   @Override
@@ -36,7 +47,7 @@ class Redo extends UndoRedo {
   }
 
   @Override
-  protected void performAction() {
+  protected void performAction() throws UnexpectedUndoException {
     myUndoableGroup.redo();
   }
 

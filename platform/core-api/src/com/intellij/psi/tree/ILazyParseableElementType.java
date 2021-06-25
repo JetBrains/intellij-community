@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A token type which represents a fragment of text (possibly in a different language)
  * which is not parsed during the current lexer or parser pass and can be parsed later when
- * its contents is requested.
+ * its contents are requested.
  *
  * @author max
  */
@@ -30,7 +30,7 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
   }
 
   /**
-   * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   * Allows constructing element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
   public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language, final boolean register) {
     super(debugName, language, register);

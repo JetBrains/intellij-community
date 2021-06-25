@@ -1,19 +1,15 @@
 <html>
 <body>
-Reports assert boolean function calls replaceable with assert equality function.
+Reports calls to <code>assertTrue()</code> and <code>assertFalse()</code> that can be replaced with assert equality functions.
 <p>
-    <code>assertTrue()</code> and <code>assertFalse()</code> have more specialized alternative to compare booleans.<br/>
-    <code>assertEquals()</code>, <code>assertSame()</code> and their paired negating ones (-Not-) provide more informative messages on
+    <code>assertEquals()</code>, <code>assertSame()</code>, and their negating counterparts (-Not-) provide more informative messages on
     failure.
 </p>
-<p>The inspection is paired with 'Replace assert boolean with assert equality' quick-fix.</p>
-<p>Example:</p>
-<pre><code>
-  assertTrue(a == b)
+<p><b>Example:</b></p>
+<pre><code>  assertTrue(a == b)
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
-  assertEquals(a, b)
+<pre><code>  assertEquals(a, b)
 </code></pre>
 </body>
 </html>

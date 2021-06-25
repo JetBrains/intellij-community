@@ -22,6 +22,6 @@ internal class MavenPackageUpdateInspection : PackageUpdateInspection() {
         val mavenDependency = MavenNavigationUtil.findDependency(projectModel, groupId, artifactId)
         val element = mavenDependency?.version?.xmlElement ?: return null
 
-        return (element as XmlTag).value.textElements.first()
+        return (element as XmlTag).value.textElements.firstOrNull()
     }
 }

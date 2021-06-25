@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers
 
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarAction
-import com.intellij.execution.segmentedRunDebugWidget.environment
+import com.intellij.execution.runToolbar.RunToolbarAction
+import com.intellij.execution.runToolbar.environment
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext

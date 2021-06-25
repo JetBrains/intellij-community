@@ -1,15 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.CopyProvider
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
@@ -84,23 +81,6 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
 
         init {
             require(installedScopes.isNotEmpty()) { "An installed package must have at least one installed scope" }
-        }
-
-        override val handledDataKeys = super.handledDataKeys + listOf(CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.NAVIGATABLE_ARRAY)
-
-        fun getData(dataId: String, module: ProjectModule?): Any? {
-            val projectModule = module ?: packageModel.usageInfo.firstOrNull()?.projectModule
-            return when {
-                CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> projectModule?.buildFile
-                CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> {
-                    val usageInfo = packageModel.usageInfo.find { it.projectModule == projectModule }
-                        ?: return null
-
-                    usageInfo.projectModule.navigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version)
-                        ?.let { arrayOf(it) } ?: emptyArray<Navigatable>()
-                }
-                else -> getData(dataId)
-            }
         }
 
         override fun additionalCopyText() = buildString {

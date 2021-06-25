@@ -31,7 +31,7 @@ public interface HintedReferenceHost extends PsiElement {
 
   /**
    * Same as {@link PsiElement#getReferences()}, but the implementation may take hints into account and return only references that match these hints.
-   * But it's not a hard requirement, so the clients should not rely that only matching references will be returned.
+   * But it's not a hard requirement, so clients should not rely on the returned references always matching the hints.
    *
    * @param hints the hints about the desired references
    * @return the array of references, or an empty array if the element has no associated references.

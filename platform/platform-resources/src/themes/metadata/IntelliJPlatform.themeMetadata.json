@@ -1201,9 +1201,19 @@
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
-      "key": "StateWidget.activeBackground",
-      "description": "Background of the state widget when at least one of the registered processes is active",
-      "since": "2021.1"
+      "key": "RunToolbar.Run.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the run processes is active",
+      "since": "2021.3"
+    },
+    {
+      "key": "RunToolbar.Debug.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the debug processes is active",
+      "since": "2021.3"
+    },
+    {
+      "key": "RunToolbar.Profile.activeBackground",
+      "description": "Background of the run toolbar widget when at least one of the profile processes is active",
+      "since": "2021.3"
     },
     {
       "key": "DragAndDrop.borderColor",

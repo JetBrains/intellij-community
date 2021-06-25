@@ -321,7 +321,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Checks if it is possible to add the specified element as a child to this element,
    * and throws an exception if the add is not possible. Does not actually modify anything.
    *
-   * @param element the child element to check the add possibility.
+   * @param element the child element to check the addition possibility.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
    */
@@ -370,7 +370,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Checks if it is possible to delete the specified element from the tree,
-   * and throws an exception if the add is not possible. Does not actually modify anything.
+   * and throws an exception if the addition is not possible. Does not actually modify anything.
    *
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
@@ -533,7 +533,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param lastParent the child of this element has been processed during the previous
    *                   step of the tree up walk (declarations under this element do not need
    *                   to be processed again)
-   * @param place      the original element from which the tree up walk was initiated.
+   * @param place      the original element from which the tree walk-up was initiated.
    * @return true if the declaration processing should continue or false if it should be stopped.
    */
   boolean processDeclarations(@NotNull PsiScopeProcessor processor,

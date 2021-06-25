@@ -293,6 +293,9 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
+      titledRow(message("group.quick.documentation")) {
+        row { checkBox(cdShowQuickDocOnMouseMove) }
+      }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
         titledRow(message("group.refactorings")) {
           row {
@@ -344,9 +347,6 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         for (configurable in configurables) {
           appendDslConfigurableRow(configurable)
         }
-      }
-      titledRow(message("group.quick.documentation")) {
-        row { checkBox(cdShowQuickDocOnMouseMove) }
       }
       titledRow(message("group.editor.tooltips")) {
         row {

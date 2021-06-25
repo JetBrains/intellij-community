@@ -136,6 +136,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   public static final Key<Boolean> SINGLETON_EDITOR_IN_WINDOW = Key.create("OPEN_OTHER_TABS_IN_MAIN_WINDOW");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
+  public static final String EDITOR_OPEN_INACTIVE_SPLITTER = "editor.open.inactive.splitter";
 
   public enum OpenMode {
     NEW_WINDOW,
@@ -754,7 +755,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     EditorWindow windowToOpenIn = window;
-    if (windowToOpenIn == null && options.getReuseOpen()) {
+    if (windowToOpenIn == null && (options.getReuseOpen() || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file);
     }
     if (windowToOpenIn == null) {
@@ -774,7 +775,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       EditorWindow[] windows = splitters.getWindows();
       for (EditorWindow window : windows) {
         if (isFileOpenInWindow(file, window)) {
-          if (AdvancedSettings.getBoolean("editor.open.inactive.splitter")) {
+          if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
             return window;
           }
 

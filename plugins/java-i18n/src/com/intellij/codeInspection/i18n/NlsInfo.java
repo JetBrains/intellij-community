@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +13,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public abstract class NlsInfo implements RestrictionInfo {
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
-  private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE);
+  private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE, AnnotationUtil.PROPERTY_KEY);
   private final @NotNull ThreeState myNls;
 
   private NlsInfo(@NotNull ThreeState nls) {

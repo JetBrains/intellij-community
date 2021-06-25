@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Toggleable {
   /**
    * A property for the presentation to hold the state of the toggleable action.
-   * Normally you should not use this directly.
+   * Normally, you should not use this directly.
    * Use {@link #isSelected(Presentation)} and {@link #setSelected(Presentation, boolean)} methods instead.
    */
   @ApiStatus.Internal
@@ -48,7 +48,7 @@ public interface Toggleable {
   }
 
   /**
-   * Sets the selected state for given presentation (assuming it's a presentation of a toggleable action)
+   * Sets the selected state for the given presentation (assuming it's a presentation of a toggleable action)
    * @param presentation presentation to update
    * @param selected whether the state should be "selected" or "not selected".
    */

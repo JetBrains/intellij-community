@@ -15,6 +15,7 @@ import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -84,6 +85,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -102,6 +104,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   public static final String ID = "ShowUsages";
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
+  private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewProperyKey";
 
   private static int ourPopupDelayTimeout = 300;
 
@@ -652,15 +655,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
-      setDimensionServiceKey(DIMENSION_SERVICE_KEY).
-      setItemChoosenCallback(itemChoseCallback);
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
-    boolean addCodePreview = Registry.is("ide.show.usages.code.preview");
+    PropertiesComponent properties = PropertiesComponent.getInstance(project);
+    boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
     JBSplitter contentSplitter = null;
     if (addCodePreview) {
-      contentSplitter = new OnePixelSplitter(true, .5f);
-      contentSplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+      contentSplitter = new OnePixelSplitter(true, .6f);
       contentSplitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+      contentSplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.DISTRIBUTE);
       contentSplitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
       builder.setContentSplitter(contentSplitter);
     }
@@ -708,6 +711,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     DefaultActionGroup filteringGroup = new DefaultActionGroup();
     usageView.addFilteringActions(filteringGroup);
     filteringGroup.add(ActionManager.getInstance().getAction("UsageGrouping.FileStructure"));
+    filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetails) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return properties.isValueSet(PREVIEW_PROPERTY_KEY);
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        properties.setValue(PREVIEW_PROPERTY_KEY, state);
+        cancel(popupRef.get());
+        showUsagesInMaximalScope(parameters, actionHandler);
+      }
+    });
 
     JPanel northPanel = new JPanel(new GridBagLayout());
     GridBag gc = new GridBag().nextLine();
@@ -761,7 +777,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(project, usageView.getPresentation(), false) {
         @Override
         public Dimension getPreferredSize() {
-          return new Dimension(table.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
+          return new Dimension(table.getWidth(), Math.max(getHeight(), getLineHeight() * 5));
         }
       };
 
@@ -771,6 +787,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel.createComponent(), BorderLayout.CENTER);
       contentSplitter.setSecondComponent(previewPanel);
+
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
+          if (event.getSource() != table) return false;
+          itemChoseCallback.run();
+          return true;
+        }
+      }.installOn(table);
+
+      builder.setAutoselectOnMouseMove(false).setCloseOnEnter(false);
 
       Runnable updatePreviewRunnable = () -> {
         if (Disposer.isDisposed(popupRef.get())) return;
@@ -815,6 +842,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
           previewUpdater.addRequest(updatePreviewRunnable, 50);
         }
       });
+    }
+    else {
+      builder.setAutoselectOnMouseMove(true).setItemChoosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
     popupRef.set((AbstractPopup)builder.createPopup());
@@ -1017,7 +1047,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         calcMaxWidth(table); // compute column widths
       }
       else {
-        setPopupSize(table, popup, popupPosition, minWidth, data);
+        PropertiesComponent properties = PropertiesComponent.getInstance(usageView.getProject());
+        setPopupSize(table, popup, popupPosition, minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), data);
       }
     }
   }
@@ -1044,6 +1075,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                    @NotNull AbstractPopup popup,
                                    @NotNull RelativePoint popupPosition,
                                    @NotNull IntRef minWidth,
+                                   boolean showCodePreview,
                                    @NotNull List<? extends UsageNode> data) {
 
     if (isCodeWithMeClientInstance(popup)) return;
@@ -1067,7 +1099,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     int minHeight = headerSize.height + toolbarSize.height;
 
-    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size());
+    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size(), showCodePreview);
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
 
@@ -1080,8 +1112,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Dimension previewSize = JBUI.emptySize();
     if (splitter != null) {
       JComponent second = splitter.getSecondComponent();
-      Rectangle bounds = second.getBounds();
-      previewSize = bounds.isEmpty() ? second.getPreferredSize() : bounds.getSize();
+      //Rectangle bounds = second.getBounds();
+      //previewSize = bounds.isEmpty() ? second.getPreferredSize() : bounds.getSize();
+      previewSize = second.getPreferredSize();
+      previewSize.height += splitter.getDividerWidth();
     }
 
     rectangle.height += previewSize.height;
@@ -1095,9 +1129,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   @NotNull
-  private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
+  private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows,
+                                              boolean showCodePreview) {
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    int visibleRows = Math.min(Registry.is("ide.show.usages.code.preview") ? 20 : 30, modelRows);
+    int visibleRows = Math.min(showCodePreview ? 20 : 30, modelRows);
     int rowHeight = table.getRowHeight();
     int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
     int height = visibleRows * rowHeight + minHeight + space;

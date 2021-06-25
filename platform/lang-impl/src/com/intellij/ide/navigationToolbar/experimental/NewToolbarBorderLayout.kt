@@ -7,17 +7,26 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import javax.swing.JComponent
 
 class NewToolbarBorderLayout : BorderLayout() {
   private var lastTarget: Container? = null
+  private val componentListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      layoutContainer(lastTarget)
+    }
+    override fun componentMoved(e: ComponentEvent?) {
+      layoutContainer(lastTarget)
+    }
+  }
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
+
     super.addLayoutComponent(comp, constraints)
-    comp?.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        layoutContainer(lastTarget)
-      }
-    })
+    if(comp is JComponent){
+      comp.components.forEach { it.addComponentListener(componentListener) }
+    }
+    comp?.addComponentListener(componentListener)
   }
 
   override fun layoutContainer(target: Container?) {
@@ -56,7 +65,7 @@ class NewToolbarBorderLayout : BorderLayout() {
         left += d.width + hgap
       }
       if (getLayoutComponent(CENTER).also { c = it } != null) {
-        c!!.setBounds(right - c!!.preferredSize.width, top, right - left, bottom - top)
+        c!!.setBounds(right - c!!.preferredSize.width, top, c!!.preferredSize.width, bottom - top)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
@@ -35,6 +35,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.</p>
  *
  * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} instead.</p>
+ * <p>Use {@link Notifications.Bus} to show notifications.</p>
  *
  * @see NotificationAction
  * @see com.intellij.notification.SingletonNotificationManager
@@ -80,7 +81,7 @@ public class Notification {
   }
 
   /**
-   * @param groupId notification group id registered in {@code plugin.xml} via {@link com.intellij.notification.impl.NotificationGroupEP}
+   * @param groupId notification group ID registered in {@code plugin.xml} via {@link com.intellij.notification.impl.NotificationGroupEP}
    * @param title   an optional title (use an empty string ({@code ""}) to display the content without a title)
    */
   public Notification(@NotNull String groupId,

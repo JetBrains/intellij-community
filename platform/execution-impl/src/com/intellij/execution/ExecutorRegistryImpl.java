@@ -13,12 +13,8 @@ import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarExecutorGroup;
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarExecutorGroupAction;
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarGroupProcessAction;
-import com.intellij.execution.segmentedRunDebugWidget.RunToolbarProcessAction;
-import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
-import com.intellij.execution.stateWidget.*;
+import com.intellij.execution.runToolbar.*;
+import com.intellij.execution.runToolbar.RunToolbarProcess;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
@@ -121,8 +117,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
       .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
 
-    if(StateWidgetProcess.isAvailable()) {
-      StateWidgetProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
+    if(RunToolbarProcess.isAvailable()) {
+      RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 
           ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
@@ -134,7 +130,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             presentation.setText(process.getName());
             presentation.setDescription(executor.getDescription());
 
-            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.RUN_WIDGET_GROUP,
+            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                   myRunWidgetIdToAction);
           } else {
             RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
@@ -148,7 +144,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
         else {
           ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
-          registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.RUN_WIDGET_GROUP,
+          registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                 myRunWidgetIdToAction);
         }
       });
@@ -197,8 +193,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
     unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
 
-    StateWidgetProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-      unregisterAction(process.getActionId(), StateWidgetProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
+    RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
+      unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
 
       if (executor instanceof ExecutorGroup) {
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),

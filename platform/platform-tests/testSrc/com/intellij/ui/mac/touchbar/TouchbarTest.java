@@ -20,7 +20,7 @@ public class TouchbarTest {
 
     final TouchBar testTB = _createTestScrubberTouchbar();
     testTB.selectVisibleItemsToShow();
-    NST.setTouchBar(null, testTB);
+    testTB.setTo(null);
 
     final JFrame f = new JFrame();
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

@@ -2,6 +2,7 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -17,6 +18,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -26,6 +28,7 @@ import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
 import kotlin.math.min
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
@@ -59,7 +62,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
           LearnBundle.message("learn.stop.lesson"),
           FeaturesTrainerIcons.Img.PluginIcon
         )
-        if(userDecision != Messages.OK) {
+        if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
         }
       }
@@ -67,8 +70,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     openManyFiles()
 
-    actionTask("RecentFiles") {
-      LessonsBundle.message("recent.files.show.recent.files", action(it))
+    task("RecentFiles") {
+      text(LessonsBundle.message("recent.files.show.recent.files", action(it)))
+      triggerOnLabelShown(IdeBundle.message("title.popup.recent.files"))
+      test { actions(it) }
     }
 
     task("rfd") {
@@ -77,7 +82,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
       stateCheck { checkRecentFilesSearch(it) }
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         ideFrame {
           waitComponent(Switcher.SwitcherPanel::class.java)
@@ -97,8 +102,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       }
     }
 
-    actionTask("RecentFiles") {
-      LessonsBundle.message("recent.files.use.recent.files.again", action(it))
+    task("RecentFiles") {
+      text(LessonsBundle.message("recent.files.use.recent.files.again", action(it)))
+      triggerOnLabelShown(IdeBundle.message("title.popup.recent.files"))
+      test { actions(it) }
     }
 
     var initialRecentFilesCount = -1
@@ -114,7 +121,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         curRecentFilesCount = focusOwner.itemsCount
         initialRecentFilesCount - curRecentFilesCount >= countOfFilesToDelete
       }
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         repeat(countOfFilesToDelete) {
           invokeActionViaShortcut("DELETE")
@@ -128,15 +135,17 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { invokeActionViaShortcut("ESCAPE") }
     }
 
-    actionTask("RecentLocations") {
-      LessonsBundle.message("recent.files.show.recent.locations", action(it))
+    task("RecentLocations") {
+      text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
+      triggerOnLabelShown(IdeBundle.message("recent.locations.popup.title"))
+      test { actions(it) }
     }
 
     task(stringForRecentFilesSearch) {
       text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
       stateCheck { checkRecentLocationsSearch(it) }
       triggerByUiComponentAndHighlight(false, false) { _: SearchTextField -> true } // needed in next task to restore if search field closed
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         ideFrame {
           waitComponent(JBList::class.java)
@@ -201,8 +210,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     return enteredPrefix.equals(expected, ignoreCase = true)
   }
 
-  private fun TaskContext.restoreIfRecentFilesPopupClosed() {
-    restoreState(delayMillis = defaultRestoreDelay) { focusOwner !is JBList<*> }
+  private fun TaskContext.triggerOnLabelShown(@Nls labelText: String) {
+    triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
+      ui.text?.contains(labelText) == true
+    }
   }
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties

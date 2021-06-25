@@ -1600,7 +1600,7 @@
 
     <!--group.names.naming.conventions-->
     <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="NewClassNamingConvention" bundle="messages.InspectionGadgetsBundle" key="class.naming.convention.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.class" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.class" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
     <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>

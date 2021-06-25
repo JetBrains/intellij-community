@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SimpleTimerTask;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -563,7 +564,11 @@ final class TouchBarsManager {
           ApplicationManager.getApplication().invokeLater(atb::updateActionItems);
         }
 
-        NST.setTouchBar(myWindow != null ? myWindow.get() : null, myLastShownTouchbar);
+        Window window = myWindow != null ? myWindow.get() : null;
+        if (myLastShownTouchbar != null)
+          myLastShownTouchbar.setTo(window);
+        else
+          NST.setTouchBar(window, ID.NIL);
       }, CHANGE_DELAY);
     }
   }

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.highlighter.markers.resolveDeclarationWithParents
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.explicateAsText
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
@@ -371,7 +372,7 @@ internal fun checkNewNameUsagesRetargeting(
         return
     }
 
-    val operator = declaration.safeAs<KtModifierListOwner>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
+    val operator = declaration.isOperator()
 
     for (candidateDescriptor in declaration.getResolutionScope().getRelevantDescriptors(declaration, newName)) {
         val candidate =
@@ -386,5 +387,18 @@ internal fun checkNewNameUsagesRetargeting(
             .mapTo(SmartList<UsageInfo>()) { MoveRenameUsageInfo(it, candidate) }
         checkUsagesRetargeting(candidate, declaration, currentName, false, listOf(descriptor), usages, newUsages)
         usages.filterIsInstanceTo<KtResolvableCollisionUsageInfo, MutableList<UsageInfo>>(newUsages)
+    }
+}
+
+internal fun KtElement.isOperator(): Boolean {
+    val namedFunction = safeAs<KtNamedFunction>() ?: return false
+    if (namedFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) return true
+    // operator modifier could be omitted for overriding function
+    if (!namedFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+
+    val resolveWithParents = resolveDeclarationWithParents(this as KtNamedFunction)
+    return resolveWithParents.overriddenDescriptors.any {
+        val psi = it.source.getPsi() ?: return@any false
+        psi !is KtElement || psi.safeAs<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
     }
 }

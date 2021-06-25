@@ -16,7 +16,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * IntelliJ Platform uses logging and statistics for actions. Please use this interface for actions with same action class
+ * IntelliJ Platform uses logging and statistics for actions. Please use this interface for actions with the same action class
  * but different business logic passed in constructor.
  *
  * @author Konstantin Bulenkov

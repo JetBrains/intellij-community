@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import org.jetbrains.idea.maven.navigator.MavenNavigationUtil.createNavigatableForDependency
+import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
@@ -35,7 +35,7 @@ private class MavenModuleTransformer : ModuleTransformer {
             moduleType = MavenProjectModuleType,
             navigatableDependency = { groupId, artifactId, _ ->
                 mavenProject.findDependencies(groupId, artifactId).firstOrNull()?.let {
-                    createNavigatableForDependency(project, buildFile, it)
+                    MavenNavigationUtil.createNavigatableForDependency(project, buildFile, it)
                 }
             },
         )

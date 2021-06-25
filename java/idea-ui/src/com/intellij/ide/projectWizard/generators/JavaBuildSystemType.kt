@@ -48,7 +48,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSetti
                                       FileChooserDescriptorFactory.createSingleFolderDescriptor())
           }
         }
-      }
+      }.largeGapAfter()
     }
 
   override fun setupProject(project: Project, languageSettings: JavaSettings, settings: IntelliJBuildSystemSettings) {

@@ -456,7 +456,15 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
         if (component instanceof ToolWindowsPane) {
-          ui.window.getDecorator().updateBounds(e);
+          if (ui.window.getType() == ToolWindowType.SLIDING) {
+            ui.window.getDecorator().updateBounds(e);
+          } else {
+            Dimension size = ui.window.getDecorator().getSize();
+            if (ui.window.getAnchor().isHorizontal()) {
+              size.height = myInitialHeight.get() - myLastPoint.get().y + myPressPoint.get().y;
+            }
+            ui.window.getDecorator().setSize(size);
+          }
         }
       }
     };

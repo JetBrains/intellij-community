@@ -172,13 +172,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
-    if (windowInfo == info) {
-      return
-    }
-
     windowInfo = info
-    val decorator = decorator
     contentUi?.setType(info.contentUiType)
+    val decorator = decorator
     if (decorator != null) {
       decorator.applyWindowInfo(info)
       decorator.validate()

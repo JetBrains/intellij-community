@@ -4,11 +4,12 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.ThreeState;
 
 
 @State(
   name = "libraryTable",
-  storages = @Storage(value = "applicationLibraries.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "applicationLibraries.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

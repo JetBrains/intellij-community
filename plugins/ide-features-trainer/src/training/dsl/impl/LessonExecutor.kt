@@ -24,6 +24,7 @@ import training.statistic.StatisticBase
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
 import java.awt.Component
+import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
 internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
@@ -56,7 +57,11 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
   val editor: Editor
     get() = selectedEditor ?: throw NoTextEditor()
 
-  data class TaskData(var shouldRestoreToTask: (() -> TaskContext.TaskId?)? = null,
+  /**
+   * @property [shouldRestore] - function that should invoke some check for restore
+   * and return the function that will apply restore if restore required, null otherwise.
+   */
+  data class TaskData(var shouldRestore: (() -> (() -> Unit)?)? = null,
                       var transparentRestore: Boolean? = null,
                       var delayMillis: Int = 0)
 
@@ -67,6 +72,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
   private var currentRecorder: ActionsRecorder? = null
   private var currentRestoreRecorder: ActionsRecorder? = null
+  private var currentRestoreFuture: CompletableFuture<Boolean>? = null
   internal var currentTaskIndex = 0
     private set
   private var currentVisualIndex = 1
@@ -127,6 +133,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
   override fun dispose() {
     if (!hasBeenStopped) {
       ApplicationManager.getApplication().assertIsDispatchThread()
+      clearRestore()
       disposeRecorders()
       hasBeenStopped = true
       taskActions.clear()
@@ -142,6 +149,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     currentRecorder = null
     currentRestoreRecorder?.let { Disposer.dispose(it) }
     currentRestoreRecorder = null
+    currentRestoreFuture = null
   }
 
   val virtualFile: VirtualFile
@@ -234,6 +242,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
   }
 
   internal fun applyRestore(taskContext: TaskContextImpl, restoreId: TaskContext.TaskId? = null) {
+    clearRestore()
     taskContext.steps.forEach { it.cancel(true) }
     val restoreIndex = restoreId?.idx ?: taskActions[taskContext.taskIndex].restoreIndex
     val restoreInfo = taskActions[restoreIndex]
@@ -250,59 +259,41 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     return i
   }
 
-  /** @return a callback to clear resources used to track restore */
-  private fun checkForRestore(taskContext: TaskContextImpl,
-                              taskData: TaskData): () -> Unit {
-    var clearRestore: () -> Unit = {}
+  private fun checkForRestore(taskContext: TaskContextImpl, taskData: TaskData) {
+    val shouldRestore = taskData.shouldRestore ?: return
+    val restoreRecorder = ActionsRecorder(project, selectedEditor?.document, this)
+    currentRestoreRecorder = restoreRecorder
 
-    fun restore(restoreId: TaskContext.TaskId) {
-      clearRestore()
-      invokeLater(ModalityState.any()) { // restore check must be done after pass conditions (and they will be done during current event processing)
-        if (canBeRestored(taskContext)) {
-          applyRestore(taskContext, restoreId)
-        }
-      }
-    }
-
-    val shouldRestoreToTask = taskData.shouldRestoreToTask ?: return {}
-
-    fun checkFunction(): Boolean {
+    fun checkFunction() {
       if (hasBeenStopped) {
         // Strange situation
         clearRestore()
-        return false
+        return
       }
-
-      val checkAndRestoreIfNeeded = {
-        if (canBeRestored(taskContext)) {
-          val restoreId = shouldRestoreToTask()
-          if (restoreId != null) {
-            restore(restoreId)
+      val restoreFunction = shouldRestore() ?: return
+      val restoreIfNeeded = {
+        invokeLater(ModalityState.any()) {
+          if (canBeRestored(taskContext)) {
+            restoreFunction()
           }
         }
       }
       if (taskData.delayMillis == 0) {
-        checkAndRestoreIfNeeded()
+        restoreIfNeeded()
       }
       else {
-        Alarm().addRequest(checkAndRestoreIfNeeded, taskData.delayMillis)
-      }
-      return false
-    }
-
-    // Not sure about use-case when we need to check restore at the start of current task
-    // But it theoretically can be needed in case of several restores of dependent steps
-    if (checkFunction()) return {}
-
-    val restoreRecorder = ActionsRecorder(project, selectedEditor?.document, this)
-    currentRestoreRecorder = restoreRecorder
-    val restoreFuture = restoreRecorder.futureCheck { checkFunction() }
-    clearRestore = {
-      if (!restoreFuture.isDone) {
-        restoreFuture.cancel(true)
+        Alarm().addRequest(restoreIfNeeded, taskData.delayMillis)
       }
     }
-    return clearRestore
+    currentRestoreFuture = restoreRecorder.futureCheck { checkFunction(); false }
+  }
+
+  private fun clearRestore() {
+    val future = currentRestoreFuture ?: return
+    if (!future.isDone) {
+      future.cancel(true)
+    }
+    LessonManager.instance.clearRestoreMessage()
   }
 
   private fun chainNextTask(taskContext: TaskContextImpl,
@@ -311,7 +302,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     val taskInfo = taskActions[currentTaskIndex]
     taskInfo.transparentRestore = taskData.transparentRestore
 
-    val clearRestore = checkForRestore(taskContext, taskData)
+    checkForRestore(taskContext, taskData)
 
     recorder.tryToCheckCallback()
 

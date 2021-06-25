@@ -184,7 +184,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
                                    Project project,
                                    JBPopup balloon) {
-    if(initEvent.getPlace().equals(ActionPlaces.NEW_TOOLBAR)){
+    if(initEvent.getPlace().equals(ActionPlaces.RUN_TOOLBAR)){
       var component = (Component)initEvent.getInputEvent().getSource();
       balloon.setLocation(component.getLocationOnScreen());
       ((AbstractPopup)balloon).show(component, 0, 0, true);

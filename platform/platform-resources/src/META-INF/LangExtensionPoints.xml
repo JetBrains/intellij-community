@@ -248,7 +248,7 @@
     <extensionPoint name="programRunner" interface="com.intellij.execution.runners.ProgramRunner" dynamic="true"/>
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner" dynamic="true"/>
     <extensionPoint name="executor" interface="com.intellij.execution.Executor" dynamic="true"/>
-    <extensionPoint name="stateWidgetProcess" interface="com.intellij.execution.stateExecutionWidget.StateWidgetProcess" dynamic="true"/>
+    <extensionPoint name="runToolbarProcess" interface="com.intellij.execution.runToolbar.RunToolbarProcess" dynamic="true"/>
     <extensionPoint name="executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate" dynamic="true"/>
@@ -422,6 +422,8 @@
     <extensionPoint name="moduleBuilder" beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory" dynamic="true">
       <with attribute="builderClass" implements="com.intellij.ide.util.projectWizard.ModuleBuilder"/>
     </extensionPoint>
+
+    <extensionPoint name="moduleNameGenerator" interface="com.intellij.ide.util.projectWizard.ModuleNameGenerator" dynamic="true"/>
 
     <extensionPoint name="projectTemplateParameterFactory" interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory" dynamic="true"/>
     <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor" dynamic="true"/>

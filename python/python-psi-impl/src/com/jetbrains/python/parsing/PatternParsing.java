@@ -114,10 +114,7 @@ public class PatternParsing extends Parsing {
   private boolean parseClassPattern() {
     if (atToken(PyTokenTypes.IDENTIFIER)) {
       SyntaxTreeBuilder.Marker mark = myBuilder.mark();
-      if (!parseReferenceExpression()) {
-        mark.drop();
-        return false;
-      }
+      parseReferenceExpression();
       if (!atToken(PyTokenTypes.LPAR)) {
         mark.rollbackTo();
         return false;
@@ -316,6 +313,7 @@ public class PatternParsing extends Parsing {
     return false;
   }
 
+  /** @noinspection UnusedReturnValue*/
   private boolean parseReferenceExpression() {
     if (atToken(PyTokenTypes.IDENTIFIER)) {
       SyntaxTreeBuilder.Marker refExpr = myBuilder.mark();

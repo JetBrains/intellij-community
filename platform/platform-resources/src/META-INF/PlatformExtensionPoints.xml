@@ -94,6 +94,8 @@
     <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
 
+    <extensionPoint name="undoReportHandler" interface="com.intellij.openapi.command.impl.UndoReportHandler" dynamic="true"/>
+
     <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT"/>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
@@ -35,7 +35,7 @@ import javax.swing.JComponent
 
 internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(null)
+  private val contentPanel = JCEFHtmlPanel(true, null, null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)

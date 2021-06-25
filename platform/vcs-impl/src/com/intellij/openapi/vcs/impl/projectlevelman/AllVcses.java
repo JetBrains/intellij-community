@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -295,7 +295,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          PluginNode descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(vcs.pluginId.getIdString(), null, indicator);
+          PluginNode descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(vcs.pluginId, null, indicator);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {

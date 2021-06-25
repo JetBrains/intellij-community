@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -30,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

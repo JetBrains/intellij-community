@@ -16,14 +16,13 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName as getKotlinFqNameOriginal
 
 infix fun SearchScope.and(otherScope: SearchScope): SearchScope = intersectWith(otherScope)
@@ -97,6 +96,8 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
     return searchScope is LocalSearchScope && searchScope.scope.all { it.containingFile is KtFile }
 }
 
+fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
+
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
     scope: GlobalSearchScope,
@@ -145,3 +146,13 @@ fun PsiReference.isImportUsage(): Boolean =
     replaceWith = ReplaceWith("getKotlinFqName()", "org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName")
 )
 fun PsiElement.getKotlinFqName(): FqName? = getKotlinFqNameOriginal()
+
+fun KtElement.isPotentiallyOperator(): Boolean {
+    val namedFunction = safeAs<KtNamedFunction>() ?: return false
+    if (namedFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) return true
+    // operator modifier could be omitted for overriding function
+    if (!namedFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+
+    // TODO: it's fast PSI-based check, a proper check requires call to resolveDeclarationWithParents() that is not frontend-independent
+    return true
+}

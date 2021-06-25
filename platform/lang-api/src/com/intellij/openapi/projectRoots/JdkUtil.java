@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -40,21 +40,9 @@ public final class JdkUtil {
 
   private JdkUtil() { }
 
-  /**
-   * Returns the specified attribute of the JDK (examines 'rt.jar'), or {@code null} if cannot determine the value.
-   */
+  /** @deprecated outdated, please use {@link org.jetbrains.jps.model.java.JdkVersionDetector} instead */
+  @Deprecated
   public static @Nullable String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
-    if (attribute == Attributes.Name.IMPLEMENTATION_VERSION) {
-      // optimization: JDK version string is cached
-      String versionString = jdk.getVersionString();
-      if (versionString != null) {
-        int start = versionString.indexOf('"'), end = versionString.lastIndexOf('"');
-        if (start >= 0 && end > start) {
-          return versionString.substring(start + 1, end);
-        }
-      }
-    }
-
     String homePath = jdk.getHomePath();
     if (homePath != null) {
       File signatureJar = FileUtil.findFirstThatExist(
@@ -73,9 +61,7 @@ public final class JdkUtil {
 
   public static @Nullable String suggestJdkName(@Nullable String versionString) {
     JavaVersion version = JavaVersion.tryParse(versionString);
-    if (version == null) return null;
-
-    return suggestJdkName(version, null);
+    return version == null ? null : suggestJdkName(version, null);
   }
 
   public static @NotNull String suggestJdkName(@NotNull JavaVersion version, @Nullable String vendorPrefix) {

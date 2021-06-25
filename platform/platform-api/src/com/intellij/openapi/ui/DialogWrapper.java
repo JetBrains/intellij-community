@@ -481,6 +481,10 @@ public abstract class DialogWrapper {
   @Nullable
   protected Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
+      if ((SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance"))
+          || (SystemInfo.isWindows && SystemInfo.isJetBrainsJvm)) {
+        return JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      }
       return JBUI.Borders.empty();
     }
     return createDefaultBorder();
@@ -1783,6 +1787,10 @@ public abstract class DialogWrapper {
         doCancelAction(e);
       }
     };
+  }
+
+  protected @NotNull Map<Action, JButton> getButtonMap() {
+    return myButtonMap;
   }
 
   private void focusButton(boolean next) {

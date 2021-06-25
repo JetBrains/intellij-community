@@ -269,6 +269,8 @@ class Main {
         break;
       case Float d:
         System.out.println("float");
+      default:
+        System.out.println("ok");
     }
   }
 
@@ -462,12 +464,13 @@ class Main {
     };
   }
 
-  void completeness(Day d) {
+  void completeness(Day d, I i, I2 i2) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
     }
 
+    // If the type of the selector expression is an enum type E
     String str;
     <error descr="The switch statement does not cover all possible input values">switch</error> (d) {
       case Day dd && dd != null:
@@ -498,10 +501,75 @@ class Main {
       default:
         System.out.println("mon");
     };
+
+    // If the type of the selector expression, T, names a sealed interface or a sealed class that is abstract
+    switch(i) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+      case Sub3 s3:
+        System.out.println("ok");
+        break;
+    }
+    str = switch(i) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+      case Sub3 s3 -> "ok";
+    };
+
+    <error descr="The switch statement does not cover all possible input values">switch</error> (i) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+    }
+    str = <error descr="The switch expression does not cover all possible input values">switch</error>(i) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+    };
+    switch (i) {
+      case Sub1 s1:
+        System.out.println("ok");
+        break;
+      case Sub2 s2:
+        System.out.println("ok");
+        break;
+      case Sub4 s4:
+        System.out.println("ok");
+        break;
+      case Sub6 s6:
+        System.out.println("ok");
+        break;
+    }
+    str = switch(i) {
+      case Sub1 s1 -> "ok";
+      case Sub2 s2 -> "ok";
+      case Sub4 s4 -> "ok";
+      case Sub6 s6 -> "ok";
+    };
+
+    // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
+    <error descr="The switch statement does not cover all possible input values">switch</error> (i2) {
+      case Sub7 s1:
+        System.out.println("ok");
+        break;
+      case Sub8 s2:
+        System.out.println("ok");
+        break;
+    }
+    str = <error descr="The switch expression does not cover all possible input values">switch</error> (i2) {
+      case Sub7 s1 -> "ok";
+      case Sub8 s2 -> "ok";
+    };
   }
 }
 
-sealed interface I permits Sub1, Sub2, Sub3 {
+sealed interface I {
 }
 
 enum Day {
@@ -514,10 +582,23 @@ final class Sub1 implements I {
 final class Sub2 implements I {
 }
 
-sealed class Sub3 implements I permits Sub4 {
+sealed class Sub3 implements I {
 }
 
 final class Sub4 extends Sub3 {
 }
 
-final class Sub5 {}
+final class Sub5 {
+}
+
+final class Sub6 extends Sub3 {
+}
+
+interface I2 {
+}
+
+class Sub7 implements I2 {
+}
+
+class Sub8 implements I2 {
+}

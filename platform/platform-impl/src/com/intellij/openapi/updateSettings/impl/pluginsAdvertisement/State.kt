@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -21,6 +20,8 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -74,8 +75,11 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       get() = service<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
-    fun getFullExtension(fileName: String): String? = Strings.toLowerCase(FileUtilRt.getExtension(fileName)).takeIf { it.isNotEmpty() }?.let  { "*.$it" }
+    fun getFullExtension(fileName: String): String? = Strings.toLowerCase(
+      FileUtilRt.getExtension(fileName)).takeIf { it.isNotEmpty() }?.let { "*.$it" }
 
+    @RequiresBackgroundThread
+    @RequiresNoReadLock
     private fun requestCompatiblePlugins(
       extensionOrFileName: String,
       dataSet: Set<PluginData>,
@@ -137,10 +141,9 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
     state[matcher.presentableString] = descriptor
   }
 
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   fun updateCache(extensionOrFileName: String): Boolean {
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed)
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
-
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }
