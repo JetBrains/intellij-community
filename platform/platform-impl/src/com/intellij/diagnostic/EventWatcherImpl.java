@@ -146,6 +146,15 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   }
 
   @Override
+  public void reset() {
+    myWrappers.clear();
+    myDurationsByFqn.clear();
+    myRunnables.clear();
+    myEventsByClass.clear();
+
+  }
+
+  @Override
   public void dispose() {
     myLogFileWriter.dump();
 

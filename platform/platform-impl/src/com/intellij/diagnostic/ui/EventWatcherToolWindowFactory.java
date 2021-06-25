@@ -4,15 +4,21 @@ package com.intellij.diagnostic.ui;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ToggleActionButton;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,13 +27,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @ApiStatus.Experimental
 final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
+
+  private static final int MS_FOR_FPS_60 = 16;
 
   @Override
   public void createToolWindowContent(@NotNull Project project,
@@ -57,6 +69,9 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
+
+    private final @NotNull AtomicBoolean myInvocationsFilterEnabled = new AtomicBoolean(false);
+    private final @NotNull AtomicBoolean myRunnablesFilterEnabled = new AtomicBoolean(false);
 
     private final @NotNull List<Content> myContents;
 
@@ -99,9 +114,16 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       );
 
       myContents = Arrays.asList(
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.invocations"), myInvocationsModel),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.runnables"), myRunnablesModel),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel)
+        // XXX Get rid of all of those lambdas
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.invocations"), myInvocationsModel,
+                           o -> !myInvocationsFilterEnabled.get() || myInvocationsModel.getRowValue(o).getAverageDuration() > MS_FOR_FPS_60,
+                           () -> myInvocationsFilterEnabled.set(!myInvocationsFilterEnabled.get()),
+                           () -> myInvocationsFilterEnabled.get()),
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.runnables"), myRunnablesModel,
+                           o -> !myRunnablesFilterEnabled.get() || myRunnablesModel.getRowValue(o).getDuration() > MS_FOR_FPS_60,
+                           () -> myRunnablesFilterEnabled.set(!myRunnablesFilterEnabled.get()),
+                           () -> myRunnablesFilterEnabled.get()),
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel, null, null, null)
       );
     }
 
@@ -119,10 +141,69 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     }
 
     private static @NotNull Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
-                                                       @NotNull ListTableModel<?> tableModel) {
+                                                       @NotNull ListTableModel<?> tableModel,
+                                                       @Nullable Predicate<Integer> filter,
+                                                       @Nullable Runnable filterSwitcher,
+                                                       @Nullable Producer<Boolean> filterEnabled) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(new JBScrollPane(new TableView<>(tableModel)),
-                BorderLayout.CENTER);
+      TableView<?> tableView = new TableView<>(tableModel);
+      ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tableView);
+      decorator.disableUpDownActions();
+      decorator.disableAddAction();
+      decorator.disableRemoveAction();
+      decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
+      decorator.addExtraAction(new AnActionButton("Clear All", AllIcons.Actions.GC) { //NON-NLS
+        @Override
+        public boolean isDumbAware() {
+          return true;
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          EventWatcher watcher = EventWatcher.getInstanceOrNull();
+          if (watcher != null) {
+            watcher.reset();
+          }
+          tableModel.setItems(new ArrayList<>());
+        }
+      });
+      if (filter != null) {
+        decorator.addExtraAction(new ToggleActionButton("Filter 16ms", AllIcons.General.Filter) { //NON-NLS
+
+          @Override
+          public boolean isDumbAware() {
+            return true;
+          }
+
+          @Override
+          public boolean isSelected(AnActionEvent e) {
+            if (filterEnabled == null) {
+              return false;
+            }
+            else {
+              return filterEnabled.produce();
+            }
+          }
+
+          @Override
+          public void setSelected(AnActionEvent e, boolean state) {
+            if (filterSwitcher != null) {
+              filterSwitcher.run();
+              panel.repaint();
+            }
+          }
+        });
+
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableModel);
+        sorter.setRowFilter(new RowFilter<>() {
+          @Override
+          public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+            return filter.test(entry.getIdentifier());
+          }
+        });
+        tableView.setRowSorter(sorter);
+      }
+      panel.add(decorator.createPanel(), BorderLayout.CENTER);
 
       return ContentFactory.SERVICE
         .getInstance()
