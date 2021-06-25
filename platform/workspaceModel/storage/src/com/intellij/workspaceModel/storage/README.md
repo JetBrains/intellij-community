@@ -90,11 +90,19 @@ Workspace Model **does not** perform cascade removing for soft references, as it
 
 ## Entities removing
 
-TODO
+Entities removing is preformed with cascade removal of entities that are connected as children.
+E.g. on removing `ModuleEntity`, all connected `ContentRootEntity` will also be removed.
 
-## Events
+## Builder changes
 
-TODO
+Builder of the workspace model may generate all events with changes that were performed on this builder.
+This mechanism may be used to send events.
+
+The changes are generated only for modified entity.
+If the change was performed on two entities at the same time (this may happen on updating hard reference),
+only one event of explicitly updated entity is generated.
+
+TODO: Should we generate two events?
 
   
 ## `replaceBySource`
