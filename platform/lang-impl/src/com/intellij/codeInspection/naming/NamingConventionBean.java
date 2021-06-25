@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
+import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -26,7 +25,7 @@ public class NamingConventionBean {
 
   private final Set<String> myPredefinedNames = new HashSet<>();
 
-  public NamingConventionBean(@NonNls String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
+  public NamingConventionBean(@NonNls @RegExp String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
     m_regex = regex;
     m_minLength = minLength;
     m_maxLength = maxLength;
