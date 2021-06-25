@@ -58,6 +58,7 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1.1/j2objc-annotations-1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-jackson2/1.25.0/google-http-client-jackson2-1.25.0.jar!/" />
         </CLASSES>
+        <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/com/google/apis/google-api-services-drive/v3-rev197-1.25.0/google-api-services-drive-v3-rev197-1.25.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/api-client/google-api-client/1.25.0/google-api-client-1.25.0-sources.jar!/" />
