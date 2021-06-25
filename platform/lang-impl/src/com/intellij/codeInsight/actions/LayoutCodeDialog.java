@@ -29,9 +29,6 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myOnlyVCSChangedTextRb;
   private JRadioButton mySelectedTextRadioButton;
   private JRadioButton myWholeFileRadioButton;
-  private JPanel myActionsPanel;
-  private JPanel myScopePanel;
-  private JLabel myOptionalLabel;
 
   public LayoutCodeDialog(@NotNull Project project, @NotNull PsiFile file, boolean textSelected, String helpId) {
     super(project, true);
@@ -105,8 +102,6 @@ public class LayoutCodeDialog extends DialogWrapper {
     }
 
     myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
-
-    myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
   }
 
   @Nullable
