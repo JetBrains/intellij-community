@@ -1541,17 +1541,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
   }
 
+  private @Nullable Project getProjectDependingOnKey(String key) {
+    return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ? myProject : null;
+  }
+
   public void storeDimensionSize() {
     if (myDimensionServiceKey != null) {
       Dimension size = myContent.getSize();
       JBInsets.removeFrom(size, myContent.getInsets());
-      getWindowStateService(myProject).putSize(myDimensionServiceKey, size);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, size);
     }
   }
 
   private void storeLocation(final Point xy) {
     if (myDimensionServiceKey != null) {
-      getWindowStateService(myProject).putLocation(myDimensionServiceKey, xy);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putLocation(myDimensionServiceKey, xy);
     }
   }
 
@@ -2077,12 +2081,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private @Nullable Point getStoredLocation() {
     if (myDimensionServiceKey == null) return null;
-    return getWindowStateService(myProject).getLocation(myDimensionServiceKey);
+    return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getLocation(myDimensionServiceKey);
   }
 
   private @Nullable Dimension getStoredSize() {
     if (myDimensionServiceKey == null) return null;
-    return getWindowStateService(myProject).getSize(myDimensionServiceKey);
+    return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getSize(myDimensionServiceKey);
   }
 
   private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
