@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.scaleIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
@@ -29,6 +30,15 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
         showPopup(component, x, y)
       }
     })
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.apply {
+      icon = button.icon ?: AllIcons.Toolbar.Unknown
+      scaleIcon()
+      isEnabledAndVisible = true
+    }
   }
 
   override fun updateToolTipText() {
