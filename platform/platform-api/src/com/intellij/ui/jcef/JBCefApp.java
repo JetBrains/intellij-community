@@ -171,7 +171,7 @@ public final class JBCefApp {
       // NOTE: also can try
       // --override-use-software-gl-for-tests - Forces the use of software GL instead of hardware gpu.
       // --disable-gpu-rasterization - 	Disable GPU rasterization, i.e. rasterize on the CPU only. Overrides the kEnableGpuRasterization flag.
-      args = ArrayUtil.mergeArrays(args, new String[] {"--disable-gpu", "--disable-gpu-compositing"});
+      args = ArrayUtil.mergeArrays(args, "--disable-gpu", "--disable-gpu-compositing");
     }
 
     // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)
