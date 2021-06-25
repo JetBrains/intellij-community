@@ -268,7 +268,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "NOT: "+myBaseScope;
+      return "NOT: (" + myBaseScope + ")";
     }
   }
 
@@ -757,7 +757,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "(restricted by file types: "+Arrays.asList(myFileTypes)+" in "+ myBaseScope + ")";
+      return "Restricted by file types: " + Arrays.asList(myFileTypes) + " in (" + myBaseScope + ")";
     }
 
     @Override
