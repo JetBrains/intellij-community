@@ -23,6 +23,7 @@ import java.awt.event.*;
 public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
   public static final int DRAG_START_DEADZONE = 7;
   @NonNls private static final String DRAGGABLE_MARKER = "DRAGGABLE_MARKER";
+  private static int ourLastDragHash = 0;
 
   @NotNull
   protected final T myDragComponent;
@@ -126,12 +127,13 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   }
 
   @Override
-  public void mousePressed(final MouseEvent e) {
-    if (!canStartDragging(e)) return;
+  public final void mousePressed(final MouseEvent e) {
+    if (!canStartDragging(e) || ourLastDragHash == System.identityHashCode(e)) return;
 
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressedOnScreenPoint = new Point(myPressPointScreen);
     processMousePressed(e);
+    ourLastDragHash = System.identityHashCode(e);
   }
 
   @Override
