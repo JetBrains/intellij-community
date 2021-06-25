@@ -16,7 +16,7 @@ class OneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(
 
   override fun getValue(thisRef: Parent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
+      connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
     return thisRef.snapshot.extractOneToManyChildren(connectionId!!, thisRef.id)
   }
@@ -28,7 +28,7 @@ class ManyToOne private constructor() {
 
     override fun getValue(thisRef: Child, property: KProperty<*>): Parent {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, false, false)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, false)
       }
       return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id)!!
     }
@@ -39,7 +39,7 @@ class ManyToOne private constructor() {
 
     override fun getValue(thisRef: Child, property: KProperty<*>): Parent? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, true, false)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, true)
       }
       return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id)
     }
@@ -56,7 +56,7 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
 
   override fun getValue(thisRef: ModifParent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
     return thisRef.diff.extractOneToManyChildren(connectionId!!, thisRef.id)
   }
@@ -66,7 +66,7 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
     thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id, value)
   }
@@ -81,7 +81,7 @@ class MutableManyToOne private constructor() {
 
     override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false, false)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false)
       }
       return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id)!!
     }
@@ -91,7 +91,7 @@ class MutableManyToOne private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false, false)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false)
       }
       return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id, value)
     }
@@ -105,7 +105,7 @@ class MutableManyToOne private constructor() {
 
     override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true, false)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true)
       }
       return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id)
     }
@@ -115,7 +115,7 @@ class MutableManyToOne private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true, false)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true)
       }
       return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id, value)
     }

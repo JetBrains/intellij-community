@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.assertEquals
@@ -19,6 +20,7 @@ class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
+    ClassToIntConverter.clear()
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
 

@@ -15,7 +15,7 @@ class OneToOneParent private constructor() {
 
     override fun getValue(thisRef: Parent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)
     }
@@ -30,7 +30,7 @@ class OneToOneChild private constructor() {
 
     override fun getValue(thisRef: Child, property: KProperty<*>): Parent {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false)
       }
       return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
@@ -48,7 +48,7 @@ class MutableOneToOneParent private constructor() {
 
     override fun getValue(thisRef: ModifParent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
@@ -58,7 +58,7 @@ class MutableOneToOneParent private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
     }
@@ -74,7 +74,7 @@ class MutableOneToOneChild private constructor() {
 
     override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
@@ -84,7 +84,7 @@ class MutableOneToOneChild private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, true)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }

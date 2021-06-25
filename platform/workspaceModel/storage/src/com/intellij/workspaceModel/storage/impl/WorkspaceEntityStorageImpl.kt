@@ -639,7 +639,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
       //  2) Connections satisfy connectionId requirements
       if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass)
-      if (!connectionId.isChildNullable) checkStrongConnection(map.values, connectionId.parentClass, connectionId.childClass)
     }
 
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
@@ -681,10 +680,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
       //  2) Connections satisfy connectionId requirements
       if (!connectionId.isParentNullable) {
         checkStrongAbstractConnection(map.keys.mapTo(HashSet()) { it.id }, map.keys.toMutableSet().map { it.id.clazz }.toSet(),
-                                      connectionId.debugStr())
-      }
-      if (!connectionId.isChildNullable) {
-        checkStrongAbstractConnection(map.values.mapTo(HashSet()) { it.id }, map.values.toMutableSet().map { it.id.clazz }.toSet(),
                                       connectionId.debugStr())
       }
     }

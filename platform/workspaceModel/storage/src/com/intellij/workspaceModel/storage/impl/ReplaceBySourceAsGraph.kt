@@ -225,11 +225,7 @@ internal object ReplaceBySourceAsGraph {
           for (childId in childIds) {
             val child = thisBuilder.entityDataById(childId.id)
             if (child == null) {
-              if (connectionId.canRemoveChild()) {
-                thisBuilder.refs.removeParentToChildRef(connectionId, thisUnmatchedId.id.asParent(), childId)
-              }
-              else thisBuilder.rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore,
-                                                  replaceWith)
+              thisBuilder.refs.removeParentToChildRef(connectionId, thisUnmatchedId.id.asParent(), childId)
             }
           }
         }
@@ -284,11 +280,6 @@ internal object ReplaceBySourceAsGraph {
 
     // Some children left without parents. We should delete these children as well.
     for (entityId in lostChildren) {
-      if (thisBuilder.refs.getParentRefsOfChild(entityId.id.asChild()).any { !it.key.isChildNullable }) {
-        thisBuilder.rbsFailedAndReport(
-          "Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child",
-          sourceFilter, initialStore, replaceWith)
-      }
       thisBuilder.removeEntity(entityId.id)
     }
 
@@ -437,22 +428,6 @@ internal object ReplaceBySourceAsGraph {
         }
         return@mapNotNull null
       }.toMutableSet()
-
-    val replacingParentOneToOneConnections = replaceWith.refs
-      .getParentOneToOneRefsOfChild(matchedEntityId.id.asChild())
-      .filter { !it.key.isChildNullable }
-    refs.getParentOneToOneRefsOfChild(localEntityId.id.asChild())
-      .asSequence()
-      .filter { !it.key.isChildNullable }
-      .forEach { (connectionId, entityId) ->
-        val suggestedNewChildEntityId = replacingParentOneToOneConnections[connectionId] ?: return@forEach
-        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId.id)
-        if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
-          val childEntityData = entityDataByIdOrDie(entityId.id)
-          removeEntity(entityId.id) { it != localEntityId.id && !replaceMap.containsKey(it.asThis()) }
-          result.add(childEntityData)
-        }
-      }
     return result
   }
 

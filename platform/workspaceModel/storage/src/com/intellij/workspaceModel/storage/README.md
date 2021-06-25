@@ -66,4 +66,10 @@ This is made because of the following reasons:
 
   _This issue makes the behaviour of workspace model more unpredictable for the users._
   
+## `replaceBySource`
 
+TODO
+
+## `addDiff`
+
+TODO

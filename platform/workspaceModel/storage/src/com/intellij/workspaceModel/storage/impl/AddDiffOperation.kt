@@ -21,6 +21,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     for ((_, change) in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
+          @Suppress("UNCHECKED_CAST")
           change as ChangeEntry.AddEntity<WorkspaceEntity>
 
           checkPersistentId(change.entityData, null)
@@ -154,9 +155,6 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           if (target.entityDataById(sourceChildId.id) != null) {
             targetChildrenIds += sourceChildId
           }
-          else if (!connectionId.canRemoveChild()) {
-            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff)
-          }
         }
       }
       target.refs.updateChildrenOfParent(connectionId, targetEntityId.id.asParent(), targetChildrenIds)
@@ -164,6 +162,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   }
 
   private fun replaceOperation(change: ChangeEntry.ReplaceEntity<out WorkspaceEntity>) {
+    @Suppress("UNCHECKED_CAST")
     change as ChangeEntry.ReplaceEntity<WorkspaceEntity>
 
     val sourceEntityId = change.newData.createEntityId().notThis()

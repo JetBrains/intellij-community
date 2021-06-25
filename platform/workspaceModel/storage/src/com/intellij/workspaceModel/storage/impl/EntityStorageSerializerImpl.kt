@@ -43,7 +43,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v22"
+    const val SERIALIZER_VERSION = "v23"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -116,7 +116,6 @@ class EntityStorageSerializerImpl(
         kryo.writeClassAndObject(output, childTypeInfo)
         output.writeString(`object`.connectionType.name)
         output.writeBoolean(`object`.isParentNullable)
-        output.writeBoolean(`object`.isChildNullable)
       }
 
       override fun read(kryo: Kryo, input: Input, type: Class<ConnectionId>): ConnectionId {
@@ -128,8 +127,7 @@ class EntityStorageSerializerImpl(
 
         val connectionType = ConnectionId.ConnectionType.valueOf(input.readString())
         val parentNullable = input.readBoolean()
-        val childNullable = input.readBoolean()
-        return ConnectionId.create(parentClass, childClass, connectionType, parentNullable, childNullable)
+        return ConnectionId.create(parentClass, childClass, connectionType, parentNullable)
       }
     })
 

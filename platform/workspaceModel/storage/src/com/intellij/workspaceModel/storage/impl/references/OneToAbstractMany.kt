@@ -17,7 +17,7 @@ class OneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBas
 
   override fun getValue(thisRef: Parent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, true, false)
+      connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
     return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id.asParent())
   }
@@ -32,7 +32,7 @@ class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEn
 
   override fun getValue(thisRef: ModifParent, property: KProperty<*>): Sequence<Child> {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
     return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id.asParent())
   }
@@ -42,7 +42,7 @@ class MutableOneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEn
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, true)
     }
     thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id.asParent(), value)
   }
