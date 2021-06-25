@@ -132,7 +132,7 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
                 },
             )
 
-            createActionLabel(KotlinDebuggerCoreBundle.message("alternative.sources.notification.disable")) {
+            createActionLabel(KotlinDebuggerCoreBundle.message("alternative.sources.notification.hide")) {
                 DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false
                 FILE_PROCESSED_KEY.set(file, null)
                 val fileEditorManager = FileEditorManager.getInstance(project)

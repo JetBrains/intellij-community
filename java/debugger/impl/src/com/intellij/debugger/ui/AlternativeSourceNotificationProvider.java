@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -184,7 +184,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       });
       myLinksPanel.add(switcher);
-      createActionLabel(JavaDebuggerBundle.message("action.disable.text"), () -> {
+      createActionLabel(JavaDebuggerBundle.message("action.hide.text"), () -> {
         DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
         setFileProcessed(file, false);
         FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
