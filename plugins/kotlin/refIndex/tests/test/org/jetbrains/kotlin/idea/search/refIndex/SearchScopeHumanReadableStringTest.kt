@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.CommonClassNames
@@ -10,6 +11,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.runAll
+import org.jetbrains.kotlin.idea.KotlinFileType
 import kotlin.properties.Delegates
 
 @SkipSlowTestLocally
@@ -48,6 +50,17 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
         )
 
         myFixture.addFileToProject(
+            "one/JavaClass3.java",
+            """
+                package one;
+                public class JavaClass3 {
+                  public static void main(String[] args){
+                  }
+                }
+            """.trimIndent(),
+        )
+
+        myFixture.addFileToProject(
             "two/KotlinClass.kt",
             """
                package two
@@ -59,7 +72,7 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                    JavaClass()
                  }
                }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         myFixture.addFileToProject(
@@ -70,7 +83,15 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                fun main() {           
                  ArrayList<String>()
                }
-            """.trimIndent()
+            """.trimIndent(),
+        )
+
+        myFixture.addFileToProject(
+            "two/AnotherKotlinClass.kt",
+            """
+               package two
+               class AnotherKotlinClass
+            """.trimIndent(),
         )
 
         val myModule = PsiTestUtil.addModule(
@@ -81,7 +102,8 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
         )
 
         ModuleRootModificationUtil.addDependency(myModule, module)
-        myFixture.addFileToProject("myModule/JavaClass.java",
+        myFixture.addFileToProject(
+            "myModule/JavaClass.java",
             """
                 package three;
                 import two.KotlinClass;
@@ -90,7 +112,7 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                     new KotlinClass();
                   }
                 }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         installCompiler()
@@ -124,6 +146,8 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                           Libraries only in [Project and Libraries]
                     
                 """.trimIndent(),
+                expectedNumberOfKotlinFiles = "2",
+                expectedNumberOfJavaFiles = "18519",
             )
     }
 
@@ -135,6 +159,8 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                  Scratches and Consoles
                
             """.trimIndent(),
+            expectedNumberOfKotlinFiles = "3",
+            expectedNumberOfJavaFiles = "18521",
         )
     }
 
@@ -160,6 +186,8 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                             restricted by file types: [org.jetbrains.kotlin.idea.KotlinFileType@5cf4beea] in NOT: EMPTY
                     
                 """.trimIndent(),
+                expectedNumberOfKotlinFiles = "1",
+                expectedNumberOfJavaFiles = "1",
             )
     }
 
@@ -173,12 +201,21 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
                  Scratches and Consoles
                
             """.trimIndent(),
+            expectedNumberOfKotlinFiles = "3",
+            expectedNumberOfJavaFiles = "4",
         )
     }
 
-    private fun SearchScope.assertWithExpected(expected: String): Unit = with(KotlinCompilerReferenceIndexVerifierAction) {
+    private fun SearchScope.assertWithExpected(
+        expectedText: String,
+        expectedNumberOfKotlinFiles: String,
+        expectedNumberOfJavaFiles: String,
+    ): Unit = with(KotlinCompilerReferenceIndexVerifierAction) {
+        assertEquals("Number of Kotlin files: ", expectedNumberOfKotlinFiles, countOfFileType(KotlinFileType.INSTANCE))
+        assertEquals("Number of Java files: ", expectedNumberOfJavaFiles, countOfFileType(JavaFileType.INSTANCE))
+
         val actualText = this@assertWithExpected.toHumanReadableString()
-        val expectedLines = expected.lines()
+        val expectedLines = expectedText.lines()
         val actualLines = actualText.lines()
         try {
             assertEquals(expectedLines.size, actualLines.size)
@@ -192,7 +229,7 @@ class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
             }
         } catch (e: AssertionError) {
             System.err.println(e.message)
-            assertEquals(expected, actualText)
+            assertEquals(expectedText, actualText)
         }
     }
 
