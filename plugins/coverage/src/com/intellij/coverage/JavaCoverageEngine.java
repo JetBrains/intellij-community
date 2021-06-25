@@ -333,9 +333,13 @@ public class JavaCoverageEngine extends CoverageEngine {
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
       final Runnable runnable = () -> {
-        if (Messages.showOkCancelDialog(
-          JavaCoverageBundle.message("project.class.files.are.out.of.date"),
-          JavaCoverageBundle.message("project.is.out.of.date"), Messages.getWarningIcon()) == Messages.OK) {
+        final int choice = Messages.showOkCancelDialog(project,
+                                                       JavaCoverageBundle.message("project.class.files.are.out.of.date"),
+                                                       JavaCoverageBundle.message("project.is.out.of.date"),
+                                                       JavaCoverageBundle.message("coverage.recompile"),
+                                                       JavaCoverageBundle.message("coverage.hide.report"),
+                                                       Messages.getWarningIcon());
+        if (choice == Messages.OK) {
           final CompilerManager compilerManager = CompilerManager.getInstance(project);
           compilerManager.make(compilerManager.createProjectCompileScope(project), (aborted, errors, warnings, compileContext) -> {
             if (aborted || errors != 0) return;
