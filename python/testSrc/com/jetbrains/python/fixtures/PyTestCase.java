@@ -449,20 +449,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
   }
 
-  /**
-   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
-   *
-   * @param path         path to open
-   * @param configurator configurator to use
-   */
-  protected void configureProjectByProjectConfigurators(@NotNull final String path,
-                                                        @NotNull final DirectoryProjectConfigurator configurator) {
-    final VirtualFile newPath =
-      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
-    configurator.configureProject(myFixture.getProject(), newPath, moduleRef, false);
-  }
-
   public static String getHelpersPath() {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
