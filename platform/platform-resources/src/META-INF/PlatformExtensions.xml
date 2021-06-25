@@ -1196,6 +1196,7 @@
     <notificationGroup id="Tutorials" displayType="BALLOON"/>
     <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" />
     <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" />
+    <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>

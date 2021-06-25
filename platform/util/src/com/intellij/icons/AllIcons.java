@@ -587,6 +587,8 @@ public class AllIcons {
     /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("ide/external_link_arrow.svg", 3848907167550726777L, 0);
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", 5216761098405937782L, 2);
     /** 16x16 */ public static final @NotNull Icon FatalError = load("ide/fatalError.svg", -6879921752749057624L, 2);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("ide/feedbackRating.svg", -4686705334008400871L, 2);
+    /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("ide/feedbackRatingOn.svg", 6410921145673381168L, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("ide/gift.svg", -3269559537649493037L, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 2667401865142309246L, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 4559603987444558516L, 2);

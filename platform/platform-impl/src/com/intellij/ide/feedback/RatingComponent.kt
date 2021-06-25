@@ -10,11 +10,11 @@ import java.awt.event.MouseMotionAdapter
 import javax.swing.JComponent
 
 class RatingComponent : JComponent() {
-  private val myIconSize = 16
+  private val myIconSize = 32
   private val myIconGap = 4
   private val myIconCount = 5
-  private val myActiveIcon = AllIcons.Nodes.Favorite
-  private val myInactiveIcon = AllIcons.Nodes.NotFavoriteOnHover
+  private val myActiveIcon = AllIcons.Ide.FeedbackRatingOn
+  private val myInactiveIcon = AllIcons.Ide.FeedbackRating
   private var myHoverRating = 0
   private var myMouseInside = false
 
@@ -36,7 +36,7 @@ class RatingComponent : JComponent() {
         val oldRating = rating
         rating = ratingFromPoint(e)
         if (rating != oldRating) {
-          firePropertyChange("rating", oldRating, rating)
+          firePropertyChange(RATING_PROPERTY, oldRating, rating)
         }
       }
     })
@@ -68,5 +68,9 @@ class RatingComponent : JComponent() {
       val icon = if (i < ratingToShow) myActiveIcon else myInactiveIcon
       icon.paintIcon(this, g, i * myIconSize + (i - 1) * myIconGap, 0)
     }
+  }
+
+  companion object {
+    const val RATING_PROPERTY = "rating"
   }
 }

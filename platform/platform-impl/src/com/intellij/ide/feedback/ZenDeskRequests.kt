@@ -2,35 +2,63 @@
 package com.intellij.ide.feedback
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.LicensingFacade
 import com.intellij.util.io.HttpRequests
 
 class ZenDeskRequests {
   private val objectMapper by lazy { ObjectMapper() }
 
-  fun submit(email: String, subject: String, text: String, rating: Int) {
+  fun submit(form: ZenDeskForm, email: String, subject: String, text: String, fieldData: Map<String, Any>, onDone: () -> Unit) {
+    val customFields = mutableListOf<ZenDeskCustomField>()
+    for (field in form.fields) {
+      val value = field.value
+                  ?: when (field.type) {
+                    "build" -> ApplicationInfo.getInstance().build.asString()
+                    "os" -> getOsForZenDesk()
+                    "timezone" -> System.getProperty("user.timezone")
+                    "eval" -> LicensingFacade.getInstance()?.isEvaluationLicense?.toString()
+                    "needsupport" -> if (fieldData[field.type] == true) "share_problems_or_ask_about_missing_features" else "provide_a_feedback"
+                    else -> fieldData[field.type]
+                  }
+      value?.let {
+        customFields.add(ZenDeskCustomField(field.id, it))
+      }
+    }
+
     val request = ZenDeskRequest(
       ZenDeskRequester("anonymous", email),
       subject,
       ZenDeskComment(text),
-      TICKET_FORM_ID,
-      listOf(ZenDeskCustomField(RATING_FIELD_ID, rating))
+      form.id,
+      customFields
     )
     val requestData = objectMapper.writeValueAsString(mapOf("request" to request))
     HttpRequests
-      .post("https://jbs.zendesk.com/api/v2/requests", "application/json")
+      .post("${form.url}/api/v2/requests", "application/json")
       .productNameAsUserAgent()
       .accept("application/json")
       .connect {
         it.write(requestData)
         val bytes = it.inputStream.readAllBytes()
         LOG.info(bytes.toString(Charsets.UTF_8))
+        onDone()
       }
   }
 
+  private fun getOsForZenDesk(): String {
+    return when {
+      SystemInfo.isWindows -> "ij_win"
+      SystemInfo.isMac -> "ij_mac"
+      SystemInfo.isLinux -> "ij_linux"
+      else -> "ij_other-os"
+    }
+  }
+
   companion object {
-    private const val TICKET_FORM_ID = 68704
-    private const val RATING_FIELD_ID = 29444529
     private val LOG = Logger.getInstance(ZenDeskRequests::class.java)
   }
 }
@@ -39,12 +67,12 @@ private class ZenDeskComment(val body: String)
 
 private class ZenDeskRequester(val name: String, val email: String)
 
-private class ZenDeskCustomField(val id: Int, val value: Any)
+private class ZenDeskCustomField(val id: Long, val value: Any)
 
 private class ZenDeskRequest(
   val requester: ZenDeskRequester,
   val subject: String,
   val comment: ZenDeskComment,
-  val ticket_form_id: Int,
+  val ticket_form_id: Long,
   val custom_fields: List<ZenDeskCustomField>
 )

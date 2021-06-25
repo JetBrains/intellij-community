@@ -3,9 +3,12 @@ package com.intellij.ide.feedback
 
 import com.intellij.CommonBundle
 import com.intellij.ide.actions.AboutDialog
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.HyperlinkLabel
@@ -19,6 +22,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -26,7 +30,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-class EvaluationFeedbackForm(private val project: Project?) : DialogWrapper(project, false) {
+class EvaluationFeedbackForm(private val project: Project?, val form: ZenDeskForm) : DialogWrapper(project, false) {
   private var details = ""
   private var email = LicensingFacade.INSTANCE.getLicenseeEmail().orEmpty()
   private var needSupport = false
@@ -49,6 +53,7 @@ class EvaluationFeedbackForm(private val project: Project?) : DialogWrapper(proj
       row {
         label(ApplicationBundle.message("feedback.form.comment")).also {
           it.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+          it.component.minimumSize = Dimension(it.component.preferredSize.width, it.component.minimumSize.height)
         }
       }
       row {
@@ -58,7 +63,7 @@ class EvaluationFeedbackForm(private val project: Project?) : DialogWrapper(proj
         cell {
           ratingComponent = RatingComponent().also {
             it.addPropertyChangeListener { evt ->
-              if (evt.propertyName == "rating") {
+              if (evt.propertyName == RatingComponent.RATING_PROPERTY) {
                 missingRatingTooltip.isVisible = false
               }
             }
@@ -105,6 +110,8 @@ class EvaluationFeedbackForm(private val project: Project?) : DialogWrapper(proj
           .focused()
           .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.required")) { it.text.isBlank() }
 
+      }
+      row {
         checkBox(ApplicationBundle.message("feedback.form.need.support"), ::needSupport)
       }
       row {
@@ -164,13 +171,31 @@ class EvaluationFeedbackForm(private val project: Project?) : DialogWrapper(proj
 
   override fun doOKAction() {
     super.doOKAction()
+    val systemInfo = if (shareSystemInformation) AboutDialog(project).extendedAboutText else ""
     ApplicationManager.getApplication().executeOnPooledThread {
       ZenDeskRequests().submit(
+        form,
         email,
         ApplicationNamesInfo.getInstance().fullProductName + " Feedback",
         details.ifEmpty { "No details" },
-        ratingComponent.rating
-      )
+        mapOf(
+          "rating" to ratingComponent.rating,
+          "systeminfo" to systemInfo,
+          "needsupport" to needSupport
+        )
+      ) {
+        ApplicationManager.getApplication().invokeLater {
+          Notification("feedback.form",
+                       ApplicationBundle.message("feedback.form.thanks.title"),
+                       ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName),
+                       NotificationType.INFORMATION).notify(project)
+        }
+      }
     }
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    Notification("feedback.form", ApplicationBundle.message("feedback.form.share.later"), NotificationType.INFORMATION).notify(project)
   }
 }

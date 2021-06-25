@@ -101,6 +101,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
   private List<ProgressSlide> progressSlides = Collections.emptyList();
+  private final List<ZenDeskForm> myZenDeskForms = new ArrayList<>();
 
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
@@ -325,6 +326,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultDarkLaf = laf.trim();
           }
         }
+
+        case "zendesk-form":
+          myZenDeskForms.add(ZenDeskForm.parse(child));
+
         break;
       }
     }
@@ -914,6 +919,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @Nullable String getDefaultDarkLaf() {
     return myDefaultDarkLaf;
+  }
+
+  public List<ZenDeskForm> getZenDeskForms() {
+    return myZenDeskForms;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {
