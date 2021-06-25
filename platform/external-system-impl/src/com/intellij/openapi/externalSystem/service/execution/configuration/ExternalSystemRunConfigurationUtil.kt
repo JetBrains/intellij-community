@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution.configuration
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.configuration.EnvironmentVariablesComponent
+import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
@@ -16,7 +16,7 @@ import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.service.ui.getUiPath
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
-import com.intellij.openapi.externalSystem.service.ui.util.EditorSettingsFragmentInfo
+import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.project.Project
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Ref
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
@@ -123,7 +124,6 @@ fun <C : RunConfigurationBase<*>> createCommandLineFragment(
   commandLineInfo,
   { it, c -> c.commandLine = it.getCommandLine() },
   { it, c -> it.setCommandLine(c.commandLine) },
-  { true }
 )
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addWorkingDirectoryFragment(
@@ -152,9 +152,10 @@ fun <C : RunConfigurationBase<*>> createWorkingDirectoryFragment(
   WorkingDirectoryField(project, workingDirectoryInfo),
   workingDirectoryInfo,
   { it, c -> it.getWorkingDirectory().let { p -> if (p.isNotBlank()) c.workingDirectory = p } },
-  { it, c -> it.setWorkingDirectory(c.workingDirectory) },
-  { true }
-).addValidation {
+  { it, c -> it.setWorkingDirectory(c.workingDirectory) }
+).apply {
+  isRemovable = false
+}.addValidation {
   if (it.component.workingDirectory.isBlank()) {
     error(workingDirectoryInfo.emptyFieldError)
   }
@@ -180,7 +181,6 @@ fun <C : RunConfigurationBase<*>> createDistributionFragment(
   distributionsInfo,
   { it, c -> c.selectedDistribution = it.getDistribution() },
   { it, c -> it.setDistribution(c.selectedDistribution) },
-  { true }
 )
 
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addVmOptionsFragment() =
@@ -201,7 +201,7 @@ fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
   RawCommandLineEditor().apply {
     MacrosDialog.addMacroSupport(editorField, MacrosDialog.Filters.ALL) { false }
   },
-  object : EditorSettingsFragmentInfo {
+  object : LabeledSettingsFragmentInfo {
     override val editorLabel: String = ExecutionBundle.message("run.configuration.java.vm.parameters.label")
     override val settingsId: String = "external.system.vm.options.fragment"
     override val settingsName: String = ExecutionBundle.message("run.configuration.java.vm.parameters.name")
@@ -217,28 +217,26 @@ fun <C : RunConfigurationBase<*>> createVmOptionsFragment(
 fun <C : ExternalSystemRunConfiguration> SettingsFragmentsContainer<C>.addEnvironmentFragment() =
   addEnvironmentFragment(
     { settings.env },
-    { settings.env = it ?: emptyMap() },
+    { settings.env = it },
     { settings.isPassParentEnvs },
-    { settings.isPassParentEnvs = it ?: true }
+    { settings.isPassParentEnvs = it }
   )
 
 fun <C : RunConfigurationBase<*>> SettingsFragmentsContainer<C>.addEnvironmentFragment(
-  getEnvs: C.() -> Map<String, String>?,
-  setEnvs: C.(Map<String, String>?) -> Unit,
-  isPassParentEnvs: C.() -> Boolean?,
-  setPassParentEnvs: C.(Boolean?) -> Unit
+  getEnvs: C.() -> Map<String, String>,
+  setEnvs: C.(Map<String, String>) -> Unit,
+  isPassParentEnvs: C.() -> Boolean,
+  setPassParentEnvs: C.(Boolean) -> Unit
 ) = add(createEnvironmentFragment(getEnvs, setEnvs, isPassParentEnvs, setPassParentEnvs))
 
 fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
-  getEnvs: C.() -> Map<String, String>?,
-  setEnvs: C.(Map<String, String>?) -> Unit,
-  isPassParentEnvs: C.() -> Boolean?,
-  setPassParentEnvs: C.(Boolean?) -> Unit
-) = createSettingsEditorFragment<C, EnvironmentVariablesComponent>(
-  EnvironmentVariablesComponent().apply {
-    labelLocation = BorderLayout.WEST
-  },
-  object : EditorSettingsFragmentInfo {
+  getEnvs: C.() -> Map<String, String>,
+  setEnvs: C.(Map<String, String>) -> Unit,
+  isPassParentEnvs: C.() -> Boolean,
+  setPassParentEnvs: C.(Boolean) -> Unit
+) = createLabeledSettingsEditorFragment<C, EnvironmentVariablesTextFieldWithBrowseButton>(
+  EnvironmentVariablesTextFieldWithBrowseButton(),
+  object : LabeledSettingsFragmentInfo {
     override val editorLabel: String = ExecutionBundle.message("environment.variables.component.title")
     override val settingsId: String = "external.system.environment.variables.fragment"
     override val settingsName: String = ExecutionBundle.message("environment.variables.fragment.name")
@@ -247,17 +245,16 @@ fun <C : RunConfigurationBase<*>> createEnvironmentFragment(
     override val settingsActionHint: String = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
   },
   { it, c ->
-    c.envs = getEnvs(it) ?: emptyMap()
-    c.isPassParentEnvs = isPassParentEnvs(it) ?: true
+    c.envs = getEnvs(it)
+    c.isPassParentEnvs = isPassParentEnvs(it)
   },
   { it, c ->
-    setEnvs(it, if (c.isVisible) c.envs else null)
-    setPassParentEnvs(it, if (c.isVisible) c.isPassParentEnvs else null)
-  },
-  { getEnvs(it) == null && isPassParentEnvs(it) == null }
+    setEnvs(it, c.envs)
+    setPassParentEnvs(it, c.isPassParentEnvs)
+  }
 )
 
-fun <S: RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.addValidation(
+fun <S : RunConfigurationBase<*>, C : JComponent> SettingsEditorFragment<S, C>.addValidation(
   validate: ValidationInfoBuilder.(C) -> ValidationInfo?
 ): SettingsEditorFragment<S, C> {
   setValidation {
@@ -298,25 +295,74 @@ fun <C : RunConfigurationBase<*>> createPathFragment(
   { setPath(it?.let(::getModelPath)) }
 )
 
-fun <S : RunConfigurationBase<*>, C> createLabeledTextSettingsEditorFragment(
+fun <S, C> createLabeledTextSettingsEditorFragment(
   component: C,
-  info: EditorSettingsFragmentInfo,
-  getText: S.() -> String?,
-  setText: S.(String?) -> Unit,
-) where C : JComponent, C : TextAccessor = createLabeledSettingsEditorFragment<S, C>(
+  info: LabeledSettingsFragmentInfo,
+  getter: S.() -> String?,
+  setter: S.(String?) -> Unit
+) where C : JComponent, C : TextAccessor = createLabeledSettingsEditorFragment(
   component,
   info,
-  { it, c -> c.text = it.getText() ?: "" },
-  { it, c -> it.setText(if (c.isVisible) c.text else null) },
-  { it.getText() != null }
+  TextAccessor::getText,
+  TextAccessor::setText,
+  getter,
+  setter
 )
 
-fun <S : RunConfigurationBase<*>, C : JComponent> createLabeledSettingsEditorFragment(
+fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
   component: C,
-  info: EditorSettingsFragmentInfo,
+  info: LabeledSettingsFragmentInfo,
+  getterC: C.() -> V,
+  setterC: C.(V) -> Unit,
+  getterS: S.() -> V?,
+  setterS: S.(V?) -> Unit
+) = createLabeledSettingsEditorFragment(
+  component, info, getterC, setterC, { null }, getterS, setterS)
+
+fun <S, C : JComponent, V> createLabeledSettingsEditorFragment(
+  component: C,
+  info: LabeledSettingsFragmentInfo,
+  getterC: C.() -> V,
+  setterC: C.(V) -> Unit,
+  defaultS: S.() -> V?,
+  getterS: S.() -> V?,
+  setterS: S.(V?) -> Unit
+): SettingsEditorFragment<S, LabeledComponent<C>> {
+  val ref = Ref<SettingsEditorFragment<S, LabeledComponent<C>>>()
+  return createLabeledSettingsEditorFragment<S, C>(
+    component,
+    info,
+    { it, c -> (it.getterS() ?: it.defaultS())?.let { c.setterC(it) } },
+    { it, c -> it.setterS(if (ref.get().isSelected) c.getterC() else null) },
+    { it.getterS() != null }
+  ).apply {
+    isRemovable = true
+    ref.set(this)
+  }
+}
+
+fun <S, C : JComponent> createLabeledSettingsEditorFragment(
+  component: C,
+  settingsFragmentInfo: LabeledSettingsFragmentInfo,
   reset: (S, C) -> Unit,
   apply: (S, C) -> Unit,
-  initialSelection: (S) -> Boolean,
+) = createLabeledSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+  .apply { isRemovable = false }
+
+fun <S, C : JComponent> createSettingsEditorFragment(
+  component: C,
+  settingsFragmentInfo: SettingsFragmentInfo,
+  reset: (S, C) -> Unit,
+  apply: (S, C) -> Unit,
+) = createSettingsEditorFragment(component, settingsFragmentInfo, reset, apply) { true }
+  .apply { isRemovable = false }
+
+fun <S, C : JComponent> createLabeledSettingsEditorFragment(
+  component: C,
+  info: LabeledSettingsFragmentInfo,
+  reset: (S, C) -> Unit,
+  apply: (S, C) -> Unit,
+  initialSelection: (S) -> Boolean
 ) = createSettingsEditorFragment(
   LabeledComponent.create(component, info.editorLabel, BorderLayout.WEST),
   info,
@@ -325,7 +371,7 @@ fun <S : RunConfigurationBase<*>, C : JComponent> createLabeledSettingsEditorFra
   initialSelection
 )
 
-fun <S : RunConfigurationBase<*>, C : JComponent> createSettingsEditorFragment(
+fun <S, C : JComponent> createSettingsEditorFragment(
   component: C,
   settingsFragmentInfo: SettingsFragmentInfo,
   reset: (S, C) -> Unit,
@@ -336,13 +382,12 @@ fun <S : RunConfigurationBase<*>, C : JComponent> createSettingsEditorFragment(
   settingsFragmentInfo.settingsName,
   settingsFragmentInfo.settingsGroup,
   component,
+  settingsFragmentInfo.settingsPriority,
   settingsFragmentInfo.settingsType,
   reset,
   apply,
   initialSelection
 ).apply {
-  isCanBeHidden = settingsFragmentInfo.settingsIsRemovable
-  isRemovable = settingsFragmentInfo.settingsIsRemovable
   setHint(settingsFragmentInfo.settingsHint)
   actionHint = settingsFragmentInfo.settingsActionHint
 

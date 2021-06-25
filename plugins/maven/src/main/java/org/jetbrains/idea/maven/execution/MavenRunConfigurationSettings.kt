@@ -35,8 +35,8 @@ class MavenRunConfigurationSettings : Cloneable {
   /** @see MavenRunnerSettings */
   var jreName: String? = null
   var vmOptions: String? = null
-  var environment: Map<String, String>? = null
-  var isPassParentEnvs: Boolean? = null
+  var environment: Map<String, String> = HashMap()
+  var isPassParentEnvs: Boolean = true
   var isSkipTests: Boolean = false
 
   public override fun clone(): MavenRunConfigurationSettings {
@@ -114,8 +114,8 @@ class MavenRunConfigurationSettings : Cloneable {
     val settings = originalSettings.clone()
     jreName?.let { settings.setJreName(it) }
     vmOptions?.let { settings.setVmOptions(expandPathAndMacros(it, null, project)) }
-    environment?.let { settings.environmentProperties = it }
-    isPassParentEnvs?.let { settings.isPassParentEnv = it }
+    environment.let { settings.environmentProperties = it }
+    isPassParentEnvs.let { settings.isPassParentEnv = it }
     isSkipTests.let { settings.isSkipTests = it }
     return if (settings == originalSettings) null else settings
   }

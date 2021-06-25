@@ -4,10 +4,9 @@ package com.intellij.openapi.externalSystem.service.ui.util
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.util.NlsContexts
 
-interface EditorSettingsFragmentInfo : SettingsFragmentInfo {
+interface LabeledSettingsFragmentInfo : SettingsFragmentInfo {
   val editorLabel: @NlsContexts.Label String
 
   override val settingsPriority: Int get() = 0
   override val settingsType get() = SettingsEditorFragmentType.EDITOR
-  override val settingsIsRemovable get() = true
 }

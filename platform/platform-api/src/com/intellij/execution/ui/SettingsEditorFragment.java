@@ -51,7 +51,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable String myConfigId; // for FUS
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
-  private boolean myCanBeHidden;
+  private boolean myCanBeHidden = false;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,

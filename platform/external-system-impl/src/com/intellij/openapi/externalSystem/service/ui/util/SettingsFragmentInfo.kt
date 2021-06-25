@@ -10,7 +10,6 @@ interface SettingsFragmentInfo {
   val settingsGroup: @Nls(capitalization = Nls.Capitalization.Title) String?
   val settingsPriority: Int
   val settingsType: SettingsEditorFragmentType
-  val settingsIsRemovable: Boolean
   val settingsHint: @Nls String?
   val settingsActionHint: @Nls String?
 }

@@ -11,11 +11,10 @@ import com.intellij.openapi.externalSystem.service.ui.distribution.LocalDistribu
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
-import com.intellij.openapi.externalSystem.service.ui.util.EditorSettingsFragmentInfo
+import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
@@ -30,7 +29,6 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsIn
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.awt.BorderLayout
 import java.io.File
 
 class MavenRunConfigurationSettingsEditor(
@@ -51,7 +49,7 @@ class MavenRunConfigurationSettingsEditor(
       addJreFragment()
       addEnvironmentFragment()
       addVmOptionsFragment()
-      addMavenProfilesFragment(workingDirectoryFragment)
+      addProfilesFragment(workingDirectoryFragment)
       addUserSettingsFragment()
       addLocalRepositoryFragment()
       addThreadsFragment()
@@ -181,28 +179,26 @@ class MavenRunConfigurationSettingsEditor(
       { settings.vmOptions = it }
     )
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() = add(createJreFragment())
-
-  private fun createJreFragment(): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>> {
-    val sdkLookupProvider = SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
-    val jreComboBox = SdkComboBox(createProjectJdkComboBoxModel(project, this)).apply {
-      CommonParameterFragments.setMonospaced(this)
-    }
-    val jreComboBoxLabel = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
-    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<SdkComboBox>>(
-      "maven.jre.fragment",
-      MavenConfigurableBundle.message("maven.run.configuration.jre.name"),
-      ExecutionBundle.message("group.java.options"),
-      LabeledComponent.create(jreComboBox, jreComboBoxLabel, BorderLayout.WEST),
-      { it, c -> c.component.setSelectedJdkReference(sdkLookupProvider, it.settings.jreName ?: MavenRunnerSettings.USE_PROJECT_JDK) },
-      { it, c -> it.settings.jreName = if (c.isVisible) c.component.getSelectedJdkReference(sdkLookupProvider) else null },
-      { !it.settings.jreName.isNullOrBlank() }
-    ).apply {
-      isCanBeHidden = true
-      isRemovable = true
-      actionHint = MavenConfigurableBundle.message("maven.run.configuration.jre.action.hint")
-    }
-  }
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJreFragment() =
+    SdkLookupProvider.getInstance(project, object : SdkLookupProvider.Id {})
+      .let { sdkLookupProvider ->
+        add(createLabeledSettingsEditorFragment(
+          SdkComboBox(createProjectJdkComboBoxModel(project, this@MavenRunConfigurationSettingsEditor)),
+          object : LabeledSettingsFragmentInfo {
+            override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.jre.label")
+            override val settingsId: String = "maven.jre.fragment"
+            override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.jre.name")
+            override val settingsGroup: String = ExecutionBundle.message("group.java.options")
+            override val settingsHint: String? = null
+            override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.jre.action.hint")
+          },
+          { getSelectedJdkReference(sdkLookupProvider) },
+          { setSelectedJdkReference(sdkLookupProvider, it) },
+          { MavenRunnerSettings.USE_PROJECT_JDK },
+          { settings.jreName },
+          { settings.jreName = it }
+        ))
+      }
 
   private fun ValidationInfoBuilder.validateMavenHome(distribution: DistributionInfo): ValidationInfo? {
     return when {
@@ -214,34 +210,26 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addMavenProfilesFragment(
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addProfilesFragment(
     workingDirectoryFragment: SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<WorkingDirectoryField>>
-  ) = add(createMavenProfilesFragment(project, workingDirectoryFragment.component().component))
+  ) = add(
+    createLabeledSettingsEditorFragment(
+      MavenProfilesFiled(project, workingDirectoryFragment.component().component),
+      object : LabeledSettingsFragmentInfo {
+        override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
 
-  private fun createMavenProfilesFragment(
-    project: Project,
-    workingDirectoryField: WorkingDirectoryField
-  ): SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<MavenProfilesFiled>> {
-    val mavenProfilesFiled = MavenProfilesFiled(project, workingDirectoryField).apply {
-      CommonParameterFragments.setMonospaced(this)
-      FragmentedSettingsUtil.setupPlaceholderVisibility(this)
-    }
-    val mavenProfilesLabel = MavenConfigurableBundle.message("maven.run.configuration.profiles.label")
-    return SettingsEditorFragment<MavenRunConfiguration, LabeledComponent<MavenProfilesFiled>>(
-      "maven.profiles.fragment",
-      MavenConfigurableBundle.message("maven.run.configuration.profiles.name"),
-      MavenConfigurableBundle.message("maven.run.configuration.options.group"),
-      LabeledComponent.create(mavenProfilesFiled, mavenProfilesLabel, BorderLayout.WEST),
-      SettingsEditorFragmentType.EDITOR,
-      { it, c -> c.component.profiles = it.settings.profilesMap },
-      { it, c -> it.settings.profilesMap = c.component.profiles },
-      { it.settings.profilesMap.isNotEmpty() }
-    ).apply {
-      isCanBeHidden = true
-      isRemovable = true
-      setHint(MavenConfigurableBundle.message("maven.run.configuration.profiles.hint"))
-    }
-  }
+        override val settingsId: String = "maven.profiles.fragment"
+        override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.name")
+        override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.options.group")
+        override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
+        override val settingsActionHint: String? = null
+      },
+      { profiles },
+      { profiles = it },
+      { settings.profilesMap.ifEmpty { null } },
+      { settings.profilesMap = it ?: emptyMap() }
+    )
+  )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addUserSettingsFragment() =
     addPathFragment(
@@ -280,9 +268,9 @@ class MavenRunConfigurationSettingsEditor(
     )
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addThreadsFragment() = add(
-    createLabeledTextSettingsEditorFragment<MavenRunConfiguration, JBTextField>(
+    createLabeledTextSettingsEditorFragment(
       JBTextField(),
-      object : EditorSettingsFragmentInfo {
+      object : LabeledSettingsFragmentInfo {
         override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.threads.label")
         override val settingsId: String = "maven.threads.fragment"
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.threads.name")

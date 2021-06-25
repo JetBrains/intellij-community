@@ -11,7 +11,6 @@ interface DistributionsInfo : FileChooserInfo, SettingsFragmentInfo {
   override val settingsGroup: String? get() = null
   override val settingsPriority: Int get() = 90
   override val settingsType get() = SettingsEditorFragmentType.COMMAND_LINE
-  override val settingsIsRemovable: Boolean get() = false
   override val settingsActionHint: String? get() = null
 
   override val fileChooserMacroFilter get() = FileChooserInfo.DIRECTORY_PATH

@@ -10,7 +10,6 @@ interface CommandLineInfo : SettingsFragmentInfo {
   override val settingsGroup: String? get() = null
   override val settingsPriority: Int get() = 100
   override val settingsType get() = SettingsEditorFragmentType.COMMAND_LINE
-  override val settingsIsRemovable: Boolean get() = false
   override val settingsActionHint: String? get() = null
 
   val dialogTitle: @NlsContexts.DialogTitle String
