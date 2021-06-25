@@ -11,6 +11,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,17 +90,15 @@ public abstract class ArgumentFixerActionFactory {
         if (!potentialCasts.isEmpty()) {
           PsiCall newCall = LambdaUtil.copyTopLevelCall(call);
           if (newCall == null) continue;
-          for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
-            replaceWithCast(expressions, newCall, entry);
+          if (!ContainerUtil.exists(potentialCasts.entrySet(), entry -> replaceWithCast(expressions, newCall, entry))) {
+            doCheckNewCall(expectedTypeByParent, newCall, () -> {
+              for (Iterator<Map.Entry<Integer, PsiType>> iterator = potentialCasts.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<Integer, PsiType> entry = iterator.next();
+                registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry);
+                iterator.remove();
+              }
+            });
           }
-          
-          doCheckNewCall(expectedTypeByParent, newCall, () -> {
-            for (Iterator<Map.Entry<Integer, PsiType>> iterator = potentialCasts.entrySet().iterator(); iterator.hasNext(); ) {
-              Map.Entry<Integer, PsiType> entry = iterator.next();
-              registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry);
-              iterator.remove();
-            }
-          });
           
           for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
             PsiCall callWithSingleCast = LambdaUtil.copyTopLevelCall(call);
