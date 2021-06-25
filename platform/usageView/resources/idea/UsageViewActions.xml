@@ -21,6 +21,9 @@
       <action id="UsageFiltering.WriteAccess"
               icon="com.intellij.icons.AllIcons.Actions.ShowWriteAccess"
               class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.GeneratedCode"
+              icon="com.intellij.icons.AllIcons.Actions.GeneratedFolder"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
     </group>
   </actions>
