@@ -176,6 +176,7 @@
     },
 
     "TabbedPane": {
+      "background": "#ececec",
       "contentAreaColor": "#bfbfbf",
       "disabledUnderlineColor": "#ababab",
       "focusColor": "#dae4ed",
