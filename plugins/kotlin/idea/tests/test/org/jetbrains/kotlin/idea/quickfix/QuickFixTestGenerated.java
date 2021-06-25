@@ -5119,6 +5119,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("annotationClass.kt")
+                public void testAnnotationClass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/annotationClass.kt");
+                }
+
+                @TestMetadata("annotationClass2.kt")
+                public void testAnnotationClass2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/annotationClass2.kt");
+                }
+
                 @TestMetadata("assignedInFun.kt")
                 public void testAssignedInFun() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/assignedInFun.kt");
