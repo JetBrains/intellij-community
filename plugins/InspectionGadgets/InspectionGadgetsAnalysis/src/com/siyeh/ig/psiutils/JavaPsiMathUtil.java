@@ -238,7 +238,7 @@ public final class JavaPsiMathUtil {
   /**
    * Returns long range set for expression compared to a constant  or null if comparison is unsupported.
    * Supports int and long constants. Supports nonConstantOperand of any type.
-   * E.g. if comparison expression is nonConstantOperand < 0, the {Long.MIN_VALUE..0} will be returned.
+   * E.g. if comparison expression is nonConstantOperand < 1, the {Long.MIN_VALUE..0} will be returned.
    * Note: returned LongRangeSet may contain numbers outside of int range, even if nonConstantOperand has int type
    *
    * @param nonConstantOperand expression which is compared to int or long constant.
