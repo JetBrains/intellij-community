@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
@@ -182,8 +183,9 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
     }
 
-    task {
-      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName)))
+    task("EditorEscape") {
+      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName),
+                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
       stateCheck {
         previous.ui?.isShowing != true && firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }
