@@ -195,8 +195,7 @@ public final class LibraryScopeCache {
 
     @Override
     public String toString() {
-      return "Libraries only in [" + myBaseScope + "]";
+      return "Libraries only in (" + myBaseScope + ")";
     }
   }
-
 }
