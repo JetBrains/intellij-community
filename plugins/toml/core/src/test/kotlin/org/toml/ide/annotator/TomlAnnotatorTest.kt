@@ -11,5 +11,8 @@ class TomlAnnotatorTest : TomlAnnotatorTestBase(TomlAnnotator::class) {
         a = {something = "", another = ""}
         a = <error>{something = "",
             another = ""}</error>
+        a = {something = [
+                "foo", "bar"
+            ]}
     """)
 }
