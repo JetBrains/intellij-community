@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +24,16 @@ public class CompileContext {
     myOptions = options;
     myProject = project;
 
-    mySearchHelper = ApplicationManager.getApplication().isUnitTestMode() ?
-                     new TestModeOptimizingSearchHelper() :
-                     new FindInFilesOptimizingSearchHelper(myOptions.getScope(), options.isCaseSensitiveMatch(), project);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      mySearchHelper = new TestModeOptimizingSearchHelper();
+    }
+    else {
+      SearchScope scope = myOptions.getScope();
+      if (!myOptions.isSearchInjectedCode() && scope instanceof GlobalSearchScope) {
+        scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, myOptions.getFileType());
+      }
+      mySearchHelper = new FindInFilesOptimizingSearchHelper(scope, options.isCaseSensitiveMatch(), project);
+    }
   }
 
   public void clear() {
