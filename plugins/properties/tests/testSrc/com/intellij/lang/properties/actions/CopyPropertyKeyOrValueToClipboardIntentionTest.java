@@ -26,7 +26,7 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
   }
 
   public void testCopyPropertyValue() throws IOException, UnsupportedFlavorException {
-    final String actionText = PropertiesBundle.message("copy.property.value.to.clipboard.intention.name");
+    final String actionText = PropertiesBundle.message("copy.property.value.to.clipboard.intention.family.name");
     final Property property = getProperty();
     final String expected = property.getUnescapedValue();
 
@@ -34,7 +34,7 @@ public final class CopyPropertyKeyOrValueToClipboardIntentionTest extends BasePl
   }
 
   public void testCopyPropertyKey() throws IOException, UnsupportedFlavorException {
-    final String actionText = PropertiesBundle.message("copy.property.key.to.clipboard.intention.name");
+    final String actionText = PropertiesBundle.message("copy.property.key.to.clipboard.intention.family.name");
     final Property property = getProperty();
     final String expected = property.getUnescapedKey();
 

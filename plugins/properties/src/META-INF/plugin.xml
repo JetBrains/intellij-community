@@ -135,13 +135,13 @@
     <intentionAction>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
-      <categoryKey>intention.category.strings</categoryKey>
+      <categoryKey>intention.category.properties</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.lang.properties.actions.CopyPropertyKeyToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
-      <categoryKey>intention.category.strings</categoryKey>
+      <categoryKey>intention.category.properties</categoryKey>
     </intentionAction>
 
   </extensions>
