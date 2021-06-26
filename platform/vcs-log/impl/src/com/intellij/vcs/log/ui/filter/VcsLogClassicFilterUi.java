@@ -788,6 +788,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           }
         }
       });
+      myTextFilterModel.addSetFilterListener(() -> {
+        String modelText = myTextFilterModel.getText();
+        if (getText() != modelText) setText(modelText);
+      });
       new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
         .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER))
         .setLocation(HelpTooltip.Alignment.BOTTOM)
