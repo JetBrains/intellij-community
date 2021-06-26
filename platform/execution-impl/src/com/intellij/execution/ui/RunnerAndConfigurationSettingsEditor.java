@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunConfigurationStorageUi;
+import com.intellij.execution.impl.RunOnTargetPanel;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -21,6 +22,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
+  private final RunOnTargetPanel myRunOnTargetPanel;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
                                               RunConfigurationFragmentedEditor<RunConfigurationBase<?>> configurationEditor) {
@@ -34,6 +36,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     myRCStorageUi = !project.isDefault() && settings.isTemplate()
                     ? new RunConfigurationStorageUi(project, () -> fireEditorStateChanged())
                     : null;
+    myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
   }
 
   public boolean isInplaceValidationSupported() {
@@ -53,6 +56,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     if (myRCStorageUi != null) {
       myRCStorageUi.reset(s);
     }
+    myRunOnTargetPanel.reset();
   }
 
   @Override
@@ -64,6 +68,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
       // editing a template run configuration
       myRCStorageUi.apply(s);
     }
+    myRunOnTargetPanel.apply();
   }
 
   @Override
@@ -83,6 +88,17 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     c.gridx = 0;
     c.gridy = 1;
+    c.anchor = GridBagConstraints.NORTH;
+    c.insets = JBUI.emptyInsets();
+    c.fill = GridBagConstraints.BOTH;
+    c.weightx = 1;
+    c.weighty = 1;
+    JPanel comp = new JPanel(new GridBagLayout());
+    myRunOnTargetPanel.buildUi(comp, null);
+    panel.add(comp, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
     c.anchor = GridBagConstraints.NORTH;
     c.insets = JBUI.emptyInsets();
     c.fill = GridBagConstraints.BOTH;
