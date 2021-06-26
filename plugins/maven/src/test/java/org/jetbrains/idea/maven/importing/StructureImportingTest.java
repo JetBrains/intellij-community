@@ -1084,24 +1084,6 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testProjectWithInvalidBuildExtension() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  " <extensions>" +
-                  "   <extension>" +
-                  "     <groupId>xxx</groupId>" +
-                  "     <artifactId>yyy</artifactId>" +
-                  "     <version>1</version>" +
-                  "    </extension>" +
-                  "  </extensions>" +
-                  "</build>");
-    assertModules("project"); // shouldn't throw any exception
-  }
-
-  @Test
   public void testUsingPropertyInBuildExtensionsOfChildModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

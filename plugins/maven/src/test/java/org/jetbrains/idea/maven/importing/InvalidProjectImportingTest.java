@@ -842,6 +842,14 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
     assertOrderedElementsAreEqual(actualProblems, expectedProblems);
   }
 
+  private static void assertContainsProblems(MavenProject project, String... expectedProblems) {
+    List<String> actualProblems = new ArrayList<>();
+    for (MavenProjectProblem each : project.getProblems()) {
+      actualProblems.add(each.getDescription());
+    }
+    assertContainsElements(actualProblems, expectedProblems);
+  }
+
   private List<MavenProject> getRootProjects() {
     return myProjectsTree.getRootProjects();
   }

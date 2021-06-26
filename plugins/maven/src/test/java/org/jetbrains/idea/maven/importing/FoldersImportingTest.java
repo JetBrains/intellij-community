@@ -79,19 +79,20 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   public void testDoNotResetFoldersAfterResolveIfProjectIsInvalid() {
     createStdProjectFolders();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                 "<artifactId>project</artifactId>" +
+                 "<version>1</version>" +
 
-                  "<build>" +
-                  "  <extensions>" +
-                  "    <extension>" +
-                  "      <groupId>xxx</groupId>" +
-                  "      <artifactId>xxx</artifactId>" +
-                  "      <version>xxx</version>" +
-                  "    </extension>" +
-                  "  </extensions>" +
-                  "</build>");
+                 "<build>" +
+                 "  <extensions>" +
+                 "    <extension>" +
+                 "      <groupId>xxx</groupId>" +
+                 "      <artifactId>xxx</artifactId>" +
+                 "      <version>xxx</version>" +
+                 "    </extension>" +
+                 "  </extensions>" +
+                 "</build>");
+    importProjectWithErrors();
 
     assertModules("project");
     assertSources("project", "src/main/java");
