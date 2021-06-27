@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.formatter" />
+    <orderEntry type="module" module-name="kotlin.generators" />
     <orderEntry type="module" module-name="kotlin.git" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" />
@@ -69,7 +70,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" />
-    <orderEntry type="module" module-name="kotlin.resources-descriptors" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.jps-plugin.tests" />
     <orderEntry type="module" module-name="kotlin.refIndex" />
