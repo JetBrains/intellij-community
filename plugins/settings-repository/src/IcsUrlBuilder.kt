@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.SystemInfo
 
@@ -18,7 +19,7 @@ internal fun getOsFolderName() = when {
 internal fun toRepositoryPath(path: String, roamingType: RoamingType): String {
   if (roamingType == RoamingType.PER_OS) {
     // mac/keymap.xml -> keymap.xml
-    val pathWithoutOsPrefix = path.removePrefix(com.intellij.configurationStore.getOsFolderName() + "/")
+    val pathWithoutOsPrefix = path.removePrefix(getPerOsSettingsStorageFolderName() + "/")
     // keymap.xml -> _mac/keymap.xml
     return "${getOsFolderName()}/$pathWithoutOsPrefix"
   }
