@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -22,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +134,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         builder
           .download(sessionDataFilePath,
                          __ -> {
-                           FileUtilRt.createIfNotExists(new File(sessionDataFilePath));
+                           createFileOrClearExisting(sessionDataFilePath);
                            return Unit.INSTANCE;
                          },
                          targetSessionDataPath -> {
@@ -169,6 +167,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     catch (IOException e) {
       LOG.info("Coverage was not enabled", e);
       return null;
+    }
+  }
+
+  private static void createFileOrClearExisting(@NotNull String sessionDataFilePath) {
+    File file = new File(sessionDataFilePath);
+    FileUtil.createIfDoesntExist(file);
+    try {
+      new FileOutputStream(file).close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 
