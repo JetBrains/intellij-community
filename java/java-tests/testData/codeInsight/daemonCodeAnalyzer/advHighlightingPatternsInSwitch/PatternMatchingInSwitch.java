@@ -494,14 +494,14 @@ class Main {
 
     // If the type of the selector expression is an enum type E
     String str;
-    <error descr="'switch' statement does not cover all possible input values">switch</error> (d) {
+    switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {
       case Day dd && dd != null:
         System.out.println("ok");
       case MONDAY:
         System.out.println("mon");
     };
 
-    str = <error descr="'switch' expression does not cover all possible input values">switch</error> (d) {
+    str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
       case MONDAY, TUESDAY -> System.out.println("ok");
     };
     str = switch (d) {
@@ -542,7 +542,7 @@ class Main {
       case Sub3 s3 -> "ok";
     };
 
-    <error descr="'switch' statement does not cover all possible input values">switch</error> (i) {
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
       case Sub1 s1:
         System.out.println("ok");
         break;
@@ -550,7 +550,7 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = <error descr="'switch' expression does not cover all possible input values">switch</error>(i) {
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
     };
@@ -576,7 +576,7 @@ class Main {
     };
 
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
-    <error descr="'switch' statement does not cover all possible input values">switch</error> (i2) {
+    switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
       case Sub7 s1:
         System.out.println("ok");
         break;
@@ -584,7 +584,7 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = <error descr="'switch' expression does not cover all possible input values">switch</error> (i2) {
+    str = switch (<error descr="'switch' expression does not cover all possible input values">i2</error>) {
       case Sub7 s1 -> "ok";
       case Sub8 s2 -> "ok";
     };
@@ -592,17 +592,17 @@ class Main {
     // empty switches
     switch (d) {
     }
-    str = <error descr="'switch' expression does not have any case clauses">switch</error> (d) {
+    str = switch (<error descr="'switch' expression does not have any case clauses">d</error>) {
     };
 
-    <error descr="'switch' statement does not cover all possible input values">switch</error> (i) {
+    switch (<error descr="'switch' statement does not have any case clauses">i</error>) {
     }
-    str = <error descr="'switch' expression does not have any case clauses">switch</error> (i) {
+    str = switch (<error descr="'switch' expression does not have any case clauses">i</error>) {
     };
 
-    <error descr="'switch' statement does not cover all possible input values">switch</error> (i2) {
+    switch (<error descr="'switch' statement does not have any case clauses">i2</error>) {
     }
-    str = <error descr="'switch' expression does not have any case clauses">switch</error> (i2) {
+    str = switch (<error descr="'switch' expression does not have any case clauses">i2</error>) {
     };
   }
 }
