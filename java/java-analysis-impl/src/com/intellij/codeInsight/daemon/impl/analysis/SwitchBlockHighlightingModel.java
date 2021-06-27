@@ -207,7 +207,10 @@ class SwitchBlockHighlightingModel {
 
     if (results.isEmpty() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
-      if (selectorClass != null) {
+      if (selectorClass == null) {
+        results.add(createCompletenessInfoForSwitch(!values.keySet().isEmpty()));
+      }
+      else {
         checkEnumCompleteness(selectorClass, ContainerUtil.map(values.keySet(), String::valueOf), results);
       }
     }
@@ -254,11 +257,10 @@ class SwitchBlockHighlightingModel {
       enumElements.forEach(missingConstants::remove);
       if (missingConstants.isEmpty()) return;
     }
-    HighlightInfo info = createCompletenessInfoForSwitch(enumElements.isEmpty());
+    HighlightInfo info = createCompletenessInfoForSwitch(!enumElements.isEmpty());
     if (!missingConstants.isEmpty()) {
       QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddMissingEnumBranchesFix(myBlock, missingConstants));
     }
-    QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddSwitchDefaultFix(myBlock, null));
     results.add(info);
   }
 
@@ -266,13 +268,15 @@ class SwitchBlockHighlightingModel {
     String messageKey;
     boolean isSwitchExpr = myBlock instanceof PsiExpression;
     if (hasAnyCaseLabels) {
-      messageKey = isSwitchExpr ? "switch.expr.empty" : "switch.statement.incomplete";
-    }
-    else {
       messageKey = isSwitchExpr ? "switch.expr.incomplete" : "switch.statement.incomplete";
     }
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(myBlock.getFirstChild())
+    else {
+      messageKey = isSwitchExpr ? "switch.expr.empty" : "switch.statement.empty";
+    }
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector)
       .descriptionAndTooltip(JavaErrorBundle.message(messageKey)).create();
+    QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddSwitchDefaultFix(myBlock, null));
+    return info;
   }
 
   @Nullable
@@ -592,7 +596,7 @@ class SwitchBlockHighlightingModel {
         checkSealedClassCompleteness(selectorClass, elements, results);
       }
       else {
-        results.add(createCompletenessInfoForSwitch(elements.isEmpty()));
+        results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
       }
     }
 
@@ -638,7 +642,7 @@ class SwitchBlockHighlightingModel {
         }
         if (directInheritedClasses.isEmpty()) return;
       }
-      HighlightInfo info = createCompletenessInfoForSwitch(elements.isEmpty());
+      HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       if (!directInheritedClasses.isEmpty()) {
         // todo here we may try to create a quick-fix to provide missing labels
       }
