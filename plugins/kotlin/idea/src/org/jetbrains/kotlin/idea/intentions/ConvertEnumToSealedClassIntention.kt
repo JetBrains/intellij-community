@@ -6,15 +6,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
@@ -31,6 +36,8 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
         val name = element.name ?: return
         if (name.isEmpty()) return
 
+        val isJvmPlatform = element.platform.isJvm()
+
         for (klass in element.withExpectedActuals()) {
             klass as? KtClass ?: continue
 
@@ -43,6 +50,7 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
 
             val psiFactory = KtPsiFactory(klass)
 
+            val objects = mutableListOf<KtObjectDeclaration>()
             for (member in klass.declarations) {
                 if (member !is KtEnumEntry) continue
 
@@ -67,6 +75,18 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
 
                 member.delete()
                 klass.addDeclaration(obj)
+
+                objects.add(obj)
+            }
+
+            if (isJvmPlatform) {
+                val enumEntryNames = objects.map { it.nameAsSafeName.asString() }
+                val targetClassName = klass.name
+                if (enumEntryNames.isNotEmpty() && targetClassName != null) {
+                    val companionObject = klass.getOrCreateCompanionObject()
+                    companionObject.addValuesFunction(targetClassName, enumEntryNames, psiFactory)
+                    companionObject.addValueOfFunction(targetClassName, classDescriptor, enumEntryNames, psiFactory)
+                }
             }
 
             klass.body?.let { body ->
@@ -82,5 +102,28 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
                     }
             }
         }
+    }
+
+    private fun KtObjectDeclaration.addValuesFunction(targetClassName: String, enumEntryNames: List<String>, psiFactory: KtPsiFactory) {
+        val functionText = "fun values(): Array<${targetClassName}> { return arrayOf(${enumEntryNames.joinToString()}) }"
+        addDeclaration(psiFactory.createFunction(functionText))
+    }
+
+    private fun KtObjectDeclaration.addValueOfFunction(
+        targetClassName: String,
+        classDescriptor: ClassDescriptor,
+        enumEntryNames: List<String>,
+        psiFactory: KtPsiFactory
+    ) {
+        val classFqName = classDescriptor.fqNameSafe.asString()
+        val functionText = buildString {
+            append("fun valueOf(value: String): $targetClassName {")
+            append("return when(value) {")
+            enumEntryNames.forEach { append("\"$it\" -> $it\n") }
+            append("else -> throw IllegalArgumentException(\"No object $classFqName.\$value\")")
+            append("}")
+            append("}")
+        }
+        addDeclaration(psiFactory.createFunction(functionText))
     }
 }
