@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
-internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 72, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
+internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 73, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            StatisticsUploadAssistant.isCollectAllowed() &&

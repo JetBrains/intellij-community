@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public final class ShortcutDataProvider {
 
     int clickCount = event.getClickCount();
     if (clickCount > 1) {
-      res += "(" + clickCount + "x)";
+      res += "(" + roundClickCount(clickCount) + "x)";
     }
 
     int modifiers = event.getModifiersEx() & ~BUTTON1_DOWN_MASK & ~BUTTON3_DOWN_MASK & ~BUTTON2_DOWN_MASK;
@@ -79,6 +80,15 @@ public final class ShortcutDataProvider {
     }
 
     return res;
+  }
+
+  @NotNull
+  private static String roundClickCount(int clickCount) {
+    if (clickCount < 3) return String.valueOf(clickCount);
+    if (clickCount < 5) return "3-5";
+    if (clickCount < 25) return "5-25";
+    if (clickCount < 100) return "25-100";
+    return "100+";
   }
 
   private static String getMouseButtonText(int buttonNum) {
