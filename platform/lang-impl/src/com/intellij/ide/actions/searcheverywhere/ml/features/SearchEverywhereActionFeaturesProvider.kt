@@ -79,7 +79,7 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
 
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-    localSummary?.getActionsStats()?.get(actionId)?.let {
+    localSummary?.getActionStatsById(actionId)?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
       data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
     }
