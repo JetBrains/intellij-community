@@ -74,9 +74,9 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
       if (causeLine.isNotEmpty()) {
         errorLine += "\n$causeLine"
       }
-      messageConsumer.accept(BuildIssueEventImpl(Object(),
-                                              MavenJvmConfigBuildIssue.getImportIssue(logLine, errorLine, project, null),
-                                              MessageEvent.Kind.ERROR))
+      messageConsumer.accept(BuildIssueEventImpl(Any(),
+                                                 MavenJvmConfigBuildIssue.getImportIssue(logLine, errorLine, project),
+                                                 MessageEvent.Kind.ERROR))
       return true
     }
 
@@ -86,7 +86,7 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
 
 class MavenJvmConfigOpenQuickFix(val jvmConfig: VirtualFile) : BuildIssueQuickFix {
 
-  override val id: String = "open_maven_jvm_config_quick_fix"
+  override val id: String = "open_maven_jvm_config_quick_fix_" + jvmConfig
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     OpenFileQuickFix.showFile(project, jvmConfig.toNioPath(), null)
@@ -105,20 +105,12 @@ class MavenRunConfigurationOpenQuickFix(val runnerAndConfigurationSettings: Runn
 }
 
 object MavenJvmConfigBuildIssue {
-  const val VM_INIT_ERROR:String = "Error occurred during initialization of VM"
+  const val VM_INIT_ERROR: String = "Error occurred during initialization of VM"
 
-  fun getRunnerIssue(title: String, errorMessage: String, project: Project,
-                     runConfiguration: MavenRunConfiguration?) =
-    getBuildIssue(title, errorMessage, project, runConfiguration, false)
-
-  fun getImportIssue(title: String, errorMessage: String, project: Project,
-                     runConfiguration: MavenRunConfiguration?) =
-    getBuildIssue(title, errorMessage, project, runConfiguration, true)
-
-  private fun getBuildIssue(title: String, errorMessage: String, project: Project,
-                            runConfiguration: MavenRunConfiguration?, import: Boolean): BuildIssue {
-    val rootMavenProject = MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()
-    val jvmConfig: VirtualFile? = rootMavenProject?.file?.path
+  fun getRunnerIssue(title: String, errorMessage: String, project: Project, runConfiguration: MavenRunConfiguration): BuildIssue {
+    val mavenProject = MavenProjectsManager.getInstance(project)
+      .rootProjects.filter { runConfiguration.settings.workingDirectory.contains(it.directory) }.firstOrNull()
+    val jvmConfig: VirtualFile? = mavenProject?.file?.path
       ?.let { MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(it) }
       ?.let { MavenExternalParameters.getJvmConfig(it) }
 
@@ -127,35 +119,64 @@ object MavenJvmConfigBuildIssue {
     issueDescription.append("\n\n")
     issueDescription.append(MavenProjectBundle.message("maven.quickfix.header.possible.solution"))
     issueDescription.append("\n")
-    if (import) {
-      val openMavenImportingSettingsQuickFix = OpenMavenImportingSettingsQuickFix(message("maven.settings.importing.vm.options"))
-      quickFixes.add(openMavenImportingSettingsQuickFix)
-      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.import.settings", openMavenImportingSettingsQuickFix.id))
-      issueDescription.append("\n")
-    }
-    else {
-      val openMavenRunnerSettingsQuickFix = OpenMavenRunnerSettingsQuickFix(message("maven.settings.runner.vm.options"))
-      quickFixes.add(openMavenRunnerSettingsQuickFix)
-      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.runner.settings", openMavenRunnerSettingsQuickFix.id))
-      issueDescription.append("\n")
 
-      val configurationById = runConfiguration
-        ?.let { RunManagerImpl.getInstanceImpl(project).findConfigurationByTypeAndName(MavenRunConfigurationType.getInstance(), it.name) }
-      if (configurationById != null && configurationById.configuration is MavenRunConfiguration) {
-        val configuration = configurationById.configuration as MavenRunConfiguration
-        if (!configuration.runnerSettings?.vmOptions.isNullOrBlank()) {
-          val mavenRunConfigurationOpenQuickFix = MavenRunConfigurationOpenQuickFix(configurationById)
-          quickFixes.add(mavenRunConfigurationOpenQuickFix)
-          issueDescription.append(MavenProjectBundle
-                                    .message("maven.quickfix.jvm.options.run.configuration", mavenRunConfigurationOpenQuickFix.id))
-          issueDescription.append("\n")
-        }
+    val openMavenRunnerSettingsQuickFix = OpenMavenRunnerSettingsQuickFix(message("maven.settings.runner.vm.options"))
+    quickFixes.add(openMavenRunnerSettingsQuickFix)
+    issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.runner.settings", openMavenRunnerSettingsQuickFix.id))
+    issueDescription.append("\n")
+
+    val configurationById = runConfiguration
+      .let { RunManagerImpl.getInstanceImpl(project).findConfigurationByTypeAndName(MavenRunConfigurationType.getInstance(), it.name) }
+    if (configurationById != null && configurationById.configuration is MavenRunConfiguration) {
+      val configuration = configurationById.configuration as MavenRunConfiguration
+      if (!configuration.runnerSettings?.vmOptions.isNullOrBlank()) {
+        val mavenRunConfigurationOpenQuickFix = MavenRunConfigurationOpenQuickFix(configurationById)
+        quickFixes.add(mavenRunConfigurationOpenQuickFix)
+        issueDescription.append(MavenProjectBundle
+                                  .message("maven.quickfix.jvm.options.run.configuration", mavenRunConfigurationOpenQuickFix.id))
+        issueDescription.append("\n")
       }
     }
+
     if (jvmConfig != null) {
       val mavenJvmConfigOpenQuickFix = MavenJvmConfigOpenQuickFix(jvmConfig)
       quickFixes.add(mavenJvmConfigOpenQuickFix)
-      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.config.file", mavenJvmConfigOpenQuickFix.id))
+      issueDescription.append(MavenProjectBundle.message("maven.quickfix.jvm.options.config.file",
+                                                         mavenProject.displayName,
+                                                         mavenJvmConfigOpenQuickFix.id))
+    }
+
+    return object : BuildIssue {
+      override val title: String = title
+      override val description: String = issueDescription.toString()
+      override val quickFixes = quickFixes
+      override fun getNavigatable(project: Project): Navigatable? = null
+    }
+  }
+
+  fun getImportIssue(title: String, errorMessage: String, project: Project): BuildIssue {
+    val quickFixes = mutableListOf<BuildIssueQuickFix>()
+    val issueDescription = StringBuilder(errorMessage)
+    issueDescription.append("\n\n")
+    issueDescription.append(MavenProjectBundle.message("maven.quickfix.header.possible.solution"))
+    issueDescription.append("\n")
+
+    val openMavenImportingSettingsQuickFix = OpenMavenImportingSettingsQuickFix(message("maven.settings.importing.vm.options"))
+    quickFixes.add(openMavenImportingSettingsQuickFix)
+    issueDescription.append(
+      MavenProjectBundle.message("maven.quickfix.jvm.options.import.settings", openMavenImportingSettingsQuickFix.id))
+
+    MavenProjectsManager.getInstance(project).rootProjects.forEach {
+      val jvmConfig: VirtualFile? = it.file.path
+        .let { MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(it) }
+        .let { MavenExternalParameters.getJvmConfig(it) }
+      if (jvmConfig != null) {
+        val mavenJvmConfigOpenQuickFix = MavenJvmConfigOpenQuickFix(jvmConfig)
+        quickFixes.add(mavenJvmConfigOpenQuickFix)
+        issueDescription.append("\n")
+        issueDescription.append(MavenProjectBundle
+                                  .message("maven.quickfix.jvm.options.config.file", it.displayName, mavenJvmConfigOpenQuickFix.id))
+      }
     }
 
     return object : BuildIssue {

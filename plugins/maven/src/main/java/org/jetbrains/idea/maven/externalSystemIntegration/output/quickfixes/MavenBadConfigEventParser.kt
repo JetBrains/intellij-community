@@ -68,14 +68,14 @@ class MavenImportBadConfigEventParser : MavenImportLoggedEventParser {
         logLine, logLine.substring(MavenConfigBuildIssue.CONFIG_PARSE_ERROR.length).trim(), project
       ) ?: return false
       messageConsumer.accept(
-        BuildIssueEventImpl(Object(), buildIssue, MessageEvent.Kind.ERROR)
+        BuildIssueEventImpl(Any(), buildIssue, MessageEvent.Kind.ERROR)
       )
       return true
     }
     if (logLine.startsWith(MavenConfigBuildIssue.CONFIG_VALUE_ERROR)) {
       val buildIssue = MavenConfigBuildIssue.getIssue(logLine, logLine, project) ?: return false
       messageConsumer.accept(
-        BuildIssueEventImpl(Object(), buildIssue, MessageEvent.Kind.ERROR)
+        BuildIssueEventImpl(Any(), buildIssue, MessageEvent.Kind.ERROR)
       )
       return true
     }

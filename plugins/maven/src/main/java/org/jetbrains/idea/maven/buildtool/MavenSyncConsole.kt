@@ -45,7 +45,7 @@ import java.io.File
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
   private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
-  private var mySyncId = getTaskId()
+  private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
   private var wrapperProgressIndicator: WrapperProgressIndicator? = null
@@ -82,7 +82,7 @@ class MavenSyncConsole(private val myProject: Project) {
     wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
     shownIssues.clear()
-    mySyncId = getTaskId()
+    mySyncId = createTaskId()
 
     val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
                                             System.currentTimeMillis())
@@ -97,7 +97,9 @@ class MavenSyncConsole(private val myProject: Project) {
     myPostponed.clear();
   }
 
-  fun getTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+  private fun createTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+
+  fun getTaskId() = mySyncId
 
   fun addText(@Nls text: String) = addText(text, true)
 
@@ -235,7 +237,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   private fun createMessageEvent(e: Throwable): MessageEventImpl {
     if (e is CannotStartServerException) {
-      var cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
+      val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
       if (cause != null) {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
                                 getExceptionText(cause), getExceptionText(cause))
@@ -253,9 +255,7 @@ class MavenSyncConsole(private val myProject: Project) {
     if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
       return ExceptionUtil.getThrowableText(e)
     }
-    return e.localizedMessage.ifEmpty {
-      if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else return e.message!!
-    }
+    return e.localizedMessage.ifEmpty { if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!! }
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {

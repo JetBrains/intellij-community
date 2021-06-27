@@ -472,13 +472,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
       StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
-      boolean withResumeAction =
-        MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
-      Project project = myConfiguration.getProject();
+      boolean withResumeAction = MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
       MavenBuildEventProcessor eventProcessor =
         new MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
                                      targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
-
         );
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
@@ -497,7 +494,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (buildView == null) {
         MavenLog.LOG.warn("buildView is null for " + myConfiguration.getName());
       }
-      Project project = myConfiguration.getProject();
       MavenBuildEventProcessor eventProcessor =
         new MavenBuildEventProcessor(myConfiguration, buildView, descriptor, taskId, targetFileMapper, ctx ->
           new StartBuildEventImpl(descriptor, ""));
