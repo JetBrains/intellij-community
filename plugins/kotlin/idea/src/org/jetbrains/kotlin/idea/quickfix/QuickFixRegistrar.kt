@@ -668,5 +668,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         SEALED_INHERITOR_IN_DIFFERENT_PACKAGE.registerFactory(MoveToSealedMatchingPackageFix)
         SEALED_INHERITOR_IN_DIFFERENT_MODULE.registerFactory(MoveToSealedMatchingPackageFix)
+
+        JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
     }
 }
