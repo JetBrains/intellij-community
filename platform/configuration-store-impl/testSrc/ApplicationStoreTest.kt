@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
@@ -15,7 +14,6 @@ import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
 import com.intellij.util.io.*
-import com.intellij.util.pico.DefaultPicoContainer
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
@@ -385,7 +383,7 @@ internal class ApplicationStoreTest {
 
     componentStore.save()
 
-    val osCode = getOsFolderName()
+    val osCode = getPerOsSettingsStorageFolderName()
     val fs = testAppConfig.fileSystem
     assertTrue("${osCode}/peros.xml doesn't exist", testAppConfig.resolve(fs.getPath(osCode, "peros.xml")).exists())
     assertFalse("Old peros.xml without os prefix was not removed", testAppConfig.resolve("peros.xml").exists())
@@ -403,7 +401,7 @@ internal class ApplicationStoreTest {
 
     componentStore.save()
 
-    val osCode = getOsFolderName()
+    val osCode = getPerOsSettingsStorageFolderName()
     val fs = testAppConfig.fileSystem
     assertTrue("${osCode}/peros.xml doesn't exist", testAppConfig.resolve(fs.getPath(osCode, "peros.xml")).exists())
     assertFalse("Old peros.xml without os prefix was not removed", testAppConfig.resolve("peros.xml").exists())
@@ -411,7 +409,7 @@ internal class ApplicationStoreTest {
 
   @Test
   fun `per-os setting is preferred from os subfolder`() {
-    val osCode = getOsFolderName()
+    val osCode = getPerOsSettingsStorageFolderName()
     writeConfig("peros.xml", "<application>${createComponentData("old")}</application>")
     writeConfig("${osCode}/peros.xml", "<application>${createComponentData("new")}</application>")
 

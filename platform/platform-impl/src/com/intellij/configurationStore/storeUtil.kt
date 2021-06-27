@@ -183,10 +183,10 @@ fun getStoragePathSpec(storage: Storage): String {
 }
 
 fun getOsDependentStorage(storagePathSpec: String): String {
-  return getOsFolderName() + "/" + storagePathSpec
+  return getPerOsSettingsStorageFolderName() + "/" + storagePathSpec
 }
 
-fun getOsFolderName(): String {
+fun getPerOsSettingsStorageFolderName(): String {
   if (SystemInfo.isMac) return "mac"
   if (SystemInfo.isWindows) return "windows"
   if (SystemInfo.isLinux) return "linux"
