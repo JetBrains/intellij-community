@@ -184,7 +184,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       .map(PsiEnumConstant::getName)
       .toSet();
     for (OldSwitchStatementBranch branch : branches) {
-      for (PsiExpression caseValue : branch.getCurrentBranchCaseExpressions()) {
+      for (PsiCaseLabelElement caseValue : branch.getCurrentBranchCaseExpressions()) {
         PsiReferenceExpression reference = tryCast(caseValue, PsiReferenceExpression.class);
         if (reference != null) {
           PsiEnumConstant enumConstant = tryCast(reference.resolve(), PsiEnumConstant.class);
@@ -616,12 +616,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   private static final class SwitchExpressionBranch {
     final boolean myIsDefault;
-    final List<? extends PsiExpression> myCaseExpressions;
+    final List<? extends PsiCaseLabelElement> myCaseExpressions;
     @NotNull final List<? extends PsiElement> myUsedElements; // used elements only for this branch
     private final SwitchRuleResult myRuleResult;
 
     private SwitchExpressionBranch(boolean isDefault,
-                                   List<? extends PsiExpression> caseExpressions,
+                                   List<? extends PsiCaseLabelElement> caseExpressions,
                                    SwitchRuleResult ruleResult,
                                    @NotNull List<? extends PsiElement> usedElements) {
       myIsDefault = isDefault;
@@ -636,16 +636,19 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (label != null) {
         sb.append(ct.commentsBefore(label.getFirstChild()));
       }
-      if (myIsDefault) {
-        sb.append("default");
-      }
-      else {
+      if (!myCaseExpressions.isEmpty()) {
         String labels = StreamEx.of(myCaseExpressions).map(ct::textWithComments).joining(",");
         sb.append("case");
         if (!labels.startsWith(" ")) {
           sb.append(" ");
         }
         sb.append(labels);
+      }
+      if (myIsDefault) {
+        if (! myCaseExpressions.isEmpty()) {
+          sb.append(" ,");
+        }
+        sb.append("default");
       }
       grabCommentsBeforeColon(label, ct, sb);
       sb.append("->");
@@ -692,22 +695,22 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     // Case expressions in code order, for all branches
-    public List<PsiExpression> getCaseExpressions() {
+    public List<PsiCaseLabelElement> getCaseExpressions() {
       List<OldSwitchStatementBranch> branches = getWithFallthroughBranches();
       Collections.reverse(branches);
       return StreamEx.of(branches).flatMap(branch -> {
-        PsiExpressionList caseValues = branch.myLabelStatement.getCaseValues();
-        if (caseValues == null) return StreamEx.empty();
-        return StreamEx.of(caseValues.getExpressions());
+        final PsiCaseLabelElementList caseLabelElementList = branch.myLabelStatement.getCaseLabelElementList();
+        if (caseLabelElementList == null) return StreamEx.empty();
+        return StreamEx.of(caseLabelElementList.getElements());
       }).toList();
     }
 
-    public List<PsiExpression> getCurrentBranchCaseExpressions() {
-      PsiExpressionList caseValues = myLabelStatement.getCaseValues();
-      if (caseValues == null) {
+    public List<PsiCaseLabelElement> getCurrentBranchCaseExpressions() {
+      final PsiCaseLabelElementList caseLabelElementList = myLabelStatement.getCaseLabelElementList();
+      if (caseLabelElementList == null) {
         return Collections.emptyList();
       }
-      return Arrays.asList(caseValues.getExpressions());
+      return Arrays.asList(caseLabelElementList.getElements());
     }
 
     /**

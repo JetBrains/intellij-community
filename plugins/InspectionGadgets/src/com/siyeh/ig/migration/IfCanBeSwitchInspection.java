@@ -184,7 +184,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (! ContainerUtil.exists(branches, (branch) -> branch.isElse())){
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
-      if (isNullable(switchExpression) && findNullCheckedOperand(ifStatement) == null) {
+      if (isNullable(switchExpression) && findNullCheckedOperand(statementToReplace) == null) {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
