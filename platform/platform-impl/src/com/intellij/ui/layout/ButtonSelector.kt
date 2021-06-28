@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import java.awt.Dimension
 import java.awt.Insets
+import java.util.function.Supplier
 import kotlin.math.max
 
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
@@ -23,9 +24,16 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
 
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
-                                                        @NlsActions.ActionText optionText: String,
-                                                        @NlsActions.ActionDescription optionDescription: String? = null)
-  : ToggleAction(optionText, optionDescription, null), DumbAware {
+                                                        optionText: Supplier<@NlsActions.ActionText String>,
+                                                        optionDescription: Supplier<@NlsActions.ActionText String>? = null)
+  : ToggleAction(optionText, optionDescription ?: Supplier { null }, null), DumbAware {
+
+  @JvmOverloads
+  constructor(option: T,
+              property: GraphProperty<T>,
+              @NlsActions.ActionText optionText: String,
+              @NlsActions.ActionDescription optionDescription: String? = null) :
+    this(option, property, Supplier { optionText }, optionDescription?.let { Supplier { optionDescription } })
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return property.get() == option
