@@ -33,6 +33,10 @@ public final class VersionMatcher {
       String minVersion = targetVersions.substring(0, targetVersions.length() - 1);
       return compare(current, minVersion, checkBaseVersions) >= 0;
     }
+    else if (targetVersions.startsWith("!")) {
+      String version = targetVersions.substring(1);
+      return compare(current, version, checkBaseVersions) != 0;
+    }
     else if (targetVersions.startsWith("<")) {
       if (targetVersions.startsWith("<=")) {
         String maxVersion = targetVersions.substring(2);
