@@ -1014,9 +1014,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   static final class CopiedModuleBuilder extends ModuleBuilder {
-    @NotNull ModifiableRootModel myRootModel;
-    @NotNull Path myComponentPath;
-    @NotNull Project myProject;
+    @NotNull private final ModifiableRootModel myRootModel;
+    @NotNull private final Path myComponentPath;
+    @NotNull private final Project myProject;
 
     CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;

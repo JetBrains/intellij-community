@@ -435,9 +435,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
 
   static class ArgResultEquality {
-    boolean argsEqual;
-    boolean firstArgEqualToResult;
-    boolean secondArgEqualToResult;
+    final boolean argsEqual;
+    final boolean firstArgEqualToResult;
+    final boolean secondArgEqualToResult;
 
     ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
       this.argsEqual = argsEqual;
