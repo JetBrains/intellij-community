@@ -13,11 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -178,6 +180,18 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
 
+    if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
+      if (! ContainerUtil.exists(branches, (branch) -> branch.isElse())){
+        branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
+      }
+      if (isNullable(switchExpression) && findNullCheckedOperand(ifStatement) == null) {
+        final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
+        final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
+        final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
+        if (defaultBranch != null) defaultBranch.addCaseExpression(condition);
+      }
+    }
+
     @NonNls final StringBuilder switchStatementText = new StringBuilder();
     switchStatementText.append("switch(").append(switchExpression.getText()).append("){");
     final PsiType type = switchExpression.getType();
@@ -276,6 +290,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         branch.addCaseExpression(argument);
       }
     }
+    else if (expression instanceof PsiInstanceOfExpression) {
+      branch.addCaseExpression(expression);
+    }
     else if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -284,6 +301,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         for (PsiExpression operand : operands) {
           extractCaseExpressions(operand, switchExpression, branch);
         }
+      } else if (JavaTokenType.ANDAND.equals(tokenType)) {
+        branch.addCaseExpression(polyadicExpression);
       }
       else if (operands.length == 2) {
         final PsiExpression lhs = operands[0];
@@ -306,13 +325,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   private static void dumpBranch(IfStatementBranch branch, boolean castToInt, boolean wrap, boolean renameBreaks, String breakLabelName,
                                  @NonNls StringBuilder switchStatementText) {
     dumpComments(branch.getComments(), switchStatementText);
+    for (PsiExpression caseExpression : branch.getCaseExpressions()) {
+      switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
+    }
     if (branch.isElse()) {
       switchStatementText.append("default: ");
-    }
-    else {
-      for (PsiExpression caseExpression : branch.getCaseExpressions()) {
-        switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
-      }
     }
     dumpComments(branch.getStatementComments(), switchStatementText);
     dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName, switchStatementText);
@@ -328,6 +345,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         return enumConstant.getName();
       }
     }
+    final String patternCaseText = SwitchUtils.createPatternCaseText(expression);
+    if (patternCaseText != null) return patternCaseText;
     if (castToInt) {
       final PsiType type = expression.getType();
       if (!PsiType.INT.equals(type)) {
@@ -442,12 +461,13 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (switchExpression == null) {
         return;
       }
+      boolean isPatternMatch = SwitchUtils.canBePatternSwitchCase(condition, switchExpression);
       int branchCount = 0;
       final Set<Object> switchCaseValues = new HashSet<>();
       PsiIfStatement branch = statement;
       while (true) {
         branchCount++;
-        if (!SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues)) {
+        if (!SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {
           return;
         }
         final PsiStatement elseBranch = branch.getElseBranch();
@@ -458,7 +478,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
 
       final ProblemHighlightType highlightType;
-      if (shouldHighlight(switchExpression) && branchCount >= minimumBranches) {
+      if (shouldHighlight(statement, switchExpression) && branchCount >= minimumBranches) {
         highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
       else {
@@ -468,7 +488,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       registerError(statement.getFirstChild(), highlightType);
     }
 
-    private boolean shouldHighlight(PsiExpression switchExpression) {
+    private boolean shouldHighlight(PsiIfStatement ifStatement, PsiExpression switchExpression) {
       final PsiType type = switchExpression.getType();
       if (!suggestIntSwitches) {
         if (type instanceof PsiClassType) {
@@ -487,7 +507,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         if (!suggestEnumSwitches && TypeConversionUtil.isEnumType(type)) {
           return false;
         }
-        if (onlySuggestNullSafe && NullabilityUtil.getExpressionNullability(switchExpression, true) != Nullability.NOT_NULL) {
+        if (onlySuggestNullSafe && isNullable(switchExpression)) {
+          final PsiExpression condition = ifStatement.getCondition();
+          if (SwitchUtils.canBePatternSwitchCase(condition, switchExpression)) {
+            return hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null;
+          }
           final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(switchExpression);
           if (parent instanceof PsiExpressionList) {
             final PsiElement grandParent = parent.getParent();
@@ -503,6 +527,42 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
       }
       return !SideEffectChecker.mayHaveSideEffects(switchExpression);
+    }
+  }
+
+  private static boolean isNullable(PsiExpression switchExpression) {
+    return NullabilityUtil.getExpressionNullability(switchExpression, false) != Nullability.NOT_NULL &&
+           NullabilityUtil.getExpressionNullability(switchExpression, true) != Nullability.NOT_NULL;
+  }
+
+  private static PsiExpression findNullCheckedOperand(PsiIfStatement ifStatement) {
+    final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
+    if (condition instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          final PsiExpression nullCheckedExpression = SwitchUtils.findNullCheckedOperand(PsiUtil.skipParenthesizedExprDown(operand));
+          if (nullCheckedExpression != null) return nullCheckedExpression;
+        }
+      }
+    }
+    final PsiExpression nullCheckedOperand = SwitchUtils.findNullCheckedOperand(condition);
+    if (nullCheckedOperand != null) return nullCheckedOperand;
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch instanceof PsiIfStatement) {
+      return findNullCheckedOperand((PsiIfStatement)elseBranch);
+    } else {
+      return null;
+    }
+  }
+
+  private static boolean hasDefaultElse(PsiIfStatement ifStatement) {
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch == null) return false;
+    if (elseBranch instanceof PsiIfStatement) {
+      return hasDefaultElse((PsiIfStatement)elseBranch);
+    } else {
+      return true;
     }
   }
 }
