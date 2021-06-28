@@ -109,12 +109,6 @@
         <element id="archive" name="kotlin-project-wizard-idea.jar">
           <element id="module-output" name="kotlin.project-wizard.idea" />
         </element>
-        <element id="archive" name="kotlin-uast-kotlin.jar">
-          <element id="module-output" name="kotlin.uast.uast-kotlin" />
-        </element>
-        <element id="archive" name="kotlin-uast-kotlin-idea.jar">
-          <element id="module-output" name="kotlin.uast.uast-kotlin-idea" />
-        </element>
         <element id="archive" name="kotlin-analysis.jar">
           <element id="module-output" name="kotlin.analysis" />
         </element>
@@ -207,6 +201,12 @@
         <element id="library" level="project" name="kotlinc.high-level-api" />
         <element id="library" level="project" name="kotlinc.high-level-api-fir" />
         <element id="library" level="project" name="kotlinc.low-level-api-fir" />
+        <element id="archive" name="uast-kotlin-idea-fir">
+          <element id="module-output" name="kotlin.uast.uast-kotlin-idea-fir" />
+        </element>
+        <element id="archive" name="uast-kotlin-fir">
+          <element id="module-output" name="kotlin.uast.uast-kotlin-fir" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.4.30-dev-local-2/kotlin-dist-for-ide-1.4.30-dev-local-2.jar" path-in-jar="/" />
