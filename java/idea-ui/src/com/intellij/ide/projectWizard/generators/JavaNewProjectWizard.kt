@@ -41,14 +41,13 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
       settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
     }
 
-    val sdkModel = ProjectSdksModel()
+    val sdkModel = ProjectSdksModel().also { it.syncSdks() }
     val sdkCombo = JdkComboBox(null, sdkModel, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo ->
         combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk })
         val sdk = ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk
         if (sdk != null && sdk.sdkType is JavaSdkType) {
-          sdkModel.addSdk(sdk)
           combo.selectedJdk = sdk
         }
       }
