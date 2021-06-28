@@ -457,9 +457,18 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectFirstExtendSelection",
     "Tree-selectFirst"
   );
-  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
-    List.of("Log.KeymapGroup", "UsageGroupingActionGroup", "SearchEverywhereActions", "Images.ThumbnailViewActions", "Images.ImageViewActions",
-            "ArrangementRulesGroup", "ServiceViewTreeToolbar", "TodoViewGroupByGroup", "ChangesView.GroupBy");
+  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS = List.of(
+    "Log.KeymapGroup",
+    "UsageGroupingActionGroup",
+    "UsageFilteringActionGroup",
+    "SearchEverywhereActions",
+    "Images.ThumbnailViewActions",
+    "Images.ImageViewActions",
+    "ArrangementRulesGroup",
+    "ServiceViewTreeToolbar",
+    "TodoViewGroupByGroup",
+    "ChangesView.GroupBy"
+  );
 
   @Override
   protected Collection<String> getConflictSafeGroups() {
