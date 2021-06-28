@@ -1,5 +1,6 @@
 package com.intellij.grazie.text;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -209,6 +210,7 @@ class TextContentImpl implements TextContent {
   }
 
   private TextContent excludeRange(TextRange range, boolean unknown) {
+    ProgressManager.checkCanceled();
     if (range.getStartOffset() < 0 || range.getEndOffset() > length()) {
       throw new IllegalArgumentException("Text range " + range + " should be between 0 and " + length());
     }
