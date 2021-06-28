@@ -10,13 +10,12 @@ import kotlin.reflect.KProperty
 class OneToOneParent private constructor() {
   class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(
     private val childClass: Class<Child>,
-    private val isParentInChildNullable: Boolean,
   ) : ReadOnlyProperty<Parent, Child?> {
     private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: Parent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)
     }
@@ -36,19 +35,6 @@ class OneToOneChild private constructor() {
       return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
   }
-
-  class Nullable<Child : WorkspaceEntityBase, Parent : WorkspaceEntityBase>(
-    private val parentClass: Class<Parent>
-  ) : ReadOnlyProperty<Child, Parent?> {
-    private var connectionId: ConnectionId? = null
-
-    override fun getValue(thisRef: Child, property: KProperty<*>): Parent? {
-      if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, true)
-      }
-      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)
-    }
-  }
 }
 
 // TODO: 08.02.2021 It may cause issues if we'll attach two children to the same parent
@@ -56,14 +42,13 @@ class MutableOneToOneParent private constructor() {
   class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
     private val parentClass: Class<Parent>,
     private val childClass: Class<Child>,
-    private val isParentInChildNullable: Boolean,
   ) : ReadWriteProperty<ModifParent, Child?> {
 
     private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: ModifParent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
@@ -73,7 +58,7 @@ class MutableOneToOneParent private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
     }
@@ -100,37 +85,6 @@ class MutableOneToOneChild private constructor() {
       }
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
-      }
-
-      // A very important thing. If we replace a field in one-to-one connection, the previous entity is automatically removed.
-      val existingChild = thisRef.diff.extractOneToOneChild<Child>(connectionId!!, value.id)
-      if (existingChild != null) {
-        thisRef.diff.removeEntity(existingChild)
-      }
-
-      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
-    }
-  }
-
-  class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifChild : ModifiableWorkspaceEntityBase<Child>>(
-    private val childClass: Class<Child>,
-    private val parentClass: Class<Parent>,
-  ) : ReadWriteProperty<ModifChild, Parent?> {
-    private var connectionId: ConnectionId? = null
-
-    override fun getValue(thisRef: ModifChild, property: KProperty<*>): Parent? {
-      if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true)
-      }
-      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)
-    }
-
-    override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent?) {
-      if (!thisRef.modifiable.get()) {
-        throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-      }
-      if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true)
       }
       thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }

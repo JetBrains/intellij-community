@@ -80,8 +80,7 @@ fun WorkspaceEntityStorageDiffBuilder.addEclipseProjectPropertiesEntity(module: 
   srcPlace = LinkedHashMap()
 }
 
-private val eclipsePropertiesDelegate = OneToOneParent.Nullable<ModuleEntity, EclipseProjectPropertiesEntity>(
-  EclipseProjectPropertiesEntity::class.java, false)
+private val eclipsePropertiesDelegate = OneToOneParent.Nullable<ModuleEntity, EclipseProjectPropertiesEntity>(EclipseProjectPropertiesEntity::class.java)
 val ModuleEntity.eclipseProperties: EclipseProjectPropertiesEntity? by eclipsePropertiesDelegate
 
 fun ModifiableEclipseProjectPropertiesEntity.setVariable(kind: String, name: String, path: String) {
