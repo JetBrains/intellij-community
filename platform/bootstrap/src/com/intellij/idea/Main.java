@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapBundle;
@@ -131,8 +131,7 @@ public final class Main {
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
-                  "The IDE failed to install some plugins.\n\n" +
-                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "The IDE failed to install or update some plugins.\n" +
                   "Please try again, and if the problem persists, please report it\n" +
                   "to https://jb.gg/ide/critical-startup-errors\n\n" +
                   "The cause: " + e, false);
