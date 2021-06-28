@@ -5,6 +5,7 @@ package com.intellij.usages.impl.rules
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.GeneratedSourcesFilter
+import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageFilteringRuleProvider
 import com.intellij.util.containers.ContainerUtil
@@ -17,6 +18,9 @@ fun usageFilteringRules(project: Project): List<UsageFilteringRule> {
   result.add(WriteAccessFilteringRule)
   if (GeneratedSourcesFilter.EP_NAME.hasAnyExtensions()) {
     result.add(UsageInGeneratedCodeFilteringRule(project))
+  }
+  if (ImportFilteringRule.EP_NAME.hasAnyExtensions()) {
+    result.add(ImportUsageFilteringRule)
   }
   fromExtensions(project, result)
   return ContainerUtil.immutableCopy(result)

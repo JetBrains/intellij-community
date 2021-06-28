@@ -1253,6 +1253,9 @@
   <action id="UsageFiltering.WriteAccess">
     <keyboard-shortcut first-keystroke="control W"/>
   </action>
+  <action id="UsageFiltering.Imports">
+    <keyboard-shortcut first-keystroke="control I"/>
+  </action>
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="F10"/>
   </action>

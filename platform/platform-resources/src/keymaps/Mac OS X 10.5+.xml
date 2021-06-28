@@ -727,6 +727,9 @@
   <action id="UsageFiltering.WriteAccess">
     <keyboard-shortcut first-keystroke="control W"/>
   </action>
+  <action id="UsageFiltering.Imports">
+    <keyboard-shortcut first-keystroke="control I"/>
+  </action>
 
   <action id="List-selectFirstRow">
     <keyboard-shortcut first-keystroke="alt up"/>
