@@ -8,7 +8,7 @@ public class WhileCanBeForeach {
         int total = 0;
         final List ints = new ArrayList();
         Iterator iterator = ints.iterator();
-        <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> ( iterator.hasNext()) {
+        <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> ( iterator.hasNext()) {
             total += (Integer) iterator.next();
         }
         return total;
@@ -18,7 +18,7 @@ public class WhileCanBeForeach {
         int total = 0;
         final List ints = new ArrayList();
         Iterator iterator = ints.iterator();
-        <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> ( iterator.hasNext()) {
+        <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> ( iterator.hasNext()) {
             total += (Integer) iterator.next();
         }
         iterator = ints.iterator(); // write use here
@@ -38,7 +38,7 @@ public class WhileCanBeForeach {
 
     void no(Collection pbps, Map tracksToPBP) {
         final Iterator pbpsIt = pbps.iterator();
-        <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (pbpsIt.hasNext()) {
+        <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> (pbpsIt.hasNext()) {
             final String pbp = (String) pbpsIt.next();
             final Iterator trackIt = it();
             while (trackIt.hasNext()) {
@@ -70,7 +70,7 @@ public class WhileCanBeForeach {
     int total = 0;
     final List ints = new ArrayList();
     ListIterator iterator = ints.listIterator();
-    <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> ( iterator.hasNext()) {
+    <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> ( iterator.hasNext()) {
       final Object next = iterator.next();
       total += (Integer) next;
     }
@@ -119,7 +119,7 @@ public class WhileCanBeForeach {
   void insideTryBlockPositive1() {
     try {
       Iterator<String> iterator = Arrays.asList("1", "2").iterator();
-      <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+      <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> (iterator.hasNext()) {
         System.out.println(iterator.next());
       }
     } catch (Exception e) {}
@@ -127,7 +127,7 @@ public class WhileCanBeForeach {
 
   void insideTryBlockPositive2() {
     Iterator<String> iterator = Arrays.asList("1", "2").iterator();
-    <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+    <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> (iterator.hasNext()) {
       try {
         System.out.println("Some string");
       } catch (Exception e) {
@@ -148,7 +148,7 @@ public class WhileCanBeForeach {
 
   void insideInnerWhilePositive() {
     Iterator<Integer> iterator = Arrays.asList(1, 2, 3, 4, 5, 6).iterator();
-    <warning descr="'while' loop replaceable with enhanced 'for'">while</warning> (iterator.hasNext()) {
+    <warning descr="'while' loop can be replaced with enhanced 'for'">while</warning> (iterator.hasNext()) {
       int i = 0;
       while (i != 3) {
         i++;

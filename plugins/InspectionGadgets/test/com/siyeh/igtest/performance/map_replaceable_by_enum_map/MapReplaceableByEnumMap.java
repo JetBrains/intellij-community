@@ -9,7 +9,7 @@ import java.util.SortedMap;
 public class MapReplaceableByEnumMap {
 
     public static void main(String[] args) {
-        final HashMap<MyEnum, Object> myEnums = new <warning descr="'HashMap<MyEnum, Object>' replaceable with 'EnumMap'">HashMap<MyEnum, Object></warning>();
+        final HashMap<MyEnum, Object> myEnums = new <warning descr="'HashMap<MyEnum, Object>' can be replaced with 'EnumMap'">HashMap<MyEnum, Object></warning>();
     }
 
     enum MyEnum{
