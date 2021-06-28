@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.coerceAtMostVersion
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -95,7 +96,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
                 this.targetPlatform?.idePlatformKind,
                 coerceRuntimeLibraryVersionToReleased = compilerVersion == null
             )
-            languageLevel?.let { maximumValue.coerceAtMost(it) }
+            languageLevel?.coerceAtMostVersion(maximumValue)
         }
     }
 }
