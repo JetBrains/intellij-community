@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -31,6 +32,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.compiler.instrumentationUtil",
                 "intellij.platform.externalSystem.impl"
         ]
+        productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
 
         productLayout.additionalPlatformJars.
                 putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
