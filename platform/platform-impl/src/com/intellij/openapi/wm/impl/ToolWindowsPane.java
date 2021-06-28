@@ -240,12 +240,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
-      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
-      if (sideInfo == null) {
-        setComponent(null, info.getAnchor(), 0);
-      }
-      else {
-        if (component != null && component.isShowing()) {
+      if (component != null && component.isShowing()) {
+        WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
+        if (sideInfo == null) {
+          setComponent(null, info.getAnchor(), 0);
+        }
+        else {
           ToolWindowAnchor anchor = info.getAnchor();
           JComponent c = getComponentAt(anchor);
           if (c instanceof Splitter) {
@@ -260,11 +260,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             setComponent(null, anchor, 0);
           }
         }
-      }
 
-      if (!dirtyMode) {
-        layeredPane.validate();
-        layeredPane.repaint();
+        if (!dirtyMode) {
+          layeredPane.validate();
+          layeredPane.repaint();
+        }
       }
     }
     else if (info.getType() == ToolWindowType.SLIDING) {
