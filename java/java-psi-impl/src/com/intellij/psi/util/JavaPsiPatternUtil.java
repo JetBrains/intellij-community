@@ -111,12 +111,14 @@ public final class JavaPsiPatternUtil {
       return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type);
     }
     else if (pattern instanceof PsiTypeTestPattern) {
-      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
-      if (checkType == null) return false;
-      // todo we need to support arrays and primitive types here as well
-      PsiClass baseClass = PsiTypesUtil.getPsiClass(TypeConversionUtil.erasure(checkType.getType()));
-      PsiClass typeClass = PsiTypesUtil.getPsiClass(TypeConversionUtil.erasure(type));
-      return typeClass != null && baseClass != null && InheritanceUtil.isInheritorOrSelf(typeClass, baseClass, true);
+      type = TypeConversionUtil.erasure(type);
+      PsiType baseType = TypeConversionUtil.erasure(getPatternType(pattern));
+      if (type instanceof PsiArrayType || baseType instanceof PsiArrayType) {
+        return baseType != null && TypeConversionUtil.isAssignable(baseType, type);
+      }
+      PsiClass typeClass = PsiTypesUtil.getPsiClass(type);
+      PsiClass baseTypeClass = PsiTypesUtil.getPsiClass(baseType);
+      return typeClass != null && baseTypeClass != null && InheritanceUtil.isInheritorOrSelf(typeClass, baseTypeClass, true);
     }
     return false;
   }
