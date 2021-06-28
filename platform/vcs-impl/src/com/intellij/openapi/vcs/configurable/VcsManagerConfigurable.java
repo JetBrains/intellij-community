@@ -31,7 +31,7 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
-  private VcsDirectoryConfigurationPanel myDelegate;
+  private Configurable myDelegate;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -46,8 +46,8 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public JComponent createComponent() {
-    myDelegate = new VcsDirectoryConfigurationPanel(myProject);
-    return myDelegate;
+    myDelegate = new VcsGeneralSettingsConfigurable(myProject);
+    return myDelegate.createComponent();
   }
 
   @Override
@@ -77,8 +77,8 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     super.disposeUIResources();
     if (myDelegate != null) {
       myDelegate.disposeUIResources();
+      myDelegate = null;
     }
-    myDelegate = null;
   }
 
   @Override
@@ -102,7 +102,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
-    result.add(new VcsGeneralSettingsConfigurable(myProject));
+    result.add(new VcsDirectoryConfigurationPanel(myProject));
     if (Registry.is("vcs.ignorefile.generation", true)) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
