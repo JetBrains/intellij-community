@@ -20,7 +20,7 @@ abstract class KotlinAbstractUElement(
     open val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
         baseResolveProviderServiceSupplier?.get()
             ?: psi?.project?.let { ServiceManager.getService(it, BaseKotlinUastResolveProviderService::class.java) }
-            ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available")
+            ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
     }
 
     final override val uastParent: UElement? by lz {
