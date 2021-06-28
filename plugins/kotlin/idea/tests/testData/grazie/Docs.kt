@@ -24,7 +24,7 @@ class ExampleClassWithNoTypos<T>(val name: String) {
 /**
  * It is <warning descr="BEEN_PART_AGREEMENT">friend</warning>
  *
- * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
+ * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
  *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  * @property name the <warning descr="COMMA_WHICH">name which</warning> group
@@ -41,7 +41,7 @@ class ExampleClassWithTypos<T>(val name: String) {
     }
 
     /**
-     * @param name1 This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic
+     * @param name1 <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic
      * @param name2 This guy
      * @return have no useful logic
      */

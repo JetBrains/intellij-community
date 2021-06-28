@@ -61,26 +61,26 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.3" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.3" />
+      <library name="org.languagetool:languagetool-core:5.4" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.4" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.3/languagetool-core-5.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.3/languagetool-core-5.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.4/languagetool-core-5.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.3" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.3" />
+      <library name="org.languagetool:language-en:5.4" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.4" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.3/language-en-5.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.4/language-en-5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.3/language-en-5.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.4/language-en-5.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
