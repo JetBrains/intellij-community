@@ -511,6 +511,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
               if (myShowComponent == component) {
                 stopLoading();
                 showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
+                PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
+
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -519,6 +521,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
       if (syncLoading) {
         showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
+        PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
       }
     }
   }
@@ -529,10 +532,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();
-
-    IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
-    PluginsGroup group = component.getGroup();
-    PluginManagerUsageCollector.pluginCardOpened(descriptor, group.type, group.getPluginIndex(descriptor.getPluginId()));
 
     select(0, true);
   }

@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.enums.PluginsGroupType
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
+import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -50,9 +51,9 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
 
     @JvmStatic
-    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroupType, index: Int) = PLUGIN_CARD_OPENED.log(
-      getPluginInfoByDescriptor(descriptor), group, index
-    )
+    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) = group?.let {
+      PLUGIN_CARD_OPENED.log(getPluginInfoByDescriptor(descriptor), it.type, it.getPluginIndex(descriptor.pluginId))
+    }
 
     @JvmStatic
     fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)

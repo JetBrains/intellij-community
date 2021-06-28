@@ -79,7 +79,7 @@ public class PluginsGroup {
 
   public int getPluginIndex(@NotNull PluginId pluginId) {
     for (int i = 0; i < descriptors.size(); i++) {
-      if (descriptors.get(i).getPluginId() == pluginId) {
+      if (descriptors.get(i).getPluginId().equals(pluginId)) {
         return i;
       }
     }
