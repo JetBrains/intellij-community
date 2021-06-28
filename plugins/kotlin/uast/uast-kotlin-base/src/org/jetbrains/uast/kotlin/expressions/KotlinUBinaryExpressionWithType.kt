@@ -22,7 +22,7 @@ class KotlinUBinaryExpressionWithType(
 
     override val typeReference by lz {
         sourcePsi.right?.let {
-            KotlinUTypeReferenceExpression(it, this) { type }
+            KotlinUTypeReferenceExpression(it, this, baseResolveProviderService) { type }
         }
     }
 

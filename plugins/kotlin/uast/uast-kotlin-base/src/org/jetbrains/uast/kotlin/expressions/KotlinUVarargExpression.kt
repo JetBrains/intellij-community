@@ -10,7 +10,8 @@ import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 class KotlinUVarargExpression(
     private val valueArgs: List<ValueArgument>,
-    uastParent: UElement?
+    uastParent: UElement?,
+    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
 ) : KotlinAbstractUExpression(uastParent), UCallExpression, DelegatedMultiResolve {
     override val kind: UastCallKind = UastCallKind.NESTED_ARRAY_INITIALIZER
 

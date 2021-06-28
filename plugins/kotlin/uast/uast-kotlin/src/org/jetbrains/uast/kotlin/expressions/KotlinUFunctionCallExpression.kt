@@ -81,7 +81,7 @@ class KotlinUFunctionCallExpression(
         if (resolvedCall != null) {
             val actualParamIndex = if (resolvedCall.extensionReceiver == null) i else i - 1
             if (actualParamIndex == -1) return receiver
-            return getArgumentExpressionByIndex(actualParamIndex, resolvedCall, this)
+            return getArgumentExpressionByIndex(actualParamIndex, resolvedCall, this, baseResolveProviderService)
         }
         val argument = valueArguments.getOrNull(i) ?: return null
         val argumentType = argument.getExpressionType()
@@ -213,7 +213,8 @@ class KotlinUFunctionCallExpression(
 internal fun getArgumentExpressionByIndex(
     actualParamIndex: Int,
     resolvedCall: ResolvedCall<out CallableDescriptor>,
-    parent: UElement
+    parent: UElement,
+    baseResolveProviderService: BaseKotlinUastResolveProviderService
 ): UExpression? {
     val (parameter, resolvedArgument) = resolvedCall.valueArguments.entries.find { it.key.index == actualParamIndex } ?: return null
     val arguments = resolvedArgument.arguments
@@ -222,14 +223,18 @@ internal fun getArgumentExpressionByIndex(
         val argument = arguments.single()
         val expression = argument.getArgumentExpression()
         if (parameter.varargElementType != null && argument.getSpreadElement() == null) {
-            return createVarargsHolder(arguments, parent)
+            return createVarargsHolder(arguments, parent, baseResolveProviderService)
         }
         return KotlinConverter.convertOrEmpty(expression, parent)
     }
-    return createVarargsHolder(arguments, parent)
+    return createVarargsHolder(arguments, parent, baseResolveProviderService)
 }
 
-private fun createVarargsHolder(arguments: List<ValueArgument>, parent: UElement?): KotlinUExpressionList =
-    KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent).apply {
+private fun createVarargsHolder(
+    arguments: List<ValueArgument>,
+    parent: UElement?,
+    baseResolveProviderService: BaseKotlinUastResolveProviderService
+): KotlinUExpressionList =
+    KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent, baseResolveProviderService).apply {
         expressions = arguments.map { KotlinConverter.convertOrEmpty(it.getArgumentExpression(), parent) }
     }
