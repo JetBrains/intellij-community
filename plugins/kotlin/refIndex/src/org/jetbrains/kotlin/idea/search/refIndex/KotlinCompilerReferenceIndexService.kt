@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
@@ -32,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -277,7 +277,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
         HierarchySearchRequest(
             originalElement = basePsiElement,
-            searchScope = LibraryScopeCache.getInstance(project).librariesOnlyScope,
+            searchScope = ProjectScope.getLibrariesScope(project),
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
         return overridden

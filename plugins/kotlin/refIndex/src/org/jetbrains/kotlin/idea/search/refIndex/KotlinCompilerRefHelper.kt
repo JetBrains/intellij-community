@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
@@ -47,7 +46,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
         HierarchySearchRequest(
             originalElement = basePsi,
-            searchScope = LibraryScopeCache.getInstance(basePsi.project).librariesOnlyScope,
+            searchScope = libraryScope,
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
 

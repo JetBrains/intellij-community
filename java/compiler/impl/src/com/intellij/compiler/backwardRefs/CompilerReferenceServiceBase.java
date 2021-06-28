@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -34,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -141,7 +141,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
-    if (!isServiceEnabledFor(element) || isInsideLibraryScope()) return null;
+    if (!isServiceEnabledFor(element)) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
@@ -247,7 +247,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
                                                      @NotNull GlobalSearchScope searchScope,
                                                      @NotNull FileType searchFileType,
                                                      @NotNull CompilerHierarchySearchType searchType) {
-    if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
+    if (!isServiceEnabledFor(aClass)) return null;
 
     try {
       Map<VirtualFile, SearchId[]> candidatesPerFile = ReadAction.compute(() -> {
@@ -262,7 +262,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       if (candidatesPerFile == null) return null;
       GlobalSearchScope dirtyScope = myDirtyScopeHolder.getDirtyScope();
       if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
-        dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+        dirtyScope = dirtyScope.union(ProjectScope.getLibrariesScope(myProject));
       }
       return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, myProject, searchFileType, searchType);
     }
@@ -275,7 +275,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    if (!isActive()) return false;
+    if (!isActive() || isInsideLibraryScope()) return false;
     PsiFile file = ReadAction.compute(() -> element.getContainingFile());
     return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(file);
   }
@@ -329,7 +329,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
                                                            @NotNull PsiElement element) {
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file == null || !fileIndex.isInLibrary(file)) return baseScope;
-    return baseScope.uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
+    return baseScope.uniteWith(ProjectScope.getLibrariesScope(project));
   }
 
   @VisibleForTesting
@@ -398,8 +398,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
                                                                                           psiElement,
                                                                                           myReader.getNameEnumerator(),
-                                                                                          LibraryScopeCache.getInstance(myProject)
-                                                                                            .getLibrariesOnlyScope());
+                                                                                          ProjectScope.getLibrariesScope(myProject));
           final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
           fullHierarchy[0] = ref;
           int i = 1;
