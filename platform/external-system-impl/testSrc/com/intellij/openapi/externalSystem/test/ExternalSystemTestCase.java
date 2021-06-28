@@ -117,7 +117,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected void collectAllowedRoots(List<String> roots) {
   }
 
-  public static Collection<String> collectRootsInside(String root) {
+  public static Collection<String> collectRootsInside(@NotNull String root) {
     final List<String> roots = new SmartList<>();
     roots.add(root);
     FileUtil.processFilesRecursively(new File(root), file -> {
