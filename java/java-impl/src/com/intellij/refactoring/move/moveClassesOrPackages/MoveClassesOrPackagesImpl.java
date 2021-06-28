@@ -66,13 +66,13 @@ public final class MoveClassesOrPackagesImpl {
           return null;
         }
         if (!checkNesting(project, aPackage, targetElement, true)) return null;
-        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage)) return null;
+        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage, (PsiDirectory)element)) return null;
         element = aPackage;
       }
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
         if (!checkNesting(project, psiPackage, targetElement, true)) return null;
-        if (!checkMovePackage(project, psiPackage)) return null;
+        if (!checkMovePackage(project, psiPackage, null)) return null;
       }
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
@@ -122,14 +122,14 @@ public final class MoveClassesOrPackagesImpl {
     return false;
   }
 
-  private static boolean checkMovePackage(Project project, PsiPackage aPackage) {
+  private static boolean checkMovePackage(Project project, PsiPackage aPackage, @Nullable PsiDirectory currentDirectory) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
       final @Nls StringBuffer message = new StringBuffer();
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
-        DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
+        DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories, currentDirectory);
         message.append("\n\n");
         String report = JavaRefactoringBundle
           .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());

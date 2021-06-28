@@ -164,7 +164,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       // the directory corresponds to a package that has multiple associated directories
       final @Nls StringBuffer message = new StringBuffer();
       String qualifiedName = aPackage.getQualifiedName();
-      DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, qualifiedName, projectDirectories);
+      DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, qualifiedName, projectDirectories, psiDirectory);
       message.append(JavaBundle.message("dialog.message.what.directories.would.you.like.to.move"));
       
       List<@NlsContexts.Button String> options = new ArrayList<>();

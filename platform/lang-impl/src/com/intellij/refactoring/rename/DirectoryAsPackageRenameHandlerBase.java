@@ -19,6 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         final @Nls StringBuffer message = new StringBuffer();
         RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
         Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(psiDirectory.getVirtualFile(), project));
-        buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), projectDirectories);
+        buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), projectDirectories, psiDirectory);
         PsiDirectory[] moduleDirectories = aPackage.getDirectories(GlobalSearchScope.moduleScope(module));
         message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed"));
         List<String> options = new ArrayList<>();
@@ -127,7 +128,8 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
                                                               String packageQname,
-                                                              PsiDirectory[] directories) {
+                                                              PsiDirectory[] directories,
+                                                              @Nullable PsiDirectory currentVDirectory) {
     message.append(RefactoringBundle.message("multiple.directories.correspond.to.package", packageQname));
     final List<PsiDirectory> generated = new ArrayList<>();
     final List<PsiDirectory> source = new ArrayList<>();
@@ -139,12 +141,34 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         source.add(directory);
       }
     }
-    final Function<PsiDirectory, String> directoryPresentation = directory -> directory.getVirtualFile().getPresentableUrl();
-    message.append(StringUtil.join(source, directoryPresentation, "\n"));
+    
+    if (currentVDirectory != null && source.indexOf(currentVDirectory) > 0) {
+      //ensure current on the first place
+      source.remove(currentVDirectory);
+      source.add(0, currentVDirectory);
+    }
+    final Function<PsiDirectory, String> directoryPresentation = directory -> presentableUrl(currentVDirectory, directory);
+    appendRoots(message, source, directoryPresentation);
     if (!generated.isEmpty()) {
       message.append("\n\n").append(RefactoringBundle.message("also.generated")).append("\n");
-      message.append(StringUtil.join(generated, directoryPresentation, "\n"));
-      
+      appendRoots(message, generated, directoryPresentation);
+    }
+  }
+
+  @NotNull
+  private static @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
+    if (directory.equals(currentVDirectory)) {
+      return directory.getVirtualFile().getPresentableUrl() +
+             " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
+    }
+    return directory.getVirtualFile().getPresentableUrl();
+  }
+
+  private static void appendRoots(StringBuffer message, List<PsiDirectory> source, Function<PsiDirectory, String> directoryPresentation) {
+    int limit = Math.min(source.size(), 10);
+    message.append(StringUtil.join(source.subList(0, limit), directoryPresentation, "\n"));
+    if (limit < source.size()) {
+      message.append("\n...\n");
     }
   }
 }
