@@ -91,7 +91,7 @@ object FileResponses {
     val lastModified: Long
     try {
       lastModified = Files.getLastModifiedTime(file).toMillis()
-      if (rangeHeader == null && checkCache(request, channel, lastModified, extraHeaders)) {
+      if (rangeHeader == null && extraSuffix.isNullOrEmpty() && checkCache(request, channel, lastModified, extraHeaders)) {
         return
       }
 
