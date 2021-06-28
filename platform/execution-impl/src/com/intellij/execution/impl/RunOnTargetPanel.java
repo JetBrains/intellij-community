@@ -86,7 +86,7 @@ public class RunOnTargetPanel {
       configuration instanceof TargetEnvironmentAwareRunProfile &&
       ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType() != null &&
       RunTargetsEnabled.get();
-    myPanel.setVisible(targetAware);
+    myPanel.getParent().setVisible(targetAware);
     if (targetAware) {
       String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
       LanguageRuntimeType<?> defaultRuntime = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType();
