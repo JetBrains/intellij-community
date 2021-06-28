@@ -247,14 +247,13 @@ object UpdateChecker {
   ): PlatformUpdates =
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
-
-      loadProductData(indicator)?.let { product ->
-        if (product.disableMachineId) {
-          PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
-          UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
-        }
-        UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
-      } ?: PlatformUpdates.Empty
+      val productData = loadProductData(indicator)
+      if (!settings.isPlatformUpdateEnabled || productData == null) {
+        PlatformUpdates.Empty
+      }
+      else {
+        UpdateStrategy(ApplicationInfo.getInstance().build, productData, settings).checkForUpdates()
+      }
     }
     catch (e: Exception) {
       LOG.infoWithDebug(e)
@@ -277,7 +276,15 @@ object UpdateChecker {
           url = UpdateRequestParameters.amendUpdateRequest(url)
         }
         LOG.debug { "loading ${url}" }
-        parseUpdateData(HttpRequests.request(url).connect { JDOMUtil.load(it.getReader(indicator)) })
+        HttpRequests.request(url)
+          .connect { JDOMUtil.load(it.getReader(indicator)) }
+          .let { parseUpdateData(it) }
+          ?.also {
+            if (it.disableMachineId) {
+              PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+              UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
+            }
+        }
       }
 
       productDataCache = SoftReference(result)
@@ -594,9 +601,12 @@ object UpdateChecker {
         NoUpdatesDialog(showSettingsLink).show()
       }
       else if (userInitiated) {
-        val message = IdeBundle.message("updates.no.updates.notification")
-        showNotification(project, NotificationKind.PLUGINS,
-                         "no.updates.available", "", message)
+        if (UpdateSettings.getInstance().isPlatformUpdateEnabled) {
+          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.updates.notification"))
+        }
+        else {
+          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.plugin.updates.notification"))
+        }
       }
     }
   }
