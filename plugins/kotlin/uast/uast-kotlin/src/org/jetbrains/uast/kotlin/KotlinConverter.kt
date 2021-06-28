@@ -2,9 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -12,13 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -26,17 +20,11 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
-import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.expressions.*
 import org.jetbrains.uast.kotlin.psi.*
-import org.jetbrains.uast.util.ClassSet
-import org.jetbrains.uast.util.ClassSetsWrapper
 
 @ApiStatus.Internal
 object KotlinConverter : BaseKotlinConverter {
@@ -67,6 +55,18 @@ object KotlinConverter : BaseKotlinConverter {
         givenParent: UElement?,
         expectedTypes: Array<out Class<out UElement>>
     ): UElement? {
+        if (element == null) return null
+
+        val project = element.project
+        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
+
+        fun <P : PsiElement> build(ctor: (P, UElement?, BaseKotlinUastResolveProviderService) -> UElement): () -> UElement? {
+            return {
+                @Suppress("UNCHECKED_CAST")
+                ctor(element as P, givenParent, service)
+            }
+        }
+
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
             return {
                 @Suppress("UNCHECKED_CAST")
@@ -74,10 +74,11 @@ object KotlinConverter : BaseKotlinConverter {
             }
         }
 
+
         return with (expectedTypes) { when (element) {
             is KtParameterList -> el<UDeclarationsExpression> {
-                val resolveProviderService = ServiceManager.getService(element.project, KotlinUastResolveProviderService::class.java)
-                val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, null) { resolveProviderService }
+                val resolveProviderService = ServiceManager.getService(project, KotlinUastResolveProviderService::class.java)
+                val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { resolveProviderService }
                 declarationsExpression.apply {
                     declarations = element.parameters.mapIndexed { i, p ->
                         KotlinUParameter(UastKotlinPsiParameter.create(p, element, declarationsExpression, i), p, this)
@@ -113,7 +114,7 @@ object KotlinConverter : BaseKotlinConverter {
             is KtWhenCondition -> convertWhenCondition(element, givenParent, expectedTypes)
             is KtTypeReference ->
                 expectedTypes.accommodate(
-                    alternative { KotlinUTypeReferenceExpression(element, givenParent) },
+                    alternative { KotlinUTypeReferenceExpression(element, givenParent, service) },
                     alternative { convertReceiverParameter(element) }
                 ).firstOrNull()
             is KtConstructorDelegationCall ->
@@ -130,7 +131,7 @@ object KotlinConverter : BaseKotlinConverter {
                 if (element.getQualifier() == null)
                     el<USimpleNameReferenceExpression> {
                         element.lastChild?.let { psiIdentifier ->
-                            KotlinStringUSimpleReferenceExpression(psiIdentifier.text, givenParent, element, element)
+                            KotlinStringUSimpleReferenceExpression(psiIdentifier.text, givenParent, service, element, element)
                         }
                     }
                 else el<UQualifiedReferenceExpression>(build(::KotlinDocUQualifiedReferenceExpression))
@@ -172,6 +173,9 @@ object KotlinConverter : BaseKotlinConverter {
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
     ): UExpression? {
+        val project = expression.project
+        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
+
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return {
                 @Suppress("UNCHECKED_CAST")
@@ -197,7 +201,7 @@ object KotlinConverter : BaseKotlinConverter {
                 }
             }
             is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
-                val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression)
+                val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
                 declarationsExpression.apply {
                     val tempAssignment = KotlinULocalVariable(
                         UastKotlinPsiVariable.create(expression, declarationsExpression),
@@ -264,7 +268,7 @@ object KotlinConverter : BaseKotlinConverter {
             is KtBinaryExpressionWithTypeRHS -> expr<UBinaryExpressionWithType>(build(::KotlinUBinaryExpressionWithType))
             is KtClassOrObject -> expr<UDeclarationsExpression> {
                 expression.toLightClass()?.let { lightClass ->
-                    KotlinUDeclarationsExpression(givenParent).apply {
+                    KotlinUDeclarationsExpression(givenParent, service).apply {
                         declarations = listOf(KotlinUClass.create(lightClass, this))
                     }
                 } ?: UastEmptyExpression(givenParent)
@@ -290,11 +294,14 @@ object KotlinConverter : BaseKotlinConverter {
         givenParent: UElement?,
         requiredType: Array<out Class<out UElement>>
     ): UExpression? {
+        val project = condition.project
+        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
+
         return with(requiredType) {
             when (condition) {
                 is KtWhenConditionInRange -> expr<UBinaryExpression> {
                     KotlinCustomUBinaryExpression(condition, givenParent).apply {
-                        leftOperand = KotlinStringUSimpleReferenceExpression("it", this)
+                        leftOperand = KotlinStringUSimpleReferenceExpression("it", this, service)
                         operator = when {
                             condition.isNegated -> KotlinBinaryOperators.NOT_IN
                             else -> KotlinBinaryOperators.IN
@@ -304,14 +311,14 @@ object KotlinConverter : BaseKotlinConverter {
                 }
                 is KtWhenConditionIsPattern -> expr<UBinaryExpression> {
                     KotlinCustomUBinaryExpressionWithType(condition, givenParent).apply {
-                        operand = KotlinStringUSimpleReferenceExpression("it", this)
+                        operand = KotlinStringUSimpleReferenceExpression("it", this, service)
                         operationKind = when {
                             condition.isNegated -> KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
                             else -> UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
                         }
                         val typeRef = condition.typeReference
                         typeReference = typeRef?.let {
-                            KotlinUTypeReferenceExpression(it, this) { typeRef.toPsiType(this, boxed = true) }
+                            KotlinUTypeReferenceExpression(it, this, service) { typeRef.toPsiType(this, boxed = true) }
                         }
                     }
                 }
@@ -481,7 +488,7 @@ object KotlinConverter : BaseKotlinConverter {
 
     private fun convertToPropertyAlternatives(
         methods: LightClassUtil.PropertyAccessorsPsiMethods?,
-        givenParent: UElement?
+        givenParent: UElement?,
     ): Array<UElementAlternative<*>> = if (methods != null) arrayOf(
         alternative { methods.backingField?.let { KotlinUField(it, (it as? KtLightElement<*, *>)?.kotlinOrigin, givenParent) } },
         alternative { methods.getter?.let { convertDeclaration(it, givenParent, arrayOf(UMethod::class.java)) as? UMethod } },
@@ -567,7 +574,12 @@ object KotlinConverter : BaseKotlinConverter {
     ): UDeclarationsExpression {
         val declarationsExpression = parent as? KotlinUDeclarationsExpression
             ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
-            ?: KotlinUDeclarationsExpression(null, parent, psi)
+            ?: KotlinUDeclarationsExpression(
+                null,
+                parent,
+                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
+                psi
+            )
         val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
         val variable =
             KotlinUAnnotatedLocalVariable(

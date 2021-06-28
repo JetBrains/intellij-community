@@ -75,7 +75,7 @@ abstract class BaseKotlinUMethod(
 
     override val returnTypeReference: UTypeReferenceExpression? by lz {
         (sourcePsi as? KtCallableDeclaration)?.typeReference?.let {
-            KotlinUTypeReferenceExpression(it, this) { javaPsi.returnType ?: UastErrorType }
+            KotlinUTypeReferenceExpression(it, this, baseResolveProviderService) { javaPsi.returnType ?: UastErrorType }
         }
     }
 }
