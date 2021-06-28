@@ -144,10 +144,6 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       val starterDependencyDom = starter.versionConfigUrl.openStream().use { JDOMUtil.load(it) }
       return StarterUtils.parseDependencyConfig(starterDependencyDom, starter.versionConfigUrl.path, false)
     }
-
-    internal fun getNameGenerator(): ModuleNameGenerator? {
-      return ModuleNameGenerator.EP_NAME.extensionList.firstOrNull()
-    }
   }
 
   protected val starterContext: StarterContext = StarterContext()

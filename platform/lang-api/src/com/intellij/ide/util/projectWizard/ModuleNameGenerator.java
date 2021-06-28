@@ -13,5 +13,5 @@ import java.util.function.Consumer;
 public interface ModuleNameGenerator {
   ExtensionPointName<ModuleNameGenerator> EP_NAME = ExtensionPointName.create("com.intellij.moduleNameGenerator");
 
-  @NotNull JComponent getButton(@NotNull Consumer<String> nameSetter);
+  @NotNull JComponent getUi(@NotNull Consumer<String> nameSetter);
 }
