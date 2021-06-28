@@ -17,7 +17,7 @@ internal fun usageFilteringRuleActions(project: Project, ruleState: UsageFilteri
     val action: AnAction = actionManager.getAction(rule.actionId)
                            ?: continue
     check(action is EmptyAction)
-    result.add(UsageFilteringRuleAction(action, rwAwareState, rule.ruleId()))
+    result.add(UsageFilteringRuleAction(action, rwAwareState, rule.ruleId))
   }
   return result
 }

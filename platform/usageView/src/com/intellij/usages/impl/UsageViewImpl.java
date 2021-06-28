@@ -789,7 +789,7 @@ public class UsageViewImpl implements UsageViewEx {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRule rule : usageFilteringRules(project)) {
-      if (myFilteringRulesState.isActive(rule.ruleId())) {
+      if (myFilteringRulesState.isActive(rule.getRuleId())) {
         list.add(rule);
       }
     }

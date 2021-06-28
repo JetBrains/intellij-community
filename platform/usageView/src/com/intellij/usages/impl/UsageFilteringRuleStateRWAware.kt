@@ -8,8 +8,8 @@ internal class UsageFilteringRuleStateRWAware(
   private val delegate: UsageFilteringRuleState,
 ) : UsageFilteringRuleState {
 
-  private val rRuleId = ReadAccessFilteringRule.ruleId()
-  private val wRuleId = WriteAccessFilteringRule.ruleId()
+  private val rRuleId = ReadAccessFilteringRule.ruleId
+  private val wRuleId = WriteAccessFilteringRule.ruleId
 
   override fun isActive(ruleId: String): Boolean = delegate.isActive(ruleId)
 

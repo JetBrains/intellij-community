@@ -14,7 +14,7 @@ public interface UsageFilteringRule {
   /**
    * @return unique identifier of this rule which is used to persist the state (active/inactive)
    */
-  default @NonNls @NotNull String ruleId() {
+  default @NonNls @NotNull String getRuleId() {
     return getClass().getName();
   }
 
