@@ -33,15 +33,15 @@ class ExampleClassWithNoTypos:
 
 
 class ExampleClassWithTypos:
-    """It <warning descr="IT_VBZ">are</warning> friend there
+    """It is <warning descr="ARTICLE_MISSING">friend</warning> there
 
     <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
 
     Args:
-        name (str): the <warning descr="COMMA_WHICH">name which</warning> group
+        name (str): the name which group
 
     Attributes:
-        name (str): the <warning descr="COMMA_WHICH">name which</warning> group
+        name (str): the name which group
 
     """
 
@@ -59,7 +59,7 @@ class ExampleClassWithTypos:
             int: the new size of <warning descr="DT_DT">a the</warning> group.
 
         """
-        return 1  # It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment
+        return 1  # It are <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment
 
 
 class ForMultiLanguageSupport:
