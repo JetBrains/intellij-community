@@ -178,13 +178,12 @@ class SwitchBlockHighlightingModel {
         }
         Object value = null;
         if (expr instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression)expr;
-          PsiElement element = refExpr.resolve();
-          if (element instanceof PsiEnumConstant) {
-            value = ((PsiEnumConstant)element).getName();
-            if (refExpr.getQualifier() != null) {
-              String message = JavaErrorBundle.message("qualified.enum.constant.in.switch");
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message).create());
+          String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)expr);
+          if (enumConstName != null) {
+            value = enumConstName;
+            HighlightInfo info = createQualifiedEnumConstantInfo((PsiReferenceExpression)expr);
+            if (info != null) {
+              results.add(info);
               continue;
             }
           }
@@ -216,7 +215,23 @@ class SwitchBlockHighlightingModel {
     return results;
   }
 
-  QuickFixFactory getFixFactory() {
+  @Nullable
+  static String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
+    PsiElement element = expr.resolve();
+    if (element instanceof PsiEnumConstant) return ((PsiEnumConstant)element).getName();
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
+    if (expr.getQualifier() != null) {
+      String message = JavaErrorBundle.message("qualified.enum.constant.in.switch");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message).create();
+    }
+    return null;
+  }
+
+  static QuickFixFactory getFixFactory() {
     return QuickFixFactory.getInstance();
   }
 
@@ -326,7 +341,8 @@ class SwitchBlockHighlightingModel {
     }
 
     @Override
-    @Nullable SelectorKind getSwitchSelectorKind() {
+    @Nullable
+    SelectorKind getSwitchSelectorKind() {
       if (TypeConversionUtil.getTypeRank(mySelectorType) <= TypeConversionUtil.INT_RANK) return SelectorKind.INT;
       if (mySelectorType instanceof PsiArrayType) return SelectorKind.CLASS_OR_ARRAY;
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
@@ -419,13 +435,9 @@ class SwitchBlockHighlightingModel {
         HighlightInfo info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (info != null) return info;
         if (label instanceof PsiReferenceExpression) {
-          PsiElement element = ((PsiReferenceExpression)label).resolve();
-          if (element instanceof PsiEnumConstant) {
-            if (((PsiReferenceExpression)label).getQualifier() != null) {
-              String message = JavaErrorBundle.message("qualified.enum.constant.in.switch");
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
-            }
-            return null;
+          String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)label);
+          if (enumConstName != null) {
+            return createQualifiedEnumConstantInfo((PsiReferenceExpression)label);
           }
         }
         Object constValue = evaluateConstant(expr);
@@ -735,15 +747,6 @@ class SwitchBlockHighlightingModel {
         return resolved instanceof PsiEnumConstant;
       }
       return false;
-    }
-
-    @Nullable
-    private static String evaluateEnumConstantName(@NotNull PsiReferenceExpression labelElement) {
-      PsiElement element = labelElement.resolve();
-      if (element instanceof PsiEnumConstant) {
-        return ((PsiEnumConstant)element).getName();
-      }
-      return null;
     }
 
     @Nullable
