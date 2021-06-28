@@ -17,11 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 
-internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.DumbAware {
-  companion object {
-    private val LOG = logger<CheckFsSanityAndProjectRootPostStartUpActivity>()
-  }
-
+internal class CheckProjectActivity : StartupActivity.DumbAware {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.INSTANCE
@@ -30,8 +26,8 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
 
   override fun runActivity(project: Project) {
     NonUrgentExecutor.getInstance().execute {
-      checkProjectRoots(project)
       checkUnknownMacros(project, true)
+      checkProjectRoots(project)
     }
   }
 
@@ -47,33 +43,28 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
       return
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread {
-      LOG.debug("FW/roots waiting started")
-      while (true) {
-        if (project.isDisposed) {
-          return@executeOnPooledThread
-        }
-
-        if (!watcher.isSettingRoots) {
-          break
-        }
-        TimeoutUtil.sleep(10)
+    val logger = logger<CheckProjectActivity>()
+    logger.debug("FW/roots waiting started")
+    while (watcher.isSettingRoots) {
+      if (project.isDisposed) {
+        return
       }
-
-      LOG.debug("FW/roots waiting finished")
-      val manualWatchRoots = watcher.manualWatchRoots
-      var pctNonWatched = 0
-      if (manualWatchRoots.isNotEmpty()) {
-        val unwatched = roots.filter { root -> root.isInLocalFileSystem && manualWatchRoots.any { VfsUtilCore.isAncestorOrSelf(it, root) } }
-        if (unwatched.isNotEmpty()) {
-          val message = ApplicationBundle.message("watcher.non.watchable.project", ApplicationNamesInfo.getInstance().fullProductName)
-          watcher.notifyOnFailure(message, null)
-          LOG.info("unwatched roots: ${unwatched.map { it.presentableUrl }}")
-          LOG.info("manual watches: ${manualWatchRoots}")
-          pctNonWatched = (100.0 * unwatched.size / roots.size).toInt()
-        }
-      }
-      ProjectFsStatsCollector.watchedRoots(project, pctNonWatched)
+      TimeoutUtil.sleep(10)
     }
+    logger.debug("FW/roots waiting finished")
+
+    val manualWatchRoots = watcher.manualWatchRoots
+    var pctNonWatched = 0
+    if (manualWatchRoots.isNotEmpty()) {
+      val unwatched = roots.filter { root -> root.isInLocalFileSystem && manualWatchRoots.any { VfsUtilCore.isAncestorOrSelf(it, root) } }
+      if (unwatched.isNotEmpty()) {
+        val message = ApplicationBundle.message("watcher.non.watchable.project", ApplicationNamesInfo.getInstance().fullProductName)
+        watcher.notifyOnFailure(message, null)
+        logger.info("unwatched roots: ${unwatched.map { it.presentableUrl }}")
+        logger.info("manual watches: ${manualWatchRoots}")
+        pctNonWatched = (100.0 * unwatched.size / roots.size).toInt()
+      }
+    }
+    ProjectFsStatsCollector.watchedRoots(project, pctNonWatched)
   }
 }
