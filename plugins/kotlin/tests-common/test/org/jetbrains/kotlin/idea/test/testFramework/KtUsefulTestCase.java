@@ -153,10 +153,6 @@ public abstract class KtUsefulTestCase extends TestCase {
         super(name);
     }
 
-    protected boolean shouldContainTempFiles() {
-        return true;
-    }
-
     @Override
     protected void setUp() throws Exception {
         // -- KOTLIN ADDITIONAL START --
@@ -168,20 +164,6 @@ public abstract class KtUsefulTestCase extends TestCase {
         // -- KOTLIN ADDITIONAL END --
 
         super.setUp();
-
-        if (shouldContainTempFiles()) {
-            IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-            String testName = null;
-            if (policy != null) {
-                testName = policy.getPerTestTempDirName();
-            }
-            if (testName == null) {
-                testName = FileUtil.sanitizeFileName(getTestName(true));
-            }
-            testName = new File(testName).getName(); // in case the test name contains file separators
-            myTempDir = FileUtil.createTempDirectory(TEMP_DIR_MARKER + testName, "", false).getPath();
-            FileUtil.resetCanonicalTempPathCache(myTempDir);
-        }
 
         boolean isStressTest = isStressTest();
         ApplicationManagerEx.setInStressTest(isStressTest);
@@ -218,24 +200,6 @@ public abstract class KtUsefulTestCase extends TestCase {
                     () -> cleanupSwingDataStructures(),
                     () -> cleanupDeleteOnExitHookList(),
                     () -> Disposer.setDebugMode(true),
-                    () -> {
-                        if (shouldContainTempFiles()) {
-                            FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-                            if (hasTmpFilesToKeep()) {
-                                File[] files = new File(myTempDir).listFiles();
-                                if (files != null) {
-                                    for (File file : files) {
-                                        if (!shouldKeepTmpFile(file)) {
-                                            FileUtil.delete(file);
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                FileUtil.delete(new File(myTempDir));
-                            }
-                        }
-                    },
                     () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
             ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
         }
@@ -253,10 +217,6 @@ public abstract class KtUsefulTestCase extends TestCase {
 
     protected void addTmpFileToKeep(@NotNull File file) {
         myPathsToKeep.add(file.getPath());
-    }
-
-    private boolean hasTmpFilesToKeep() {
-        return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep.toString(), false) || !myPathsToKeep.isEmpty();
     }
 
     private boolean shouldKeepTmpFile(@NotNull File file) {
