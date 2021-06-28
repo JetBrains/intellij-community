@@ -56,12 +56,9 @@ class Main {
       case int[] arr:
         System.out.println("true");
         break;
-      default:
-        System.out.println("ok");
     }
     str = switch (array) {
       case int[] arr -> "true";
-      default -> "ok";
     };
   }
 

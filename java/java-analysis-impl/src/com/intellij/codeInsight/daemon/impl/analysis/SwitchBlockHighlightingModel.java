@@ -407,6 +407,7 @@ class SwitchBlockHighlightingModel {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(
             JavaErrorBundle.message("incompatible.types", expectedTypes, JavaHighlightUtil.formatType(mySelectorType))).create();
         }
+        // todo we need to add this check for generics com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil.isUnsafeCastInInstanceOf
         if (!TypeConversionUtil.isAssignable(mySelectorType, patternType) &&
             !TypeConversionUtil.isAssignable(patternType, mySelectorType)) {
           return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, label.getTextRange(), 0);
