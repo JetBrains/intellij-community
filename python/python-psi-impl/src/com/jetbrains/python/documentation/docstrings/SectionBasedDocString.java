@@ -110,7 +110,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   private final Substring mySummary;
   private final List<Section> mySections = new ArrayList<>();
-  private final List<Substring> myOtherContent = new ArrayList<>();
 
   protected SectionBasedDocString(@NotNull Substring text) {
     super(text);
@@ -129,7 +128,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
         lineNum = parsedSummary.getSecond();
       }
       else {
-        myOtherContent.add(getLine(lineNum));
         lineNum++;
       }
       lineNum = consumeEmptyLines(lineNum);
@@ -176,9 +174,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
           fields.add(parsedField.getFirst());
           lineNum = parsedField.getSecond();
           continue;
-        }
-        else {
-          myOtherContent.add(getLine(lineNum));
         }
       }
       lineNum++;
