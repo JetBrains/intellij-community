@@ -8,19 +8,19 @@ code from the function will not be evaluated which can lead to incorrect behavio
 <p><b>Remove = token from function declaration</b> can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
-fun printHello() = { println("Hello") }
+  fun printHello() = { println("Hello") }
 
-fun main() {
-    printHello() // This function doesn't print anything
-}
+  fun main() {
+      printHello() // This function doesn't print anything
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun printHello() { println("Hello") }
+  fun printHello() { println("Hello") }
 
-fun main() {
-    printHello()
-}
+  fun main() {
+      printHello()
+  }
 </code></pre>
 </body>
 </html>

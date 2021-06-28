@@ -8,9 +8,9 @@ Reports usages of <code>asDynamic</code> function on a receiver of dynamic type.
 <p><b>Remove "asDynamic" invocation</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
-fun wrongUsage(d: Dynamic) {
-   d.asDynamic().foo() // &lt;== redundant, quick-fix simplifies the call expression to "d.foo()"
-}
+  fun wrongUsage(d: Dynamic) {
+     d.asDynamic().foo() // &lt;== redundant, quick-fix simplifies the call expression to "d.foo()"
+  }
 </code></pre>
 </body>
 </html>

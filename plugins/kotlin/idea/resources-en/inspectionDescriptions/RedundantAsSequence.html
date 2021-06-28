@@ -8,15 +8,15 @@ However, if a terminal operation (such as <code>toList()</code>) is used right a
 you any positive performance effect.</p>
 <p><b>Example:</b></p>
 <pre><code>
-fun test(list: List&lt;String&gt;) {
-    list.<b>asSequence()</b>.last()
-}
+  fun test(list: List&lt;String&gt;) {
+      list.<b>asSequence()</b>.last()
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun test(list: List&lt;String&gt;) {
-    list.last()
-}
+  fun test(list: List&lt;String&gt;) {
+      list.last()
+  }
 </code></pre>
 </body>
 </html>

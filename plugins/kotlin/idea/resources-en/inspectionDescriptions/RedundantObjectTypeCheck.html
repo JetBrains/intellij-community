@@ -4,21 +4,21 @@
 <p>It's recommended to replace such checks with reference comparison.</p>
 <p><b>Example:</b></p>
 <pre><code>
-object Foo
+  object Foo
 
-fun foo(arg: Any) = when {
-    arg <b>is</b> Foo -> ...
-    arg <b>!is</b> Foo -> ...
-}
+  fun foo(arg: Any) = when {
+      arg <b>is</b> Foo -> ...
+      arg <b>!is</b> Foo -> ...
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-object Foo
+  object Foo
 
-fun foo(arg: Any) = when {
-    arg <b>===</b> Foo -> ...
-    arg <b>!==</b> Foo -> ...
-}
+  fun foo(arg: Any) = when {
+      arg <b>===</b> Foo -> ...
+      arg <b>!==</b> Foo -> ...
+  }
 </code></pre>
 </body>
 </html>

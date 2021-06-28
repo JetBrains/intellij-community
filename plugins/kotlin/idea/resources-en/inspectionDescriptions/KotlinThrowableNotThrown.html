@@ -8,15 +8,16 @@ is never actually thrown.
     when the resulting <code>Throwable</code> instance is not thrown.
 </p>
 <p><b>Example:</b></p>
-<pre><code>fun check(condition: Boolean) {
-    if (!condition) /* throw is missing here */ IllegalArgumentException("condition is not met");
-}
+<pre><code>
+  fun check(condition: Boolean) {
+      if (!condition) /* throw is missing here */ IllegalArgumentException("condition is not met");
+  }
 
-fun createError() = RuntimeException()
+  fun createError() = RuntimeException()
 
-fun foo() {
-    /* throw is missing here */ createError()
-}
+  fun foo() {
+      /* throw is missing here */ createError()
+  }
 </code></pre>
 </body>
 </html>

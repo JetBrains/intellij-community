@@ -6,10 +6,10 @@ Reports calls on not-null receiver that make sense only for nullable receiver.
 <p><b>Remove redundant call</b> and <b>Change call to …</b>  quick-fixes can be used to amend the code automatically.</p>
 <p>Examples:</p>
 <pre><code>
-fun test(s: String) {
-    val x = s.orEmpty() // quick-fix simplifies to 's'
-    val y = s.isNullOrEmpty() // quick-fix simplifies to 's.isEmpty()'
-}
+  fun test(s: String) {
+      val x = s.orEmpty() // quick-fix simplifies to 's'
+      val y = s.isNullOrEmpty() // quick-fix simplifies to 's.isEmpty()'
+  }
 </code></pre>
 </body>
 </html>

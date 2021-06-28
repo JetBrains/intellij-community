@@ -5,8 +5,8 @@ Reports <code>==</code> and <code>===</code> comparisons that are both used on t
     it takes a close look to check that <code>==</code> used instead of <code>===</code></p>
 <p>Example:</p>
 <pre><code>
-if (type === FIELD || type == METHOD || type == ANNOTATION_METHOD || // Note that "==" is used incorrectly
-    type === LAMBDA_EXPRESSION) return
+  if (type === FIELD || type == METHOD || type == ANNOTATION_METHOD || // Note that "==" is used incorrectly
+      type === LAMBDA_EXPRESSION) return
 </code></pre>
 </body>
 </html>

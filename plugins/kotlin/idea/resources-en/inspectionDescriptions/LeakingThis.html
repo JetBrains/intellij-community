@@ -13,18 +13,19 @@ Reports unsafe operations with <code>this</code> during object construction incl
     they may not be fully initialized at the moment when an unsafe operation is carried out.
 </p>
 <p><b>Example:</b></p>
-<pre><code><b>abstract class</b> Base {
-    <b>val</b> code = calculate()
-    <b>abstract fun</b> calculate(): Int
-}
+<pre><code>
+  <b>abstract class</b> Base {
+      <b>val</b> code = calculate()
+      <b>abstract fun</b> calculate(): Int
+  }
 
-<b>class</b> Derived(<b>private val</b> x: Int) : Base() {
-    <b>override fun</b> calculate() = x
-}
+  <b>class</b> Derived(<b>private val</b> x: Int) : Base() {
+      <b>override fun</b> calculate() = x
+  }
 
-<b>fun</b> testIt() {
-    println(Derived(42).code) <i>// Expected: 42, actual: 0</i>
-}
+  <b>fun</b> testIt() {
+      println(Derived(42).code) <i>// Expected: 42, actual: 0</i>
+  }
 </code></pre>
 </body>
 </html>

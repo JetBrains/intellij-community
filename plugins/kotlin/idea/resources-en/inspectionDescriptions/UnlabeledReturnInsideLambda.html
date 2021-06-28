@@ -5,21 +5,21 @@ Reports unlabeled <code>return</code> expressions inside inline lambda.
 <p><b>Change to return@…</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
-fun test(list: List&lt;Int&gt;) {
-    list.forEach {
-        // This return expression returns from the function test
-        // One can change it to return@forEach to change the scope
-        if (it == 10) return
-    }
-}
+  fun test(list: List&lt;Int&gt;) {
+      list.forEach {
+          // This return expression returns from the function test
+          // One can change it to return@forEach to change the scope
+          if (it == 10) return
+      }
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun test(list: List&lt;Int&gt;) {
-    list.forEach {
-        if (it == 10) return@test
-    }
-}
+  fun test(list: List&lt;Int&gt;) {
+      list.forEach {
+          if (it == 10) return@test
+      }
+  }
 </code></pre>
 </body>
 </html>

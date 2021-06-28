@@ -3,19 +3,19 @@
 Reports SAM (Single Abstract Method) constructor usages which can be replaced with lambdas.
 <p><b>Example:</b></p>
 <pre><code>
-fun main() {
-    foo(<b>Runnable</b> { println("Hi!") })
-}
+  fun main() {
+      foo(<b>Runnable</b> { println("Hi!") })
+  }
 
-fun foo(other: Runnable) {}
+  fun foo(other: Runnable) {}
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun main() {
-    foo( { println("Hi!") })
-}
+  fun main() {
+      foo( { println("Hi!") })
+  }
 
-fun foo(other: Runnable) {}
+  fun foo(other: Runnable) {}
 </code></pre>
 </body>
 </html>
