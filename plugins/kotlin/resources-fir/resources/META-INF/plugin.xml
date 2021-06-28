@@ -211,6 +211,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.framework.LibraryEffectiveKindProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.framework.LibraryEffectiveKindProviderImpl"/>
