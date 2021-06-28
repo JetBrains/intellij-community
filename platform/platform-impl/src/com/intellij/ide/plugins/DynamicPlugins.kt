@@ -1176,8 +1176,13 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(dependencyPluginId: P
        val (pluginExtensionPoint, foundInDependencies) = result
        // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
        // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
-       if (baseDescriptor != null && (descriptor === baseDescriptor || foundInDependencies) && !pluginExtensionPoint.isDynamic) {
-         return getNonDynamicUnloadError(if (foundInDependencies) null else descriptor.pluginId)
+       if (!pluginExtensionPoint.isDynamic) {
+         if (baseDescriptor == null || foundInDependencies) {
+           return getNonDynamicUnloadError(null)
+         }
+         else if (descriptor === baseDescriptor) {
+           return getNonDynamicUnloadError(descriptor.pluginId)
+         }
        }
        continue
      }
