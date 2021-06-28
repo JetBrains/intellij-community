@@ -79,8 +79,9 @@ public final class JavaModuleGraphUtil {
         PsiDirectory rootPsi = PsiManager.getInstance(project).findDirectory(root);
         assert rootPsi != null : root;
         return CachedValuesManager.getCachedValue(rootPsi, () -> {
-          LightJavaModule result = LightJavaModule.create(PsiManager.getInstance(project), root, LightJavaModule.moduleName(root));
-          return Result.create(result, root, ProjectRootModificationTracker.getInstance(project));
+          VirtualFile _root = rootPsi.getVirtualFile();
+          LightJavaModule result = LightJavaModule.create(rootPsi.getManager(), _root, LightJavaModule.moduleName(_root));
+          return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
         });
       }
     }
