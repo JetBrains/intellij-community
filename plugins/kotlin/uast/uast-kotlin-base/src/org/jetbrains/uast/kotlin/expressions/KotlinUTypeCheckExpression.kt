@@ -24,7 +24,7 @@ class KotlinUTypeCheckExpression(
 
     override val typeReference by lz {
         sourcePsi.typeReference?.let {
-            KotlinUTypeReferenceExpression(it, this) { type }
+            KotlinUTypeReferenceExpression(it, this, baseResolveProviderService) { type }
         }
     }
 

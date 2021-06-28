@@ -9,7 +9,7 @@ import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 
 class KotlinUImplicitReturnExpression(
-    givenParent: UElement?
+    givenParent: UElement?,
 ) : KotlinAbstractUExpression(givenParent), UReturnExpression, KotlinUElementWithType, KotlinFakeUElement {
     override val psi: PsiElement?
         get() = null
