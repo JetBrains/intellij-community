@@ -36,11 +36,10 @@ internal class KotlinLocalFunctionUVariable(
     }
 }
 
-
-internal class KotlinLocalFunctionULambdaExpression(
-        override val sourcePsi: KtFunction,
-        givenParent: UElement?
-): KotlinAbstractUExpression(givenParent), ULambdaExpression {
+internal class KotlinLocalFunctionULambdaExpressionImpl(
+    sourcePsi: KtFunction,
+    givenParent: UElement?
+) : KotlinLocalFunctionULambdaExpression(sourcePsi, givenParent) {
     override val functionalInterfaceType: PsiType? = null
 
     override val body by lz {
@@ -72,4 +71,4 @@ fun createLocalFunctionDeclaration(function: KtFunction, parent: UElement?): UDe
 }
 
 fun createLocalFunctionLambdaExpression(function: KtFunction, parent: UElement?): ULambdaExpression =
-        KotlinLocalFunctionULambdaExpression(function, parent)
+        KotlinLocalFunctionULambdaExpressionImpl(function, parent)
