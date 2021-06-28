@@ -294,11 +294,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                                                                    pluginClassLoader.packagePrefix,
                                                                                                    forceLoadFromSubPluginClassloader);
             if (consistencyError != null) {
-              if (!consistencyError.isEmpty()) {
-                if (error == null) {
-                  // yes, we blame requestor plugin
-                  error = new PluginException(consistencyError, pluginId);
-                }
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
               }
               continue;
             }
