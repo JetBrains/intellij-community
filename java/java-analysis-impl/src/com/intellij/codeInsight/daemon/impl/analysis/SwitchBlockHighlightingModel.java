@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -295,7 +294,7 @@ class SwitchBlockHighlightingModel {
     return null;
   }
 
-  private enum SelectorKind {INT, ENUM, STRING}
+  private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
   private static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
 
@@ -308,7 +307,39 @@ class SwitchBlockHighlightingModel {
     @NotNull
     @Override
     List<HighlightInfo> checkSwitchSelectorType() {
+      SelectorKind kind = getSwitchSelectorKind();
+      if (kind == SelectorKind.INT) return Collections.emptyList();
+      if (kind == null) {
+        String message = JavaErrorBundle.message("switch.invalid.selector.types", JavaHighlightUtil.formatType(mySelectorType));
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector).descriptionAndTooltip(message).create();
+        if (myBlock instanceof PsiSwitchStatement) {
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertSwitchToIfIntention((PsiSwitchStatement)myBlock));
+        }
+        if (PsiType.LONG.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector));
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector));
+        }
+        return Collections.singletonList(info);
+      }
       return checkIfAccessibleType();
+    }
+
+    @Override
+    @Nullable SelectorKind getSwitchSelectorKind() {
+      if (TypeConversionUtil.getTypeRank(mySelectorType) <= TypeConversionUtil.INT_RANK) return SelectorKind.INT;
+      if (mySelectorType instanceof PsiArrayType) return SelectorKind.CLASS_OR_ARRAY;
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
+      if (psiClass != null) {
+        if (psiClass.isEnum()) return SelectorKind.ENUM;
+        String fqn = psiClass.getQualifiedName();
+        if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) return SelectorKind.STRING;
+        if (PsiType.BOOLEAN.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
+          return null;
+        }
+        return SelectorKind.CLASS_OR_ARRAY;
+      }
+      return null;
     }
 
     @NotNull
@@ -361,8 +392,9 @@ class SwitchBlockHighlightingModel {
     private HighlightInfo checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
       if (label instanceof PsiDefaultCaseLabelElement) return null;
       if (isNullType(label)) {
-        if (!(mySelectorType instanceof PsiClassReferenceType)) {
-          String message = JavaErrorBundle.message("incompatible.switch.null.type", "null", mySelectorType.getPresentableText());
+        if (!(mySelectorType instanceof PsiClassType)) {
+          String message = JavaErrorBundle.message("incompatible.switch.null.type", "null",
+                                                   JavaHighlightUtil.formatType(mySelectorType));
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label)
             .descriptionAndTooltip(message).create();
         }
@@ -383,6 +415,8 @@ class SwitchBlockHighlightingModel {
       }
       else if (label instanceof PsiExpression) {
         PsiExpression expr = (PsiExpression)label;
+        HighlightInfo info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
+        if (info != null) return info;
         if (label instanceof PsiReferenceExpression) {
           PsiElement element = ((PsiReferenceExpression)label).resolve();
           if (element instanceof PsiEnumConstant) {
@@ -393,12 +427,13 @@ class SwitchBlockHighlightingModel {
             return null;
           }
         }
-        if (ConstantExpressionUtil.computeCastTo(expr, mySelectorType) == null) {
-          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
-        }
-        if (getSwitchSelectorKind() == null) {
+        Object constValue = evaluateConstant(expr);
+        if (constValue == null) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr)
             .descriptionAndTooltip(JavaErrorBundle.message("constant.expression.required")).create();
+        }
+        if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
+          return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
         }
         return null;
       }
@@ -532,7 +567,7 @@ class SwitchBlockHighlightingModel {
      * The dominance is based on pattern totality and dominance (14.30.3).
      *
      * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
-     * @see JavaPsiPatternUtil#dominates(com.intellij.psi.PsiPattern, com.intellij.psi.PsiPattern)
+     * @see JavaPsiPatternUtil#dominates(PsiPattern, PsiPattern)
      */
     private void checkDominance(@NotNull List<PsiCaseLabelElement> switchLabels, @NotNull List<HighlightInfo> results) {
       Map<PsiCaseLabelElement, PsiCaseLabelElement> alreadyDominatedLabels = new HashMap<>();
@@ -716,7 +751,7 @@ class SwitchBlockHighlightingModel {
     }
 
     private boolean isEnhancedSwitch(@NotNull List<PsiCaseLabelElement> labelElements) {
-      if (getSwitchSelectorKind() == null) return true;
+      if (getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY) return true;
       return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
     }
   }
