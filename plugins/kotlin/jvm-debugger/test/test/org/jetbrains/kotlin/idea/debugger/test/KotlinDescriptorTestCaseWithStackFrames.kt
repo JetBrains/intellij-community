@@ -152,7 +152,7 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(pattern = "$mavenDependencyRegex(-javaagent)?")
+        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
         if ("-javaagent" == agent)

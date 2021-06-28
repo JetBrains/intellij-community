@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
         //language=RegExp
-        val mavenDependencyRegex = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
+        const val MAVEN_DEPENDENCY_REGEX = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
     }
 
     private val dp: DebugProcessImpl
@@ -248,7 +248,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(mavenDependencyRegex)
+        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String) = result.groupValues
         addMavenDependency(compilerFacility, groupId, artifactId, version)
