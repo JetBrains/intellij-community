@@ -34,13 +34,7 @@ public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase
   }
 
   @Override
-  protected void collectAllowedRoots(List<String> roots) {
-    super.collectAllowedRoots(roots);
-    roots.add(TEST_DATA_PATH);
-  }
-
-  @Override
-  protected void setUpInWriteAction() throws Exception {
+  protected void setUpProjectRoot() throws Exception {
     File projectDir = new File(TEST_DATA_PATH);
     FileUtil.ensureExists(projectDir);
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);

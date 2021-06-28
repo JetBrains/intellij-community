@@ -93,10 +93,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Parameterized.Parameter
   public @NotNull String gradleVersion;
   private GradleProjectSettings myProjectSettings;
-  private volatile String myJdkHome;
+  private String myJdkHome;
 
   private final List<Sdk> removedSdks = new SmartList<>();
-  private volatile PathAssembler.LocalDistribution myDistribution;
+  private PathAssembler.LocalDistribution myDistribution;
 
   @Override
   public void setUp() throws Exception {
