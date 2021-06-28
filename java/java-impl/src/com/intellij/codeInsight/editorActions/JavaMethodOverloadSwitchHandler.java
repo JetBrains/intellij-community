@@ -42,8 +42,6 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (exprList == null) return false;
 
