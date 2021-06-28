@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;
@@ -89,6 +90,25 @@ public abstract class NlsInfo implements RestrictionInfo {
    */
   static @NotNull NlsInfo forExpression(@NotNull UExpression expression, boolean allowStringModifications) {
     expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoFactory.INSTANCE);
+    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
+    if (parent instanceof UCallExpression) {
+      var qualifiedCall = ObjectUtils.tryCast(parent.getUastParent(), UQualifiedReferenceExpression.class);
+      if (qualifiedCall != null && parent.equals(qualifiedCall.getSelector())) {
+        UExpression receiver = qualifiedCall.getReceiver();
+        if (TypeUtils.isJavaLangString(receiver.getExpressionType())) {
+          String name = ((UCallExpression)parent).getMethodName();
+          if (name != null && (name.equals("equals") || (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
+                                                         name.equals("equalsIgnoreCase") || name.equals("contains")))) {
+            if (receiver instanceof UReferenceExpression) {
+              PsiElement target = ((UReferenceExpression)receiver).resolve();
+              if (target instanceof PsiVariable) {
+                return factory().fromModifierListOwner((PsiVariable)target);
+              }
+            }
+          }
+        }
+      }
+    }
     AnnotationContext context = AnnotationContext.fromExpression(expression);
     return fromAnnotationContext(expression.getUastParent(), context);
   }
