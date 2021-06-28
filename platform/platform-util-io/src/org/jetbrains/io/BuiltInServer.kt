@@ -87,7 +87,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
                      bootstrap: ServerBootstrap,
                      channelRegistrar: ChannelRegistrar,
                      isEventLoopGroupOwner: Boolean): Int {
-      val address = InetAddress.getLoopbackAddress()
+      val address = InetAddress.getByName("127.0.0.1")
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
         // some antiviral software detect viruses by the fact of accessing these ports, so we should not touch them to appear innocent

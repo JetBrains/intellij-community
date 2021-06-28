@@ -254,7 +254,7 @@ public final class SocketLock {
   private @NotNull Map.Entry<ActivationStatus, CliResult> tryActivate(int portNumber, @NotNull List<String> paths, String[] args) {
     log("trying: port=%s", portNumber);
 
-    try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber)) {
+    try (Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), portNumber)) {
       socket.setSoTimeout(5000);
 
       DataInput in = new DataInputStream(socket.getInputStream());
