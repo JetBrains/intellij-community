@@ -21,8 +21,8 @@ class Version(val major: Int, val minor: Int, val patch: Int) {
     }
 
     companion object {
-        val CURRENT_VERSION = parse(KotlinCompilerVersion.VERSION)
         private val VERSION_REGEX = Regex("(\\d+)\\.(\\d+)\\.(\\d+).*")
+        val CURRENT_VERSION = parse(KotlinCompilerVersion.VERSION)
 
         private fun lookup(major: Int, minor: Int) =
             LanguageVersion.values().firstOrNull { it.major == major && it.minor == minor } ?: LanguageVersion.LATEST_STABLE
