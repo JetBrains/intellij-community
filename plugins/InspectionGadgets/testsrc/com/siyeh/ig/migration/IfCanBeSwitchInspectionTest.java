@@ -2,13 +2,24 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIfCanBeSwitch() {
     doTest();
+  }
+
+  public void testPatternIfCanBeSwitch() {
+    doTest();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
   }
 
   @Nullable
