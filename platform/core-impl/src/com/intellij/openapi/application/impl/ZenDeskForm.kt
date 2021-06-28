@@ -14,12 +14,11 @@ data class ZenDeskField(val id: Long, val type: String?, val value: String?) {
   }
 }
 
-class ZenDeskForm(val id: Long, val type: String, val url: String, val fields: List<ZenDeskField>) {
+class ZenDeskForm(val id: Long, val url: String, val fields: List<ZenDeskField>) {
   companion object {
     @JvmStatic fun parse(element: XmlElement): ZenDeskForm {
-      val id = element.getAttributeValue("id")!!.toLong()
-      val type = element.getAttributeValue("type")!!
-      val url = element.getAttributeValue("url")!!
+      val id = element.getAttributeValue("zendesk-form-id")!!.toLong()
+      val url = element.getAttributeValue("zendesk-url")!!
       val fields = mutableListOf<ZenDeskField>()
 
       for (child in element.children) {
@@ -27,7 +26,7 @@ class ZenDeskForm(val id: Long, val type: String, val url: String, val fields: L
           fields.add(ZenDeskField.parse(child))
         }
       }
-      return ZenDeskForm(id, type, url, fields)
+      return ZenDeskForm(id, url, fields)
     }
   }
 }

@@ -101,7 +101,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
   private List<ProgressSlide> progressSlides = Collections.emptyList();
-  private final List<ZenDeskForm> myZenDeskForms = new ArrayList<>();
+  private ZenDeskForm myFeedbackForm;
 
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
@@ -251,6 +251,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "feedback": {
           myFeedbackUrl = child.getAttributeValue("url");
+          if (child.getAttributeValue("zendesk-form-id") != null) {
+            myFeedbackForm = ZenDeskForm.parse(child);
+          }
         }
         break;
 
@@ -326,9 +329,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
             myDefaultDarkLaf = laf.trim();
           }
         }
-
-        case "zendesk-form":
-          myZenDeskForms.add(ZenDeskForm.parse(child));
 
         break;
       }
@@ -921,8 +921,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myDefaultDarkLaf;
   }
 
-  public List<ZenDeskForm> getZenDeskForms() {
-    return myZenDeskForms;
+  @Nullable
+  public ZenDeskForm getFeedbackForm() {
+    return myFeedbackForm;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {
