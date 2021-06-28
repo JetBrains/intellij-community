@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin.expressions
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
@@ -56,7 +57,10 @@ private fun createElvisExpressions(
         containingElement: UElement?,
         psiParent: PsiElement): List<UExpression> {
 
-    val declaration = KotlinUDeclarationsExpression(containingElement)
+    val declaration = KotlinUDeclarationsExpression(
+        containingElement,
+        ServiceManager.getService(left.project, BaseKotlinUastResolveProviderService::class.java)
+    )
     val tempVariable = KotlinULocalVariable(UastKotlinPsiVariable.create(left, declaration, psiParent), null, declaration)
     declaration.declarations = listOf(tempVariable)
 

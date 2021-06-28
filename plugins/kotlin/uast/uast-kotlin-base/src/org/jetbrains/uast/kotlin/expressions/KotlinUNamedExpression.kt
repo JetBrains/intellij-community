@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.uast.*
@@ -10,6 +11,7 @@ class KotlinUNamedExpression private constructor(
     override val name: String?,
     override val sourcePsi: PsiElement?,
     givenParent: UElement?,
+    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
     expressionProducer: (UElement) -> UExpression
 ) : KotlinAbstractUElement(givenParent), UNamedExpression {
 
@@ -28,7 +30,8 @@ class KotlinUNamedExpression private constructor(
             uastParent: UElement?
         ): UNamedExpression {
             val expression = valueArgument.getArgumentExpression()
-            return KotlinUNamedExpression(name, valueArgument.asElement(), uastParent) { expressionParent ->
+            val service = ServiceManager.getService(valueArgument.asElement().project, BaseKotlinUastResolveProviderService::class.java)
+            return KotlinUNamedExpression(name, valueArgument.asElement(), uastParent, service) { expressionParent ->
                 expression?.let { expressionParent.getLanguagePlugin().convertOpt(it, expressionParent) }
                     ?: UastEmptyExpression(expressionParent)
             }
@@ -37,10 +40,11 @@ class KotlinUNamedExpression private constructor(
         fun create(
             name: String?,
             valueArguments: List<ValueArgument>,
-            uastParent: UElement?
+            uastParent: UElement?,
+            baseResolveProviderService: BaseKotlinUastResolveProviderService,
         ): UNamedExpression {
-            return KotlinUNamedExpression(name, null, uastParent) { expressionParent ->
-                KotlinUVarargExpression(valueArguments, expressionParent)
+            return KotlinUNamedExpression(name, null, uastParent, baseResolveProviderService) { expressionParent ->
+                KotlinUVarargExpression(valueArguments, expressionParent, baseResolveProviderService)
             }
         }
     }
