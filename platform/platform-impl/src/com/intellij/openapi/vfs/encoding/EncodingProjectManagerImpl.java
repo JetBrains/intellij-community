@@ -23,10 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -203,6 +200,28 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   @NotNull
   public ModificationTracker getModificationTracker() {
     return myModificationTracker;
+  }
+
+  @Override
+  public void setEncodingByPath(@NotNull final String fileOrDirPath, @Nullable final Charset charset) {
+    final VirtualFile vf = LocalFileSystem.getInstance().findFileByPath(fileOrDirPath);
+    if (vf != null) {
+      setEncoding(vf, charset);
+      return;
+    }
+
+    Charset oldCharset;
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(fileOrDirPath), this, null);
+    if (charset == null) {
+      oldCharset = myMapping.remove(pointer);
+    }
+    else {
+      oldCharset = myMapping.put(pointer, charset);
+    }
+
+    if (!Comparing.equal(oldCharset, charset)) {
+      myModificationTracker.incModificationCount();
+    }
   }
 
   @Override

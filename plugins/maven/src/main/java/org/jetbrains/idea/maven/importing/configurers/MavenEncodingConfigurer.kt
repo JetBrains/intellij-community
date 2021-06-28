@@ -15,15 +15,9 @@
  */
 package org.jetbrains.idea.maven.importing.configurers
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
-import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
@@ -35,66 +29,25 @@ import java.nio.charset.UnsupportedCharsetException
  */
 class MavenEncodingConfigurer : MavenModuleConfigurer() {
   override fun configure(mavenProject: MavenProject, project: Project, module: Module) {
-    val newMap = LinkedHashMap<VirtualFile, Charset>()
-    val leaveAsIsMap = LinkedHashMap<VirtualFile, Charset>()
-    val projectManagerImpl = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
-
-    ReadAction.compute<Unit, Throwable> {
-      fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
-    }
-
-    ReadAction.compute<Unit, Throwable> {
-      fillResourceEncoding(project, mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
-    }
-
-    if (newMap.isEmpty()) {
-      return
-    }
-
-    newMap.putAll(leaveAsIsMap)
-
-    ApplicationManager.getApplication().invokeAndWait {
-      projectManagerImpl.setMapping(newMap)
-    }
+      fillSourceEncoding(mavenProject, EncodingProjectManager.getInstance(project))
+      fillResourceEncoding(project, mavenProject, EncodingProjectManager.getInstance(project))
   }
 
   private fun fillResourceEncoding(project: Project,
                                    mavenProject: MavenProject,
-                                   newMap: LinkedHashMap<VirtualFile, Charset>,
-                                   leaveAsIsMap: LinkedHashMap<VirtualFile, Charset>,
-                                   projectManagerImpl: EncodingProjectManagerImpl) {
+                                   projectManager: EncodingProjectManager) {
     mavenProject.getResourceEncoding(project)?.let(this::getCharset)?.let { charset ->
       mavenProject.resources.forEach { resource ->
-        val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(resource.directory)) ?: return
-        newMap[dirVfile] = charset
-        projectManagerImpl.allMappings.forEach {
-          if (FileUtil.isAncestor(resource.directory, it.key.path, false)) {
-            newMap[it.key] = charset
-          }
-          else {
-            leaveAsIsMap[it.key] = it.value
-          }
-        }
+        projectManager.setEncodingByPath(File(resource.directory).absolutePath, charset)
       }
     }
   }
 
   private fun fillSourceEncoding(mavenProject: MavenProject,
-                                 newMap: LinkedHashMap<VirtualFile, Charset>,
-                                 leaveAsIsMap: LinkedHashMap<VirtualFile, Charset>,
-                                 projectManagerImpl: EncodingProjectManagerImpl) {
+                                 projectManager: EncodingProjectManager) {
     mavenProject.sourceEncoding?.let(this::getCharset)?.let { charset ->
       mavenProject.sources.forEach { directory ->
-        val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(directory)) ?: return
-        newMap[dirVfile] = charset
-        projectManagerImpl.allMappings.forEach {
-          if (FileUtil.isAncestor(directory, it.key.path, false)) {
-            newMap[it.key] = charset
-          }
-          else {
-            leaveAsIsMap[it.key] = it.value
-          }
-        }
+        projectManager.setEncodingByPath(File(directory).absolutePath, charset)
       }
     }
   }
