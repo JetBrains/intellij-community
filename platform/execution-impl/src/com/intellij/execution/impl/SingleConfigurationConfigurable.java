@@ -147,6 +147,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myComponent = new MyValidatableComponent();
     }
     myComponent.doReset();
+    myRunOnTargetPanel.reset();
   }
 
   void requestToUpdateWarning() {

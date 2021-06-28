@@ -33,10 +33,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     Project project = settings.getConfiguration().getProject();
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
-    myRCStorageUi = !project.isDefault() && settings.isTemplate()
-                    ? new RunConfigurationStorageUi(project, () -> fireEditorStateChanged())
-                    : null;
-    myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
+    if (!project.isDefault() && settings.isTemplate()) {
+      myRCStorageUi = new RunConfigurationStorageUi(project, () -> fireEditorStateChanged());
+      myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
+    }
+    else {
+      myRCStorageUi = null;
+      myRunOnTargetPanel = null;
+    }
   }
 
   public boolean isInplaceValidationSupported() {
@@ -55,8 +59,8 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     if (myRCStorageUi != null) {
       myRCStorageUi.reset(s);
+      myRunOnTargetPanel.reset();
     }
-    myRunOnTargetPanel.reset();
   }
 
   @Override
@@ -67,8 +71,8 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     if (myRCStorageUi != null) {
       // editing a template run configuration
       myRCStorageUi.apply(s);
+      myRunOnTargetPanel.apply();
     }
-    myRunOnTargetPanel.apply();
   }
 
   @Override
