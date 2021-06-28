@@ -8,7 +8,8 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 
-open class RunToolbarRerunAction() : FakeRerunAction(), RunToolbarAction, DumbAware{
+open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
   override fun update(event: AnActionEvent) {
     super.update(event)

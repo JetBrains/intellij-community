@@ -13,7 +13,7 @@ class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOL
 
   }
 
-  private fun isNewRunDebug(): Boolean {
+  private fun isRunToolbar(): Boolean {
     return Registry.get(runDebugKey).asBoolean()
   }
 
@@ -29,7 +29,7 @@ class RunToolbarWidgetAction : SegmentedBarActionComponent(ActionPlaces.RUN_TOOL
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = isNewRunDebug()
+    e.presentation.isEnabledAndVisible = isRunToolbar()
     e.presentation.putClientProperty(RunToolbarMainWidgetComponent.PROP_POJECT, e.project)
   }
 

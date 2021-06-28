@@ -24,12 +24,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class RunToolbarProcessStartedAction() : ComboBoxAction(), RunToolbarAction {
+class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
   companion object {
     val PROP_ACTIVE_ENVIRONMENT = Key<ExecutionEnvironment>("PROP_ACTIVE_ENVIRONMENT")
   }
-
-  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Fixed
 
   override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup = DefaultActionGroup()
 

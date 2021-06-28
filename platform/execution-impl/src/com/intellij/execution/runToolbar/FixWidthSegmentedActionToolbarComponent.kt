@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.ComparatorUtil
-import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBValue
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -17,7 +17,8 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     private val LOG = Logger.getInstance(FixWidthSegmentedActionToolbarComponent::class.java)
   }
 
-  private var rightSideSize: JBDimension? = null
+  private var runConfigWidth: JBValue.Float? = null
+  private var rightSideWidth: JBValue.Float? = null
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
 
@@ -27,119 +28,156 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     val executorButtonsPrefWidth = (0 until componentCount).mapNotNull {
       val actionComponent = getComponent(it) as JComponent
       val anAction = actionComponent.getClientProperty(RUN_TOOLBAR_COMPONENT_ACTION)
-
-      if (anAction is ExecutorRunToolbarAction && anAction.process.showInBar) {
-        getChildPreferredSize(it)
-      }
-      else null
-    }.sumOf { it.width }
-
-    val isMainState = (executorButtonsPrefWidth > 0)
-    val isMain = executorButtonsPrefWidth > controlButtonsPrefWidth
-
-    val max = ComparatorUtil.max(executorButtonsPrefWidth, controlButtonsPrefWidth)
-    val isNew = (rightSideSize?.width ?: 0) < max
-
-    if (isNew) {
-      rightSideSize = JBDimension(max, controlButtonsPrefWidth, true)
-    }
-
-    if (isMainState) {
-      if (executorButtonsPrefWidth > controlButtonsPrefWidth) {
-        if (isNew) {
-          if (isMain) {
-            super.calculateBounds(size2Fit, bounds)
-            return
+      if (anAction is RTBarAction) {
+        when (anAction) {
+          is ExecutorRunToolbarAction -> getChildPreferredSize(it).width
+          is RTRunConfiguration -> {
+            if (anAction.isStable()) {
+              val configWidth = getChildPreferredSize(it).width.toFloat()
+              runConfigWidth?.let { float ->
+                if (configWidth > float.float) {
+                  runConfigWidth = JBValue.Float(configWidth, true)
+                }
+              } ?: kotlin.run {
+                runConfigWidth = JBValue.Float(configWidth, true)
+              }
+            }
+            null
           }
+          else -> null
         }
       }
+      else null
+    }.sumOf { it }
+
+    val max = ComparatorUtil.max(executorButtonsPrefWidth, controlButtonsPrefWidth)
+
+    if ((rightSideWidth?.get() ?: 0) < max) {
+      rightSideWidth = JBValue.Float(max.toFloat(), true)
     }
-    rightSideSize?.let {
-      calculateBoundsToFit(it, bounds)
-      return
+
+    rightSideWidth?.let {
+      calculateBoundsToFit(size2Fit, bounds)
+    } ?: run {
+      super.calculateBounds(size2Fit, bounds)
     }
-    super.calculateBounds(size2Fit, bounds)
   }
 
   private fun calculateBoundsToFit(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
-    val executors = mutableListOf<Component>()
-    var flexible = mutableListOf<Component>()
-    var stable = mutableListOf<Component>()
+    val right_flexible = mutableListOf<Component>()
+    val right_stable = mutableListOf<Component>()
+    val flexible = mutableListOf<Component>()
 
     (0 until componentCount).forEach {
       val actionComponent = getComponent(it) as JComponent
-
-      when (val action = actionComponent.getClientProperty(RUN_TOOLBAR_COMPONENT_ACTION)) {
-        is ExecutorRunToolbarAction -> {
-          executors.add(actionComponent)
-        }
-        is RunToolbarAction -> {
-          when (action.getFlexibleType()) {
-            RunToolbarAction.FlexibleType.Flexible -> {
-              flexible.add(actionComponent)
-            }
-            RunToolbarAction.FlexibleType.Stable -> {
-              stable.add(actionComponent)
-            }
-            else -> {
-            }
+      actionComponent.getClientProperty(RUN_TOOLBAR_COMPONENT_ACTION)?.let {
+        if (it is RTBarAction) {
+          if (it is RTRunConfiguration) {
+            (if (it.isStable()) null else flexible)?.add(actionComponent)
           }
+          else {
+            when (it.getRightSideType()) {
+              RTBarAction.Type.RIGHT_FLEXIBLE -> right_flexible
+              RTBarAction.Type.RIGHT_STABLE -> right_stable
+              RTBarAction.Type.FLEXIBLE -> flexible
+              else -> null
+            }?.add(actionComponent)
+          }
+
         }
       }
     }
 
-    flexible.ifEmpty {
-      if (stable.isNotEmpty()) {
-        flexible = stable
-        stable = mutableListOf()
+    rightSideWidth?.get()?.let { rightWidth ->
+      bounds.clear()
+      for (i in 0 until componentCount) {
+        bounds.add(Rectangle())
       }
-    }
 
-    if (executors.isEmpty() && flexible.isEmpty()) {
-      LOG.error("right side empty")
+      if (right_flexible.isNotEmpty()) {
+        val flexiblePrefWidth = (0 until componentCount).filter {
+          right_flexible.contains(getComponent(it))
+        }.sumOf { getChildPreferredSize(it).width }
+
+        val stablePrefWidth = (0 until componentCount).filter {
+          right_stable.contains(getComponent(it))
+        }.sumOf { getChildPreferredSize(it).width }
+
+        val delta = rightWidth - stablePrefWidth - flexiblePrefWidth
+        val rightAdditionWidth = if (delta > 0) delta / right_flexible.size else 0
+
+        val lastAddition = if(delta <= 0) 0 else rightWidth - stablePrefWidth - flexiblePrefWidth - (rightAdditionWidth * right_flexible.size).let { gap ->
+          if (gap < 0) 0 else gap
+        }
+
+        setComponentsBounds(right_flexible, rightAdditionWidth, lastAddition, bounds)
+
+        return
+      }
+      else if (flexible.size == 1) {
+        val stablePrefWidth = (0 until componentCount).filter {
+          right_stable.contains(getComponent(it))
+        }.sumOf { getChildPreferredSize(it).width }
+
+        (rightWidth + (runConfigWidth?.get() ?: 0) - stablePrefWidth).let {
+          if(it > 0) it else null
+        } ?.let {
+          var offset = 0
+          for (i in 0 until componentCount) {
+            val d = getChildPreferredSize(i)
+            var w = d.width
+            val component = getComponent(i)
+            if(component == flexible[0]) {
+              w = it
+            }
+
+            val r = bounds[i]
+            r.setBounds(insets.left + offset, insets.top, w, DEFAULT_MINIMUM_BUTTON_SIZE.height)
+            offset += w
+          }
+          return
+        } ?: run {
+          super.calculateBounds(size2Fit, bounds)
+        }
+      } else if(right_stable.isNotEmpty() && flexible.isEmpty()) {
+        val stablePrefWidth = (0 until componentCount).filter {
+          right_stable.contains(getComponent(it))
+        }.sumOf { getChildPreferredSize(it).width }
+
+        val delta = rightWidth - stablePrefWidth
+        val rightAdditionWidth = if (delta > 0) delta / right_stable.size else 0
+
+        val lastAddition = if(delta <= 0) 0 else rightWidth - stablePrefWidth - (rightAdditionWidth * right_stable.size).let { gap ->
+          if (gap < 0) 0 else gap
+        }
+
+        setComponentsBounds(right_stable, rightAdditionWidth, lastAddition, bounds)
+
+        return
+
+
+      } else {
+        super.calculateBounds(size2Fit, bounds)
+      }
+    } ?: run {
       super.calculateBounds(size2Fit, bounds)
-      return
     }
+ }
 
-    if (executors.isNotEmpty() && flexible.isNotEmpty()) {
-      LOG.error("Unexpected run toolbar widget state")
-      super.calculateBounds(size2Fit, bounds)
-      return
-    }
-
-    val flexibleComponents = executors.ifEmpty { flexible }
-
-    val flexiblePrefWidth = (0 until componentCount).filter {
-      flexibleComponents.contains(getComponent(it))
-    }.sumOf { getChildPreferredSize(it).width }
-
-    val stableWidth = (0 until componentCount).filter {
-      stable.contains(getComponent(it))
-    }.sumOf { getChildPreferredSize(it).width }
-
-    val delta = size2Fit.width - flexiblePrefWidth - stableWidth
-    val gap = if (delta > 0) delta / flexibleComponents.size else 0
-
-    val lastAddGap = if (gap > 0) size2Fit.width - (flexibleComponents.size * gap) - flexiblePrefWidth - stableWidth else 0
-    LOG.debug("gap $gap")
-
-    bounds.clear()
-    for (i in 0 until componentCount) {
-      bounds.add(Rectangle())
-    }
-
+  private fun setComponentsBounds(flexible: MutableList<Component>,
+                                  additionWidth: Int,
+                                  lastAddition: Int,
+                                  bounds: MutableList<Rectangle>) {
     var offset = 0
-    var calculatedW = 0
-    val last = flexibleComponents[flexibleComponents.lastIndex]
+    val last = flexible[flexible.lastIndex]
     for (i in 0 until componentCount) {
       val d = getChildPreferredSize(i)
       var w = d.width
       val component = getComponent(i)
 
-      if (flexibleComponents.contains(component)) {
-        w += gap
-        if(component == last) w+= lastAddGap
-        calculatedW += w
+      if (flexible.contains(component)) {
+        w += additionWidth
+        if (component == last) w += lastAddition
       }
 
       val r = bounds[i]

@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import java.util.function.Function
 
-internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecutorGroup) : SplitButtonAction(group), RunToolbarAction, ExecutorRunToolbarAction {
+internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecutorGroup) : SplitButtonAction(group), ExecutorRunToolbarAction {
   override val process: RunToolbarProcess
     get() = group.process
 
@@ -26,9 +26,10 @@ internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecut
 }
 
 internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
-                                childConverter: Function<in Executor, out AnAction>, val process: RunToolbarProcess) :
-  RunToolbarAction, ExecutorRegistryImpl.ExecutorGroupActionGroup(executorGroup, childConverter) {
+                                       childConverter: Function<in Executor, out AnAction>, override val process: RunToolbarProcess) :
+  ExecutorRunToolbarAction, ExecutorRegistryImpl.ExecutorGroupActionGroup(executorGroup, childConverter) {
 
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
   override fun displayTextInToolbar(): Boolean {
     return true

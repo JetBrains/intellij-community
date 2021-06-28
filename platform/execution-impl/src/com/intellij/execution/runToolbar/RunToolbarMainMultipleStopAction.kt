@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
-class RunToolbarMainMultipleStopAction : StopAction(), RunToolbarAction {
-  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Flexible
+class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_STABLE
 
   override fun update(e: AnActionEvent) {
     super.update(e)

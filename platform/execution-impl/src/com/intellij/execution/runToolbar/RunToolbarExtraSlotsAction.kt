@@ -5,13 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import javax.swing.JComponent
 
-class RunToolbarExtraSlotsAction: AnAction(), CustomComponentAction {
+class RunToolbarExtraSlotsAction: AnAction(), CustomComponentAction, DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
 

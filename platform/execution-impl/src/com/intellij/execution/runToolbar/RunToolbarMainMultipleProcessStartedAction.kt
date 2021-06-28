@@ -11,12 +11,12 @@ import java.awt.Dimension
 import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 
-class RunToolbarMainMultipleProcessStartedAction() : ComboBoxAction(), RunToolbarAction {
+class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   companion object {
     private val PROP_ACTIVE_PROCESS = Key<RunToolbarProcess>("ACTIVE_PROCESS")
   }
 
-  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Fixed
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
 
   override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup = DefaultActionGroup()
 

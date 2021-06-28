@@ -15,7 +15,7 @@ interface RunToolbarProcess {
     const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
     const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
 
-    const val ACTIVE_STATE_BUTTONS_COUNT = 4
+    const val ACTIVE_STATE_BUTTONS_COUNT = 3
 
     @JvmStatic
     fun isAvailable(): Boolean {

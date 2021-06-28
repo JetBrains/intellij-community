@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers
 
-import com.intellij.execution.runToolbar.RunToolbarAction
+import com.intellij.execution.runToolbar.RTBarAction
 import com.intellij.execution.runToolbar.environment
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,7 +11,9 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 
-abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler(), RunToolbarAction {
+abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler(), RTBarAction {
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
+
   override fun perform(project: Project, event: AnActionEvent) {
       val session = getSession(event)
       if (session is XDebugSessionImpl) {

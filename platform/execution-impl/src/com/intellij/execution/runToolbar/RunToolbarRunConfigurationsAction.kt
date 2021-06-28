@@ -12,8 +12,7 @@ import com.intellij.ui.scale.JBUIScale
 import java.awt.Dimension
 import javax.swing.JComponent
 
-class RunToolbarRunConfigurationsAction() : RunConfigurationsComboBoxAction(), RunToolbarAction {
-  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Fixed
+class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
     return RunToolbarSelectConfigAction(configuration, project)

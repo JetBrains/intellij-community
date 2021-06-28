@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 
-class RunToolbarStopAction() : AnAction(AllIcons.Actions.Suspend), DumbAware, RunToolbarAction {
+class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBarAction {
+  override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_STABLE
+
   override fun actionPerformed(e: AnActionEvent) {
     e.environment()?.contentToReuse?.let {
       if (canBeStopped(it)) ExecutionManagerImpl.stopProcess(it)
@@ -36,6 +38,4 @@ class RunToolbarStopAction() : AnAction(AllIcons.Actions.Suspend), DumbAware, Ru
             && (!processHandler.isProcessTerminating
                 || processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()))
   }
-
-  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Flexible
 }
