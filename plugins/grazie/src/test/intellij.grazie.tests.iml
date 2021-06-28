@@ -13,18 +13,18 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-ru:5.3" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.3" />
+      <library name="org.languagetool:language-ru:5.4" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.4" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.3/language-ru-5.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.4/language-ru-5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-de:5.3" type="repository">
-        <properties maven-id="org.languagetool:language-de:5.3">
+      <library name="org.languagetool:language-de:5.4" type="repository">
+        <properties maven-id="org.languagetool:language-de:5.4">
           <exclude>
             <dependency maven-id="com.carrotsearch:hppc" />
             <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
@@ -92,10 +92,10 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.3/language-de-5.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.4/language-de-5.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.2/german-pos-dict-1.2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.4/jwordsplitter-4.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

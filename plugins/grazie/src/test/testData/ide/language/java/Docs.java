@@ -49,7 +49,7 @@ class ExampleClassWithNoTypos<T> {
 /**
  * It is friend there
  *
- * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
+ * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
  *
  * </unopenedTag>
  *
