@@ -781,6 +781,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             //Artifact projectArtifact = project.getArtifact();
             //Map managedVersions = project.getManagedVersionMap();
             //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
+            modelProblems = MavenVersionHelper.resolveVersionProblem(project, modelProblems);
             project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
             //
 
