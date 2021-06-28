@@ -37,7 +37,6 @@ import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click")
   private val previewFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
@@ -53,24 +52,24 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     installSelectionChangedHandler(tree) { updatePreview(false) }
   }
 
-  fun installListeners(tree: ChangesTree) {
+  fun installListeners(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installDoubleClickHandler(tree)
     installEnterKeyHandler(tree)
-    if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
+    if (isOpenEditorDiffPreviewWithSingleClick) {
       //do not open file aggressively on start up, do it later
       DumbService.getInstance(project).smartInvokeLater {
         if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
-        installSelectionHandler(tree)
+        installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
       }
     }
     else {
-      installSelectionHandler(tree)
+      installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
     }
   }
 
-  private fun installSelectionHandler(tree: ChangesTree) {
+  private fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installSelectionChangedHandler(tree) {
-      if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
+      if (isOpenEditorDiffPreviewWithSingleClick) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
       }
       else {
