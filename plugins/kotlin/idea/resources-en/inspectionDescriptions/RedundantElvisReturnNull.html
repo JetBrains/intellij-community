@@ -3,23 +3,23 @@
 <p>Reports redundant <code>?: return null</code></p>
 <p><b>Example:</b></p>
 <pre><code>
-fun foo(): Int? {
-    ...
-}
+  fun foo(): Int? {
+      ...
+  }
 
-fun test() : Int? {
-    return foo() <b>?: return null</b>
-}
+  fun test() : Int? {
+      return foo() <b>?: return null</b>
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun foo(): Int? {
-    ...
-}
+  fun foo(): Int? {
+      ...
+  }
 
-fun test() : Int? {
-    return foo()
-}
+  fun test() : Int? {
+      return foo()
+  }
 </code></pre>
 </body>
 </html>

@@ -3,15 +3,15 @@
 <p>Reports redundant return labels outside of lambda expressions.</p>
 <p><b>Example:</b></p>
 <pre><code>
-fun test() {
-    return@test
-}
+  fun test() {
+      return@test
+  }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-fun test() {
-    return
-}
+  fun test() {
+      return
+  }
 </code></pre>
 </body>
 </html>

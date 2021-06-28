@@ -7,10 +7,10 @@ Reports <code>filter…</code> calls from the standard library on already filter
 <p><b>Remove redundant call</b> quick-fix can be used to amend the code automatically.</p>
 <p>Example:</p>
 <pre><code>
-fun test(list: List&lt;String&gt;) {
-    val x = list.filterNotNull() // quick-fix simplifies to 'list'
-    val y = list.filterIsInstance&lt;String&gt;() // quick-fix simplifies to 'list'
-}
+  fun test(list: List&lt;String&gt;) {
+      val x = list.filterNotNull() // quick-fix simplifies to 'list'
+      val y = list.filterIsInstance&lt;String&gt;() // quick-fix simplifies to 'list'
+  }
 </code></pre>
 </body>
 </html>
