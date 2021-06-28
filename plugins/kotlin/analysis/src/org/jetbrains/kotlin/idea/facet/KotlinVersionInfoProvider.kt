@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.VersionView
+import org.jetbrains.kotlin.idea.compiler.configuration.Version
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.orDefault
@@ -42,26 +43,38 @@ fun getLibraryLanguageLevel(
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind<*>?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-): LanguageVersion {
+) = getLibraryVersion(module, rootModel, platformKind, coerceRuntimeLibraryVersionToReleased).languageVersion
+
+fun getLibraryVersion(
+    module: Module,
+    rootModel: ModuleRootModel?,
+    platformKind: IdePlatformKind<*>?,
+    coerceRuntimeLibraryVersionToReleased: Boolean = true
+): Version {
     val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind.orDefault())
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
         .minWithOrNull(VersionComparatorUtil.COMPARATOR)
-    return getDefaultLanguageLevel(module, minVersion, coerceRuntimeLibraryVersionToReleased)
+    return getDefaultVersion(module, minVersion, coerceRuntimeLibraryVersionToReleased)
+}
+
+fun getDefaultVersion(
+    module: Module,
+    explicitVersion: String? = null,
+    coerceRuntimeLibraryVersionToReleased: Boolean = true
+): Version {
+    val libVersion = explicitVersion
+        ?: KotlinVersionInfoProvider.EP_NAME.extensions
+            .mapNotNull { it.getCompilerVersion(module) }
+            .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
+            .minWithOrNull(VersionComparatorUtil.COMPARATOR)
+    return Version.parse(libVersion)
 }
 
 fun getDefaultLanguageLevel(
     module: Module,
     explicitVersion: String? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-): LanguageVersion {
-    val libVersion = explicitVersion
-        ?: KotlinVersionInfoProvider.EP_NAME.extensions
-            .mapNotNull { it.getCompilerVersion(module) }
-            .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
-            .minWithOrNull(VersionComparatorUtil.COMPARATOR)
-        ?: return VersionView.RELEASED_VERSION
-    return libVersion.toLanguageVersion()
-}
+) = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 fun String?.toLanguageVersion(): LanguageVersion = when {
     this == null -> VersionView.RELEASED_VERSION
