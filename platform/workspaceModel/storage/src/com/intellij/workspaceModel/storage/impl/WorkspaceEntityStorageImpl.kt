@@ -622,7 +622,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
       //  2) All children should have a parent if the connection has a restriction for that
       if (!connectionId.isParentNullable) {
-        checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass)
+        checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass, connectionId)
       }
     }
 
@@ -638,7 +638,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
       }
 
       //  2) Connections satisfy connectionId requirements
-      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass)
+      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass, connectionId)
     }
 
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
@@ -687,7 +687,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     indexes.assertConsistency(this)
   }
 
-  private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int) {
+  private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int, connectionId: ConnectionId) {
     if (connectionKeys.isEmpty()) return
 
     var counter = 0
@@ -695,7 +695,15 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
                        ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
+      assert(i in connectionKeys) {
+        """
+          |Storage inconsistency. Hard reference broken.
+          |Existing entity $entity
+          |Misses a reference to ${connectionTo.findWorkspaceEntity()}
+          |Reference id: $i
+          |ConnectionId: $connectionId
+          """.trimMargin()
+      }
       counter++
     }
 
