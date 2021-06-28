@@ -10,10 +10,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,14 +53,14 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   private final ConcurrentLinkedQueue<InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
-  private final ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
 
   private final @NotNull LogFileWriter myLogFileWriter = new LogFileWriter();
   private final @NotNull RegistryValue myThreshold;
   private final @NotNull ScheduledExecutorService myExecutor;
   private final @NotNull ScheduledFuture<?> myThread;
 
-  private @Nullable MatchResult myCurrentResult = null;
+  private Pair<? extends MatchResult, Long> myCurrentResult = Pair.empty();
+  private Pair<? extends Class<?>, Long> myCurrentRunnableOrCallable = Pair.empty();
 
   EventWatcherImpl() {
     Application application = ApplicationManager.getApplication();
@@ -83,12 +85,16 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   }
 
   @Override
-  public void logTimeMillis(@NotNull String processId, long startedAt,
+  public void logTimeMillis(@NotNull String processId,
+                            long startedAt,
                             @NotNull Class<? extends Runnable> runnableClass) {
-    InvocationDescription description = new InvocationDescription(processId, startedAt);
+    InvocationDescription description = new InvocationDescription(processId,
+                                                                  startedAt,
+                                                                  System.currentTimeMillis());
     logTimeMillis(description, runnableClass);
   }
 
+  @RequiresEdt
   @Override
   public void runnableStarted(@NotNull Runnable runnable, long startedAt) {
     Object current = runnable;
@@ -107,16 +113,20 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
       }
     }
 
-    myRunnablesOrCallablesInProgress.put(startedAt,
-                                         (current != null ? current : runnable).getClass());
+    myCurrentRunnableOrCallable = Pair.create((current != null ? current : runnable).getClass(),
+                                              startedAt);
   }
 
+  @RequiresEdt
   @Override
-  public void runnableFinished(@NotNull Runnable runnable, long startedAt) {
-    Class<?> runnableOrCallableClass = Objects.requireNonNull(myRunnablesOrCallablesInProgress.remove(startedAt));
+  public void runnableFinished(@NotNull Runnable runnable, long finishedAt) {
+    Class<?> runnableOrCallableClass = Objects.requireNonNull(myCurrentRunnableOrCallable.getFirst());
     String fqn = runnableOrCallableClass.getName();
+    InvocationDescription description = new InvocationDescription(fqn,
+                                                                  Objects.requireNonNull(myCurrentResult.getSecond()),
+                                                                  finishedAt);
+    myCurrentRunnableOrCallable = Pair.empty();
 
-    InvocationDescription description = new InvocationDescription(fqn, startedAt);
     myRunnables.offer(description);
     myDurationsByFqn.compute(fqn,
                              (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info));
@@ -124,25 +134,29 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
     logTimeMillis(description, runnableOrCallableClass);
   }
 
+  @RequiresEdt
   @Override
-  public void edtEventStarted(@NotNull AWTEvent event) {
+  public void edtEventStarted(@NotNull AWTEvent event, long startedAt) {
     Matcher matcher = DESCRIPTION_BY_EVENT.matcher(event.toString());
-    myCurrentResult = matcher.find() ?
-                      matcher.toMatchResult() :
-                      null;
+    myCurrentResult = Pair.create(matcher.find() ? matcher.toMatchResult() : null,
+                                  startedAt);
   }
 
+  @RequiresEdt
   @Override
-  public void edtEventFinished(@NotNull AWTEvent event, long startedAt) {
-    String representation = myCurrentResult instanceof Matcher ?
-                            ((Matcher)myCurrentResult).group("description") :
+  public void edtEventFinished(@NotNull AWTEvent event, long finishedAt) {
+    MatchResult matchResult = myCurrentResult.getFirst();
+    String representation = matchResult instanceof Matcher ?
+                            ((Matcher)matchResult).group("description") :
                             event.toString();
-    myCurrentResult = null;
+    InvocationDescription description = new InvocationDescription(representation,
+                                                                  Objects.requireNonNull(myCurrentResult.getSecond()),
+                                                                  finishedAt);
+    myCurrentResult = Pair.empty();
 
     Class<? extends AWTEvent> eventClass = event.getClass();
     myEventsByClass.putIfAbsent(eventClass, new ConcurrentLinkedQueue<>());
-    myEventsByClass.get(eventClass)
-      .offer(new InvocationDescription(representation, startedAt));
+    myEventsByClass.get(eventClass).offer(description);
   }
 
   @Override

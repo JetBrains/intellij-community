@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,17 +42,22 @@ public interface EventWatcher {
     return result;
   }
 
+  @RequiresEdt
   void runnableStarted(@NotNull Runnable runnable, long startedAt);
 
-  void runnableFinished(@NotNull Runnable runnable, long startedAt);
+  @RequiresEdt
+  void runnableFinished(@NotNull Runnable runnable, long finishedAt);
 
-  void edtEventStarted(@NotNull AWTEvent event);
+  @RequiresEdt
+  void edtEventStarted(@NotNull AWTEvent event, long startedAt);
 
-  void edtEventFinished(@NotNull AWTEvent event, long startedAt);
+  @RequiresEdt
+  void edtEventFinished(@NotNull AWTEvent event, long finishedAt);
 
   void reset();
 
-  void logTimeMillis(@NotNull String processId, long startedAt,
+  void logTimeMillis(@NotNull String processId,
+                     long startedAt,
                      @NotNull Class<? extends Runnable> runnableClass);
 
   default void logTimeMillis(@NotNull String processId, long startedAt) {

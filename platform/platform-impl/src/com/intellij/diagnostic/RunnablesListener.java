@@ -50,11 +50,6 @@ public interface RunnablesListener {
       myFinishedAt = finishedAt;
     }
 
-    InvocationDescription(@NotNull String processId,
-                          long startedAt) {
-      this(processId, startedAt, System.currentTimeMillis());
-    }
-
     public @NotNull String getProcessId() {
       return myProcessId;
     }

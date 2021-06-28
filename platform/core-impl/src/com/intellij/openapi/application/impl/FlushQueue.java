@@ -145,7 +145,7 @@ final class FlushQueue {
       finally {
         if (!DEBUG) myLastInfo = null;
         if (watcher != null) {
-          watcher.runnableFinished(runnable, startedAt);
+          watcher.runnableFinished(runnable, System.currentTimeMillis());
         }
       }
     }

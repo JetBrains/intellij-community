@@ -373,7 +373,7 @@ public final class IdeEventQueue extends EventQueue {
         performanceWatcher.edtEventStarted();
       }
       if (eventWatcher != null) {
-        eventWatcher.edtEventStarted(e);
+        eventWatcher.edtEventStarted(e, startedAt);
       }
 
       fixNestedSequenceEvent(e);
@@ -496,7 +496,7 @@ public final class IdeEventQueue extends EventQueue {
         performanceWatcher.edtEventFinished();
       }
       if (eventWatcher != null) {
-        eventWatcher.edtEventFinished(e, startedAt);
+        eventWatcher.edtEventFinished(e, System.currentTimeMillis());
       }
     }
   }
