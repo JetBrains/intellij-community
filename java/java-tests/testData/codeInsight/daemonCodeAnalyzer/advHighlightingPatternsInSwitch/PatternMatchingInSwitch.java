@@ -37,7 +37,35 @@ class Main {
     return i1 + i2 + i3 + i4 + i5 + i6;
   }
 
-  void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s, boolean b) {
+  void checkSwitchSelectorType(boolean b, double d, int[] array) {
+    switch (<error descr="Selector type of 'boolean' is not supported">b</error>) {
+      case true:
+        System.out.println("true");
+        break;
+      case false:
+        System.out.println("false");
+        break;
+    }
+    String str;
+    str = switch(<error descr="Selector type of 'double' is not supported">d</error>) {
+      case 1 -> "ok";
+      case 2 -> "not ok";
+    };
+
+    switch (array) {
+      case int[] arr:
+        System.out.println("true");
+        break;
+      default:
+        System.out.println("ok");
+    }
+    str = switch (array) {
+      case int[] arr -> "true";
+      default -> "ok";
+    };
+  }
+
+  void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s) {
     switch (n) {
       case <error descr="Incompatible types. Found: 'int', required: 'java.lang.Number'">1</error>:
         System.out.println("ok");
@@ -54,6 +82,15 @@ class Main {
     }
     str = switch (c) {
       case <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.CharSequence'">"ok"</error> -> "ok";
+      default -> "not ok";
+    };
+
+    switch (i) {
+      case <error descr="Incompatible types. Found: 'char', required: 'java.lang.Integer'">'1'</error>:
+        System.out.println("ok");
+    }
+    str = switch (i) {
+      case <error descr="Incompatible types. Found: 'char', required: 'java.lang.Integer'">'1'</error> ->"ok";
       default -> "not ok";
     };
 
