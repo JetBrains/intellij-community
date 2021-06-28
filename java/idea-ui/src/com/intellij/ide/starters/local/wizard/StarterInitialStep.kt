@@ -4,6 +4,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
+import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
@@ -115,8 +116,6 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
     updateStartersDependencies(starterPack)
 
-    val nameGenerator = StarterModuleBuilder.getNameGenerator()
-
     return panel {
       row(JavaStartersBundle.message("title.project.name.label")) {
         textField(entityNameProperty)
@@ -124,8 +123,8 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
 
-        if (nameGenerator != null) {
-          component(nameGenerator.getButton {
+        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
+          component(nameGenerator.getUi {
             entityNameProperty.set(it)
           }).constraints(pushX)
         }

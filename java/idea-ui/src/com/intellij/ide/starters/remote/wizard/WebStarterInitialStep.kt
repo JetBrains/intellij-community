@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
@@ -181,8 +182,6 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
     progressIcon.toolTipText = JavaStartersBundle.message("message.state.connecting.and.retrieving.options")
 
-    val nameGenerator = StarterModuleBuilder.getNameGenerator()
-
     return panel {
       row {
         cell(isFullWidth = true) {
@@ -200,8 +199,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT)
           .focused()
 
-        if (nameGenerator != null) {
-          component(nameGenerator.getButton {
+        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
+          component(nameGenerator.getUi {
             entityNameProperty.set(it)
           }).constraints(pushX)
         }
