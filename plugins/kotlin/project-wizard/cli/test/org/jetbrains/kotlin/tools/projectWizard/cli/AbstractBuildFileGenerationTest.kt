@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.BintrayRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.wizard.Wizard
 import java.nio.file.Files
@@ -52,7 +51,7 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
                 val pluginVersion = wizard.context.read { KotlinPlugin.version.propertyValue.version.toString() }
                 fileContent.replace(pluginVersion, KOTLIN_VERSION_PLACEHOLDER)
             }.also { it.replaceAllTo(
-                listOf(Repositories.JETBRAINS_KOTLIN_DEV.url, KOTLIN_DEV_BINTRAY_WITH_CACHE_REDIRECTOR.url),
+                listOf(Repositories.JETBRAINS_KOTLIN_DEV.url),
                 KOTLIN_REPO_PLACEHOLDER
             ) }
         }
@@ -68,9 +67,6 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         private const val EXPECTED_DIRECTORY_NAME = "expected"
         private const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
         private const val KOTLIN_REPO_PLACEHOLDER = "KOTLIN_REPO"
-
-        private const val CACHE_REDIRECTOR_JETBRAINS_SPACE_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space"
-        val KOTLIN_DEV_BINTRAY_WITH_CACHE_REDIRECTOR = BintrayRepository("kotlin/p/kotlin/dev", CACHE_REDIRECTOR_JETBRAINS_SPACE_URL)
     }
 }
 
