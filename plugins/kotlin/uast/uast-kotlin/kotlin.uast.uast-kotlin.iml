@@ -42,5 +42,8 @@
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="module" module-name="intellij.groovy.uast.tests" scope="TEST" />
     <orderEntry type="library" name="javaslang" level="project" />
+    <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="TEST" />
   </component>
 </module>
