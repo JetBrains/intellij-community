@@ -18,12 +18,7 @@ internal class KtArrayAccessReferenceDescriptorsImpl(
 ) : KtArrayAccessReference(expression), KtDescriptorsBasedReference {
     override fun isReferenceTo(element: PsiElement): Boolean = super<KtDescriptorsBasedReference>.isReferenceTo(element)
 
-    override fun moveFunctionLiteralOutsideParentheses(callExpression: KtCallExpression) {
-        callExpression.moveFunctionLiteralOutsideParentheses()
-    }
-
-    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression): Boolean =
-        callExpression.canMoveLambdaOutsideParentheses()
+    override fun handleElementRename(newElementName: String): PsiElement = doRenameImplicitConventionalCall(newElementName)
 
     override fun doRenameImplicitConventionalCall(newName: String?): KtExpression = renameImplicitConventionalCall(newName)
 
