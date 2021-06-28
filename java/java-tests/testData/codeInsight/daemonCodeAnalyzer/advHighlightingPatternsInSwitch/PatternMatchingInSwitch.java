@@ -500,6 +500,10 @@ class Main {
       case MONDAY:
         System.out.println("mon");
     };
+    switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {
+      case Day dd && dd != null:
+        System.out.println("ok");
+    };
 
     str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
       case MONDAY, TUESDAY -> System.out.println("ok");
