@@ -11,6 +11,7 @@ import org.jetbrains.uast.UastErrorType
 class KotlinUTypeReferenceExpression(
     override val sourcePsi: KtTypeReference?,
     givenParent: UElement?,
+    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
     private val typeSupplier: (() -> PsiType)? = null
 ) : KotlinAbstractUExpression(givenParent), UTypeReferenceExpression, KotlinUElementWithType {
     override val type: PsiType by lz {

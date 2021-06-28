@@ -50,7 +50,8 @@ class KotlinUObjectLiteralExpression(
     override fun resolve() = superClassConstructorCall?.let { resolveToPsiMethod(it) }
 
     override fun getArgumentForParameter(i: Int): UExpression? =
-        superClassConstructorCall?.let { it.getResolvedCall(it.analyze()) }?.let { getArgumentExpressionByIndex(i, it, this) }
+        superClassConstructorCall?.let { it.getResolvedCall(it.analyze()) }
+            ?.let { getArgumentExpressionByIndex(i, it, this, baseResolveProviderService) }
 
     private class ObjectLiteralClassReference(
         override val sourcePsi: KtSuperTypeCallEntry,

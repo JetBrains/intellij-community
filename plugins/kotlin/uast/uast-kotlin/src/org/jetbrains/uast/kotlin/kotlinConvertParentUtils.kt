@@ -150,7 +150,7 @@ fun doConvertParent(element: UElement, parent: PsiElement?): UElement? {
     val result = KotlinUastLanguagePlugin().convertElementWithParent(parentUnwrapped, null)
 
     if (result is KotlinUBlockExpression && element is UClass) {
-        return KotlinUDeclarationsExpression(result).apply {
+        return KotlinUDeclarationsExpression(result, result.baseResolveProviderService).apply {
             declarations = listOf(element)
         }
     }
