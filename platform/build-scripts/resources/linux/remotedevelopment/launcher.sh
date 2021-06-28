@@ -26,6 +26,7 @@ usage()
   echo "Usage: $0 [idea commands]"
   echo "Examples:"
   echo "  $0 run /pat/to/project"
+  echo "  $0 status /pat/to/project"
   echo "  $0 cwmHost /path/to/project"
   echo "  $0 cwmHostNoLobby /path/to/project"
   echo "  $0 cwmHostStatus /path/to/project"
@@ -131,6 +132,9 @@ STARTER_COMMAND="$1"
 if [ "$STARTER_COMMAND" = "run" ]; then
   STARTER_COMMAND="cwmHostNoLobby"
 fi
+if [ "$STARTER_COMMAND" = "status" ]; then
+  STARTER_COMMAND="cwmHostStatus"
+fi
 
 if [ "$STARTER_COMMAND" = "cwmHost" ] || [ "$STARTER_COMMAND" = "cwmHostNoLobby" ] || [ "$STARTER_COMMAND" = "cwmHostStatus" ]; then
   if [ -z "$2" ]; then
@@ -207,4 +211,5 @@ fi
 
 # TODO: Might need to be updated for running other IDEs
 echo "> Start IDE"
-"$IDE_BIN_HOME/idea.sh" "$@"
+shift
+"$IDE_BIN_HOME/idea.sh" "$STARTER_COMMAND" "$@"
