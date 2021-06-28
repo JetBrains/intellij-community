@@ -174,18 +174,18 @@ public class AnnotationsPanel {
 
     myComponent = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridy = 0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1;
     if (showDefaultActions) {
       myComponent.add(new JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints);
       constraints.fill = GridBagConstraints.HORIZONTAL;
-      constraints.weightx = 1;
-      myComponent.add(myCombo, constraints);
-
+      constraints.insets.bottom = 3;
       constraints.gridy = 1;
-      constraints.gridwidth = 2;
+      myComponent.add(myCombo, constraints);
+      constraints.insets.bottom = 0;
+      constraints.gridy = 2;
     }
     constraints.fill = GridBagConstraints.BOTH;
-    constraints.weightx = 1;
     constraints.weighty = 1;
     myComponent.add(tablePanel, constraints);
   }
