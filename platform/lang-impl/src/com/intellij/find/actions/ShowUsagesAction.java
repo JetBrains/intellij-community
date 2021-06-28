@@ -649,6 +649,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       setMovable(true).
       setResizable(true).
       setItemChoosenCallback(itemChoseCallback).
+      setCancelKeyEnabled(true).
       setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
@@ -731,8 +732,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     northPanel.add(toolbarComponent, gc.next());
 
     builder.setNorthComponent(northPanel);
-
-    builder.setCancelKeyEnabled(false);
 
     PopupUpdateProcessor processor = new PopupUpdateProcessor(usageView.getProject()) {
       @Override
