@@ -409,7 +409,7 @@ public final class TypeConstraints {
     public StreamEx<Exact> superTypes() {
       Set<PsiClass> superTypes = new LinkedHashSet<>();
       InheritanceUtil.processSupers(myClass, false, t -> {
-        if (!t.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!(t instanceof PsiTypeParameter) && !t.hasModifierProperty(PsiModifier.FINAL)) {
           superTypes.add(t);
         }
         return true;
