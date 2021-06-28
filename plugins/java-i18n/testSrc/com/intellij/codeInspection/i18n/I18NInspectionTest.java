@@ -84,7 +84,16 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testAnnotationArgument() { doTest(); }
   public void testAssertionStmt() { doTest(); }
-  public void testPropertKeyAnnotated() { doTest(); }
+  public void testPropertyKeyAnnotated() {
+    String oldPattern = myTool.nonNlsCommentPattern;
+    try {
+      myTool.setNonNlsLiteralPattern("");
+      doTest();
+    }
+    catch (Exception e) {
+      myTool.setNonNlsLiteralPattern(oldPattern);
+    }
+  }
   public void testExceptionCtor() { doTest(); }
   public void testSpecifiedExceptionCtor() {
     boolean old = myTool.ignoreForExceptionConstructors;
