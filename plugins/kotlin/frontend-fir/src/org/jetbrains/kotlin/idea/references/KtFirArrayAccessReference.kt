@@ -24,7 +24,5 @@ class KtFirArrayAccessReference(
         return listOfNotNull(fir.getCalleeSymbol()?.fir?.buildSymbol(firSymbolBuilder))
     }
 
-    override fun doRenameImplicitConventionalCall(newName: String?): KtExpression {
-        TODO("Not yet implemented")
-    }
+    override fun handleElementRename(newElementName: String): PsiElement? = TODO("Not yet implemented")
 }
