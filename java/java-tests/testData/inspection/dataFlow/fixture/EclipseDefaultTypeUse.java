@@ -16,6 +16,10 @@ public class EclipseDefaultTypeUse {
     // List::add is not annotated but ArrayList<String> is defined in context of TYPE_USE NonNullByDefault annotation
     a.add(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>); 
   }
+
+  void local() {
+    String s = null;
+  }
 }
 @NonNullByDefault
 @FunctionalInterface
