@@ -107,13 +107,14 @@ class JavaToKotlinAction : AnAction() {
         }
 
         fun convertFiles(
-            javaFiles: List<PsiJavaFile>,
+            files: List<PsiJavaFile>,
             project: Project,
             module: Module,
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
             forceUsingOldJ2k: Boolean = false
         ): List<KtFile> {
+            val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
             fun convert() {
                 val converter =
