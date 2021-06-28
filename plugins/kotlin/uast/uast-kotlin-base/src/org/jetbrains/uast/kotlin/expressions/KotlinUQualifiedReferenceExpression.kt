@@ -31,27 +31,3 @@ class KotlinUQualifiedReferenceExpression(
             else -> super.referenceNameElement
         }
 }
-
-
-class KotlinDocUQualifiedReferenceExpression(
-    override val sourcePsi: KDocName,
-    givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
-
-    override val receiver by lz {
-        TODO("fix me later")
-        //KotlinConverter.convertPsiElement(sourcePsi, givenParent, DEFAULT_EXPRESSION_TYPES_LIST)
-        //        as? UExpression ?: UastEmptyExpression(givenParent)
-    }
-    override val selector by lz {
-        createKDocNameSimpleNameReference(parentKDocName = sourcePsi, givenParent = this) ?: UastEmptyExpression(this)
-    }
-    override val accessType = UastQualifiedExpressionAccessType.SIMPLE
-
-    override fun resolve(): PsiElement? = sourcePsi.reference?.resolve()
-
-    override val resolvedName: String?
-        get() = (resolve() as? PsiNamedElement)?.name
-
-    override fun multiResolve(): Iterable<ResolveResult> = sourcePsi.multiResolveResults().asIterable()
-}
