@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,23 +24,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
-import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
@@ -131,57 +124,19 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         return;
       }
 
-      PsiDirectory psiDirectory = directories[0];
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-
-      PsiDirectory[] packageDirectories = Objects.requireNonNull(aPackage).getDirectories();
-
-      if (packageDirectories.length == 1) {
-        moveAsPackage(project, new PsiElement[] {aPackage}, null, callback);
-        return;
+      int ret = Messages.showDialog(project,
+                                    JavaBundle.message("where.do.you.want.to.move.directory.prompt", directories[0].getVirtualFile().getPresentableUrl()),
+                                    MoveHandler.getRefactoringName(),
+                                    new String[] {
+                                      JavaBundle.message("button.to.another.directory"),
+                                      JavaBundle.message("button.to.another.source.root")},
+                                    0,
+                                    null);
+      if (ret == Messages.YES) {
+        moveAsDirectory(project, null, callback, directories);
       }
-
-      PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
-      
-      if (projectDirectories.length == 1) {
-        int ret = Messages.showDialog(project,
-                                      JavaBundle.message("where.do.you.want.to.move.directory.prompt"),
-                                      MoveHandler.getRefactoringName(),
-                                      new String[] {   
-                                        JavaBundle.message("button.to.another.directory"),
-                                        JavaBundle.message("button.to.another.source.root")},
-                                      0,
-                                      null);
-        if (ret == Messages.YES) {
-          moveAsDirectory(project, null, callback, projectDirectories);
-        }
-        else if (ret == Messages.NO) {
-          MoveClassesOrPackagesImpl.doRearrangePackage(project, projectDirectories);
-        }
-        return;
-      }
-
-      // the directory corresponds to a package that has multiple associated directories
-      final @Nls StringBuffer message = new StringBuffer();
-      String qualifiedName = aPackage.getQualifiedName();
-      DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, qualifiedName, projectDirectories, psiDirectory);
-      message.append(JavaBundle.message("dialog.message.what.directories.would.you.like.to.move"));
-      
-      List<@NlsContexts.Button String> options = new ArrayList<>();
-      options.add(JavaBundle.message("button.current"));
-      options.add(JavaBundle.message("button.current.to.another.source.root"));
-      options.add(JavaBundle.message("button.all.in.project"));
-      
-      int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                                    ArrayUtil.toStringArray(options), 0, Messages.getWarningIcon());
-      if (ret == 0) {
-        moveAsDirectory(project, null, callback, new PsiDirectory[] {psiDirectory} );
-      }
-      else if (ret == 1) {
-        MoveClassesOrPackagesImpl.doRearrangePackage(project, packageDirectories);
-      }
-      else if (ret == 2 && MoveClassesOrPackagesImpl.checkNesting(project, aPackage, null, true)) {
-        doMoveWithMoveClassesDialog(project, new PsiElement[]{aPackage}, null, callback);
+      else if (ret == Messages.NO) {
+        MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
       }
       return;
     }
