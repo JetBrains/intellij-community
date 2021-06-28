@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.notifyOutdatedBundledCompilerIfNecessary
@@ -34,7 +35,10 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity {
             notifyOutdatedBundledCompilerIfNecessary(project)
         })
 
-        notifyNewJVMBackendIfNeeded(project)
+        NonUrgentExecutor.getInstance().execute {
+            notifyNewJVMBackendIfNeeded(project)
+        }
+
         DumbService.getInstance(project).runWhenSmart {
             KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
         }
