@@ -103,13 +103,10 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
 
-    <!-- register local sessions and preload per-client services-->
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
-                        serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"
-                        preload="await"/>
+                        serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
     <projectService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
-                    serviceImplementation="com.intellij.openapi.client.ClientProjectSessionsManager"
-                    preload="await"/>
+                    serviceImplementation="com.intellij.openapi.client.ClientProjectSessionsManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>

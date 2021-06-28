@@ -66,7 +66,6 @@ sealed class ClientSessionsManager<T : ClientSession> {
     Disposer.register(disposable) {
       sessions.remove(clientId)
     }
-    (session as? ClientSessionImpl)?.init()
   }
 }
 

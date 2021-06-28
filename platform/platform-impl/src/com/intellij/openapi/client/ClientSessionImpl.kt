@@ -40,29 +40,33 @@ abstract class ClientSessionImpl(
   override val isLightServiceSupported = false
   override val isMessageBusSupported = false
 
-  open fun init() {
-    assert(containerState.get() == ContainerState.PRE_INIT)
+  init {
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
+  }
 
-    if (!isLocal) {
-      // registration for local session happens in ClientAwareComponentManager#registerComponents
-      registerComponents(
-        PluginManagerCore.getLoadedPlugins(null),
-        ApplicationManager.getApplication(),
-        null,
-        null
-      )
-    }
+  fun registerServices() {
+    registerComponents(
+      PluginManagerCore.getLoadedPlugins(null),
+      ApplicationManager.getApplication(),
+      null,
+      null
+    )
+  }
+
+  fun preloadServices() {
+    assert(containerState.get() == ContainerState.PRE_INIT)
+    preloadServices(
+      PluginManagerCore.getLoadedPlugins(null),
+      container = this,
+      activityPrefix = "client ",
+      onlyIfAwait = false
+    ).join()
+    assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
+  }
+
+  override fun instantiateService(service: ServiceDescriptor) {
     ClientId.withClientId(clientId) {
-      preloadServices(
-        PluginManagerCore.getLoadedPlugins(null),
-        container = this,
-        activityPrefix = "client ",
-        onlyIfAwait = false
-      )
-      // per-client components aren't supported
-      //createComponents(null)
-      assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
+      super.instantiateService(service)
     }
   }
 
@@ -177,9 +181,8 @@ open class ClientAppSessionImpl(
     return pluginDescriptor.appContainerDescriptor
   }
 
-  override fun init() {
+  init {
     registerServiceInstance(ClientAppSession::class.java, this, fakeCorePluginDescriptor)
-    super.init()
   }
 }
 
@@ -193,10 +196,9 @@ open class ClientProjectSessionImpl(
     return pluginDescriptor.projectContainerDescriptor
   }
 
-  override fun init() {
+  init {
     registerServiceInstance(ClientProjectSession::class.java, this, fakeCorePluginDescriptor)
     registerServiceInstance(Project::class.java, project, fakeCorePluginDescriptor)
-    super.init()
   }
 
   override val appSession: ClientAppSession

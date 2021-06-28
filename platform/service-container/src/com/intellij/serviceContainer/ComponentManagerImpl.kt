@@ -1004,7 +1004,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   open fun activityNamePrefix(): String? = null
 
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+  open fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
                       onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
@@ -1049,15 +1049,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
             return@task
           }
 
-          val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return@task
           try {
-            val instance = adapter.getInstance<Any>(this, null)
-            if (instance != null) {
-              val implClass = instance.javaClass
-              if (Modifier.isFinal(implClass.modifiers)) {
-                serviceInstanceHotCache.putIfAbsent(implClass, instance)
-              }
-            }
+            instantiateService(service)
           }
           catch (ignore: AlreadyDisposedException) {
           }
@@ -1081,6 +1074,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }, ForkJoinPool.commonPool())
     )
+  }
+
+  protected open fun instantiateService(service: ServiceDescriptor) {
+    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+    val instance = adapter.getInstance<Any>(this, null)
+    if (instance != null) {
+      val implClass = instance.javaClass
+      if (Modifier.isFinal(implClass.modifiers)) {
+        serviceInstanceHotCache.putIfAbsent(implClass, instance)
+      }
+    }
   }
 
   override fun isDisposed(): Boolean {
