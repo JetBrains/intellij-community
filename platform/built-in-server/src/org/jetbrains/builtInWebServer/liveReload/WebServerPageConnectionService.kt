@@ -79,6 +79,10 @@ class WebServerPageConnectionService {
       return null
     }
     if (!isReloadRequest) return null
+    if (file == null) {
+      LOGGER.warn("VirtualFile for $uri isn't resolved, reload on save can't be started")
+      return null
+    }
     val clientId = myState.pageRequested(uri, file)
 
     val optionalConsoleLog =
@@ -239,6 +243,10 @@ class WebServerPageConnectionService {
     private var myLastClientId = 0
     private val myRequestedFilesWithoutReferrer: MutableSet<VirtualFile?> = HashSet()
     private val myRequestedPages = MultiMap<String, RequestedPage?>()
+
+    /**
+     * Start to listen for files changes on HTTP request with RELOAD_URL_PARAM, stop on last WS client disconnect
+     */
     private var myListenerDisposable: Disposable? = null
 
     private val myMessageId = AtomicInteger(0)
@@ -280,7 +288,7 @@ class WebServerPageConnectionService {
     }
 
     @Synchronized
-    fun pageRequested(uri: String, file: VirtualFile?): Int {
+    fun pageRequested(uri: String, file: VirtualFile): Int {
       if (myRequestedPages.isEmpty) {
         if (myListenerDisposable == null) {
           val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), WebServerFileContentListener::class.java.simpleName)
@@ -292,12 +300,10 @@ class WebServerPageConnectionService {
         }
       }
       val clientId = ++myLastClientId
-      if (file != null) {
-        LOGGER.debug("Page is requested for $uri, clientId = $clientId")
-        val newPage = RequestedPage(clientId, file)
-        myRequestedPages.putValue(uri, newPage)
-        JobScheduler.getScheduler().schedule({ stopWaitingForClient(uri, newPage) }, 30, TimeUnit.SECONDS)
-      }
+      LOGGER.debug("Page is requested for $uri, clientId = $clientId")
+      val newPage = RequestedPage(clientId, file)
+      myRequestedPages.putValue(uri, newPage)
+      JobScheduler.getScheduler().schedule({ stopWaitingForClient(uri, newPage) }, 30, TimeUnit.SECONDS)
       return clientId
     }
 
@@ -348,9 +354,6 @@ class WebServerPageConnectionService {
         if (myListenerDisposable != null) {
           Disposer.dispose(Objects.requireNonNull(myListenerDisposable)!!)
           myListenerDisposable = null
-        }
-        else {
-          LOGGER.error("Listener already disposed")
         }
       }
     }
