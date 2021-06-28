@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -453,14 +453,21 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  private class ChangesBrowserParentNode extends ChangesBrowserStringNode {
+  class ChangesBrowserParentNode extends ChangesBrowserStringNode {
+    @NotNull private final CommitId myCommitId;
+
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
+      myCommitId = commitId;
     }
 
     @Override
     public boolean shouldExpandByDefault() {
       return false;
+    }
+
+    RootTag wrap() {
+      return new RootTag(myCommitId.getHash(), getUserObject());
     }
   }
 
