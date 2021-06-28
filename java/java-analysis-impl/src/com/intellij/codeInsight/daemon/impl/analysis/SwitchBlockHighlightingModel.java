@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 class SwitchBlockHighlightingModel {
   @NotNull private final LanguageLevel myLevel;
@@ -296,7 +295,7 @@ class SwitchBlockHighlightingModel {
     return null;
   }
 
-  private enum SelectorKind {INT, ENUM, STRING, CLASS}
+  private enum SelectorKind {INT, ENUM, STRING}
 
   private static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
 
@@ -412,9 +411,9 @@ class SwitchBlockHighlightingModel {
         elements.putValue(myDefaultValue, labelElement);
       }
       else if (labelElement instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)labelElement).resolve();
-        if (element instanceof PsiEnumConstant) {
-          elements.putValue(((PsiEnumConstant)element).getName(), labelElement);
+        String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
+        if (enumConstName != null) {
+          elements.putValue(enumConstName, labelElement);
         }
       }
       else if (labelElement instanceof PsiExpression) {
@@ -586,8 +585,18 @@ class SwitchBlockHighlightingModel {
       if (defaultElement != null || elementCoversType != null) return;
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
-        List<String> enumElements = StreamEx.of(elements).select(PsiReferenceExpression.class).map(PsiReferenceExpression::resolve)
-          .select(PsiEnumConstant.class).map(PsiField::getName).collect(Collectors.toList());
+        List<String> enumElements = new SmartList<>();
+        for (PsiCaseLabelElement labelElement : elements) {
+          if (labelElement instanceof PsiReferenceExpression) {
+            String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
+            if (enumConstName != null) {
+              enumElements.add(enumConstName);
+            }
+          }
+          else {
+            enumElements.add(labelElement.getText());
+          }
+        }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
       else if (selectorClass != null &&
@@ -690,6 +699,15 @@ class SwitchBlockHighlightingModel {
         return resolved instanceof PsiEnumConstant;
       }
       return false;
+    }
+
+    @Nullable
+    private static String evaluateEnumConstantName(@NotNull PsiReferenceExpression labelElement) {
+      PsiElement element = labelElement.resolve();
+      if (element instanceof PsiEnumConstant) {
+        return ((PsiEnumConstant)element).getName();
+      }
+      return null;
     }
 
     @Nullable
