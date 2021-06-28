@@ -1,6 +1,10 @@
 # Workspace model specification
 
-## Hard references
+# Persistent Id
+
+TODO
+
+# Hard references
 
 Hard reference is a usual way to connect entities. This mechanism provides several types of entities connection,
 including `One-To-One` and `One-To-Many`. Entities in the connection are defined as parent and child.
@@ -74,7 +78,7 @@ This is made because of the following reasons:
   _This issue makes the behaviour of workspace model more unpredictable for the users._
 
 
-## Soft references
+# Soft references
 
 Soft reference (or reference by `PersistentId`) a second option to define a connection between entities.
 Only entities with a `PersistentId` may be referred with a soft reference. To define a soft reference,
@@ -88,12 +92,12 @@ So, the accessing the entity by soft reference may return null.
 
 Workspace Model **does not** perform cascade removing for soft references, as it does for hard references.
 
-## Entities removing
+# Entities removing
 
 Entities removing is preformed with cascade removal of entities that are connected as children.
 E.g. on removing `ModuleEntity`, all connected `ContentRootEntity` will also be removed.
 
-## Builder changes
+# Builder changes
 
 Builder of the workspace model may generate all events with changes that were performed on this builder.
 This mechanism may be used to send events.
@@ -105,10 +109,25 @@ only one event of explicitly updated entity is generated.
 TODO: Should we generate two events?
 
   
-## `replaceBySource`
+# Function `replaceBySource`
+
+`replaceBySource` is a function that allows to replace a part of the store to a different store
+depending on an entity source.
+This is a powerful mechanism that allows, for example, replace all existing gradle imported entities with a newly 
+created after the gradle refresh. `replaceBySource` function tries to keep the references between entities even if they
+were replaced.
+
+**XXX the described implementation is currently different from the actual one**
+
+# Function `addDiff`
+
+`addDiff` is one of approaches of joining a lot of changes into a different store. When creating a new builder,
+all changes that are applied to it are recorded and may also be applied to a different builder.
+
+# Indexes
 
 TODO
 
-## `addDiff`
+# Path fields
 
 TODO
