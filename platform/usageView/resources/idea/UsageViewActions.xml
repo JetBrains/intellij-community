@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter" />
+    <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter"/>
     <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
@@ -12,7 +12,6 @@
       <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules"/>
       <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure"/>
       <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
-
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
     </group>
   </actions>
