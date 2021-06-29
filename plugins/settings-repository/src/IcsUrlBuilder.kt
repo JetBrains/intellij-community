@@ -7,7 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 
 private val OS_PREFIXES = arrayOf("_mac/", "_windows/", "_linux/", "_freebsd/", "_unix/")
 
-internal fun getOsFolderName() = when {
+fun getOsFolderName() = when {
   SystemInfo.isMac -> "_mac"
   SystemInfo.isWindows -> "_windows"
   SystemInfo.isLinux -> "_linux"
@@ -17,7 +17,7 @@ internal fun getOsFolderName() = when {
 }
 
 internal fun toRepositoryPath(path: String, roamingType: RoamingType): String {
-  if (roamingType == RoamingType.PER_OS) {
+  if (roamingType == RoamingType.PER_OS && path.startsWith(getPerOsSettingsStorageFolderName())) {
     // mac/keymap.xml -> keymap.xml
     val pathWithoutOsPrefix = path.removePrefix(getPerOsSettingsStorageFolderName() + "/")
     // keymap.xml -> _mac/keymap.xml
