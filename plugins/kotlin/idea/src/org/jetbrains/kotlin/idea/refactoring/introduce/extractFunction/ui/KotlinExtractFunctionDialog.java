@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui;
 
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -16,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
@@ -32,6 +36,8 @@ import java.awt.event.ItemListener;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.kotlin.idea.util.NonblockingKt.nonBlocking;
 
 public class KotlinExtractFunctionDialog extends DialogWrapper {
     private JPanel contentPane;
@@ -197,27 +203,42 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
 
     @Override
     protected void doOKAction() {
-        MultiMap<PsiElement, String> conflicts = ExtractableAnalysisUtilKt.validate(currentDescriptor).getConflicts();
-        conflicts.values().removeAll(originalDescriptor.getConflicts().values());
-
-        KotlinRefactoringUtilKt.checkConflictsInteractively(
+        nonBlocking(
                 project,
-                conflicts,
-                new Function0<>() {
-                    @Override
-                    public Unit invoke() {
-                        close(OK_EXIT_CODE);
-                        return Unit.INSTANCE;
+                () -> {
+                    try {
+                        return ExtractableAnalysisUtilKt.validate(currentDescriptor);
+                    } catch (RuntimeException e) {
+                        return new ExtractableCodeDescriptorWithException(e);
                     }
                 },
-                new Function0<>() {
-                    @Override
-                    public Unit invoke() {
-                        KotlinExtractFunctionDialog.super.doOKAction();
-                        return onAccept.invoke(KotlinExtractFunctionDialog.this);
+                result -> {
+                    if (result instanceof ExtractableCodeDescriptorWithException) {
+                        throw ((ExtractableCodeDescriptorWithException) result).getException();
                     }
-                }
-        );
+                    MultiMap<PsiElement, String> conflicts = ((ExtractableCodeDescriptorWithConflicts) result).getConflicts();
+                    conflicts.values().removeAll(originalDescriptor.getConflicts().values());
+
+                    KotlinRefactoringUtilKt.checkConflictsInteractively(
+                            project,
+                            conflicts,
+                            new Function0<>() {
+                                @Override
+                                public Unit invoke() {
+                                    close(OK_EXIT_CODE);
+                                    return Unit.INSTANCE;
+                                }
+                            },
+                            new Function0<>() {
+                                @Override
+                                public Unit invoke() {
+                                    KotlinExtractFunctionDialog.super.doOKAction();
+                                    return onAccept.invoke(KotlinExtractFunctionDialog.this);
+                                }
+                            }
+                    );
+                    return Unit.INSTANCE;
+                });
     }
 
     @Override

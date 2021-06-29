@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.nonBlocking
+import org.jetbrains.kotlin.utils.addToStdlib.cast
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.event.HyperlinkEvent
 
 abstract class ExtractionEngineHelper(val operationName: String) {
@@ -57,14 +60,23 @@ class ExtractionEngine(
         }
 
         fun validateAndRefactor() {
-            val validationResult = helper.validate(analysisResult.descriptor!!)
-            project.checkConflictsInteractively(validationResult.conflicts) {
-                helper.configureAndRun(project, editor, validationResult) {
-                    try {
-                        onFinish(it)
-                    } finally {
-                        it.dispose()
-                        extractionData.dispose()
+            nonBlocking(project, {
+                try {
+                    helper.validate(analysisResult.descriptor!!)
+                } catch (e: RuntimeException) {
+                    ExtractableCodeDescriptorWithException(e)
+                }
+            }) { result ->
+                result.safeAs<ExtractableCodeDescriptorWithException>()?.let { throw it.exception }
+                val validationResult = result.cast<ExtractableCodeDescriptorWithConflicts>()
+                project.checkConflictsInteractively(validationResult.conflicts) {
+                    helper.configureAndRun(project, editor, validationResult) {
+                        try {
+                            onFinish(it)
+                        } finally {
+                            it.dispose()
+                            extractionData.dispose()
+                        }
                     }
                 }
             }
