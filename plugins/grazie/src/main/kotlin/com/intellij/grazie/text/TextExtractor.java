@@ -69,10 +69,16 @@ public abstract class TextExtractor {
       }
     }
 
+    Language fileLanguage = psi.getContainingFile().getLanguage();
+
     for (PsiElement each : hierarchy) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
-      TextContent content = doExtract(each, allowedDomains);
+      Language psiLanguage = each.getLanguage();
+      TextContent content = doExtract(each, allowedDomains, psiLanguage);
+      if (content == null && fileLanguage != psiLanguage) {
+        content = doExtract(each, allowedDomains, fileLanguage);
+      }
       if (content != null && stamp.mayCacheNow()) {
         PsiElement parent = content.getCommonParent();
         CachedValue<Set<TextContent>> cache = CachedValuesManager.getManager(parent.getProject()).createCachedValue(
@@ -119,15 +125,15 @@ public abstract class TextExtractor {
   }
 
   @SuppressWarnings("deprecation")
-  private static TextContent doExtract(@NotNull PsiElement anyRoot, @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    TextExtractor extractor = EP.forLanguage(anyRoot.getLanguage());
+  private static TextContent doExtract(@NotNull PsiElement anyRoot, @NotNull Set<TextContent.TextDomain> allowedDomains, @NotNull Language language) {
+    TextExtractor extractor = EP.forLanguage(language);
     if (extractor != null) {
       TextContent roots = extractor.buildTextContent(anyRoot, allowedDomains);
       return roots != null && allowedDomains.contains(roots.getDomain()) ? roots : null;
     }
 
     // legacy extraction
-    for (GrammarCheckingStrategy strategy : LanguageGrammarChecking.INSTANCE.allForLanguage(anyRoot.getLanguage())) {
+    for (GrammarCheckingStrategy strategy : LanguageGrammarChecking.INSTANCE.allForLanguage(language)) {
       if (strategy.isMyContextRoot(anyRoot)) {
         GrammarCheckingStrategy.TextDomain oldDomain = strategy.getContextRootTextDomain(anyRoot);
         TextContent.TextDomain domain = StrategyTextExtractor.convertDomain(oldDomain);

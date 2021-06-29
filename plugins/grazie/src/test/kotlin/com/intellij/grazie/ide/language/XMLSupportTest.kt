@@ -15,6 +15,10 @@ class XMLSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/xml/Example.xml")
   }
 
+  fun `test no grammar checks in svg file`() {
+    runHighlightTestForFile("ide/language/xml/Example.svg")
+  }
+
   fun `test grammar check in html file`() {
     GrazieConfig.update { it.copy(checkingContext = it.checkingContext.copy(disabledLanguages = setOf(XMLLanguage.INSTANCE.id))) }
     runHighlightTestForFile("ide/language/xml/Example.html")
