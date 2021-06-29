@@ -4,8 +4,14 @@ package org.jetbrains.uast.test.kotlin
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.kotlin.KotlinConverter
 import org.junit.Test
+import java.io.File
+import kotlin.io.path.ExperimentalPathApi
 
 class SimpleKotlinRenderLogTest12 : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
+    @OptIn(ExperimentalPathApi::class)
+    override fun getTestFile(testName: String, ext: String): File {
+        return super.getTestFile(testName, ext).withFe10Extension()
+    }
 
     override fun check(testName: String, file: UFile) = super.check(testName, file)
 
