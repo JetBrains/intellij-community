@@ -40,12 +40,18 @@ fun getEffectiveConfiguration(runProfile: RunProfile, project: Project): TargetE
 
   val targetName = runProfile.defaultTargetName
 
-  return when {
+  return getEffectiveConfiguration(targetName, project)
+}
+
+/**
+ * @see TargetEnvironmentsManager.defaultTarget
+ */
+fun getEffectiveConfiguration(targetName: String?, project: Project): TargetEnvironmentConfiguration? =
+  when {
     targetName == LocalTargetType.LOCAL_TARGET_NAME -> null
     targetName != null -> TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName)
     else -> TargetEnvironmentsManager.getInstance(project).defaultTarget
   }
-}
 
 /**
  * Returns the display name of the effective target configuration.

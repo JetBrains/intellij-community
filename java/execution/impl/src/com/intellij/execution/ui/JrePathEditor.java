@@ -3,7 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
@@ -113,10 +113,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
         JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
-          @Override public void focusGained(FocusEvent e) {
+          @Override
+          public void focusGained(FocusEvent e) {
             update(e);
           }
-          @Override public void focusLost(FocusEvent e) {
+
+          @Override
+          public void focusLost(FocusEvent e) {
             update(e);
           }
 
@@ -132,7 +135,6 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
         return field;
       }
-
     };
     comboBox.setEditor(myComboboxEditor);
     InsertPathAction.addTo(myComboboxEditor.getEditorComponent());
@@ -149,20 +151,18 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   public boolean updateModel(@NotNull Project project, @Nullable String targetName) {
     myComboBoxModel.clear();
     myRemoteTarget = false;
-    if (targetName != null) {
-      TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(targetName);
-      if (config != null) {
-        myRemoteTarget = true;
-        List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
-                                                             configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
-                                                                              new CustomJreItem(
-                                                                                (JavaLanguageRuntimeConfiguration)configuration) : null);
-        myComboBoxModel.addAll(items);
-        if (!items.isEmpty()) {
-          myComboBoxModel.setSelectedItem(items.get(0));
-        }
-        return false;
+    TargetEnvironmentConfiguration config = TargetEnvironmentConfigurations.getEffectiveConfiguration(targetName, project);
+    if (config != null) {
+      myRemoteTarget = true;
+      List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
+                                                           configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
+                                                                            new CustomJreItem(
+                                                                              (JavaLanguageRuntimeConfiguration)configuration) : null);
+      myComboBoxModel.addAll(items);
+      if (!items.isEmpty()) {
+        myComboBoxModel.setSelectedItem(items.get(0));
       }
+      return false;
     }
     buildModel(getComponent().isEditable());
     return true;
@@ -275,14 +275,19 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
+
     String getPresentableText();
+
     default @NonNls @Nullable String getID() { return null; }
+
     @Nullable @NlsSafe
     String getPathOrName();
+
     @Nullable
     default String getVersion() { return null; }
 
     default @NlsSafe @Nullable String getDescription() { return getPresentableText(); }
+
     int getOrder();
   }
 
