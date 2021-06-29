@@ -465,7 +465,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Kotlin Standard Library for JDK 8",
                        libraryName: "kotlin-stdlib-jdk8",
                        url: "https://github.com/JetBrains/kotlin").apache(),
-    new LibraryLicense(name: "kotlinx.html", libraryName: "org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.11",
+    new LibraryLicense(name: "kotlinx.html", libraryName: "org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3",
                        licenseUrl: "https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE",
                        url: "https://github.com/Kotlin/kotlinx.html").apache(),
     new LibraryLicense(name: "Kryo", libraryName: "Kryo",

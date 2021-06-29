@@ -9,14 +9,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
-      <library name="org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.11" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.11" />
+      <library name="org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.6.11/kotlinx-html-jvm-0.6.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.3/kotlinx-html-jvm-0.7.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.6.11/kotlinx-html-jvm-0.6.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.3/kotlinx-html-jvm-0.7.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
