@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
-import java.util.*
 
 class DefaultBundleIndexAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,21 +30,19 @@ class DefaultBundleIndexAction : AnAction() {
         val path = pluginDescriptor?.resourceBundleBaseName ?: ActionsBundle.IDEA_ACTIONS_BUNDLE
         val bundle = DynamicBundle.INSTANCE.getResourceBundle(path, pluginDescriptor?.pluginClassLoader ?: it.javaClass.classLoader)
 
+        fun appendKey(key: String, string: String?) {
+          if (!bundle.containsKey(key) && !string.isNullOrBlank()) {
+            file.appendText("$key=$string\n")
+          }
+        }
+
         if (it !is ActionGroup) {
-          appendKey(bundle, file, "action.$id.text", presentation.text)
-          appendKey(bundle, file, "action.$id.description", presentation.description)
+          appendKey("action.$id.text", presentation.text)
+          appendKey("action.$id.description", presentation.description)
         } else {
-          appendKey(bundle, file, "group.$id.text", presentation.text)
-          appendKey(bundle, file, "group.$id.description", presentation.description)
+          appendKey("group.$id.text", presentation.text)
+          appendKey("group.$id.description", presentation.description)
         }
       }
-  }
-
-  companion object {
-    private fun appendKey(bundle: ResourceBundle, file: File, key: String, string: String?) {
-      if (!bundle.containsKey(key) && !string.isNullOrBlank()) {
-        file.appendText("$key=$string\n")
-      }
-    }
   }
 }
