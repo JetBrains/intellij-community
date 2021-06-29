@@ -41,7 +41,7 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
   for (factory in SYMBOL_SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
     val factory_ = factory as SymbolSearchTargetFactory<Symbol>
-    val target = factory_.createTarget(project, symbol)
+    val target = factory_.searchTarget(project, symbol)
     if (target != null) {
       return target
     }

@@ -20,8 +20,7 @@ import static org.jetbrains.annotations.ApiStatus.OverrideOnly;
  * in this case any target will be chosen and used instead of showing the disambiguation popup.
  */
 @OverrideOnly
-public interface SymbolSearchTargetFactory<T extends Symbol> {
+public interface SymbolSearchTargetFactory<T extends @NotNull Symbol> {
 
-  @Nullable
-  SearchTarget createTarget(@NotNull Project project, @NotNull T symbol);
+  @Nullable SearchTarget searchTarget(@NotNull Project project, @NotNull T symbol);
 }
