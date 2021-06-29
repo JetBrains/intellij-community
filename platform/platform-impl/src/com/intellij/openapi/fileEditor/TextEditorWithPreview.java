@@ -8,24 +8,33 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -120,24 +129,55 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   @Override
   public JComponent getComponent() {
-    if (myComponent == null) {
-      mySplitter = new JBSplitter(myIsVerticalSplit, 0.5f, 0.15f, 0.85f);
-      mySplitter.setSplitterProportionKey(getSplitterProportionKey());
-      mySplitter.setFirstComponent(myEditor.getComponent());
-      mySplitter.setSecondComponent(myPreview.getComponent());
-      mySplitter.setDividerWidth(3);
-
-      myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
-
-      if (myLayout == null) {
-        String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-        myLayout = Layout.fromId(lastUsed, myDefaultLayout);
-      }
-      adjustEditorsVisibility();
-
-      myComponent = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
+    if (myComponent != null) {
+      return myComponent;
     }
+    mySplitter = new JBSplitter(myIsVerticalSplit, 0.5f, 0.15f, 0.85f);
+    mySplitter.setSplitterProportionKey(getSplitterProportionKey());
+    mySplitter.setFirstComponent(myEditor.getComponent());
+    mySplitter.setSecondComponent(myPreview.getComponent());
+    mySplitter.setDividerWidth(3);
+
+    myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
+
+    if (myLayout == null) {
+      String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
+      myLayout = Layout.fromId(lastUsed, myDefaultLayout);
+    }
+    adjustEditorsVisibility();
+
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
+    if (!Registry.is("ide.text.editor.with.preview.show.floating.toolbar") || !myToolbarWrapper.isLeftToolbarEmpty()) {
+      myComponent = panel;
+      return myComponent;
+    }
+
+    myToolbarWrapper.setVisible(false);
+    MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
+    myComponent = layeredPane;
+    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, new DefaultActionGroup(myToolbarWrapper.getRightToolbar().getActions()));
+    Disposer.register(this, toolbar);
+    layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
+    myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
+    registerToolbarListeners(panel, toolbar);
     return myComponent;
+  }
+
+  private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
+    UIUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
+    final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
+    if (actualEditor != null) {
+      final var editorKeyListener = new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent event) {
+          toolbar.getVisibilityController().scheduleHide();
+        }
+      };
+      actualEditor.getEditor().getContentComponent().addKeyListener(editorKeyListener);
+      Disposer.register(toolbar, () -> {
+        actualEditor.getEditor().getContentComponent().removeKeyListener(editorKeyListener);
+      });
+    }
   }
 
   public boolean isVerticalSplit() {
@@ -146,6 +186,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   public void setVerticalSplit(boolean verticalSplit) {
     myIsVerticalSplit = verticalSplit;
+    mySplitter.setOrientation(verticalSplit);
   }
 
   @NotNull
@@ -181,7 +222,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   @SuppressWarnings("unused")
-  protected void onLayoutChange(Layout oldValue, Layout newValue) {}
+  protected void onLayoutChange(Layout oldValue, Layout newValue) { }
 
   private void adjustEditorsVisibility() {
     myEditor.getComponent().setVisible(myLayout == Layout.SHOW_EDITOR || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
@@ -396,10 +437,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   protected ActionGroup createViewActionGroup() {
     return new DefaultActionGroup(
-        getShowEditorAction(),
-        getShowEditorAndPreviewAction(),
-        getShowPreviewAction()
-      );
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction()
+    );
   }
 
   @Nullable
@@ -448,10 +489,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myName.get();
     }
 
-    public Icon getIcon(TextEditorWithPreview editor) {
+    public Icon getIcon(@Nullable TextEditorWithPreview editor) {
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
-      return editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+      return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
@@ -472,7 +513,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         setLayout(myActionLayout);
-      } else {
+      }
+      else {
         if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
           mySplitter.setOrientation(!myIsVerticalSplit);
           myIsVerticalSplit = !myIsVerticalSplit;
@@ -532,5 +574,69 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
     file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
     FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  private static class MyEditorLayeredComponentWrapper extends JBLayeredPane {
+    private final JComponent editorComponent;
+
+    static final int toolbarTopPadding = 25;
+    static final int toolbarRightPadding = 20;
+
+    private MyEditorLayeredComponentWrapper(JComponent component) {
+      editorComponent = component;
+    }
+
+    @Override
+    public void doLayout() {
+      final var components = getComponents();
+      final var bounds = getBounds();
+      for (Component component : components) {
+        if (component == editorComponent) {
+          component.setBounds(0, 0, bounds.width, bounds.height);
+        }
+        else {
+          final var preferredComponentSize = component.getPreferredSize();
+          var x = 0;
+          var y = 0;
+          if (component instanceof LayoutActionsFloatingToolbar) {
+            x = bounds.width - preferredComponentSize.width - toolbarRightPadding;
+            y = toolbarTopPadding;
+          }
+          component.setBounds(x, y, preferredComponentSize.width, preferredComponentSize.height);
+        }
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return editorComponent.getPreferredSize();
+    }
+  }
+
+  private class MyMouseListener implements AWTEventListener {
+    private final LayoutActionsFloatingToolbar toolbar;
+    private final Alarm alarm;
+
+    MyMouseListener(LayoutActionsFloatingToolbar toolbar) {
+      this.toolbar = toolbar;
+      alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, toolbar);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
+      if (myComponent.getMousePosition() != null) {
+        alarm.cancelAllRequests();
+        toolbar.getVisibilityController().scheduleShow();
+        if (isMouseOutsideToolbar) {
+          alarm.addRequest(() -> {
+            toolbar.getVisibilityController().scheduleHide();
+          }, 1400);
+        }
+      }
+      else if (isMouseOutsideToolbar) {
+        toolbar.getVisibilityController().scheduleHide();
+      }
+    }
   }
 }
