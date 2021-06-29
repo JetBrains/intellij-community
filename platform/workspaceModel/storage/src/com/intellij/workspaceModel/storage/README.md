@@ -50,8 +50,11 @@ This is the restriction of the current specification. See the explanation below.
 
 - One-To-One  
   - One-To-One with mandatory parent
+  - One-To-One with optional parent
 
-One-To-One connection has at the moment only mandatory parent. Optional parent may be supported if needed.
+⚠️ If you set a new child for the `One-To-One` reference with a mandatory parent, the old child is automatically
+removed to keep the store consistent.
+For the `One-To-One` with optional parent, the previous child remains in the store.
 
 #### One-To-Abstract-One
 In `one-to-abstract-one` connections **child is always optional for the parent**.  
