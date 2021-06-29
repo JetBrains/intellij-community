@@ -10,11 +10,8 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import com.intellij.lang.injection.general.Injection
-import com.intellij.openapi.util.Key
 import com.intellij.psi.ElementManipulators
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil.concat
-import com.intellij.util.text.splitToTextRanges
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -102,23 +99,20 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
                 if (pendingPrefix.isNotEmpty() || collected.isEmpty()) {
                     // Store pending prefix before creating a new one,
                     // or if it is a first part then create a dummy injection to distinguish "inner" prefixes
-                    collected += injectionRange(literal, TextRange.from(partOffsetInParent, 0), pendingPrefix, "")
+                    collected += injectionRange(literal, getRangeForPlaceholder(literal, child) { startOffset }, pendingPrefix, "")
                 }
 
                 val (prefix, myUnparseable) = makePlaceholder(child)
 
                 if (tail.isEmpty()) {
                     // There won't be more elements, so create part with prefix right away
+                    val rangeForPlaceHolder = getRangeForPlaceholder(literal, child) { endOffset }
                     collected +=
                         if (literal.textRange.contains(child.textRange))
-                            injectionRange(literal, TextRange.from(partOffsetInParent + child.textLength, 0), prefix, injection.suffix)
+                            injectionRange(literal, rangeForPlaceHolder, prefix, injection.suffix)
                         else
-                            // when the child is not a string we use the end of the current literal anyway (the concantenation case)
-                            injectionRange(
-                                literal,
-                                ElementManipulators.getValueTextRange(literal).let { TextRange.from(it.endOffset, 0) },
-                                "", prefix + injection.suffix
-                            )
+                        // when the child is not a string we use the end of the current literal anyway (the concantenation case)
+                            injectionRange(literal, rangeForPlaceHolder, "", prefix + injection.suffix)
                 }
                 return collectInjections(literal, tail, prefix, unparseable || myUnparseable, collected)
             }
@@ -126,6 +120,19 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
     }
 
     return collectInjections(null, listOf(literalOrConcatenation), injection.prefix, false, ArrayList())
+}
+
+private inline fun getRangeForPlaceholder(
+    literal: KtStringTemplateExpression,
+    child: PsiElement,
+    selector: TextRange.() -> Int
+): TextRange {
+    val literalRange = literal.textRange
+    val childRange = child.textRange
+    if (literalRange.contains(childRange))
+        return TextRange.from(selector(childRange) - literalRange.startOffset, 0)
+    else
+        return ElementManipulators.getValueTextRange(literal).let { TextRange.from(selector(it), 0) }
 }
 
 private fun makePlaceholder(child: PsiElement): Pair<String, Boolean> = when (child) {
