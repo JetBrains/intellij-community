@@ -34,7 +34,7 @@ internal abstract class ModuleFileCache {
      * Maps [ClassId] to corresponding classifiers
      * If classifier with required [ClassId] is not found in given module then map contains [Optional.EMPTY]
      */
-    abstract val classifierByClassId: ConcurrentHashMap<ClassId, Optional<FirClassLikeDeclaration<*>>>
+    abstract val classifierByClassId: ConcurrentHashMap<ClassId, Optional<FirClassLikeDeclaration>>
 
     /**
      * Maps [CallableId] to corresponding callable
@@ -64,7 +64,7 @@ internal abstract class ModuleFileCache {
 internal class ModuleFileCacheImpl(override val session: FirSession) : ModuleFileCache() {
     private val ktFileToFirFile = ConcurrentCollectionFactory.createConcurrentIdentityMap<KtFile, FirFile>()
 
-    override val classifierByClassId: ConcurrentHashMap<ClassId, Optional<FirClassLikeDeclaration<*>>> = ConcurrentHashMap()
+    override val classifierByClassId: ConcurrentHashMap<ClassId, Optional<FirClassLikeDeclaration>> = ConcurrentHashMap()
     override val callableByCallableId: ConcurrentHashMap<CallableId, List<FirCallableSymbol<*>>> = ConcurrentHashMap()
 
     override fun fileCached(file: KtFile, createValue: () -> FirFile): FirFile =

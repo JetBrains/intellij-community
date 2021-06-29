@@ -57,7 +57,7 @@ internal class KtSimpleFirTypeAndAnnotations(
     override val annotations: List<KtAnnotationCall> get() = annotationsListRef
 }
 
-internal fun FirRefWithValidityCheck<FirClass<*>>.superTypesAndAnnotationsList(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> =
+internal fun FirRefWithValidityCheck<FirClass>.superTypesAndAnnotationsList(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> =
     withFir(FirResolvePhase.SUPER_TYPES) { fir ->
         fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
     }
@@ -73,7 +73,7 @@ internal fun FirRefWithValidityCheck<FirRegularClass>.superTypesAndAnnotationsLi
 }
 
 private fun List<FirTypeRef>.mapToTypeAndAnnotations(
-    containingDeclaration: FirRefWithValidityCheck<FirClass<*>>,
+    containingDeclaration: FirRefWithValidityCheck<FirClass>,
     builder: KtSymbolByFirBuilder,
 ) = map { typeRef ->
     val annotations = typeRef.annotations.map { annotation ->
@@ -87,7 +87,7 @@ internal fun FirRefWithValidityCheck<FirTypedDeclaration>.returnTypeAndAnnotatio
     builder: KtSymbolByFirBuilder
 ) = KtFirTypeAndAnnotations(this, typeResolvePhase, builder) { it.returnTypeRef }
 
-internal fun FirRefWithValidityCheck<FirCallableDeclaration<*>>.receiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) = withFir { fir ->
+internal fun FirRefWithValidityCheck<FirCallableDeclaration>.receiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) = withFir { fir ->
     fir.receiverTypeRef?.let { _ ->
         KtFirTypeAndAnnotations(this, FirResolvePhase.TYPES, builder) {
             it.receiverTypeRef ?: error { "Receiver expected for callable declaration but it is null" }
@@ -95,7 +95,7 @@ internal fun FirRefWithValidityCheck<FirCallableDeclaration<*>>.receiverTypeAndA
     }
 }
 
-internal fun FirRefWithValidityCheck<FirCallableMemberDeclaration<*>>.dispatchReceiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) =
+internal fun FirRefWithValidityCheck<FirCallableMemberDeclaration>.dispatchReceiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) =
     withFir { fir ->
         fir.dispatchReceiverType?.let {
             builder.typeBuilder.buildKtType(it)
