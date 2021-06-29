@@ -2,7 +2,9 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.ChangeEntry
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
@@ -571,5 +573,44 @@ class ReferencesInStorageTest {
     else {
       assertNull(children[1].parent)
     }
+  }
+
+  @Test
+  fun `remove children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    val childEntity = builder.addChildEntity(parentEntity)
+
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.children = emptyList<ChildEntity>().asSequence()
+    }
+
+    builder.assertConsistency()
+
+    assertTrue(builder.entities(ChildEntity::class.java).toList().isEmpty())
+
+    assertInstanceOf(builder.changeLog.changeLog[childEntity.id], ChangeEntry.RemoveEntity::class.java)
+  }
+
+  @Test
+  fun `remove multiple children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    val childEntity1 = builder.addChildEntity(parentEntity)
+    val childEntity2 = builder.addChildEntity(parentEntity)
+
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.children = sequenceOf(childEntity2)
+    }
+
+    builder.assertConsistency()
+
+    assertEquals(1, builder.entities(ChildEntity::class.java).toList().size)
+
+    assertInstanceOf(builder.changeLog.changeLog[childEntity1.id], ChangeEntry.RemoveEntity::class.java)
   }
 }

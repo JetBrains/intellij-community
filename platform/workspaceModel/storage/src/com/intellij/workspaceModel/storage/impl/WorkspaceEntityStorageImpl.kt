@@ -688,11 +688,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int, connectionId: ConnectionId) {
-    if (connectionKeys.isEmpty()) return
-
     var counter = 0
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]
-                       ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: ImmutableEntityFamily()
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
       assert(i in connectionKeys) {

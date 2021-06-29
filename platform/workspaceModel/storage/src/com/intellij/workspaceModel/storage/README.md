@@ -33,6 +33,10 @@ We should implement and specify all remaining types of references.
   - One-To-Many with optional parent
   - One-To-Many with mandatory parent
 
+⚠️ If you set a new children for the `One-To-Many` reference with a mandatory parent, the old children are automatically
+removed if they are not presented in a new set.
+For the `One-To-Many` with optional parent, the previous children remain in the store.
+
 #### One-To-Abstract-Many
 
 This reference has a special behaviour. During addDIff it doesn't try to merge added and remove children,

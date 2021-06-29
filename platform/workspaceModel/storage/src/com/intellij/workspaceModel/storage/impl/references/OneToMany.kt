@@ -68,6 +68,15 @@ class MutableOneToMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable)
     }
+
+    if (!connectionId!!.isParentNullable) {
+      val existingChildren = thisRef.diff.extractOneToManyChildrenIds(connectionId!!, thisRef.id).toHashSet()
+      value.forEach {
+        existingChildren.remove(it.id)
+      }
+      existingChildren.forEach { thisRef.diff.removeEntity(it) }
+    }
+
     thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id, value)
   }
 }
