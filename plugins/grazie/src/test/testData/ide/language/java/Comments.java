@@ -27,4 +27,8 @@ class ForMultiLanguageSupport {
   // An iterable of bundle instances
 
   // Resolve '../' in paths (like real_path)
+
+  // Thrown when an UPLOAD_ERR_CANT_WRITE error occurred with UploadedFile.
+
+  // We don't use the PHP php_strip_whitespace() function
 }
