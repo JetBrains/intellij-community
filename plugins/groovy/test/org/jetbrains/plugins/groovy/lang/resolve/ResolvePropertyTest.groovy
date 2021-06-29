@@ -1473,4 +1473,17 @@ A[] ai = [new A(1), new A(2)].toArray()
 println(ai.fo<caret>o)
 """, GrAccessorMethod
   }
+
+  void 'test gpath in array 2'() {
+    resolveByText """
+class A {
+    int length
+    A(int x) { length = x }
+}
+
+A[] ai = [new A(1), new A(2)].toArray()
+
+println(ai.len<caret>gth)
+""", GrField
+  }
 }
