@@ -158,7 +158,7 @@ final class CommunityLibraryLicenses {
                        url: "https://source.android.com/").apache(),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime",
                        url: "https://www.antlr.org", licenseUrl: "https://www.antlr.org/license.html").newBsd(),
-    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.1.jar",
+    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.9",
                        url: "https://www.antlr.org", licenseUrl: "https://www.antlr.org/license.html").newBsd(),
     new LibraryLicense(name: "ap-validation", libraryName: "ap-validation",
                        url: "https://github.com/JetBrains/ap-validation").apache(),
