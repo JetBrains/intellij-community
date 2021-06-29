@@ -60,6 +60,16 @@ class Main {
     str = switch (array) {
       case int[] arr -> "true";
     };
+
+    // intersection type
+    var values = List.of("foo", 3, 4.0);
+    for (var value : values) {
+      switch (value) {
+        case Integer i -> System.out.println("integer !");
+        case String s -> System.out.println("string !");
+        case Object o -> System.out.println("object !");
+      }
+    }
   }
 
   void constLabelAndSelectorCompatibility(Number n, CharSequence c, Integer i, String s) {

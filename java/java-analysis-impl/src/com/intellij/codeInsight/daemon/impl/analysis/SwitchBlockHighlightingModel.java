@@ -344,18 +344,14 @@ class SwitchBlockHighlightingModel {
     @Nullable
     SelectorKind getSwitchSelectorKind() {
       if (TypeConversionUtil.getTypeRank(mySelectorType) <= TypeConversionUtil.INT_RANK) return SelectorKind.INT;
-      if (mySelectorType instanceof PsiArrayType) return SelectorKind.CLASS_OR_ARRAY;
+      if (mySelectorType instanceof PsiPrimitiveType) return null;
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (psiClass != null) {
         if (psiClass.isEnum()) return SelectorKind.ENUM;
         String fqn = psiClass.getQualifiedName();
         if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) return SelectorKind.STRING;
-        if (PsiType.BOOLEAN.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
-          return null;
-        }
-        return SelectorKind.CLASS_OR_ARRAY;
       }
-      return null;
+      return SelectorKind.CLASS_OR_ARRAY;
     }
 
     @NotNull
