@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.notification;
 
 import com.intellij.application.Topics;
@@ -7,7 +7,6 @@ import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.ide.gdpr.ConsentOptions;
-import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -21,7 +20,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.util.Time;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -40,8 +38,7 @@ final class StatisticsNotificationManagerImpl implements StatisticsNotificationM
       @Override
       public void onFrameActivated() {
         if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
-          final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
-          ApplicationManager.getApplication().invokeLater(() -> showNotification(statisticsService));
+          ApplicationManager.getApplication().invokeLater(() -> showNotification());
           Disposer.dispose(disposable);
         }
       }
@@ -53,9 +50,11 @@ final class StatisticsNotificationManagerImpl implements StatisticsNotificationM
            (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
   }
 
-  private static void showNotification(@NotNull StatisticsService statisticsService) {
+  private static void showNotification() {
     if (AppUIUtil.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManagerImpl.class), ConsentOptions.condUsageStatsConsent())) {
-      ApplicationManager.getApplication().executeOnPooledThread((Runnable)statisticsService::send);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        return StatisticsUploadAssistant.getEventLogStatisticsService("FUS").send();
+      });
       UsageStatisticsPersistenceComponent.getInstance().setShowNotification(false);
     }
   }
