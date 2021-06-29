@@ -136,7 +136,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setSplitterProportionKey(getSplitterProportionKey());
     mySplitter.setFirstComponent(myEditor.getComponent());
     mySplitter.setSecondComponent(myPreview.getComponent());
-    mySplitter.setDividerWidth(3);
+    mySplitter.setDividerWidth(2);
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
 
