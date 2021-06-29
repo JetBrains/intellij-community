@@ -28,7 +28,7 @@ var TD.valign: String
     attributes["valign"] = value
   }
 
-fun FlowContent.nbsp() = +"&nbsp;"
+fun FlowContent.nbsp() = +Entities.nbsp
 
 private val anyTag = Pattern.compile("</?\\w+[^>]*>")
 private val closingTag = Pattern.compile("</\\w+>")
