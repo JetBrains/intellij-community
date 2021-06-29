@@ -90,7 +90,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
       myTool.setNonNlsLiteralPattern("");
       doTest();
     }
-    catch (Exception e) {
+    finally {
       myTool.setNonNlsLiteralPattern(oldPattern);
     }
   }
