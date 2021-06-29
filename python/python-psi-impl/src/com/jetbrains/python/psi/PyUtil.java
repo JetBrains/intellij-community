@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.model.ModelBranch;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -16,12 +17,15 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
@@ -1100,6 +1104,21 @@ public final class PyUtil {
       }
     }
     return selfName;
+  }
+
+  public static void addSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (ContentEntry entry : model.getContentEntries()) {
+          final VirtualFile file = entry.getFile();
+          if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
+            entry.addSourceFolder(root, false);
+          }
+        }
+        model.commit();
+      }
+    );
   }
 
   /**
