@@ -30,33 +30,35 @@ public final class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static @NotNull Sdk create(@NotNull String name) {
-    return create(name, LanguageLevel.getLatest());
+  public static @NotNull Sdk create() {
+    return create(LanguageLevel.getLatest());
+  }
+
+  public static @NotNull Sdk create(@NotNull String sdkPath) {
+    return create(sdkPath, LanguageLevel.getLatest());
   }
 
   public static @NotNull Sdk create(@NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    return create("MockSdk", level, additionalRoots);
+    return create(PythonTestUtil.getTestDataPath() + "/MockSdk", level, additionalRoots);
   }
 
-  private static @NotNull Sdk create(@NotNull String name, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    return create(name, new PyMockSdkType(level), level, additionalRoots);
-  }
-
-  public static @NotNull Sdk create(@NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+  private static @NotNull Sdk create(@NotNull String sdkPath, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
     String sdkName = "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion();
-    return create(sdkName, pathSuffix, sdkType, level, additionalRoots);
+    return create(sdkName, sdkPath, new PyMockSdkType(level), level, additionalRoots);
   }
 
-  public static @NotNull Sdk create(@NotNull String name, @NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + pathSuffix;
-
+  public static @NotNull Sdk create(@NotNull String sdkName,
+                                    @NotNull String sdkPath,
+                                    @NotNull SdkTypeId sdkType,
+                                    @NotNull LanguageLevel level,
+                                    VirtualFile @NotNull ... additionalRoots) {
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    roots.putValues(OrderRootType.CLASSES, createRoots(mockSdkPath, level));
+    roots.putValues(OrderRootType.CLASSES, createRoots(sdkPath, level));
     roots.putValues(OrderRootType.CLASSES, Arrays.asList(additionalRoots));
 
     MockSdk sdk = new MockSdk(
-      name,
-      mockSdkPath + "/bin/python",
+      sdkName,
+      sdkPath + "/bin/python",
       toVersionString(level),
       roots,
       sdkType

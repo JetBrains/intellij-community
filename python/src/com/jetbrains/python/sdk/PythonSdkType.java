@@ -47,10 +47,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,6 +62,11 @@ import java.util.regex.Pattern;
  * Class should be final and singleton since some code checks its instance by ref.
  */
 public final class PythonSdkType extends SdkType {
+
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
+
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
@@ -430,9 +432,8 @@ public final class PythonSdkType extends SdkType {
       return getSysPathsFromScript(sdk);
     }
     else { // mock sdk
-      List<String> ret = new ArrayList<>(1);
-      ret.add(working_dir);
-      return ret;
+      final List<String> data = sdk.getUserData(MOCK_SYS_PATH_KEY);
+      return data != null ? data : Collections.singletonList(working_dir);
     }
   }
 
