@@ -2299,6 +2299,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
+    if (myIsInsertMode == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
+      // adjustment for block caret
+      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
+    }
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
       LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
       LogicalPosition lineEndPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logicalPosition.line));
