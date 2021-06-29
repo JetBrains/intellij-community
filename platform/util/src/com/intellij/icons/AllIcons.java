@@ -713,6 +713,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("nodes/anonymousClass.svg", 4399892964933631120L, 0);
     /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", -3254375564343235015L, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 5323027972373212490L, 0);
+    /** 16x16 */ public static final @NotNull Icon BookmarksList = load("nodes/bookmarksList.svg", 2799799081942024152L, 2);
     /** 16x16 */ public static final @NotNull Icon C_plocal = load("nodes/c_plocal.svg", 3501127193229261037L, 0);
     /** 16x16 */ public static final @NotNull Icon C_private = load("nodes/c_private.svg", 522391154330779219L, 0);
     /** 16x16 */ public static final @NotNull Icon C_protected = load("nodes/c_protected.svg", -2444857138846209853L, 0);
