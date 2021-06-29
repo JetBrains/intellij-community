@@ -105,6 +105,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
 
     myRunOnTargetPanel = new RunOnTargetPanel(settings, getEditor());
+    myRunOnTargetPanel.addChangeListener(e -> setModified(true));
   }
 
   @NotNull
