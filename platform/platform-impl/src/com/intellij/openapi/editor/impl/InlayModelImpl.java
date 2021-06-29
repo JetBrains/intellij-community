@@ -37,11 +37,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
     .comparingInt((AfterLineEndInlayImpl i) -> i.getOffset())
-    .thenComparing(i -> !i.isSoftWrappable())
+    .thenComparing(i -> !i.mySoftWrappable)
     .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
-    .comparing((AfterLineEndInlayImpl i) -> !i.isSoftWrappable())
+    .comparing((AfterLineEndInlayImpl i) -> !i.mySoftWrappable)
     .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
 
