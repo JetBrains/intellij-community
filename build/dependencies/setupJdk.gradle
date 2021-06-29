@@ -24,6 +24,7 @@ def deleteObsoleteJdkArchives = ext.deleteObsoleteArchivesTask('Jdk', jbsdkDir)
  * Update this method together with:
  *  `setupJbre.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
  */
 static def splitJbrBuild(String jreBuild, String version) {
   def split = jreBuild.split('b')

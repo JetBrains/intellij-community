@@ -144,6 +144,7 @@ class BundledJreManager {
    * Update this method together with:
    *  `build/dependencies/setupJbre.gradle`
    *  `build/dependencies/setupJdk.gradle`
+   *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
   */
   private String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
     String update, build
