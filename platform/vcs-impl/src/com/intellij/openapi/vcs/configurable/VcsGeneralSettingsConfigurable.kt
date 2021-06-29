@@ -7,11 +7,11 @@ import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -24,13 +24,14 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.layout.*
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.JComponent
 
 class VcsGeneralSettingsConfigurable(val project: Project)
   : BoundSearchableConfigurable(message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
-                                "project.propVCSSupport.Confirmation"), NoScroll {
+                                "project.propVCSSupport.Confirmation"), NoScroll, Configurable.WithEpDependencies {
+  override fun getDependencies() = listOf(VcsEP.EP_NAME)
 
   override fun createPanel(): DialogPanel {
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
@@ -99,8 +100,10 @@ class VcsGeneralSettingsConfigurable(val project: Project)
               .visibleIf(OptionVisibleForVcsesPredicate(project, setting, vcsListeners))
           }
         }
-        fullRow {
-          checkBox(cdShowReadOnlyStatusDialog(project))
+        if (project.isDefault || ProjectLevelVcsManager.getInstance(project).allSupportedVcss.any { it.editFileProvider != null }) {
+          fullRow {
+            checkBox(cdShowReadOnlyStatusDialog(project))
+          }
         }
       }
 
@@ -163,12 +166,12 @@ class VcsGeneralSettingsConfigurable(val project: Project)
 }
 
 private fun updateApplicableVcsesTooltip(project: Project, component: JComponent, setting: PersistentVcsSetting) {
-  val result = TreeSet<String>()
-  val applicableVcses = setting.getApplicableVcses(project)
-  for (abstractVcs in applicableVcses) {
-    result.add(abstractVcs.displayName)
+  val vcses = setting.getApplicableVcses(project)
+    .map { it.displayName }
+  component.toolTipText = when {
+    vcses.isNotEmpty() -> message("description.text.option.applicable.to.vcses", VcsUtil.joinWithAnd(vcses.toList(), 0))
+    else -> null
   }
-  component.toolTipText = message("tooltip.text.action.applicable.to.vcses", StringUtil.join(result, ", "))
 }
 
 private enum class ShowPatchAfterCreationEnum(private val text: () -> @Nls String,

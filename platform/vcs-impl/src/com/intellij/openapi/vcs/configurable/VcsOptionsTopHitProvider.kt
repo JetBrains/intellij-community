@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.ui.layout.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
+import com.intellij.vcsUtil.VcsUtil
 
 private val vcsOptionGroupName get() = VcsBundle.message("settings.version.control.option.group")
 private val commitMessageOptionGroupName get() = VcsBundle.message("settings.commit.message.option.group")
@@ -41,7 +42,14 @@ private fun cdShowChangesLastNDays(project: Project): CheckboxDescriptor {
 fun cdShowReadOnlyStatusDialog(project: Project): CheckboxDescriptor {
   val state = (ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl).state
   val name = VcsBundle.message("checkbox.show.clear.read.only.status.dialog")
-  return CheckboxDescriptor(name, state::SHOW_DIALOG, groupName = vcsOptionGroupName)
+  val vcses = ProjectLevelVcsManager.getInstance(project).allSupportedVcss
+    .filter { it.editFileProvider != null }
+    .map { it.displayName }
+  val comment = when {
+    vcses.isNotEmpty() -> VcsBundle.message("description.text.option.applicable.to.vcses", VcsUtil.joinWithAnd(vcses, 0))
+    else -> null
+  }
+  return CheckboxDescriptor(name, state::SHOW_DIALOG, groupName = vcsOptionGroupName, comment = comment)
 }
 
 private fun cdShowRightMargin(project: Project): CheckboxDescriptor {

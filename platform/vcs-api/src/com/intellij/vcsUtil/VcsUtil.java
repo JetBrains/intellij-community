@@ -566,6 +566,32 @@ public class VcsUtil {
       .collect(Collectors.toSet());
   }
 
+  @Nls
+  @NotNull
+  public static String joinWithAnd(@NotNull List<@Nls String> strings, int limit) {
+    int size = strings.size();
+    if (size == 0) return "";
+    if (size == 1) return strings.get(0);
+    if (size == 2) return VcsBundle.message("sequence.concatenation.a.and.b", strings.get(0), strings.get(1));
+
+    boolean isLimited = limit >= 2 && limit < size;
+    int listCount = (isLimited ? limit : size) - 1;
+
+    @Nls StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < listCount; i++) {
+      if (i != 0) sb.append(VcsBundle.message("sequence.concatenation.separator"));
+      sb.append(strings.get(i));
+    }
+
+    if (isLimited) {
+      sb.append(VcsBundle.message("sequence.concatenation.tail.n.others", size - limit + 1));
+    }
+    else {
+      sb.append(VcsBundle.message("sequence.concatenation.tail", strings.get(size - 1)));
+    }
+    return sb.toString();
+  }
+
   @NlsSafe
   @NotNull
   public static String trimCommitMessageToSaneSize(@NotNull @NlsSafe String message) {
