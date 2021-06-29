@@ -343,6 +343,21 @@ public class PyRenameTest extends PyTestCase {
     assertEmpty(found);
   }
 
+  // PY-21938
+  public void testRenameMethodDefinitionDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed");
+  }
+
+  // PY-21938
+  public void testRenameMethodUsageDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed");
+  }
+
+  // PY-21938
+  public void testRenameMethodDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed", "a.pyi");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }
@@ -379,10 +394,14 @@ public class PyRenameTest extends PyTestCase {
   }
 
   private void doMultiFileTest(String newName) {
+    doMultiFileTest(newName, "a.py");
+  }
+
+  private void doMultiFileTest(String newName, String entryFileName) {
     final String testName = getTestName(true);
     final VirtualFile dir1 = myFixture.copyDirectoryToProject(RENAME_DATA_PATH + testName + "/before", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    myFixture.configureFromTempProjectFile("a.py");
+    myFixture.configureFromTempProjectFile(entryFileName);
     myFixture.renameElementAtCaret(newName);
     VirtualFile dir2 = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
     try {
