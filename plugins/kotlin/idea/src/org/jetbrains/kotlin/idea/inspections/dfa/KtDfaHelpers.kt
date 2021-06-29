@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.types.typeUtil.*
 internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
-        var notNullableType = makeNotNullable().toDfType(context)
+        var notNullableType = makeNotNullable().toDfTypeNotNull(context)
         if (notNullableType is DfPrimitiveType) {
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
                 .meet(DfTypes.typedObject(toPsiType(context), Nullability.UNKNOWN))
@@ -42,6 +42,10 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
             notNullableType
         }
     }
+    return toDfTypeNotNull(context)
+}
+
+private fun KotlinType.toDfTypeNotNull(context: PsiElement): DfType {
     return when {
         isBoolean() -> DfTypes.BOOLEAN
         isByte() -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
