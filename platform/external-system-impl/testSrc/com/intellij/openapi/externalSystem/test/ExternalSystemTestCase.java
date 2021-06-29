@@ -86,7 +86,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     super.setUp();
     ensureTempDirCreated();
 
-    myTestDir = new File(ourTempDir, getTestName(false));
+    String testDirName = "testDir" + System.currentTimeMillis();
+    myTestDir = new File(ourTempDir, testDirName);
     FileUtil.ensureExists(myTestDir);
 
     setUpFixtures();
