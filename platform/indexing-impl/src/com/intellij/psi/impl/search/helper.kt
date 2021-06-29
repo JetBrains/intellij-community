@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
@@ -23,8 +23,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -95,7 +93,7 @@ private fun <B, R> handleParamRequest(progress: ProgressIndicator,
   }
 }
 
-private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   return DumbService.getInstance(parameters.project).runReadActionInSmartMode(Computable {
     if (parameters.areValid()) {
       doCollectSearchRequests(parameters)
@@ -106,7 +104,7 @@ private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collecti
   })
 }
 
-private fun <R> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   val queries = ArrayList<Query<out R>>()
 
   @Suppress("UNCHECKED_CAST")
