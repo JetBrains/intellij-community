@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
@@ -63,11 +62,6 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   protected @Nullable ActionGroup createLeftToolbarActionGroup() {
     return null;
-  }
-
-  @Override
-  protected @Nullable ActionGroup createRightToolbarActionGroup() {
-    return (ActionGroup)ActionManager.getInstance().getAction("Markdown.Toolbar.Right");
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {
