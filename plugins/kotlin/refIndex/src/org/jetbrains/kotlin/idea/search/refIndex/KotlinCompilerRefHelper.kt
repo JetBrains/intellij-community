@@ -22,7 +22,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = when (element) {
         is KtClassOrObject -> element.fqName
             ?.asString()
-            ?.tryEnumerate(names)
+            ?.let(names::tryEnumerate)
             ?.let(CompilerRef::JavaCompilerClassRef)
 
         else -> null
@@ -38,7 +38,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         val processor = Processor { psiClass: PsiClass ->
             psiClass.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
                 ?.let { runReadAction { it.qualifiedName } }
-                ?.tryEnumerate(names)
+                ?.let { names.tryEnumerate(it) }
                 ?.let { overridden.add(baseRef.override(it)) }
 
             true
@@ -53,5 +53,3 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         return overridden
     }
 }
-
-private fun String.tryEnumerate(names: NameEnumerator): Int? = names.tryEnumerate(this).takeUnless { it == 0 }

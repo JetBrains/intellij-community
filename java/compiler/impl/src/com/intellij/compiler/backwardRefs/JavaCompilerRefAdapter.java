@@ -43,9 +43,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
         final String name = field.getName();
         if (jvmOwnerName == null) return null;
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerFieldRef(ownerId, nameId);
       }
       else if (element instanceof PsiMethod) {
@@ -57,18 +55,14 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerMethodRef(ownerId, nameId, parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
           final int nameId = names.tryEnumerate(jvmClassName);
-          if (nameId != 0) {
-            return new CompilerRef.JavaCompilerClassRef(nameId);
-          }
+          return new CompilerRef.JavaCompilerClassRef(nameId);
         }
       }
     }
@@ -93,9 +87,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       if (qName == null) return true;
       try {
         final int nameId = names.tryEnumerate(qName);
-        if (nameId != 0) {
-          overridden.add(baseRef.override(nameId));
-        }
+        overridden.add(baseRef.override(nameId));
       }
       catch (IOException e) {
         exception[0] = e;
