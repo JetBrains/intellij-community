@@ -28,7 +28,7 @@ abstract class NullabilityAnnotationPanelModel implements AnnotationPanelModel {
 
     @Override
     public @NotNull String getName() {
-      return "Nullable";
+      return NullableNotNullDialog.NULLABLE;
     }
 
     @Override
@@ -64,7 +64,7 @@ abstract class NullabilityAnnotationPanelModel implements AnnotationPanelModel {
 
     @Override
     public @NotNull String getName() {
-      return "NotNull";
+      return NullableNotNullDialog.NOT_NULL;
     }
 
     @Override

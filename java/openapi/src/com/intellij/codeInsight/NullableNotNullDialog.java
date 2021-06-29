@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ public class NullableNotNullDialog extends DialogWrapper {
   private final AnnotationsPanel myNullablePanel;
   private final AnnotationsPanel myNotNullPanel;
   private final boolean myShowInstrumentationOptions;
+  public static final @NlsSafe String NULLABLE = "Nullable";
+  public static final @NlsSafe String NOT_NULL = "NotNull";
 
   public NullableNotNullDialog(@NotNull Project project) {
     this(project, false);
@@ -76,8 +79,8 @@ public class NullableNotNullDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final var pane = new JBTabbedPane();
-    pane.insertTab("Nullable", null, myNullablePanel.getComponent(), "", 0);
-    pane.insertTab("NotNull", null, myNotNullPanel.getComponent(), "", 1);
+    pane.insertTab(NULLABLE, null, myNullablePanel.getComponent(), "", 0);
+    pane.insertTab(NOT_NULL, null, myNotNullPanel.getComponent(), "", 1);
     return pane;
   }
 
