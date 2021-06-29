@@ -99,7 +99,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
 
   public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
     JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/testData/build/alienFormFile", "src"));
-    buildAllModules().assertFailed();
+    buildAllModules().assertSuccessful();
     assertFalse(isRuntimeClassesCopied(module));
   }
 
