@@ -16213,9 +16213,44 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument.kt");
         }
 
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument2.kt");
+        }
+
+        @TestMetadata("typeArgument3.kt")
+        public void testTypeArgument3() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument3.kt");
+        }
+
+        @TestMetadata("typeArgument4.kt")
+        public void testTypeArgument4() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument4.kt");
+        }
+
+        @TestMetadata("typeArgument5.kt")
+        public void testTypeArgument5() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument5.kt");
+        }
+
+        @TestMetadata("typeArgument6.kt")
+        public void testTypeArgument6() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument6.kt");
+        }
+
+        @TestMetadata("typeArgument7.kt")
+        public void testTypeArgument7() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
+        }
+
         @TestMetadata("typeArgument_ni.kt")
         public void testTypeArgument_ni() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni.kt");
+        }
+
+        @TestMetadata("typeArgument_ni2.kt")
+        public void testTypeArgument_ni2() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni2.kt");
         }
 
         @TestMetadata("underScoreParameters.kt")
