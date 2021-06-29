@@ -1,0 +1,13 @@
+UFile (package = )
+    UClass (name = TestPropertyInitializer)
+        UMethod (name = TestPropertyInitializer)
+        UMethod (name = getWithSetter)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = field)
+        UMethod (name = setWithSetter)
+            UParameter (name = p)
+            UBlockExpression
+                UBinaryExpression (operator = =)
+                    USimpleNameReferenceExpression (identifier = field)
+                    USimpleNameReferenceExpression (identifier = p)

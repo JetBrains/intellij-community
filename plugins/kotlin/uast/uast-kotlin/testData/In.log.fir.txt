@@ -1,0 +1,18 @@
+UFile (package = )
+    UClass (name = InKt)
+        UMethod (name = foo)
+            UBlockExpression
+                [!] UnknownKotlinExpression (PROPERTY)
+                [!] UnknownKotlinExpression (PROPERTY)
+                UReturnExpression
+                    UBinaryExpression (operator = &&)
+                        UBinaryExpression (operator = in)
+                            USimpleNameReferenceExpression (identifier = x)
+                            UBinaryExpression (operator = ..)
+                                ULiteralExpression (value = 0)
+                                ULiteralExpression (value = 5)
+                        UBinaryExpression (operator = !in)
+                            USimpleNameReferenceExpression (identifier = y)
+                            UBinaryExpression (operator = ..)
+                                ULiteralExpression (value = 4)
+                                ULiteralExpression (value = 9)

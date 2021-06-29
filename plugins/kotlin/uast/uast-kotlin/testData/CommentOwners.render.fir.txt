@@ -1,0 +1,44 @@
+public final class CommentOwnersKt {
+    private static final var topLevelProperty: int = 42
+    public static final fun getTopLevelProperty() : int = UastEmptyExpression
+    public static final fun topLevelFun() : void {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    public static final fun funPlainCall(a: int) : void {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    public static final fun funNamedArgumentsCall(a: int) : void {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    public static final fun func(a: int) : void {
+        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        while (true) {
+            break
+        }
+        if (true) {
+        }else {
+        }
+        [!] UnknownKotlinExpression (PROPERTY)
+    }
+}
+
+public final class TopLevelClass {
+    private final var classLevelProperty: int = 42
+    public fun TopLevelClass(t: int) {
+        UastEmptyExpression
+    }
+    public final fun getClassLevelProperty() : int = UastEmptyExpression
+    public final fun classLevelMethod() : void {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    public static final class NestedClass {
+        public fun NestedClass() = UastEmptyExpression
+    }
+}
+
+public final enum MyBooleanEnum {
+    public static final var TRUE: MyBooleanEnum
+    public static final var FALSE: MyBooleanEnum
+    private fun MyBooleanEnum() = UastEmptyExpression
+}
