@@ -272,17 +272,24 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
   private static void registerProjectSession(@NotNull ClientId clientId, @NotNull Project project, @NotNull Disposable disposable) {
     ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, (ProjectExImpl)project);
-    ClientSessionsManager<ClientSession> projectManager = getClientSessionsManager(project);
-    projectManager.registerSession(disposable, clientProjectSession);
+    registerSession(clientProjectSession, project, disposable);
   }
 
   private static void registerAppSession(@NotNull ClientId clientId, @NotNull Disposable disposable) {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, application);
-    ClientSessionsManager<ClientSession> appManager = getClientSessionsManager(application);
-    appManager.registerSession(disposable, clientAppSession);
+    registerSession(clientAppSession, application, disposable);
     PluginDescriptor descriptor = ComponentManagerImpl.fakeCorePluginDescriptor;
     clientAppSession.registerServiceInstance(ClientCopyPasteManager.class, new MockCopyPasteManager(), descriptor);
+  }
+
+  private static void registerSession(@NotNull ClientSessionImpl session,
+                                      @NotNull ComponentManager componentManager,
+                                      @NotNull Disposable disposable) {
+    ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
+    sessionsManager.registerSession(disposable, session);
+    session.registerServices();
+    session.preloadServices();
   }
 
   @SuppressWarnings("unchecked")
