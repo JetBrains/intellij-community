@@ -39,19 +39,27 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 internal fun KotlinType?.toDfType(context: KtElement) : DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
-        var notNullableType = makeNotNullable().toDfType(context)
+        var notNullableType = makeNotNullable().toDfTypeNotNullable(context)
         if (notNullableType is DfPrimitiveType) {
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
                 .meet(DfTypes.typedObject(toPsiType(context), Nullability.UNKNOWN))
         }
-        return if (notNullableType is DfReferenceType) {
-            notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
-        } else if (notNullableType == DfType.BOTTOM) {
-            DfTypes.NULL
-        } else {
-            notNullableType
+        return when (notNullableType) {
+            is DfReferenceType -> {
+                notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
+            }
+            DfType.BOTTOM -> {
+                DfTypes.NULL
+            }
+            else -> {
+                notNullableType
+            }
         }
     }
+    return toDfTypeNotNullable(context)
+}
+
+private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
     return when (val descriptor = this.constructor.declarationDescriptor) {
         is TypeAliasDescriptor -> {
             descriptor.expandedType.toDfType(context)
