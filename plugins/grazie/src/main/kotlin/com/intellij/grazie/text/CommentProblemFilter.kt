@@ -21,6 +21,9 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && (isNumberRange(problem, text) || isPathPart(problem, text))) {
         return true
       }
+      if (problem.rule.globalId.startsWith("LanguageTool.") && isAboutIdentifierParts(problem, text)) {
+        return true
+      }
     }
 
     if (domain == DOCUMENTATION) {
@@ -51,6 +54,12 @@ internal class CommentProblemFilter : ProblemFilter() {
     val range = problem.highlightRange
     return text.subSequence(0, range.startOffset).endsWith('/') ||
            text.subSequence(range.endOffset, text.length).startsWith('/')
+  }
+
+  private fun isAboutIdentifierParts(problem: TextProblem, text: TextContent): Boolean {
+    val range = problem.highlightRange
+    return text.subSequence(0, range.startOffset).endsWith('_') ||
+           text.subSequence(range.endOffset, text.length).startsWith('_')
   }
 
   // the _todo_ word spoils the grammar of what follows
