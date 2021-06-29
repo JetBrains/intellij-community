@@ -1,0 +1,8 @@
+UFile (package = )
+    UClass (name = AssertionKt)
+        UMethod (name = foo)
+            UBlockExpression
+                [!] UnknownKotlinExpression (PROPERTY)
+                UReturnExpression
+                    UPostfixExpression (operator = !!)
+                        USimpleNameReferenceExpression (identifier = s)
