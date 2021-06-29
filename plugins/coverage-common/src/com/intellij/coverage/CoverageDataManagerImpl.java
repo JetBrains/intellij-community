@@ -372,19 +372,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         };
         final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
                                  new String[] {
-                                   CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.add.to.active.suites"),
+                                   CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.do.not.apply.collected.coverage")} :
                                  new String[] {
                                    CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.do.not.apply.collected.coverage")};
         final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CoverageBundle.message("code.coverage"),
-                                                                              options, 1, Messages.getQuestionIcon(),
+                                                                              options, 0, Messages.getQuestionIcon(),
                                                                               doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
-        if (answer == DialogWrapper.OK_EXIT_CODE) {
+        if ((answer == 0 && options.length == 2) || (answer == 1 && options.length == 3)) {
           chooseSuitesBundle(new CoverageSuitesBundle(suite));
         }
-        else if (answer == 1) {
+        else if (answer == 0/* && options.length == 3*/) {
           chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
         }
       }
