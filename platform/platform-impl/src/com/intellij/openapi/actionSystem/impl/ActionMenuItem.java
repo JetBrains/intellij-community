@@ -130,7 +130,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
-    setText(myPresentation.getText(false));
+    setText(myPresentation.getText(myEnableMnemonics));
     final int mnemonicIndex = myEnableMnemonics ? myPresentation.getDisplayedMnemonicIndex() : -1;
 
     if (getText() != null && mnemonicIndex >= 0 && mnemonicIndex < getText().length()) {
