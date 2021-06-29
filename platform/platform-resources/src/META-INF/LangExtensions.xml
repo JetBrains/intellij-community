@@ -800,19 +800,23 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
-      <category>Language injection</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
-      <category>Other</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
-      <category>Other</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
-      <category>Other</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
 
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
