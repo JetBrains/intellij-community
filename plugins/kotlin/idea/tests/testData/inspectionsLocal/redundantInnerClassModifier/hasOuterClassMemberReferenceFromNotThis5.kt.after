@@ -1,0 +1,12 @@
+// WITH_RUNTIME
+class Foo {
+    fun Foo.foo() {}
+
+    class Bar {
+        fun bar(f: Foo) {
+            with (f) {
+                f.foo()
+            }
+        }
+    }
+}

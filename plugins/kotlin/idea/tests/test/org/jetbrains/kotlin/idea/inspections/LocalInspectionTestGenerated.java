@@ -8321,6 +8321,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference5.kt");
         }
 
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis2.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis2.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis3.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis3.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis4.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis4.kt");
+        }
+
+        @TestMetadata("hasOuterClassMemberReferenceFromNotThis5.kt")
+        public void testHasOuterClassMemberReferenceFromNotThis5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis5.kt");
+        }
+
         @TestMetadata("hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt")
         public void testHasOuterClassMemberReferenceInSuperTypeConstructorCall() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall.kt");
