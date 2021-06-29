@@ -2,6 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.uast
 
-import org.jetbrains.kotlin.idea.fir.uast.common.kotlin.FirLegacyUastValuesTestBase
+import org.jetbrains.uast.test.common.kotlin.LegacyUastValuesTestBase
 
-abstract class AbstractFirLegacyUastValuesTest : AbstractFirUastValuesTest(), FirLegacyUastValuesTestBase
+abstract class AbstractFirLegacyUastValuesTest : AbstractFirUastValuesTest(), LegacyUastValuesTestBase

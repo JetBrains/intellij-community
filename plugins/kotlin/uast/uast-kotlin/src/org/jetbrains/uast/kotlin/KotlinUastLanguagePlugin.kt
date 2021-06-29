@@ -22,6 +22,7 @@ import org.jetbrains.uast.util.ClassSetsWrapper
 class KotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority = 10
 
+
     override val language: Language
         get() = KotlinLanguage.INSTANCE
 
