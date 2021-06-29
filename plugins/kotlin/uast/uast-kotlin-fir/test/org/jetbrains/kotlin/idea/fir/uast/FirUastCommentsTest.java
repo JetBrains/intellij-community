@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.uast;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.fir.uast.AbstractFirUastCommentsTest;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.idea.test.TestRoot;
@@ -12,7 +11,7 @@ import org.junit.runner.RunWith;
 
 @TestRoot("uast/uast-kotlin-fir")
 @TestMetadata("uast-kotlin-fir/testData/declaration")
-@TestDataPath("$PROJECT_ROOT")
+@TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public class FirUastCommentsTest extends AbstractFirUastCommentsTest {
     private void runTest(String testDataFilePath) throws Exception {
