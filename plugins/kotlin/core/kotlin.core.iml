@@ -20,6 +20,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../analysis/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../analysis/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../analysis/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../analysis/resources-en" type="java-resource" />
     </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
