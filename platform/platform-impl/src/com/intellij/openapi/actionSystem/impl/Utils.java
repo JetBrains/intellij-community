@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -186,10 +185,9 @@ public final class Utils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
-    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() && event.getID() == FocusEvent.FOCUS_GAINED &&
-          focusOwner != null && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
+      if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         ActionUpdater.cancelPromise(promise, event);
