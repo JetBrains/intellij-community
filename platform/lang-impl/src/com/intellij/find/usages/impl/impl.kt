@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.impl
 
 import com.intellij.find.usages.api.*
-import com.intellij.find.usages.symbol.SearchableSymbol
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
@@ -46,7 +46,7 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
       return target
     }
   }
-  if (symbol is SearchableSymbol) {
+  if (symbol is SearchTargetSymbol) {
     return symbol.searchTarget
   }
   if (symbol is SearchTarget) {
