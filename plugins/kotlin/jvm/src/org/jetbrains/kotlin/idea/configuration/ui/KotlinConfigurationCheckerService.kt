@@ -34,8 +34,6 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity.Background {
             notifyOutdatedBundledCompilerIfNecessary(project)
         })
 
-        notifyNewJVMBackendIfNeeded(project)
-
         DumbService.getInstance(project).runWhenSmart {
             KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
         }
@@ -48,6 +46,8 @@ class KotlinConfigurationCheckerService(val project: Project) {
     fun performProjectPostOpenActions() {
         val task = object : Task.Backgroundable(project, KotlinJvmBundle.message("configure.kotlin.language.settings"), false) {
             override fun run(indicator: ProgressIndicator) {
+                notifyNewJVMBackendIfNeeded(project)
+
                 val ktModules = getModulesWithKotlinFiles(project)
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
