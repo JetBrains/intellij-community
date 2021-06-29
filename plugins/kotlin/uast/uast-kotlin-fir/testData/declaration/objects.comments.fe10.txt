@@ -1,4 +1,5 @@
 KotlinUFile(
+    UComment(// file comment)
     KotlinUClass(
         KotlinUField(
             UComment(// Single-line comment bound to top-level property)
