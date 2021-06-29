@@ -2,22 +2,32 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 import java.util.ArrayList
 
 class KotlinUFile(
     override val psi: KtFile,
     override val languagePlugin: UastLanguagePlugin
-) : UFile {
-    override val javaPsi: PsiElement? = null
+) : UFile, KotlinUElementWithComments {
+    override val javaPsi: PsiClassOwner? by lz {
+        val lightClasses = this@KotlinUFile.classes.map { it.javaPsi }.toTypedArray()
+        val lightFile = lightClasses.asSequence()
+            .mapNotNull { it.containingFile as? PsiClassOwner }
+            .firstOrNull()
+
+        if (lightFile == null) null
+        else
+            object : PsiClassOwner by lightFile {
+                override fun getClasses() = lightClasses
+                override fun setPackageName(packageName: String?) = error("Incorrect operation for non-physical Java PSI")
+            }
+    }
 
     override val sourcePsi: KtFile = psi
 
