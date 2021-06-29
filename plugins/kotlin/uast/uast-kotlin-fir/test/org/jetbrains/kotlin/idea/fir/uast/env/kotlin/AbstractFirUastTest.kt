@@ -8,12 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
@@ -21,11 +20,11 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
-import org.jetbrains.kotlin.idea.fir.uast.common.kotlin.FirUastPluginSelection
+import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
 import java.io.File
 import java.nio.file.Paths
 
-abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), FirUastPluginSelection {
+abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
     companion object {
         private const val IGNORE_FIR_DIRECTIVE = "IGNORE_FIR"
 
@@ -36,16 +35,12 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Fi
     }
 
     private fun registerExtensionPointAndServiceIfNeeded() {
-        if (!isFirPlugin) return
-
         val area = Extensions.getRootArea()
         CoreApplicationEnvironment.registerExtensionPoint(
             area,
             UastLanguagePlugin.extensionPointName,
             UastLanguagePlugin::class.java
         )
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
-            .registerExtension(firKotlinUastPlugin, testRootDisposable)
         val service = FirCliKotlinUastResolveProviderService()
         project.registerServiceInstance(
             BaseKotlinUastResolveProviderService::class.java,
@@ -63,8 +58,12 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Fi
     }
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable {
+                project.invalidateCaches(context = null)
+            },
+            ThrowableRunnable { super.tearDown() },
+        )
     }
 
     override fun isFirPlugin(): Boolean = true
@@ -80,6 +79,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Fi
     abstract fun check(filePath: String, file: UFile)
 
     protected fun doCheck(filePath: String, checkCallback: (String, UFile) -> Unit = { _filePath, file -> check(_filePath, file) }) {
+        check(UastLanguagePlugin.getInstances().count { it.language == KotlinLanguage.INSTANCE } == 1)
         val normalizedFile = Paths.get(filePath).normalize()
         val virtualFile = getVirtualFile(normalizedFile.toString())
 
