@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -1467,17 +1468,19 @@ public final class PsiUtil {
     return candidate.getArgumentMapping() instanceof NullArgumentMapping<?>;
   }
 
-  public static boolean isEligibleForSpreadWithDot(@NotNull PsiType type) {
-    return InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION) || type instanceof PsiArrayType;
-  }
-
-  public static @Nullable PsiType getComponentForSpreadWithDot(@NotNull PsiType type) {
+  public static @Nullable Pair<@NotNull PsiType,@NotNull Integer> getComponentForSpreadWithDot(@NotNull PsiType type) {
+    PsiType componentType;
     if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
-      return com.intellij.psi.util.PsiUtil.substituteTypeParameter(type, JAVA_UTIL_COLLECTION, 0, false);
+      componentType = com.intellij.psi.util.PsiUtil.substituteTypeParameter(type, JAVA_UTIL_COLLECTION, 0, false);
     } else if (type instanceof PsiArrayType) {
-      return ((PsiArrayType)type).getComponentType();
+      componentType = ((PsiArrayType)type).getComponentType();
     } else {
+      componentType = null;
+    }
+    if (componentType == null) {
       return null;
     }
+    var nested = getComponentForSpreadWithDot(componentType);
+    return nested == null ? Pair.create(componentType, 1) : Pair.create(nested.first, nested.second + 1);
   }
 }

@@ -1971,7 +1971,7 @@ class A {
 def ai = [[new A(1)], [new A(2)]]
 
 ai.<caret>
-''', '', CompletionType.BASIC, CompletionResult.notContain, 'foo')
+''', '', CompletionType.BASIC, CompletionResult.contain, 'foo')
   }
 
   void "test override trait method completion"() {

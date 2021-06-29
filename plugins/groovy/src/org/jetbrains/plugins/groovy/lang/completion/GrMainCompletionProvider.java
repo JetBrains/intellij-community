@@ -255,11 +255,16 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   private static void processImplicitSpread(@NotNull PsiType type, @NotNull Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher) {
-    var typeParameter = PsiUtil.getComponentForSpreadWithDot(type);
-    if (!(typeParameter instanceof PsiClassType)) {
+    var componentPair = PsiUtil.getComponentForSpreadWithDot(type);
+    if (componentPair == null) {
       return;
     }
-    var resolveResult = ((PsiClassType)typeParameter).resolveGenerics();
+    PsiType deepComponentType = componentPair.first;
+    int depth = componentPair.second;
+    if (!(deepComponentType instanceof PsiClassType)) {
+      return;
+    }
+    var resolveResult = ((PsiClassType)deepComponentType).resolveGenerics();
     PsiClass resolvedClass = resolveResult.getElement();
     if (resolvedClass == null) {
       return;
@@ -268,7 +273,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
         var lookupElement = CompleteReferenceExpression.createPropertyLookupElement(method, resolveResult.getSubstitutor(), matcher);
         if (lookupElement != null) {
-          consumer.consume(lookupElement);
+          PsiType methodReturnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
+          String returnTypeRepresentation = methodReturnType == null ? "?" : methodReturnType.getPresentableText();
+          consumer.consume(lookupElement.withTypeText(StringUtil.repeat("ArrayList<", depth) + returnTypeRepresentation + StringUtil.repeat(">", depth)));
         }
       }
     }
