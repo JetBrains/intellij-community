@@ -15775,6 +15775,44 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/replaceWithImportAlias")
+    public static class ReplaceWithImportAlias extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/class.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/function.kt");
+        }
+
+        @TestMetadata("inImport.kt")
+        public void testInImport() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/inImport.kt");
+        }
+
+        @TestMetadata("multipleAliases.kt")
+        public void testMultipleAliases() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/multipleAliases.kt");
+        }
+
+        @TestMetadata("notQualifed.kt")
+        public void testNotQualifed() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/notQualifed.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/intentions/replaceWithImportAlias/property.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceWithOrdinaryAssignment")
     public static class ReplaceWithOrdinaryAssignment extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
