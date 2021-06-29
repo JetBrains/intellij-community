@@ -4,6 +4,7 @@
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -11,13 +12,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import java.io.IOException
+import java.util.zip.CRC32
 
 fun Document.calculateCrc(project: Project, file: VirtualFile): Long = this.calculateCrc(project, null, file)
 
 fun Document.calculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile): Long {
   file.getCachedCrc(modificationStamp)?.let { return it }
   return findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project, systemId, file)
+    doCalculateCrc(project, systemId, file) ?: file.calculateCrc()
   }
 }
 
@@ -25,14 +28,26 @@ fun VirtualFile.calculateCrc(project: Project) = calculateCrc(project, null)
 
 fun VirtualFile.calculateCrc(project: Project, systemId: ProjectSystemId?) =
   findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project, systemId)
+    doCalculateCrc(project, systemId) ?: calculateCrc()
   }
 
-private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, calculate: () -> Long?): Long {
+fun VirtualFile.calculateCrc(): Long {
+  val crc32 = CRC32()
+  crc32.update(contentsToByteArray())
+  return crc32.value
+}
+
+private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, calculate: () -> Long): Long {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   val cachedCrc = getCachedCrc(modificationStamp)
   if (cachedCrc != null) return cachedCrc
-  val crc = calculate() ?: modificationStamp
+  val crc = try {
+    calculate()
+  }
+  catch (ex: IOException) {
+    LOG.warn(ex)
+    modificationStamp
+  }
   setCachedCrc(crc, modificationStamp)
   return crc
 }
@@ -71,6 +86,8 @@ private fun UserDataHolder.getCachedCrc(modificationStamp: Long): Long? {
 private fun UserDataHolder.setCachedCrc(value: Long, modificationStamp: Long) {
   putUserData(CRC_CACHE, CrcCache(value, modificationStamp))
 }
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.util.CRC")
 
 private val CRC_CACHE = Key<CrcCache>("com.intellij.openapi.externalSystem.util.CRC_CACHE")
 

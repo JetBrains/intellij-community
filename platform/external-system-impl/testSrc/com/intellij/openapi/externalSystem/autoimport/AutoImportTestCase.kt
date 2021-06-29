@@ -142,7 +142,14 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     runWriteAction { move(null, parent) }
 
   protected fun VirtualFile.removeContent() =
-    runWriteAction { VfsUtil.saveText(this, "") }
+    runWriteAction { getOutputStream(null).close() }
+
+  protected fun VirtualFile.replaceContent(content: ByteArray) =
+    runWriteAction {
+      getOutputStream(null).use { stream ->
+        stream.write(content)
+      }
+    }
 
   protected fun VirtualFile.replaceContent(content: String) =
     runWriteAction { VfsUtil.saveText(this, content) }
