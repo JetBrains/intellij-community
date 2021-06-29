@@ -63,6 +63,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("Hello |World", TextContentTest.unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 4)));
   }
 
+  public void testMultiLineCommentInProperties() {
+    assertEquals("line1 line2", TextContentTest.unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
+  }
+
   public void testJavadoc() {
     String docText = "/**\n" +
                      "* Hello {@link #foo},\n" +
