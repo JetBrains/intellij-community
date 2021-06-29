@@ -132,7 +132,8 @@
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
       <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
-      <category>JSON</category>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
     <notificationGroup id="JSON Schema" displayType="NONE"/>
 
@@ -165,7 +166,8 @@
 
     <intentionAction>
       <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
-      <category>JSON</category>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
   </extensions>
 
