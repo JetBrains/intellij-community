@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -42,8 +43,8 @@ public class JavaExecutionStack extends XExecutionStack {
 
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final DebugProcessImpl myDebugProcess;
-  private volatile XStackFrame myTopFrame;
-  private volatile boolean myTopFrameReady = false;
+  private volatile List<XStackFrame> myTopFrames;
+  private volatile boolean myTopFramesReady = false;
   private final MethodsTracker myTracker = new MethodsTracker();
 
   public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
@@ -129,41 +130,42 @@ public class JavaExecutionStack extends XExecutionStack {
     try {
       StackFrameProxyImpl frame = myThreadProxy.frame(0);
       if (frame != null) {
-        myTopFrame = createStackFrame(frame);
+        myTopFrames = createStackFrames(frame);
       }
     }
     catch (EvaluateException e) {
       LOG.info(e);
     }
     finally {
-      myTopFrameReady = true;
+      myTopFramesReady = true;
     }
   }
 
   @NotNull
-  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy) {
+  public List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
     StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, myTracker);
 
-    if (descriptor.getUiIndex() == 1 && myTopFrame instanceof JavaStackFrame) {
+    XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
+    if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
       Method method = descriptor.getMethod();
       if (method != null) {
-        ((JavaStackFrame)myTopFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
+        ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
       }
     }
 
-    XStackFrame customFrame = myDebugProcess.getPositionManager().createStackFrame(descriptor);
-    if (customFrame != null) {
-      return customFrame;
+    List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
+    if (!customFrames.isEmpty()) {
+      return customFrames;
     }
 
-    return new JavaStackFrame(descriptor, true);
+    return Collections.singletonList(new JavaStackFrame(descriptor, true));
   }
 
   @Nullable
   @Override
   public XStackFrame getTopFrame() {
-    assert myTopFrameReady : "Top frame must be already calculated here";
-    return myTopFrame;
+    assert myTopFramesReady : "Top frame must be already calculated here";
+    return ContainerUtil.getFirstItem(myTopFrames);
   }
 
   @Override
@@ -244,25 +246,28 @@ public class JavaExecutionStack extends XExecutionStack {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;
-        XStackFrame frame;
+        List<XStackFrame> frames;
         boolean first = myAdded == 0;
-        if (first && myTopFrameReady) {
-          frame = myTopFrame;
+        if (first && myTopFramesReady) {
+          frames = myTopFrames;
           frameProxy = myStackFramesIterator.next();
         }
         else {
           frameProxy = myStackFramesIterator.next();
-          frame = createStackFrame(frameProxy);
-          if (first && !myTopFrameReady) {
-            myTopFrame = frame;
-            myTopFrameReady = true;
+          frames = createStackFrames(frameProxy);
+          if (first && !myTopFramesReady) {
+            myTopFrames = frames;
+            myTopFramesReady = true;
           }
         }
-        if (first || showFrame(frame)) {
-          if (frame instanceof JavaStackFrame) {
-            ((JavaStackFrame)frame).getDescriptor().updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+
+        for (XStackFrame frame : frames) {
+          if (first || showFrame(frame)) {
+            if (frame instanceof JavaStackFrame) {
+              ((JavaStackFrame)frame).getDescriptor().updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+            }
+            addFrameIfNeeded(frame, false);
           }
-          addFrameIfNeeded(frame, false);
         }
 
         // replace the rest with the related stack (if available)
@@ -272,11 +277,12 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         List<StackFrameItem> relatedStack = null;
+        XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
         if (AsyncStacksToggleAction.isAsyncStacksEnabled(
           (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
-            frame instanceof JavaStackFrame) {
+            topFrame instanceof JavaStackFrame) {
           for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
-            relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)frame), suspendContext);
+            relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext);
             if (relatedStack != null) {
               appendRelatedStack(relatedStack);
               return;

@@ -229,7 +229,8 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
         val nodeManager = debugProcess.xdebugProcess!!.nodeManager
         val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
-        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
+        val stackFrame = debugProcess.positionManager.createStackFrames(descriptor).firstOrNull() ?:
+            error("Can't create stack frame for $descriptor")
 
         ApplicationManager.getApplication().executeOnPooledThread {
             stackFrame.callback()
