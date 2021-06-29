@@ -21,9 +21,9 @@ internal class MarkdownScriptsTable : JBTable() {
   override fun getCellSelectionEnabled(): Boolean = false
 
   override fun prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): Component {
-    var prepared  = super.prepareRenderer(renderer, row, column)
-    if (prepared is JComponent) {
-      val tableModel = model as MarkdownScriptsTableModel
+    var prepared = super.prepareRenderer(renderer, row, column)
+    val tableModel = model
+    if (prepared is JComponent && tableModel is MarkdownScriptsTableModel) {
       val extension = tableModel.getExtensionAt(row)
       if (column == MarkdownScriptsTableModel.NAME_COLUMN_INDEX) {
         prepared = panel {
