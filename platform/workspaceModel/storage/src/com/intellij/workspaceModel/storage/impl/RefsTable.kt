@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashSetInterner
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType
 import com.intellij.workspaceModel.storage.impl.containers.*
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.util.function.IntFunction
 
 internal class ConnectionId private constructor(
@@ -243,7 +244,7 @@ internal class MutableRefsTable(
   fun <Child : WorkspaceEntityBase> updateOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, childrenEntities: Sequence<Child>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
-    val children = childrenEntities.map { it.id.arrayId }.toList().toIntArray()
+    val children = childrenEntities.mapToIntArray { it.id.arrayId }
     copiedMap.putAll(children, parentId)
   }
 
@@ -339,6 +340,15 @@ internal class MutableRefsTable(
       HashMap(other.oneToManyContainer), HashMap(other.oneToOneContainer),
       HashMap(other.oneToAbstractManyContainer),
       HashMap(other.abstractOneToOneContainer))
+  }
+
+  private fun <T> Sequence<T>.mapToIntArray(action: (T) -> Int): IntArray {
+    val intArrayList = IntArrayList()
+    this.forEach { item ->
+      intArrayList.add(action(item))
+    }
+
+    return intArrayList.toIntArray()
   }
 }
 
