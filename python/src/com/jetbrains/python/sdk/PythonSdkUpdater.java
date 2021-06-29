@@ -164,6 +164,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
     }
 
+    /**
+     * May be invoked from any thread.
+     */
     private void generateSkeletons(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
       final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
       try {
@@ -171,7 +174,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
         indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
         PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, null, skeletonsPath, sdk);
-        updateRemoteSdkPaths(sdk, getProject());
+        if (PythonSdkUtil.isRemote(sdk)) {
+          updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
+        }
       }
       catch (UnsupportedPythonSdkTypeException e) {
         NOTIFICATION_GROUP
@@ -356,10 +361,15 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
   }
 
+  /**
+   * May be invoked from any thread. May freeze the current thread while evaluating python version and sys.path.
+   */
   private static void updateLocalSdkVersionAndPaths(@NotNull Sdk sdk, @Nullable Project project)
     throws InvalidSdkException {
     updateLocalSdkVersion(sdk);
-    updateLocalSdkPaths(sdk, project);
+    if (!PythonSdkUtil.isRemote(sdk)) {
+      updateSdkPaths(sdk, evaluateSysPath(sdk), project);
+    }
   }
 
   /**
@@ -380,44 +390,15 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
   }
 
-  /**
-   * Updates the paths of a local SDK.
-   * <p>
-   * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
-   */
-  private static void updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project)
-    throws InvalidSdkException {
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      final Pair<List<VirtualFile>, List<VirtualFile>> pair = splitIntoLibraryAndSourceRoots(sdk, evaluateSysPath(sdk), project);
+  private static void updateSdkPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
+    final Pair<List<VirtualFile>, List<VirtualFile>> pair = splitIntoLibraryAndSourceRoots(sdk, paths, project);
 
-      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, pair.first);
-      commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
+    final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
+    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, pair.first);
+    commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
-      if (project != null) {
-        addSourceRoots(project, pair.second);
-      }
-    }
-  }
-
-  /**
-   * Updates the paths of a remote SDK.
-   * <p>
-   * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
-   * <p>
-   * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
-   */
-  private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      final Pair<List<VirtualFile>, List<VirtualFile>> pair = splitIntoLibraryAndSourceRoots(sdk, getRemoteSdkMappedPaths(sdk), project);
-
-      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> remoteSdkPaths = buildSdkPaths(sdk, pair.first);
-      commitSdkPathsIfChanged(sdk, remoteSdkPaths, forceCommit);
-
-      if (project != null) {
-        addSourceRoots(project, pair.second);
-      }
+    if (project != null) {
+      addSourceRoots(project, pair.second);
     }
   }
 
