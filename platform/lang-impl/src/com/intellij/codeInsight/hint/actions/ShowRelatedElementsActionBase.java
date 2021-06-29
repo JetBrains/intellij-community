@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -186,7 +187,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
           Disposer.dispose(session);
           return Boolean.TRUE;
         });
-      
+      WindowMoveListener.install(component, session);
       popup = popupBuilder.createPopup();
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);
