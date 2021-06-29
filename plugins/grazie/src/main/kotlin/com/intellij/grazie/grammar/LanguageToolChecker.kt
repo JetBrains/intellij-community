@@ -21,6 +21,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
+import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -94,7 +95,7 @@ class LanguageToolChecker : TextChecker() {
           LangTool.getTool(lang).check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
                                        null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
             .asSequence()
-            .filterNotNull()
+            .filter { !isKnownLTBug(it, text) }
             .map { Problem(it, lang, text) }
             .toList()
         }
@@ -107,6 +108,18 @@ class LanguageToolChecker : TextChecker() {
         logger.warn("Got exception during check for typos by LanguageTool", e)
         emptyList()
       }
+    }
+
+    private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
+      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 && text.startsWith("\")", match.fromPos - 1)) {
+        return true //https://github.com/languagetool-org/languagetool/issues/5269
+      }
+
+      if (match.rule.id == "ARTICLE_ADJECTIVE_OF" && text.substring(match.fromPos, match.toPos).equals("iterable", ignoreCase = true)) {
+        return true // https://github.com/languagetool-org/languagetool/issues/5270
+      }
+
+      return false
     }
 
     @NlsSafe
