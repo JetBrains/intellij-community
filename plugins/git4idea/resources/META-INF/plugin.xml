@@ -463,7 +463,7 @@
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.show.full.branch.name.instead.current.selected"
                  description="Show full branch names instead of Current/Selected"
-                 defaultValue="false"/>
+                 defaultValue="true"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
