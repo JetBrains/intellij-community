@@ -2,21 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.ide.actions.RecentLocationsAction.getEmptyFileText
 import com.intellij.ide.ui.UISettings
-import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
-import com.intellij.openapi.editor.highlighter.LightHighlighterClient
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentPlacesListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -31,30 +21,13 @@ import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.stream.Collectors
-import javax.swing.ScrollPaneConstants
 import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
-internal class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf(),
+internal class RecentLocationsDataModel(val project: Project,
                                         val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
                                         val placesRemover: Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
-  val projectConnection = project.messageBus.simpleConnect()
-
-  init {
-    projectConnection.subscribe(RecentPlacesListener.TOPIC, object : RecentPlacesListener {
-      override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) =
-        resetPlaces(isChanged)
-
-      override fun recentPlaceRemoved(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
-        resetPlaces(isChanged)
-      }
-
-      private fun resetPlaces(isChanged: Boolean) {
-        if (isChanged) changedPlaces.drop() else navigationPlaces.drop()
-      }
-    })
-  }
 
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 
@@ -106,31 +79,46 @@ internal class RecentLocationsDataModel(val project: Project, val editorsToRelea
 
   private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {
     return SynchronizedClearableLazy {
-      val items = createPlaceLinePairs(project, changed)
-      editorsToRelease.addAll(ContainerUtil.map(items) { item -> item.editor })
-      items
+      createPlaceLinePairs(project, changed)
     }
   }
 
   private fun createPlaceLinePairs(project: Project, changed: Boolean): List<RecentLocationItem> {
-    val items = doGetPlaces(project, changed)
-      .mapNotNull { RecentLocationItem(createEditor(project, it) ?: return@mapNotNull null, it) }
-    if (placesSupplier != null) return items
-    return items.take(UISettings.instance.recentLocationsLimit)
-  }
-
-  private fun doGetPlaces(project: Project, changed: Boolean): List<IdeDocumentHistoryImpl.PlaceInfo> {
-    val infos = placesSupplier?.apply(changed) ?: ContainerUtil.reverse(
-      if (changed) IdeDocumentHistory.getInstance(project).changePlaces else IdeDocumentHistory.getInstance(project).backPlaces)
-
-    val infosCopy = arrayListOf<IdeDocumentHistoryImpl.PlaceInfo>()
-    for (info in infos) {
-      if (infosCopy.stream().noneMatch { info1 -> IdeDocumentHistoryImpl.isSame(info, info1) }) {
-        infosCopy.add(info)
+    val result = arrayListOf<RecentLocationItem>()
+    if (placesSupplier != null) {
+      for (place in placesSupplier.apply(changed)) {
+        result.add(newLocationItem(place) ?: continue)
       }
     }
+    else {
+      val maxPlaces = UISettings.instance.recentLocationsLimit
+      val places = ContainerUtil.reverse(if (changed) IdeDocumentHistory.getInstance(project).changePlaces
+                                         else IdeDocumentHistory.getInstance(project).backPlaces)
+      for (place in places) {
+        if (result.stream().noneMatch { IdeDocumentHistoryImpl.isSame(place, it.info) }) {
+          result.add(newLocationItem(place) ?: continue)
+        }
+        if (result.size >= maxPlaces) break
+      }
+    }
+    return result
+  }
 
-    return infosCopy
+  private fun newLocationItem(place: IdeDocumentHistoryImpl.PlaceInfo): RecentLocationItem? {
+    val positionOffset = place.caretPosition
+    if (positionOffset == null || !positionOffset.isValid) {
+      return null
+    }
+    assert(positionOffset.startOffset == positionOffset.endOffset)
+
+    val fileDocument = positionOffset.document
+    val lineNumber = fileDocument.getLineNumber(positionOffset.startOffset)
+    val ranges = getTrimmedRange(fileDocument, lineNumber)
+    var documentText = ranges.joinToString("\n") { fileDocument.getText(it) }
+    if (documentText.isEmpty()) {
+      documentText = getEmptyFileText()
+    }
+    return RecentLocationItem(place, documentText, ranges)
   }
 
   fun removeItems(project: Project, isChanged: Boolean, items: List<RecentLocationItem>) {
@@ -150,120 +138,7 @@ internal class RecentLocationsDataModel(val project: Project, val editorsToRelea
     }
   }
 
-  private fun createEditor(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): EditorEx? {
-    val positionOffset = placeInfo.caretPosition
-    if (positionOffset == null || !positionOffset.isValid) {
-      return null
-    }
-    assert(positionOffset.startOffset == positionOffset.endOffset)
-
-    val fileDocument = positionOffset.document
-    val lineNumber = fileDocument.getLineNumber(positionOffset.startOffset)
-    val actualTextRange = getTrimmedRange(fileDocument, lineNumber)
-    var documentText = fileDocument.getText(actualTextRange)
-    if (actualTextRange.isEmpty) {
-      documentText = getEmptyFileText()
-    }
-
-    val editorFactory = EditorFactory.getInstance()
-    val editorDocument = editorFactory.createDocument(documentText)
-    val editor = editorFactory.createEditor(editorDocument, project) as EditorEx
-
-    val gutterComponentEx = editor.gutterComponentEx
-    val linesShift = fileDocument.getLineNumber(actualTextRange.startOffset)
-    gutterComponentEx.setLineNumberConverter(LineNumberConverter.Increasing { _, line -> line + linesShift })
-    gutterComponentEx.setPaintBackground(false)
-    val scrollPane = editor.scrollPane
-    scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
-
-    fillEditorSettings(editor.settings)
-    setHighlighting(project, editor, fileDocument, placeInfo, actualTextRange)
-
-    return editor
-  }
-
-  private fun fillEditorSettings(settings: EditorSettings) {
-    settings.isLineNumbersShown = true
-    settings.isCaretRowShown = false
-    settings.isLineMarkerAreaShown = false
-    settings.isFoldingOutlineShown = false
-    settings.additionalColumnsCount = 0
-    settings.additionalLinesCount = 0
-    settings.isRightMarginShown = false
-    settings.isUseSoftWraps = false
-    settings.isAdditionalPageAtBottom = false
-  }
-
-  private fun setHighlighting(project: Project,
-                              editor: EditorEx,
-                              document: Document,
-                              placeInfo: IdeDocumentHistoryImpl.PlaceInfo,
-                              textRange: TextRange) {
-    val colorsScheme = EditorColorsManager.getInstance().globalScheme
-
-    applySyntaxHighlighting(project, editor, document, colorsScheme, textRange, placeInfo)
-    applyHighlightingPasses(project, editor, document, colorsScheme, textRange)
-  }
-
-  private fun applySyntaxHighlighting(project: Project,
-                                      editor: EditorEx,
-                                      document: Document,
-                                      colorsScheme: EditorColorsScheme,
-                                      textRange: TextRange,
-                                      placeInfo: IdeDocumentHistoryImpl.PlaceInfo) {
-    val editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(placeInfo.file, colorsScheme, project)
-    editorHighlighter.setEditor(LightHighlighterClient(document, project))
-    editorHighlighter.setText(document.getText(TextRange.create(0, textRange.endOffset)))
-    val startOffset = textRange.startOffset
-    val iterator = editorHighlighter.createIterator(startOffset)
-
-    while (!iterator.atEnd() && iterator.end <= textRange.endOffset) {
-      if (iterator.start >= startOffset) {
-        editor.markupModel.addRangeHighlighter(iterator.start - startOffset,
-                                               iterator.end - startOffset,
-                                               HighlighterLayer.SYNTAX - 1,
-                                               iterator.textAttributes,
-                                               HighlighterTargetArea.EXACT_RANGE)
-      }
-
-      iterator.advance()
-    }
-  }
-
-  private fun applyHighlightingPasses(project: Project,
-                                      editor: EditorEx,
-                                      document: Document,
-                                      colorsScheme: EditorColorsScheme,
-                                      rangeMarker: TextRange) {
-    val startOffset = rangeMarker.startOffset
-    val endOffset = rangeMarker.endOffset
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, startOffset, endOffset) { info ->
-      if (info.startOffset < startOffset || info.endOffset > endOffset) {
-        return@processHighlights true
-      }
-
-      when (info.severity) {
-        HighlightSeverity.ERROR,
-        HighlightSeverity.WARNING,
-        HighlightSeverity.WEAK_WARNING,
-        HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING
-        -> return@processHighlights true
-      }
-
-      val textAttributes = if (info.forcedTextAttributes != null) info.forcedTextAttributes
-      else colorsScheme.getAttributes(info.forcedTextAttributesKey)
-      editor.markupModel.addRangeHighlighter(
-        info.actualStartOffset - rangeMarker.startOffset, info.actualEndOffset - rangeMarker.startOffset,
-        HighlighterLayer.SYNTAX,
-        textAttributes,
-        HighlighterTargetArea.EXACT_RANGE)
-
-      true
-    }
-  }
-
-  private fun getTrimmedRange(document: Document, lineNumber: Int): TextRange {
+  private fun getTrimmedRange(document: Document, lineNumber: Int): Array<TextRange> {
     val range = getLinesRange(document, lineNumber)
     val text = document.getText(TextRange.create(range.startOffset, range.endOffset))
 
@@ -278,10 +153,12 @@ internal class RecentLocationsDataModel(val project: Project, val editorsToRelea
     val lastLine = document.getLineNumber(range.endOffset)
     val lastLineAdjusted = lastLine - newLinesAfter
 
-    val startOffset = document.getLineStartOffset(firstLineAdjusted)
-    val endOffset = document.getLineEndOffset(lastLineAdjusted)
-
-    return TextRange.create(startOffset, endOffset)
+    val result = Array(lastLineAdjusted - firstLineAdjusted + 1) {
+      val startOffset = document.getLineStartOffset(firstLineAdjusted + it)
+      val endOffset = document.getLineEndOffset(firstLineAdjusted + it)
+      TextRange.create(startOffset, startOffset + min(endOffset - startOffset, 1000))
+    }
+    return result
   }
 
   private fun getLinesRange(document: Document, line: Int): TextRange {
@@ -311,4 +188,16 @@ internal class RecentLocationsDataModel(val project: Project, val editorsToRelea
   }
 }
 
-data class RecentLocationItem(val editor: EditorEx, val info: IdeDocumentHistoryImpl.PlaceInfo)
+internal data class RecentLocationItem(
+  @JvmField val info: IdeDocumentHistoryImpl.PlaceInfo,
+  @JvmField val text: String,
+  @JvmField val ranges: Array<TextRange>
+) {
+  override fun equals(other: Any?): Boolean = if (other !is RecentLocationItem) false else {
+    info.file == other.info.file &&
+    info.caretPosition?.startOffset == other.info.caretPosition?.startOffset &&
+    info.caretPosition?.startOffset == other.info.caretPosition?.endOffset
+  }
+
+    override fun hashCode(): Int = info.file.hashCode() + 31 * (info.caretPosition?.hashCode() ?: 0)
+}
