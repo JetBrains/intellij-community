@@ -10,10 +10,12 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -122,6 +124,16 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             }
         }
 
+        if ((calleeDescriptor as? FunctionDescriptor)?.overloadedFunctions().orEmpty().size > 1) {
+            if (context[BindingContext.EXPRESSION_TYPE_INFO, lambdaExpression]?.type?.arguments?.lastOrNull()?.type != calleeDescriptor.returnType) {
+                return false
+            }
+            val property = lambdaExpression.getStrictParentOfType<KtProperty>()
+            if (property != null && property.initializer != lambdaExpression) {
+                return false
+            }
+        }
+
         val lambdaValueParameterDescriptors = context[FUNCTION, lambdaExpression.functionLiteral]?.valueParameters ?: return false
         if (explicitReceiver != null && explicitReceiver !is KtSimpleNameExpression &&
             explicitReceiver.anyDescendantOfType<KtSimpleNameExpression> {
@@ -200,6 +212,13 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
 
         val lambdaArgument = element.parentValueArgument() as? KtLambdaArgument
         if (lambdaArgument == null) {
+            if (parent is KtProperty && parent.typeReference == null) {
+                val propertyType = (parent.descriptor as? VariableDescriptor)?.type
+                val functionDescriptor = element.singleStatementOrNull()?.resolveToCall()?.resultingDescriptor as? FunctionDescriptor
+                if (propertyType != null && functionDescriptor != null && functionDescriptor.overloadedFunctions().size > 1) {
+                    parent.setType(propertyType)
+                }
+            }
             // Without lambda argument syntax, just replace lambda with reference
             val callableReferenceExpr = factory.createCallableReferenceExpression(referenceName) ?: return
             (element.replace(callableReferenceExpr) as? KtElement)?.let { ShortenReferences.RETAIN_COMPANION.process(it) }
