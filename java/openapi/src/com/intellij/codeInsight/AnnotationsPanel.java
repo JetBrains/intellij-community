@@ -6,6 +6,9 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
@@ -13,6 +16,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
@@ -21,8 +25,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class AnnotationsPanel {
   private final Project myProject;
@@ -41,26 +52,25 @@ public class AnnotationsPanel {
                           Set<String> checkedAnnotations,
                           boolean showInstrumentationOptions,
                           boolean showDefaultActions) {
-    this(project, name, defaultAnnotation, annotations, defaultAnnotations, checkedAnnotations, annotations, showInstrumentationOptions, showDefaultActions);
+    this(project, new SimpleAnnotationPanelModel(name, defaultAnnotation, annotations, defaultAnnotations, checkedAnnotations), showInstrumentationOptions, showDefaultActions);
   }
 
   public AnnotationsPanel(Project project,
-                          @NlsSafe String name,
-                          @NlsSafe String defaultAnnotation,
-                          List<String> annotations,
-                          List<String> defaultAnnotations,
-                          Set<String> checkedAnnotations,
-                          List<String> comboAnnotations,
+                          @NotNull AnnotationPanelModel model,
                           boolean showInstrumentationOptions,
                           boolean showDefaultActions) {
     myProject = project;
-    myDefaultAnnotations = new HashSet<>(defaultAnnotations);
+    myDefaultAnnotations = new HashSet<>(model.getDefaultAnnotations());
 
-    myCombo = new ComboBox<>(comboAnnotations.stream().sorted().toArray(String[]::new));
-    for (String annotation : annotations) {
-      if (!comboAnnotations.contains(annotation)) addAnnotationToCombo(annotation);
+    List<String> annotations = model.getAnnotations();
+    myCombo = new ComboBox<>(annotations.stream().sorted().toArray(String[]::new));
+    String defaultAnnotation = model.getDefaultAnnotation();
+    if (!annotations.contains(defaultAnnotation)) {
+      addAnnotationToCombo(defaultAnnotation);
     }
-    if (!comboAnnotations.contains(defaultAnnotation)) addAnnotationToCombo(defaultAnnotation);
+    if (model.hasAdvancedAnnotations()) {
+      loadAdvancedAnnotations(model);
+    }
     myCombo.setSelectedItem(defaultAnnotation);
 
     myTableModel = new DefaultTableModel() {
@@ -71,7 +81,7 @@ public class AnnotationsPanel {
     };
     myTableModel.setColumnCount(showInstrumentationOptions ? 2 : 1);
     for (String annotation : annotations) {
-      addRow(annotation, checkedAnnotations.contains(annotation));
+      addRow(annotation, model.getCheckedAnnotations().contains(annotation));
     }
 
     DefaultTableColumnModel columnModel = new DefaultTableColumnModel();
@@ -130,7 +140,7 @@ public class AnnotationsPanel {
     }
 
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable).disableUpDownActions()
-      .setAddAction(b -> chooseAnnotation(name))
+      .setAddAction(b -> chooseAnnotation(model.getName()))
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton anActionButton) {
@@ -156,7 +166,7 @@ public class AnnotationsPanel {
 
     final var tablePanel = UI.PanelFactory
       .panel(toolbarDecorator.createPanel())
-      .withLabel(JavaBundle.message("nullable.notnull.annotations.panel.title", name))
+      .withLabel(JavaBundle.message("nullable.notnull.annotations.panel.title", model.getName()))
       .moveLabelOnTop()
       .resizeY(true)
       .createPanel();
@@ -178,6 +188,38 @@ public class AnnotationsPanel {
     constraints.weightx = 1;
     constraints.weighty = 1;
     myComponent.add(tablePanel, constraints);
+  }
+
+  private void loadAdvancedAnnotations(@NotNull AnnotationPanelModel model) {
+    String loading = JavaBundle.message("loading.additional.annotations");
+    myCombo.addItem(loading);
+    DumbService.getInstance(myProject).runWhenSmart(() -> {
+      ReadAction.nonBlocking(model::getAdvancedAnnotations)
+        .finishOnUiThread(ModalityState.any(), advancedAnnotations -> {
+          myCombo.removeItem(loading);
+          int count = myCombo.getItemCount();
+          Object selectedItem = myCombo.getSelectedItem();
+          List<String> newItems = Stream.concat(
+            IntStream.range(0, count).mapToObj(myCombo::getItemAt),
+            advancedAnnotations.stream()).sorted().distinct().collect(Collectors.toList());
+          myCombo.removeAllItems();
+          newItems.forEach(myCombo::addItem);
+          myCombo.setSelectedItem(selectedItem);
+        }).submit(AppExecutorUtil.getAppExecutorService());
+    });
+    myCombo.addActionListener(new ActionListener() {
+      Object previous = myCombo.getSelectedItem();
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Object item = myCombo.getSelectedItem();
+        if (item == loading) {
+          myCombo.setSelectedItem(previous);
+        } else {
+          previous = item;
+        }
+      }
+    });
   }
 
   private void addRow(String annotation, boolean checked) {
@@ -256,5 +298,55 @@ public class AnnotationsPanel {
       }
     }
     return result;
+  }
+
+  private static class SimpleAnnotationPanelModel implements AnnotationPanelModel {
+    private @NonNls final String myName;
+    private final String myDefaultAnnotation;
+    private final List<String> myAnnotations;
+    private final List<String> myDefaultAnnotations;
+    private final Set<String> myCheckedAnnotations;
+
+    private SimpleAnnotationPanelModel(@NonNls String name,
+                                       String defaultAnnotation,
+                                       List<String> annotations,
+                                       List<String> defaultAnnotations,
+                                       Set<String> checkedAnnotations) {
+      myName = name;
+      myDefaultAnnotation = defaultAnnotation;
+      myAnnotations = annotations;
+      myDefaultAnnotations = defaultAnnotations;
+      myCheckedAnnotations = checkedAnnotations;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return myName;
+    }
+
+    @Override
+    public @NotNull String getDefaultAnnotation() {
+      return myDefaultAnnotation;
+    }
+
+    @Override
+    public @NotNull List<String> getAnnotations() {
+      return myAnnotations;
+    }
+
+    @Override
+    public @NotNull List<String> getAdvancedAnnotations() {
+      return myAnnotations;
+    }
+
+    @Override
+    public @NotNull List<String> getDefaultAnnotations() {
+      return myDefaultAnnotations;
+    }
+
+    @Override
+    public @NotNull Set<String> getCheckedAnnotations() {
+      return myCheckedAnnotations;
+    }
   }
 }

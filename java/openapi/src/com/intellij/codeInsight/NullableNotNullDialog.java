@@ -4,20 +4,16 @@ package com.intellij.codeInsight;
 import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.HashSet;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
@@ -36,18 +32,10 @@ public class NullableNotNullDialog extends DialogWrapper {
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     myNullablePanel = new AnnotationsPanel(project,
-                                           "Nullable",
-                                           manager.getDefaultNullable(),
-                                           manager.getNullables(), manager.getDefaultNullables(),
-                                           Collections.emptySet(),
-                                           ActionUtil.isDumbMode(project) ? manager.getNullables() : manager.getNullablesWithNickNames(),
+                                           new NullabilityAnnotationPanelModel.NullableModel(manager),
                                            false, true);
     myNotNullPanel = new AnnotationsPanel(project,
-                                          "NotNull",
-                                          manager.getDefaultNotNull(),
-                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
-                                          new HashSet<>(manager.getInstrumentedNotNulls()),
-                                          ActionUtil.isDumbMode(project) ? manager.getNotNulls() : manager.getNotNullsWithNickNames(),
+                                          new NullabilityAnnotationPanelModel.NotNullModel(manager),
                                           showInstrumentationOptions, true);
 
     init();
