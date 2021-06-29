@@ -25,4 +25,6 @@ class ForMultiLanguageSupport {
   // contains only letters, digits, numbers, underscores ("_")
 
   // An iterable of bundle instances
+
+  // Resolve '../' in paths (like real_path)
 }
