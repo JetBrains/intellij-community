@@ -86,7 +86,7 @@ public class NewObjectEqualityInspection extends BaseInspection {
       if (initializer == null) return expression;
       if (parent instanceof PsiBinaryExpression) {
         // Check if variable is reused in the same expression
-        if (ContainerUtil.getOnlyItem(VariableAccessUtils.getVariableReferences(variable, parent)) != expression) return expression;
+        if (VariableAccessUtils.getVariableReferences(variable, parent).size() != 1) return expression;
       }
       PsiElement block = ControlFlowUtil.findCodeFragment(variable);
       PsiElement expressionContext = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
