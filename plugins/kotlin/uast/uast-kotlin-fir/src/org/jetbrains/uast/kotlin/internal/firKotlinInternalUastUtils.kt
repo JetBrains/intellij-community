@@ -10,8 +10,8 @@ import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.lz
 
-val firKotlinUastPlugin: UastLanguagePlugin by lz {
-    UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
+val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
+    UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
 

@@ -209,6 +209,7 @@ import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDi
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
 import org.jetbrains.uast.test.kotlin.*
 import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly
+import org.jetbrains.uast.test.comparasion.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
@@ -1561,7 +1562,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             }
         }
 
-        testGroup("uast/uast-kotlin-fir") {
+        testGroup("uast/uast-kotlin") {
             testClass<AbstractFE1UastDeclarationTest> {
                 model("declaration")
             }
@@ -1571,7 +1572,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             }
         }
 
-        testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
+        testGroup("uast/uast-kotlin", testDataPath = "../uast-kotlin/testData") {
             testClass<AbstractFE1LegacyUastDeclarationTest> {
                 model("")
             }
