@@ -6,8 +6,8 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.*
-import org.jetbrains.kotlin.idea.fir.uast.common.kotlin.UastResolveApiTestBase
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
+import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)

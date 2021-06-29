@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.fir.uast
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.kotlin.idea.fir.uast.common.kotlin.FirUastRenderLogTestBase
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
+import org.jetbrains.uast.test.common.kotlin.UastRenderLogTestBase
 
-abstract class AbstractFirUastDeclarationTest : AbstractFirUastTest(), FirUastRenderLogTestBase {
+abstract class AbstractFirUastDeclarationTest : AbstractFirUastTest(), UastRenderLogTestBase {
     override val isFirUastPlugin: Boolean = true
 
     override fun check(filePath: String, file: UFile) {
