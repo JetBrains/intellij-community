@@ -6,18 +6,19 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
-import com.jetbrains.python.testing.pythonFactories
+import com.jetbrains.python.testing.PythonTestConfigurationType
 
 
-class PyAutoDetectionConfigurationFactory : PyAbstractTestFactory<PyAutoDetectTestConfiguration>() {
+class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
+  type) {
   internal companion object {
     val factoriesExcludingThis: Collection<PyAbstractTestFactory<*>>
       get() =
-        pythonFactories.filterNot { it is PyAutoDetectionConfigurationFactory }
+        PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
 
   fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> =
-    factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(sdk) } ?: PyUnitTestFactory()
+    factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(sdk) } ?: PyUnitTestFactory(type)
 
   override fun createTemplateConfiguration(project: Project): PyAutoDetectTestConfiguration =
     PyAutoDetectTestConfiguration(project, this)

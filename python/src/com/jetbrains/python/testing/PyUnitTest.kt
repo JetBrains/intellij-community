@@ -88,7 +88,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   override fun shouldSeparateTargetPath() = false
 }
 
-class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
+class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyUnitTestConfiguration>(type) {
   companion object {
     const val id: String = "Unittests"
   }

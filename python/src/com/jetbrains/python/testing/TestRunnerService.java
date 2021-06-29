@@ -68,7 +68,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(PyTestsSharedKt.getDefaultFactory().getId());
+      this(PythonTestConfigurationType.getInstance().getAutoDetectFactory().getId());
     }
   }
 

@@ -7,13 +7,14 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBInsets
 import com.jetbrains.python.testing.PyAbstractTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 internal class PyTestRunConfigurationRenderer(private val sdk: Sdk?) : ListCellRenderer<PyAbstractTestFactory<*>> {
-  private val autoFactory: PyAutoDetectionConfigurationFactory = PyAutoDetectionConfigurationFactory()
+  private val autoFactory: PyAutoDetectionConfigurationFactory = PythonTestConfigurationType.getInstance().autoDetectFactory
   override fun getListCellRendererComponent(list: JList<out PyAbstractTestFactory<*>>,
                                             value: PyAbstractTestFactory<*>,
                                             index: Int,

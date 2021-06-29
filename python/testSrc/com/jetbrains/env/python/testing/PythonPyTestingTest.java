@@ -150,7 +150,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         final CharBuffer data = Charset.defaultCharset().decode(ByteBuffer.wrap(file.contentsToByteArray()));
         final Element element = builder.build(new StringReader(data.toString())).getRootElement();
 
-        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), new PyTestFactory());
+        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), new PyTestFactory(PythonTestConfigurationType.getInstance()));
         configuration.readExternal(element);
         return configuration;
       }
@@ -589,7 +589,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyAbstractTestFactory<PyTestConfiguration> createFactory() {
-        return new PyTestFactory();
+        return new PyTestFactory(PythonTestConfigurationType.getInstance());
       }
 
       @Override
@@ -652,7 +652,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
           try {
             // Test "custom symbol" mode: instead of QN we must get custom with additional arguments pointing to file and symbol
             ((PyTestConfiguration)RunManager.getInstance(getProject())
-              .getConfigurationTemplate(new PyTestFactory())
+              .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
               .getConfiguration())
               .setWorkingDirectory(bar.getContainingFile().getParent().getVirtualFile().getPath());
             PyTestConfiguration customConfiguration = createConfigurationByElement(foo, PyTestConfiguration.class);
@@ -661,7 +661,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
           }
           finally {
             ((PyTestConfiguration)RunManager.getInstance(getProject())
-              .getConfigurationTemplate(new PyTestFactory())
+              .getConfigurationTemplate(new PyTestFactory(PythonTestConfigurationType.getInstance()))
               .getConfiguration())
               .setWorkingDirectory(null);
           }
@@ -725,7 +725,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyTestFactory createFactory() {
-          return new PyTestFactory();
+          return new PyTestFactory(PythonTestConfigurationType.getInstance());
         }
       });
   }

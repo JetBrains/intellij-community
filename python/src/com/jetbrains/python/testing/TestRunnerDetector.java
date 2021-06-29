@@ -60,7 +60,8 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
       PyPackageUtil.refreshAndGetPackagesModally(sdk);
-      var factory = Arrays.stream(PyTestsSharedKt.getPythonFactories()).filter(o -> o.isFrameworkInstalled(sdk)).findFirst();
+      var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
+      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(sdk)).findFirst();
       if (factory.isPresent()) {
         testRunner = factory.get().getId();
       }
@@ -91,7 +92,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
 
   @Nullable
   private static @NonNls String findSdkByPackage(@NotNull String packageToFind) {
-    for (var factory : PyTestsSharedKt.getPythonFactories()) {
+    for (var factory : PythonTestConfigurationType.getInstance().getTypedFactories()) {
       var packageRequired = factory.getPackageRequired();
       if (packageRequired != null && packageRequired.equals(packageToFind)) {
         return factory.getId();
