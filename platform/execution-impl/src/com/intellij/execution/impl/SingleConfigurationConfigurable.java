@@ -7,6 +7,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -201,7 +202,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         return getEditor();
       }
       if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
-        return myRunOnTargetPanel.getDefaultTargetName();
+        return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
       }
       return null;
     });

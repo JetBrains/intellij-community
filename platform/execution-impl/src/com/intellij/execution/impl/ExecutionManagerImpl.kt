@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.getEffectiveTargetName
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
@@ -577,7 +578,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val component = TargetPrepareComponent(consoleView)
     val buildContentManager = BuildContentManager.getInstance(environment.project)
-    val contentName = targetEnvironmentAwareRunProfile.defaultTargetName?.let {
+    val contentName = targetEnvironmentAwareRunProfile.getEffectiveTargetName(environment.project)?.let {
       ExecutionBundle.message("tab.title.prepare.environment", it, environment.runProfile.name)
     } ?: ExecutionBundle.message("tab.title.prepare.target.environment", environment.runProfile.name)
     val toolWindow = buildContentManager.orCreateToolWindow

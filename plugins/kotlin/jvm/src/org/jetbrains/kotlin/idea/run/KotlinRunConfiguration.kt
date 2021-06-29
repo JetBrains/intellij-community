@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.getEffectiveTargetName
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
@@ -280,7 +281,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun needPrepareTarget(): Boolean {
-        return defaultTargetName != null || runsUnderWslJdk()
+        return getEffectiveTargetName(project) != null || runsUnderWslJdk()
     }
 
     override fun getShortenCommandLine(): ShortenCommandLine? {

@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.local.LocalTargetType;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -42,6 +43,12 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  /**
+   * Stands for the target specified for the Run Configuration.
+   * <p>
+   * Note that if the value is {@code null} then the <i>project default target</i> will be used for executing the run configuration. The
+   * default value for the project default target is the local machine, it might be changed by the user.
+   */
   private static final StringEventField TARGET_FIELD =
     EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
@@ -59,7 +66,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    Object2IntMap<Template> templates=new Object2IntOpenHashMap<>();
+    Object2IntMap<Template> templates = new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
     }
@@ -84,12 +91,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
       }
       if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-        if (defaultTargetName != null) {
-          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-          if (target != null) {
-            pairs.add(TARGET_FIELD.with(target.getTypeId()));
-          }
+        String assignedTargetType = getAssignedTargetType(project, (TargetEnvironmentAwareRunProfile)runConfiguration);
+        if (assignedTargetType != null) {
+          pairs.add(TARGET_FIELD.with(assignedTargetType));
         }
       }
     }
@@ -151,7 +155,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static @NotNull List<EventPair<?>> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
+  public static @NotNull List<EventPair<?>> createFeatureUsageData(@NotNull ConfigurationType configuration,
+                                                                   @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
     List<EventPair<?>> pairs = new ArrayList<>();
     pairs.add(ID_FIELD.with(id));
@@ -265,5 +270,34 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
       return null;
     }
+  }
+
+  /**
+   * The logged string type for the local machine target. Stands for {@link LocalTargetType#LOCAL_TARGET_NAME} target identifier.
+   * <p>
+   * Just for the reason that {@code "local"} looks prettier than {@code "@@@LOCAL@@@"}.
+   */
+  static final String LOCAL_TYPE_ID = "local";
+
+  /**
+   * <ul>
+   * <li>{@code null} stands for the project default target;</li>
+   * <li>{@code "local"} stands for the explicitly selected local machine configuration;</li>
+   * <li>other values stands for the specific target types.</li>
+   * </ul>
+   */
+  private static @Nullable String getAssignedTargetType(@NotNull Project project,
+                                                        @NotNull TargetEnvironmentAwareRunProfile runConfiguration) {
+    String assignedTargetName = runConfiguration.getDefaultTargetName();
+    if (LocalTargetType.LOCAL_TARGET_NAME.equals(assignedTargetName)) {
+      return LOCAL_TYPE_ID;
+    }
+    else if (assignedTargetName != null) {
+      TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(assignedTargetName);
+      if (target != null) {
+        return target.getTypeId();
+      }
+    }
+    return null;
   }
 }

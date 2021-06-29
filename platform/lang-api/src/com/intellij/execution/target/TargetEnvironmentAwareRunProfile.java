@@ -38,16 +38,33 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
   LanguageRuntimeType<?> getDefaultLanguageRuntimeType();
 
   /**
-   * @return display name of target environment to run on, or null if local machine target is chosen
+   * Returns the identifier of the target environment to run on, which is either:
+   * <ul>
+   *   <li>{@code null} for the project default target (available via {@link TargetEnvironmentsManager#getDefaultTarget()});</li>
+   *   <li>the display name of the target environment;</li>
+   *   <li>the special value for the explicitly chosen local machine target
+   *   ({@link com.intellij.execution.target.local.LocalTargetType#LOCAL_TARGET_NAME}).</li>
+   * </ul>
+   *
+   * @return the display name of target environment to run on, the special value for explicitly chosen local machine target
+   * or {@code null} if the project default target is chosen
    * @see TargetEnvironmentConfiguration#getDisplayName()
+   * @see com.intellij.execution.target.local.LocalTargetType#LOCAL_TARGET_NAME
    */
   @Nullable
   String getDefaultTargetName();
 
   void setDefaultTargetName(@Nullable String targetName);
 
+  /**
+   * Takes into the account the project default target.
+   *
+   * @param project the project to validate with
+   * @throws RuntimeConfigurationException if the validation fails
+   * @see TargetEnvironmentsManager#getDefaultTarget()
+   */
   default void validateRunTarget(@SuppressWarnings("unused") @NotNull Project project) throws RuntimeConfigurationException {
-    String targetName = getDefaultTargetName();
+    String targetName = TargetEnvironmentConfigurations.getEffectiveTargetName(this, project);
     if (targetName == null) {
       return;
     }
@@ -70,6 +87,6 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
   }
 
   default boolean needPrepareTarget() {
-    return getDefaultTargetName() != null;
+    return TargetEnvironmentConfigurations.getEffectiveTargetName(this) != null;
   }
 }

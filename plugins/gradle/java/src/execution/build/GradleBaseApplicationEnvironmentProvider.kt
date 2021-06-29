@@ -12,7 +12,7 @@ import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -72,8 +72,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val javaModuleName: String?
     val javaExePath: String
     try {
-      val targetEnvironmentAwareRunProfile = runProfile as? TargetEnvironmentAwareRunProfile
-      if (targetEnvironmentAwareRunProfile?.defaultTargetName != null) {
+      if (getEffectiveConfiguration(runProfile, project) != null) {
         javaModuleName = null
         javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
       }

@@ -21,10 +21,25 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
       project.getService(TargetEnvironmentsManager::class.java)
   }
 
+  /**
+   * UUID of the target which is set as the project default or `null` if the project default target is the local machine.
+   */
+  private var projectDefaultTargetUuid: String? = null
+
+  /**
+   * The project default target or `null` if the project default target is the local machine.
+   */
+  var defaultTarget: TargetEnvironmentConfiguration?
+    get() = projectDefaultTargetUuid?.let { uuid -> targets.resolvedConfigs().firstOrNull { it.uuid == uuid } }
+    set(value) {
+      projectDefaultTargetUuid = value?.uuid
+    }
+
   val targets: ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>> = TargetsList()
 
   override fun getState(): TargetsListState {
     val result = TargetsListState()
+    result.projectDefaultTargetUuid = projectDefaultTargetUuid
     for (next in this.targets.state.configs) {
       result.targets.add(next as OneTargetState)
     }
@@ -32,6 +47,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   }
 
   override fun loadState(state: TargetsListState) {
+    projectDefaultTargetUuid = state.projectDefaultTargetUuid
     targets.loadState(state.targets)
   }
 
@@ -74,6 +90,8 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   }
 
   class TargetsListState : BaseState() {
+    var projectDefaultTargetUuid by string()
+
     @get: XCollection(style = XCollection.Style.v2)
     var targets by list<OneTargetState>()
   }

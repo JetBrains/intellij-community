@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -107,16 +106,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull
   private TargetEnvironmentRequest createTargetEnvironmentRequest() {
-    if (myRunProfile instanceof TargetEnvironmentAwareRunProfile) {
-      String targetName = ((TargetEnvironmentAwareRunProfile)myRunProfile).getDefaultTargetName();
-      if (targetName != null) {
-        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(myProject).getTargets().findByName(targetName);
-        if (config != null) {
-          return config.createEnvironmentRequest(myProject);
-        }
-      }
-    }
-    return new LocalTargetEnvironmentRequest();
+    return TargetEnvironmentConfigurations.createEnvironmentRequest(myRunProfile, myProject);
   }
 
   @ApiStatus.Experimental
@@ -137,8 +127,9 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     throws ExecutionException {
     TargetEnvironmentRequest request = null;
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState &&
-        myRunProfile instanceof TargetEnvironmentAwareRunProfile && ((TargetEnvironmentAwareRunProfile) myRunProfile).getDefaultTargetName() == null) {
-      request = ((TargetEnvironmentAwareRunProfileState) runProfileState).createCustomTargetEnvironmentRequest();
+        myRunProfile instanceof TargetEnvironmentAwareRunProfile &&
+        TargetEnvironmentConfigurations.getEffectiveTargetName((TargetEnvironmentAwareRunProfile)myRunProfile, myProject) == null) {
+      request = ((TargetEnvironmentAwareRunProfileState)runProfileState).createCustomTargetEnvironmentRequest();
     }
     if (request == null) {
       request = getTargetEnvironmentRequest();
@@ -291,8 +282,9 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
     @NotNull
     static CachingDataContext cacheIfNeeded(@NotNull DataContext context) {
-      if (context instanceof CachingDataContext)
+      if (context instanceof CachingDataContext) {
         return (CachingDataContext)context;
+      }
       return new CachingDataContext(context);
     }
 
@@ -304,7 +296,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
-        return values.get(dataId);
+      return values.get(dataId);
     }
   }
 

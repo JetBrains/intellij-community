@@ -8,8 +8,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.TargetEnvironmentType;
-import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.LOCAL_TYPE_ID;
 import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.createFeatureUsageData;
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
@@ -37,6 +38,12 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 62);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
+  /**
+   * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
+   * <p>
+   * Takes into the account the project default target and uses its value if the "project default target" is specified for the run
+   * configuration.
+   */
   private static final StringEventField TARGET =
     EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
@@ -82,12 +89,11 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
     }
     if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-      String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-      if (defaultTargetName != null) {
-        TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-        if (target != null) {
-          eventPairs.add(TARGET.with(target.getTypeId()));
-        }
+      String assignedTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
+      TargetEnvironmentConfiguration effectiveTargetConfiguration =
+        TargetEnvironmentConfigurations.getEffectiveConfiguration(assignedTargetName, project);
+      if (effectiveTargetConfiguration != null) {
+        eventPairs.add(TARGET.with(effectiveTargetConfiguration.getTypeId()));
       }
     }
     return eventPairs;
@@ -131,6 +137,9 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if (LOCAL_TYPE_ID.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
       for (TargetEnvironmentType<?> type : TargetEnvironmentType.EXTENSION_NAME.getExtensions()) {
         if (StringUtil.equals(type.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
