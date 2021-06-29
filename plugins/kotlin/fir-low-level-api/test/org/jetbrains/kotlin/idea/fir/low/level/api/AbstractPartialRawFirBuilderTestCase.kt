@@ -93,17 +93,17 @@ abstract class AbstractPartialRawFirBuilderTestCase : FrontendApiSingleTestDataF
         val elementToBuild = findPsiElement(file) as KtDeclaration
 
         val scopeProvider = object : FirScopeProvider() {
-            override fun getUseSiteMemberScope(klass: FirClass<*>, useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope =
+            override fun getUseSiteMemberScope(klass: FirClass, useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope =
                 error("Should not be called")
 
             override fun getStaticMemberScopeForCallables(
-                klass: FirClass<*>,
+                klass: FirClass,
                 useSiteSession: FirSession,
                 scopeSession: ScopeSession
             ): FirScope =
                 error("Should not be called")
 
-            override fun getNestedClassifierScope(klass: FirClass<*>, useSiteSession: FirSession, scopeSession: ScopeSession): FirScope =
+            override fun getNestedClassifierScope(klass: FirClass, useSiteSession: FirSession, scopeSession: ScopeSession): FirScope =
                 error("Should not be called")
         }
 

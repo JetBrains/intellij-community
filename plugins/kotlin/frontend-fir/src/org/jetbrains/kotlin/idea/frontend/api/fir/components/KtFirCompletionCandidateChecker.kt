@@ -45,13 +45,13 @@ internal class KtFirCompletionCandidateChecker(
         return firSymbolForCandidate.firRef.withFirWithPossibleResolveInside(
             phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE
         ) { declaration ->
-            check(declaration is FirCallableDeclaration<*>)
+            check(declaration is FirCallableDeclaration)
             checkExtension(declaration, originalFile, nameExpression, possibleExplicitReceiver)
         }
     }
 
     private fun checkExtension(
-        candidateSymbol: FirCallableDeclaration<*>,
+        candidateSymbol: FirCallableDeclaration,
         originalFile: KtFile,
         nameExpression: KtSimpleNameExpression,
         possibleExplicitReceiver: KtExpression?,
@@ -69,7 +69,7 @@ internal class KtFirCompletionCandidateChecker(
             )
             resolver.resolveSingleCandidate(resolutionParameters)?.let {
                 return when {
-                    candidateSymbol is FirVariable<*> && candidateSymbol.returnTypeRef.coneType.receiverType(rootModuleSession) != null -> {
+                    candidateSymbol is FirVariable && candidateSymbol.returnTypeRef.coneType.receiverType(rootModuleSession) != null -> {
                         KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
                     }
                     else -> {

@@ -57,7 +57,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
 
     private fun FirTypeScope.processAllOverriddenDeclarations(
         declaration: FirDeclaration,
-        processor: (FirCallableDeclaration<*>) -> Unit
+        processor: (FirCallableDeclaration) -> Unit
     ) = when (declaration) {
         is FirSimpleFunction -> processOverriddenFunctions(declaration.symbol) { symbol ->
             processor.invoke(symbol.fir)
@@ -72,7 +72,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
 
     private fun FirTypeScope.processDirectOverriddenDeclarations(
         declaration: FirDeclaration,
-        processor: (FirCallableDeclaration<*>) -> Unit
+        processor: (FirCallableDeclaration) -> Unit
     ) = when (declaration) {
         is FirSimpleFunction -> processDirectOverriddenFunctionsWithBaseScope(declaration.symbol) { symbol, _ ->
             processor.invoke(symbol.fir)

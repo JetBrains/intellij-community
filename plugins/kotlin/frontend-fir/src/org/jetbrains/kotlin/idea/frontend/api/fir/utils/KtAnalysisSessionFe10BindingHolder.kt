@@ -31,7 +31,7 @@ class KtAnalysisSessionFe10BindingHolder private constructor(
 
     val firResolveState: FirModuleResolveState get() = firAnalysisSession.firResolveState
 
-    fun buildClassLikeSymbol(fir: FirClassLikeDeclaration<*>): KtClassLikeSymbol =
+    fun buildClassLikeSymbol(fir: FirClassLikeDeclaration): KtClassLikeSymbol =
         firAnalysisSession.firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(fir)
 
     fun buildKtType(coneType: FirTypeRef): KtType =

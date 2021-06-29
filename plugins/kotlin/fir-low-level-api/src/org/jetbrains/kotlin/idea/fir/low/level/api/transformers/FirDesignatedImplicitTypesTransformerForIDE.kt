@@ -62,7 +62,7 @@ internal class FirDesignatedImplicitTypesTransformerForIDE(
         designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
         if (designation.isTargetCallableDeclarationAndInPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)) return
 
-        val callableDeclaration = designation.declaration as? FirCallableDeclaration<*>
+        val callableDeclaration = designation.declaration as? FirCallableDeclaration
         if (callableDeclaration != null) {
             if (callableDeclaration.returnTypeRef is FirResolvedTypeRef) return
             callableDeclaration.ensurePhase(FirResolvePhase.CONTRACTS)
@@ -82,7 +82,7 @@ internal class FirDesignatedImplicitTypesTransformerForIDE(
         when (declaration) {
             is FirSimpleFunction -> check(declaration.returnTypeRef is FirResolvedTypeRef)
             is FirField -> check(declaration.returnTypeRef is FirResolvedTypeRef)
-            is FirClass<*>, is FirConstructor, is FirTypeAlias, is FirEnumEntry, is FirAnonymousInitializer -> Unit
+            is FirClass, is FirConstructor, is FirTypeAlias, is FirEnumEntry, is FirAnonymousInitializer -> Unit
             is FirProperty -> {
                 check(declaration.returnTypeRef is FirResolvedTypeRef)
                 //Not resolved for some getters and setters #KT-46995

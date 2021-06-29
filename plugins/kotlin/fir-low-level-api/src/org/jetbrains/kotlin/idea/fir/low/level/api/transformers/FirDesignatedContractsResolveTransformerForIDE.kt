@@ -32,7 +32,7 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
     private val ideDeclarationTransformer = IDEDeclarationTransformer(designation)
 
     override val declarationsTransformer: FirDeclarationsResolveTransformer = object : FirDeclarationsContractResolveTransformer(this) {
-        override fun transformDeclarationContent(firClass: FirClass<*>, data: ResolutionMode) {
+        override fun transformDeclarationContent(firClass: FirClass, data: ResolutionMode) {
             ideDeclarationTransformer.transformDeclarationContent(this, firClass, data) {
                 super.transformDeclarationContent(firClass, data)
                 firClass
@@ -74,7 +74,7 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
                 declaration.getter?.ensurePhase(FirResolvePhase.CONTRACTS)
                 declaration.setter?.ensurePhase(FirResolvePhase.CONTRACTS)
             }
-            is FirClass<*>, is FirTypeAlias, is FirEnumEntry, is FirField -> Unit
+            is FirClass, is FirTypeAlias, is FirEnumEntry, is FirField -> Unit
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }
     }
