@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,12 @@ public class InspectionOptionsPanel extends JPanel {
   public void addRow(Component label, Component component) {
     add(label, "");
     add(component, "pushx, wrap");
+  }
+
+  public void addLabeledRow(@NlsContexts.Label String labelText, Component component) {
+    final JLabel label = new JLabel(labelText);
+    label.setLabelFor(component);
+    addRow(label, component);
   }
 
   /**
