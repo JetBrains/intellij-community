@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -30,6 +29,8 @@ import git4idea.GitNotificationIdsHolder.Companion.BRANCH_OPERATION_SUCCESS
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.gotItStep
+import git4idea.ift.GitLessonsUtil.openCommitWindowText
+import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
@@ -208,7 +209,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       before {
         LearningUiHighlightingManager.clearHighlights()
       }
-      text(GitLessonsBundle.message("git.quick.start.open.commit.window", action(it), VcsBundle.message("commit.dialog.configurable")))
+      openCommitWindowText(GitLessonsBundle.message("git.quick.start.open.commit.window"))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
@@ -239,8 +240,8 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     val pushButtonText = DvcsBundle.message("action.push").dropMnemonic()
-    task("Vcs.Push") {
-      text(GitLessonsBundle.message("git.quick.start.open.push.dialog", action(it)))
+    task {
+      openPushDialogText(GitLessonsBundle.message("git.quick.start.open.push.dialog"))
       triggerByUiComponentAndHighlight { ui: JBOptionButton ->
         ui.text?.contains(pushButtonText) == true
       }

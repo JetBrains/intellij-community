@@ -27,6 +27,8 @@ import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
+import git4idea.ift.GitLessonsUtil.openPushDialogText
+import git4idea.ift.GitLessonsUtil.openUpdateDialogText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
@@ -126,7 +128,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task("Vcs.UpdateProject") {
       val updateProjectDialogTitle = VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name"))
-      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it), strong(updateProjectDialogTitle)))
+      openUpdateDialogText(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main)))
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
@@ -172,16 +174,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
     }
 
-    val pushText = DvcsBundle.message("action.push").dropMnemonic()
     task("Vcs.Push") {
-      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it), strong(pushText)))
+      openPushDialogText(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName)))
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
     }
 
     val forcePushText = DvcsBundle.message("action.force.push").dropMnemonic()
     task {
       text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
-                                    strong(branchName), strong(forcePushText), strong(pushText)))
+                                    strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
       triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
       val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
