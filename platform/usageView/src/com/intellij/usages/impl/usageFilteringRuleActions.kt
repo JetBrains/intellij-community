@@ -38,6 +38,6 @@ private class UsageFilteringRuleAction(
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     ruleState.setActive(ruleId, !state)
     val project = e.project ?: return
-    project.messageBus.syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED)
+    project.messageBus.syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run()
   }
 }
