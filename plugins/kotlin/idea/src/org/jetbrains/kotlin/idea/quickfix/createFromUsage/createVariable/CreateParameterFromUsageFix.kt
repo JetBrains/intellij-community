@@ -69,6 +69,8 @@ open class CreateParameterFromUsageFix<E : KtElement>(
             element: E,
             info: PropertyInfo
         ): CreateParameterFromUsageFix<E>? {
+            if (info.isForCompanion) return null
+
             val receiverClassDescriptor: ClassDescriptor
 
             val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
