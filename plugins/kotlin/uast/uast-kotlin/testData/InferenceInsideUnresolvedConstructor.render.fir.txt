@@ -1,0 +1,8 @@
+public final class InferenceInsideUnresolvedConstructorKt {
+    public static final fun getBar() : java.lang.Object {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    public static final fun id(x: T) : T {
+        return x
+    }
+}

@@ -1,0 +1,12 @@
+UFile (package = )
+    UClass (name = LocalDeclarationsKt)
+        UMethod (name = foo)
+            UBlockExpression
+                [!] UnknownKotlinExpression (CLASS)
+                [!] UnknownKotlinExpression (FUN)
+                [!] UnknownKotlinExpression (PROPERTY)
+                [!] UnknownKotlinExpression (FUN)
+                UReturnExpression
+                    UBinaryExpression (operator = ==)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)

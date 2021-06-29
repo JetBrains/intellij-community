@@ -1,0 +1,17 @@
+package test.pkg
+
+public final class SuspendKt {
+    public static final fun top() : int {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+}
+
+public final class Context {
+    public fun Context() = UastEmptyExpression
+    public final fun inner() : int {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+    private final fun suspendPrivate() : int {
+        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    }
+}
