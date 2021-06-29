@@ -58,7 +58,7 @@ internal class KtFirScopeProvider(
     private val fileScopeCache = IdentityHashMap<KtFileSymbol, KtDeclarationScope<KtSymbolWithDeclarations>>()
     private val packageMemberScopeCache = IdentityHashMap<KtPackageSymbol, KtPackageScope>()
 
-    private inline fun <T> KtSymbolWithMembers.withFirForScope(crossinline body: (FirClass<*>) -> T): T? = when (this) {
+    private inline fun <T> KtSymbolWithMembers.withFirForScope(crossinline body: (FirClass) -> T): T? = when (this) {
         is KtFirNamedClassOrObjectSymbol -> firRef.withFirWithPossibleResolveInside(FirResolvePhase.TYPES, body)
         is KtFirAnonymousObjectSymbol -> firRef.withFirWithPossibleResolveInside(FirResolvePhase.TYPES, body)
         is KtFirEnumEntrySymbol -> firRef.withFir(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {

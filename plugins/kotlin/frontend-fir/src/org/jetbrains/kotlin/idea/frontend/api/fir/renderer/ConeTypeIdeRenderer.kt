@@ -177,10 +177,10 @@ internal class ConeTypeIdeRenderer(
         return null
     }
 
-    private fun FirRegularClass.collectForLocal(): List<FirClassLikeDeclaration<*>> {
+    private fun FirRegularClass.collectForLocal(): List<FirClassLikeDeclaration> {
         require(isLocal)
         var containingClassLookUp = containingClassForLocal()
-        val designation = mutableListOf<FirClassLikeDeclaration<*>>(this)
+        val designation = mutableListOf<FirClassLikeDeclaration>(this)
         while (containingClassLookUp != null && containingClassLookUp.classId.isLocal) {
             val currentClass = containingClassLookUp.toFirRegularClass(moduleData.session) ?: break
             designation.add(currentClass)
@@ -191,9 +191,9 @@ internal class ConeTypeIdeRenderer(
 
     private fun collectDesignationPathForLocal(declaration: FirDeclaration): List<FirDeclaration>? {
         val containingClass = when (declaration) {
-            is FirCallableDeclaration<*> -> declaration.containingClass()?.toFirRegularClass(declaration.moduleData.session)
+            is FirCallableDeclaration -> declaration.containingClass()?.toFirRegularClass(declaration.moduleData.session)
             is FirAnonymousObject -> return listOf(declaration)
-            is FirClassLikeDeclaration<*> -> declaration.let {
+            is FirClassLikeDeclaration -> declaration.let {
                 if (!declaration.isLocal) return null
                 (it as? FirRegularClass)?.containingClassForLocal()?.toFirRegularClass(declaration.moduleData.session)
             }

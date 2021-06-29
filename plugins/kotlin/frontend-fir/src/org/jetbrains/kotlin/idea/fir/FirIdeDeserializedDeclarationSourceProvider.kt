@@ -31,7 +31,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
         return when (fir) {
             is FirSimpleFunction -> provideSourceForFunction(fir, project)
             is FirProperty -> provideSourceForProperty(fir, project)
-            is FirClass<*> -> provideSourceForClass(fir, project)
+            is FirClass -> provideSourceForClass(fir, project)
             is FirTypeAlias -> provideSourceForTypeAlias(fir, project)
             is FirConstructor -> provideSourceForConstructor(fir, project)
             else -> null
@@ -66,7 +66,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
         return candidates.firstOrNull(KtElement::isCompiled)
     }
 
-    private fun provideSourceForClass(klass: FirClass<*>, project: Project): PsiElement? =
+    private fun provideSourceForClass(klass: FirClass, project: Project): PsiElement? =
         classByClassId(klass.symbol.classId, klass.scope(project), project)
 
     private fun provideSourceForTypeAlias(alias: FirTypeAlias, project: Project): PsiElement? {
@@ -84,7 +84,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
         return constructor.unwrapFakeOverrides().chooseCorrespondingPsi(containingKtClass.secondaryConstructors)
     }
 
-    private fun FirFunction<*>.chooseCorrespondingPsi(
+    private fun FirFunction.chooseCorrespondingPsi(
         candidates: Collection<KtFunction>
     ): KtFunction? {
         if (candidates.isEmpty()) return null
@@ -106,7 +106,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
          return session?.scope ?: GlobalSearchScope.allScope(project)*/
     }
 
-    private fun FirCallableDeclaration<*>.containingKtClass(project: Project): KtClassOrObject? =
+    private fun FirCallableDeclaration.containingKtClass(project: Project): KtClassOrObject? =
         unwrapFakeOverrides().containingClass()?.classId?.let { classByClassId(it, scope(project), project) }
 
     private fun classByClassId(classId: ClassId, scope: GlobalSearchScope, project: Project): KtClassOrObject? {
@@ -116,7 +116,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
             .firstOrNull(KtElement::isCompiled)
     }
 
-    private val FirCallableDeclaration<*>.isTopLevel
+    private val FirCallableDeclaration.isTopLevel
         get() = symbol.callableId.className == null
 
     private val classIdMapping = (0..23).associate { i ->

@@ -81,8 +81,8 @@
 //                when (resolveType) {
 //                    ResolveType.CallableReturnType,
 //                    ResolveType.CallableBodyResolve,
-//                    ResolveType.CallableContracts -> if (declarationToResolve !is FirCallableDeclaration<*>) return@resolveWithClearCaches
-//                    ResolveType.ClassSuperTypes -> if (declarationToResolve !is FirClassLikeDeclaration<*>) return@resolveWithClearCaches
+//                    ResolveType.CallableContracts -> if (declarationToResolve !is FirCallableDeclaration) return@resolveWithClearCaches
+//                    ResolveType.ClassSuperTypes -> if (declarationToResolve !is FirClassLikeDeclaration) return@resolveWithClearCaches
 //                    else -> {
 //                    }
 //                }

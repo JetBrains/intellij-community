@@ -203,11 +203,11 @@ internal class FirCompileTimeConstantEvaluator {
             @Suppress("UNCHECKED_CAST")
             buildConstExpression(source, this, value as T)
 
-    private fun FirFunctionCall.getOriginalFunction(): FirCallableDeclaration<*>? {
+    private fun FirFunctionCall.getOriginalFunction(): FirCallableDeclaration? {
         val symbol: AbstractFirBasedSymbol<*>? = when (val reference = calleeReference) {
             is FirResolvedNamedReference -> reference.resolvedSymbol
             else -> null
         }
-        return symbol?.fir as? FirCallableDeclaration<*>
+        return symbol?.fir as? FirCallableDeclaration
     }
 }

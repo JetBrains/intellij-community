@@ -36,7 +36,7 @@ internal class KtFirTypeCreator(
             is KtClassTypeBuilder.BySymbol -> {
                 val symbol = builder.symbol
                 check(symbol is KtFirSymbol<*>)
-                symbol.firRef.withFir { (it as FirClassLikeDeclaration<*>).symbol.toLookupTag() }
+                symbol.firRef.withFir { (it as FirClassLikeDeclaration).symbol.toLookupTag() }
             }
         }
 

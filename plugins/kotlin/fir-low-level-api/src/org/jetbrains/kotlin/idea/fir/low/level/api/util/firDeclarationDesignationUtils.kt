@@ -24,7 +24,7 @@ internal fun FirDeclarationDesignation.ensureDesignation(firResolvePhase: FirRes
 }
 internal fun FirDeclarationDesignation.ensurePhaseForClasses(firResolvePhase: FirResolvePhase) {
     ensurePathPhase(firResolvePhase)
-    if (declaration is FirClassLikeDeclaration<*>) {
+    if (declaration is FirClassLikeDeclaration) {
         check(declaration.resolvePhase >= firResolvePhase) {
             "Expected $firResolvePhase but found ${declaration.resolvePhase}"
         }
@@ -32,6 +32,6 @@ internal fun FirDeclarationDesignation.ensurePhaseForClasses(firResolvePhase: Fi
 }
 
 internal fun FirDeclarationDesignation.isTargetCallableDeclarationAndInPhase(firResolvePhase: FirResolvePhase): Boolean =
-    (declaration as? FirCallableDeclaration<*>)?.let { it.resolvePhase >= firResolvePhase } ?: false
+    (declaration as? FirCallableDeclaration)?.let { it.resolvePhase >= firResolvePhase } ?: false
 
 internal fun FirDeclarationDesignation.targetContainingDeclaration(): FirDeclaration? = path.lastOrNull()
