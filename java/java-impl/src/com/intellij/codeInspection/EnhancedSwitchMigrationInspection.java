@@ -645,8 +645,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         sb.append(labels);
       }
       if (myIsDefault) {
-        if (! myCaseExpressions.isEmpty()) {
-          sb.append(" ,");
+        if (!myCaseExpressions.isEmpty()) {
+          sb.append(",");
         }
         sb.append("default");
       }
