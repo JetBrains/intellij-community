@@ -11,7 +11,6 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -190,12 +189,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
         });
       WindowMoveListener listener = new WindowMoveListener();
       listener.installTo(component);
-      Disposer.register(session, new Disposable() {
-        @Override
-        public void dispose() {
-          listener.uninstallFrom(component);
-        }
-      });
+      Disposer.register(session, () -> listener.uninstallFrom(component));
       popup = popupBuilder.createPopup();
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);
