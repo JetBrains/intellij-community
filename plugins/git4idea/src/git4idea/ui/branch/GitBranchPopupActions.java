@@ -997,15 +997,15 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  private static String getCurrentBranchFullPresentation(@NotNull Project project,
-                                                         @NotNull Collection<? extends GitRepository> repositories) {
+  public static String getCurrentBranchFullPresentation(@NotNull Project project,
+                                                        @NotNull Collection<? extends GitRepository> repositories) {
     return getCurrentBranchPresentation(project, repositories, false);
   }
 
   @NlsSafe
   @NotNull
-  private static String getCurrentBranchTruncatedPresentation(@NotNull Project project,
-                                                              @NotNull Collection<? extends GitRepository> repositories) {
+  public static String getCurrentBranchTruncatedPresentation(@NotNull Project project,
+                                                             @NotNull Collection<? extends GitRepository> repositories) {
     return getCurrentBranchPresentation(project, repositories, true);
   }
 
@@ -1029,7 +1029,7 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  private static String getSelectedBranchFullPresentation(@NlsSafe @NotNull String branchName) {
+  public static String getSelectedBranchFullPresentation(@NlsSafe @NotNull String branchName) {
     return wrapWithQuotes(branchName);
   }
 
@@ -1048,8 +1048,8 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  private static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
-                                                               @NlsSafe @NotNull String branchName) {
+  public static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
+                                                              @NlsSafe @NotNull String branchName) {
     return showFullBranchNamesInsteadOfCurrentSelected()
            ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
            : GitBundle.message("branches.selected.branch.name");
