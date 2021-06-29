@@ -99,9 +99,9 @@ internal class KtSymbolByFirBuilder private constructor(
 
     fun buildSymbol(fir: FirDeclaration): KtSymbol {
         return when (fir) {
-            is FirClassLikeDeclaration<*> -> classifierBuilder.buildClassLikeSymbol(fir)
+            is FirClassLikeDeclaration -> classifierBuilder.buildClassLikeSymbol(fir)
             is FirTypeParameter -> classifierBuilder.buildTypeParameterSymbol(fir)
-            is FirCallableDeclaration<*> -> callableBuilder.buildCallableSymbol(fir)
+            is FirCallableDeclaration -> callableBuilder.buildCallableSymbol(fir)
             else -> throwUnexpectedElementError(fir)
         }
     }
@@ -138,15 +138,15 @@ internal class KtSymbolByFirBuilder private constructor(
         }
 
 
-        fun buildClassLikeSymbol(fir: FirClassLikeDeclaration<*>): KtClassLikeSymbol {
+        fun buildClassLikeSymbol(fir: FirClassLikeDeclaration): KtClassLikeSymbol {
             return when (fir) {
-                is FirClass<*> -> buildClassOrObjectSymbol(fir)
+                is FirClass -> buildClassOrObjectSymbol(fir)
                 is FirTypeAlias -> buildTypeAliasSymbol(fir)
                 else -> throwUnexpectedElementError(fir)
             }
         }
 
-        fun buildClassOrObjectSymbol(fir: FirClass<*>): KtClassOrObjectSymbol {
+        fun buildClassOrObjectSymbol(fir: FirClass): KtClassOrObjectSymbol {
             return when (fir) {
                 is FirAnonymousObject -> buildAnonymousObjectSymbol(fir)
                 is FirRegularClass -> buildNamedClassOrObjectSymbol(fir)
@@ -187,7 +187,7 @@ internal class KtSymbolByFirBuilder private constructor(
     }
 
     inner class FunctionLikeSymbolBuilder {
-        fun buildFunctionLikeSymbol(fir: FirFunction<*>): KtFunctionLikeSymbol {
+        fun buildFunctionLikeSymbol(fir: FirFunction): KtFunctionLikeSymbol {
             return when (fir) {
                 is FirSimpleFunction -> buildFunctionSymbol(fir)
                 is FirConstructor -> buildConstructorSymbol(fir)
@@ -213,7 +213,7 @@ internal class KtSymbolByFirBuilder private constructor(
     }
 
     inner class VariableLikeSymbolBuilder {
-        fun buildVariableLikeSymbol(fir: FirVariable<*>): KtVariableLikeSymbol {
+        fun buildVariableLikeSymbol(fir: FirVariable): KtVariableLikeSymbol {
             return when (fir) {
                 is FirProperty -> buildVariableSymbol(fir)
                 is FirValueParameter -> buildValueParameterSymbol(fir)
@@ -281,11 +281,11 @@ internal class KtSymbolByFirBuilder private constructor(
     }
 
     inner class CallableSymbolBuilder {
-        fun buildCallableSymbol(fir: FirCallableDeclaration<*>): KtCallableSymbol {
+        fun buildCallableSymbol(fir: FirCallableDeclaration): KtCallableSymbol {
             return when (fir) {
                 is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir)
-                is FirFunction<*> -> functionLikeBuilder.buildFunctionLikeSymbol(fir)
-                is FirVariable<*> -> variableLikeBuilder.buildVariableLikeSymbol(fir)
+                is FirFunction -> functionLikeBuilder.buildFunctionLikeSymbol(fir)
+                is FirVariable -> variableLikeBuilder.buildVariableLikeSymbol(fir)
                 else -> throwUnexpectedElementError(fir)
             }
         }

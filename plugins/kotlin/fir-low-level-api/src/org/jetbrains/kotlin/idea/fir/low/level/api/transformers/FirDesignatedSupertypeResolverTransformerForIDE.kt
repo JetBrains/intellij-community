@@ -122,7 +122,7 @@ internal class FirDesignatedSupertypeResolverTransformerForIDE(
                 if (value !is SupertypeComputationStatus.Computed) continue
                 for (reference in value.supertypeRefs) {
                     val classLikeDeclaration = reference.type.toSymbol(session)?.fir
-                    if (classLikeDeclaration !is FirClassLikeDeclaration<*>) continue
+                    if (classLikeDeclaration !is FirClassLikeDeclaration) continue
                     if (classLikeDeclaration is FirJavaClass) continue
                     if (visited.containsKey(classLikeDeclaration)) continue
                     val containingFile = moduleFileCache.getContainerFirFile(classLikeDeclaration) ?: continue
@@ -157,9 +157,9 @@ internal class FirDesignatedSupertypeResolverTransformerForIDE(
             "Invalid resolve phase of file. Should be IMPORTS but found ${designation.firFile.resolvePhase}"
         }
 
-        val targetDesignation = if (designation.declaration !is FirClassLikeDeclaration<*>) {
+        val targetDesignation = if (designation.declaration !is FirClassLikeDeclaration) {
             val resolvableTarget = designation.path.lastOrNull() ?: return
-            check(resolvableTarget is FirClassLikeDeclaration<*>)
+            check(resolvableTarget is FirClassLikeDeclaration)
             val targetPath = designation.path.dropLast(1)
             FirDeclarationDesignationWithFile(targetPath, resolvableTarget, designation.firFile)
         } else designation
@@ -180,7 +180,7 @@ internal class FirDesignatedSupertypeResolverTransformerForIDE(
 
     override fun ensureResolved(declaration: FirDeclaration) {
         when (declaration) {
-            is FirFunction<*>, is FirProperty, is FirEnumEntry, is FirField, is FirAnonymousInitializer -> Unit
+            is FirFunction, is FirProperty, is FirEnumEntry, is FirField, is FirAnonymousInitializer -> Unit
             is FirRegularClass -> {
                 declaration.ensurePhase(FirResolvePhase.SUPER_TYPES)
                 check(declaration.superTypeRefs.all { it is FirResolvedTypeRef })

@@ -43,7 +43,7 @@ internal fun FirLazyDeclarationResolver.lazyResolveDeclaration(
     when (toResolveType) {
         ResolveType.NoResolve -> return
         ResolveType.CallableReturnType -> {
-            require(firDeclaration is FirCallableDeclaration<*>) {
+            require(firDeclaration is FirCallableDeclaration) {
                 "CallableReturnType type cannot be applied to ${firDeclaration::class.qualifiedName}"
             }
             //Need to be sync
@@ -82,7 +82,7 @@ internal fun FirLazyDeclarationResolver.lazyResolveDeclaration(
             }
         }
         ResolveType.BodyResolveWithChildren, ResolveType.CallableBodyResolve -> {
-            require(firDeclaration is FirCallableDeclaration<*> || toResolveType != ResolveType.CallableBodyResolve) {
+            require(firDeclaration is FirCallableDeclaration || toResolveType != ResolveType.CallableBodyResolve) {
                 "BodyResolveWithChildren and CallableBodyResolve types cannot be applied to ${firDeclaration::class.qualifiedName}"
             }
             lazyResolveDeclaration(
@@ -114,7 +114,7 @@ internal fun FirLazyDeclarationResolver.lazyResolveDeclaration(
             }
         }
         ResolveType.ClassSuperTypes -> {
-            require(firDeclaration is FirClassLikeDeclaration<*>) {
+            require(firDeclaration is FirClassLikeDeclaration) {
                 "ClassSuperTypes type cannot be applied to ${firDeclaration::class.qualifiedName}"
             }
             lazyResolveDeclaration(
@@ -126,7 +126,7 @@ internal fun FirLazyDeclarationResolver.lazyResolveDeclaration(
             )
         }
         ResolveType.CallableContracts -> {
-            require(firDeclaration is FirCallableDeclaration<*>) {
+            require(firDeclaration is FirCallableDeclaration) {
                 "CallableContracts type cannot be applied to ${firDeclaration::class.qualifiedName}"
             }
             lazyResolveDeclaration(

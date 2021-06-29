@@ -49,5 +49,5 @@ private fun FirDeclaration.invalidModalityError(): Nothing {
 internal fun <F : FirMemberDeclaration> KtFirSymbol<F>.getVisibility(phase: FirResolvePhase = FirResolvePhase.STATUS): Visibility =
     firRef.withFir(phase) { fir -> fir.visibility }
 
-internal fun KtFirSymbol<FirCallableDeclaration<*>>.getCallableIdIfNonLocal(): CallableId? =
+internal fun KtFirSymbol<FirCallableDeclaration>.getCallableIdIfNonLocal(): CallableId? =
     firRef.withFir { fir -> fir.symbol.callableId.takeUnless { it.isLocal } }

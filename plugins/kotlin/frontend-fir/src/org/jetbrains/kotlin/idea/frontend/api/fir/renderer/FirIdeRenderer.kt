@@ -114,7 +114,7 @@ internal class FirIdeRenderer private constructor(
             return if (classKind == ClassKind.INTERFACE) Modality.ABSTRACT else Modality.FINAL
         }
         val containingFirClass = containingDeclaration as? FirRegularClass ?: return Modality.FINAL
-        if (this !is FirCallableMemberDeclaration<*>) return Modality.FINAL
+        if (this !is FirCallableMemberDeclaration) return Modality.FINAL
         if (isOverride) {
             if (containingFirClass.modality != Modality.FINAL) return Modality.OPEN
         }
@@ -125,7 +125,7 @@ internal class FirIdeRenderer private constructor(
     }
 
     private fun StringBuilder.renderModalityForCallable(
-        callable: FirCallableMemberDeclaration<*>,
+        callable: FirCallableMemberDeclaration,
         containingDeclaration: FirDeclaration?
     ) {
         val modality = callable.modality ?: return
@@ -136,7 +136,7 @@ internal class FirIdeRenderer private constructor(
         }
     }
 
-    private fun StringBuilder.renderOverride(callableMember: FirCallableMemberDeclaration<*>) {
+    private fun StringBuilder.renderOverride(callableMember: FirCallableMemberDeclaration) {
         if (RendererModifier.OVERRIDE !in options.modifiers) return
         renderModifier(callableMember.isOverride || options.forceRenderingOverrideModifier, "override")
     }
@@ -314,7 +314,7 @@ internal class FirIdeRenderer private constructor(
             appendLine()
             appendTabs()
             val containingClass = containingDeclaration
-            check(containingClass is FirDeclaration && (containingClass is FirClass<*> || containingClass is FirEnumEntry)) {
+            check(containingClass is FirDeclaration && (containingClass is FirClass || containingClass is FirEnumEntry)) {
                 "Invalid renderer containing declaration for constructor"
             }
             if (options.renderDeclarationHeader) {
@@ -577,7 +577,7 @@ internal class FirIdeRenderer private constructor(
         }
     }
 
-    private fun StringBuilder.renderReceiver(firCallableDeclaration: FirCallableDeclaration<*>) {
+    private fun StringBuilder.renderReceiver(firCallableDeclaration: FirCallableDeclaration) {
         val receiverType = firCallableDeclaration.receiverTypeRef
         if (receiverType != null) {
             if (options.renderDeclarationHeader) {
@@ -637,13 +637,13 @@ internal class FirIdeRenderer private constructor(
         }
     }
 
-    private fun StringBuilder.renderValVarPrefix(variable: FirVariable<*>, isInPrimaryConstructor: Boolean = false) {
+    private fun StringBuilder.renderValVarPrefix(variable: FirVariable, isInPrimaryConstructor: Boolean = false) {
         if (!isInPrimaryConstructor || variable !is FirValueParameter) {
             append(if (variable.isVar) "var" else "val").append(" ")
         }
     }
 
-    private fun StringBuilder.renderVariable(variable: FirVariable<*>) {
+    private fun StringBuilder.renderVariable(variable: FirVariable) {
         val typeToRender = variable.returnTypeRef
         val isVarArg = (variable as? FirValueParameter)?.isVararg ?: false
         renderModifier(isVarArg, "vararg")
@@ -657,7 +657,7 @@ internal class FirIdeRenderer private constructor(
         }
     }
 
-    private fun StringBuilder.renderSuperTypes(klass: FirClass<*>) {
+    private fun StringBuilder.renderSuperTypes(klass: FirClass) {
 
         if (klass.defaultType().isNothing) return
 

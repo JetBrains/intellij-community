@@ -54,9 +54,9 @@ private fun FirRegularClass.collectForNonLocal(): List<FirDeclaration> {
 
 private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclaration>? {
     val containingClass = when (declaration) {
-        is FirCallableDeclaration<*> -> {
+        is FirCallableDeclaration -> {
             if (declaration.symbol.callableId.isLocal) return null
-            if ((declaration as? FirCallableMemberDeclaration<*>)?.status?.visibility == Visibilities.Local) return null
+            if ((declaration as? FirCallableMemberDeclaration)?.status?.visibility == Visibilities.Local) return null
             when (declaration) {
                 is FirSimpleFunction, is FirProperty, is FirField, is FirConstructor -> {
                     val klass = declaration.containingClass() ?: return emptyList()
@@ -66,7 +66,7 @@ private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclara
                 else -> return null
             }
         }
-        is FirClassLikeDeclaration<*> -> {
+        is FirClassLikeDeclaration -> {
             if (declaration.isLocal) return null
             declaration.symbol.classId.outerClassId?.let(declaration.moduleData.session.firProvider::getFirClassifierByFqName)
         }

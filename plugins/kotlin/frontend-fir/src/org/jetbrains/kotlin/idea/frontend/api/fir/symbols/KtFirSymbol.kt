@@ -45,13 +45,13 @@ private tailrec fun FirDeclaration.ktSymbolOrigin(): KtSymbolOrigin = when (orig
         }
     }
     FirDeclarationOrigin.ImportedFromObject -> {
-        val importedFromObjectData = (this as FirCallableDeclaration<*>).importedFromObjectData
+        val importedFromObjectData = (this as FirCallableDeclaration).importedFromObjectData
             ?: error("Declaration has ImportedFromObject origin, but no importedFromObjectData present")
 
         importedFromObjectData.original.ktSymbolOrigin()
     }
     else -> {
-        val overridden = (this as? FirCallableDeclaration<*>)?.originalIfFakeOverride()
+        val overridden = (this as? FirCallableDeclaration)?.originalIfFakeOverride()
             ?: throw InvalidFirDeclarationOriginForSymbol(this)
         overridden.ktSymbolOrigin()
     }

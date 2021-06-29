@@ -45,7 +45,7 @@ internal class KtFirSymbolProvider(
     }
 
     override fun getFunctionLikeSymbol(psi: KtNamedFunction): KtFunctionLikeSymbol = withValidityAssertion {
-        psi.withFirDeclarationOfType<FirFunction<*>, KtFunctionLikeSymbol>(resolveState) { fir ->
+        psi.withFirDeclarationOfType<FirFunction, KtFunctionLikeSymbol>(resolveState) { fir ->
             when (fir) {
                 is FirSimpleFunction -> firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(fir)
                 is FirAnonymousFunction -> firSymbolBuilder.functionLikeBuilder.buildAnonymousFunctionSymbol(fir)
@@ -104,7 +104,7 @@ internal class KtFirSymbolProvider(
     }
 
     override fun getClassOrObjectSymbol(psi: KtClassOrObject): KtClassOrObjectSymbol = withValidityAssertion {
-        psi.withFirDeclarationOfType<FirClass<*>, KtClassOrObjectSymbol>(resolveState) {
+        psi.withFirDeclarationOfType<FirClass, KtClassOrObjectSymbol>(resolveState) {
             firSymbolBuilder.classifierBuilder.buildClassOrObjectSymbol(it)
         }
     }
