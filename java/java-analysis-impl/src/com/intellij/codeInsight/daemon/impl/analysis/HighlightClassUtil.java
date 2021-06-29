@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Checks and Highlights problems with classes
@@ -1101,7 +1101,7 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {
+   public static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
       if (PsiUtil.isLocalClass(aClass)) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
@@ -1111,7 +1111,8 @@ public final class HighlightClassUtil {
 
       PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
       if (permittedTypes.length > 0) {
-        if (Arrays.stream(permittedTypes).map(permittedType -> permittedType.resolve()).anyMatch(permittedClass -> aClass.equals(permittedClass))) {
+        PsiManager manager = superClass.getManager();
+        if (ContainerUtil.exists(permittedTypes, permittedType -> manager.areElementsEquivalent(aClass, permittedType.resolve()))) {
           return null;
         }
       }
@@ -1187,7 +1188,8 @@ public final class HighlightClassUtil {
         @Nullable PsiElement resolve = permitted.resolve();
         if (resolve instanceof PsiClass) {
           PsiClass inheritorClass = (PsiClass)resolve;
-          if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> aClass.equals(type.resolve()))) {
+          PsiManager manager = inheritorClass.getManager();
+          if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> manager.areElementsEquivalent(aClass, type.resolve()))) {
             HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
               .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
                                                              inheritorClass.getName(),
