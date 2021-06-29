@@ -21,4 +21,8 @@ class ForMultiLanguageSupport {
   // also releases ThreadContext.consumer reference
 
   /** An int list where most values are in the range 0..2^16 */
+
+  // contains only letters, digits, numbers, underscores ("_")
+
+  // An iterable of bundle instances
 }
