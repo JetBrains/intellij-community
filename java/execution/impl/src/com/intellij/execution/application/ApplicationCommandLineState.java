@@ -40,8 +40,8 @@ public abstract class ApplicationCommandLineState<T extends
     params.setMainClass(myConfiguration.getRunClass());
     setupJavaParameters(params);
 
+    final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     ReadAction.run(() -> {
-      final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
@@ -53,9 +53,9 @@ public abstract class ApplicationCommandLineState<T extends
       else {
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
       }
-
-      setupModulePath(params, module);
     });
+
+    setupModulePath(params, module);
 
     params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
@@ -74,13 +74,14 @@ public abstract class ApplicationCommandLineState<T extends
 
   private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
     if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
-      PsiJavaModule mainModule = DumbService.getInstance(module.getProject()).computeWithAlternativeResolveEnabled(
-        () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass())));
+      DumbService dumbService = DumbService.getInstance(module.getProject());
+      PsiJavaModule mainModule = ReadAction.compute(() -> dumbService.computeWithAlternativeResolveEnabled(
+        () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass()))));
       if (mainModule != null) {
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
-        if (!inLibrary || JavaModuleGraphUtil.findDescriptorByModule(module.getModule(), false) != null) {
+        if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module.getModule(), false)) != null) {
           params.setModuleName(mainModule.getName());
-          JavaParametersUtil.putDependenciesOnModulePath(params.getModulePath(), params.getClassPath(), mainModule);
+          dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params.getModulePath(), params.getClassPath(), mainModule));
         }
       }
     }
