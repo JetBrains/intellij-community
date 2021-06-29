@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 class PatternIfCanBeSwitch {
 
   void simplePatternMatching(@NotNull Object o) {
-   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof Integer i) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof Integer i) {
       // do this
     } else if (o instanceof String s) {
       // do that
@@ -12,7 +12,7 @@ class PatternIfCanBeSwitch {
   }
 
   void guardedPatternMatching(@NotNull Object o) {
-   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
       // do this
     } else if (o instanceof String s) {
       // do that
@@ -20,7 +20,7 @@ class PatternIfCanBeSwitch {
   }
 
   void patternMatchingWithNull(@Nullable Object o) {
-   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
       // do this
     } else if (o instanceof String s) {
       // do that
@@ -30,7 +30,7 @@ class PatternIfCanBeSwitch {
   }
 
   void patternMatchingWithNullInSameCondition(@Nullable Object o) {
-   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof Integer i && i > 0 && i < 10) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof Integer i && i > 0 && i < 10) {
       // do this
     } else if (o instanceof String s || o == null) {
       // do that
@@ -38,7 +38,7 @@ class PatternIfCanBeSwitch {
   }
 
   void patternMatchingImplicitNull(@Nullable Object o) {
-   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof Integer i && i > 0) {
       // do this
     } else if (o instanceof String s) {
       // do that
