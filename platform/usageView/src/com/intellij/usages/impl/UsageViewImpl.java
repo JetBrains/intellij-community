@@ -2038,15 +2038,10 @@ public class UsageViewImpl implements UsageViewEx {
           .traverse()
           .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
                           o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .flatMap(o -> {
-            if (o instanceof UsageInFile) {
-              VirtualFile file = ((UsageInFile)o).getFile();
-              return file != null ? Collections.singletonList(file) : Collections.emptyList();
-            }
-            return o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
-                   o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
-                   Collections.emptyList();
-          })
+          .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
+                        o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
+                        o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
+                        Collections.emptyList())
           .filter(VirtualFile::isValid)
           .unique()
           .toArray(VirtualFile.EMPTY_ARRAY);
