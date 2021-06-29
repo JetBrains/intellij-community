@@ -1,5 +1,7 @@
 // "Import" "false"
 
+// ACTION: Create extension property 'A.Companion.foo'
+// ACTION: Create member property 'A.Companion.foo'
 // ACTION: Create object 'foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo

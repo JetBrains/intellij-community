@@ -4169,6 +4169,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/doNotStripPrefix.kt");
                 }
 
+                @TestMetadata("extensionFunOnClassNoClassObject.kt")
+                public void testExtensionFunOnClassNoClassObject() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnClassNoClassObject.kt");
+                }
+
+                @TestMetadata("extensionFunOnClassNoClassObject2.kt")
+                public void testExtensionFunOnClassNoClassObject2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnClassNoClassObject2.kt");
+                }
+
                 @TestMetadata("extensionFunOnTrait.kt")
                 public void testExtensionFunOnTrait() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnTrait.kt");
@@ -4212,6 +4222,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("funOnClassNoClassObject.kt")
                 public void testFunOnClassNoClassObject() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassNoClassObject.kt");
+                }
+
+                @TestMetadata("funOnClassNoClassObject2.kt")
+                public void testFunOnClassNoClassObject2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassNoClassObject2.kt");
                 }
 
                 @TestMetadata("funOnClassObject.kt")
@@ -4474,6 +4489,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     @TestMetadata("classNoExplicitReceiver.kt")
                     public void testClassNoExplicitReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/classNoExplicitReceiver.kt");
+                    }
+
+                    @TestMetadata("companion.kt")
+                    public void testCompanion() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/companion.kt");
                     }
 
                     @TestMetadata("explicitReceiverOfContainingClass.kt")
@@ -5717,6 +5737,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/property/extensionRefInImport.kt");
                 }
 
+                @TestMetadata("extensionValOnClassNoClassObject.kt")
+                public void testExtensionValOnClassNoClassObject() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnClassNoClassObject.kt");
+                }
+
+                @TestMetadata("extensionValOnClassNoClassObject2.kt")
+                public void testExtensionValOnClassNoClassObject2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnClassNoClassObject2.kt");
+                }
+
                 @TestMetadata("extensionWithTypeParameterAsReceiver.kt")
                 public void testExtensionWithTypeParameterAsReceiver() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/property/extensionWithTypeParameterAsReceiver.kt");
@@ -5870,6 +5900,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("valOnClassNoClassObject.kt")
                 public void testValOnClassNoClassObject() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/property/valOnClassNoClassObject.kt");
+                }
+
+                @TestMetadata("valOnClassNoClassObject2.kt")
+                public void testValOnClassNoClassObject2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/property/valOnClassNoClassObject2.kt");
                 }
 
                 @TestMetadata("valOnClassObject.kt")

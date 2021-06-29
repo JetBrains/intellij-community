@@ -92,6 +92,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
             callableInfosFactory: (E) -> List<CallableInfo>?
         ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(element): CreateParameterData<E>? {
             val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
+            if (info.receiverTypeInfo.staticContextRequired) return null
 
             val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
             val receiverTypeCandidate = builder.computeTypeCandidates(info.receiverTypeInfo).firstOrNull()
