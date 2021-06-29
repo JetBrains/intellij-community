@@ -6,9 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -16,7 +14,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog

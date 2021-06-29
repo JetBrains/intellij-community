@@ -363,7 +363,6 @@ fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue
     )
 }
 
-fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }
 private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
   cell {
     column1()

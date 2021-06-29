@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.configurable
 
 import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.actions.RevealFileAction
-import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundSearchableConfigurable

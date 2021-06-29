@@ -176,3 +176,5 @@ fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
   subRowsEnabled = predicate()
   predicate.addListener { subRowsEnabled = it }
 }
+
+fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

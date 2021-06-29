@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts
 
-import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
