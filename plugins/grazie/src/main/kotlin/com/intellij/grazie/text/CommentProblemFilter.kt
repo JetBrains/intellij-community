@@ -18,7 +18,7 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (isTodoComment(text.commonParent.containingFile, text)) {
         return true
       }
-      if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && isNumberRange(problem, text)) {
+      if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && (isNumberRange(problem, text) || isPathPart(problem, text))) {
         return true
       }
     }
@@ -45,6 +45,12 @@ internal class CommentProblemFilter : ProblemFilter() {
     val range = problem.highlightRange
     return range.startOffset > 0 && range.endOffset < text.length &&
            text[range.startOffset - 1].isDigit() && text[range.endOffset].isDigit()
+  }
+
+  private fun isPathPart(problem: TextProblem, text: TextContent): Boolean {
+    val range = problem.highlightRange
+    return text.subSequence(0, range.startOffset).endsWith('/') ||
+           text.subSequence(range.endOffset, text.length).startsWith('/')
   }
 
   // the _todo_ word spoils the grammar of what follows
