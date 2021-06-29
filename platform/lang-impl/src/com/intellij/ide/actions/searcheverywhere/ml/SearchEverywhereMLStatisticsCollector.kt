@@ -122,7 +122,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 3)
+    private val GROUP = EventLogGroup("mlse.log", 4)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
