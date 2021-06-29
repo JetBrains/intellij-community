@@ -7,9 +7,11 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import java.util.*
 
 @State(name = "RemoteTargetsManager", storages = [Storage("remote-targets.xml")])
 class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsManager.TargetsListState> {
@@ -57,12 +59,14 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState =
       OneTargetState().also {
         it.loadFromConfiguration(config)
+        it.uuid = config.uuid
         it.runtimes = config.runtimes.state.configs
       }
 
     override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? {
       val result = super.fromOneState(state)
       if (result != null && state is OneTargetState) {
+        result.uuid = state.uuid ?: UUID.randomUUID().toString()
         result.runtimes.loadState(state.runtimes)
       }
       return result
@@ -76,6 +80,9 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
 
   @Tag("target")
   class OneTargetState : ContributedConfigurationsList.ContributedStateBase() {
+    @get:Attribute("uuid")
+    var uuid by string()
+
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
     var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
