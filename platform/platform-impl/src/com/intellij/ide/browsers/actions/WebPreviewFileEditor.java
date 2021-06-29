@@ -30,29 +30,13 @@ import java.beans.PropertyChangeListener;
 public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
-  private String myUrl;
+  private final String myUrl;
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
     myPanel = new JCEFHtmlPanel(file.getPreviewUrl().toExternalForm());
-    Alarm alarm = new Alarm(this);
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
-    if (psiFile != null) {
-      myUrl = file.getPreviewUrl().toExternalForm();
-      reloadPage();
-      project.getMessageBus().connect(alarm)
-        .subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-                   new AnyPsiChangeListener() {
-                     @Override
-                     public void afterPsiChanged(boolean isPhysical) {
-                       PsiFile psi = PsiManager.getInstance(project).findFile(myFile);
-                       if (psi != null) {
-                         alarm.cancelAllRequests();
-                         alarm.addRequest(() -> reloadPage(), 100);
-                       }
-                     }
-                   });
-    }
+    myUrl = file.getPreviewUrl().toExternalForm();
+    reloadPage();
   }
 
   private void reloadPage() {

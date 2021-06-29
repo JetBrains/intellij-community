@@ -51,10 +51,7 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
       if (browserRequest == null) return;
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(browserRequest, preferLocalFileUrl);
       if (!urls.isEmpty()) {
-        //hack to disable reload
-        List<Url> processedUrls = ContainerUtil.map(urls, el -> el.removeParameter("_ij_reload"));
-        
-        BaseOpenInBrowserActionKt.chooseUrl(processedUrls).onSuccess((url) -> {
+        BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {
           WebPreviewVirtualFile file = new WebPreviewVirtualFile(virtualFile, url);
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
             OpenInRightSplitAction.Companion.openInRightSplit(
