@@ -16,8 +16,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
@@ -41,8 +41,9 @@ public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase
   }
 
   @Test
-  public void testImportTiming() {
+  public void testImportTiming() throws IOException {
     GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.jvmargs=-Xmx2g");
+    createSettingsFile("");
     importProjectUsingSingeModulePerGradleProject();
     long startTime = System.currentTimeMillis();
     importProjectUsingSingeModulePerGradleProject();
@@ -70,8 +71,9 @@ public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase
   }
 
   @Test
-  public void testImportPerSourceSetTiming() {
+  public void testImportPerSourceSetTiming() throws IOException {
     GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.jvmargs=-Xmx2g");
+    createSettingsFile("");
     importProject();
     long startTime = System.currentTimeMillis();
     importProject();
@@ -108,8 +110,8 @@ public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase
 
   protected long sumByPrefix(Map<String, Long> trace, String prefix) {
     return trace.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(prefix))
-                .mapToLong(Map.Entry::getValue)
-                .sum();
+      .filter(entry -> entry.getKey().startsWith(prefix))
+      .mapToLong(Map.Entry::getValue)
+      .sum();
   }
 }
