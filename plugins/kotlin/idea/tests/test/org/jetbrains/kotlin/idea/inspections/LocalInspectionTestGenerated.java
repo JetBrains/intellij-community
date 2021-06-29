@@ -12082,6 +12082,94 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceMapIndexedWithListGenerator")
+    public static class ReplaceMapIndexedWithListGenerator extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/anonymousFunction.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/basic2.kt");
+        }
+
+        @TestMetadata("basic3.kt")
+        public void testBasic3() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/basic3.kt");
+        }
+
+        @TestMetadata("destructingDeclarationParameter.kt")
+        public void testDestructingDeclarationParameter() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/destructingDeclarationParameter.kt");
+        }
+
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiver2.kt")
+        public void testImplicitReceiver2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/implicitReceiver2.kt");
+        }
+
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/importAlias.kt");
+        }
+
+        @TestMetadata("insideLambdaParameter.kt")
+        public void testInsideLambdaParameter() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/insideLambdaParameter.kt");
+        }
+
+        @TestMetadata("iterable.kt")
+        public void testIterable() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/iterable.kt");
+        }
+
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/labeledReturn.kt");
+        }
+
+        @TestMetadata("labeledReturn2.kt")
+        public void testLabeledReturn2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/labeledReturn2.kt");
+        }
+
+        @TestMetadata("labeledReturn3.kt")
+        public void testLabeledReturn3() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/labeledReturn3.kt");
+        }
+
+        @TestMetadata("thisReceiver.kt")
+        public void testThisReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/thisReceiver.kt");
+        }
+
+        @TestMetadata("usedValue.kt")
+        public void testUsedValue() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/usedValue.kt");
+        }
+
+        @TestMetadata("usedValue2.kt")
+        public void testUsedValue2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceMapIndexedWithListGenerator/usedValue2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty")
     public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
