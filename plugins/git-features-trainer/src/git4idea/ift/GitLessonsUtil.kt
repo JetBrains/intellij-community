@@ -1,13 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift
 
+import com.intellij.dvcs.push.VcsPushAction
+import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
@@ -25,14 +33,13 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
-import training.dsl.LearningBalloonConfig
-import training.dsl.LessonContext
-import training.dsl.TaskContext
-import training.dsl.subscribeForMessageBus
+import training.dsl.*
 import training.learn.lesson.LessonManager
 import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
+import javax.swing.Icon
+import kotlin.reflect.KClass
 
 object GitLessonsUtil {
   fun LessonContext.checkoutBranch(branchName: String) {
@@ -191,5 +198,49 @@ object GitLessonsUtil {
                                    callbackId), callback = {}))
       }
     }
+  }
+
+  fun TaskContext.openPushDialogText(@Nls introduction: String) {
+    openGitDialogText(introduction, DvcsBundle.message("action.push").dropMnemonic(),
+                      "Vcs.Push", AllIcons.Vcs.Push, VcsPushAction::class)
+  }
+
+  fun TaskContext.openUpdateDialogText(@Nls introduction: String) {
+    openGitDialogText(introduction, VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name")),
+                      "Vcs.UpdateProject", AllIcons.Actions.CheckOut, CommonUpdateProjectAction::class)
+  }
+
+  fun TaskContext.openCommitWindowText(@Nls introduction: String) {
+    val commitText = VcsBundle.message("commit.dialog.configurable")
+    openGitWindowText(introduction,
+                      GitLessonsBundle.message("git.open.tool.window", 0, action("CheckinProject"),
+                                               icon(AllIcons.Actions.Commit), strong(commitText)),
+                      GitLessonsBundle.message("git.open.tool.window", 1, action("CheckinProject"),
+                                               "", strong(commitText)),
+                      CommonCheckinProjectAction::class)
+  }
+
+  private fun <T : AnAction> TaskContext.openGitDialogText(@Nls introduction: String,
+                                                           @Nls dialogName: String,
+                                                           actionId: String,
+                                                           icon: Icon,
+                                                           actionClass: KClass<T>) {
+    openGitWindowText(introduction,
+                      GitLessonsBundle.message("git.open.dialog", 0, action(actionId), icon(icon), strong(dialogName)),
+                      GitLessonsBundle.message("git.open.dialog", 1, action(actionId), "", strong(dialogName)),
+                      actionClass)
+  }
+
+  private fun <T : AnAction> TaskContext.openGitWindowText(@Nls introduction: String,
+                                                           @Nls suggestionWithIcon: String,
+                                                           @Nls suggestionWithoutIcon: String,
+                                                           actionClass: KClass<T>) {
+    if (UISettings.instance.run { showNavigationBar || showMainToolbar }) {
+      text("$introduction $suggestionWithIcon")
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+        actionClass.isInstance(ui.action)
+      }
+    }
+    else text("$introduction $suggestionWithoutIcon")
   }
 }

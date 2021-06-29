@@ -341,7 +341,7 @@ fun TaskRuntimeContext.closeAllFindTabs() {
   }
 }
 
-fun String.dropMnemonic(): String {
+fun @Nls String.dropMnemonic(): @Nls String {
   return TextWithMnemonic.parse(this).dropMnemonic(true).text
 }
 

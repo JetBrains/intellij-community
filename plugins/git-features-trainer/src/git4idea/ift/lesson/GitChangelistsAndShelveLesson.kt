@@ -24,6 +24,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
+import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.dsl.*
@@ -112,8 +113,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task("CheckinProject") {
-      text(GitLessonsBundle.message("git.changelists.shelf.open.commit.window", action(it),
-                                    strong(VcsBundle.message("commit.dialog.configurable"))))
+      openCommitWindowText(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }

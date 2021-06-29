@@ -28,6 +28,7 @@ import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -70,10 +71,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     showWarningIfModalCommitEnabled()
 
-    val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
-      text(GitLessonsBundle.message("git.commit.open.commit.window", action("CheckinProject"),
-                                    strong(commitWindowName)))
+      openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
@@ -95,6 +94,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task { highlightVcsChange(secondFileName, highlightBorder = false) }
 
+    val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
       text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 300))
