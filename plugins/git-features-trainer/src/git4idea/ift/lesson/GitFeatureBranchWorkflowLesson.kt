@@ -34,6 +34,7 @@ import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
 import java.io.File
 import javax.swing.JDialog
@@ -165,7 +166,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.current")
+      val repositories = GitRepositoryManager.getInstance(project).repositories
+      val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.branch",
+                                                    GitBranchPopupActions.getCurrentBranchTruncatedPresentation(project, repositories))
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
       triggerByListItemAndHighlight { item -> item.toString().contains(checkoutAndRebaseText) }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
