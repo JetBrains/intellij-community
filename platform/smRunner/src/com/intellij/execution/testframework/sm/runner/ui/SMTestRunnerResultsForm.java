@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -21,6 +21,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,7 +36,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
@@ -44,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -170,10 +172,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
       //ensure scroll to source on explicit selection only
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
-        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(testProxy, this);
-        if (descriptor != null) {
-          OpenSourceUtil.navigate(false, descriptor);
-        }
+        ReadAction
+          .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
+          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+            if (descriptor != null) {
+              OpenSourceUtil.navigate(false, descriptor);
+            }
+          })
+          .expireWith(this)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
 
