@@ -47,7 +47,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
     companion object {
 
-        private val ToolWindowId = PackageSearchBundle.message("packagesearch.ui.toolwindow.title")
+        private val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)
 
@@ -65,7 +65,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
             .map(Dispatchers.AppUI) {
                 RegisterToolWindowTask.closable(
                     ToolWindowId,
-                    PackageSearchBundle.messagePointer("toolwindow.stripe.Packages"),
+                    PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
                     PackageSearchIcons.ArtifactSmall
                 )
             }
@@ -82,7 +82,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         toolWindow: ToolWindow,
         project: Project
     ): Unit = with(toolWindow) {
-        title = PackageSearchBundle.message("toolwindow.stripe.Packages")
+        title = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         contentManager.addSelectionChangedListener { event ->
             if (this is ToolWindowEx) {
