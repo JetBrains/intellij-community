@@ -2,9 +2,7 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,17 +14,19 @@ import static java.awt.event.InputEvent.BUTTON1_MASK;
 
 public class WindowMoveListener extends WindowMouseListener {
 
-  public static void install(@NotNull Component component, @NotNull Disposable disposable) {
-    WindowMoveListener listener = new WindowMoveListener(component);
-    component.addMouseListener(listener);
-    component.addMouseMotionListener(listener);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ListenerUtil.removeMouseListener(component, listener);
-        ListenerUtil.removeMouseMotionListener(component, listener);
-      }
-    });
+  public WindowMoveListener installTo(@NotNull Component component) {
+    component.addMouseListener(this);
+    component.addMouseMotionListener(this);
+    return this;
+  }
+
+  public void uninstallFrom(@NotNull Component component) {
+    component.removeMouseListener(this);
+    component.removeMouseMotionListener(this);
+  }
+
+  public WindowMoveListener() {
+    super(null);
   }
 
   public WindowMoveListener(Component content) {
