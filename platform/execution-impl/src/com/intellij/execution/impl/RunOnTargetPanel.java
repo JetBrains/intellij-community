@@ -9,7 +9,6 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +27,7 @@ public class RunOnTargetPanel {
   private final Project myProject;
   private final SettingsEditor<RunnerAndConfigurationSettings> myEditor;
   private final JPanel myPanel;
-  private final ComboBox myRunOnComboBox;
+  private final RunOnTargetComboBox myRunOnComboBox;
   private String myDefaultTargetName;
 
   public RunOnTargetPanel(RunnerAndConfigurationSettings settings, SettingsEditor<RunnerAndConfigurationSettings> editor) {
@@ -38,9 +37,10 @@ public class RunOnTargetPanel {
     myRunOnComboBox = new RunOnTargetComboBox(myProject);
     ActionLink actionLink =
       new ActionLink(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), e -> {
-        String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
-        LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
-        TargetEnvironmentsConfigurable targetEnvironmentsConfigurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
+        String selectedName = myRunOnComboBox.getSelectedTargetName();
+        LanguageRuntimeType<?> languageRuntime = myRunOnComboBox.getDefaultLanguageRuntimeType();
+        TargetEnvironmentsConfigurable targetEnvironmentsConfigurable =
+          new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
         if (targetEnvironmentsConfigurable.openForEditing()) {
           TargetEnvironmentConfiguration lastEdited = targetEnvironmentsConfigurable.getSelectedTargetConfig();
           String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
@@ -60,8 +60,8 @@ public class RunOnTargetPanel {
       .withLabel(ExecutionBundle.message("run.on"))
       .withComment(ExecutionBundle.message("edit.run.configuration.run.configuration.run.on.comment"))
       .addToPanel(addTo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
-                                                       GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                       JBUI.emptyInsets(), 0, 0), false);
+                                                GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                JBUI.emptyInsets(), 0, 0), false);
     JLabel runOnLabel = UIUtil.findComponentOfType(addTo, JLabel.class);
     if (runOnLabel != null && nameLabel != null) {
       runOnLabel.setLabelFor(myRunOnComboBox);
@@ -73,7 +73,7 @@ public class RunOnTargetPanel {
     }
 
     myRunOnComboBox.addActionListener(e -> {
-      String chosenTarget = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
+      String chosenTarget = myRunOnComboBox.getSelectedTargetName();
       if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
         setTargetName(chosenTarget);
       }
@@ -90,7 +90,7 @@ public class RunOnTargetPanel {
     if (targetAware) {
       String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
       LanguageRuntimeType<?> defaultRuntime = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType();
-      ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeType(defaultRuntime);
+      myRunOnComboBox.setDefaultLanguageRuntimeType(defaultRuntime);
       resetRunOnComboBox(defaultTargetName);
       setTargetName(defaultTargetName);
     }
@@ -115,11 +115,11 @@ public class RunOnTargetPanel {
   }
 
   private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
-    ((RunOnTargetComboBox)myRunOnComboBox).initModel();
+    myRunOnComboBox.initModel();
     List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
-    ((RunOnTargetComboBox)myRunOnComboBox).addTargets(ContainerUtil.filter(configs, configuration -> {
+    myRunOnComboBox.addTargets(ContainerUtil.filter(configs, configuration -> {
       return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
     }));
-    ((RunOnTargetComboBox)myRunOnComboBox).selectTarget(targetNameToChoose);
+    myRunOnComboBox.selectTarget(targetNameToChoose);
   }
 }
