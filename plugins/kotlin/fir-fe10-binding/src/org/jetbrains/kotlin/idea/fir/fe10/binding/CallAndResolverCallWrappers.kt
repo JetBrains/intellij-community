@@ -32,7 +32,7 @@ private fun FirExpression?.toExpressionReceiverValue(context: FE10BindingContext
 
     if (this is FirThisReceiverExpression) {
         val ktClassSymbol =
-            context.ktAnalysisSessionFacade.buildClassLikeSymbol(calleeReference.boundSymbol?.fir as FirClassLikeDeclaration<*>)
+            context.ktAnalysisSessionFacade.buildClassLikeSymbol(calleeReference.boundSymbol?.fir as FirClassLikeDeclaration)
         return ImplicitClassReceiver(ktClassSymbol.toDeclarationDescriptor(context) as ClassDescriptor)
     }
     val expression = realPsi.safeAs<KtExpression>() ?: context.implementationPostponed()

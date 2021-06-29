@@ -53,7 +53,7 @@ internal class FirIdeProvider(
 
     override val isPhasedFirAllowed: Boolean get() = true
 
-    override fun getFirClassifierByFqName(classId: ClassId): FirClassLikeDeclaration<*>? =
+    override fun getFirClassifierByFqName(classId: ClassId): FirClassLikeDeclaration? =
         providerHelper.getFirClassifierByFqName(classId)
 
     override fun getFirClassifierContainerFile(fqName: ClassId): FirFile {

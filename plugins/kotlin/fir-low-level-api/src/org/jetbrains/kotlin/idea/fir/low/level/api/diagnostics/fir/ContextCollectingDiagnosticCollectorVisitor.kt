@@ -55,8 +55,8 @@ internal object PersistenceContextCollector {
         declaration: FirDeclaration,
     ): PersistentCheckerContext {
         val isLocal = when (declaration) {
-            is FirClassLikeDeclaration<*> -> declaration.symbol.classId.isLocal
-            is FirCallableDeclaration<*> -> declaration.symbol.callableId.isLocal
+            is FirClassLikeDeclaration -> declaration.symbol.classId.isLocal
+            is FirCallableDeclaration -> declaration.symbol.callableId.isLocal
             else -> error("Unsupported declaration ${declaration.renderWithType()}")
         }
         require(!isLocal) {

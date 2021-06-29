@@ -59,7 +59,7 @@ internal class FirDesignatedBodyResolveTransformerForIDE(
         designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.BODY_RESOLVE)
         if (designation.isTargetCallableDeclarationAndInPhase(FirResolvePhase.BODY_RESOLVE)) return
 
-        (designation.declaration as? FirCallableDeclaration<*>)?.ensurePhase(FirResolvePhase.CONTRACTS)
+        (designation.declaration as? FirCallableDeclaration)?.ensurePhase(FirResolvePhase.CONTRACTS)
         designation.ensurePhaseForClasses(FirResolvePhase.STATUS)
 
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.BODY_RESOLVE) {
@@ -82,7 +82,7 @@ internal class FirDesignatedBodyResolveTransformerForIDE(
                 declaration.getter?.ensurePhase(FirResolvePhase.BODY_RESOLVE)
                 declaration.setter?.ensurePhase(FirResolvePhase.BODY_RESOLVE)
             }
-            is FirEnumEntry, is FirClass<*> -> Unit
+            is FirEnumEntry, is FirClass -> Unit
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }
     }

@@ -73,7 +73,7 @@ internal object DeclarationCopyBuilder {
         moduleData = originalDeclaration.moduleData
     }
 
-    private fun FirFunction<*>.reassignAllReturnTargets(from: FirFunction<*>) {
+    private fun FirFunction.reassignAllReturnTargets(from: FirFunction) {
         this.accept(object : FirVisitorVoid() {
             override fun visitElement(element: FirElement) {
                 if (element is FirReturnExpression && element.target.labeledElement == from) {

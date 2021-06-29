@@ -16,8 +16,8 @@ fun FirDeclaration.getContainingFile(): FirFile? {
     val provider = moduleData.session.firProvider
     return when (this) {
         is FirFile -> this
-        is FirCallableDeclaration<*> -> provider.getFirCallableContainerFile(symbol)
-        is FirClassLikeDeclaration<*> -> provider.getFirClassifierContainerFile(symbol)
+        is FirCallableDeclaration -> provider.getFirCallableContainerFile(symbol)
+        is FirClassLikeDeclaration -> provider.getFirClassifierContainerFile(symbol)
         else -> error("Unsupported declaration ${this::class.java}")
     }
 }

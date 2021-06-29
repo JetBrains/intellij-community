@@ -62,7 +62,7 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
             declaration.ensurePhase(FirResolvePhase.TYPES)
         }
         when (declaration) {
-            is FirFunction<*> -> {
+            is FirFunction -> {
                 check(declaration.returnTypeRef is FirResolvedTypeRef || declaration.returnTypeRef is FirImplicitTypeRef)
                 check(declaration.receiverTypeRef?.let { it is FirResolvedTypeRef } ?: true)
                 declaration.valueParameters.forEach {
@@ -76,7 +76,7 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
                 declaration.setter?.run(::ensureResolved)
             }
             is FirField -> check(declaration.returnTypeRef is FirResolvedTypeRef || declaration.returnTypeRef is FirImplicitTypeRef)
-            is FirClass<*>, is FirTypeAlias, is FirAnonymousInitializer -> Unit
+            is FirClass, is FirTypeAlias, is FirAnonymousInitializer -> Unit
             is FirEnumEntry -> check(declaration.returnTypeRef is FirResolvedTypeRef)
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }
