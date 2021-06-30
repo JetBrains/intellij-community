@@ -230,12 +230,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     }
   }
 
-  private SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
+  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
     myValidation.add(it -> Collections.singletonList(validation.apply(it)));
     return this;
   }
 
-  public SettingsEditorFragment<Settings, C> addValidation(
+  public @NotNull SettingsEditorFragment<Settings, C> addValidation(
     @NotNull ThrowableConsumer<? super Settings, ? extends ConfigurationException> validation
   ) {
     return addValidation(settings -> {
