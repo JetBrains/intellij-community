@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -31,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,6 +206,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   private static final class ExceptionColumnFinder implements HyperlinkInfoFactory.HyperlinkHandler {
+    private static final long ADVANCED_LINK_INFO_TIMEOUT = 1000L;
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
     private final int myTextEndOffset;
@@ -227,10 +230,11 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
 
-      LinkInfo info = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() -> ReadAction.compute(
-                                               () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor)),
-                                             JavaBundle.message("exception.navigation.fetching.target.position"), true, project);
+      LinkInfo info = ProgressIndicatorUtils.withTimeout(
+        ADVANCED_LINK_INFO_TIMEOUT,
+        () -> SlowOperations.allowSlowOperations(
+          () -> ReadAction.compute(
+            () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor))));
       if (info == null) return;
       TextRange range = info.target.getTextRange();
       targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
