@@ -342,7 +342,7 @@ final class ScratchImplUtil {
       JBIterable<TreePath> paths;
       JBTreeTraverser<TreePath> traverser = TreeUtil.treePathTraverser(comp).expand(comp::isExpanded);
       if (selection != null && selection.length > 1) {
-        paths = traverser.withRoots(selection).traverse();
+        paths = traverser.withRoots(selection).unique().traverse();
         initialDepth = Integer.MAX_VALUE;
         for (TreePath path : selection) {
           initialDepth = Math.min(initialDepth, path.getPathCount() - 1);
