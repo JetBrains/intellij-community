@@ -280,7 +280,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(testRoot);
+    List<String> expected = newArrayList(testRoot);
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.add("build/tmp/compileTestJava/previous-compilation-data.bin");
+    }
+    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).as("Generated files").containsOnly(
       Map.entry(testRoot, Set.of("my/pack/AppTest.class"))
     );
