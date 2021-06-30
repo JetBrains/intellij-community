@@ -309,7 +309,7 @@ public final class SwitchUtils {
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
       if (pattern != null) return pattern.getText();
       final PsiTypeElement type = instanceOf.getCheckType();
-      String typeElement = type != null ? type.getText() : "Object";
+      String typeElement = type != null ? type.getText() : CommonClassNames.JAVA_LANG_OBJECT;
       String variableName = StringUtil.toLowerCase(typeElement.substring(0, 1));
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(instanceOf.getProject());
       String uniqueName = styleManager.suggestUniqueVariableName(variableName, instanceOf.getContext(), false);

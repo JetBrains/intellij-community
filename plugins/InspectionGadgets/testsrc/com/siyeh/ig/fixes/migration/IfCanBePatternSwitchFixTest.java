@@ -34,6 +34,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testPatternDefault() { doTest(); }
   public void testPatternKeepVariable() { doTest(); }
   public void testGuardedPattern() { doTest(); }
+  public void testGuardedPatternCustomOrder() { doTest(); }
   public void testPatternToVariable() { doTest(); }
   public void testPatternToSwitchExpression() { doTest(); }
 }

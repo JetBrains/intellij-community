@@ -184,7 +184,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (! ContainerUtil.exists(branches, (branch) -> branch.isElse())){
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
-      if (isNullable(switchExpression) && findNullCheckedOperand(statementToReplace) == null) {
+      if (getNullability(switchExpression) != Nullability.NOT_NULL && findNullCheckedOperand(statementToReplace) == null) {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
@@ -507,32 +507,42 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         if (!suggestEnumSwitches && TypeConversionUtil.isEnumType(type)) {
           return false;
         }
-        if (onlySuggestNullSafe && isNullable(switchExpression)) {
-          final PsiExpression condition = ifStatement.getCondition();
-          if (SwitchUtils.canBePatternSwitchCase(condition, switchExpression)) {
-            return hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null;
+        Nullability nullability = getNullability(switchExpression);
+        if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
+          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null) {
+            nullability = Nullability.NOT_NULL;
           }
-          final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(switchExpression);
-          if (parent instanceof PsiExpressionList) {
-            final PsiElement grandParent = parent.getParent();
-            if (grandParent instanceof PsiMethodCallExpression) {
-              final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-              if ("equals".equals(methodCallExpression.getMethodExpression().getReferenceName())) {
-                // Objects.equals(switchExpression, other) or other.equals(switchExpression)
-                return false;
-              }
-            }
-          }
-          return !(parent instanceof PsiPolyadicExpression); // == expression
+        }
+        if (nullability == Nullability.NULLABLE) {
+          return false;
+        }
+        if (onlySuggestNullSafe && nullability != Nullability.NOT_NULL) {
+          return false;
         }
       }
       return !SideEffectChecker.mayHaveSideEffects(switchExpression);
     }
   }
 
-  private static boolean isNullable(PsiExpression switchExpression) {
-    return NullabilityUtil.getExpressionNullability(switchExpression, false) != Nullability.NOT_NULL &&
-           NullabilityUtil.getExpressionNullability(switchExpression, true) != Nullability.NOT_NULL;
+  private static Nullability getNullability(PsiExpression expression) {
+    // expression.equals("string") -> expression == NOT_NULL
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    if (parent instanceof PsiReferenceExpression) {
+      PsiElement grandparent = parent.getParent();
+      if (grandparent instanceof PsiMethodCallExpression) {
+        return Nullability.NOT_NULL;
+      }
+    }
+    // inferred nullability
+    Nullability normal = NullabilityUtil.getExpressionNullability(expression, false);
+    Nullability dataflow = NullabilityUtil.getExpressionNullability(expression, true);
+    if (normal == Nullability.NOT_NULL || dataflow == Nullability.NOT_NULL) {
+      return Nullability.NOT_NULL;
+    }
+    if (normal == Nullability.NULLABLE || dataflow == Nullability.NULLABLE) {
+      return Nullability.NULLABLE;
+    }
+    return Nullability.UNKNOWN;
   }
 
   private static PsiExpression findNullCheckedOperand(PsiIfStatement ifStatement) {
