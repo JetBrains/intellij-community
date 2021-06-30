@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateBundle;
@@ -116,8 +115,7 @@ public class TextMateBundlesListPanel implements Disposable {
 
         final VirtualFile[] bundleDirectories = fileChooser.choose(null, fileToSelect);
         if (bundleDirectories.length > 0) {
-          @Nls
-          StringBuilder errorMessage = new StringBuilder();
+          String errorMessage = null;
           for (final VirtualFile bundleDirectory : bundleDirectories) {
             PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.getPath());
             ThrowableComputable<Bundle, Exception> readBundleProcess = () -> TextMateService.getInstance().createBundle(bundleDirectory);
@@ -140,21 +138,18 @@ public class TextMateBundlesListPanel implements Disposable {
                   break;
                 }
               }
-
               if (!alreadyAdded) {
-                myBundlesList.addItem(new BundleConfigBean(bundle.getName(), bundleDirectoryPath, true), bundle.getName(), true);
+                BundleConfigBean item = new BundleConfigBean(bundle.getName(), bundleDirectoryPath, true);
+                myBundlesList.addItem(item, item.getName(), true);
                 fireStateChanged();
               }
             }
             else {
-              if (errorMessage.length() == 0) {
-                errorMessage.append("Can't read following bundles:");
-              }
-              errorMessage.append('\n').append(bundleDirectoryPath);
+              errorMessage = TextMateBundle.message("message.textmate.bundle.error", bundleDirectory.getPresentableUrl());
             }
           }
-          if (errorMessage.length() > 0) {
-            Messages.showErrorDialog(errorMessage.toString(), TextMateBundle.message("title.textmate.bundle.error"));
+          if (errorMessage != null) {
+            Messages.showErrorDialog(errorMessage, TextMateBundle.message("title.textmate.bundle.error"));
           }
         }
       }
