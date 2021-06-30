@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeperProvider;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -207,7 +208,8 @@ public final class DocRenderItem {
   }
 
   private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
+    EditorScrollingPositionKeeper keeper = ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class)
+      .createEditorScrollingPositionKeeper(editor);
     keeper.savePosition();
     if (task.getAsBoolean()) keeper.restorePosition(false);
   }
