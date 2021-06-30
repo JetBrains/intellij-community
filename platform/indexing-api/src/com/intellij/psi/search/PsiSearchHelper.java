@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public interface PsiSearchHelper {
     return project.getService(PsiSearchHelper.class);
   }
 
+  @ApiStatus.Internal
   ExtensionPointName<ScopeOptimizer> CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.codeUsageScopeOptimizer");
 
   /**
