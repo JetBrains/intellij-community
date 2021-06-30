@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -232,11 +233,9 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
 
-      LinkInfo info = ProgressIndicatorUtils.withTimeout(
-        ADVANCED_LINK_INFO_TIMEOUT,
-        () -> SlowOperations.allowSlowOperations(
-          () -> ReadAction.compute(
-            () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor))));
+      ThrowableComputable<LinkInfo, RuntimeException> computable = () -> ReadAction.compute(
+        () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor));
+      LinkInfo info = ProgressIndicatorUtils.withTimeout(ADVANCED_LINK_INFO_TIMEOUT, () -> SlowOperations.allowSlowOperations(computable));
       if (info == null) return;
       TextRange range = info.target.getTextRange();
       targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
