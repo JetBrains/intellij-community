@@ -34,7 +34,7 @@ fun TargetWithVariant.asVirtualFile(): VirtualFile? = target?.let { targetAsVirt
  * CUSTOM type is not checked.
  */
 fun TargetWithVariant.isWellFormed(): Boolean = when (targetType) {
-  PyRunTargetVariant.PYTHON -> Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target ?: "")
+  PyRunTargetVariant.PYTHON -> target?.let { it.split(".").all { PyNames.isIdentifier(it) } } ?: true
   PyRunTargetVariant.PATH -> !VfsUtil.isBadName(target)
   else -> true
 }
