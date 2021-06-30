@@ -88,7 +88,8 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     for (ContentDescriptor.ModuleDescriptor descriptor : plugin.getContent().getModuleEntry()) {
       final String value = descriptor.getName().getStringValue();
       if (StringUtil.isNotEmpty(value)) {
-        ids.add(getContentIndexingKey(value));
+        final String escapeSubDescriptorValue = value.replace('/', '.');
+        ids.add(getContentIndexingKey(escapeSubDescriptorValue));
       }
     }
 
@@ -97,7 +98,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
