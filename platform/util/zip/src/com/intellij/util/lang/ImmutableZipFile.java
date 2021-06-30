@@ -104,9 +104,7 @@ public final class ImmutableZipFile implements Closeable {
   }
 
   /**
-   * Returns a named entry - or {@code null} if no entry by that name exists.
-   *
-   * For directories must be name without ending slash used.
+   * Returns a named entry, or {@code null} if no entry by that name exists. The name should not contain trailing slashes.
    */
   public ImmutableZipEntry getEntry(String name) {
     int index = probe(name, Murmur3_32Hash.MURMUR3_32.hashString(name, 0, name.length()), nameMap);
@@ -166,7 +164,7 @@ public final class ImmutableZipFile implements Closeable {
     int offset = centralDirPosition;
     int entryIndex = 0;
 
-    // assume that file name is not greater than ~2KB
+    // assume that file name is not greater than ~2 KiB
     // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
     // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
     byte[] tempNameBytes = new byte[4096];
