@@ -13,10 +13,12 @@ import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
+import org.jetbrains.annotations.NotNull
 import java.util.*
 
 class GrazieInspection : LocalInspectionTool() {
@@ -24,9 +26,14 @@ class GrazieInspection : LocalInspectionTool() {
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    val file = holder.file
+    if (ignoreGrammarChecking(file)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+
     val checkers = TextChecker.allCheckers()
     val checkedDomains = checkedDomains()
-    val fileLanguage = holder.file.language
+    val fileLanguage = file.language
 
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
@@ -43,6 +50,9 @@ class GrazieInspection : LocalInspectionTool() {
   }
 
   companion object {
+    fun ignoreGrammarChecking(file: PsiFile): Boolean =
+      SpellCheckingEditorCustomization.isSpellCheckingDisabled(file) // they probably don't want grammar checks as well
+
     internal fun checkedDomains(): Set<TextContent.TextDomain> {
       val result = EnumSet.of(TextContent.TextDomain.PLAIN_TEXT)
       if (GrazieConfig.get().checkingContext.isCheckInStringLiteralsEnabled) {
