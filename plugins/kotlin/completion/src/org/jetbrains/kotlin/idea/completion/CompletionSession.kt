@@ -135,7 +135,7 @@ abstract class CompletionSession(
 
 
     protected val basicLookupElementFactory =
-        BasicLookupElementFactory(project, InsertHandlerProvider(callTypeAndReceiver.callType) { expectedInfos })
+        BasicLookupElementFactory(project, InsertHandlerProvider(callTypeAndReceiver.callType, parameters.editor) { expectedInfos })
 
     // LookupElementsCollector instantiation is deferred because virtual call to createSorter uses data from derived classes
     protected val collector: LookupElementsCollector by lazy(LazyThreadSafetyMode.NONE) {

@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.SerializedInsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.SerializableInsertHandler
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -28,6 +26,155 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
+
+fun createNormalFunctionInsertHandler(
+    editor: Editor,
+    callType: CallType<*>,
+    inputTypeArguments: Boolean,
+    inputValueArguments: Boolean,
+    argumentText: String = "",
+    lambdaInfo: GenerateLambdaInfo? = null,
+    argumentsOnly: Boolean = false
+): InsertHandler<LookupElement> {
+    if (lambdaInfo != null) {
+        assert(argumentText == "")
+    }
+
+    val handlers = mutableMapOf<Char, DeclarativeInsertHandler2>()
+    // todo: extract
+    val postInsertHandler = InsertHandler<LookupElement> { context, item ->
+        KotlinFunctionInsertHandler.Normal(
+            callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly
+        ).addImport(context, item)
+    }
+
+    val chars = editor.document.charsSequence
+
+
+    // \n
+    run {
+        val insertOperations = mutableListOf<Pair<Int, String>>()
+        val stringToInsert = StringBuilder()
+
+        var offsetToPutCaret = 0 //relative
+
+        val offset = editor.caretModel.offset
+        val insertLambda = lambdaInfo != null
+        val openingBracket = if (insertLambda) '{' else '('
+        val closingBracket = if (insertLambda) '}' else ')'
+
+        val insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
+        if (insertTypeArguments) {
+            stringToInsert.append("<>")
+            offsetToPutCaret += 1
+        }
+
+        var absoluteOpeningBracketOffset = chars.indexOfSkippingSpace(openingBracket, offset)
+        var absoluteCloseBracketOffset = absoluteOpeningBracketOffset?.let { chars.indexOfSkippingSpace(closingBracket, it + 1) }
+        if (insertLambda && lambdaInfo!!.explicitParameters && absoluteCloseBracketOffset == null) {
+            absoluteOpeningBracketOffset = null
+        }
+
+        if (absoluteOpeningBracketOffset == null) {
+            if (insertLambda) {
+                // todo: get file outside
+                val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
+                if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
+                    offsetToPutCaret = stringToInsert.length + 4
+                    stringToInsert.append(" {  }")
+                } else {
+                    offsetToPutCaret = stringToInsert.length + 3
+                    stringToInsert.append(" {}")
+                }
+            } else {
+                offsetToPutCaret = stringToInsert.length + 1
+                stringToInsert.append("($argumentText)")
+            }
+            val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
+            if (!insertTypeArguments && shouldPlaceCaretInBrackets) {
+                // todo: move to post action
+                //showParameterInfo = true
+                //AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+            }
+        } else if (!(insertLambda && lambdaInfo!!.explicitParameters)) {
+            insertOperations.add(absoluteOpeningBracketOffset + 1 - offset to argumentText)
+            if (absoluteCloseBracketOffset != null) {
+                absoluteCloseBracketOffset += argumentText.length
+            }
+
+            if (!insertTypeArguments) {
+                offsetToPutCaret = absoluteOpeningBracketOffset + 1 - offset
+                val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
+                if (shouldPlaceCaretInBrackets) {
+                    // todo: move to post action
+                    //showParameterInfo = true
+                    //AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                }
+            }
+        }
+        insertOperations.add(0 to stringToInsert.toString())
+
+        val normalInsertHandler = DeclarativeInsertHandler2(
+            insertOperations = insertOperations,
+            offsetToPutCaret = offsetToPutCaret,
+            postInsertHandler = postInsertHandler
+        )
+        handlers[Lookup.NORMAL_SELECT_CHAR] = normalInsertHandler
+    }
+
+    // \t
+/*
+    run {
+        // identifier123| ***
+        val replaceInsertHandler = DeclarativeInsertHandler2(
+            insertOperations = insertOperations,
+            offsetToPutCaret = offsetToPutCaret,
+            postInsertHandler = postInsertHandler
+        )
+
+        var offset = context.replacementOffset
+
+        val insertLambda = lambdaInfo != null && !chars.isCharAt(offset, '(')
+        var insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
+
+
+        val offset1 = chars.skipSpaces(offset)
+        if (offset1 < chars.length) {
+            if (chars[offset1] == '<') {
+                val token = context.file.findElementAt(offset1)!!
+                if (token.node.elementType == KtTokens.LT) {
+                    val parent = token.parent
+                    */
+/* if type argument list is on multiple lines this is more likely wrong parsing*//*
+
+                    if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
+                        offset = parent.endOffset
+                        insertTypeArguments = false
+                    }
+                }
+            }
+        }
+
+    }
+*/
+    // (
+/*
+    run {
+        var insertTypeArguments = false
+        var insertLambda = false
+        val parensInsertHandler = DeclarativeInsertHandler2(
+            insertOperations = insertOperations,
+            offsetToPutCaret = offsetToPutCaret,
+            addCompletionChar = false,
+            postInsertHandler = postInsertHandler
+        )
+    }
+*/
+    //completionChar == ' ' || completionChar == '{' ???
+
+
+    return CompositeDeclarativeInsertHandler(handlers)
+}
 
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
 
@@ -60,7 +207,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         }
 
         // TODO: should be extracted into separate thing
-        class DummyPayloadBuilder(): SerializedInsertHandler.InsertionPayloadBuilder {
+        class DummyPayloadBuilder() : SerializedInsertHandler.InsertionPayloadBuilder {
             var snippet: String = ""
             var deleteAfterCursor: Int? = null
             var callPostCompletion: Boolean = true
@@ -76,7 +223,14 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             }
         }
 
-        override fun trySerialize(item: LookupElement, editor: Editor, file: PsiFile, insertionStart: Int, caretOffset: Int): SerializedInsertHandler? {
+        override fun trySerialize(
+            item: LookupElement,
+            editor: Editor,
+            file: PsiFile,
+            insertionStart: Int,
+            caretOffset: Int
+        ): SerializedInsertHandler? {
+
 
             fun surroundWithBracesIfInStringTemplate(renderedText: String): String {
                 val document = editor.document
@@ -101,12 +255,18 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 val openingBracket = '('
                 val closingBracket = ')'
                 val foundOpeningBracket = editor.document.charsSequence.indexOfSkippingSpace(openingBracket, caretOffset)
-                val foundClosedBracket = foundOpeningBracket?.let { bracketPos -> editor.document.charsSequence.indexOfStopOnSpace(closingBracket, bracketPos + 1) }
+                val foundClosedBracket = foundOpeningBracket?.let { bracketPos ->
+                    editor.document.charsSequence.indexOfStopOnSpace(
+                        closingBracket,
+                        bracketPos + 1
+                    )
+                }
 
                 payloadBuilder.deleteAfterCursor = foundClosedBracket?.let { it - caretOffset + 1 }
 
                 snippetStringBuilder.append(
-                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0")
+                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0"
+                )
 
                 payloadBuilder.snippet = surroundWithBracesIfInStringTemplate(snippetStringBuilder.toString())
 
@@ -148,8 +308,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 with(payloadBuilder) {
                     if (deleteAfterCursor == null) {
                         deleteAfterCursor = foundClosedBracket
-                    }
-                    else if (foundClosedBracket != null) {
+                    } else if (foundClosedBracket != null) {
                         deleteAfterCursor = maxOf(deleteAfterCursor!!, foundClosedBracket)
                     }
                 }
@@ -159,13 +318,13 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 }
 
                 snippetStringBuilder.append(
-                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0")
+                    if (inputValueArguments) "(\${2:$argumentText})" else "($argumentText)\$0"
+                )
 
                 payloadBuilder.snippet = surroundWithBracesIfInStringTemplate(snippetStringBuilder.toString())
 
                 return payloadBuilder
             }
-
 
 
             val declarationLookupObjectName = (item.`object` as? DeclarationLookupObject)?.name
@@ -178,14 +337,16 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
 
                 return object : SerializedInsertHandler {
                     override fun snippetPerCompletionChar(): MutableMap<Char, SerializedInsertHandler.InsertionPayloadBuilder> {
+                        if (true) {
+                            return mutableMapOf()
+                        }
                         return mutableMapOf(
                             Lookup.NORMAL_SELECT_CHAR to constructSnippetForNormalCompletion(renderedName),
                             Lookup.REPLACE_SELECT_CHAR to constructSnippetForReplaceCompletion(renderedName)
                         )
                     }
                 }
-            }
-            else {
+            } else {
                 return null
             }
         }
@@ -244,6 +405,34 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
 
             var insertTypeArguments = inputTypeArguments && (isNormalCompletion || isReplaceCompletion || isSmartEnterCompletion)
 
+            //val a = intellijIdeaRulezzzz()       <Hello>
+            /**
+             *
+             *
+             * <intellijIdeaRulezzzz <List<ll>, List<ll>> >
+             *
+             * <intellijIdea| <T>| >
+             *
+             * <intellijIdea|123 <T>| >
+             * <intellijIdea1|123 <T>| >
+             * <intellijIdea1| <T>| >
+             *
+             *
+             *     declarativeIH = \t: base=replacementOffset;
+             *                      retain=ktTypeArgumentList.endOffset - replacementOffset;
+             *                      insert (){\n}
+             *                      retain 1
+             *
+             *                      insert=();
+             *                      insert={};
+             *                      insert=\n;
+             *
+             *
+             *
+             *                      retain=7
+             *
+             *                     \n: base=startOffset+lookupStringLength; insert=()
+             */
             val psiDocumentManager = PsiDocumentManager.getInstance(project)
             if (isReplaceCompletion) {
                 val offset1 = chars.skipSpaces(offset)
