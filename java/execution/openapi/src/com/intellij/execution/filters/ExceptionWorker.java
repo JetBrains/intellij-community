@@ -78,14 +78,6 @@ public class ExceptionWorker {
     myClassResolveInfo = myCache.resolveClassOrFile(className, myInfo.fileName);
     if (myClassResolveInfo.myClasses.isEmpty()) return null;
 
-    /*
-     IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
-    final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
-    final int slashIndex = filePath.lastIndexOf(File.separatorChar);
-    final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
-    if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
-    */
-
     final int textStartOffset = textEndOffset - line.length();
 
     int highlightStartOffset = textStartOffset + myInfo.fileLineRange.getStartOffset();
@@ -415,6 +407,7 @@ public class ExceptionWorker {
       if (!PsiDocumentManager.getInstance(project).isCommitted(document)) return;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
+
       LinkInfo info = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(() -> ReadAction.compute(
           () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor)),
