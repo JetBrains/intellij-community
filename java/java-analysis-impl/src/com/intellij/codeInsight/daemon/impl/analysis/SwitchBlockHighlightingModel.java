@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class SwitchBlockHighlightingModel {
+public class SwitchBlockHighlightingModel {
   @NotNull private final LanguageLevel myLevel;
   @NotNull final PsiSwitchBlock myBlock;
   @NotNull final PsiExpression mySelector;
@@ -311,7 +311,7 @@ class SwitchBlockHighlightingModel {
 
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
-  private static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
+  public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
 
     PatternsInSwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
                                            @NotNull PsiSwitchBlock switchBlock,
@@ -613,10 +613,7 @@ class SwitchBlockHighlightingModel {
      * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
      */
     private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results) {
-      if (!(myBlock instanceof PsiSwitchExpression) &&
-          !(myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements))) {
-        return;
-      }
+      if (!needToCheckCompleteness(elements)) return;
       PsiElement elementCoversType = findElementCoversType(mySelectorType, elements);
       PsiElement defaultElement = findDefaultElement();
       if (defaultElement != null && elementCoversType != null) {
@@ -748,6 +745,36 @@ class SwitchBlockHighlightingModel {
     @Nullable
     private static Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
       return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant, false);
+    }
+
+    private boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
+      return myBlock instanceof PsiSwitchExpression || myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements);
+    }
+
+    public static boolean possibleToAddDefaultBranch(@NotNull PsiSwitchBlock switchBlock) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(switchBlock);
+      PatternsInSwitchBlockHighlightingModel model = ObjectUtils.tryCast(SwitchBlockHighlightingModel.createInstance(
+          languageLevel, switchBlock, switchBlock.getContainingFile()), PatternsInSwitchBlockHighlightingModel.class);
+      if (model == null) return true;
+      PsiCodeBlock body = model.myBlock.getBody();
+      if (body == null) return false;
+      List<PsiCaseLabelElement> elementsToCheckCompleteness = new SmartList<>();
+      for (PsiStatement st : body.getStatements()) {
+        if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
+        PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+        if (labelStatement.isDefaultCase()) return false;
+        PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) return false;
+          fillElementsToCheckCompleteness(elementsToCheckCompleteness, labelElement);
+        }
+      }
+      if (!model.needToCheckCompleteness(elementsToCheckCompleteness)) return true;
+      if (findElementCoversType(model.mySelectorType, elementsToCheckCompleteness) != null) return false;
+      List<HighlightInfo> results = new SmartList<>();
+      model.checkCompleteness(elementsToCheckCompleteness, results);
+      return results.isEmpty();
     }
 
     private boolean isEnhancedSwitch(@NotNull List<PsiCaseLabelElement> labelElements) {
