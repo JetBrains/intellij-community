@@ -71,7 +71,12 @@ public final class ImmutableZipFile implements Closeable {
       }
       mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
-    return populateFromCentralDirectory(mappedBuffer, fileSize, commentConsumer);
+    try {
+      return populateFromCentralDirectory(mappedBuffer, fileSize, commentConsumer);
+    }
+    catch (IOException e) {
+      throw new IOException(file.toString(), e);
+    }
   }
 
   public ImmutableZipEntry[] getEntries() {
