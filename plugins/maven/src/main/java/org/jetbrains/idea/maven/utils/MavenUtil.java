@@ -67,10 +67,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -1065,6 +1062,16 @@ public class MavenUtil {
     }
 
     return res;
+  }
+
+  public static void notifyMavenProblems(@NotNull Project project) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    MavenSyncConsole syncConsole = projectsManager.getSyncConsole();
+    for (MavenProject mavenProject : projectsManager.getProjects()) {
+      for (MavenProjectProblem problem : mavenProject.getProblems()) {
+        syncConsole.showProblem(problem);
+      }
+    }
   }
 
   public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {

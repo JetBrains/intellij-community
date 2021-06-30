@@ -33,6 +33,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
+import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.CannotStartServerException
@@ -216,6 +217,34 @@ class MavenSyncConsole(private val myProject: Project) {
     mySyncView.onEvent(mySyncId,
                        FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("maven.sync.group.error"), desc, desc,
                                             FilePosition(File(file.path), -1, -1)))
+  }
+
+  @Synchronized
+  fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
+    hasErrors = true
+    val group = SyncBundle.message("maven.sync.group.error")
+    val description = problem.description
+    val position = problem.getPosition()
+    val eventImpl = FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, group, description, description, position)
+    mySyncView.onEvent(mySyncId, eventImpl)
+  }
+
+  private fun MavenProjectProblem.getPosition(): FilePosition {
+    val problemFile = File(path)
+    try {
+      if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
+        val pattern = Regex("@(\\d+):(\\d+)")
+        val matchedCoordinates = pattern.findAll(description).lastOrNull()
+        if (matchedCoordinates != null) {
+          val (_, line, offset) = matchedCoordinates.groupValues
+          return FilePosition(problemFile, line.toInt() - 1, offset.toInt())
+        }
+      }
+    }
+    catch (ex: Exception) {
+      MavenLog.LOG.error(ex)
+    }
+    return FilePosition(problemFile, -1, -1)
   }
 
   @Synchronized
@@ -440,7 +469,6 @@ class MavenSyncConsole(private val myProject: Project) {
       action.invoke()
     }
   }
-
 
   private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
     override fun downloadStarted(dependency: String) {

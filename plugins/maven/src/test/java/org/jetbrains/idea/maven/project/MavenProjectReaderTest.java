@@ -149,9 +149,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("foo", p.getName());
   }
 
+  // These tests fail until issue https://youtrack.jetbrains.com/issue/IDEA-272809 is fixed
   public void testInvalidXmlWithWrongClosingTag() {
-    if (ignore()) return;
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</vers>" +
