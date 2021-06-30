@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
@@ -57,6 +58,8 @@ class ServiceViewTree extends Tree {
         if (path == null) return false;
 
         Object lastComponent = path.getLastPathComponent();
+        if (lastComponent instanceof LoadingNode) return false;
+
         return myTreeModel.isLeaf(lastComponent) &&
                lastComponent instanceof ServiceViewItem &&
                ((ServiceViewItem)lastComponent).getViewDescriptor().handleDoubleClick(e);
