@@ -43,6 +43,7 @@
     "CellEditor.border.width": 2,
 
     "CheckBox": {
+      "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
       "borderInsets": "4,4,4,0",
       "UI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI"
@@ -154,6 +155,7 @@
     },
 
     "RadioButton": {
+      "background": "#ececec",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "3,3,3,0",
       "UI": "com.intellij.laf.macos.MacIntelliJRadioButtonUI"
