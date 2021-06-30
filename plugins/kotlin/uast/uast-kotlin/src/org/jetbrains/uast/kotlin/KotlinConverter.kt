@@ -57,10 +57,10 @@ object KotlinConverter : BaseKotlinConverter {
         return KotlinUAnnotation(annotationEntry, givenParent)
     }
 
-    internal fun convertPsiElement(
+    override fun convertPsiElement(
         element: PsiElement?,
         givenParent: UElement?,
-        expectedTypes: Array<out Class<out UElement>>
+        requiredTypes: Array<out Class<out UElement>>
     ): UElement? {
         if (element == null) return null
 
@@ -81,8 +81,7 @@ object KotlinConverter : BaseKotlinConverter {
             }
         }
 
-
-        return with (expectedTypes) { when (element) {
+        return with (requiredTypes) { when (element) {
             is KtParameterList -> el<UDeclarationsExpression> {
                 val resolveProviderService = ServiceManager.getService(project, KotlinUastResolveProviderService::class.java)
                 val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { resolveProviderService }
@@ -100,27 +99,27 @@ object KotlinConverter : BaseKotlinConverter {
                 }
                 else {
                     el<UVariable> { convertVariablesDeclaration(element, givenParent).declarations.singleOrNull() }
-                        ?: expr<UDeclarationsExpression> { KotlinConverter.convertExpression(element, givenParent, expectedTypes) }
+                        ?: expr<UDeclarationsExpression> { KotlinConverter.convertExpression(element, givenParent, requiredTypes) }
                 }
 
-            is KtExpression -> convertExpression(element, givenParent, expectedTypes)
-            is KtLambdaArgument -> element.getLambdaExpression()?.let { convertExpression(it, givenParent, expectedTypes) }
+            is KtExpression -> convertExpression(element, givenParent, requiredTypes)
+            is KtLambdaArgument -> element.getLambdaExpression()?.let { convertExpression(it, givenParent, requiredTypes) }
             is KtLightElementBase -> {
                 val expression = element.kotlinOrigin
                 when (expression) {
-                    is KtExpression -> convertExpression(expression, givenParent, expectedTypes)
+                    is KtExpression -> convertExpression(expression, givenParent, requiredTypes)
                     else -> el<UExpression> { UastEmptyExpression(givenParent) }
                 }
             }
             is KtLiteralStringTemplateEntry, is KtEscapeStringTemplateEntry ->
                 el<ULiteralExpression>(build(::KotlinStringULiteralExpression))
             is KtStringTemplateEntry ->
-                element.expression?.let { convertExpression(it, givenParent, expectedTypes) }
+                element.expression?.let { convertExpression(it, givenParent, requiredTypes) }
                     ?: expr<UExpression> { UastEmptyExpression(givenParent) }
             is KtWhenEntry -> el<USwitchClauseExpressionWithBody>(build(::KotlinUSwitchEntry))
-            is KtWhenCondition -> convertWhenCondition(element, givenParent, expectedTypes)
+            is KtWhenCondition -> convertWhenCondition(element, givenParent, requiredTypes)
             is KtTypeReference ->
-                expectedTypes.accommodate(
+                requiredTypes.accommodate(
                     alternative { KotlinUTypeReferenceExpression(element, givenParent, service) },
                     alternative { convertReceiverParameter(element) }
                 ).firstOrNull()

@@ -1,7 +1,14 @@
 Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression
+String -> UQualifiedReferenceExpression from KDocName
+lang -> UQualifiedReferenceExpression from KDocName
+IllegalStateException -> UQualifiedReferenceExpression from KDocName
+lang -> UQualifiedReferenceExpression from KDocName
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
+Ingredient -> UQualifiedReferenceExpression from KDocName
+NotImplementedError -> UQualifiedReferenceExpression from KDocName
+contains -> UQualifiedReferenceExpression from KDocName
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient) from KtNameReferenceExpression
 Boolean -> USimpleNameReferenceExpression (identifier = Boolean) from KtNameReferenceExpression
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza) from KtNameReferenceExpression
@@ -26,6 +33,8 @@ lang -> USimpleNameReferenceExpression (identifier = lang) from KtDotQualifiedEx
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 String -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Ingredient -> UQualifiedReferenceExpression from KDocName
+Ingredient -> UQualifiedReferenceExpression from KDocName
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza) from KtNameReferenceExpression
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient) from KtNameReferenceExpression
 Boolean -> USimpleNameReferenceExpression (identifier = Boolean) from KtNameReferenceExpression
