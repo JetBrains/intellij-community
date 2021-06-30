@@ -6,6 +6,7 @@ import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +22,9 @@ import java.util.stream.Collectors;
 public class TextContentBuilder {
 
   /**
-   * A basic builder that takes the full PSI text.
+   * A basic builder that takes the full PSI text, considering any {@link OuterLanguageElement}s as unknown fragments.
    */
-  public static final TextContentBuilder FromPsi = new TextContentBuilder(e -> false, e -> false, Collections.emptySet());
+  public static final TextContentBuilder FromPsi = new TextContentBuilder(e -> e instanceof OuterLanguageElement, e -> false, Collections.emptySet());
 
   private final Predicate<PsiElement> unknown;
   private final Predicate<PsiElement> excluded;

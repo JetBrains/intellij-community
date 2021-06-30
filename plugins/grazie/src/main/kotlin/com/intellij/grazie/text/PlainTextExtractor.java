@@ -12,7 +12,7 @@ public class PlainTextExtractor extends TextExtractor {
   public @Nullable TextContent buildTextContent(@NotNull PsiElement root,
                                                 @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (root instanceof PsiPlainText && root.getContainingFile().getName().endsWith(".txt")) {
-      return TextContent.psiFragment(TextContent.TextDomain.PLAIN_TEXT, root);
+      return TextContent.builder().build(root, TextContent.TextDomain.PLAIN_TEXT);
     }
     return null;
   }
