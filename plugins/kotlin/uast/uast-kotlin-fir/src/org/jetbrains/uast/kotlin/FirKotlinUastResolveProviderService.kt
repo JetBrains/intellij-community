@@ -18,7 +18,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         get() = FirKotlinConverter
 
     override fun convertParent(uElement: UElement): UElement? {
-        TODO("Not yet implemented")
+        // TODO
+        return null
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
