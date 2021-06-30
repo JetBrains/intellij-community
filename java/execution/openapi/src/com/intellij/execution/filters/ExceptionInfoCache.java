@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbService;
@@ -49,7 +49,8 @@ public class ExceptionInfoCache {
     return result.length != 0 ? result : psiFacade.findClasses(className, GlobalSearchScope.allScope(myProject));
   }
   
-  @NotNull ClassResolveInfo resolveClassOrFile(String className, @Nullable String fileName) {
+  @NotNull
+  public ClassResolveInfo resolveClassOrFile(String className, @Nullable String fileName) {
     ClassResolveInfo info = resolveClass(className);
     
     if (info.myClasses.isEmpty() && fileName != null) {
@@ -88,11 +89,11 @@ public class ExceptionInfoCache {
     return result;
   }
 
-  static class ClassResolveInfo {
+  public static class ClassResolveInfo {
     static final ClassResolveInfo EMPTY = new ClassResolveInfo(Collections.emptyMap(), false);
     
-    final Map<VirtualFile, PsiElement> myClasses;
-    final boolean myInLibrary;
+    private final Map<VirtualFile, PsiElement> myClasses;
+    private final boolean myInLibrary;
     private volatile List<PsiClass> myExceptionClasses;
 
     ClassResolveInfo(Map<VirtualFile, PsiElement> classes, boolean library) {
@@ -118,6 +119,14 @@ public class ExceptionInfoCache {
     boolean isValid() {
       return ContainerUtil.and(myClasses.values(), PsiElement::isValid) && 
              (myExceptionClasses == null || ContainerUtil.and(myExceptionClasses, PsiElement::isValid));
+    }
+
+    public Map<VirtualFile, PsiElement> getClasses() {
+      return myClasses;
+    }
+
+    public boolean isInLibrary() {
+      return myInLibrary;
     }
 
     @NotNull

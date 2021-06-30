@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.execution.filters.ExceptionInfoCache;
-import com.intellij.execution.filters.ExceptionWorker;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.FilterMixin;
+import com.intellij.execution.filters.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
@@ -86,7 +83,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     for (int i = 0; i < copiedFragment.getLineCount(); i++) {
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
-      final ExceptionWorker worker = new ExceptionWorker(myCache);
+      final ExceptionLineParser worker = ExceptionLineParserFactory.getInstance().create(myCache);
       final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
       if (ReadAction.compute(() -> DumbService.isDumb(myProject) ? null : worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
@@ -189,7 +186,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     }
   }
 
-  private static Document getDocumentForFile(@NotNull ExceptionWorker worker) {
+  private static Document getDocumentForFile(@NotNull ExceptionLineParser worker) {
     return ReadAction.compute(() -> {
       final Document document = FileDocumentManager.getInstance().getDocument(worker.getFile().getVirtualFile());
       if (document == null) {
@@ -201,7 +198,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   }
 
   // line numbers
-  private static List<TextRange> findMethodRange(final ExceptionWorker worker,
+  private static List<TextRange> findMethodRange(final ExceptionLineParser worker,
                                                  final Document document,
                                                  final Trinity<PsiClass, PsiFile, String> previousLineResult) {
     return ReadAction.compute(() -> {
@@ -239,7 +236,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     return result;
   }
 
-  private static List<TextRange> getTextRangeForMethod(final ExceptionWorker worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
+  private static List<TextRange> getTextRangeForMethod(final ExceptionLineParser worker, Trinity<PsiClass, PsiFile, String> previousLineResult) {
     String method = worker.getMethod();
     PsiClass psiClass = worker.getPsiClass();
     PsiMethod[] methods;
