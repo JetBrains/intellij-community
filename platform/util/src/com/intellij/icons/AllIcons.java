@@ -713,7 +713,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("nodes/anonymousClass.svg", 4399892964933631120L, 0);
     /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", -3254375564343235015L, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 5323027972373212490L, 0);
-    /** 16x16 */ public static final @NotNull Icon BookmarksList = load("nodes/bookmarksList.svg", 2799799081942024152L, 2);
+    /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("nodes/bookmarkGroup.svg", 1659074700901225627L, 2);
     /** 16x16 */ public static final @NotNull Icon C_plocal = load("nodes/c_plocal.svg", 3501127193229261037L, 0);
     /** 16x16 */ public static final @NotNull Icon C_private = load("nodes/c_private.svg", 522391154330779219L, 0);
     /** 16x16 */ public static final @NotNull Icon C_protected = load("nodes/c_protected.svg", -2444857138846209853L, 0);
@@ -1082,6 +1082,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("toolwindows/projectWideAnalysisOn.svg", 4864149562935994868L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 1296641742748522434L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("toolwindows/toolWindowAnt.svg", -8044985201571763562L, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("toolwindows/toolWindowBookmarks.svg", -7010322220862563369L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("toolwindows/toolWindowBuild.svg", -5921532073527085775L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("toolwindows/toolWindowChanges.svg", -7043388422082560811L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommander = load("toolwindows/toolWindowCommander.svg", 2026695722773005232L, 2);
