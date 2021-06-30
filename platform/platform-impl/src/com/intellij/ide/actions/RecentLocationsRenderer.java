@@ -63,6 +63,9 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
   private final Map<RecentLocationItem, Couple<Highlight[]>> myItemHighlights = new ConcurrentHashMap<>();
   private Future<?> myHighlightingFuture;
 
+  private RecentLocationItem myCurrentValueForPainting;
+  private boolean myCurrentSelectedForPainting;
+
   RecentLocationsRenderer(@NotNull Project project,
                           @NotNull RecentLocationsDataModel model,
                           @NotNull JBCheckBox checkBox) {
@@ -96,18 +99,17 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
                                                 boolean hasFocus) {
     myTitle.clear();
     if (myProject.isDisposed() || getEditor().isDisposed()) return myTitle;
+    myCurrentValueForPainting = value;
+    myCurrentSelectedForPainting = selected;
+
     EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
-
-    myTitle.setForeground(colorsScheme.getDefaultForeground());
-    customizeTitleComponentText(value.info);
-    SpeedSearchUtil.applySpeedSearchHighlighting(list, myTitle, true, selected);
-
     Color backgroundColor = getBackgroundColor(colorsScheme, selected);
+    myTitle.setForeground(colorsScheme.getDefaultForeground());
     setForcedBackground(backgroundColor);
     getEditor().setBackgroundColor(backgroundColor);
 
+    customizeTitleComponentText(value.info);
     customizeEditorComponent(value);
-    applyEditorSpeedSearchHighlighting(SpeedSearchSupply.getSupply(list));
 
     setBorder(index == 0 ? JBUI.Borders.empty() :
               JBUI.Borders.customLine(getSeparatorLineColor(colorsScheme), 1, 0, 0, 0));
@@ -130,8 +132,13 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
 
   @Override
   protected void paintComponent(Graphics g) {
+    Objects.requireNonNull(myCurrentValueForPainting);
+    JList<?> component = Objects.requireNonNull(UIUtil.getParentOfType(JList.class, this));
+    scheduleHighlightingIfNeeded(component);
+    applyEditorHighlighting(myCurrentValueForPainting);
+    applyEditorSpeedSearchHighlighting(SpeedSearchSupply.getSupply(component));
+    SpeedSearchUtil.applySpeedSearchHighlighting(component, myTitle, true, myCurrentSelectedForPainting);
     super.paintComponent(g);
-    scheduleHighlightingIfNeeded();
   }
 
   private void customizeEditorComponent(RecentLocationItem value) {
@@ -141,7 +148,9 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
     getEditor().getGutterComponentEx().setLineNumberConverter(LineNumberConverter.DEFAULT);
 
     setText(value.text);
+  }
 
+  private void applyEditorHighlighting(RecentLocationItem value) {
     RangeMarker caretPosition = value.info.getCaretPosition();
     int linesShift = caretPosition != null && caretPosition.isValid() ?
                      caretPosition.getDocument().getLineNumber(value.ranges[0].getStartOffset()) : 0;
@@ -241,11 +250,10 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
     editor.getCaretModel().setCaretsAndSelections(caretStates);
   }
 
-  private void scheduleHighlightingIfNeeded() {
+  private void scheduleHighlightingIfNeeded(@NotNull JList<?> component) {
     if (getEditor().isDisposed()) return;
     if (myHighlightingFuture != null && !myHighlightingFuture.isDone()) return;
     if (myItemsDeque.isEmpty()) return;
-    JList<?> component = Objects.requireNonNull(UIUtil.getParentOfType(JList.class, this));
     myHighlightingFuture = ReadAction.nonBlocking(() -> {
         while (!myItemsDeque.isEmpty()) {
           ProgressManager.checkCanceled();

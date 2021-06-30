@@ -25,12 +25,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -106,13 +102,16 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     list.setCellRenderer(renderer);
     list.setEmptyText(emptyText);
     list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    if (list.getModel().getSize() > 0) list.setSelectedIndex(0);
     ScrollingUtil.installActions(list);
-    ScrollingUtil.ensureSelectionExists(list);
 
-    JBLabel title = new JBLabel();
-    title.setFont(title.getFont().deriveFont(Font.BOLD));
-    //noinspection DialogTitleCapitalization
-    Runnable titleUpdater = () -> title.setText(checkBox.isSelected() ? title2 : title1);
+    SimpleColoredComponent title = new SimpleColoredComponent();
+    title.setOpaque(false);
+    Runnable titleUpdater = () -> {
+      title.clear();
+      title.append(checkBox.isSelected() ? title2 : title1, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      title.append("  (" + list.getModel().getSize() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    };
     titleUpdater.run();
 
     JComponent listWithFilter = ListWithFilter.wrap(list, scrollPane, renderer::getSpeedSearchText, true);
@@ -142,15 +141,15 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
 
     LightEditActionFactory.create(event -> {
       checkBox.setSelected(!checkBox.isSelected());
-      titleUpdater.run();
       updateItems(model, list, checkBox, popup);
+      titleUpdater.run();
     }).registerCustomShortcutSet(showChangedOnlyShortcutSet, list, popup);
 
     checkBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        titleUpdater.run();
         updateItems(model, list, checkBox, popup);
+        titleUpdater.run();
       }
     });
 
@@ -187,7 +186,10 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     LightEditActionFactory.create(e -> navigateToSelected(project, list, popup))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), list, popup);
 
-    LightEditActionFactory.create(e -> removeItems(project, list, model, checkBox.isSelected()))
+    LightEditActionFactory.create(e -> {
+        removeItems(project, list, model, checkBox.isSelected());
+        titleUpdater.run();
+      })
       .registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), list, popup);
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
@@ -252,6 +254,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
 
     originalModel.removeAllElements();
     originalModel.addAll(data.getPlaces(changed));
+    if (list.getModel().getSize() > 0) list.setSelectedIndex(0);
 
     SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(list);
     if (speedSearch instanceof SpeedSearch) ((SpeedSearch)speedSearch).reset();
@@ -264,7 +267,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     return mainPanel;
   }
 
-  private static @NotNull JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
+  private static @NotNull JPanel createHeaderPanel(@NotNull JComponent title, @NotNull JComponent checkbox) {
     JPanel topPanel = new CaptionPanel();
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
