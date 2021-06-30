@@ -131,6 +131,8 @@ public interface TextContent extends CharSequence {
   /**
    * @return a new TextContent in the given domain, containing the substring of the given {@code psi.getText()}
    * in the specified range.
+   * Consider using {@link #builder()} instead if there's any change that your language might be used as a data language in templates
+   * (see e.g. {@link com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider}).
    */
   static TextContent psiFragment(TextDomain domain, PsiElement psi, TextRange rangeInPsi) {
     return new TextContentImpl(domain, Collections.singletonList(
@@ -139,9 +141,19 @@ public interface TextContent extends CharSequence {
 
   /**
    * @return a new TextContent in the given domain, containing the full {@code psi.getText()}.
+   * Consider using {@link #builder()} instead if there's any change that your language might be used as a data language in templates
+   * (see e.g. {@link com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider}).
    */
   static TextContent psiFragment(TextDomain domain, PsiElement psi) {
     return psiFragment(domain, psi, TextRange.from(0, psi.getTextLength()));
+  }
+
+  /**
+   * A builder allowing to assemble text content taking into account various PSI types and characters to exclude,
+   * element manipulators and {@link com.intellij.psi.templateLanguages.OuterLanguageElement}s.
+   */
+  static TextContentBuilder builder() {
+    return TextContentBuilder.FromPsi;
   }
 
   /**

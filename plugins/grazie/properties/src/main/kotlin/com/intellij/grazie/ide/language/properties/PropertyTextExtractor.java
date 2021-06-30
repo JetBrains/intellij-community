@@ -30,15 +30,15 @@ public class PropertyTextExtractor extends TextExtractor {
         TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS)));
     }
     if (PsiUtilCore.getElementType(root) == PropertiesTokenTypes.VALUE_CHARACTERS) {
-      TextContent content = TextContent.psiFragment(TextContent.TextDomain.PLAIN_TEXT, root);
-      while (true) {
+      TextContent content = TextContent.builder().build(root, TextContent.TextDomain.PLAIN_TEXT);
+      while (content != null) {
         int apostrophes = content.toString().indexOf("''");
         if (apostrophes < 0) break;
 
         content = content.excludeRange(TextRange.from(apostrophes, 1));
       }
 
-      while (true) {
+      while (content != null) {
         String str = content.toString();
         int start = str.indexOf("{");
         if (start < 0) break;
