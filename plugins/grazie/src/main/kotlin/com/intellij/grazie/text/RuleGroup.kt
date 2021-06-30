@@ -27,6 +27,9 @@ open class RuleGroup(rules: Set<String>) {
     /** An abstract category for all rules that report sentence fragments (e.g. bare noun phrases or missing subject). */
     const val INCOMPLETE_SENTENCE = "INCOMPLETE_SENTENCE"
 
+    /** An abstract category for all rules that report sentences not separated properly (e.g. missing space or lowercase after dot). */
+    const val UNDECORATED_SENTENCE_SEPARATION = "UNDECORATED_SENTENCE_SEPARATION"
+
     val EMPTY = RuleGroup()
 
     /** Rules for checking casing errors */

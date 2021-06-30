@@ -8,8 +8,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 
 internal class CommentProblemFilter : ProblemFilter() {
-  private val suppressedInComments =
-    setOf("LanguageTool.EN.LC_AFTER_PERIOD", "LanguageTool.NL.PUNT_GEEN_HL", "LanguageTool.DE.KLEIN_NACH_PUNKT")
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val text = problem.text
@@ -31,7 +29,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == COMMENTS) {
-      if (problem.rule.globalId in suppressedInComments) {
+      if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
       if (Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)) {
