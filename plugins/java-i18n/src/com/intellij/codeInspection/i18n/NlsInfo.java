@@ -92,18 +92,16 @@ public abstract class NlsInfo implements RestrictionInfo {
     expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoFactory.INSTANCE);
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent instanceof UCallExpression) {
-      var qualifiedCall = ObjectUtils.tryCast(parent.getUastParent(), UQualifiedReferenceExpression.class);
-      if (qualifiedCall != null && parent.equals(qualifiedCall.getSelector())) {
-        UExpression receiver = qualifiedCall.getReceiver();
-        if (TypeUtils.isJavaLangString(receiver.getExpressionType())) {
-          String name = ((UCallExpression)parent).getMethodName();
-          if (name != null && (name.equals("equals") || (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
-                                                         name.equals("equalsIgnoreCase") || name.equals("contains")))) {
-            if (receiver instanceof UReferenceExpression) {
-              PsiElement target = ((UReferenceExpression)receiver).resolve();
-              if (target instanceof PsiVariable) {
-                return factory().fromModifierListOwner((PsiVariable)target);
-              }
+      String name = ((UCallExpression)parent).getMethodName();
+      if (name != null && (name.equals("equals") || (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
+                                                     name.equals("equalsIgnoreCase") || name.equals("contains")))) {
+        var qualifiedCall = ObjectUtils.tryCast(parent.getUastParent(), UQualifiedReferenceExpression.class);
+        if (qualifiedCall != null && parent.equals(qualifiedCall.getSelector())) {
+          UExpression receiver = qualifiedCall.getReceiver();
+          if (receiver instanceof UReferenceExpression && TypeUtils.isJavaLangString(receiver.getExpressionType())) {
+            PsiElement target = ((UReferenceExpression)receiver).resolve();
+            if (target instanceof PsiVariable) {
+              return factory().fromModifierListOwner((PsiVariable)target);
             }
           }
         }
