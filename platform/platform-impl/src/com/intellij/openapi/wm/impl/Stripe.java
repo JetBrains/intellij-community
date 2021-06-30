@@ -495,13 +495,14 @@ class Stripe extends JPanel implements UISettingsListener {
     int areaSize = Math.min(Math.min(getParent().getWidth() / 2, getParent().getHeight() / 2), JBUI.scale(DROP_DISTANCE_SENSITIVITY));
     Point[] points = {new Point(0, 0), new Point(width, 0), new Point(width, height), new Point(0, height)};
     switch (anchor) {
+      //Top area should be is empty due to IDEA-271100
       case SwingConstants.TOP: {
-        updateLocation(points, 1, 2, -1, +1, areaSize);
-        updateLocation(points, 0, 3, 1, 1, areaSize);
+        updateLocation(points, 1, 2, 0, 0, areaSize);
+        updateLocation(points, 0, 3, 0, 0, areaSize);
         break;
       }
       case SwingConstants.LEFT: {
-        updateLocation(points, 0, 1, 1, 1, areaSize);
+        updateLocation(points, 0, 1, 1, 0, areaSize);
         updateLocation(points, 3, 2, 1, -1, areaSize);
         break;
       }
@@ -512,7 +513,7 @@ class Stripe extends JPanel implements UISettingsListener {
       }
 
       case SwingConstants.RIGHT: {
-        updateLocation(points, 1, 0, -1, 1, areaSize);
+        updateLocation(points, 1, 0, -1, 0, areaSize);
         updateLocation(points, 2, 3, -1, 1, areaSize);
       }
     }
@@ -520,8 +521,8 @@ class Stripe extends JPanel implements UISettingsListener {
                        new int[]{points[0].y, points[1].y, points[2].y, points[3].y}, 4).contains(point);
   }
 
-  private static void updateLocation(Point[] points, int indexFrom, int indexTo, int xSign, int ySign, int areaSize) {
-    points[indexTo].setLocation(points[indexFrom].x + xSign * areaSize, points[indexFrom].y + ySign * areaSize);
+  private static void updateLocation(Point[] points, int indexBase, int indexDest, int xSign, int ySign, int areaSize) {
+    points[indexDest].setLocation(points[indexBase].x + xSign * areaSize, points[indexBase].y + ySign * areaSize);
   }
 
   public void finishDrop(@NotNull ToolWindowManagerImpl manager) {
