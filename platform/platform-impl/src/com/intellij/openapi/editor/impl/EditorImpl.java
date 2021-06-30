@@ -2227,7 +2227,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setBorder(Border border) {
+  public void setBorder(@Nullable Border border) {
+    if (border == null) border = JBUI.Borders.empty();
     myScrollPane.setBorder(border);
   }
 
