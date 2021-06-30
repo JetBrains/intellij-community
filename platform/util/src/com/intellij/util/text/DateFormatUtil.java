@@ -220,10 +220,18 @@ public final class DateFormatUtil {
     return "";
   }
 
+  /**
+   * @deprecated use NlsMessages.formatDateLong
+   */
+  @Deprecated
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
   }
 
+  /**
+   * @deprecated use NlsMessages.formatDateLong
+   */
+  @Deprecated
   public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
     return ABOUT_DATE_FORMAT.format(time);
   }

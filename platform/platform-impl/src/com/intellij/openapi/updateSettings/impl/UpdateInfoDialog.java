@@ -5,6 +5,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +125,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
     Date expiration = la.getLicenseExpirationDate();
     if (expiration != null) {
-      return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), Boolean.FALSE);
+      return pair(IdeBundle.message("updates.interim.build", NlsMessages.formatDateLong(expiration)), Boolean.FALSE);
     }
     else {
       return null;

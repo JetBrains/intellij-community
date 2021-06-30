@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.WhatsNewAction
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
@@ -53,7 +54,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       row {
         cell {
           label(IdeBundle.message("updates.settings.current.version") + ' ' + ApplicationNamesInfo.getInstance().fullProductName + ' ' + appInfo.fullVersion)
-          contextLabel(appInfo.build.asString() + ' ' + DateFormatUtil.formatAboutDialogDate(appInfo.buildDate.time))
+          contextLabel(appInfo.build.asString() + ' ' + NlsMessages.formatDateLong(appInfo.buildDate.time))
         }
       }.largeGapAfter()
 

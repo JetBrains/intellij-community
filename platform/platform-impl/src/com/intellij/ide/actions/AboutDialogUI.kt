@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
@@ -14,7 +15,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBFont
 import java.text.SimpleDateFormat
 import java.util.*
@@ -102,11 +102,11 @@ class AboutDialogUI(val project: Project?) {
     var buildInfo = IdeBundle.message("about.box.build.number", appInfo.build.asString())
     val timestamp: Date = appInfo.buildDate.time
     buildInfo += if (appInfo.build.isSnapshot) {
-      IdeBundle.message("about.box.build.date.time", DateFormatUtil.formatAboutDialogDate(timestamp),
+      IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp),
                         SimpleDateFormat("HH:mm").format(timestamp))
     }
     else {
-      IdeBundle.message("about.box.build.date", DateFormatUtil.formatAboutDialogDate(timestamp))
+      IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp))
     }
     return buildInfo
   }

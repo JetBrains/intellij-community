@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -21,7 +22,6 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -121,10 +121,11 @@ public class AboutDialog extends DialogWrapper {
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     Date timestamp = appInfo.getBuildDate().getTime();
     if (appInfo.getBuild().isSnapshot()) {
-      buildInfo += IdeBundle.message("about.box.build.date.time", DateFormatUtil.formatAboutDialogDate(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
+      buildInfo += IdeBundle.message("about.box.build.date.time",
+                                     NlsMessages.formatDateLong(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
     }
     else {
-      buildInfo += IdeBundle.message("about.box.build.date", DateFormatUtil.formatAboutDialogDate(timestamp));
+      buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp));
     }
     addLine(lines, buildInfo);
     addEmptyLine(lines);

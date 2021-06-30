@@ -18,10 +18,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.text.DateFormat;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -194,4 +192,12 @@ public class NlsMessages {
     return ListFormatter.getInstance(Locale.getDefault(), ListFormatter.Type.UNITS, ListFormatter.Width.NARROW).format(result);
   }
 
+  /**
+   * @param date date to format
+   * @return date in human-readable format localized according to the current language pack used
+   */
+  @Contract(pure = true)
+  public static @NotNull @Nls String formatDateLong(Date date) {
+    return DateFormat.getDateInstance(DateFormat.LONG, DynamicBundle.getLocale()).format(date);
+  }
 }
