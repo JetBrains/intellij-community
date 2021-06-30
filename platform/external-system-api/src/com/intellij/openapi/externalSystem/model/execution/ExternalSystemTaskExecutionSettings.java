@@ -9,10 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -106,12 +103,14 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   }
 
   @Transient
+  @ApiStatus.Experimental
   public void setTasksAndArguments(@NotNull String tasksAndArguments) {
     setTaskNames(new ArrayList<>());
     setScriptParameters(tasksAndArguments);
   }
 
   @Transient
+  @ApiStatus.Experimental
   public @NotNull String getTasksAndArguments() {
     StringJoiner tasksAndArguments = new StringJoiner(" ");
     for (String taskName : getTaskNames()) {
