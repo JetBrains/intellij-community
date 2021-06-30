@@ -161,6 +161,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
     readFiles(myProjectPom);
+    resolveDependenciesAndImport();
     assertEquals(1, getRootNodes().size());
 
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
