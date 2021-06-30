@@ -198,7 +198,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> () -> Component)  {
+  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?)  {
     hasDetection = true
   }
 

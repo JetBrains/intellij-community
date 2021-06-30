@@ -40,6 +40,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       data.transparentRestore = value
     }
 
+  override var rehighlightPreviousUi: Boolean?
+    get() = data.highlightPreviousUi
+    set(value) {
+      data.highlightPreviousUi = value
+    }
+
   private val runtimeContext = TaskRuntimeContext(lessonExecutor,
                                                   recorder,
                                                   { lessonExecutor.applyRestore(this) },
@@ -260,7 +266,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> (() -> Component)) {
+  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {
     val step = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().executeOnPooledThread {
       while (true) {
@@ -269,9 +275,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
           break
         }
         try {
-          val highlightFunction = findAndHighlight(runtimeContext)
+          val highlightFunction = { findAndHighlight(runtimeContext) }
+          val foundComponent = highlightFunction() ?: continue
           invokeLater(ModalityState.any()) {
-            lessonExecutor.foundComponent = highlightFunction()
+            lessonExecutor.foundComponent = foundComponent
             lessonExecutor.rehighlightComponent = highlightFunction
             step.complete(true)
           }
