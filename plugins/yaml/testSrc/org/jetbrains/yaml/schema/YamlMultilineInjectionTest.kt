@@ -702,6 +702,22 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
+
+  fun testYamlToYamlQuotedInFragment() {
+    myFixture.configureByText("test.yaml", """
+        myyaml: "root: <caret>"
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("yaml")
+    assertInjectedAndLiteralValue("root: ")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml: "root:\n\
+              \  "
+    """.trimIndent())
+  }
   
 
   private fun assertInjectedAndLiteralValue(expectedText: String) {

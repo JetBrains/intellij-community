@@ -4,6 +4,7 @@ package org.jetbrains.yaml.smart
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.injected.editor.InjectionMeta
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -29,6 +30,7 @@ fun preserveIndentStateBeforeProcessing(file: PsiFile, dataContext: DataContext)
   val hostFile = hostEditor.project?.let { PsiManager.getInstance(it).findFile(virtualFile) } ?: return
   if (hostFile !is YAMLFile) return
 
+  if (file.virtualFile !is VirtualFileWindow) return
   val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) ?: return
 
   val lineIndent = InjectionMeta.INJECTION_INDENT[injectionHost]
