@@ -52,6 +52,12 @@ interface BaseKotlinConverter {
         }
     }
 
+    fun convertPsiElement(
+        element: PsiElement?,
+        givenParent: UElement?,
+        requiredTypes: Array<out Class<out UElement>>
+    ): UElement?
+
     fun convertOrEmpty(expression: KtExpression?, parent: UElement?): UExpression {
         return expression?.let { convertExpression(it, parent, DEFAULT_EXPRESSION_TYPES_LIST) } ?: UastEmptyExpression(parent)
     }

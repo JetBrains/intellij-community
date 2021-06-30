@@ -1,35 +1,35 @@
-Margherita -> null
+Margherita -> USimpleNameReferenceExpression (identifier = Margherita)
 Pizza -> UClass (name = Pizza)
-Pizza -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 size -> UMethod (name = getSize)
 Int -> USimpleNameReferenceExpression (identifier = Int)
-java -> null
+java -> USimpleNameReferenceExpression (identifier = java)
 lang -> USimpleNameReferenceExpression (identifier = lang)
 String -> USimpleNameReferenceExpression (identifier = String)
-java -> null
+java -> USimpleNameReferenceExpression (identifier = java)
 lang -> USimpleNameReferenceExpression (identifier = lang)
 IllegalStateException -> USimpleNameReferenceExpression (identifier = IllegalStateException)
-ClassCastException -> null
+ClassCastException -> USimpleNameReferenceExpression (identifier = ClassCastException)
 getName -> UMethod (name = getName)
 java -> USimpleNameReferenceExpression (identifier = java)
 lang -> USimpleNameReferenceExpression (identifier = lang)
 String -> USimpleNameReferenceExpression (identifier = String)
-Pizza -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient)
-ingredient -> null
-kotlin -> null
+ingredient -> USimpleNameReferenceExpression (identifier = ingredient)
+kotlin -> USimpleNameReferenceExpression (identifier = kotlin)
 NotImplementedError -> USimpleNameReferenceExpression (identifier = NotImplementedError)
-Margherita -> null
+Margherita -> USimpleNameReferenceExpression (identifier = Margherita)
 contains -> USimpleNameReferenceExpression (identifier = contains)
 contains -> UMethod (name = contains)
 ingredient -> UParameter (name = ingredient)
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient)
 Boolean -> USimpleNameReferenceExpression (identifier = Boolean)
-Pizza -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 Ingredient -> UClass (name = Ingredient)
-Pizza -> null
-P -> null
-self -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
+P -> USimpleNameReferenceExpression (identifier = P)
+self -> USimpleNameReferenceExpression (identifier = self)
 Builder -> UClass (name = Builder)
 P -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
@@ -40,9 +40,9 @@ MutableSet -> USimpleNameReferenceExpression (identifier = MutableSet)
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient)
 mutableSetOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-ingredient -> null
-ingredients -> null
-P -> null
+ingredient -> USimpleNameReferenceExpression (identifier = ingredient)
+ingredients -> USimpleNameReferenceExpression (identifier = ingredients)
+P -> USimpleNameReferenceExpression (identifier = P)
 addIngredient -> UMethod (name = addIngredient)
 ingredient -> UParameter (name = ingredient)
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
@@ -52,9 +52,9 @@ build -> UMethod (name = build)
 Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 self -> UMethod (name = self)
 P -> USimpleNameReferenceExpression (identifier = P)
-Pizza -> null
-size -> null
-Margherita -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
+size -> USimpleNameReferenceExpression (identifier = size)
+Margherita -> USimpleNameReferenceExpression (identifier = Margherita)
 Margherita -> UClass (name = Margherita)
 size -> UParameter (name = size)
 Int -> USimpleNameReferenceExpression (identifier = Int)
@@ -66,10 +66,10 @@ String -> USimpleNameReferenceExpression (identifier = String)
 java -> USimpleNameReferenceExpression (identifier = java)
 lang -> USimpleNameReferenceExpression (identifier = lang)
 String -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-Pizza -> null
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient)
-ingredient -> null
-Pizza -> null
+ingredient -> USimpleNameReferenceExpression (identifier = ingredient)
+Pizza -> USimpleNameReferenceExpression (identifier = Pizza)
 Ingredient -> USimpleNameReferenceExpression (identifier = Ingredient)
 contains -> UMethod (name = contains)
 ingredient -> UParameter (name = ingredient)
