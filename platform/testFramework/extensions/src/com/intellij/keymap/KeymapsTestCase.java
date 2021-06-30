@@ -198,8 +198,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl UP",            "EditorBackwardParagraphWithSelection", "ResizeToolWindowUp"},
     { "ESCAPE",                   SECOND_STROKE, "CloseGotItTooltip", "FocusEditor", "Terminal.SwitchFocusToEditor"},
     { "ctrl L",                   "EditorScrollToCenter", "Terminal.ClearBuffer"},
-    {"alt shift RIGHT",           "Diff.NextChange", "NextEditorTab"},
-    {"alt shift LEFT",            "Diff.PrevChange", "PreviousEditorTab"},
     });
     put("Visual Studio", new String[][] {
     { "F7",                       "CompileDirty", "NextDiff"},
