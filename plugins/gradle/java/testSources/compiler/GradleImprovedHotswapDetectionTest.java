@@ -7,18 +7,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
-import com.intellij.testFramework.RunAll;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTestCase {
@@ -103,29 +105,30 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     implJar = "impl/build/libs/impl.jar";
 
     clearOutputs();
-    Registry.get("gradle.improved.hotswap.detection").setValue(true);
+    Registry.get("gradle.improved.hotswap.detection").setValue(true, getTestRootDisposable());
     createProject();
     subscribeToProject();
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    new RunAll(
-      Registry.get("gradle.improved.hotswap.detection")::resetToDefault,
-      super::tearDown
-    ).run();
   }
 
   @Test
   public void testBuildMainProject() {
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(
-      mainRoot,
-      apiMainRoot,
-      apiJar,
-      implMainRoot,
-      implJar);
+    List<String> expected = newArrayList(mainRoot,
+                                         apiMainRoot, apiJar,
+                                         implMainRoot);
+
+    if (isGradleOlderThan("3.5")) {
+      expected.add(implJar);
+    }
+
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.addAll(asList("build/tmp/compileJava/previous-compilation-data.bin",
+                             "api/build/tmp/compileJava/previous-compilation-data.bin",
+                             "impl/build/tmp/compileJava/previous-compilation-data.bin"));
+    }
+
+    assertThat(dirtyOutputRoots).containsExactlyInAnyOrderElementsOf(expected);
 
     assertThat(generatedFiles).containsOnly(
       Map.entry(mainRoot, Set.of("my/pack/App.class", "my/pack/Other.class")),
@@ -148,13 +151,24 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildTestProject() {
     compileModules("project.test");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(
-      mainRoot,
-      testRoot,
-      apiMainRoot,
-      apiJar,
-      implMainRoot,
-      implJar);
+    List<String> expected = newArrayList(mainRoot,
+                                         testRoot,
+                                         apiMainRoot,
+                                         apiJar,
+                                         implMainRoot);
+
+    if (isGradleOlderThan("3.5")) {
+      expected.add(implJar);
+    }
+
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.addAll(asList("build/tmp/compileJava/previous-compilation-data.bin",
+                             "build/tmp/compileTestJava/previous-compilation-data.bin",
+                             "api/build/tmp/compileJava/previous-compilation-data.bin",
+                             "impl/build/tmp/compileJava/previous-compilation-data.bin"));
+    }
+
+    assertThat(dirtyOutputRoots).containsExactlyInAnyOrderElementsOf(expected);
 
     assertThat(generatedFiles)
       .containsOnly(
@@ -183,7 +197,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(mainRoot);
+    List<String> expected = newArrayList(mainRoot);
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+    }
+
+    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles)
       .containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
@@ -236,10 +255,16 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder(
-      implMainRoot,
-      implJar
-    );
+    List<String> expected = newArrayList(implMainRoot);
+
+    if (isGradleOlderThan("3.5")) {
+      expected.add(implJar);
+    }
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.add("impl/build/tmp/compileJava/previous-compilation-data.bin");
+    }
+
+    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
 
     // note that the "implJar" is not marked as a generated file
     // this is jar itself is marked as dirty root
@@ -284,7 +309,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactly(mainRoot);
+    List<String> expected = newArrayList(mainRoot);
+    if (isGradleNewerOrSameAs("7.1")) {
+      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+    }
+
+    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
 
@@ -364,19 +394,15 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
                          "import my.pack.ApiTest;\n" +
                          "public class ImplTest extends ApiTest {}");
 
-    importProject("allprojects {\n" +
-                  "  apply plugin: 'java'\n" +
-                  "}\n" +
-                  "\n" +
-                  "dependencies {\n" +
-                  "  compile project(':impl')\n" +
-                  "}\n" +
-                  "\n" +
-                  "configure(project(':impl')) {\n" +
-                  "  dependencies {\n" +
-                  "    compile project(':api')\n" +
-                  "  }\n" +
-                  "}");
+    importProject(script(it -> {
+      it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
+        .addImplementationDependency(it.code("project(':impl')"), null)
+        .project(":impl", p -> {
+          p
+            .withJavaLibraryPlugin()
+            .addApiDependency(p.code("project(':api')"), null);
+        });
+    }));
 
     assertModules("project", "project.main", "project.test",
                   "project.api", "project.api.main", "project.api.test",
