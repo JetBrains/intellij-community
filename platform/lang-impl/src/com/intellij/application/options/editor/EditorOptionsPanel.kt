@@ -41,6 +41,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Contract
 import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
 
 // @formatter:off
 private val codeInsightSettings get() = CodeInsightSettings.getInstance()
@@ -229,8 +230,9 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       }
       titledRow(message("editor.options.save.files.group")) {
         row {
-          val stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
+          lateinit var stripEnabledBox: CellBuilder<JCheckBox>
           cell(isFullWidth = true) {
+            stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
             val model = DefaultComboBoxModel(
               arrayOf(
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,
