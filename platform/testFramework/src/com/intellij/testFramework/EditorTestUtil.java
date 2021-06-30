@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
@@ -841,6 +842,12 @@ public final class EditorTestUtil {
     public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
       return myHeight;
     }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 
   public static class TestWidthProvider implements SoftWrapApplianceManager.VisibleAreaWidthProvider {

@@ -4,9 +4,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CustomFoldRegionTest extends AbstractEditorTest {
@@ -120,6 +122,12 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
         public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
           return 30;
         }
+
+        @Override
+        public void paint(@NotNull CustomFoldRegion region,
+                          @NotNull Graphics2D g,
+                          @NotNull Rectangle2D targetRegion,
+                          @NotNull TextAttributes textAttributes) {}
       }));
     });
     assertEquals(new Dimension(75, 54), getEditor().getContentComponent().getPreferredSize());
@@ -177,6 +185,12 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
         public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
           return size[1];
         }
+
+        @Override
+        public void paint(@NotNull CustomFoldRegion region,
+                          @NotNull Graphics2D g,
+                          @NotNull Rectangle2D targetRegion,
+                          @NotNull TextAttributes textAttributes) {}
       });
       assertNotNull(region[0]);
     });

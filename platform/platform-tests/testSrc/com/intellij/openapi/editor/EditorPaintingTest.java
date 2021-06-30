@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -349,10 +350,11 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
     @Override
     public void paint(@NotNull CustomFoldRegion region,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle r,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
                       @NotNull TextAttributes textAttributes) {
       g.setColor(Color.pink);
+      Rectangle r = targetRegion.getBounds();
       int startX = r.x;
       int endX = r.x + r.width - 1;
       int startY = r.y;
