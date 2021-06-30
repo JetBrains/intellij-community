@@ -14540,6 +14540,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryVariable/copyOfVar.kt");
         }
 
+        @TestMetadata("delegated.kt")
+        public void testDelegated() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/delegated.kt");
+        }
+
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
