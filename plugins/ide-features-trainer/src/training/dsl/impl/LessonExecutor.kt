@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -340,21 +341,29 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
     taskContext.steps.forEach { step ->
       step.thenAccept {
-        ApplicationManager.getApplication().assertIsDispatchThread()
-        val taskHasBeenDone = isTaskCompleted(taskContext)
-        if (taskHasBeenDone) {
-          clearRestore()
-          LessonManager.instance.passExercise()
-          if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
-          if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
-          for (index in taskInfo.removeAfterDoneMessages) {
-            LessonManager.instance.removeMessage(index)
-          }
-          taskInfo.taskProperties?.let { it.messagesNumber -= taskInfo.removeAfterDoneMessages.size }
-          processNextTask(currentTaskIndex + 1)
+        try {
+          stepHasBeenCompleted(taskContext, taskInfo)
+        }
+        catch (e: Throwable) {
+          thisLogger().error("Step exception: ", e)
         }
       }
     }
+  }
+
+  private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    if (!isTaskCompleted(taskContext)) return
+
+    clearRestore()
+    LessonManager.instance.passExercise()
+    if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
+    if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+    for (index in taskInfo.removeAfterDoneMessages) {
+      LessonManager.instance.removeMessage(index)
+    }
+    taskInfo.taskProperties?.let { it.messagesNumber -= taskInfo.removeAfterDoneMessages.size }
+    processNextTask(currentTaskIndex + 1)
   }
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
