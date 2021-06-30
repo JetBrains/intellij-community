@@ -26,7 +26,10 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -166,7 +169,7 @@ public final class ActionUtil {
    *   without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
    */
   public static <T> T underModalProgress(@NotNull Project project,
-                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                         @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                          @NotNull Computable<T> computable) throws ProcessCanceledException {
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
