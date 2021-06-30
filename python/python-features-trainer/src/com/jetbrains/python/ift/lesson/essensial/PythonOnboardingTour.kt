@@ -38,6 +38,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -79,6 +80,8 @@ class PythonOnboardingTour :
   KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name")) {
 
   private lateinit var openLearnTaskId: TaskContext.TaskId
+  private var useDelay: Boolean = false
+
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
@@ -104,6 +107,7 @@ class PythonOnboardingTour :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
+      useDelay = true
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectUtils.getProjectRoot(project)
@@ -120,8 +124,6 @@ class PythonOnboardingTour :
     prepareSample(sample)
 
     openLearnToolwindow()
-
-    waitBeforeContinue(500)
 
     showInterpreterConfiguration()
 
@@ -585,14 +587,26 @@ class PythonOnboardingTour :
 
   private fun LessonContext.showInterpreterConfiguration() {
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { info: TextPanel.WithIconAndArrows ->
+      addFutureStep {
+        if (useDelay) {
+          Alarm().addRequest({ completeStep() }, 500)
+        }
+        else {
+          completeStep()
+        }
+      }
+    }
+
+    task {
+      triggerByUiComponentAndHighlight(usePulsation = true) { info: TextPanel.WithIconAndArrows ->
         info.toolTipText.contains(PyBundle.message("current.interpreter", ""))
       }
     }
     task {
+      before {
+        useDelay = false
+      }
       text(PythonLessonsBundle.message("python.onboarding.interpreter.description"))
-      text(PythonLessonsBundle.message("python.onboarding.balloon.interpreter"),
-           LearningBalloonConfig(Balloon.Position.above, width = 0, delayBeforeShow = 1000, animationCycle = 200))
 
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
