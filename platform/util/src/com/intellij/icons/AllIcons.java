@@ -146,6 +146,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProfileRed = load("actions/profileRed.svg", 8182615076473201348L, 2);
     /** 16x16 */ public static final @NotNull Icon ProfileYellow = load("actions/profileYellow.svg", -6354088785640800915L, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("actions/projectDirectory.svg", -5720477564296433188L, 2);
+    /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("actions/projectWideAnalysisOff.svg", -8135864581795886819L, 2);
+    /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("actions/projectWideAnalysisOn.svg", -984371835289554973L, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("actions/properties.svg", -7026787948782900035L, 2);
     /** 16x16 */ public static final @NotNull Icon QuickfixBulb = load("actions/quickfixBulb.svg", -2332654081984500070L, 2);
     /** 16x16 */ public static final @NotNull Icon QuickfixOffBulb = load("actions/quickfixOffBulb.svg", -236992234584797184L, 2);
@@ -1078,8 +1080,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", 5097176169930710668L, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("toolwindows/problems.svg", -3654404648954575086L, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("toolwindows/problemsEmpty.svg", -4152233369359930308L, 2);
-    /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("toolwindows/projectWideAnalysisOff.svg", -6863056163174444636L, 2);
-    /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("toolwindows/projectWideAnalysisOn.svg", 4864149562935994868L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 1296641742748522434L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("toolwindows/toolWindowAnt.svg", -8044985201571763562L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("toolwindows/toolWindowBookmarks.svg", -7010322220862563369L, 2);
