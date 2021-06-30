@@ -13,8 +13,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test-junit5"))
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

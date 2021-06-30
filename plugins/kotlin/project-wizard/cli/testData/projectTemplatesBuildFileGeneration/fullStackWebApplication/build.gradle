@@ -34,8 +34,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation kotlin('test-common')
-                implementation kotlin('test-annotations-common')
+                implementation kotlin('test')
             }
         }
         jvmMain {
@@ -46,10 +45,7 @@ kotlin {
             }
         }
         jvmTest {
-            dependencies {
-                implementation kotlin('test-junit5')
-                runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
-            }
+
         }
         jsMain {
             dependencies {
@@ -58,9 +54,7 @@ kotlin {
             }
         }
         jsTest {
-            dependencies {
-                implementation kotlin('test-js')
-            }
+
         }
     }
 }

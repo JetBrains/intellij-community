@@ -10,8 +10,7 @@ version = "1.0-SNAPSHOT"
 dependencies {
     implementation(project(":c"))
     implementation(project(":d"))
-    testImplementation(kotlin("test-junit5"))
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

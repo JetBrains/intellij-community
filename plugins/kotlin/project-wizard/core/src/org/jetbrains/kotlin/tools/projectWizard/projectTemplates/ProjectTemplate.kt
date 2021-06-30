@@ -174,7 +174,8 @@ object MultiplatformApplicationProjectTemplate : ProjectTemplate() {
     override val setsPluginSettings: List<SettingWithValue<*, *>>
         get() = listOf(
             KotlinPlugin.modules.reference withValue listOf(
-                MultiplatformModule("mainModule", targets = listOf(ModuleType.common.createDefaultTarget()))
+                MultiplatformModule("mainModule", targets = listOf(
+                    ModuleType.common.createDefaultTarget(), ModuleType.jvm.createDefaultTarget()))
             )
         )
 }
