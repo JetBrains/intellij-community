@@ -34,11 +34,11 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author Konstantin Bulenkov
@@ -119,15 +119,21 @@ public class AboutDialog extends DialogWrapper {
     lines.add(Box.createVerticalStrut(10));
 
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+    String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
     Date timestamp = appInfo.getBuildDate().getTime();
     if (appInfo.getBuild().isSnapshot()) {
-      buildInfo += IdeBundle.message("about.box.build.date.time",
-                                     NlsMessages.formatDateLong(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
+      String time = new SimpleDateFormat("HH:mm").format(timestamp);
+      buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp), time);
+      buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}",
+                                                    DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp), time);
     }
     else {
       buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp));
+      buildInfoNonLocalized += MessageFormat.format(", built on {0}",
+                                                    DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp));
     }
-    addLine(lines, buildInfo);
+    addLineWithoutLog(lines, buildInfo);
+    myInfo.add(buildInfoNonLocalized);
     addEmptyLine(lines);
 
     LicensingFacade la = LicensingFacade.getInstance();
@@ -146,7 +152,8 @@ public class AboutDialog extends DialogWrapper {
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
     String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
-    addLine(lines, jreInfo);
+    addLineWithoutLog(lines, jreInfo);
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}\n", javaVersion, arch));
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");

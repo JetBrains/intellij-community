@@ -43,7 +43,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
@@ -63,6 +62,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -201,15 +202,21 @@ public final class AboutPopup {
       appendLast();
 
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+      String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
       Date timestamp = appInfo.getBuildDate().getTime();
       if (appInfo.getBuild().isSnapshot()) {
-        buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
+        String time = new SimpleDateFormat("HH:mm").format(timestamp);
+        buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp), time);
+        buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}",
+                                                      DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp), time);
       }
       else {
         buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp));
+        buildInfoNonLocalized += MessageFormat.format(", built on {0}",
+                                                      DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp));
       }
       myLines.add(new AboutBoxLine(buildInfo));
-      appendLast();
+      myInfo.append(buildInfoNonLocalized).append("\n");
 
       myLines.add(new AboutBoxLine(""));
 
@@ -232,7 +239,7 @@ public final class AboutPopup {
       String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
       String arch = properties.getProperty("os.arch", "");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.jre", javaVersion, arch)));
-      appendLast();
+      myInfo.append(MessageFormat.format("Runtime version: {0} {1}\n", javaVersion, arch));
 
       String vmVersion = properties.getProperty("java.vm.name", "unknown");
       String vmVendor = properties.getProperty("java.vendor", "unknown");
