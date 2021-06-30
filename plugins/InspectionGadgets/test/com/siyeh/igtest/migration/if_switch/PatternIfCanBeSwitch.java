@@ -47,6 +47,16 @@ class PatternIfCanBeSwitch {
     }
   }
 
+  void guardedMatchingWithCustomOrder(@Nullable Object o, int x) {
+   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (x > 0 && o instanceof Integer i) {
+      // do this
+    } else if (o instanceof String s) {
+      // do that
+    } else {
+      // implicit null check
+    }
+  }
+
   void patternMatchingWithoutNullCheck(@Nullable Object o) {
    //should be ignored if 'only suggest null safe' option is enabled
    if (o instanceof Integer i && i > 0) {

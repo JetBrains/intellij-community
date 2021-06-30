@@ -17,6 +17,10 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testNullUnsafe(){ doUnsafeNullTest(); }
+
+  @NotNull IfCanBeSwitchInspection myInspection = new IfCanBeSwitchInspection();
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_17;
@@ -25,12 +29,21 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
-    inspection.suggestIntSwitches = true;
-    inspection.suggestEnumSwitches = true;
-    inspection.minimumBranches = 2;
-    inspection.setOnlySuggestNullSafe(true);
-    return inspection;
+    myInspection.suggestIntSwitches = true;
+    myInspection.suggestEnumSwitches = true;
+    myInspection.minimumBranches = 2;
+    myInspection.setOnlySuggestNullSafe(true);
+    return myInspection;
+  }
+
+  private void doUnsafeNullTest(){
+    boolean suggestOnlyNullSafe = myInspection.suggestEnumSwitches;
+    try {
+      myInspection.setOnlySuggestNullSafe(false);
+      doTest();
+    } finally {
+      myInspection.setOnlySuggestNullSafe(suggestOnlyNullSafe);
+    }
   }
 
   @Override
