@@ -22,7 +22,11 @@ TODO
 
 # Persistent Id
 
-TODO
+Persistent Id is an id in some entity types. This id is supposed to be end-user readable.
+With this persistent id you can identify and quickly access an entity.  
+An important usage of persistent id is soft references. Some entity may contain a persistent id of a different entity
+what is defined as a soft reference. If the referenced entity changes its persistent id, the id is automatically updated
+in all entity that hold a reference to this id.
 
 # Hard references
 
