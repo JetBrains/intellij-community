@@ -54,11 +54,11 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
                     .build(root, domain, TextRange(0, root.textLength)) ?: return null
 
     val stealthyRanges = strategy.getStealthyRanges(root, content)
-    val filtered = stealthyRanges.filter { it.last < content.length }
+    val filtered = stealthyRanges.filter { it.first <= it.last && it.last < content.length }
     if (filtered.size != stealthyRanges.size) {
       PluginException.logPluginError(
         logger<StrategyTextExtractor>(),
-        "$strategy produced a stealthy range out of the given text",
+        "$strategy produced invalid stealthy ranges $stealthyRanges in a text of length ${content.length}",
         null,
         strategy.javaClass)
     }
