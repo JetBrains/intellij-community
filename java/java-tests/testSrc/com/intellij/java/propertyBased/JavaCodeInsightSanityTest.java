@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
@@ -55,7 +55,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
+    return JAVA_17;
   }
 
   public void testRandomActivity() {
@@ -65,7 +65,9 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
                                     new DeleteRange(file),
-                                    new IntroduceVariableActionOnFile(file));
+                                    new IntroduceVariableActionOnFile(file),
+                                    new IfCanBeSwitchActionOnFile(file)
+      );
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
