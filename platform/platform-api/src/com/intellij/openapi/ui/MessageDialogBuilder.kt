@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -118,15 +118,17 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     private fun show(project: Project?, parentComponent: Component?): Boolean {
       val yesText = yesText ?: CommonBundle.getYesButtonText()
       val noText = noText ?: CommonBundle.getNoButtonText()
-      return showMessage(project, parentComponent, mac = { window ->
-        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption, icon, helpId)
-      }, other = {
-        (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
-                                                         message = message, title = title, icon = icon,
-                                                         options = arrayOf(yesText, noText),
-                                                         doNotAskOption = doNotAskOption,
-                                                         helpId = helpId, alwaysUseIdeaUI = true) == 0)
-      })
+      return showMessage(
+        project,
+        parentComponent,
+        mac = { MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, it, doNotAskOption, icon, helpId) },
+        other = {
+          MessagesService.getInstance().showMessageDialog(
+            project = project, parentComponent = parentComponent, message = message, title = title, icon = icon,
+            options = arrayOf(yesText, noText), doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true
+          ) == YES
+        }
+      )
     }
   }
 
