@@ -94,56 +94,9 @@ final class BuildTasksImpl extends BuildTasks {
         // Android Studio: include sources for the prebuilt Kotlin plugin.
         def workspaceRoot = "$buildContext.paths.communityHome/../.."
         buildContext.ant.zipfileset(src: "$workspaceRoot/prebuilts/tools/common/kotlin-plugin/kotlin-plugin-sources.jar")
-
-        // Android Studio: include sources from library dependencies too.
-        zipSourcesOfLibraries()
       }
 
       buildContext.notifyArtifactBuilt(targetFile)
-    }
-  }
-
-  // Android Studio: include sources from library dependencies too.
-  // Some of this code is inspired by LibraryLicensesListGenerator and DependencyResolvingBuilder.
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void zipSourcesOfLibraries() {
-    buildContext.messages.info("Including sources from library dependencies")
-    def libs = JpsJavaExtensionService.dependencies(buildContext.project)
-      .recursively()
-      .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      .getLibraries()
-
-    // The JPS build does not download sources for Maven dependencies, so we have to do it manually.
-    def pathVars = JpsModelSerializationDataService.getPathVariablesConfiguration(buildContext.projectModel.global)
-    def localRepo = new File(pathVars.getUserVariableValue("MAVEN_REPOSITORY"))
-    def remoteRepoConfig = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(buildContext.project)
-    def remoteRepos = remoteRepoConfig.repositories.collect { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) }
-    ArtifactRepositoryManager repoManager = new ArtifactRepositoryManager(localRepo, remoteRepos, ProgressConsumer.DEAF)
-
-    for (lib in libs) {
-      def sourceRoots = lib.getFiles(JpsOrderRootType.SOURCES)
-      if (sourceRoots.empty) continue
-
-      // Download sources from Maven if needed.
-      def mavenLib = lib.asTyped(JpsRepositoryLibraryType.INSTANCE)
-      def hasMissingSourceRoots = sourceRoots.any { !it.exists() }
-      if (mavenLib != null && hasMissingSourceRoots) {
-        buildContext.messages.info("Downloading sources for library: ${lib.name}")
-        def descriptor = mavenLib.properties.data
-        repoManager.resolveDependencyAsArtifact(
-          descriptor.groupId, descriptor.artifactId, descriptor.version, Collections.singleton(ArtifactKind.SOURCES),
-          descriptor.includeTransitiveDependencies, descriptor.excludedDependencies)
-      }
-
-      for (root in sourceRoots) {
-        if (root.isFile()) {
-          buildContext.ant.zipfileset(src: root.absolutePath, erroronmissingarchive: false)
-        } else if (root.isDirectory()) {
-          buildContext.ant.zipfileset(dir: root.absolutePath, erroronmissingdir: false)
-        } else {
-          buildContext.messages.warning("Ignoring missing source root in library ${lib.name}: $root")
-        }
-      }
     }
   }
 
