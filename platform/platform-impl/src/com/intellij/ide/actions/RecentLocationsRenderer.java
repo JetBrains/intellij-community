@@ -96,11 +96,12 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
                                                 boolean hasFocus) {
     myTitle.clear();
     if (myProject.isDisposed() || getEditor().isDisposed()) return myTitle;
+    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
 
+    myTitle.setForeground(colorsScheme.getDefaultForeground());
     customizeTitleComponentText(value.info);
     SpeedSearchUtil.applySpeedSearchHighlighting(list, myTitle, true, selected);
 
-    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
     Color backgroundColor = getBackgroundColor(colorsScheme, selected);
     setForcedBackground(backgroundColor);
     getEditor().setBackgroundColor(backgroundColor);
