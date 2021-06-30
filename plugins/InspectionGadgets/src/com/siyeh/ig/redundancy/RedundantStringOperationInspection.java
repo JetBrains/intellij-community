@@ -352,13 +352,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      */
     @NotNull
     private ProblemDescriptor createSubstringToCharAtProblemDescriptor(@NotNull final PsiMethodCallExpression call) {
-      final String converted = SubstringEqualsToCharAtEqualsQuickFix.getTargetString(call, PsiElement::getText);
+      final String converted = SubstringToCharAtQuickFix.getTargetString(call, PsiElement::getText);
       assert converted != null : "Message cannot be null";
 
       final PsiElement outermostEqualsExpr = getOutermostEquals(call);
-      final SubstringEqualsToCharAtEqualsQuickFix fix = new SubstringEqualsToCharAtEqualsQuickFix(outermostEqualsExpr.getText(),
-                                                                                                  converted);
-      final @NlsSafe String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()");
+      final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(outermostEqualsExpr.getText(), converted, true);
+      final @NlsSafe String message =
+        InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()");
       return myManager.createProblemDescriptor(outermostEqualsExpr,
                                                message,
                                                fix,
@@ -512,7 +512,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                Objects.requireNonNull(stringExpression).getText(),
                                                args[0].getText());
 
-        final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(call.getText(), converted);
+        final SubstringToCharAtQuickFix fix = new SubstringToCharAtQuickFix(call.getText(), converted, false);
 
         final TextRange textRange = new TextRange(substring.getStartOffsetInParent(),
                                                   substring.getStartOffsetInParent() + substring.getTextLength());
@@ -556,7 +556,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      * to be converted with {@link String#charAt(int)}
      *
      * @param call an expression to examine
-     * @return true if the expression is a good candidate to to be converted with {@link String#charAt(int)}, otherwise - false
+     * @return true if the expression is a good candidate to be converted with {@link String#charAt(int)}, otherwise - false
      */
     private static boolean isBetterWithCharAt(@NotNull final PsiMethodCallExpression call) {
       final PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -601,16 +601,19 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     /**
      * An instance of {@link LocalQuickFix} for problems that can be solved by replacing
-     * {@link String#substring(int, int)} with {@link String#charAt(int)}
+     * {@link String#substring(int, int)} with {@link String#charAt(int)} or
+     * {@code stringValue.substring(i, i + 1).equals("_")} with {@code stringValue.charAt(i) == '_'}
      */
     private static class SubstringToCharAtQuickFix implements LocalQuickFix {
       @NotNull private final String myText;
       @NotNull private final String myConverted;
+      private final boolean myEquality;
 
       SubstringToCharAtQuickFix(@NotNull final String text,
-                                @NotNull @NonNls final String converted) {
+                                final @NotNull String converted, boolean equality) {
         myText = text;
         myConverted = converted;
+        myEquality = equality;
       }
 
       @Override
@@ -625,47 +628,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiMethodCallExpression call = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-        if (call == null) return;
-        PsiExpression[] args = call.getArgumentList().getExpressions();
-        if (args.length != 2) return;
-        ExpressionUtils.bindCallTo(call, "charAt");
-        new CommentTracker().deleteAndRestoreComments(args[1]);
-      }
-    }
-
-    /**
-     * An instance of {@link LocalQuickFix} for problems like
-     * <pre>
-     *   stringValue.substring(i, i + 1).equals("_")
-     * </pre>
-     * that can be changed to
-     * <pre>
-     *   stringValue.charAt(i) == '_'
-     * </pre>
-     */
-    private static class SubstringEqualsToCharAtEqualsQuickFix implements LocalQuickFix {
-      @NotNull private final String myText;
-      @NotNull private final String myConverted;
-
-      SubstringEqualsToCharAtEqualsQuickFix(@NotNull final String text,
-                                            @NotNull final String converted) {
-        myText = text;
-        myConverted = converted;
+        if (myEquality) {
+          applyEqualityFix(descriptor);
+        }
+        else {
+          PsiMethodCallExpression call = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+          if (call == null) return;
+          PsiExpression[] args = call.getArgumentList().getExpressions();
+          if (args.length != 2) return;
+          ExpressionUtils.bindCallTo(call, "charAt");
+          new CommentTracker().deleteAndRestoreComments(args[1]);
+        }
       }
 
-      @Override
-      public @IntentionName @NotNull String getName() {
-        return CommonQuickFixBundle.message("fix.replace.x.with.y", myText, myConverted);
-      }
-
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return CommonQuickFixBundle.message("fix.replace.x.with.y", "substring()", "charAt()");
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      private static void applyEqualityFix(@NotNull final ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (element == null) return;
 
