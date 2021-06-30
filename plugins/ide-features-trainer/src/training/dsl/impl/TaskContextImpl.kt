@@ -271,7 +271,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     ApplicationManager.getApplication().executeOnPooledThread {
       while (true) {
         if (lessonExecutor.hasBeenStopped) {
-          step.complete(false)
+          step.cancel(true)
           break
         }
         try {
