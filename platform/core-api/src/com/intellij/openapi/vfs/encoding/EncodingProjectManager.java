@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -31,12 +30,4 @@ public abstract class EncodingProjectManager extends EncodingManager {
    */
   @Override
   public abstract void setDefaultCharsetName(@NotNull String name);
-
-  /**
-   * Sets encoding by file / dir path.
-   * The target file or directory may not exist.
-   * @param fileOrDirPath target file / dir absolute path
-   * @param charset null to remove specific configuration.
-   */
-  public abstract void setEncodingByPath(@NotNull final String fileOrDirPath, @Nullable final Charset charset);
 }

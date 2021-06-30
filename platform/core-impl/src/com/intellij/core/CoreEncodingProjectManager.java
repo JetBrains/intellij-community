@@ -35,10 +35,6 @@ public class CoreEncodingProjectManager extends EncodingProjectManager {
   }
 
   @Override
-  public void setEncodingByPath(@NotNull String path, @Nullable Charset charset) {
-  }
-
-  @Override
   public boolean isNative2AsciiForPropertiesFiles() {
     return false;
   }
