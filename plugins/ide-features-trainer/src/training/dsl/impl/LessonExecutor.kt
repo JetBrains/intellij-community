@@ -260,7 +260,6 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
         }
         Thread.sleep(300)
       }
-      System.err.println("done")
     }
   }
 
