@@ -333,7 +333,7 @@ private class AlertDialog(project: Project?,
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
-      titleComponent.font = JBFont.h3().asBold()
+      titleComponent.font = getFont("swing.alert.dialog.title.font").asBold()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
@@ -351,7 +351,7 @@ private class AlertDialog(project: Project?,
         }
       }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
-      messageComponent.font = JBFont.medium()
+      messageComponent.font = getFont("swing.alert.dialog.message.font")
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
@@ -378,7 +378,7 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
-      myCheckBoxDoNotShowDialog.font = JBFont.medium()
+      myCheckBoxDoNotShowDialog.font = getFont("swing.alert.dialog.checkbox.font")
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
@@ -465,12 +465,23 @@ private class AlertDialog(project: Project?,
     return actions.toTypedArray()
   }
 
+  private fun getFont(key: String): JBFont {
+    val value = Registry.stringValue(key)
+    if ("h3".equals(value, true)) {
+      return JBFont.h3()
+    }
+    if ("medium".equals(value, true)) {
+      return JBFont.medium()
+    }
+    return JBFont.regular()
+  }
+
   override fun createJButtonForAction(action: Action): JButton {
     val button = super.createJButtonForAction(action)
     val size = button.preferredSize
     val insets = button.insets
 
-    val width100 = JBUI.scale(100) + insets.left + insets.right
+    val width100 = JBUI.scale(Registry.intValue("swing.alert.dialog.button.min.width", 100)) + insets.left + insets.right
     if (size.width < width100) {
       size.width = width100
     }
@@ -481,7 +492,7 @@ private class AlertDialog(project: Project?,
       }
     }
 
-    val height28 = JBUI.scale(28) + insets.top + insets.bottom
+    val height28 = JBUI.scale(Registry.intValue("swing.alert.dialog.button.height", 28)) + insets.top + insets.bottom
     if (size.height < height28) {
       size.height = height28
     }
