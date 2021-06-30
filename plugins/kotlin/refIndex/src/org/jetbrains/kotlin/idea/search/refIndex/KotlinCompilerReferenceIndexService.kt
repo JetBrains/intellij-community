@@ -50,8 +50,10 @@ import org.jetbrains.kotlin.incremental.LookupStorage
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
@@ -228,6 +230,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         val fqName = when (element) {
             is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
             is KtConstructor<*> -> element.getContainingClassOrObject().fqName
+            is KtCallableDeclaration -> element.takeIf(KtCallableDeclaration::isTopLevelKtOrJavaMember)?.fqName
             is PsiMethod -> element.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
             else -> null
         } ?: return null

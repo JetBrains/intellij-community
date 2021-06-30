@@ -15,7 +15,7 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
 
     fun testIsNotReady() {
         myFixture.configureByFile("Main.kt")
-        assertIndexNotReady()
+        assertIndexUnavailable()
     }
 
     fun testFindItself() {
@@ -76,10 +76,65 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
-    private fun assertIndexNotReady() = assertNull(getReferentFilesForElementUnderCaret())
+    fun testMemberFunction() {
+        myFixture.configureByFile("Main.kt")
+        rebuildProject()
+        assertIndexUnavailable()
+    }
+
+    fun testTopLevelFunction() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelExtension() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Main.kt", "Bar.kt", "Foo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelProperty() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelExtensionProperty() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Main.kt", "Bar.kt", "Foo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelVariable() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Main.kt", "Read.kt", "Write.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelPropertyWithBackingField() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Main.kt", "Read.kt", "Write.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelPropertyWithCustomGetterAndSetter() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Main.kt", "Read.kt", "Write.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    private fun assertIndexUnavailable() = assertNull(getReferentFilesForElementUnderCaret())
     private fun assertUsageInMainFile() = assertEquals(setOf("Main.kt"), getReferentFilesForElementUnderCaret())
     private fun addFileAndAssertIndexNotReady(fileName: String = "Another.kt") {
         myFixture.addFileToProject(fileName, "")
-        assertIndexNotReady()
+        assertIndexUnavailable()
     }
 }
