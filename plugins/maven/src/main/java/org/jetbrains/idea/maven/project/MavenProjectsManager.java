@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -575,17 +574,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public boolean isMavenizedModule(@NotNull Module m) {
     return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
-  }
-
-  public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    //todo remove 'mergeRootsChangesDuring' call when 'setMavenized' stop firing rootsChanged events (IDEA-250924)
-    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      for (Module m : modules) {
-        if (m.isDisposed()) continue;
-        ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-      }
-    });
   }
 
   @TestOnly
