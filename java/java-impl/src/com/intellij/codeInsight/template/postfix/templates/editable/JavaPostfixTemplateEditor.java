@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateEditorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
@@ -24,6 +25,7 @@ import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -39,15 +41,18 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
 
   @NotNull private final JPanel myPanel;
   @NotNull private final ComboBox<LanguageLevel> myLanguageLevelCombo;
+  @NotNull private final JBCheckBox myStaticImportCheckBox;
 
   public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider) {
     super(provider, createEditor(), true);
+    myStaticImportCheckBox = new JBCheckBox(JavaBundle.message("dialog.edit.template.checkbox.use.static.import"));
     myLanguageLevelCombo = new ComboBox<>(LanguageLevel.values());
     myLanguageLevelCombo.setRenderer(SimpleListCellRenderer.create("", LanguageLevel::getPresentableText));
 
     myPanel = FormBuilder.createFormBuilder()
                          .addLabeledComponent(JavaBundle.message("postfix.template.language.level.title"), myLanguageLevelCombo)
                          .addComponentFillVertically(myEditTemplateAndConditionsPanel, UIUtil.DEFAULT_VGAP)
+                         .addComponent(myStaticImportCheckBox)
                          .getPanel();
   }
 
@@ -65,8 +70,12 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     ContainerUtil.addAll(conditions, myExpressionTypesListModel.elements());
     String templateText = myTemplateEditor.getDocument().getText();
     boolean useTopmostExpression = myApplyToTheTopmostJBCheckBox.isSelected();
-    return new JavaEditablePostfixTemplate(templateId, templateName, templateText, "", conditions, languageLevel, useTopmostExpression,
-                                           myProvider);
+    boolean useStaticImport = myStaticImportCheckBox.isSelected();
+    JavaEditablePostfixTemplate template =
+      new JavaEditablePostfixTemplate(templateId, templateName, templateText, "", conditions, languageLevel, useTopmostExpression,
+                                      myProvider);
+    template.getLiveTemplate().setValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE, useStaticImport);
+    return template;
   }
 
   @NotNull
@@ -104,7 +113,9 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   public void setTemplate(@Nullable PostfixTemplate template) {
     super.setTemplate(template);
     if (template instanceof JavaEditablePostfixTemplate) {
-      myLanguageLevelCombo.setSelectedItem(((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel());
+      JavaEditablePostfixTemplate javaTemplate = (JavaEditablePostfixTemplate)template;
+      myLanguageLevelCombo.setSelectedItem(javaTemplate.getMinimumLanguageLevel());
+      myStaticImportCheckBox.setSelected(javaTemplate.getLiveTemplate().getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE));
     }
   }
 
