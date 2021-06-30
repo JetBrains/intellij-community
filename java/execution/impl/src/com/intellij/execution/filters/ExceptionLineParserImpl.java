@@ -3,7 +3,6 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,8 +10,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -303,8 +302,8 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
               }
             }
           })
-        .setDisposable(project)
         .createBalloon();
+      EditorUtil.disposeWithEditor(editor, balloon);
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       balloon.show(point, Balloon.Position.below);
