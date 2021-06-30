@@ -358,6 +358,10 @@ public class PyRenameTest extends PyTestCase {
     doMultiFileTest("someOtherMethodRenamed", "a.pyi");
   }
 
+  public void testRenameBothPyFileAndStub() {
+    doMultiFileTest("bar.pyi");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }
