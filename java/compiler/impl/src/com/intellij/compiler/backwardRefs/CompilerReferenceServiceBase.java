@@ -48,7 +48,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
@@ -332,10 +332,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return baseScope.uniteWith(ProjectScope.getLibrariesScope(project));
   }
 
-  @VisibleForTesting
   @Nullable
-  Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
+  private Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
     return getReferentFiles(element, true, (ref, elementPlace) -> myReader.findReferentFileIds(ref, elementPlace == ElementPlace.SRC));
+  }
+
+  @TestOnly
+  public @Nullable Set<VirtualFile> getReferentFilesForTests(@NotNull PsiElement element) {
+    return getReferentFiles(element);
   }
 
   @Nullable

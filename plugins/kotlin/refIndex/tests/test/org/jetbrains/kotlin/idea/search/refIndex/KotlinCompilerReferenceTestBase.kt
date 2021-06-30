@@ -1,20 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.search.refIndex
 
-import com.intellij.java.codeInsight.completion.AbstractCompilerAwareTest
+import com.intellij.compiler.CompilerReferenceService
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
+import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import kotlin.properties.Delegates
 
-abstract class KotlinCompilerReferenceTestBase : AbstractCompilerAwareTest() {
+abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     private var defaultEnableState by Delegates.notNull<Boolean>()
 
     protected fun getTestDataPath(testDirectory: String): String = KotlinRoot.DIR
@@ -39,11 +42,20 @@ abstract class KotlinCompilerReferenceTestBase : AbstractCompilerAwareTest() {
 
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {
         val elementAtCaret = myFixture.elementAtCaret
-        val declarationAtCaret = elementAtCaret.parentOfType<KtNamedDeclaration>(withSelf = true) ?: error("declaration at caret not found")
+        val declarationAtCaret = elementAtCaret.parentOfType<PsiNamedElement>(withSelf = true) ?: error("declaration at caret not found")
         return getReferentFiles(declarationAtCaret)
     }
 
-    protected fun getReferentFiles(element: PsiElement): Set<String>? = KotlinCompilerReferenceIndexService[project]
-        .findReferenceFilesInTests(element)
-        ?.mapTo(mutableSetOf(), VirtualFile::getName)
+    protected fun getReferentFiles(element: PsiElement): Set<String>? {
+        val fromKotlinIndex = KotlinCompilerReferenceIndexService[project].findReferenceFilesInTests(element)
+        val fromJavaIndex = CompilerReferenceService.getInstance(project)
+            .cast<CompilerReferenceServiceBase<*>>()
+            .getReferentFilesForTests(element)
+
+        if (fromKotlinIndex == null && fromJavaIndex == null) return null
+        return mutableSetOf<String>().apply {
+            fromKotlinIndex?.mapTo(this, VirtualFile::getName)
+            fromJavaIndex?.mapTo(this, VirtualFile::getName)
+        }
+    }
 }

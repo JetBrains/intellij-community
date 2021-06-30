@@ -26,8 +26,7 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         rebuildProject()
         assertUsageInMainFile()
 
-        myFixture.addFileToProject("Another.kt", "")
-        assertIndexNotReady()
+        addFileAndAssertIndexNotReady()
 
         rebuildProject()
         assertUsageInMainFile()
@@ -35,16 +34,14 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         myFixture.addFileToProject("Another.groovy", "")
         assertUsageInMainFile()
 
-        myFixture.addFileToProject("JavaClass.java", "")
-        assertIndexNotReady()
+        addFileAndAssertIndexNotReady("JavaClass.java")
     }
 
     fun testSimpleUsageInFullyCompiledProject() {
         myFixture.configureByFiles("Main.kt", "Foo.kt", "Boo.kt", "Doo.kt")
         rebuildProject()
         TestCase.assertEquals(setOf("Main.kt", "Foo.kt", "Boo.kt"), getReferentFilesForElementUnderCaret())
-        myFixture.addFileToProject("Another.kt", "")
-        assertIndexNotReady()
+        addFileAndAssertIndexNotReady()
     }
 
     fun testSimpleJavaLibraryClass() {
@@ -58,8 +55,36 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         rebuildProject()
         TestCase.assertEquals(setOf("Main.kt", "Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList")))
         myFixture.addFileToProject("Another.kt", "")
+        TestCase.assertEquals(setOf("Main.kt", "Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList")))
+    }
+
+    fun testPrimaryConstructor() {
+        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "WithoutUsages.kt")
+        rebuildProject()
+        // TODO: java class
+        TestCase.assertEquals(setOf("Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testSecondaryConstructor() {
+        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "WithoutUsages.kt")
+        rebuildProject()
+        // TODO: java class
+        TestCase.assertEquals(setOf("Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testJavaConstructor() {
+        myFixture.configureByFiles("JavaClass.java", "Foo.kt", "Main.kt", "Doo.kt", "WithoutUsages.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("JavaClass.java", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
     }
 
     private fun assertIndexNotReady() = assertNull(getReferentFilesForElementUnderCaret())
     private fun assertUsageInMainFile() = assertEquals(setOf("Main.kt"), getReferentFilesForElementUnderCaret())
+    private fun addFileAndAssertIndexNotReady(fileName: String = "Another.kt") {
+        myFixture.addFileToProject(fileName, "")
+        assertIndexNotReady()
+    }
 }

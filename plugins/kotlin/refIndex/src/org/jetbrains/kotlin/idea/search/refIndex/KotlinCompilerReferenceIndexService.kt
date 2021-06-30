@@ -26,10 +26,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.CachedValueProvider
@@ -54,6 +51,7 @@ import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
@@ -229,6 +227,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         val storage = storage ?: return null
         val fqName = when (element) {
             is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
+            is KtConstructor<*> -> element.getContainingClassOrObject().fqName
+            is PsiMethod -> element.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
             else -> null
         } ?: return null
 

@@ -195,7 +195,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(atCaret);
     final PsiMember memberAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiMember.class, false);
     assertNotNull(memberAtCaret);
-    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret);
+    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFilesForTests(memberAtCaret);
   }
 
   @Override
