@@ -209,7 +209,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   private static final class ExceptionColumnFinder implements HyperlinkInfoFactory.HyperlinkHandler {
-    private static final long ADVANCED_LINK_INFO_TIMEOUT = 1000L;
+    private static final long LINK_INFO_TIMEOUT_MS = 300L;
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
     private final int myTextEndOffset;
@@ -235,7 +235,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
 
       ThrowableComputable<LinkInfo, RuntimeException> computable = () -> ReadAction.compute(
         () -> computeLinkInfo(project, file, startOffset, endOffset, originalEditor));
-      LinkInfo info = ProgressIndicatorUtils.withTimeout(ADVANCED_LINK_INFO_TIMEOUT, () -> SlowOperations.allowSlowOperations(computable));
+      LinkInfo info = ProgressIndicatorUtils.withTimeout(LINK_INFO_TIMEOUT_MS, () -> SlowOperations.allowSlowOperations(computable));
       if (info == null) return;
       TextRange range = info.target.getTextRange();
       targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
