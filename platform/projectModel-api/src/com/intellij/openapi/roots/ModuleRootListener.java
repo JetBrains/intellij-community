@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.ProjectTopics;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -11,6 +12,7 @@ import java.util.EventListener;
  *
  * @see ProjectTopics#PROJECT_ROOTS
  */
+@ApiStatus.OverrideOnly
 public interface ModuleRootListener extends EventListener {
   
   default void beforeRootsChange(@NotNull ModuleRootEvent event) {
