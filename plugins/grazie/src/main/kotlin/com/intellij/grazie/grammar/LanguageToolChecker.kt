@@ -63,6 +63,10 @@ class LanguageToolChecker : TextChecker() {
         }
       }
 
+      if (RuleGroup.UNDECORATED_SENTENCE_SEPARATION in group.rules && ruleId in sentenceSeparationRules) {
+        return true
+      }
+
       return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && ruleId == id }
     }
 
@@ -73,6 +77,7 @@ class LanguageToolChecker : TextChecker() {
   companion object {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
+    private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 
     internal fun getRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<LanguageToolRule> {
       return LangTool.getTool(lang, state).allRules.asSequence()
