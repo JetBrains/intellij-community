@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -31,6 +31,7 @@ public class ExternalJavadocPresentationTest extends LightJavaCodeInsightTestCas
   public void testToLowerCase() {
     doTest("lang/String.html#toLowerCase()", "String/7/page.html", "String/7/expectedToLowerCase.html");
     doTest("lang/String.html#toLowerCase()", "String/6/page.html", "String/6/expectedToLowerCase.html");
+    doTest("lang/String.html#toLowerCase()", "String/16/page.html", "String/16/expectedToLowerCase.html");
   }
 
   public void testInvalidJavadoc() {
