@@ -215,7 +215,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
     toolbarGroup.add(new MyPreviewAction());
 
-    setToolbar(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false);
+    toolbar.setTargetComponent(myTree);
+    setToolbar(toolbar.getComponent());
   }
 
   @NotNull
