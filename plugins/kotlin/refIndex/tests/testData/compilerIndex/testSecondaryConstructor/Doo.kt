@@ -1,3 +1,3 @@
 fun test3() {
-    Foo()
+    Foo(42)
 }

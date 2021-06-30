@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 @SkipSlowTestLocally
 class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
@@ -59,18 +56,16 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     }
 
     fun testPrimaryConstructor() {
-        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "WithoutUsages.kt")
+        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
         rebuildProject()
-        // TODO: java class
-        TestCase.assertEquals(setOf("Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        TestCase.assertEquals(setOf("JavaClass.java","Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
         addFileAndAssertIndexNotReady()
     }
 
     fun testSecondaryConstructor() {
-        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "WithoutUsages.kt")
+        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
         rebuildProject()
-        // TODO: java class
-        TestCase.assertEquals(setOf("Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        TestCase.assertEquals(setOf("JavaClass2.java","Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
         addFileAndAssertIndexNotReady()
     }
 

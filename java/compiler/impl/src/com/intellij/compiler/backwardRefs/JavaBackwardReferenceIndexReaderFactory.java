@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.server.BuildManager;
@@ -282,14 +282,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     private enum DefCount {NONE, ONE, MANY}
 
     private boolean hasMultipleDefinitions(CompilerRef.NamedCompilerRef def) throws StorageException {
-      DefCount count = getDefinitionCount(def);
-      if (count == DefCount.NONE) {
-        //diagnostic
-        String name =
-          def instanceof CompilerRef.CompilerAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
-        LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
-      }
-      return count == DefCount.MANY;
+      return getDefinitionCount(def) == DefCount.MANY;
     }
 
     @NotNull

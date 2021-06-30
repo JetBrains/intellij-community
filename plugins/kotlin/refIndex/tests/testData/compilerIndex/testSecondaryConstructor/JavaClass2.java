@@ -1,5 +1,5 @@
-public class JavaClass {
+public class JavaClass2 {
     public static void main(String[] args) {
-        new Foo(42, 42);
+        new Foo(42);
     }
 }

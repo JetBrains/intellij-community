@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
@@ -24,6 +25,17 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             ?.asString()
             ?.let(names::tryEnumerate)
             ?.let(CompilerRef::JavaCompilerClassRef)
+
+        is KtConstructor<*> -> element.getContainingClassOrObject()
+            .fqName
+            ?.asString()
+            ?.let { qualifier ->
+                CompilerRef.JavaCompilerMethodRef(
+                    names.tryEnumerate(qualifier),
+                    names.tryEnumerate("<init>"),
+                    element.valueParameters.size,
+                )
+            }
 
         else -> null
     }
