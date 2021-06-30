@@ -71,6 +71,11 @@ public class TestDataReferenceCollector {
       if (uMethod == null) {
         return result;
       }
+      String testMetaData = TestDataLineMarkerProvider.annotationValue(uMethod, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
+      if (testMetaData != null) {
+        result.add(new TestDataFile.LazyResolved(myTestDataPath + testMetaData));
+        return result;
+      }
       uMethod.accept(new AbstractUastVisitor() {
         @Override
         public boolean visitCallExpression(@NotNull UCallExpression expression) {
