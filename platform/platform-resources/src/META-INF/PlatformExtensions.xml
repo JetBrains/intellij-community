@@ -871,7 +871,8 @@
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
-      <category>Other</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
 
     <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
