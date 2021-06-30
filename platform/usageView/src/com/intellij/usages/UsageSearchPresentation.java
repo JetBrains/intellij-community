@@ -19,7 +19,5 @@ public interface UsageSearchPresentation {
    * Search options converted to formatted string.
    */
   @Nls
-  default @NotNull String getSearchOptions() {
-    return "";
-  }
+  @NotNull String getSearchOptions();
 }

@@ -7,6 +7,7 @@ import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -23,11 +24,12 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun isValid(): Boolean = true
 
-  override fun getPresentation(): UsageSearchPresentation {
-    return UsageSearchPresentation {
-      usageHandler.getSearchString(allOptions)
+  override fun getPresentation(): UsageSearchPresentation =
+    object: UsageSearchPresentation {
+      override fun getSearchString(): String = usageHandler.getSearchString(allOptions)
+      override fun getSearchOptions(): String =
+        LangBundle.message(if (allOptions.textSearch == true) "target.usages.and.text.option" else "target.usages.option")
     }
-  }
 
   override fun createUsageSearcher(): UsageSearcher {
     val query = buildUsageViewQuery(project, target, usageHandler, allOptions)
