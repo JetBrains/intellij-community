@@ -47,13 +47,10 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -251,14 +248,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void initUi() {
     if (myTabs != null) return;
 
-    myTabs = new JBRunnerTabs(myProject, this) {
-      @Override
-      protected TabPainterAdapter createTabPainterAdapter() {
-        return Registry.is("debugger.new.tool.window.layout")
-               ? new DefaultTabPainterAdapter(JBTabPainter.getTOOL_WINDOW())
-               : super.createTabPainterAdapter();
-      }
-    };
+    myTabs = new JBRunnerTabs(myProject, this);
     myTabs.getComponent().setOpaque(false);
     myTabs.setDataProvider(dataId -> {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
@@ -478,6 +468,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   @Override
   public int getWindow() {
     return myWindow;
+  }
+
+  @NotNull
+  public JBTabs getTabs() { return myTabs; }
+
+  public AnAction @NotNull[] getViewActions() {
+    return myViewActions.getChildren(null);
   }
 
   @Override
@@ -948,7 +945,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
 
     NonOpaquePanel sideComponent = new TwoSideComponent(leftWrapper, new TwoSideComponent(middleWrapper, new TwoSideComponent(right, rightWrapper)));
-
+    sideComponent.setVisible(!myTabs.isHideTopPanel());
     tab.setSideComponent(sideComponent);
 
     tab.setTabLabelActions((ActionGroup)myActionManager.getAction(VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);

@@ -86,7 +86,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
                              @NotNull JPanel contentComponent) {
     this.contentManager = contentManager;
     type = window.getWindowInfo().getContentUiType();
-    tabsLayout = new TabContentLayout(this);
+    tabsLayout = new SingleContentLayout(this);
     this.window = window;
     this.contentComponent = contentComponent;
 

@@ -137,6 +137,13 @@ class ContentTabLabel extends ContentLabel {
     }
   }
 
+  protected void closeContent() {
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
+    if (contentManager != null) {
+      contentManager.removeContent(myContent, true);
+    }
+  }
+
   public void update() {
     setHorizontalAlignment(SwingConstants.LEFT);
     if (myLayout.isToDrawTabs() == TabContentLayout.TabsDrawMode.HIDE) {
@@ -212,10 +219,7 @@ class ContentTabLabel extends ContentLabel {
         content.setPinned(false);
         return;
       }
-      ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-      if (contentManager != null) {
-        contentManager.removeContent(content, true);
-      }
+      closeContent();
     }
 
     @Override

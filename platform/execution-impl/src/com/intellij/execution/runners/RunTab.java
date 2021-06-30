@@ -4,24 +4,34 @@ package com.intellij.execution.runners;
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.diagnostic.logging.OutputFileUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.GridImpl;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class RunTab implements DataProvider, Disposable {
   @NotNull
@@ -71,7 +81,14 @@ public abstract class RunTab implements DataProvider, Disposable {
     }
     else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
       return myRunContentDescriptor;
+    } else if (SingleContentSupplier.KEY.is(dataId)) {
+      return getSupplier();
     }
+    return null;
+  }
+
+  @Nullable
+  protected SingleContentSupplier getSupplier() {
     return null;
   }
 
@@ -109,6 +126,82 @@ public abstract class RunTab implements DataProvider, Disposable {
       if (processHandler != null) {
         OutputFileUtil.attachDumpListener(configuration, processHandler, console);
       }
+    }
+  }
+
+  /**
+   * Default implementation of {@link SingleContentSupplier}.
+   *
+   * Isn't used directly by {@link RunTab}, but can be used by inheritors.
+   */
+  protected class RunTabSupplier implements SingleContentSupplier {
+
+    @Nullable
+    private final ActionGroup myActionGroup;
+
+    public RunTabSupplier(@Nullable ActionGroup group) {
+      myActionGroup = group;
+    }
+
+    @NotNull
+    @Override
+    public JBTabs getTabs() {
+      RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+      return Objects.requireNonNull(contentUi).getTabs();
+    }
+
+    @Nullable
+    @Override
+    public ActionGroup getToolbarActions() {
+      return myActionGroup;
+    }
+
+    @NotNull
+    @Override
+    public List<AnAction> getContentActions() {
+      var layout = new ActionGroup(ExecutionBundle.messagePointer("runner.content.tooltip.layout.settings"), () -> "", AllIcons.Debugger.RestoreLayout) {
+          @Override
+          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+            RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+            return Objects.requireNonNull(contentUi).getViewActions();
+          }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return true;
+        }
+      };
+      layout.setPopup(true);
+      layout.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+
+      return List.of(layout);
+    }
+
+    @Override
+    public void init(@Nullable ActionToolbar toolbar) {
+      JBTabs tabs = getTabs();
+      if (tabs instanceof JBTabsEx) {
+        ((JBTabsEx)tabs).setHideTopPanel(true);
+      }
+    }
+
+    @Override
+    public void reset() {
+      JBTabs tabs = getTabs();
+      if (tabs instanceof JBTabsEx) {
+        ((JBTabsEx)tabs).setHideTopPanel(false);
+      }
+    }
+
+    @Override
+    public boolean isClosable(@NotNull TabInfo tab) {
+      List<Content> gridContents = ((GridImpl)tab.getComponent()).getContents();
+      return gridContents.size() > 0 && gridContents.get(0).isCloseable();
     }
   }
 }

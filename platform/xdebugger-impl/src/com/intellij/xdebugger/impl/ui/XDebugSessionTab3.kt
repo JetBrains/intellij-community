@@ -3,33 +3,22 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair.create
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.JBColor
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
-import com.intellij.util.Producer
-import com.intellij.util.ui.JBUI
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.*
@@ -39,8 +28,6 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.Icon
 import javax.swing.LayoutFocusTraversalPolicy
-import javax.swing.event.AncestorEvent
-import javax.swing.event.AncestorListener
 
 //TODO: unify with XDebugSessionTab2
 class XDebugSessionTab3(
@@ -70,86 +57,7 @@ class XDebugSessionTab3(
 
   private val focusTraversalPolicy = MyFocusTraversalPolicy()
 
-  init {
-    // value from com.intellij.execution.ui.layout.impl.GridImpl
-    splitter.setMinSize(48)
-
-    splitter.isFocusCycleRoot = true
-    splitter.isFocusTraversalPolicyProvider = true
-    splitter.focusTraversalPolicy = focusTraversalPolicy
-
-    session.addSessionListener(object : XDebugSessionListener {
-      override fun sessionStopped() {
-        UIUtil.invokeLaterIfNeeded {
-          splitter.saveProportions()
-          Disposer.dispose(lifetime)
-        }
-      }
-    })
-
-    project.messageBus.connect(lifetime).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
-      override fun processStarted(debugProcess: XDebugProcess) {
-        UIUtil.invokeLaterIfNeeded {
-          if (debugProcess.session != null && debugProcess.session != session) {
-            splitter.saveProportions()
-          }
-        }
-      }
-
-      override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-        UIUtil.invokeLaterIfNeeded {
-          if (previousSession == session) {
-            splitter.saveProportions()
-            //xThreadsFramesView.saveUiState()
-          }
-          else if (currentSession == session)
-            splitter.restoreProportions()
-        }
-      }
-
-      override fun processStopped(debugProcess: XDebugProcess) {
-        UIUtil.invokeLaterIfNeeded {
-          splitter.saveProportions()
-          //xThreadsFramesView.saveUiState()
-          if (debugProcess.session == session)
-            Disposer.dispose(lifetime)
-        }
-      }
-    })
-
-    val ancestorListener = object : AncestorListener {
-      override fun ancestorAdded(event: AncestorEvent?) {
-        if (XDebuggerManager.getInstance(project).currentSession == session) {
-          splitter.restoreProportions()
-        }
-      }
-
-      override fun ancestorRemoved(event: AncestorEvent?) {
-        if (XDebuggerManager.getInstance(project).currentSession == session) {
-          splitter.saveProportions()
-          //xThreadsFramesView.saveUiState()
-        }
-      }
-
-      override fun ancestorMoved(event: AncestorEvent?) {
-      }
-    }
-
-    toolWindow?.component?.addAncestorListener(ancestorListener)
-    Disposer.register(lifetime, Disposable {
-      toolWindow?.component?.removeAncestorListener(ancestorListener)
-    })
-
-    var oldToolWindowType: ToolWindowType? = null
-    project.messageBus.connect(lifetime).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        if (oldToolWindowType == toolWindow?.type) return
-
-        setHeaderState()
-        oldToolWindowType = toolWindow?.type
-      }
-    })
-  }
+  private var mySingleContentSupplier: SingleContentSupplier? = null
 
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
@@ -207,25 +115,6 @@ class XDebugSessionTab3(
     myUi.addContent(content, 0, PlaceInGrid.left, false)
 
     ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
-
-    toolWindow?.let {
-      val contentManager = it.contentManager
-      val listener = object : ContentManagerListener {
-        override fun contentAdded(event: ContentManagerEvent) {
-          setHeaderState()
-        }
-
-        override fun contentRemoved(event: ContentManagerEvent) {
-          setHeaderState()
-        }
-      }
-      contentManager.addContentManagerListener(listener)
-      Disposer.register(lifetime, Disposable {
-        contentManager.removeContentManagerListener(listener)
-      })
-    }
-
-    setHeaderState()
   }
   private fun getComponents(): Iterator<Component> {
     return iterator {
@@ -261,52 +150,14 @@ class XDebugSessionTab3(
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    myUi.options.setTitleProducer(Producer {
-      val icon = if (session.isStopped) session.runProfile?.icon else ExecutionUtil.getLiveIndicator(session.runProfile?.icon)
-      return@Producer create(icon, StringUtil.shortenTextWithEllipsis(session.sessionName, 15, 0) + ":")
-    })
+    mySingleContentSupplier = RunTabSupplier(toolbar)
 
     val settings = DefaultActionGroup(*myUi.options.settingsActionsList)
     registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
     (toolWindow as ToolWindowEx).setAdditionalGearActions(settings)
   }
 
-  private fun setHeaderState() {
-    toolWindow?.let { toolWindow ->
-      if (toolWindow !is ToolWindowEx) return@let
-
-      val singleContent = toolWindow.contentManager.contents.singleOrNull()
-      val headerVisible = toolWindow.isHeaderVisible
-      val topRightToolbar = DefaultActionGroup().apply {
-        if (headerVisible) return@apply
-        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
-      }
-      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-
-      val topMiddleToolbar = DefaultActionGroup().apply {
-        if (singleContent == null || headerVisible) return@apply
-
-        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Cancel) {
-          override fun actionPerformed(e: AnActionEvent) {
-            toolWindow.contentManager.removeContent(singleContent, true)
-          }
-        })
-      }
-      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-
-      toolWindow.decorator.isHeaderVisible = headerVisible
-
-      if (toolWindow.decorator.isHeaderVisible) {
-        toolWindow.component.border = null
-        toolWindow.component.invalidate()
-        toolWindow.component.repaint()
-      } else if (toolWindow.component.border == null) {
-        UIUtil.addBorder(toolWindow.component, JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
-      }
-    }
-  }
-
-  private val ToolWindowEx.isHeaderVisible get() = (type != ToolWindowType.DOCKED) || contentManager.contents.singleOrNull() == null
+  override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
     leftToolbar.apply {

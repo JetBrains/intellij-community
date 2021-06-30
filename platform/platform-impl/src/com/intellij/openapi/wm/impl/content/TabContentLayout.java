@@ -31,7 +31,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-final class TabContentLayout extends ContentLayout implements MorePopupAware {
+class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
   LayoutData myLastLayout;
@@ -288,7 +288,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
   }
 
-  private final JBTabPainter tabPainter = JBTabPainter.getTOOL_WINDOW();
+  protected final JBTabPainter tabPainter = JBTabPainter.getTOOL_WINDOW();
 
   @Override
   public void paintComponent(Graphics g) {
