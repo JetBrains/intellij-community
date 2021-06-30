@@ -355,12 +355,14 @@ final class SearchForUsagesRunnable implements Runnable {
       CoreProgressManager.assertUnderProgress(indicator);
     }
     TooManyUsagesStatus.createFor(indicator);
+    AtomicBoolean showBalloon = new AtomicBoolean(true);
+
     EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!myProject.isDisposed()) {
+      if (!myProject.isDisposed() && showBalloon.get()) {
         notifyByFindBalloon(null, MessageType.WARNING,
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+        findStartedBalloonShown.set(true);
       }
-      findStartedBalloonShown.set(true);
     }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
@@ -406,6 +408,7 @@ final class SearchForUsagesRunnable implements Runnable {
           balloon.hide();
         }
       }
+      showBalloon.set(false);
     }, myProject.getDisposed());
   }
 
