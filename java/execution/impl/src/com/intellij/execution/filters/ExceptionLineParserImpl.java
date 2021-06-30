@@ -38,12 +38,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-import static com.intellij.execution.filters.ExceptionWorker.*;
+
+import static com.intellij.execution.filters.ExceptionWorker.ParsedLine;
+import static com.intellij.execution.filters.ExceptionWorker.parseExceptionLine;
 
 public class ExceptionLineParserImpl implements ExceptionLineParser {
   private final Project myProject;
@@ -252,12 +255,11 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       }
     }
 
-    private @Nullable
-    LinkInfo computeLinkInfo(@NotNull Project project,
-                                                                   @NotNull VirtualFile file,
-                                                                   int lineStart,
-                                                                   int lineEnd,
-                                                                   @Nullable Editor originalEditor) {
+    private @Nullable LinkInfo computeLinkInfo(@NotNull Project project,
+                                               @NotNull VirtualFile file,
+                                               int lineStart,
+                                               int lineEnd,
+                                               @Nullable Editor originalEditor) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
       PsiElement target = getExceptionOrigin(psiFile, lineStart, lineEnd);
@@ -286,30 +288,28 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       String actionName = action.getTemplatePresentation().getDescription();
       Objects.requireNonNull(actionName);
       Ref<Balloon> ref = Ref.create();
-      Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null,
-                                      MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
-            @Override
-            protected void hyperlinkActivated(HyperlinkEvent e) {
-              if (e.getDescription().equals("analyze")) {
-                Balloon b = ref.get();
-                if (b != null) {
-                  Disposer.dispose(b);
-                }
-                myAnalysisWasActivated = true;
-                ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
-                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
+      String content = HtmlChunk.link("analyze", actionName).toString();
+      Color background = MessageType.INFO.getPopupBackground();
+      Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(content, null, background, new HyperlinkAdapter() {
+          @Override
+          protected void hyperlinkActivated(HyperlinkEvent e) {
+            if (e.getDescription().equals("analyze")) {
+              Balloon b = ref.get();
+              if (b != null) {
+                Disposer.dispose(b);
               }
+              myAnalysisWasActivated = true;
+              ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
+              action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
             }
-          })
+          }
+        })
         .createBalloon();
       EditorUtil.disposeWithEditor(editor, balloon);
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       balloon.show(point, Balloon.Position.below);
-      editor.getScrollingModel().addVisibleAreaListener(e -> {
-        Disposer.dispose(balloon);
-      }, balloon);
+      editor.getScrollingModel().addVisibleAreaListener(e -> Disposer.dispose(balloon), balloon);
     }
 
     @Nullable
