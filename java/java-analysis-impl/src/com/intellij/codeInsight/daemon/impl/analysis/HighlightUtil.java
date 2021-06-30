@@ -1687,26 +1687,6 @@ public final class HighlightUtil {
   }
 
 
-  private enum SelectorKind {INT, ENUM, STRING}
-
-  private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {
-    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) {
-      return SelectorKind.INT;
-    }
-
-    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (psiClass != null) {
-      if (psiClass.isEnum()) {
-        return SelectorKind.ENUM;
-      }
-      if (Comparing.strEqual(psiClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)) {
-        return SelectorKind.STRING;
-      }
-    }
-
-    return null;
-  }
-
   static HighlightInfo checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
     PsiExpression[] operands = expression.getOperands();
 
@@ -1810,21 +1790,22 @@ public final class HighlightUtil {
           ObjectUtils.notNull(resolved instanceof PsiMethod ? ((PsiMethod)resolved).getContainingClass() : null, aClass);
         for (PsiClass superClass : classT.getSupers()) {
           if (superClass.isInheritor(containingClass, true)) {
-            String cause = null;
             if (superClass.isInheritor(aClass, true) && superClass.isInterface()) {
-              cause = "redundant interface " + format(containingClass) + " is extended by ";
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(qualifier)
+                .descriptionAndTooltip(
+                  JavaErrorBundle.message("bad.qualifier.in.super.method.reference.extended", format(containingClass), formatClass(superClass)))
+                .create();
             }
             else if (resolved instanceof PsiMethod &&
                      MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
-              cause = "method " + ((PsiMethod)resolved).getName() + " is overridden in ";
-            }
-
-            if (cause != null) {
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(qualifier)
-                .descriptionAndTooltip(JavaErrorBundle.message("bad.qualifier.in.super.method.reference", cause + formatClass(superClass)))
+                .descriptionAndTooltip(
+                  JavaErrorBundle.message("bad.qualifier.in.super.method.reference.overridden", ((PsiMethod)resolved).getName(), formatClass(superClass)))
                 .create();
             }
+
           }
         }
 
@@ -3131,6 +3112,7 @@ public final class HighlightUtil {
     return ref;
   }
 
+  @NlsSafe
   @NotNull
   static String format(@NotNull PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
