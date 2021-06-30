@@ -4,12 +4,9 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.ResolveResult
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
-import org.jetbrains.uast.kotlin.internal.multiResolveResults
 
 class KotlinUQualifiedReferenceExpression(
     override val sourcePsi: KtDotQualifiedExpression,
