@@ -978,7 +978,7 @@ idea.fatal.error.notification=disabled
       .runtimeOnly()
       .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar") {
+      jar("updater-full.jar", true) {
         module(updaterModule)
         for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)
