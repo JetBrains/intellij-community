@@ -10,9 +10,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightGetter
 import org.jetbrains.kotlin.asJava.toLightSetter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -117,7 +114,9 @@ fun convertParentImpl(uElement: UElement): UElement? {
 
     val result = doConvertParent(uElement, parent)
     if (result == uElement) {
-        throw IllegalStateException("Loop in parent structure when converting a $psi of type ${psi?.javaClass} with parent $parent of type ${parent?.javaClass} text: [${parent?.text}], result = $result")
+        throw KotlinExceptionWithAttachments("Loop in parent structure when converting a $psi of type ${psi?.javaClass} with parent $parent of type ${parent?.javaClass}")
+            .withAttachment("text", parent?.text)
+            .withAttachment("result", result)
     }
 
     return result
