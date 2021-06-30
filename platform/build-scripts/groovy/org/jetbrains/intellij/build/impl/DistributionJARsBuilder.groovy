@@ -251,36 +251,44 @@ final class DistributionJARsBuilder {
   }
 
   /**
-   * Build index which is used to search options in the Settings dialog.
+   * @see {@link org.jetbrains.intellij.build.impl.DistributionJARsBuilder#buildSearchableOptions}
    */
   static BuildTaskRunnable<Void> createBuildSearchableOptionsTask(@NotNull List<String> modulesForPluginsToPublish) {
     BuildTaskRunnable.task(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, "Build searchable options index", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext buildContext) {
-        ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-        List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
-        modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
-        Path targetDirectory = getSearchableOptionsDir(buildContext)
-        buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
-        buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
-        FileUtil.delete(targetDirectory)
-        // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-        // It'll process all UI elements in Settings dialog and build index for them.
-        BuildTasksImpl.runApplicationStarter(buildContext,
-                                             buildContext.paths.tempDir.resolve("searchableOptions"),
-                                             modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
-                                             Collections.emptyMap(),
-                                             List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"))
-        String[] modules = targetDirectory.toFile().list()
-        if (modules == null || modules.length == 0) {
-          buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
-        }
-        else {
-          buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
-          buildContext.messages.debug("The following modules contain searchable options: $modules")
-        }
+        buildSearchableOptions(buildContext, modulesForPluginsToPublish)
       }
     })
+  }
+
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  static Path buildSearchableOptions(BuildContext buildContext, @NotNull List<String> modulesForPluginsToPublish) {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+    modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
+    Path targetDirectory = getSearchableOptionsDir(buildContext)
+    buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
+    buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
+    FileUtil.delete(targetDirectory)
+    // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+    // It'll process all UI elements in Settings dialog and build index for them.
+    BuildTasksImpl.runApplicationStarter(buildContext,
+                                         buildContext.paths.tempDir.resolve("searchableOptions"),
+                                         modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                         Collections.emptyMap(),
+                                         List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"))
+    String[] modules = targetDirectory.toFile().list()
+    if (modules == null || modules.length == 0) {
+      buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
+    }
+    else {
+      buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+      buildContext.messages.debug("The following modules contain searchable options: $modules")
+    }
+    return targetDirectory
   }
 
   static Set<String> getModulesToCompile(BuildContext buildContext) {
