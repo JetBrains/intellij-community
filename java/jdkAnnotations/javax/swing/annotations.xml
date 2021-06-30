@@ -75,6 +75,12 @@
       <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
     </annotation>
   </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, boolean, boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
