@@ -1776,10 +1776,7 @@ public final class HighlightUtil {
       aClass = (PsiClass)resolved;
     }
     else {
-      aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
-      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, false)) {
-        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-      }
+      aClass = getContainingClass(expr);
     }
     if (aClass == null) return null;
 
@@ -1804,7 +1801,7 @@ public final class HighlightUtil {
       //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
       //It is a compile-time error if I is not a direct superinterface of T,
       //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
-      final PsiClass classT = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+      PsiClass classT = getContainingClass(expr);
       if (classT != null) {
         final PsiElement parent = expr.getParent();
         final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
@@ -1839,6 +1836,15 @@ public final class HighlightUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiClass getContainingClass(@NotNull PsiExpression expr) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+    while (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    }
+    return aClass;
   }
 
   static HighlightInfo checkUnqualifiedSuperInDefaultMethod(@NotNull LanguageLevel languageLevel,
