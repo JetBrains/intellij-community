@@ -75,7 +75,6 @@ import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
@@ -95,8 +94,8 @@ import javax.swing.ToolTipManager
 import kotlin.collections.component1
 import kotlin.collections.component2
 
- private val LOG = logger<DynamicPlugins>()
-private val classloadersFromUnloadedPlugins = ContainerUtil.createWeakValueMap<PluginId, PluginClassLoader>()
+private val LOG = logger<DynamicPlugins>()
+private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
 
 object DynamicPlugins {
   private const val GROUP_ID = "Dynamic plugin installation"
@@ -202,7 +201,7 @@ object DynamicPlugins {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return InstalledPluginsState.RESTART_REQUIRED_MESSAGE
     }
-    if (classloadersFromUnloadedPlugins.get(descriptor.pluginId) != null) {
+    if (classloadersFromUnloadedPlugins.get(descriptor.pluginId)?.isEmpty() == false) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
     }
     findMissingRequiredDependency(descriptor, context)?.let { pluginDependency ->
@@ -537,11 +536,8 @@ object DynamicPlugins {
         classLoaderUnloaded = true
       }
       else {
-        for (classLoader in classLoaders) {
-          classloadersFromUnloadedPlugins.put(pluginId, classLoader)
-        }
+        classloadersFromUnloadedPlugins.put(pluginId, classLoaders)
         ClassLoaderTreeChecker(pluginDescriptor, classLoaders).checkThatClassLoaderNotReferencedByPluginClassLoader()
-        classLoaders.clear()
 
         val checkClassLoaderUnload = options.waitForClassloaderUnload ||
                                      options.requireMemorySnapshot ||
@@ -798,7 +794,7 @@ object DynamicPlugins {
   }
 
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
-    if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] != null) {
+    if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
       return false
@@ -950,7 +946,7 @@ object DynamicPlugins {
 
     MemoryDumpHelper.captureMemoryDump(snapshotPath)
 
-    if (classloadersFromUnloadedPlugins[pluginId] == null) {
+    if (classloadersFromUnloadedPlugins[pluginId]?.isEmpty() != false) {
       LOG.info("Successfully unloaded plugin $pluginId (classloader collected during memory snapshot generation)")
       return true
     }
