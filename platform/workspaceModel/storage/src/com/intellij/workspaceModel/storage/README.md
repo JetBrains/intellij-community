@@ -1,5 +1,25 @@
 # Workspace model specification
 
+# Definitions
+
+- Storage, or workspace storage - the core storage where all entities are saved.  
+  _Please **do not** use the term `store`, it's deprecated for now_.
+- Builder - a builder that can be used to create a new workspace storage or modify the existing one.  
+  _Please **do not** use the term `diff`, it's deprecated for now_.
+- Hard reference - a reference between two entities that is always resolved.
+- Soft reference - a symbolic link to a different entity with `PersistentId`. 
+  The referred entity may be not presented in the storage.
+- Persistent id - a user presentable id of some entity.
+- Index - index inside the storage that helps to quickly access entities by its properties.
+- External index - a map of user defined objects to entities. This index is not stored to storage cache on disk.
+
+# General information
+
+TODO
+
+- Immutable structure
+- Thread save on read w/o locks
+
 # Persistent Id
 
 TODO
@@ -35,7 +55,7 @@ We should implement and specify all remaining types of references.
 
 ⚠️ If you set a new children for the `One-To-Many` reference with a mandatory parent, the old children are automatically
 removed if they are not presented in a new set.
-For the `One-To-Many` with optional parent, the previous children remain in the store.
+For the `One-To-Many` with optional parent, the previous children remain in the storage.
 
 #### One-To-Abstract-Many
 
@@ -57,8 +77,8 @@ This is the restriction of the current specification. See the explanation below.
   - One-To-One with optional parent
 
 ⚠️ If you set a new child for the `One-To-One` reference with a mandatory parent, the old child is automatically
-removed to keep the store consistent.
-For the `One-To-One` with optional parent, the previous child remains in the store.
+removed to keep the storage consistent.
+For the `One-To-One` with optional parent, the previous child remains in the storage.
 
 #### One-To-Abstract-One
 In `one-to-abstract-one` connections **child is always optional for the parent**.  
@@ -87,14 +107,14 @@ This is made because of the following reasons:
 
 # Soft references
 
-Soft reference (or reference by `PersistentId`) a second option to define a connection between entities.
+Soft reference (or reference by `PersistentId`, or symbolic link) a second option to define a connection between entities.
 Only entities with a `PersistentId` may be referred with a soft reference. To define a soft reference,
 put a `PersistentId` (e.g. `ModuleId` or `LibraryId`) as a property of your entity.
 Workspace model **guarantees** that in case of the `PersistentId` of the referred entity changes, the entity
 with an id updates as well to keep the reference actual. So, if you have a reference to a module with name `A`: `ModuleId(A)`,
 the reference will be automatically updated if the module is renamed from `A` to `B`.
 
-Workspace Model **does not guarantee** that the referred entities are really exist in the store.
+Workspace Model **does not guarantee** that the referred entities are really exist in the storage.
 So, the accessing the entity by soft reference may return null.
 
 Workspace Model **does not** perform cascade removing for soft references, as it does for hard references.
@@ -103,6 +123,10 @@ Workspace Model **does not** perform cascade removing for soft references, as it
 
 Entities removing is preformed with cascade removal of entities that are connected as children.
 E.g. on removing `ModuleEntity`, all connected `ContentRootEntity` will also be removed.
+
+# Modifying entities
+
+Remove entities on modifying references
 
 # Builder changes
 
@@ -118,7 +142,7 @@ TODO: Should we generate two events?
   
 # Function `replaceBySource`
 
-`replaceBySource` is a function that allows to replace a part of the store to a different store
+`replaceBySource` is a function that allows to replace a part of the storage to a different storage
 depending on an entity source.
 This is a powerful mechanism that allows, for example, replace all existing gradle imported entities with a newly 
 created after the gradle refresh. `replaceBySource` function tries to keep the references between entities even if they
@@ -126,9 +150,41 @@ were replaced.
 
 **XXX the described implementation is currently different from the actual one**
 
+The process of `replaceBySource`:
+
+By "target builder" or "target" we mean the builder ther would be updated after the operation.
+This is the receiver of the function
+
+By "source storage" or "source" we mean the storage that is merging into the target builder.
+
+The general approach for performing `replaceBySource` can be described as following:
+
+- Traverse entities from the parents to children
+- Trying to match entities based on `PersistentId`
+- Removing entities from target builder that match the filter
+- Add entities from source storage that match the filter
+- Trying not to touch entities that don't match the filter. They can be removed cascade, though.
+
+<!--
+
+WIP
+
+Possible combinations:
+- With or without `PersistentId`
+- With or without parent entity
+- With matching or not-matching entity source
+
+1. Collect all entities that fit the entity source in target and source.
+2. Take a random entity from the ones that fit.
+3. Trying to build the graph of entity types.
+4. Detecting the root entity type for the chosen type.  
+   **TODO: what about cyclic dependencies? Or dependencies to the same type as in FacetEntity?**
+5. 
+-->
+
 # Function `addDiff`
 
-`addDiff` is one of approaches of joining a lot of changes into a different store. When creating a new builder,
+`addDiff` is one of approaches of joining a lot of changes into a different storage. When creating a new builder,
 all changes that are applied to it are recorded and may also be applied to a different builder.
 
 # Indexes
