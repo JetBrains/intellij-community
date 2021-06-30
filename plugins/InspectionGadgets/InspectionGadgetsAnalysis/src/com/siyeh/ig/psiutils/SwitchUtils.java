@@ -282,9 +282,11 @@ public final class SwitchUtils {
     return null;
   }
 
+  @Contract("null, _ -> false")
   public static boolean canBePatternSwitchCase(@Nullable PsiExpression expression, @NotNull PsiExpression switchExpression) {
+    if (expression == null) return false;
     final PsiExpression localSwitchExpression = findPatternSwitchExpression(expression);
-     return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(localSwitchExpression, switchExpression);
+    return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(localSwitchExpression, switchExpression);
   }
 
   public static @Nullable PsiExpression findNullCheckedOperand(PsiExpression expression){
