@@ -34,6 +34,8 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
+
 public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
@@ -70,6 +72,7 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
           if (!isOnTheFly) return;
           infoMode = true;
         }
+        if (!PatternsInSwitchBlockHighlightingModel.possibleToAddDefaultBranch(statement)) return;
         String message = InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
         if (infoMode || (isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), statement))) {
           holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, new CreateDefaultBranchFix(statement, null));
