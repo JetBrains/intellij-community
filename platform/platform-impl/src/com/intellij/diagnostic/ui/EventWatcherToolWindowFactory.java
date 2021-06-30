@@ -9,37 +9,26 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.ToggleActionButton;
+import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
-
-  private static final int MS_FOR_FPS_60 = 16;
 
   @Override
   public void createToolWindowContent(@NotNull Project project,
@@ -50,13 +39,23 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       .connect(project)
       .subscribe(listener.TOPIC, listener);
 
-    listener.getContents()
-      .forEach(toolWindow.getContentManager()::addContent);
+    ContentManager manager = toolWindow.getContentManager();
+    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    listener.createNamedPanels()
+      .map(entry -> {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(entry.getValue(),
+                  BorderLayout.CENTER);
+
+        return contentFactory.createContent(panel,
+                                            entry.getKey(),
+                                            false);
+      }).forEach(manager::addContent);
   }
 
   @Override
   public void init(@NotNull ToolWindow toolWindow) {
-    toolWindow.setStripeTitle(DiagnosticBundle.message("tab.title.event.watcher"));
+    toolWindow.setStripeTitle(DiagnosticBundle.message("event.watcher.tab.title"));
   }
 
   @Override
@@ -70,61 +69,53 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
 
-    private final @NotNull AtomicBoolean myInvocationsFilterEnabled = new AtomicBoolean(false);
-    private final @NotNull AtomicBoolean myRunnablesFilterEnabled = new AtomicBoolean(false);
-
-    private final @NotNull List<Content> myContents;
+    private final @NotNull Map<@PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String, ? extends ListTableModel<?>> myModels;
 
     TableProvidingListener() {
-      myInvocationsModel = new ListTableModel<>(
-        new ColumnInfo[]{
-          FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
-                                              InvocationsInfo::getFQN),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"),
-                                        String.class,
-                                        info -> DEFAULT_DURATION_FORMAT.format(info.getAverageDuration()),
-                                        Comparator.comparingDouble(InvocationsInfo::getAverageDuration)),
-          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"),
-                                        Integer.TYPE,
-                                        InvocationsInfo::getCount)
-        },
-        new ArrayList<>(),
-        1,
-        SortOrder.DESCENDING
+      myInvocationsModel = createDescendingTableModel(
+        FunctionBasedColumnInfo.stringBased("event.watcher.column.name.runnable.callable",
+                                            InvocationsInfo::getFQN),
+        new FunctionBasedColumnInfo<>("event.watcher.column.name.average.duration.ms",
+                                      String.class,
+                                      info -> DEFAULT_DURATION_FORMAT.format(info.getAverageDuration()),
+                                      Comparator.comparingDouble(InvocationsInfo::getAverageDuration)),
+        new FunctionBasedColumnInfo<>("event.watcher.column.name.count",
+                                      Integer.TYPE,
+                                      InvocationsInfo::getCount)
       );
 
-      myRunnablesModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"),
+      myRunnablesModel = createDescendingTableModel(
+        FunctionBasedColumnInfo.stringBased("event.watcher.column.name.runnable",
                                             InvocationDescription::getProcessId),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"),
+        new FunctionBasedColumnInfo<>("event.watcher.column.name.duration.ms",
                                       Long.TYPE,
                                       InvocationDescription::getDuration),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.started.at"),
+        new FunctionBasedColumnInfo<>("event.watcher.column.name.started.at",
                                       String.class,
                                       description -> DEFAULT_DATE_FORMAT.format(description.getStartDateTime()),
                                       Comparator.comparingLong(InvocationDescription::getStartedAt))
       );
 
-      myWrappersModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"),
+      myWrappersModel = createDescendingTableModel(
+        FunctionBasedColumnInfo.stringBased("event.watcher.column.name.runnable.callable",
                                             WrapperDescription::getFQN),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"),
+        new FunctionBasedColumnInfo<>("event.watcher.column.name.usages.count",
                                       Integer.TYPE,
                                       WrapperDescription::getUsagesCount)
       );
 
-      myContents = Arrays.asList(
-        // XXX Get rid of all of those lambdas
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.invocations"), myInvocationsModel,
-                           o -> !myInvocationsFilterEnabled.get() || myInvocationsModel.getRowValue(o).getAverageDuration() > MS_FOR_FPS_60,
-                           () -> myInvocationsFilterEnabled.set(!myInvocationsFilterEnabled.get()),
-                           () -> myInvocationsFilterEnabled.get()),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.runnables"), myRunnablesModel,
-                           o -> !myRunnablesFilterEnabled.get() || myRunnablesModel.getRowValue(o).getDuration() > MS_FOR_FPS_60,
-                           () -> myRunnablesFilterEnabled.set(!myRunnablesFilterEnabled.get()),
-                           () -> myRunnablesFilterEnabled.get()),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel, null, null, null)
+      myModels = Map.of(
+        "event.watcher.tab.title.invocations", myInvocationsModel,
+        "event.watcher.tab.title.runnables", myRunnablesModel,
+        "event.watcher.tab.title.wrappers", myWrappersModel
       );
+    }
+
+    @NotNull Stream<Map.Entry<@Nls String, JPanel>> createNamedPanels() {
+      return myModels.entrySet()
+        .stream()
+        .map(entry -> Map.entry(DiagnosticBundle.message(entry.getKey()),
+                                createPanel(entry.getValue())));
     }
 
     @Override
@@ -132,82 +123,39 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
                                    @NotNull Collection<InvocationsInfo> infos,
                                    @NotNull Collection<WrapperDescription> wrappers) {
       myRunnablesModel.addRows(invocations);
-      myInvocationsModel.setItems(new ArrayList<>(infos));
-      myWrappersModel.setItems(new ArrayList<>(wrappers));
+      setItems(myInvocationsModel, infos);
+      setItems(myWrappersModel, wrappers);
     }
 
-    @NotNull List<? extends Content> getContents() {
-      return myContents;
+    private static <Item extends Comparable<? super Item>> @NotNull ListTableModel<Item> createDescendingTableModel(FunctionBasedColumnInfo<Item, ?> @NotNull ... columns) {
+      return new ListTableModel<>(columns,
+                                  new ArrayList<>(),
+                                  1,
+                                  SortOrder.DESCENDING);
     }
 
-    private static @NotNull Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
-                                                       @NotNull ListTableModel<?> tableModel,
-                                                       @Nullable Predicate<Integer> filter,
-                                                       @Nullable Runnable filterSwitcher,
-                                                       @Nullable Producer<Boolean> filterEnabled) {
-      JPanel panel = new JPanel(new BorderLayout());
-      TableView<?> tableView = new TableView<>(tableModel);
-      ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tableView);
-      decorator.disableUpDownActions();
-      decorator.disableAddAction();
-      decorator.disableRemoveAction();
-      decorator.setToolbarPosition(ActionToolbarPosition.RIGHT);
-      decorator.addExtraAction(new AnActionButton("Clear All", AllIcons.Actions.GC) { //NON-NLS
-        @Override
-        public boolean isDumbAware() {
-          return true;
-        }
+    private static <Item> void setItems(@NotNull ListTableModel<? super Item> model,
+                                        @NotNull Collection<? extends Item> infos) {
+      model.setItems(new ArrayList<>(infos));
+    }
 
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          EventWatcher watcher = EventWatcher.getInstanceOrNull();
-          if (watcher != null) {
-            watcher.reset();
-          }
-          tableModel.setItems(new ArrayList<>());
-        }
-      });
-      if (filter != null) {
-        decorator.addExtraAction(new ToggleActionButton("Filter 16ms", AllIcons.General.Filter) { //NON-NLS
+    private static @NotNull JPanel createPanel(@NotNull ListTableModel<?> tableModel) {
+      return ToolbarDecorator
+        .createDecorator(new TableView<>(tableModel))
+        .disableUpDownActions()
+        .disableAddAction()
+        .disableRemoveAction()
+        .setToolbarPosition(ActionToolbarPosition.RIGHT)
+        .addExtraAction(new DumbAwareActionButton(DiagnosticBundle.message("event.watcher.clear.button.title"),
+                                                  AllIcons.Actions.GC) {
 
           @Override
-          public boolean isDumbAware() {
-            return true;
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            Objects.requireNonNull(EventWatcher.getInstanceOrNull())
+              .reset();
+            setItems(tableModel, List.of());
           }
-
-          @Override
-          public boolean isSelected(AnActionEvent e) {
-            if (filterEnabled == null) {
-              return false;
-            }
-            else {
-              return filterEnabled.produce();
-            }
-          }
-
-          @Override
-          public void setSelected(AnActionEvent e, boolean state) {
-            if (filterSwitcher != null) {
-              filterSwitcher.run();
-              panel.repaint();
-            }
-          }
-        });
-
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableModel);
-        sorter.setRowFilter(new RowFilter<>() {
-          @Override
-          public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
-            return filter.test(entry.getIdentifier());
-          }
-        });
-        tableView.setRowSorter(sorter);
-      }
-      panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-      return ContentFactory.SERVICE
-        .getInstance()
-        .createContent(panel, tableName, false);
+        }).createPanel();
     }
 
     private static final class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
@@ -217,20 +165,20 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       private final @NotNull Function<? super Item, ? extends Aspect> myExtractor;
       private final @NotNull Comparator<Item> myComparator;
 
-      private FunctionBasedColumnInfo(@NotNull @Nls String name,
+      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor,
                                       @NotNull Comparator<Item> comparator) {
-        super(name);
+        super(DiagnosticBundle.message(nameKey));
         myColumnClass = columnClass;
         myExtractor = extractor;
         myComparator = comparator;
       }
 
-      private FunctionBasedColumnInfo(@NotNull @Nls String name,
+      private FunctionBasedColumnInfo(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor) {
-        this(name, columnClass, extractor, Comparator.comparing(extractor));
+        this(nameKey, columnClass, extractor, Comparator.comparing(extractor));
       }
 
       @Override
@@ -248,9 +196,12 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
         return myComparator;
       }
 
-      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull @NlsContexts.ColumnName String name,
+      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull @PropertyKey(resourceBundle = DiagnosticBundle.BUNDLE) String nameKey,
                                                                                                                @NotNull Function<? super Item, String> extractor) {
-        return new FunctionBasedColumnInfo<Item, String>(name, String.class, extractor, Comparator.naturalOrder());
+        return new FunctionBasedColumnInfo<Item, String>(nameKey,
+                                                         String.class,
+                                                         extractor,
+                                                         Comparator.naturalOrder());
       }
     }
   }

@@ -10,12 +10,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +40,7 @@ import static com.intellij.util.ReflectionUtil.*;
 @ApiStatus.Internal
 final class EventWatcherImpl implements EventWatcher, Disposable {
 
-  private static final int PUBLISHER_INITIAL_DELAY = 100;
-  private static final int PUBLISHER_PERIOD = 1000;
+  private static final int PUBLISHER_DELAY = 1000;
 
   private static final Logger LOG = Logger.getInstance(EventWatcherImpl.class);
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
@@ -54,13 +53,13 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
 
+  private final Map<? super Runnable, Long> myCurrentCallablesOrRunnables = new Object2LongOpenHashMap<>();
+  private final Map<? super AWTEvent, Long> myCurrentResults = new Object2LongOpenHashMap<>();
+
   private final @NotNull LogFileWriter myLogFileWriter = new LogFileWriter();
   private final @NotNull RegistryValue myThreshold;
   private final @NotNull ScheduledExecutorService myExecutor;
-  private final @NotNull ScheduledFuture<?> myThread;
-
-  private Pair<? extends MatchResult, Long> myCurrentResult = Pair.empty();
-  private Pair<? extends Class<?>, Long> myCurrentRunnableOrCallable = Pair.empty();
+  private @Nullable ScheduledFuture<?> myFuture;
 
   EventWatcherImpl() {
     Application application = ApplicationManager.getApplication();
@@ -74,14 +73,11 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
       .connect(this)
       .subscribe(TOPIC, myLogFileWriter);
 
-    RegistryManager registryManager = application.getService(RegistryManager.class);
-    myThreshold = registryManager.get("ide.event.queue.dispatch.threshold");
+    myThreshold = application.getService(RegistryManager.class)
+      .get("ide.event.queue.dispatch.threshold");
 
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Events Logger", 1);
-    myThread = myExecutor.scheduleWithFixedDelay(this::dumpDescriptions,
-                                                 PUBLISHER_INITIAL_DELAY,
-                                                 PUBLISHER_PERIOD,
-                                                 TimeUnit.MILLISECONDS);
+    myFuture = scheduleDumping();
   }
 
   @Override
@@ -97,39 +93,20 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   @RequiresEdt
   @Override
   public void runnableStarted(@NotNull Runnable runnable, long startedAt) {
-    Object current = runnable;
-
-    while (current != null) {
-      Class<?> rootClass = current.getClass();
-      Field field = findCallableOrRunnableField(rootClass);
-
-      if (field != null) {
-        myWrappers.compute(rootClass.getName(),
-                           WrapperDescription::computeNext);
-        current = getFieldValue(field, current);
-      }
-      else {
-        break;
-      }
-    }
-
-    myCurrentRunnableOrCallable = Pair.create((current != null ? current : runnable).getClass(),
-                                              startedAt);
+    myCurrentCallablesOrRunnables.put(runnable, startedAt);
   }
 
   @RequiresEdt
   @Override
   public void runnableFinished(@NotNull Runnable runnable, long finishedAt) {
-    Class<?> runnableOrCallableClass = Objects.requireNonNull(myCurrentRunnableOrCallable.getFirst());
-    String fqn = runnableOrCallableClass.getName();
-    InvocationDescription description = new InvocationDescription(fqn,
-                                                                  Objects.requireNonNull(myCurrentResult.getSecond()),
+    Class<?> runnableOrCallableClass = getCallableOrRunnableClass(runnable);
+    InvocationDescription description = new InvocationDescription(runnableOrCallableClass.getName(),
+                                                                  Objects.requireNonNull(myCurrentCallablesOrRunnables.remove(runnable)),
                                                                   finishedAt);
-    myCurrentRunnableOrCallable = Pair.empty();
 
     myRunnables.offer(description);
-    myDurationsByFqn.compute(fqn,
-                             (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info));
+    myDurationsByFqn.compute(description.getProcessId(),
+                             (fqn, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info));
 
     logTimeMillis(description, runnableOrCallableClass);
   }
@@ -137,22 +114,15 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   @RequiresEdt
   @Override
   public void edtEventStarted(@NotNull AWTEvent event, long startedAt) {
-    Matcher matcher = DESCRIPTION_BY_EVENT.matcher(event.toString());
-    myCurrentResult = Pair.create(matcher.find() ? matcher.toMatchResult() : null,
-                                  startedAt);
+    myCurrentResults.put(event, startedAt);
   }
 
   @RequiresEdt
   @Override
   public void edtEventFinished(@NotNull AWTEvent event, long finishedAt) {
-    MatchResult matchResult = myCurrentResult.getFirst();
-    String representation = matchResult instanceof Matcher ?
-                            ((Matcher)matchResult).group("description") :
-                            event.toString();
-    InvocationDescription description = new InvocationDescription(representation,
-                                                                  Objects.requireNonNull(myCurrentResult.getSecond()),
+    InvocationDescription description = new InvocationDescription(toDescription(event.toString()),
+                                                                  Objects.requireNonNull(myCurrentResults.remove(event)),
                                                                   finishedAt);
-    myCurrentResult = Pair.empty();
 
     Class<? extends AWTEvent> eventClass = event.getClass();
     myEventsByClass.putIfAbsent(eventClass, new ConcurrentLinkedQueue<>());
@@ -166,25 +136,40 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
     myRunnables.clear();
     myEventsByClass.clear();
 
+    reschedule(scheduleDumping());
   }
 
   @Override
   public void dispose() {
     myLogFileWriter.dump();
 
-    myThread.cancel(true);
+    reschedule(null);
     myExecutor.shutdownNow();
   }
 
-  private void dumpDescriptions() {
-    Application application = ApplicationManager.getApplication();
-    RunnablesListener publisher = application != null && !application.isDisposed() ?
-                                  application.getMessageBus().syncPublisher(TOPIC) :
-                                  null;
-    if (publisher == null) {
-      return;
+  private void reschedule(@Nullable ScheduledFuture<?> future) {
+    if (myFuture != null) {
+      myFuture.cancel(true);
     }
+    myFuture = future;
+  }
 
+  private @NotNull ScheduledFuture<?> scheduleDumping() {
+    return myExecutor.scheduleWithFixedDelay(() -> {
+                                               Application application = ApplicationManager.getApplication();
+                                               if (application != null && !application.isDisposed()) {
+                                                 dumpDescriptions(application.getMessageBus().syncPublisher(TOPIC));
+                                               }
+                                               else {
+                                                 reschedule(null);
+                                               }
+                                             },
+                                             PUBLISHER_DELAY,
+                                             PUBLISHER_DELAY,
+                                             TimeUnit.MILLISECONDS);
+  }
+
+  private void dumpDescriptions(@NotNull RunnablesListener publisher) {
     myEventsByClass.forEach((eventClass, events) ->
                               publisher.eventsProcessed(eventClass, joinPolling(events)));
     publisher.runnablesProcessed(joinPolling(myRunnables),
@@ -192,9 +177,24 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
                                  myWrappers.values());
   }
 
-  private static @Nullable Field findCallableOrRunnableField(@NotNull Class<?> rootClass) {
-    return findFieldInHierarchy(rootClass,
-                                field -> isInstanceField(field) && isCallableOrRunnable(field));
+  private @NotNull Class<?> getCallableOrRunnableClass(@NotNull Runnable runnable) {
+    Object current = runnable;
+    while (current != null) {
+      Class<?> rootClass = current.getClass();
+      Field targetField = findFieldInHierarchy(rootClass,
+                                               field -> isInstanceField(field) && isCallableOrRunnable(field));
+
+      if (targetField != null) {
+        myWrappers.compute(rootClass.getName(),
+                           WrapperDescription::computeNext);
+        current = getFieldValue(targetField, current);
+      }
+      else {
+        break;
+      }
+    }
+
+    return (current != null ? current : runnable).getClass();
   }
 
   private static boolean isCallableOrRunnable(@NotNull Field field) {
@@ -219,7 +219,7 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
       return; // do not measure a time if the threshold is too small
     }
 
-    LOG.warn(description.toString());
+    LOG.info(description.toString());
 
     if (runnableClass != Runnable.class) {
       addPluginCost(runnableClass, description.getDuration());
@@ -236,6 +236,16 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
     StartUpMeasurer.addPluginCost(pluginId,
                                   "invokeLater",
                                   TimeUnit.MILLISECONDS.toNanos(duration));
+  }
+
+  private static @NotNull String toDescription(@NotNull String string) {
+    Matcher matcher = DESCRIPTION_BY_EVENT.matcher(string);
+    MatchResult matchResult = matcher.find() ?
+                              matcher.toMatchResult() :
+                              null;
+    return matchResult instanceof Matcher ?
+           ((Matcher)matchResult).group("description") :
+           string;
   }
 
   private static final class LogFileWriter implements RunnablesListener {

@@ -25,7 +25,7 @@ public interface RunnablesListener {
                                                true);
 
   SimpleDateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-  DecimalFormat DEFAULT_DURATION_FORMAT = new DecimalFormat("#.00");
+  DecimalFormat DEFAULT_DURATION_FORMAT = new DecimalFormat("0.00");
 
   default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
                                @NotNull Collection<InvocationDescription> descriptions) { }
@@ -103,18 +103,12 @@ public interface RunnablesListener {
     public @NotNull String toString() {
       return "InvocationDescription{" +
              "processId='" + myProcessId + '\'' +
-             ", started=" + DEFAULT_DATE_FORMAT.format(getStartDateTime()) +
-             ", finished=" + DEFAULT_DATE_FORMAT.format(getFinishDateTime()) +
+             ", duration=" + DEFAULT_DURATION_FORMAT.format(getDuration()) + " ms" +
              '}';
     }
   }
 
   final class InvocationsInfo implements Comparable<InvocationsInfo> {
-
-    static {
-      //DEFAULT_DURATION_FORMAT.setMinimumFractionDigits(2);
-      //DEFAULT_DURATION_FORMAT.setMaximumFractionDigits(2);
-    }
 
     static @NotNull InvocationsInfo computeNext(@NotNull String fqn,
                                                 long duration,
@@ -178,7 +172,7 @@ public interface RunnablesListener {
       return "InvocationsInfo{" +
              "FQN='" + myFQN + '\'' +
              ", count=" + myCount +
-             ", averageDuration=" + DEFAULT_DURATION_FORMAT.format(getAverageDuration()) +
+             ", averageDuration=" + DEFAULT_DURATION_FORMAT.format(getAverageDuration()) + " ms" +
              '}';
     }
   }
