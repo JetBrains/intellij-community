@@ -84,7 +84,9 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
               }
             }
             it
-          }.collect(Collectors.toMap({ it }, { it.qualifiedName }))
+          }
+            .distinct()
+            .collect(Collectors.toMap({ it }, { it.qualifiedName }))
 
           checkConflictingSourceAnnotations(usedSourceAnnotations, node, parameterizedAnnotation[0])
         }
