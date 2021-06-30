@@ -39,11 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.typing.TypeUtils;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
@@ -166,8 +168,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final PrefixMatcher matcher,
                                     final @Nullable CompletionResultSet resultSet,
                                     final Consumer<? super LookupElement> _consumer) {
+    final HashSet<LookupElement> addedElements = new HashSet<>();
     final Consumer<LookupElement> consumer = new Consumer<>() {
-      final Set<LookupElement> added = new HashSet<>();
+      final Set<LookupElement> added = addedElements;
 
       @Override
       public void consume(LookupElement element) {
@@ -240,12 +243,12 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     });
 
-    if (qualifierType != null) {
-      processImplicitSpread(qualifierType, consumer, matcher);
-    }
-
     for (LookupElement element : zeroPriority) {
       consumer.consume(element);
+    }
+
+    if (qualifierType != null) {
+      processImplicitSpread(qualifierType, consumer, matcher, addedElements);
     }
 
     if (qualifier == null) {
@@ -254,7 +257,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     return EmptyRunnable.INSTANCE;
   }
 
-  private static void processImplicitSpread(@NotNull PsiType type, @NotNull Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher) {
+  private static void processImplicitSpread(@NotNull PsiType type,
+                                            @NotNull Consumer<LookupElement> consumer,
+                                            @NotNull PrefixMatcher matcher,
+                                            @NotNull HashSet<@NotNull LookupElement> addedElements) {
     var componentPair = PsiUtil.getComponentForSpreadWithDot(type);
     if (componentPair == null) {
       return;
@@ -269,12 +275,13 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (resolvedClass == null) {
       return;
     }
+    Set<String> existingIdentifiers = addedElements.stream().map(element -> element.getLookupString()).collect(Collectors.toSet());
     for (var method : resolvedClass.getAllMethods()) {
       if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
         var lookupElement = CompleteReferenceExpression.createPropertyLookupElement(method, resolveResult.getSubstitutor(), matcher);
-        if (lookupElement != null) {
+        if (lookupElement != null && !existingIdentifiers.contains(lookupElement.getLookupString())) {
           PsiType methodReturnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
-          String returnTypeRepresentation = methodReturnType == null ? "?" : methodReturnType.getPresentableText();
+          String returnTypeRepresentation = methodReturnType == null ? "?" : TypeUtils.box(methodReturnType, method).getPresentableText();
           consumer.consume(lookupElement.withTypeText(StringUtil.repeat("ArrayList<", depth) + returnTypeRepresentation + StringUtil.repeat(">", depth)));
         }
       }
