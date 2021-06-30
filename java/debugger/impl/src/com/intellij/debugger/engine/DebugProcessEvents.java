@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -375,21 +376,26 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                    });
       }
 
-      // fill position managers
-      PositionManagerFactory.EP_NAME.extensions(getProject())
-        .map(factory -> factory.createPositionManager(this))
-        .filter(Objects::nonNull)
-        .forEach(this::appendPositionManager);
+      // fill position managers and watch for dynamic changes
+      PositionManagerFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+        final Map<PositionManagerFactory, PositionManager> mapping = new HashMap<>();
 
-      PositionManagerFactory.EP_NAME.getPoint(getProject()).addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull PositionManagerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
-          PositionManager manager = extension.createPositionManager(DebugProcessEvents.this);
-          if (manager != null) {
-            appendPositionManager(manager);
-          }
+          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
+            ObjectUtils.consumeIfNotNull(extension.createPositionManager(DebugProcessEvents.this), m -> {
+              mapping.put(extension, m);
+              appendPositionManager(m);
+            }));
         }
-      }, false, myDisposable);
+
+        @Override
+        public void extensionRemoved(@NotNull PositionManagerFactory extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
+            ObjectUtils.consumeIfNotNull(mapping.remove(extension), m -> myPositionManager.removePositionManager(m)));
+        }
+      }, true, myDisposable);
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
