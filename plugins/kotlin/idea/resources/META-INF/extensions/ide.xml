@@ -55,7 +55,8 @@
                         dynamic="true"/>
 
         <extensionPoint qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
-                        interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"/>
+                        interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
+                        dynamic="true"/>
 
         <extensionPoint qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
                         interface="org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader"
