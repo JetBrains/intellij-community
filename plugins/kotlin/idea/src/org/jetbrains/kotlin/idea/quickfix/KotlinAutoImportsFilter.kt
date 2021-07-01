@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
+@Internal
 interface KotlinAutoImportsFilter {
     /**
      * Even if the option to perform auto import is disabled for Kotlin but [forceAutoImportForFile] is true, auto import must happen
