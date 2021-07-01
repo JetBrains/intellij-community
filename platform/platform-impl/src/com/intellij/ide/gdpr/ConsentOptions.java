@@ -362,7 +362,7 @@ public final class ConsentOptions {
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
       final Consent current = base.get(newConsent.getId());
-      if (current != null && newConsent.getVersion().isNewer(current.getVersion())) {
+      if (current != null && !newConsent.isDeleted() && newConsent.getVersion().isNewer(current.getVersion())) {
         base.put(newConsent.getId(), newConsent);
         changes = true;
       }
