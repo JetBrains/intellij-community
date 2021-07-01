@@ -290,6 +290,7 @@ class PythonOnboardingTour :
         configurations().isNotEmpty()
       }
       restoreIfModified(sample)
+      rehighlightPreviousUi = true
     }
 
     task {

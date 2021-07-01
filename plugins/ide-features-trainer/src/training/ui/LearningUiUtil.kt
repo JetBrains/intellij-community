@@ -139,4 +139,19 @@ object LearningUiUtil {
         "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.duration()}")
     }
   }
+
+  fun <ComponentType : Component> findComponentOrNull(componentClass: Class<ComponentType>,
+                                                      selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
+                                                      finderFunction: (ComponentType) -> Boolean = { true }): ComponentType? {
+    val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
+    return try {
+      findShowingComponentWithTimeout(null, componentClass, delay, selector, finderFunction)
+    }
+    catch (e: WaitTimedOutError) {
+      null
+    }
+    catch (e: ComponentLookupException) {
+      null
+    }
+  }
 }

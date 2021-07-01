@@ -2,10 +2,10 @@
 package training.dsl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
-import org.fest.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
@@ -15,7 +15,6 @@ import java.awt.Component
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import javax.swing.JList
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -31,6 +30,12 @@ abstract class TaskContext : LearningDslBase {
    * Default `null` value is reserved for the future automatic transparent restore calculation.
    */
   open var transparentRestore: Boolean? = null
+
+  /**
+   * Can be set to true iff you need to rehighlight the triggered element from the previous task when it will be shown again.
+   * Note: that the rehighlighted element can be different from `previous?.ui` (it can become `null` or `!isValid` or `!isShowing`)
+   * */
+  open var rehighlightPreviousUi: Boolean? = null
 
   /** Put here some initialization for the task */
   open fun before(preparation: TaskRuntimeContext.() -> Unit) = Unit
@@ -126,17 +131,18 @@ abstract class TaskContext : LearningDslBase {
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
   private fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions, checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     @Suppress("DEPRECATION")
-    triggerByUiComponentAndHighlight {
-      val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
-      val tree = LearningUiUtil.findShowingComponentWithTimeout(null, JTree::class.java, delay) {
+    triggerByUiComponentAndHighlight l@{
+      val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
         checkTree(it) != null
       }
-      return@triggerByUiComponentAndHighlight {
-        LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
-          checkTree(tree)
+      if (tree != null) {
+        invokeLater {
+          LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
+            checkTree(tree)
+          }
         }
-        tree
       }
+      tree
     }
   }
 
@@ -146,15 +152,16 @@ abstract class TaskContext : LearningDslBase {
                                                              crossinline rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
     @Suppress("DEPRECATION")
-    triggerByUiComponentAndHighlight {
-      val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
-      val whole = LearningUiUtil.findShowingComponentWithTimeout(null, T::class.java, delay, selector) {
+    triggerByUiComponentAndHighlight l@{
+      val whole = LearningUiUtil.findComponentOrNull(T::class.java, selector) {
         rectangle(it) != null
       }
-      return@triggerByUiComponentAndHighlight {
-        LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
-        whole
+      if (whole != null) {
+        invokeLater {
+          LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
+        }
       }
+      whole
     }
   }
 
@@ -169,18 +176,19 @@ abstract class TaskContext : LearningDslBase {
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form
   private fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions, checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
     @Suppress("DEPRECATION")
-    triggerByUiComponentAndHighlight {
-      val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
-      val list = LearningUiUtil.findShowingComponentWithTimeout(null, JList::class.java, delay) l@{
+    triggerByUiComponentAndHighlight l@{
+      val list = LearningUiUtil.findComponentOrNull(JList::class.java) l@{
         val index = checkList(it)
         index != null && it.visibleRowCount > index
       }
-      return@triggerByUiComponentAndHighlight {
-        LearningUiHighlightingManager.highlightJListItem(list, options) {
-          checkList(list)
+      if (list != null) {
+        invokeLater {
+          LearningUiHighlightingManager.highlightJListItem(list, options) {
+            checkList(list)
+          }
         }
-        list
       }
+      list
     }
   }
 
@@ -191,20 +199,21 @@ abstract class TaskContext : LearningDslBase {
   ) {
     @Suppress("DEPRECATION")
     triggerByUiComponentAndHighlight l@{
-      val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
-      val component = LearningUiUtil.findShowingComponentWithTimeout(null, ComponentType::class.java, delay, selector) {
+      val component = LearningUiUtil.findComponentOrNull(ComponentType::class.java, selector) {
         finderFunction(it)
       }
-      return@l {
+      if (component != null) {
         val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
-        LearningUiHighlightingManager.highlightComponent(component, options)
-        component
+        invokeLater {
+          LearningUiHighlightingManager.highlightComponent(component, options)
+        }
       }
+      component
     }
   }
 
   @Deprecated("It is auxiliary method with explicit class parameter. Use inlined short form instead")
-  open fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> (() -> Component)) = Unit
+  open fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) = Unit
 
   open fun caret(position: LessonSamplePosition) = before {
     caret(position)
