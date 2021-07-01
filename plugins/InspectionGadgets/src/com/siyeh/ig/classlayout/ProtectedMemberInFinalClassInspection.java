@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -76,7 +75,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
       final boolean canBePrivate = search.forEach(reference -> {
         return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
       });
-      WriteAction.run(() -> modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true));
+      modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
     }
   }
 
