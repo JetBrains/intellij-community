@@ -1,16 +1,16 @@
 public final class MyColor {
-    private final var x: int
-    private final var y: int
-    private final var z: int
-    public fun MyColor(x: int, y: int, z: int) = UastEmptyExpression
+    @null private final var x: int
+    @null private final var y: int
+    @null private final var z: int
+    public fun MyColor(@null x: int, @null y: int, @null z: int) = UastEmptyExpression
     public final fun getX() : int = UastEmptyExpression
     public final fun getY() : int = UastEmptyExpression
     public final fun getZ() : int = UastEmptyExpression
 }
 
 public final class Some {
-    private final var lambda: kotlin.Lazy<? extends MyColor> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    private final var nonLazy: MyColor = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    @org.jetbrains.annotations.NotNull private final var lambda: kotlin.Lazy<? extends MyColor> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    @org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     public fun Some() = UastEmptyExpression
     public final fun getDelegate() : MyColor = UastEmptyExpression
     public final fun getLambda() : kotlin.Lazy<? extends MyColor> = UastEmptyExpression

@@ -1,10 +1,14 @@
 UFile (package = ) [public final class ParametersWithDefaultValuesKt {...]
     UClass (name = ParametersWithDefaultValuesKt) [public final class ParametersWithDefaultValuesKt {...}]
-        UMethod (name = foo) [public static final fun foo(a: int, b: java.lang.String, c: int, flag: boolean) : void {...}]
-            UParameter (name = a) [var a: int]
-            UParameter (name = b) [var b: java.lang.String]
-            UParameter (name = c) [var c: int = 0]
+        UMethod (name = foo) [public static final fun foo(@null a: int, @null b: java.lang.String, @null c: int, @null flag: boolean) : void {...}]
+            UParameter (name = a) [@null var a: int]
+                UAnnotation (fqName = null) [@null]
+            UParameter (name = b) [@null var b: java.lang.String]
+                UAnnotation (fqName = null) [@null]
+            UParameter (name = c) [@null var c: int = 0]
+                UAnnotation (fqName = null) [@null]
                 ULiteralExpression (value = 0) [0] = (long)0
-            UParameter (name = flag) [var flag: boolean = false]
+            UParameter (name = flag) [@null var flag: boolean = false]
+                UAnnotation (fqName = null) [@null]
                 ULiteralExpression (value = false) [false] = false
             UBlockExpression [{...}] = Undetermined

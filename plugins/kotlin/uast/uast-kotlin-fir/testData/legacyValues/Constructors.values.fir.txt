@@ -1,45 +1,56 @@
 UFile (package = ) [public final class A {...]
     UClass (name = A) [public final class A {...}]
-        UField (name = str) [private final var str: java.lang.String]
-        UMethod (name = A) [public fun A(str: java.lang.String) = UastEmptyExpression]
-            UParameter (name = str) [var str: java.lang.String]
-        UMethod (name = A) [public fun A(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UField (name = str) [@null private final var str: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = A) [public fun A(@null str: java.lang.String) = UastEmptyExpression]
+            UParameter (name = str) [@null var str: java.lang.String]
+                UAnnotation (fqName = null) [@null]
+        UMethod (name = A) [public fun A(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AWithInit) [public final class AWithInit {...}]
-        UField (name = str) [private final var str: java.lang.String]
-        UMethod (name = AWithInit) [public fun AWithInit(str: java.lang.String) {...}]
-            UParameter (name = str) [var str: java.lang.String]
+        UField (name = str) [@null private final var str: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = AWithInit) [public fun AWithInit(@null str: java.lang.String) {...}]
+            UParameter (name = str) [@null var str: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UBlockExpression [{...}] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = AWithInit) [public fun AWithInit(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UMethod (name = AWithInit) [public fun AWithInit(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AWith2Init) [public final class AWith2Init {...}]
-        UField (name = str) [private final var str: java.lang.String]
-        UMethod (name = AWith2Init) [public fun AWith2Init(str: java.lang.String) {...}]
-            UParameter (name = str) [var str: java.lang.String]
+        UField (name = str) [@null private final var str: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = AWith2Init) [public fun AWith2Init(@null str: java.lang.String) {...}]
+            UParameter (name = str) [@null var str: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UBlockExpression [{...}] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 UBlockExpression [{...}] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = AWith2Init) [public fun AWith2Init(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UMethod (name = AWith2Init) [public fun AWith2Init(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AOnlyInit) [public final class AOnlyInit {...}]
         UMethod (name = AOnlyInit) [public fun AOnlyInit() = UastEmptyExpression]
     UClass (name = AWithSecondary) [public final class AWithSecondary {...}]
-        UField (name = a) [private var a: java.lang.String]
-        UMethod (name = AWithSecondary) [public fun AWithSecondary(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UField (name = a) [@null private var a: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = AWithSecondary) [public fun AWithSecondary(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
@@ -47,20 +58,24 @@ UFile (package = ) [public final class A {...]
                     UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = AWithSecondary) [public fun AWithSecondary(s: java.lang.String) {...}]
-            UParameter (name = s) [var s: java.lang.String]
+        UMethod (name = AWithSecondary) [public fun AWithSecondary(@null s: java.lang.String) {...}]
+            UParameter (name = s) [@null var s: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
-        UMethod (name = setA) [public final fun setA(value: java.lang.String) : void = UastEmptyExpression]
-            UParameter (name = value) [var value: java.lang.String]
+        UMethod (name = setA) [public final fun setA(@org.jetbrains.annotations.NotNull value: java.lang.String) : void = UastEmptyExpression]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
     UClass (name = AWithSecondaryInit) [public final class AWithSecondaryInit {...}]
-        UField (name = a) [private var a: java.lang.String]
-        UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UField (name = a) [@null private var a: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UBlockExpression [{...}] = Undetermined
@@ -70,8 +85,9 @@ UFile (package = ) [public final class A {...]
                     UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(s: java.lang.String) {...}]
-            UParameter (name = s) [var s: java.lang.String]
+        UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(@null s: java.lang.String) {...}]
+            UParameter (name = s) [@null var s: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UBinaryExpression (operator = =) [a = s] = Undetermined
@@ -84,12 +100,15 @@ UFile (package = ) [public final class A {...]
                     USimpleNameReferenceExpression (identifier = local) [local] = (var local = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
-        UMethod (name = setA) [public final fun setA(value: java.lang.String) : void = UastEmptyExpression]
-            UParameter (name = value) [var value: java.lang.String]
+        UMethod (name = setA) [public final fun setA(@org.jetbrains.annotations.NotNull value: java.lang.String) : void = UastEmptyExpression]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
     UClass (name = AWithFieldInit) [public final class AWithFieldInit {...}]
-        UField (name = a) [private final var a: java.lang.String]
-        UMethod (name = AWithFieldInit) [public fun AWithFieldInit(i: int) {...}]
-            UParameter (name = i) [var i: int]
+        UField (name = a) [@null private final var a: java.lang.String]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = AWithFieldInit) [public fun AWithFieldInit(@null i: int) {...}]
+            UParameter (name = i) [@null var i: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UBlockExpression [{...}] = Undetermined
                     UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

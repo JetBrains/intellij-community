@@ -1,11 +1,11 @@
 public final class TypeReferencesKt {
-    public static final fun foo(parameter: int) : java.lang.String {
+    public static final fun foo(@null parameter: int) : java.lang.String {
         var varWithType: <ErrorType> = "Not Null"
         var varWithoutType: <ErrorType> = "lorem ipsum"
         var result: <ErrorType> = varWithType + varWithoutType
         return result
     }
-    public static final fun parameterizedFoo(arg: T) : void {
+    public static final fun parameterizedFoo(@null arg: T) : void {
         var a: <ErrorType> = arg
         var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)
         var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)

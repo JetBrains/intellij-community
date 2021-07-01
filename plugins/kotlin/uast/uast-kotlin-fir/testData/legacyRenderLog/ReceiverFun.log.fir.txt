@@ -2,6 +2,8 @@ UFile (package = )
     UClass (name = ReceiverFunKt)
         UMethod (name = foo)
             UParameter (name = $this$foo)
+                UAnnotation (fqName = not-implemented-annotation)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     UQualifiedReferenceExpression
@@ -9,6 +11,8 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = length)
         UMethod (name = getRx)
             UParameter (name = $this$rx)
+                UAnnotation (fqName = not-implemented-annotation)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

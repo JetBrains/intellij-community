@@ -2,9 +2,11 @@ UFile (package = )
     UClass (name = ElvisTypeKt)
         UMethod (name = foo)
             UParameter (name = text)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = bar)
             UParameter (name = o)
+                UAnnotation (fqName = null)
             UBlockExpression

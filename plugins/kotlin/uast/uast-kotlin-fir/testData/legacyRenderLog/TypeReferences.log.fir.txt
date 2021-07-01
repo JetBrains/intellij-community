@@ -2,6 +2,7 @@ UFile (package = )
     UClass (name = TypeReferencesKt)
         UMethod (name = foo)
             UParameter (name = parameter)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = varWithType)
@@ -18,6 +19,7 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = result)
         UMethod (name = parameterizedFoo)
             UParameter (name = arg)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = a)

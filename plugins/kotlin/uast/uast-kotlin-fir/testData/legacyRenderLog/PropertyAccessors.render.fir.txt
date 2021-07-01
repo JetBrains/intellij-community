@@ -3,9 +3,9 @@ public final class PropertyTest {
     public final fun getStringRepresentation() : java.lang.String {
         return this.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public final fun setStringRepresentation(value: java.lang.String) : void {
+    public final fun setStringRepresentation(@null value: java.lang.String) : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public final fun setDataFromString(data: java.lang.String) : void {
+    public final fun setDataFromString(@null data: java.lang.String) : void {
     }
 }

@@ -1,5 +1,5 @@
 public final class ElvisKt {
-    public static final fun foo(bar: java.lang.String) : java.lang.String {
+    public static final fun foo(@null bar: java.lang.String) : java.lang.String {
         return null
     }
     public static final fun bar() : int {

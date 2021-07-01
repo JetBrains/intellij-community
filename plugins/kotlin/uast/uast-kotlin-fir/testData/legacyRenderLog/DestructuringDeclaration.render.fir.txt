@@ -1,6 +1,6 @@
 public final class DestructuringDeclarationKt {
-    public static final fun foo(data: java.lang.Object) : void {
-        var var268d41a5: <ErrorType>
-        var var465978a0: <ErrorType>
+    public static final fun foo(@null data: java.lang.Object) : void {
+        @null var var268d41a5: <ErrorType> = "foo" <other> 1
+        @null @not-implemented-annotation var var465978a0: <ErrorType> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>
     }
 }

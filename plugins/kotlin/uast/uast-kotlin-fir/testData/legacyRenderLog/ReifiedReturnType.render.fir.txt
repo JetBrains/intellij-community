@@ -1,5 +1,5 @@
 public final class ReifiedReturnTypeKt {
-    public static final fun copyWhenGreater(list: java.util.List<? extends T>, threshold: T, threshold2: B) : B {
+    public static final fun copyWhenGreater(@null list: java.util.List<? extends T>, @null threshold: T, @null threshold2: B) : B {
         return threshold2
     }
 }

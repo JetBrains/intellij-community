@@ -1,5 +1,5 @@
 public final class Demo {
-    private final var foo: error.NonExistentClass = X.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+    @null private final var foo: error.NonExistentClass = X.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     public fun Demo() = UastEmptyExpression
     public final fun getFoo() : error.NonExistentClass = UastEmptyExpression
 }

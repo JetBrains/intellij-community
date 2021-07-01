@@ -10,6 +10,7 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = doSelectItem)
             UParameter (name = selectItemFunction)
+                UAnnotation (fqName = null)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
