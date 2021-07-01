@@ -137,7 +137,7 @@ class InlineStackFrame private constructor(
                     // introduction variable as well as all pending variables.
                     name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) -> {
                         val frameId = nextFrameId++
-                        activeFrames += frameId
+                        activeFrames.add(frameId)
                         for (pending in pendingVariables) {
                             variableFrameIds[pending] = frameId
                         }
