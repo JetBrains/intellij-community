@@ -5,4 +5,5 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var sdCardPathLocal: <ErrorType>] = Undetermined
                     ULocalVariable (name = sdCardPathLocal) [var sdCardPathLocal: <ErrorType>]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = getAnnotatedDelegate) [public static final fun getAnnotatedDelegate() : int = UastEmptyExpression]

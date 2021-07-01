@@ -14,10 +14,10 @@ public final class ResolveKt {
         intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun barT(t: T) : void {
+    public static final fun barT(@null t: T) : void {
         t.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun barTL(listT: T) : void {
+    public static final fun barTL(@null listT: T) : void {
         listT.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (FOR)
     }

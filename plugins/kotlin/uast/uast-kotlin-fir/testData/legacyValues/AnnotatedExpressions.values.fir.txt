@@ -16,8 +16,9 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                 UDeclarationsExpression [var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
                     ULocalVariable (name = c) [var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)]
                         [!] UnknownKotlinExpression (BINARY_EXPRESSION) [[!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
-        UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(str: java.lang.String) : java.lang.Integer {...}]
-            UParameter (name = str) [var str: java.lang.String]
+        UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(@null str: java.lang.String) : java.lang.Integer {...}]
+            UParameter (name = str) [@null var str: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return [!] UnknownKotlinExpression (WHEN)] = Nothing
                     [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)] = Undetermined

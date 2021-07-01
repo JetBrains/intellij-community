@@ -1,16 +1,16 @@
 public final class CommentOwnersKt {
-    private static final var topLevelProperty: int = 42
+    @org.jetbrains.annotations.NotNull private static final var topLevelProperty: int = 42
     public static final fun getTopLevelProperty() : int = UastEmptyExpression
     public static final fun topLevelFun() : void {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun funPlainCall(a: int) : void {
+    public static final fun funPlainCall(@null a: int) : void {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun funNamedArgumentsCall(a: int) : void {
+    public static final fun funNamedArgumentsCall(@null a: int) : void {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun func(a: int) : void {
+    public static final fun func(@null a: int) : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         while (true) {
@@ -24,8 +24,8 @@ public final class CommentOwnersKt {
 }
 
 public final class TopLevelClass {
-    private final var classLevelProperty: int = 42
-    public fun TopLevelClass(t: int) {
+    @org.jetbrains.annotations.NotNull private final var classLevelProperty: int = 42
+    public fun TopLevelClass(@null t: int) {
         UastEmptyExpression
     }
     public final fun getClassLevelProperty() : int = UastEmptyExpression
@@ -38,7 +38,7 @@ public final class TopLevelClass {
 }
 
 public final enum MyBooleanEnum {
-    public static final var TRUE: MyBooleanEnum
-    public static final var FALSE: MyBooleanEnum
+    @null public static final var TRUE: MyBooleanEnum
+    @null public static final var FALSE: MyBooleanEnum
     private fun MyBooleanEnum() = UastEmptyExpression
 }

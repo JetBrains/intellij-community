@@ -1,7 +1,7 @@
 public final class ElvisTypeKt {
-    public static final fun foo(text: java.lang.String) : void {
+    public static final fun foo(@null text: java.lang.String) : void {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun bar(o: java.lang.Object) : void {
+    public static final fun bar(@null o: java.lang.Object) : void {
     }
 }

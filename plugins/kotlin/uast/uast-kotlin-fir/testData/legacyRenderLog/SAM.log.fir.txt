@@ -5,10 +5,13 @@ UFile (package = )
     UImportStatement (isOnDemand = false)
     UClass (name = SAMKt)
         UField (name = notSam)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
         UField (name = foo)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
         UField (name = baz)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UQualifiedReferenceExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = java)
@@ -18,6 +21,7 @@ UFile (package = )
         UMethod (name = getFoo)
         UMethod (name = setFoo)
             UParameter (name = value)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = bar)
             UBlockExpression
                 UBinaryExpression (operator = =)
@@ -34,6 +38,7 @@ UFile (package = )
         UMethod (name = getBaz)
         UMethod (name = runRunnable)
             UParameter (name = r)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -53,11 +58,13 @@ UFile (package = )
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

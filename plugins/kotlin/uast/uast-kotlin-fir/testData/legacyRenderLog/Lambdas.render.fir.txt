@@ -4,7 +4,7 @@ public final class LambdasKt {
     public static final fun foo() : void {
         Stream.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun doSelectItem(selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {
+    public static final fun doSelectItem(@null selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)

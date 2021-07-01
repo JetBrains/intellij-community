@@ -1,14 +1,18 @@
 UFile (package = ) [public final class ReceiverFunKt {...]
     UClass (name = ReceiverFunKt) [public final class ReceiverFunKt {...}]
-        UMethod (name = foo) [public static final fun foo($this$foo: java.lang.String) : int {...}]
-            UParameter (name = $this$foo) [var $this$foo: java.lang.String]
+        UMethod (name = foo) [public static final fun foo(@not-implemented-annotation @null $this$foo: java.lang.String) : int {...}]
+            UParameter (name = $this$foo) [@not-implemented-annotation @null var $this$foo: java.lang.String]
+                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
                 UReturnExpression [return this.length]
                     UQualifiedReferenceExpression [this.length] : PsiType:int
                         UThisExpression (label = null) [this] : PsiType:String
                         USimpleNameReferenceExpression (identifier = length) [length] : PsiType:int
-        UMethod (name = getRx) [public static final fun getRx($this$rx: java.lang.String) : kotlin.text.Regex {...}]
-            UParameter (name = $this$rx) [var $this$rx: java.lang.String]
+        UMethod (name = getRx) [public static final fun getRx(@not-implemented-annotation @null $this$rx: java.lang.String) : kotlin.text.Regex {...}]
+            UParameter (name = $this$rx) [@not-implemented-annotation @null var $this$rx: java.lang.String]
+                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Regex
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Void
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

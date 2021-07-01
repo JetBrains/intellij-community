@@ -1,6 +1,8 @@
 UFile (package = )
     UClass (name = SimpleAnnotated)
         UField (name = property)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UAnnotation (fqName = not-implemented-annotation)
             ULiteralExpression (value = "Mary")
         UMethod (name = SimpleAnnotated)
         UMethod (name = method)

@@ -1,7 +1,8 @@
 UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
     UClass (name = NonTrivialIdentifiersKt) [public final class NonTrivialIdentifiersKt {...}]
-        UMethod (name = main) [public static final fun main(a: A) : void {...}]
-            UParameter (name = a) [var a: A]
+        UMethod (name = main) [public static final fun main(@null a: A) : void {...}]
+            UParameter (name = a) [@null var a: A]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 UDeclarationsExpression [var p: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
@@ -13,6 +14,7 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
         UMethod (name = invoke) [public final fun invoke() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = invoke) [public final fun invoke(f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
-            UParameter (name = f) [var f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
+        UMethod (name = invoke) [public final fun invoke(@null f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
+            UParameter (name = f) [@null var f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Unit

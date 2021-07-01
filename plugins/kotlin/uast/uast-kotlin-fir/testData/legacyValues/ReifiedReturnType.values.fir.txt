@@ -1,9 +1,12 @@
 UFile (package = ) [public final class ReifiedReturnTypeKt {...]
     UClass (name = ReifiedReturnTypeKt) [public final class ReifiedReturnTypeKt {...}]
-        UMethod (name = copyWhenGreater) [public static final fun copyWhenGreater(list: java.util.List<? extends T>, threshold: T, threshold2: B) : B {...}]
-            UParameter (name = list) [var list: java.util.List<? extends T>]
-            UParameter (name = threshold) [var threshold: T]
-            UParameter (name = threshold2) [var threshold2: B]
+        UMethod (name = copyWhenGreater) [public static final fun copyWhenGreater(@null list: java.util.List<? extends T>, @null threshold: T, @null threshold2: B) : B {...}]
+            UParameter (name = list) [@null var list: java.util.List<? extends T>]
+                UAnnotation (fqName = null) [@null]
+            UParameter (name = threshold) [@null var threshold: T]
+                UAnnotation (fqName = null) [@null]
+            UParameter (name = threshold2) [@null var threshold2: B]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return threshold2] = Nothing
                     USimpleNameReferenceExpression (identifier = threshold2) [threshold2] = Undetermined
