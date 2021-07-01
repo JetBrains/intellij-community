@@ -25,7 +25,9 @@ class KotlinUCatchClause(
 
     override val parameters by lz {
         val parameter = sourcePsi.catchParameter ?: return@lz emptyList<UParameter>()
-        listOf(KotlinUParameter(UastKotlinPsiParameter.create(parameter, sourcePsi, this, 0), parameter, this))
+        listOf(
+            KotlinUParameter(UastKotlinPsiParameter.create(baseResolveProviderService, parameter, sourcePsi, this, 0), parameter, this)
+        )
     }
 
     override val typeReferences by lz {

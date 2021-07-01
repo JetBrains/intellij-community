@@ -79,7 +79,7 @@ object KotlinConverter : BaseKotlinConverter {
                 val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { service }
                 declarationsExpression.apply {
                     declarations = element.parameters.mapIndexed { i, p ->
-                        KotlinUParameter(UastKotlinPsiParameter.create(p, element, declarationsExpression, i), p, this)
+                        KotlinUParameter(UastKotlinPsiParameter.create(service, p, element, declarationsExpression, i), p, this)
                     }
                 }
             }
