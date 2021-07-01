@@ -17,15 +17,15 @@ T -> USimpleNameReferenceExpression (identifier = T)
 resolve -> UMethod (name = resolve)
     foo -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     String -> USimpleNameReferenceExpression (identifier = String)
-    x -> [!] UnknownKotlinExpression (PROPERTY)
+    x -> UDeclarationsExpression
     String -> USimpleNameReferenceExpression (identifier = String)
     foo -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     bar -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     String -> USimpleNameReferenceExpression (identifier = String)
-    y -> [!] UnknownKotlinExpression (PROPERTY)
+    y -> UDeclarationsExpression
     String -> USimpleNameReferenceExpression (identifier = String)
     bar -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    z -> [!] UnknownKotlinExpression (PROPERTY)
+    z -> UDeclarationsExpression
     listOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     filterIsInstance -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     String -> USimpleNameReferenceExpression (identifier = String)

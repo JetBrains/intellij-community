@@ -3,5 +3,5 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
         UMethod (name = getSdCardPath) [public static final fun getSdCardPath() : java.lang.String = UastEmptyExpression]
         UMethod (name = localPropertyTest) [public static final fun localPropertyTest() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
         UMethod (name = getAnnotatedDelegate) [public static final fun getAnnotatedDelegate() : int = UastEmptyExpression]

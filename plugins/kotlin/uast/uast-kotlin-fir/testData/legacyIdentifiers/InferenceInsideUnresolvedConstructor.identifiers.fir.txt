@@ -1,4 +1,4 @@
-bar -> [!] UnknownKotlinExpression (PROPERTY)
+bar -> null
 Any -> USimpleNameReferenceExpression (identifier = Any)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
 Unresolved -> [!] UnknownKotlinExpression (CALL_EXPRESSION)

@@ -77,7 +77,7 @@ UFile (package = ) [public final class A {...]
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UQualifiedReferenceExpression [local.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = local) [local] = external local()
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
