@@ -10,10 +10,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
@@ -21,17 +20,13 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   override val cache: WorkspaceModelCache?
     get() = WorkspaceModelCache.getInstance(project)
 
-  /** specifies ID of a entity which changes should be printed to the log */
-  private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
-    val (moduleName, facetTypeId, facetName) = it.split('/')
-    FacetId(facetName, facetTypeId, ModuleId(moduleName))
-  }
-
   @Volatile
   var loadedFromCache = false
     private set
 
   override val entityStorage: VersionedEntityStorageImpl
+
+  val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
   init {
     // TODO It's possible to load this cache from the moment we know project path
@@ -52,7 +47,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
         val storage = if (previousStorage != null) {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
-          printInfoAboutTracedEntity(previousStorage, "cache")
+          entityTracer.printInfoAboutTracedEntity(previousStorage, "cache")
           previousStorage
         }
         else WorkspaceEntityStorageBuilder.create()
@@ -63,19 +58,11 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     }
 
     entityStorage = VersionedEntityStorageImpl((projectEntities as? WorkspaceEntityStorageBuilder)?.toStorage() ?: projectEntities)
-    if (entityToTrace != null) {
-      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), EntityTracingListener(entityToTrace))
-    }
+    entityTracer.subscribe(project)
   }
 
   fun blockDelayedLoading() {
     loadedFromCache = false
-  }
-
-  fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
-    if (entityToTrace != null) {
-      log.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.configurationXmlTag}")
-    }
   }
 
   override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R {
@@ -145,30 +132,5 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
     private val PRE_UPDATE_HANDLERS = ExtensionPointName.create<WorkspaceModelPreUpdateHandler>("com.intellij.workspaceModel.preUpdateHandler")
     private const val PRE_UPDATE_LOOP_BLOCK = 100
-  }
-}
-
-private class EntityTracingListener(private val entityId: FacetId) : WorkspaceModelChangeListener {
-  override fun changed(event: VersionedStorageChange) {
-    event.getAllChanges().forEach {
-      when (it) {
-        is EntityChange.Added -> printInfo("added", it.entity)
-        is EntityChange.Removed -> printInfo("removed", it.entity)
-        is EntityChange.Replaced -> {
-          printInfo("replaced from", it.oldEntity)
-          printInfo("replaced to", it.newEntity)
-        }
-      }
-    }
-  }
-
-  private fun printInfo(action: String, entity: WorkspaceEntity) {
-    if ((entity as? FacetEntity)?.persistentId() == entityId) {
-      LOG.info("$action: ${entity.configurationXmlTag}", Throwable())
-    }
-  }
-
-  companion object {
-    private val LOG = logger<EntityTracingListener>()
   }
 }

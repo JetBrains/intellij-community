@@ -193,7 +193,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("entities loading")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
-      (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
+      (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
       return builder.toStorage() to sourcesToUpdate
     }
