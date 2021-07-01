@@ -50,7 +50,7 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
   }
 
   public void startLoading() {
-    super.startLoading(false);
+    startLoading(false);
   }
 
   @Override
