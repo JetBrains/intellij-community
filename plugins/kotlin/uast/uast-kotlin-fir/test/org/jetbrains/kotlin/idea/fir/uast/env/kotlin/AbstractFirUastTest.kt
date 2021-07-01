@@ -73,7 +73,8 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     private fun getVirtualFile(filepath: String): VirtualFile {
         val vfs = VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL)
-        return vfs.findFileByPath(filepath)!!
+        return vfs.findFileByPath(filepath)
+            ?: error("Virtual file $filepath was not found in ${vfs.findFileByPath(".")?.path}")
     }
 
     abstract fun check(filePath: String, file: UFile)
