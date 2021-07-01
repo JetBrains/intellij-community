@@ -12,13 +12,13 @@ import com.intellij.util.Processor
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.numberOfArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
@@ -30,8 +30,8 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             is KtClassOrObject -> originalElement.asCompilerRef(names)?.let(::listOf)
             is KtConstructor<*> -> originalElement.asCompilerRef(names)?.let(::listOf)
             is KtCallableDeclaration -> originalElement.takeIf { it.isTopLevelKtOrJavaMember() }
-                ?.fqName
-                ?.let { PackagePartClassUtils.getPackagePartFqName(it.parent(), originalElement.containingFile.name) }
+                ?.containingKtFile
+                ?.javaFileFacadeFqName
                 ?.asString()
                 ?.let { qualifier ->
                     when (originalElement) {
