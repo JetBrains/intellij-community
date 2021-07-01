@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,7 +28,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
   }
 
-  public RemoteRepositoriesConfiguration(Collection<? extends RemoteRepositoryDescription> repos) {
+  public RemoteRepositoriesConfiguration(Collection<RemoteRepositoryDescription> repos) {
     myRepositories.addAll(repos);
   }
 
@@ -45,7 +46,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     setRepositories(Collections.emptyList());
   }
 
-  public void setRepositories(@NotNull List<? extends RemoteRepositoryDescription> repos) {
+  public void setRepositories(@NotNull List<RemoteRepositoryDescription> repos) {
     myRepositories.clear();
     myRepositories.addAll(repos.isEmpty() ? RemoteRepositoryDescription.DEFAULT_REPOSITORIES : repos);
   }
@@ -89,10 +90,12 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
       public String name;
       public String url;
 
+      // needed for PersistentStateComponent
+      @SuppressWarnings("unused")
       Repo() {
       }
 
-      Repo(String id, String name, String url) {
+      Repo(@NotNull String id, @NotNull String name, @NotNull String url) {
         this.id = id;
         this.name = name;
         this.url = url;
@@ -105,19 +108,12 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
 
         Repo repo = (Repo)o;
 
-        if (id != null ? !id.equals(repo.id) : repo.id != null) return false;
-        if (name != null ? !name.equals(repo.name) : repo.name != null) return false;
-        if (url != null ? !url.equals(repo.url) : repo.url != null) return false;
-
-        return true;
+        return Objects.equals(id, repo.id) && Objects.equals(name, repo.name) && Objects.equals(url, repo.url);
       }
 
       @Override
       public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (url != null ? url.hashCode() : 0);
-        return result;
+        return Objects.hash(id, name, url);
       }
     }
 
@@ -126,11 +122,13 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     @XCollection
     public final List<Repo> data = new SmartList<>();
 
+    // needed for PersistentStateComponent
+    @SuppressWarnings("unused")
     State() {
       this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
     }
 
-    State(List<? extends RemoteRepositoryDescription> repos) {
+    State(List<RemoteRepositoryDescription> repos) {
       for (RemoteRepositoryDescription repository : repos) {
         data.add(new Repo(repository.getId(), repository.getName(), repository.getUrl()));
       }
