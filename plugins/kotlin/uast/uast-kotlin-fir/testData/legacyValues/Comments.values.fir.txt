@@ -2,13 +2,16 @@ UFile (package = ) [public abstract interface Pizza {...]
     UClass (name = Pizza) [public abstract interface Pizza {...}]
         UMethod (name = getSize) [public abstract fun getSize() : int = UastEmptyExpression]
         UMethod (name = getName) [public abstract fun getName() : java.lang.String = UastEmptyExpression]
-        UMethod (name = contains) [public abstract fun contains(ingredient: Pizza.Ingredient) : boolean = UastEmptyExpression]
-            UParameter (name = ingredient) [var ingredient: Pizza.Ingredient]
+        UMethod (name = contains) [public abstract fun contains(@null ingredient: Pizza.Ingredient) : boolean = UastEmptyExpression]
+            UParameter (name = ingredient) [@null var ingredient: Pizza.Ingredient]
+                UAnnotation (fqName = null) [@null]
     UClass (name = Margherita) [public final class Margherita : Pizza {...}]
-        UField (name = size) [private final var size: int = 42]
+        UField (name = size) [@null private final var size: int = 42]
+            UAnnotation (fqName = null) [@null]
             ULiteralExpression (value = 42) [42] = (long)42
-        UMethod (name = Margherita) [public fun Margherita(size: int) = UastEmptyExpression]
-            UParameter (name = size) [var size: int = 42]
+        UMethod (name = Margherita) [public fun Margherita(@null size: int) = UastEmptyExpression]
+            UParameter (name = size) [@null var size: int = 42]
+                UAnnotation (fqName = null) [@null]
                 ULiteralExpression (value = 42) [42] = (long)42
         UMethod (name = getSize) [public fun getSize() : int = UastEmptyExpression]
         UMethod (name = getName) [public fun getName() : java.lang.String {...}]
@@ -19,8 +22,9 @@ UFile (package = ) [public abstract interface Pizza {...]
                             USimpleNameReferenceExpression (identifier = java) [java] = external java()
                             USimpleNameReferenceExpression (identifier = lang) [lang] = external lang()
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = contains) [public fun contains(ingredient: Pizza.Ingredient) : boolean {...}]
-            UParameter (name = ingredient) [var ingredient: Pizza.Ingredient]
+        UMethod (name = contains) [public fun contains(@null ingredient: Pizza.Ingredient) : boolean {...}]
+            UParameter (name = ingredient) [@null var ingredient: Pizza.Ingredient]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return false] = Nothing
                     ULiteralExpression (value = false) [false] = false

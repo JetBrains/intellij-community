@@ -9,15 +9,17 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.kotlin.BaseKotlinUMethod
+import org.jetbrains.uast.kotlin.KotlinReceiverUParameter
+import org.jetbrains.uast.kotlin.KotlinUParameter
 import org.jetbrains.uast.kotlin.getKotlinMemberOrigin
 
 internal interface FirKotlinUMethodParametersProducer {
     fun produceUastParameters(uMethod: BaseKotlinUMethod, receiverTypeReference: KtTypeReference?): List<UParameter> {
         val lightParams = uMethod.psi.parameterList.parameters
-        val receiver = receiverTypeReference ?: return lightParams.map { FirKotlinUParameter(it, getKotlinMemberOrigin(it), uMethod) }
+        val receiver = receiverTypeReference ?: return lightParams.map { KotlinUParameter(it, getKotlinMemberOrigin(it), uMethod) }
         val lightReceiver = lightParams.firstOrNull() ?: return emptyList()
-        val uParameters = SmartList<UParameter>(FirKotlinReceiverUParameter(lightReceiver, receiver, uMethod))
-        lightParams.drop(1).mapTo(uParameters) { FirKotlinUParameter(it, getKotlinMemberOrigin(it), uMethod) }
+        val uParameters = SmartList<UParameter>(KotlinReceiverUParameter(lightReceiver, receiver, uMethod))
+        lightParams.drop(1).mapTo(uParameters) { KotlinUParameter(it, getKotlinMemberOrigin(it), uMethod) }
         return uParameters
     }
 }

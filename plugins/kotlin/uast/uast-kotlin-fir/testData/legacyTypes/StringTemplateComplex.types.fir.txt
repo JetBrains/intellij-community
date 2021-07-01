@@ -1,27 +1,32 @@
 UFile (package = ) [public final class StringTemplateComplexKt {...]
     UClass (name = StringTemplateComplexKt) [public final class StringTemplateComplexKt {...}]
-        UField (name = muchRecur) [private static final var muchRecur: java.lang.String = "abc"]
+        UField (name = muchRecur) [@org.jetbrains.annotations.NotNull private static final var muchRecur: java.lang.String = "abc"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULiteralExpression (value = "abc") ["abc"] : PsiType:String
-        UField (name = case4) [private static final var case4: java.lang.String = "a " + "literal" + " z"]
+        UField (name = case4) [@org.jetbrains.annotations.NotNull private static final var case4: java.lang.String = "a " + "literal" + " z"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UPolyadicExpression (operator = +) ["a " + "literal" + " z"] : PsiType:String
                 ULiteralExpression (value = "a ") ["a "] : PsiType:String
                 ULiteralExpression (value = "literal") ["literal"] : PsiType:String
                 ULiteralExpression (value = " z") [" z"] : PsiType:String
-        UField (name = case5) [private static final var case5: java.lang.String = "a " + "literal" + " " + "literal" + " z"]
+        UField (name = case5) [@org.jetbrains.annotations.NotNull private static final var case5: java.lang.String = "a " + "literal" + " " + "literal" + " z"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UPolyadicExpression (operator = +) ["a " + "literal" + " " + "literal" + " z"] : PsiType:String
                 ULiteralExpression (value = "a ") ["a "] : PsiType:String
                 ULiteralExpression (value = "literal") ["literal"] : PsiType:String
                 ULiteralExpression (value = " ") [" "] : PsiType:String
                 ULiteralExpression (value = "literal") ["literal"] : PsiType:String
                 ULiteralExpression (value = " z") [" z"] : PsiType:String
-        UField (name = literalInLiteral) [private static final var literalInLiteral: java.lang.String = "a " + "literal" + case4 + " z"]
+        UField (name = literalInLiteral) [@org.jetbrains.annotations.NotNull private static final var literalInLiteral: java.lang.String = "a " + "literal" + case4 + " z"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UPolyadicExpression (operator = +) ["a " + "literal" + case4 + " z"] : PsiType:String
                 ULiteralExpression (value = "a ") ["a "] : PsiType:String
                 UPolyadicExpression (operator = +) ["literal" + case4] : PsiType:String
                     ULiteralExpression (value = "literal") ["literal"] : PsiType:String
                     USimpleNameReferenceExpression (identifier = case4) [case4] : PsiType:String
                 ULiteralExpression (value = " z") [" z"] : PsiType:String
-        UField (name = literalInLiteral2) [private static final var literalInLiteral2: java.lang.String = "a " + "literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION) + " z"]
+        UField (name = literalInLiteral2) [@org.jetbrains.annotations.NotNull private static final var literalInLiteral2: java.lang.String = "a " + "literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION) + " z"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UPolyadicExpression (operator = +) ["a " + "literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION) + " z"] : PsiType:String
                 ULiteralExpression (value = "a ") ["a "] : PsiType:String
                 UQualifiedReferenceExpression ["literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
@@ -30,7 +35,8 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                         USimpleNameReferenceExpression (identifier = case4) [case4] : PsiType:String
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 ULiteralExpression (value = " z") [" z"] : PsiType:String
-        UField (name = empty) [private static final var empty: java.lang.String = ""]
+        UField (name = empty) [@org.jetbrains.annotations.NotNull private static final var empty: java.lang.String = ""]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULiteralExpression (value = "") [""] : PsiType:String
         UMethod (name = getMuchRecur) [public static final fun getMuchRecur() : java.lang.String = UastEmptyExpression]
         UMethod (name = getCase4) [public static final fun getCase4() : java.lang.String = UastEmptyExpression]
@@ -38,8 +44,9 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
         UMethod (name = getLiteralInLiteral) [public static final fun getLiteralInLiteral() : java.lang.String = UastEmptyExpression]
         UMethod (name = getLiteralInLiteral2) [public static final fun getLiteralInLiteral2() : java.lang.String = UastEmptyExpression]
         UMethod (name = getEmpty) [public static final fun getEmpty() : java.lang.String = UastEmptyExpression]
-        UMethod (name = simpleForTemplate) [public static final fun simpleForTemplate(i: int) : java.lang.String {...}]
-            UParameter (name = i) [var i: int = 0]
+        UMethod (name = simpleForTemplate) [public static final fun simpleForTemplate(@null i: int) : java.lang.String {...}]
+            UParameter (name = i) [@null var i: int = 0]
+                UAnnotation (fqName = null) [@null]
                 ULiteralExpression (value = 0) [0] : PsiType:int
             UBlockExpression [{...}]
                 UReturnExpression [return i]

@@ -2,8 +2,11 @@ UFile (package = )
     UClass (name = ReifiedReturnTypeKt)
         UMethod (name = copyWhenGreater)
             UParameter (name = list)
+                UAnnotation (fqName = null)
             UParameter (name = threshold)
+                UAnnotation (fqName = null)
             UParameter (name = threshold2)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = threshold2)

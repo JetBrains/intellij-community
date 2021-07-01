@@ -1,6 +1,7 @@
 UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
     UClass (name = AccessArrayOfInlineClassKt) [public final class AccessArrayOfInlineClassKt {...}]
-        UField (name = xs) [private static final var xs: Z[] = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+        UField (name = xs) [@org.jetbrains.annotations.NotNull private static final var xs: Z[] = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = getXs) [public static final fun getXs() : Z[] = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]

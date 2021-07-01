@@ -1,7 +1,8 @@
 UFile (package = ) [public final class ElvisKt {...]
     UClass (name = ElvisKt) [public final class ElvisKt {...}]
-        UMethod (name = foo) [public static final fun foo(bar: java.lang.String) : java.lang.String {...}]
-            UParameter (name = bar) [var bar: java.lang.String]
+        UMethod (name = foo) [public static final fun foo(@null bar: java.lang.String) : java.lang.String {...}]
+            UParameter (name = bar) [@null var bar: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return null] = Nothing
                     ULiteralExpression (value = null) [null] = null

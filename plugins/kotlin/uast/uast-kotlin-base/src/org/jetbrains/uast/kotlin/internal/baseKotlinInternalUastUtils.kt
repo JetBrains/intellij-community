@@ -54,3 +54,8 @@ fun KtElement.canAnalyze(): Boolean {
 
 val PsiClass.isEnumEntryLightClass: Boolean
     get() = (this as? KtLightClass)?.kotlinOrigin is KtEnumEntry
+
+val KtTypeReference.nameElement: PsiElement?
+    get() = this.typeElement?.let {
+        (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
+    }

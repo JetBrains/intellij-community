@@ -1,7 +1,7 @@
 KotlinUFile(
     UComment(// file comment)
     FirKotlinUClass(
-        FirKotlinUField(
+        KotlinUField(
             UComment(// Single-line comment bound to top-level property)
         )
         FirKotlinUMethod(
@@ -12,17 +12,17 @@ KotlinUFile(
     )
     FirKotlinUClass(
         UComment(// Single-line comment bound to object)
-        FirKotlinUField(
+        KotlinUField(
             UComment(// Single-line comment bound to object)
         )
-        FirKotlinUField(
+        KotlinUField(
         )
         FirKotlinConstructorUMethod(
         )
         FirKotlinUMethod(
         )
         FirKotlinUMethod(
-            FirKotlinUParameter(
+            KotlinUParameter(
             )
         )
         FirKotlinUMethod(

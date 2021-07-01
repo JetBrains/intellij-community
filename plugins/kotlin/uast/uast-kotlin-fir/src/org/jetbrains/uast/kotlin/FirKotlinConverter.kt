@@ -90,19 +90,19 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 is KtLightField -> {
                     // TODO: differentiate enum constant
-                    el<UField>(buildKtOpt(original.kotlinOrigin, ::FirKotlinUField))
+                    el<UField>(buildKtOpt(original.kotlinOrigin, ::KotlinUField))
                 }
                 is UastKotlinPsiVariable -> {
-                    el<ULocalVariable>(buildKt(original.ktElement, ::FirKotlinULocalVariable))
+                    el<ULocalVariable>(buildKt(original.ktElement, ::KotlinULocalVariable))
                 }
                 is KtLightParameter -> {
-                    el<UParameter>(buildKtOpt(original.kotlinOrigin, ::FirKotlinUParameter))
+                    el<UParameter>(buildKtOpt(original.kotlinOrigin, ::KotlinUParameter))
                 }
                 is KtParameter -> {
                     convertParameter(original, givenParent, requiredTypes).firstOrNull()
                 }
                 is UastKotlinPsiParameter -> {
-                    el<UParameter>(buildKt(original.ktParameter, ::FirKotlinUParameter))
+                    el<UParameter>(buildKt(original.ktParameter, ::KotlinUParameter))
                 }
                 is UastKotlinPsiParameterBase<*> -> el<UParameter> {
                     original.ktOrigin.safeAs<KtTypeReference>()?.let { convertReceiverParameter(it) }
@@ -175,7 +175,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
     ): Array<UElementAlternative<*>> =
         if (methods != null)
             arrayOf(
-                alternative { methods.backingField?.let { FirKotlinUField(it, getKotlinMemberOrigin(it), givenParent) } },
+                alternative { methods.backingField?.let { KotlinUField(it, getKotlinMemberOrigin(it), givenParent) } },
                 alternative { methods.getter?.let { convertDeclaration(it, givenParent, arrayOf(UMethod::class.java)) as? UMethod } },
                 alternative { methods.setter?.let { convertDeclaration(it, givenParent, arrayOf(UMethod::class.java)) as? UMethod } }
             )
@@ -196,7 +196,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
         requiredTypes.accommodate(
             alternative uParam@{
                 val lightParameter = element.toPsiParameters().find { it.name == element.name } ?: return@uParam null
-                FirKotlinUParameter(lightParameter, element, givenParent)
+                KotlinUParameter(lightParameter, element, givenParent)
             },
             alternative catch@{
                 val uCatchClause = element.parent?.parent?.safeAs<KtCatchClause>()?.toUElementOfType<UCatchClause>() ?: return@catch null
@@ -232,7 +232,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                         val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { service }
                         declarationsExpression.apply {
                             declarations = element.parameters.mapIndexed { i, p ->
-                                FirKotlinUParameter(UastKotlinPsiParameter.create(service, p, element, declarationsExpression, i), p, this)
+                                KotlinUParameter(UastKotlinPsiParameter.create(service, p, element, declarationsExpression, i), p, this)
                             }
                         }
                     }
@@ -327,7 +327,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
                     val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
                     declarationsExpression.apply {
-                        val tempAssignment = FirKotlinULocalVariable(
+                        val tempAssignment = KotlinULocalVariable(
                             UastKotlinPsiVariable.create(service, expression, declarationsExpression),
                             expression,
                             declarationsExpression
@@ -410,31 +410,5 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 else -> expr<UExpression>(build(::UnknownKotlinExpression))
             }
         }
-    }
-
-    // TODO: can be commonized once abstraction of (local) variable is commonized
-    private fun convertVariablesDeclaration(
-        psi: KtVariableDeclaration,
-        parent: UElement?
-    ): UDeclarationsExpression {
-        val declarationsExpression = parent as? KotlinUDeclarationsExpression
-            ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
-            ?: KotlinUDeclarationsExpression(
-                null,
-                parent,
-                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
-                psi
-            )
-        val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
-        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
-        val variable =
-            FirKotlinUAnnotatedLocalVariable(
-                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
-                psi,
-                declarationsExpression
-            ) { annotationParent ->
-                psi.annotationEntries.map { convertAnnotation(it, annotationParent) }
-            }
-        return declarationsExpression.apply { declarations = listOf(variable) }
     }
 }

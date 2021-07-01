@@ -1,7 +1,8 @@
 UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
     UClass (name = InnerNonFixedTypeVariableKt) [public final class InnerNonFixedTypeVariableKt {...}]
-        UMethod (name = test) [public static final fun test(list: java.util.List<? extends java.lang.Object>) : void {...}]
-            UParameter (name = list) [var list: java.util.List<? extends java.lang.Object>]
+        UMethod (name = test) [public static final fun test(@null list: java.util.List<? extends java.lang.Object>) : void {...}]
+            UParameter (name = list) [@null var list: java.util.List<? extends java.lang.Object>]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UQualifiedReferenceExpression [list.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     UQualifiedReferenceExpression [list.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

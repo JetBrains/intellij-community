@@ -29,8 +29,9 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:void
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
-        UMethod (name = ext) [public static final fun ext($this$ext: A) : void {...}]
-            UParameter (name = $this$ext) [var $this$ext: A]
+        UMethod (name = ext) [public static final fun ext(@null $this$ext: A) : void {...}]
+            UParameter (name = $this$ext) [@null var $this$ext: A]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:int
                 UDeclarationsExpression [var x: <ErrorType> = -mutableProp]
                     ULocalVariable (name = x) [var x: <ErrorType> = -mutableProp]
@@ -47,11 +48,14 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                 UPostfixExpression (operator = --) [mutableProp--] : PsiType:int
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
     UClass (name = A) [public final class A {...}]
-        UField (name = privateProp) [private var privateProp: int = 0]
+        UField (name = privateProp) [@org.jetbrains.annotations.NotNull private var privateProp: int = 0]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULiteralExpression (value = 0) [0] : PsiType:int
-        UField (name = mutableProp) [private var mutableProp: int]
-        UMethod (name = A) [public fun A(init: int) {...}]
-            UParameter (name = init) [var init: int]
+        UField (name = mutableProp) [@null private var mutableProp: int]
+            UAnnotation (fqName = null) [@null]
+        UMethod (name = A) [public fun A(@null init: int) {...}]
+            UParameter (name = init) [@null var init: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
                 UBlockExpression [{...}] : PsiType:Unit
                     UBinaryExpression (operator = =) [mutableProp = init] : PsiType:void
@@ -60,8 +64,9 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = getMutableProp) [public final fun getMutableProp() : int = UastEmptyExpression]
         UMethod (name = setMutableProp) [public final fun setMutableProp(value: int) : void = UastEmptyExpression]
             UParameter (name = value) [var value: int]
-        UMethod (name = add) [public final fun add(x: int) : int {...}]
-            UParameter (name = x) [var x: int]
+        UMethod (name = add) [public final fun add(@null x: int) : int {...}]
+            UParameter (name = x) [@null var x: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var result: <ErrorType> = privateProp]
                     ULocalVariable (name = result) [var result: <ErrorType> = privateProp]

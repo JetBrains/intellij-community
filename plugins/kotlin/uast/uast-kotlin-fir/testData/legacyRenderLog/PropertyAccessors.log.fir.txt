@@ -9,8 +9,10 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = setStringRepresentation)
             UParameter (name = value)
+                UAnnotation (fqName = null)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = setDataFromString)
             UParameter (name = data)
+                UAnnotation (fqName = null)
             UBlockExpression

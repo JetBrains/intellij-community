@@ -1,7 +1,8 @@
 UFile (package = ) [public final class TypeReferencesKt {...]
     UClass (name = TypeReferencesKt) [public final class TypeReferencesKt {...}]
-        UMethod (name = foo) [public static final fun foo(parameter: int) : java.lang.String {...}]
-            UParameter (name = parameter) [var parameter: int]
+        UMethod (name = foo) [public static final fun foo(@null parameter: int) : java.lang.String {...}]
+            UParameter (name = parameter) [@null var parameter: int]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var varWithType: <ErrorType> = "Not Null"] = Undetermined
                     ULocalVariable (name = varWithType) [var varWithType: <ErrorType> = "Not Null"]
@@ -16,8 +17,9 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             USimpleNameReferenceExpression (identifier = varWithoutType) [varWithoutType] = (var varWithoutType = "lorem ipsum")
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = "Not Nulllorem ipsum" (depending on: (var varWithType = "Not Null"), (var varWithoutType = "lorem ipsum")))
-        UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(arg: T) : void {...}]
-            UParameter (name = arg) [var arg: T]
+        UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@null arg: T) : void {...}]
+            UParameter (name = arg) [@null var arg: T]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var a: <ErrorType> = arg] = Undetermined
                     ULocalVariable (name = a) [var a: <ErrorType> = arg]

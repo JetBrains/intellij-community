@@ -1,12 +1,15 @@
 UFile (package = ) [public abstract interface Callback {...]
     UClass (name = Callback) [public abstract interface Callback {...}]
-        UMethod (name = onError) [public abstract fun onError(throwable: java.lang.Throwable) : void = UastEmptyExpression]
-            UParameter (name = throwable) [var throwable: java.lang.Throwable]
+        UMethod (name = onError) [public abstract fun onError(@null throwable: java.lang.Throwable) : void = UastEmptyExpression]
+            UParameter (name = throwable) [@null var throwable: java.lang.Throwable]
+                UAnnotation (fqName = null) [@null]
     UClass (name = Model) [public final class Model {...}]
         UMethod (name = Model) [public fun Model() = UastEmptyExpression]
-        UMethod (name = crashMe) [public final fun crashMe(clazz: java.lang.Class<T>, factory: kotlin.jvm.functions.Function0<? extends T>) : void {...}]
-            UParameter (name = clazz) [var clazz: java.lang.Class<T>]
-            UParameter (name = factory) [var factory: kotlin.jvm.functions.Function0<? extends T>]
+        UMethod (name = crashMe) [public final fun crashMe(@null clazz: java.lang.Class<T>, @null factory: kotlin.jvm.functions.Function0<? extends T>) : void {...}]
+            UParameter (name = clazz) [@null var clazz: java.lang.Class<T>]
+                UAnnotation (fqName = null) [@null]
+            UParameter (name = factory) [@null var factory: kotlin.jvm.functions.Function0<? extends T>]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UThrowExpression [throw [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

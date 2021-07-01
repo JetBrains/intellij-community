@@ -2,6 +2,7 @@ UFile (package = )
     UClass (name = ElvisKt)
         UMethod (name = foo)
             UParameter (name = bar)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     ULiteralExpression (value = null)
