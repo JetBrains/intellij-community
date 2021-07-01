@@ -8,7 +8,7 @@ this -> USimpleNameReferenceExpression (identifier = this)
 length -> USimpleNameReferenceExpression (identifier = length)
 MyReceiverAnnotation -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation)
 String -> USimpleNameReferenceExpression (identifier = String)
-rx -> [!] UnknownKotlinExpression (PROPERTY)
+rx -> null
 Regex -> USimpleNameReferenceExpression (identifier = Regex)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
     toRegex -> [!] UnknownKotlinExpression (CALL_EXPRESSION)

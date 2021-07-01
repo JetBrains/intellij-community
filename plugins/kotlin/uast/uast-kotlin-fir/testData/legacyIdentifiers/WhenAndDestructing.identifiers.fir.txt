@@ -2,10 +2,10 @@ getElementsAdditionalResolve -> UMethod (name = getElementsAdditionalResolve)
 string -> UParameter (name = string)
 String -> USimpleNameReferenceExpression (identifier = String)
 String -> USimpleNameReferenceExpression (identifier = String)
-    arr -> [!] UnknownKotlinExpression (PROPERTY)
+    arr -> UDeclarationsExpression
     listOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     string -> USimpleNameReferenceExpression (identifier = string)
-        bindingContext -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
-        statementFilter -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
+        bindingContext -> UDeclarationsExpression
+        statementFilter -> UDeclarationsExpression
         arr -> USimpleNameReferenceExpression (identifier = arr)
         bindingContext -> USimpleNameReferenceExpression (identifier = bindingContext)

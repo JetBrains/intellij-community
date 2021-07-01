@@ -2,8 +2,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] : PsiType:int
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
+                UDeclarationsExpression []
                 UBinaryExpression (operator = =) [a.mutableProp = 1] : PsiType:void
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:void
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
@@ -25,7 +25,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = ext) [public static final fun ext($this$ext: A) : void {...}]
             UParameter (name = $this$ext) [var $this$ext: A]
             UBlockExpression [{...}] : PsiType:int
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 UBinaryExpression (operator = =) [mutableProp = 1] : PsiType:void
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     ULiteralExpression (value = 1) [1] : PsiType:int
@@ -53,7 +53,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = add) [public final fun add(x: int) : int {...}]
             UParameter (name = x) [var x: int]
             UBlockExpression [{...}] : PsiType:Void
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 UBinaryExpression (operator = =) [privateProp = x] : PsiType:void
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int

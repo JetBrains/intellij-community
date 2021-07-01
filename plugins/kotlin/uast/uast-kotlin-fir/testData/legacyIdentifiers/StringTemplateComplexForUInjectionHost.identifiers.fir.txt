@@ -14,7 +14,7 @@ i -> USimpleNameReferenceExpression (identifier = i)
 foo -> UMethod (name = foo)
     println -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     baz -> USimpleNameReferenceExpression (identifier = baz)
-    template1 -> [!] UnknownKotlinExpression (PROPERTY)
+    template1 -> UDeclarationsExpression
     simpleForTemplate -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    template2 -> [!] UnknownKotlinExpression (PROPERTY)
+    template2 -> UDeclarationsExpression
     simpleForTemplate -> [!] UnknownKotlinExpression (CALL_EXPRESSION)

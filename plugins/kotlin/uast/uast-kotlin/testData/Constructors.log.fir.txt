@@ -77,7 +77,7 @@ UFile (package = )
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = a)
                     USimpleNameReferenceExpression (identifier = s)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = local)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

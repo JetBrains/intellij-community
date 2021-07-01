@@ -2,5 +2,5 @@ UFile (package = ) [public final class LocalVariableWithAnnotationKt {...]
     UClass (name = LocalVariableWithAnnotationKt) [public final class LocalVariableWithAnnotationKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
     UClass (name = TestAnnotation) [public abstract annotation TestAnnotation {...}]

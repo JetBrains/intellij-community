@@ -1,4 +1,4 @@
 TestAnnotation -> UClass (name = TestAnnotation)
 foo -> UMethod (name = foo)
     TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
-    bar -> [!] UnknownKotlinExpression (PROPERTY)
+    bar -> UDeclarationsExpression

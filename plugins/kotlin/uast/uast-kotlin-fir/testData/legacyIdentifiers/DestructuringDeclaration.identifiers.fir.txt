@@ -1,12 +1,12 @@
 foo -> UMethod (name = foo)
 data -> UParameter (name = data)
 Any -> USimpleNameReferenceExpression (identifier = Any)
-    a -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
-    b -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
+    a -> UDeclarationsExpression
+    b -> UDeclarationsExpression
     to -> USimpleNameReferenceExpression (identifier = to)
     Suppress -> USimpleNameReferenceExpression (identifier = Suppress)
-    k -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
-    v -> [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION_ENTRY)
+    k -> UDeclarationsExpression
+    v -> UDeclarationsExpression
     data -> USimpleNameReferenceExpression (identifier = data)
     as -> USimpleNameReferenceExpression (identifier = as)
     Pair -> USimpleNameReferenceExpression (identifier = Pair)

@@ -19,7 +19,7 @@ public final class CommentOwnersKt {
         if (true) {
         }else {
         }
-        [!] UnknownKotlinExpression (PROPERTY)
+
     }
 }
 

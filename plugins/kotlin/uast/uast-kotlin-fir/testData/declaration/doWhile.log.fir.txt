@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = DoWhileKt)
         UMethod (name = test)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UDoWhileExpression
                     UBinaryExpression (operator = !=)
                         USimpleNameReferenceExpression (identifier = x)
@@ -13,14 +13,14 @@ UFile (package = )
                             ULiteralExpression (value = "non-null")
         UMethod (name = kt44412)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 ULabeledExpression (label = Outer)
                     UWhileExpression
                         ULiteralExpression (value = true)
                         UBlockExpression
                             UPrefixExpression (operator = ++)
                                 USimpleNameReferenceExpression (identifier = i)
-                            [!] UnknownKotlinExpression (PROPERTY)
+                            UDeclarationsExpression
                             ULabeledExpression (label = Inner)
                                 UDoWhileExpression
                                     UIfExpression

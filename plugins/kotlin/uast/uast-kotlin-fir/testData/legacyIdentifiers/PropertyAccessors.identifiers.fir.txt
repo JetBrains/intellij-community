@@ -1,5 +1,5 @@
 PropertyTest -> UClass (name = PropertyTest)
-stringRepresentation -> [!] UnknownKotlinExpression (PROPERTY)
+stringRepresentation -> null
 String -> USimpleNameReferenceExpression (identifier = String)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
 this -> USimpleNameReferenceExpression (identifier = this)

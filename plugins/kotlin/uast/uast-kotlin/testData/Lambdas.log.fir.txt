@@ -12,7 +12,7 @@ UFile (package = )
             UParameter (name = selectItemFunction)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = lambdaInPlaceCall)
             UBlockExpression

@@ -1,7 +1,7 @@
 foo -> UMethod (name = foo)
 Boolean -> USimpleNameReferenceExpression (identifier = Boolean)
-    x -> [!] UnknownKotlinExpression (PROPERTY)
-    y -> [!] UnknownKotlinExpression (PROPERTY)
+    x -> UDeclarationsExpression
+    y -> UDeclarationsExpression
     x -> USimpleNameReferenceExpression (identifier = x)
     in -> USimpleNameReferenceExpression (identifier = in)
     .. -> USimpleNameReferenceExpression (identifier = ..)

@@ -16,7 +16,7 @@ public final class StringTemplateComplexForUInjectionHostKt {
     }
     public static final fun foo() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+
+
     }
 }
