@@ -14,7 +14,7 @@ class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInser
 // todo: filter out empty insertion operations
 // todo: replace insertOperations with replaceOperations
 // todo: implement IntelliJ part
-class DeclarativeInsertHandler2(
+data class DeclarativeInsertHandler2(
   val insertOperations: List<Pair<Int, String>>,
   val offsetToPutCaret: Int,
   val addCompletionChar: Boolean = true,
