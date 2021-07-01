@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
@@ -15,36 +14,46 @@ class UnfoldFunctionCallToIfIntention : SelfTargetingIntention<KtCallExpression>
     KotlinBundle.lazyMessage("replace.function.call.with.if"),
 ) {
     override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
-        if (element.calleeExpression == null) return false
-        val (ifExpression, _) = element.ifExpressionArgument() ?: return false
-        val branches = ifExpression.branches
-        if (branches.size < 2) return false
-        return branches.all { it.singleExpression() != null }
+        return canUnFoldToIf<KtIfExpression>(element)
     }
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
-        val (ifExpression, argumentIndex) = element.ifExpressionArgument() ?: return
-        val qualifiedOrCall = element.getQualifiedExpressionForSelectorOrThis()
-        ifExpression.branches.forEach {
-            val branchExpression = it.singleExpression() ?: return@forEach
-            val copied = qualifiedOrCall.copy()
-            val valueArguments = when (copied) {
-                is KtCallExpression -> copied.valueArguments
-                is KtQualifiedExpression -> copied.callExpression?.valueArguments
-                else -> null
-            } ?: return@forEach
-            valueArguments[argumentIndex]?.getArgumentExpression()?.replace(branchExpression)
-            branchExpression.replace(copied)
-        }
-        qualifiedOrCall.replace(ifExpression).reformatted()
+        unFoldToIf<KtIfExpression>(element)
     }
 
-    private fun KtCallExpression.ifExpressionArgument(): Pair<KtIfExpression, Int>? =
-        valueArguments.mapIndexedNotNull { index, argument ->
-            val expression = argument.getArgumentExpression() as? KtIfExpression ?: return@mapIndexedNotNull null
-            expression to index
-        }.singleOrNull()
+    companion object {
+        private inline fun <reified T: KtExpression> canUnFoldToIf(element: KtCallExpression): Boolean {
+            if (element.calleeExpression == null) return false
+            val (argument, _) = element.argumentOfType<T>() ?: return false
+            val branches = FoldIfToFunctionCallIntention.branches(argument) ?: return false
+            return branches.all { it.singleExpression() != null }
+        }
 
-    private fun KtExpression?.singleExpression(): KtExpression? =
-        if (this is KtBlockExpression) this.statements.singleOrNull() else this
+        private inline fun <reified T: KtExpression> unFoldToIf(element: KtCallExpression) {
+            val (argument, argumentIndex) = element.argumentOfType<T>() ?: return
+            val branches = FoldIfToFunctionCallIntention.branches(argument) ?: return
+            val qualifiedOrCall = element.getQualifiedExpressionForSelectorOrThis()
+            branches.forEach {
+                val branchExpression = it.singleExpression() ?: return@forEach
+                val copied = qualifiedOrCall.copy()
+                val valueArguments = when (copied) {
+                    is KtCallExpression -> copied.valueArguments
+                    is KtQualifiedExpression -> copied.callExpression?.valueArguments
+                    else -> null
+                } ?: return@forEach
+                valueArguments[argumentIndex]?.getArgumentExpression()?.replace(branchExpression)
+                branchExpression.replace(copied)
+            }
+            qualifiedOrCall.replace(argument).reformatted()
+        }
+
+        private inline fun <reified T: KtExpression> KtCallExpression.argumentOfType(): Pair<T, Int>? =
+            valueArguments.mapIndexedNotNull { index, argument ->
+                val expression = argument.getArgumentExpression() as? T ?: return@mapIndexedNotNull null
+                expression to index
+            }.singleOrNull()
+
+        private fun KtExpression?.singleExpression(): KtExpression? =
+            if (this is KtBlockExpression) this.statements.singleOrNull() else this
+    }
 }
