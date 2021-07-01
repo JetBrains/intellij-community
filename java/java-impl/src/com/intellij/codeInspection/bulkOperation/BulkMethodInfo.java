@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bulkOperation;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,12 +14,15 @@ import java.util.Objects;
 import static com.intellij.psi.CommonClassNames.*;
 
 public final class BulkMethodInfo {
-  private final String myClassName;
-  private final String mySimpleName;
-  private final String myBulkName;
-  private final String myBulkParameterType;
+  @NotNull private final String myClassName;
+  @NotNull private final String mySimpleName;
+  @NotNull private final String myBulkName;
+  @NotNull private final String myBulkParameterType;
 
-  public BulkMethodInfo(String className, String simpleName, String bulkName, String bulkParameterType) {
+  public BulkMethodInfo(@NotNull String className,
+                        @NotNull String simpleName,
+                        @NotNull String bulkName,
+                        @NotNull String bulkParameterType) {
     myClassName = className;
     mySimpleName = simpleName;
     myBulkName = bulkName;
@@ -53,7 +54,7 @@ public final class BulkMethodInfo {
     return ContainerUtil.or(aClass.findMethodsByName(myBulkName, true), method -> {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length != 1) return false;
-      return TypeUtils.variableHasTypeOrSubtype(parameters[0], getBulkParameterType(aClass.getProject()));
+      return TypeUtils.variableHasTypeOrSubtype(parameters[0], getBulkParameterType());
     });
   }
 
@@ -81,7 +82,7 @@ public final class BulkMethodInfo {
     }
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass == null) return false;
-    String bulkParameterType = getBulkParameterType(aClass.getProject());
+    String bulkParameterType = getBulkParameterType();
     PsiClass commonParent = psiFacade.findClass(bulkParameterType, aClass.getResolveScope());
     if (!InheritanceUtil.isInheritorOrSelf(aClass, commonParent, true)) return false;
     PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
@@ -99,27 +100,31 @@ public final class BulkMethodInfo {
     return bulkParameterType.equals(qualifiedName) && parameterType.isAssignableFrom(type);
   }
 
+  @NotNull
   public String getClassName() {
     return myClassName;
   }
 
+  @NotNull
   public String getSimpleName() {
     return mySimpleName;
   }
 
+
+  /**
+   * @return 2 if the simple method is <code>java.util.Map#put</code>, 1 otherwise
+   */
   public int getSimpleParametersCount() {
-    return myBulkParameterType.equals(JAVA_UTIL_MAP) ? 2 : 1;
+    return myClassName.equals(JAVA_UTIL_MAP) && mySimpleName.equals("put") ? 2 : 1;
   }
 
+  @NotNull
   public String getBulkName() {
     return myBulkName;
   }
 
-  public String getBulkParameterType(@NotNull Project project) {
-    if (myBulkParameterType.equals(JAVA_LANG_ITERABLE) &&
-        PsiUtil.getLanguageLevel(project).isLessThan(LanguageLevel.JDK_1_5)) {
-      return JAVA_UTIL_COLLECTION;
-    }
+  @NotNull
+  public String getBulkParameterType() {
     return myBulkParameterType;
   }
 
