@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -61,9 +62,7 @@ public class SwitchBlockHighlightingModel {
     if (body == null) return Collections.emptyList();
     PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
     if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
-      String description = JavaErrorBundle.message("statement.must.be.prepended.with.case.label");
-      return Collections.singletonList(
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create());
+      return Collections.singletonList(createError(first, JavaErrorBundle.message("statement.must.be.prepended.with.case.label")));
     }
     PsiElement element = first;
     PsiStatement alien = null;
@@ -105,17 +104,13 @@ public class SwitchBlockHighlightingModel {
     if (alien == null) return Collections.emptyList();
     if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
       PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(alien, PsiSwitchLabeledRuleStatement.class);
-      String description = JavaErrorBundle.message("statement.must.be.prepended.with.case.label");
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create();
+      HighlightInfo info = createError(alien, JavaErrorBundle.message("statement.must.be.prepended.with.case.label"));
       if (previousRule != null) {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapSwitchRuleStatementsIntoBlockFix(previousRule));
       }
       return Collections.singletonList(info);
     }
-    String description = JavaErrorBundle.message("different.case.kinds.in.switch");
-    return Collections.singletonList(
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create());
+    return Collections.singletonList(createError(alien, JavaErrorBundle.message("different.case.kinds.in.switch")));
   }
 
   @NotNull
@@ -130,9 +125,8 @@ public class SwitchBlockHighlightingModel {
     if (kind == null || requiredLevel != null && !myLevel.isAtLeast(requiredLevel)) {
       boolean is7 = myLevel.isAtLeast(LanguageLevel.JDK_1_7);
       String expected = JavaErrorBundle.message(is7 ? "valid.switch.17.selector.types" : "valid.switch.selector.types");
-      String message = JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType));
       HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector).descriptionAndTooltip(message).create();
+        createError(mySelector, JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType)));
       if (myBlock instanceof PsiSwitchStatement) {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertSwitchToIfIntention((PsiSwitchStatement)myBlock));
       }
@@ -192,8 +186,7 @@ public class SwitchBlockHighlightingModel {
           value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
         }
         if (value == null) {
-          String description = JavaErrorBundle.message("constant.expression.required");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create());
+          results.add(createError(expr, JavaErrorBundle.message("constant.expression.required")));
           continue;
         }
         values.putValue(value, expr);
@@ -225,8 +218,7 @@ public class SwitchBlockHighlightingModel {
   @Nullable
   static HighlightInfo createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
     if (expr.getQualifier() != null) {
-      String message = JavaErrorBundle.message("qualified.enum.constant.in.switch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message).create();
+      return createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
     }
     return null;
   }
@@ -240,9 +232,7 @@ public class SwitchBlockHighlightingModel {
     PsiClass member = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
     if (member != null && !PsiUtil.isAccessible(member.getProject(), member, mySelector, null)) {
       String className = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-      String message = JavaErrorBundle.message("inaccessible.type", className);
-      return Collections.singletonList(
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector).descriptionAndTooltip(message).create());
+      return Collections.singletonList(createError(mySelector, JavaErrorBundle.message("inaccessible.type", className)));
     }
     return Collections.emptyList();
   }
@@ -254,7 +244,7 @@ public class SwitchBlockHighlightingModel {
         String description = value == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") : JavaErrorBundle
           .message("duplicate.switch.label", value);
         for (PsiElement element : entry.getValue()) {
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create());
+          results.add(createError(element, description));
         }
       }
     }
@@ -286,8 +276,7 @@ public class SwitchBlockHighlightingModel {
     else {
       messageKey = isSwitchExpr ? "switch.expr.empty" : "switch.statement.empty";
     }
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector)
-      .descriptionAndTooltip(JavaErrorBundle.message(messageKey)).create();
+    HighlightInfo info = createError(mySelector, JavaErrorBundle.message(messageKey));
     QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddSwitchDefaultFix(myBlock, null));
     return info;
   }
@@ -309,6 +298,10 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
+  private static HighlightInfo createError(@NotNull PsiElement range, @NlsSafe @NotNull String message) {
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
+  }
+
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
@@ -325,9 +318,8 @@ public class SwitchBlockHighlightingModel {
       SelectorKind kind = getSwitchSelectorKind();
       if (kind == SelectorKind.INT) return Collections.emptyList();
       if (kind == null) {
-        String message = JavaErrorBundle.message("switch.invalid.selector.types", JavaHighlightUtil.formatType(mySelectorType));
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(mySelector).descriptionAndTooltip(message).create();
+        HighlightInfo info = createError(mySelector, JavaErrorBundle.message("switch.invalid.selector.types",
+                                                                             JavaHighlightUtil.formatType(mySelectorType)));
         if (myBlock instanceof PsiSwitchStatement) {
           QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertSwitchToIfIntention((PsiSwitchStatement)myBlock));
         }
@@ -405,10 +397,8 @@ public class SwitchBlockHighlightingModel {
       if (label instanceof PsiDefaultCaseLabelElement) return null;
       if (isNullType(label)) {
         if (!(mySelectorType instanceof PsiClassType)) {
-          String message = JavaErrorBundle.message("incompatible.switch.null.type", "null",
-                                                   JavaHighlightUtil.formatType(mySelectorType));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label)
-            .descriptionAndTooltip(message).create();
+          return createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
+                                                            JavaHighlightUtil.formatType(mySelectorType)));
         }
         return null;
       }
@@ -416,13 +406,15 @@ public class SwitchBlockHighlightingModel {
         PsiType patternType = JavaPsiPatternUtil.getPatternType((PsiPattern)label);
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(
-            JavaErrorBundle.message("incompatible.types", expectedTypes, JavaHighlightUtil.formatType(mySelectorType))).create();
+          return createError(label, JavaErrorBundle.message("incompatible.types", expectedTypes,
+                                                            JavaHighlightUtil.formatType(mySelectorType)));
         }
-        // todo we need to add this check for generics com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil.isUnsafeCastInInstanceOf
-        if (!TypeConversionUtil.isAssignable(mySelectorType, patternType) &&
-            !TypeConversionUtil.isAssignable(patternType, mySelectorType)) {
+        if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
           return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, label.getTextRange(), 0);
+        }
+        else if (JavaGenericsUtil.isUncheckedCast(patternType, mySelectorType)) {
+          return createError(label, JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(mySelectorType),
+                                                            JavaHighlightUtil.formatType(patternType)));
         }
         return null;
       }
@@ -438,16 +430,14 @@ public class SwitchBlockHighlightingModel {
         }
         Object constValue = evaluateConstant(expr);
         if (constValue == null) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr)
-            .descriptionAndTooltip(JavaErrorBundle.message("constant.expression.required")).create();
+          return createError(expr, JavaErrorBundle.message("constant.expression.required"));
         }
         if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
           return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
         }
         return null;
       }
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label)
-        .descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")).create();
+      return createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
     }
 
     private void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
@@ -517,24 +507,21 @@ public class SwitchBlockHighlightingModel {
           if (currentElement instanceof PsiPattern) {
             if (existPattern || existsConst || existsDefault) {
               alreadyFallThroughElements.add(currentElement);
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(currentElement)
-                            .descriptionAndTooltip(JavaErrorBundle.message("switch.illegal.fall.through.to")).create());
+              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to")));
             }
             existPattern = true;
           }
           else if (isConstantLabelElement(currentElement)) {
             if (existPattern) {
               alreadyFallThroughElements.add(currentElement);
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(currentElement)
-                            .descriptionAndTooltip(JavaErrorBundle.message("switch.illegal.fall.through.from")).create());
+              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
             }
             existsConst = true;
           }
           else if (currentElement instanceof PsiDefaultCaseLabelElement) {
             if (existPattern) {
               alreadyFallThroughElements.add(currentElement);
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(currentElement)
-                            .descriptionAndTooltip(JavaErrorBundle.message("switch.illegal.fall.through.from")).create());
+              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
             }
             existsDefault = true;
           }
@@ -560,10 +547,7 @@ public class SwitchBlockHighlightingModel {
         if (lastStatement == null) continue;
         if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
           patternElements.stream().filter(patternElement -> !alreadyFallThroughElements.contains(patternElement))
-            .forEach(patternElement -> {
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(patternElement)
-                            .descriptionAndTooltip(JavaErrorBundle.message("switch.illegal.fall.through.to")).create());
-            });
+            .forEach(patternElement -> results.add(createError(patternElement, JavaErrorBundle.message("switch.illegal.fall.through.to"))));
         }
       }
     }
@@ -599,8 +583,7 @@ public class SwitchBlockHighlightingModel {
         }
       }
       alreadyDominatedLabels.forEach((overWhom, who) -> results.add(
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overWhom)
-          .descriptionAndTooltip(JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText())).create()));
+        createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()))));
     }
 
     /**
@@ -617,10 +600,8 @@ public class SwitchBlockHighlightingModel {
       PsiElement elementCoversType = findElementCoversType(mySelectorType, elements);
       PsiElement defaultElement = findDefaultElement();
       if (defaultElement != null && elementCoversType != null) {
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(defaultElement)
-                      .descriptionAndTooltip(JavaErrorBundle.message("switch.total.pattern.and.default.exist")).create());
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementCoversType)
-                      .descriptionAndTooltip(JavaErrorBundle.message("switch.total.pattern.and.default.exist")).create());
+        results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+        results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
         return;
       }
       if (defaultElement != null || elementCoversType != null) return;
@@ -754,7 +735,7 @@ public class SwitchBlockHighlightingModel {
     public static boolean possibleToAddDefaultBranch(@NotNull PsiSwitchBlock switchBlock) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(switchBlock);
       PatternsInSwitchBlockHighlightingModel model = ObjectUtils.tryCast(SwitchBlockHighlightingModel.createInstance(
-          languageLevel, switchBlock, switchBlock.getContainingFile()), PatternsInSwitchBlockHighlightingModel.class);
+        languageLevel, switchBlock, switchBlock.getContainingFile()), PatternsInSwitchBlockHighlightingModel.class);
       if (model == null) return true;
       PsiCodeBlock body = model.myBlock.getBody();
       if (body == null) return false;

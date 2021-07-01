@@ -146,7 +146,7 @@ class Main {
     };
   }
 
-  void patternsCompatibilty(I i) {
+  void patternsCompatibilty(I i, Object o, List<? extends Number> list1, List<Integer> list2) {
     switch (i) {
       case Sub1 s2:
         System.out.println("s1");
@@ -165,13 +165,33 @@ class Main {
 
     switch (i) {
       // total pattern
-      case Object o:
+      case Object oo:
         System.out.println("s1");
     }
     str = switch (i) {
       // total pattern
-      case Object o -> "s1";
+      case Object oo -> "s1";
     };
+
+    // unsafe casts
+    switch (list1) {
+      case <error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>:
+        break;
+    }
+    switch (list2) {
+      case List<? extends Number> l:
+        break;
+    }
+    switch (o) {
+      case <error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>:
+        break;
+      case default:
+        break;
+    }
+    switch (list1) {
+      case Object oo:
+        break;
+    }
   }
 
   void duplicateLabels(Integer i) {
