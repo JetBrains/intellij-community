@@ -1,24 +1,24 @@
 public final class BitwiseKt {
     public static final fun foo() : int {
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var mask: <ErrorType> = 127
+        var x: <ErrorType> = 2863311530
+        var pos: <ErrorType> = x <other> mask
+        var max: <ErrorType> = x <other> mask
+        var zebra: <ErrorType> = x <other> mask
+        var signed: <ErrorType> = x <other> 2
+        var one: <ErrorType> = x <other> 31
+        var zero: <ErrorType> = x <other> 32
         return pos + zero - zebra * signed / one
     }
     public static final fun bar() : long {
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var mask: <ErrorType> = 127
+        var x: <ErrorType> = 6148914691236517205
+        var pos: <ErrorType> = x <other> mask
+        var max: <ErrorType> = x <other> mask
+        var zebra: <ErrorType> = x <other> mask
+        var signed: <ErrorType> = x <other> 2
+        var one: <ErrorType> = x <other> 63
+        var zero: <ErrorType> = x <other> 64
         return pos + zero - zebra * signed / one
     }
 }

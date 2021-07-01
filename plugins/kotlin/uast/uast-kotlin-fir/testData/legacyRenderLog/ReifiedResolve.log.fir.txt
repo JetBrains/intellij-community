@@ -3,7 +3,15 @@ UFile (package = )
         UMethod (name = resolve)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = y)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UDeclarationsExpression
+                    ULocalVariable (name = z)
+                        UQualifiedReferenceExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)

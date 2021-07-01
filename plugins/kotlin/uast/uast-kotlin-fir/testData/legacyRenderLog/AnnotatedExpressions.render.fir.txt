@@ -1,11 +1,11 @@
 public final class AnnotatedExpressionsKt {
     public static final fun foo() : void {
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        @not-implemented-annotation var a: <ErrorType> = 1
+        @not-implemented-annotation var b: <ErrorType> = 2
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)
     }
     public static final fun annotatedSwitch(str: java.lang.String) : java.lang.Integer {
         return [!] UnknownKotlinExpression (WHEN)

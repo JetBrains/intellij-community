@@ -2,9 +2,13 @@ UFile (package = )
     UClass (name = LocalDeclarationsKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (CLASS)
+                UDeclarationsExpression
+                    UClass (name = Local)
+                        UMethod (name = Local)
                 [!] UnknownKotlinExpression (FUN)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = baz)
+                        [!] UnknownKotlinExpression (FUN)
                 [!] UnknownKotlinExpression (FUN)
                 UReturnExpression
                     UBinaryExpression (operator = ==)

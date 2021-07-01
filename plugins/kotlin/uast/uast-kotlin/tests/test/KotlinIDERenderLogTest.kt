@@ -10,10 +10,10 @@ class KotlinIDERenderLogTest : AbstractKotlinUastLightCodeInsightFixtureTest(), 
 
     override fun getTestFile(testName: String, ext: String): File {
         if (ext.endsWith(".txt")) {
-            val testFile = super.getTestFile(testName, ext.removeSuffix(".txt") + "-ide.txt").withFe10Extension()
+            val testFile = super.getTestFile(testName, ext.removeSuffix(".txt") + "-ide.txt")
             if (testFile.exists()) return testFile
         }
-        return super.getTestFile(testName, ext).withFe10Extension()
+        return super.getTestFile(testName, ext)
     }
 
     override fun check(testName: String, file: UFile) = super.check(testName, file)

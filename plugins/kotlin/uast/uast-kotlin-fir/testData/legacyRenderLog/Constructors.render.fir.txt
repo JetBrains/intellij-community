@@ -66,7 +66,7 @@ public final class AWithSecondaryInit {
     public fun AWithSecondaryInit(s: java.lang.String) {
         UastEmptyExpression
         a = s
-        [!] UnknownKotlinExpression (PROPERTY)
+        var local: <ErrorType> = s
         local.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public final fun getA() : java.lang.String = UastEmptyExpression

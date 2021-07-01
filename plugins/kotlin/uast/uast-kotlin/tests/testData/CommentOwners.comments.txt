@@ -1,4 +1,4 @@
-UFile (package = ) [  ]
+UFile (package = ) [ /** file */, // file, /* file */ ]
     UClass (name = CommentOwnersKt) [  ]
         UField (name = topLevelProperty) [ /** topLevelProperty */ ]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [  ]

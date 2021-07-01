@@ -3,14 +3,14 @@ import java.io.InputStream
 
 public final class AnonymousKt {
     public static final fun foo() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+        var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)
         runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var runnable2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)
+        var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)
     }
     public static final fun withErr() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+        var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)
     }
 }

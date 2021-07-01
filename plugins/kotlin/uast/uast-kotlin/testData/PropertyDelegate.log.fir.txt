@@ -1,8 +1,0 @@
-UFile (package = )
-    UClass (name = PropertyDelegateKt)
-        UMethod (name = getSdCardPath)
-        UMethod (name = localPropertyTest)
-            UBlockExpression
-                UDeclarationsExpression
-                    ULocalVariable (name = sdCardPathLocal)
-        UMethod (name = getAnnotatedDelegate)

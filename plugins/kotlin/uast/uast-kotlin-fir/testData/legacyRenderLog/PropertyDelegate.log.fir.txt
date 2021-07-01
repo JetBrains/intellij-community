@@ -3,5 +3,6 @@ UFile (package = )
         UMethod (name = getSdCardPath)
         UMethod (name = localPropertyTest)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = sdCardPathLocal)
         UMethod (name = getAnnotatedDelegate)

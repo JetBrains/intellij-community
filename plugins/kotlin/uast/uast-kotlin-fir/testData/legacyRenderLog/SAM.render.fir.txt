@@ -12,7 +12,7 @@ public final class SAMKt {
     public static final fun setFoo(value: java.lang.Runnable) : void = UastEmptyExpression
     public static final fun bar() : java.lang.Runnable {
         foo = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var a: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         return [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
     }
@@ -21,10 +21,10 @@ public final class SAMKt {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test1() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+        var thread1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test2() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+        var thread2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test3() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
