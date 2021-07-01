@@ -2,8 +2,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] = external mutableProp()
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UBinaryExpression (operator = =) [a.mutableProp = 1] = Undetermined
                     UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
                         USimpleNameReferenceExpression (identifier = a) [a] = external a()
@@ -25,7 +25,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = ext) [public static final fun ext($this$ext: A) : void {...}]
             UParameter (name = $this$ext) [var $this$ext: A]
             UBlockExpression [{...}] = external mutableProp()
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UBinaryExpression (operator = =) [mutableProp = 1] = Undetermined
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                     ULiteralExpression (value = 1) [1] = (long)1
@@ -53,7 +53,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = add) [public final fun add(x: int) : int {...}]
             UParameter (name = x) [var x: int]
             UBlockExpression [{...}] = Nothing
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UBinaryExpression (operator = =) [privateProp = x] = Undetermined
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] = external privateProp()
                     USimpleNameReferenceExpression (identifier = x) [x] = Undetermined

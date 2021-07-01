@@ -4,7 +4,7 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
             UParameter (name = a) [var a: A]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
     UClass (name = A) [public final class A {...}]
         UMethod (name = A) [public fun A() = UastEmptyExpression]

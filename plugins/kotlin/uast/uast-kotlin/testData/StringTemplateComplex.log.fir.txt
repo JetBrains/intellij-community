@@ -47,5 +47,5 @@ UFile (package = )
         UMethod (name = foo)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression

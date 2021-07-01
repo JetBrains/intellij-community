@@ -215,8 +215,25 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
         return with(requiredTypes) {
             when (element) {
+                is KtParameterList -> {
+                    el<UDeclarationsExpression> {
+                        val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { service }
+                        declarationsExpression.apply {
+                            // TODO: fill declarations with UParameter
+                            declarations = listOf()
+                        }
+                    }
+                }
                 is KtClassBody -> {
                     el<UExpressionList>(build(KotlinUExpressionList.Companion::createClassBody))
+                }
+                is KtVariableDeclaration -> {
+                    if (element is KtProperty && !element.isLocal) {
+                        convertNonLocalProperty(element, givenParent, this).firstOrNull()
+                    } else {
+                        el<UVariable> { convertVariablesDeclaration(element, givenParent).declarations.singleOrNull() }
+                            ?: expr<UDeclarationsExpression> { convertExpression(element, givenParent, requiredTypes) }
+                    }
                 }
                 is KtExpression -> {
                     convertExpression(element, givenParent, requiredTypes)
@@ -281,6 +298,8 @@ internal object FirKotlinConverter : BaseKotlinConverter {
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
     ): UExpression? {
+        val project = expression.project
+        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
 
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return {
@@ -291,6 +310,15 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
         return with(requiredTypes) {
             when (expression) {
+                is KtVariableDeclaration -> expr<UDeclarationsExpression>(build(::convertVariablesDeclaration))
+                is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
+                    val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
+                    declarationsExpression.apply {
+                        // TODO: fill declarations with temp var and assignments
+                        declarations = listOf()
+                    }
+                }
+
                 is KtStringTemplateExpression -> {
                     when {
                         requiredTypes.contains(UInjectionHost::class.java) -> {
@@ -353,8 +381,34 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtPrefixExpression -> expr<UPrefixExpression>(build(::KotlinUPrefixExpression))
                 is KtPostfixExpression -> expr<UPostfixExpression>(build(::KotlinUPostfixExpression))
 
+                is KtClassOrObject -> expr<UDeclarationsExpression> {
+                    expression.toLightClass()?.let { lightClass ->
+                        KotlinUDeclarationsExpression(givenParent, service).apply {
+                            declarations = listOf(FirKotlinUClass.create(lightClass, this))
+                        }
+                    } ?: UastEmptyExpression(givenParent)
+                }
+
                 else -> expr<UExpression>(build(::UnknownKotlinExpression))
             }
+        }
+    }
+
+    private fun convertVariablesDeclaration(
+        psi: KtVariableDeclaration,
+        parent: UElement?
+    ): UDeclarationsExpression {
+        val declarationsExpression = parent as? KotlinUDeclarationsExpression
+            ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
+            ?: KotlinUDeclarationsExpression(
+                null,
+                parent,
+                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
+                psi
+            )
+        return declarationsExpression.apply {
+            // TODO: fill the declaration with an annotated local variable
+            declarations = listOf()
         }
     }
 }

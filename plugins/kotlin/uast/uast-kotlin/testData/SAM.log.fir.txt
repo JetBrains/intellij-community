@@ -23,7 +23,7 @@ UFile (package = )
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = foo)
                     [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UReturnExpression
                     [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
@@ -35,10 +35,10 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = test1)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
         UMethod (name = test2)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
         UMethod (name = test3)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)

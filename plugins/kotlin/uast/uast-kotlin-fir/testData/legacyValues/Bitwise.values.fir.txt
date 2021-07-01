@@ -2,14 +2,14 @@ UFile (package = ) [public final class BitwiseKt {...]
     UClass (name = BitwiseKt) [public final class BitwiseKt {...}]
         UMethod (name = foo) [public static final fun foo() : int {...}]
             UBlockExpression [{...}] = Nothing
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UReturnExpression [return pos + zero - zebra * signed / one] = Nothing
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] = Undetermined
                         UBinaryExpression (operator = +) [pos + zero] = Undetermined
@@ -22,14 +22,14 @@ UFile (package = ) [public final class BitwiseKt {...]
                             USimpleNameReferenceExpression (identifier = one) [one] = external one()
         UMethod (name = bar) [public static final fun bar() : long {...}]
             UBlockExpression [{...}] = Nothing
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UReturnExpression [return pos + zero - zebra * signed / one] = Nothing
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] = Undetermined
                         UBinaryExpression (operator = +) [pos + zero] = Undetermined

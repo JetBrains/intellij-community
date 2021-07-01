@@ -3,5 +3,5 @@ UFile (package = )
         UMethod (name = foo)
             UParameter (name = data)
             UBlockExpression
-                [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION)
-                [!] UnknownKotlinExpression (DESTRUCTURING_DECLARATION)
+                UDeclarationsExpression
+                UDeclarationsExpression
