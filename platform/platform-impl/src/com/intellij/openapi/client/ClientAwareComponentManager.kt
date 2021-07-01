@@ -11,6 +11,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 abstract class ClientAwareComponentManager @JvmOverloads constructor(
@@ -61,7 +62,7 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
                                   listenerCallbacks: List<Runnable>?) {
     super.registerComponents(plugins, app, precomputedExtensionModel, listenerCallbacks)
 
-    val sessionsManager = super.getService(ClientSessionsManager::class.java) ?: return
+    val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(true)) {
       (session as? ClientSessionImpl)?.registerComponents(plugins, app, precomputedExtensionModel, listenerCallbacks)
     }
@@ -70,10 +71,31 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
   override fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
     super.unloadServices(services, pluginId)
 
-    val sessionsManager = super.getService(ClientSessionsManager::class.java) ?: return
+    val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(true)) {
       (session as? ClientSessionImpl)?.unloadServices(services, pluginId)
     }
+  }
+
+  override fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+                               activityPrefix: String,
+                               onlyIfAwait: Boolean): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+    val (asyncPreloadFuture, syncPreloadFuture) = super.preloadServices(plugins, activityPrefix, onlyIfAwait)
+    val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
+
+    val asyncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
+    val syncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
+    for (session in sessionsManager.getSessions(true)) {
+      session as? ClientSessionImpl ?: continue
+      val (sessionAsyncPreloadFuture, sessionSyncPreloadFuture) = session.preloadServices(plugins, activityPrefix, onlyIfAwait)
+      asyncPreloadFutures.add(sessionAsyncPreloadFuture)
+      syncPreloadFutures.add(sessionSyncPreloadFuture)
+    }
+
+    return Pair(
+      CompletableFuture.allOf(asyncPreloadFuture, *asyncPreloadFutures.toTypedArray()),
+      CompletableFuture.allOf(syncPreloadFuture, *syncPreloadFutures.toTypedArray())
+    )
   }
 
   override fun isPreInitialized(component: Any): Boolean {
