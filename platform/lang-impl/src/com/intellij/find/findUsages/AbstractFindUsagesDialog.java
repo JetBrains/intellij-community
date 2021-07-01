@@ -246,7 +246,11 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected abstract JPanel createFindWhatPanel();
+  protected JPanel createFindWhatPanel() {
+    JPanel findWhatPanel = new JPanel();
+    findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
+    return findWhatPanel;
+  }
 
   protected void addUsagesOptions(JPanel panel) {
     if (mySearchForTextOccurrencesAvailable) {
