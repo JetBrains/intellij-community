@@ -18,7 +18,7 @@ class KotlinUForEachExpression(
     override val body by lz { KotlinConverter.convertOrEmpty(sourcePsi.body, this) }
     
     override val variable by lz {
-        val parameter = sourcePsi.loopParameter?.let { UastKotlinPsiParameter.create(it, sourcePsi, this, 0) }
+        val parameter = sourcePsi.loopParameter?.let { UastKotlinPsiParameter.create(baseResolveProviderService, it, sourcePsi, this, 0) }
                 ?: UastPsiParameterNotResolved(sourcePsi, KotlinLanguage.INSTANCE)
         KotlinUParameter(parameter, sourcePsi, this)
     }

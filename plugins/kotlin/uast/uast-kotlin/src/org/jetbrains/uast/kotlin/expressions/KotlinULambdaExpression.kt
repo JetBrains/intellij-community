@@ -60,7 +60,7 @@ class KotlinULambdaExpression(
 
     private inline fun getParameters(parametersSelector: SimpleFunctionDescriptor.() -> List<ParameterDescriptor>): List<UParameter> {
         val explicitParameters = sourcePsi.valueParameters.mapIndexed { i, p ->
-            KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+            KotlinUParameter(UastKotlinPsiParameter.create(baseResolveProviderService, p, sourcePsi, this, i), p, this)
         }
         if (explicitParameters.isNotEmpty()) return explicitParameters
 
