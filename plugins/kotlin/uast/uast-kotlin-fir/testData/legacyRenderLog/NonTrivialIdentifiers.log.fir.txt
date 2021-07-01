@@ -2,6 +2,7 @@ UFile (package = )
     UClass (name = NonTrivialIdentifiersKt)
         UMethod (name = main)
             UParameter (name = a)
+                UAnnotation (fqName = null)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
@@ -15,4 +16,5 @@ UFile (package = )
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = invoke)
             UParameter (name = f)
+                UAnnotation (fqName = null)
             UBlockExpression

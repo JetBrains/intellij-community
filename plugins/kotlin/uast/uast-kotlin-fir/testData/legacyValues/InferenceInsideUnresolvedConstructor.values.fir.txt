@@ -4,8 +4,9 @@ UFile (package = ) [public final class InferenceInsideUnresolvedConstructorKt {.
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = id) [public static final fun id(x: T) : T {...}]
-            UParameter (name = x) [var x: T]
+        UMethod (name = id) [public static final fun id(@null x: T) : T {...}]
+            UParameter (name = x) [@null var x: T]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return x] = Nothing
                     USimpleNameReferenceExpression (identifier = x) [x] = Undetermined

@@ -2,8 +2,18 @@ UFile (package = )
     UClass (name = DestructuringDeclarationKt)
         UMethod (name = foo)
             UParameter (name = data)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = var268d41a5)
+                        UAnnotation (fqName = null)
+                        UBinaryExpression (operator = <other>)
+                            ULiteralExpression (value = "foo")
+                            ULiteralExpression (value = 1)
                 UDeclarationsExpression
                     ULocalVariable (name = var465978a0)
+                        UAnnotation (fqName = null)
+                        UAnnotation (fqName = not-implemented-annotation)
+                        UBinaryExpressionWithType
+                            USimpleNameReferenceExpression (identifier = data)
+                            UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>)

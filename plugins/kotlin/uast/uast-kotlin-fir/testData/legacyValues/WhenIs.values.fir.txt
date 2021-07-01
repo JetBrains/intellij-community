@@ -1,7 +1,8 @@
 UFile (package = ) [public final class WhenIsKt {...]
     UClass (name = WhenIsKt) [public final class WhenIsKt {...}]
-        UMethod (name = foo) [public static final fun foo(bar: java.lang.Object) : void {...}]
-            UParameter (name = bar) [var bar: java.lang.Object]
+        UMethod (name = foo) [public static final fun foo(@null bar: java.lang.Object) : void {...}]
+            UParameter (name = bar) [@null var bar: java.lang.Object]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return [!] UnknownKotlinExpression (WHEN)] = Nothing
                     [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)] = Undetermined

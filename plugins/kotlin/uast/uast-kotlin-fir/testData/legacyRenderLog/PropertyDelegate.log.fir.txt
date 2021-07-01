@@ -5,4 +5,5 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = sdCardPathLocal)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = getAnnotatedDelegate)

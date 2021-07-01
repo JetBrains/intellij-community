@@ -14,15 +14,15 @@ public abstract annotation MyAnnotation5 {
 }
 
 public final class Test1 {
-    private var bar: int
-    public fun Test1(bar: int) = UastEmptyExpression
+    @null private var bar: int
+    public fun Test1(@null bar: int) = UastEmptyExpression
     public final fun getBar() : int = UastEmptyExpression
     public final fun setBar(value: int) : void = UastEmptyExpression
 }
 
 public final class Test2 {
-    private var bar: int
-    public fun Test2(bar: int) = UastEmptyExpression
+    @null @not-implemented-annotation private var bar: int
+    public fun Test2(@null @not-implemented-annotation bar: int) = UastEmptyExpression
     public final fun getBar() : int = UastEmptyExpression
-    public final fun setBar(value: int) : void = UastEmptyExpression
+    public final fun setBar(@MyAnnotation3 value: int) : void = UastEmptyExpression
 }

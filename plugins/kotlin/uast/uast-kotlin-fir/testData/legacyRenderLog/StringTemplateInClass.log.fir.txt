@@ -1,6 +1,7 @@
 UFile (package = )
     UClass (name = Demo)
         UField (name = foo)
+            UAnnotation (fqName = null)
             UQualifiedReferenceExpression
                 USimpleNameReferenceExpression (identifier = X)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)

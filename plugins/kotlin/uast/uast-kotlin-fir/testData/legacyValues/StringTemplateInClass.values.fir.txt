@@ -1,6 +1,7 @@
 UFile (package = ) [public final class Demo {...]
     UClass (name = Demo) [public final class Demo {...}]
-        UField (name = foo) [private final var foo: error.NonExistentClass = X.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+        UField (name = foo) [@null private final var foo: error.NonExistentClass = X.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+            UAnnotation (fqName = null) [@null]
             UQualifiedReferenceExpression [X.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 USimpleNameReferenceExpression (identifier = X) [X] = external X()
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

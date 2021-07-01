@@ -6,6 +6,7 @@ UFile (package = declaration)
                     ULiteralExpression (value = 42)
         UMethod (name = buzz)
             UParameter (name = $this$buzz)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     UPolyadicExpression (operator = +)

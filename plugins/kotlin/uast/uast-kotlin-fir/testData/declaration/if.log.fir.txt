@@ -2,6 +2,7 @@ UFile (package = )
     UClass (name = IfKt)
         UMethod (name = test)
             UParameter (name = b)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     UIfExpression
