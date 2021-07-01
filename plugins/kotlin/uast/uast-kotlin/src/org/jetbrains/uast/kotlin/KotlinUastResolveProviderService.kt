@@ -5,12 +5,16 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.isError
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
@@ -57,6 +61,32 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
         val ktType = ktElement.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: return null
         return ktType.toPsiType(uExpression, ktElement, boxed = false)
+    }
+
+    override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
+        val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
+        return ktType.toPsiType(parent, ktExpression, boxed = false)
+    }
+
+    override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
+        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
+            ?.returnType
+            ?.takeIf { !it.isError }
+            ?.toPsiType(parent, ktDeclaration, boxed = false)
+    }
+
+    override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
+        val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null
+        val returnType = descriptor.returnType ?: return null
+
+        return createFunctionType(
+            builtIns = descriptor.builtIns,
+            annotations = descriptor.annotations,
+            receiverType = descriptor.extensionReceiverParameter?.type,
+            parameterTypes = descriptor.valueParameters.map { it.type },
+            parameterNames = descriptor.valueParameters.map { it.name },
+            returnType = returnType
+        ).toPsiType(parent, ktFunction, boxed = false)
     }
 
     override fun evaluate(uExpression: UExpression): Any? {

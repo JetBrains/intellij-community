@@ -2,5 +2,8 @@ UFile (package = ) [public final class LocalVariableWithAnnotationKt {...]
     UClass (name = LocalVariableWithAnnotationKt) [public final class LocalVariableWithAnnotationKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [@not-implemented-annotation var bar: <ErrorType> = "lorem ipsum"] = Undetermined
+                    ULocalVariable (name = bar) [@not-implemented-annotation var bar: <ErrorType> = "lorem ipsum"]
+                        UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                        ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] = "lorem ipsum"
     UClass (name = TestAnnotation) [public abstract annotation TestAnnotation {...}]

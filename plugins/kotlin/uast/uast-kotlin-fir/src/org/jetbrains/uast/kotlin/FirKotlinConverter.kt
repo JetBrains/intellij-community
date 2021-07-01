@@ -25,6 +25,7 @@ import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBlockExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUSimpleReferenceExpression
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
 internal object FirKotlinConverter : BaseKotlinConverter {
     override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
@@ -88,6 +89,9 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtLightField -> {
                     // TODO: differentiate enum constant
                     el<UField>(buildKtOpt(original.kotlinOrigin, ::FirKotlinUField))
+                }
+                is UastKotlinPsiVariable -> {
+                    el<ULocalVariable>(buildKt(original.ktElement, ::FirKotlinULocalVariable))
                 }
                 is KtLightParameter -> {
                     el<UParameter>(buildKtOpt(original.kotlinOrigin, ::FirKotlinUParameter))
@@ -314,8 +318,13 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
                     val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
                     declarationsExpression.apply {
-                        // TODO: fill declarations with temp var and assignments
-                        declarations = listOf()
+                        val tempAssignment = FirKotlinULocalVariable(
+                            UastKotlinPsiVariable.create(service, expression, declarationsExpression),
+                            expression,
+                            declarationsExpression
+                        )
+                        // TODO: fill declarations with assignments
+                        declarations = listOf(tempAssignment)
                     }
                 }
 
@@ -394,6 +403,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
         }
     }
 
+    // TODO: can be commonized once abstraction of (local) variable is commonized
     private fun convertVariablesDeclaration(
         psi: KtVariableDeclaration,
         parent: UElement?
@@ -406,9 +416,16 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
                 psi
             )
-        return declarationsExpression.apply {
-            // TODO: fill the declaration with an annotated local variable
-            declarations = listOf()
-        }
+        val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
+        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
+        val variable =
+            FirKotlinUAnnotatedLocalVariable(
+                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
+                psi,
+                declarationsExpression
+            ) { annotationParent ->
+                psi.annotationEntries.map { convertAnnotation(it, annotationParent) }
+            }
+        return declarationsExpression.apply { declarations = listOf(variable) }
     }
 }

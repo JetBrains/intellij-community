@@ -3,6 +3,8 @@ UFile (package = )
         UMethod (name = test)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        ULiteralExpression (value = null)
                 UDoWhileExpression
                     UBinaryExpression (operator = !=)
                         USimpleNameReferenceExpression (identifier = x)
@@ -14,6 +16,8 @@ UFile (package = )
         UMethod (name = kt44412)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = i)
+                        ULiteralExpression (value = 0)
                 ULabeledExpression (label = Outer)
                     UWhileExpression
                         ULiteralExpression (value = true)
@@ -21,6 +25,8 @@ UFile (package = )
                             UPrefixExpression (operator = ++)
                                 USimpleNameReferenceExpression (identifier = i)
                             UDeclarationsExpression
+                                ULocalVariable (name = j)
+                                    ULiteralExpression (value = 0)
                             ULabeledExpression (label = Inner)
                                 UDoWhileExpression
                                     UIfExpression

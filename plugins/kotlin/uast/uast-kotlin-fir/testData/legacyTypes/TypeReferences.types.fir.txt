@@ -3,19 +3,40 @@ UFile (package = ) [public final class TypeReferencesKt {...]
         UMethod (name = foo) [public static final fun foo(parameter: int) : java.lang.String {...}]
             UParameter (name = parameter) [var parameter: int]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
+                UDeclarationsExpression [var varWithType: <ErrorType> = "Not Null"]
+                    ULocalVariable (name = varWithType) [var varWithType: <ErrorType> = "Not Null"]
+                        ULiteralExpression (value = "Not Null") ["Not Null"] : PsiType:String
+                UDeclarationsExpression [var varWithoutType: <ErrorType> = "lorem ipsum"]
+                    ULocalVariable (name = varWithoutType) [var varWithoutType: <ErrorType> = "lorem ipsum"]
+                        ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] : PsiType:String
+                UDeclarationsExpression [var result: <ErrorType> = varWithType + varWithoutType]
+                    ULocalVariable (name = result) [var result: <ErrorType> = varWithType + varWithoutType]
+                        UBinaryExpression (operator = +) [varWithType + varWithoutType] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = varWithType) [varWithType] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = varWithoutType) [varWithoutType] : PsiType:String
                 UReturnExpression [return result] : PsiType:Void
                     USimpleNameReferenceExpression (identifier = result) [result] : PsiType:String
         UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(arg: T) : void {...}]
             UParameter (name = arg) [var arg: T]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
-                UDeclarationsExpression []
+                UDeclarationsExpression [var a: <ErrorType> = arg]
+                    ULocalVariable (name = a) [var a: <ErrorType> = arg]
+                        USimpleNameReferenceExpression (identifier = arg) [arg] : PsiType:T
+                UDeclarationsExpression [var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)]
+                    ULocalVariable (name = at) [var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)]
+                        [!] UnknownKotlinExpression (BINARY_EXPRESSION) [[!] UnknownKotlinExpression (BINARY_EXPRESSION)]
+                UDeclarationsExpression [var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = tl) [var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = tsl) [var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UQualifiedReferenceExpression [tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:List<? extends String>
+                            USimpleNameReferenceExpression (identifier = tl) [tl] : PsiType:List<? extends T>
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var lls: <ErrorType>]
+                    ULocalVariable (name = lls) [var lls: <ErrorType>]
+                UDeclarationsExpression [var llsAliased: <ErrorType>]
+                    ULocalVariable (name = llsAliased) [var llsAliased: <ErrorType>]
+                UDeclarationsExpression [var llt: <ErrorType>]
+                    ULocalVariable (name = llt) [var llt: <ErrorType>]
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

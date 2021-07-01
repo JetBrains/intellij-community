@@ -31,6 +31,8 @@ UFile (package = )
                     UBlockExpression
                     UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = localValueDefinition)
+                        ULiteralExpression (value = 42)
     UClass (name = TopLevelClass)
         UField (name = classLevelProperty)
             ULiteralExpression (value = 42)

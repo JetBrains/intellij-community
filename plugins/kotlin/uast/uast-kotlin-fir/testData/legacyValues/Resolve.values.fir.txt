@@ -20,10 +20,16 @@ UFile (package = ) [public final class ResolveKt {...]
                 UQualifiedReferenceExpression [[!] UnknownKotlinExpression (CALL_EXPRESSION).indices] = external indices()
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = indices) [indices] = external indices()
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var date: <ErrorType> = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = date) [var date: <ErrorType> = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UQualifiedReferenceExpression [java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            UQualifiedReferenceExpression [java.util] = external util()
+                                USimpleNameReferenceExpression (identifier = java) [java] = external java()
+                                USimpleNameReferenceExpression (identifier = util) [util] = external util()
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 UBinaryExpression (operator = =) [date.time = 1000] = Undetermined
                     UQualifiedReferenceExpression [date.time] = external time()
-                        USimpleNameReferenceExpression (identifier = date) [date] = external date()
+                        USimpleNameReferenceExpression (identifier = date) [date] = (var date = Undetermined)
                         USimpleNameReferenceExpression (identifier = time) [time] = external time()
                     ULiteralExpression (value = 1000) [1000] = (long)1000
                 UQualifiedReferenceExpression [[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
@@ -36,9 +42,13 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = entries) [entries] = external entries()
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var intRange: <ErrorType> = 0 .. 3] = Undetermined
+                    ULocalVariable (name = intRange) [var intRange: <ErrorType> = 0 .. 3]
+                        UBinaryExpression (operator = ..) [0 .. 3] = Undetermined
+                            ULiteralExpression (value = 0) [0] = (long)0
+                            ULiteralExpression (value = 3) [3] = (long)3
                 UQualifiedReferenceExpression [intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    USimpleNameReferenceExpression (identifier = intRange) [intRange] = external intRange()
+                    USimpleNameReferenceExpression (identifier = intRange) [intRange] = (var intRange = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = barT) [public static final fun barT(t: T) : void {...}]

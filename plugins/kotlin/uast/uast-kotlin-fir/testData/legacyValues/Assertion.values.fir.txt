@@ -2,7 +2,9 @@ UFile (package = ) [public final class AssertionKt {...]
     UClass (name = AssertionKt) [public final class AssertionKt {...}]
         UMethod (name = foo) [public static final fun foo() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var s: <ErrorType> = "Not Null"] = Undetermined
+                    ULocalVariable (name = s) [var s: <ErrorType> = "Not Null"]
+                        ULiteralExpression (value = "Not Null") ["Not Null"] = "Not Null"
                 UReturnExpression [return s!!] = Nothing
                     UPostfixExpression (operator = !!) [s!!] = Undetermined
-                        USimpleNameReferenceExpression (identifier = s) [s] = external s()
+                        USimpleNameReferenceExpression (identifier = s) [s] = (var s = "Not Null")

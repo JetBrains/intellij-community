@@ -21,6 +21,12 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     USimpleNameReferenceExpression (identifier = indices)
                 UDeclarationsExpression
+                    ULocalVariable (name = date)
+                        UQualifiedReferenceExpression
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = java)
+                                USimpleNameReferenceExpression (identifier = util)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UBinaryExpression (operator = =)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = date)
@@ -37,6 +43,10 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = intRange)
+                        UBinaryExpression (operator = ..)
+                            ULiteralExpression (value = 0)
+                            ULiteralExpression (value = 3)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = intRange)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
