@@ -29,6 +29,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private JComponent myOptionsComponent;
   private final boolean myNameEditable;
   @Nullable private final Runnable myUpdateTree;
+  private boolean myUpdatingNameFieldFromDisplayName;
 
   protected NamedConfigurable() {
     this(false, null);
@@ -137,8 +138,18 @@ public abstract class NamedConfigurable<T> implements Configurable {
   }
 
   public void updateName() {
-    ensureUiInitialized();
-    myNameField.setText(getDisplayName());
+    myUpdatingNameFieldFromDisplayName = true;
+    try {
+      ensureUiInitialized();
+      myNameField.setText(getDisplayName());
+    }
+    finally {
+      myUpdatingNameFieldFromDisplayName = false;
+    }
+  }
+
+  protected boolean isUpdatingNameFieldFromDisplayName() {
+    return myUpdatingNameFieldFromDisplayName;
   }
 
   public abstract JComponent createOptionsPanel();
