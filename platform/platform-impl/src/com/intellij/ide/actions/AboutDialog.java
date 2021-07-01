@@ -153,7 +153,7 @@ public class AboutDialog extends DialogWrapper {
     String arch = properties.getProperty("os.arch", "");
     String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
     addLineWithoutLog(lines, jreInfo);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}\n", javaVersion, arch));
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch));
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
