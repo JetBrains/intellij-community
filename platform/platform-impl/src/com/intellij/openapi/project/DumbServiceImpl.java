@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -84,6 +84,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   //used from EDT
   private final DumbServiceBalloon myBalloon;
+
+  private volatile @Nullable Thread myWaitIntolerantThread;
 
   public DumbServiceImpl(@NotNull Project project) {
     myProject = project;
@@ -450,6 +452,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
+    if (myWaitIntolerantThread == Thread.currentThread()) {
+      throw new AssertionError("Don't invoke waitForSmartMode from a background startup activity");
+    }
     CountDownLatch switched;
     synchronized (myRunWhenSmartQueue) {
       if (!isDumb()) {
@@ -637,6 +642,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           activity.finished();
         }
       });
+    }
+  }
+
+  @Override
+  public void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable) {
+    try {
+      myWaitIntolerantThread = Thread.currentThread();
+      runnable.run();
+    }
+    finally {
+      myWaitIntolerantThread = null;
     }
   }
 

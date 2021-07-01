@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
@@ -211,7 +211,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         return@processWithPluginDescriptor
       }
       if (DumbService.isDumbAware(extension)) {
-        runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        dumbService.runWithWaitForSmartModeDisabled {
+          runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        }
         return@processWithPluginDescriptor
       }
       if (edtActivity.get() == null) {

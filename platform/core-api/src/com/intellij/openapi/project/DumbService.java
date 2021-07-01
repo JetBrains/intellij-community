@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -410,6 +410,9 @@ public abstract class DumbService {
    * in the next line of the calling code.
    */
   public abstract boolean isSuspendedDumbMode();
+
+  @ApiStatus.Internal
+  public abstract void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable);
 
   /**
    * @see #DUMB_MODE
