@@ -1658,18 +1658,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         }));
       }
     }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      if (!ScreenUtil.isStandardAddRemoveNotify(this)) {
-        return;
-      }
-
-      if (Disposer.isDisposed(RunnerContentUi.this)) return;
-
-      saveUiState();
-    }
   }
 
   @SuppressWarnings("SSBasedInspection")
