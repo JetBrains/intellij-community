@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
@@ -15,7 +14,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -25,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Fabrice TIERCELIN
  */
-public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection {
 
   @NotNull
   @Override
