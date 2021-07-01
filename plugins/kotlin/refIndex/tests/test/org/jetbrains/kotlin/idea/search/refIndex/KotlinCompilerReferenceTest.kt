@@ -113,7 +113,7 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     fun testTopLevelConstantJava() {
         myFixture.configureByFiles("JavaRead.java", "Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java")
         rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt"), getReferentFilesForElementUnderCaret())
+        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
         addFileAndAssertIndexNotReady()
     }
 

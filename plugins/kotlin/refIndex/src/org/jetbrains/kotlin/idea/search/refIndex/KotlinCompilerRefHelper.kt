@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -24,23 +25,24 @@ import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = null
-    override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? = when (element) {
-        is KtClassOrObject -> element.asCompilerRef(names)?.let(::listOf)
-        is KtConstructor<*> -> element.asCompilerRef(names)?.let(::listOf)
-        is KtCallableDeclaration -> element.takeIf { it.isTopLevelKtOrJavaMember() }
-            ?.fqName
-            ?.let { PackagePartClassUtils.getPackagePartFqName(it.parent(), element.containingFile.name) }
-            ?.asString()
-            ?.let { qualifier ->
-                when (element) {
-                    is KtNamedFunction -> element.asCompilerRef(qualifier, names).let(::listOf)
-                    is KtProperty -> element.asCompilerRef(qualifier, names)
-                    else -> null
+    override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? =
+        when (val originalElement = element.unwrapped) {
+            is KtClassOrObject -> originalElement.asCompilerRef(names)?.let(::listOf)
+            is KtConstructor<*> -> originalElement.asCompilerRef(names)?.let(::listOf)
+            is KtCallableDeclaration -> originalElement.takeIf { it.isTopLevelKtOrJavaMember() }
+                ?.fqName
+                ?.let { PackagePartClassUtils.getPackagePartFqName(it.parent(), originalElement.containingFile.name) }
+                ?.asString()
+                ?.let { qualifier ->
+                    when (originalElement) {
+                        is KtNamedFunction -> originalElement.asCompilerRef(qualifier, names).let(::listOf)
+                        is KtProperty -> originalElement.asCompilerRef(qualifier, names)
+                        else -> null
+                    }
                 }
-            }
 
-        else -> null
-    }
+            else -> null
+        }
 
     private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = fqName?.asString()
         ?.let(names::tryEnumerate)
