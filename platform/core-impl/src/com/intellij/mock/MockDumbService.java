@@ -37,8 +37,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void waitForSmartMode() {
-  }
+  public void waitForSmartMode() { }
 
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
@@ -53,8 +52,7 @@ public class MockDumbService extends DumbService {
   public void cancelAllTasksAndWait() { }
 
   @Override
-  public void completeJustSubmittedTasks() {
-  }
+  public void completeJustSubmittedTasks() { }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
@@ -74,8 +72,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText,
-                                        @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
+  public void showDumbModeActionBalloon(@NotNull String balloonText, @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
     throw new UnsupportedOperationException();
   }
 
@@ -85,8 +82,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void setAlternativeResolveEnabled(boolean enabled) {
-  }
+  public void setAlternativeResolveEnabled(boolean enabled) { }
 
   @Override
   public boolean isAlternativeResolveEnabled() {
