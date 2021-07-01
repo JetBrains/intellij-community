@@ -6,11 +6,11 @@ public final class ResolveKt {
         [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION).size
         [!] UnknownKotlinExpression (CALL_EXPRESSION).indices
-
+        var date: <ErrorType> = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         date.time = 1000
         [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION).entries.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-
+        var intRange: <ErrorType> = 0 .. 3
         intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }

@@ -2,11 +2,26 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
     UClass (name = LambdaReturnKt) [public final class LambdaReturnKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var lam1: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = lam1) [var lam1: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var lam2: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = lam2) [var lam2: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = lam3) [var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                        ULabeledExpression (label = lbd) [lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
+                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
+                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
+                UDeclarationsExpression [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
+                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
+                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = x) [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = y) [var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined

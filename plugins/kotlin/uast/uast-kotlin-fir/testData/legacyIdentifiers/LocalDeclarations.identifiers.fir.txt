@@ -3,7 +3,7 @@ Boolean -> USimpleNameReferenceExpression (identifier = Boolean)
     Local -> UClass (name = Local)
     bar -> [!] UnknownKotlinExpression (FUN)
     Local -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    baz -> UDeclarationsExpression
+    baz -> ULocalVariable (name = baz)
         Local -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     Int -> USimpleNameReferenceExpression (identifier = Int)
     someLocalFun -> [!] UnknownKotlinExpression (FUN)

@@ -3,7 +3,11 @@ UFile (package = )
         UMethod (name = foo)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        ULiteralExpression (value = 1)
                 UDeclarationsExpression
+                    ULocalVariable (name = y)
+                        ULiteralExpression (value = 10)
                 UReturnExpression
                     UBinaryExpression (operator = &&)
                         UBinaryExpression (operator = in)

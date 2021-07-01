@@ -16,7 +16,7 @@ public final class StringTemplateComplexKt {
     }
     public static final fun foo() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-
-
+        var template1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var template2: <ErrorType> = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }
