@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
@@ -104,7 +104,7 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
     val psi = event.getData(PSI_FILE) ?: return null
     val panel = event.getData(ProblemsViewPanel.SELECTED) ?: return null
     if (!panel.isShowing) return null
-    val editor = panel.preview.preview ?: getEditor(psi, showEditor) ?: return null
+    val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
     val markers = problem.info?.quickFixActionMarkers ?: return null
 
     val info = ShowIntentionsPass.IntentionsInfo()
