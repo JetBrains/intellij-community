@@ -2,6 +2,7 @@ UFile (package = )
     UClass (name = WhenIsKt)
         UMethod (name = foo)
             UParameter (name = bar)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (WHEN)

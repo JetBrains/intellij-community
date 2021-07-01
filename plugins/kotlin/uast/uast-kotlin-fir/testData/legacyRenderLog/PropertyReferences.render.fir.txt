@@ -7,7 +7,7 @@ public final class PropertyReferencesKt {
         ++a.mutableProp
         a.mutableProp--
     }
-    public static final fun ext($this$ext: A) : void {
+    public static final fun ext(@null $this$ext: A) : void {
         var x: <ErrorType> = -mutableProp
         mutableProp = 1
         mutableProp += x
@@ -17,16 +17,16 @@ public final class PropertyReferencesKt {
 }
 
 public final class A {
-    private var privateProp: int = 0
-    private var mutableProp: int
-    public fun A(init: int) {
+    @org.jetbrains.annotations.NotNull private var privateProp: int = 0
+    @null private var mutableProp: int
+    public fun A(@null init: int) {
         {
             mutableProp = init
         }
     }
     public final fun getMutableProp() : int = UastEmptyExpression
     public final fun setMutableProp(value: int) : void = UastEmptyExpression
-    public final fun add(x: int) : int {
+    public final fun add(@null x: int) : int {
         var result: <ErrorType> = privateProp
         privateProp = x
         return privateProp

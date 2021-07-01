@@ -7,7 +7,7 @@ KotlinUFile(
             UComment(/*
              * Multi-line comment bound to extension fun buzz
              */)
-            FirKotlinReceiverUParameter(
+            KotlinReceiverUParameter(
             )
         )
     )

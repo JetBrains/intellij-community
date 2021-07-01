@@ -1,5 +1,5 @@
 public final class PropertyWithAnnotationKt {
-    private static final var prop1: int = 0
+    @org.jetbrains.annotations.NotNull @not-implemented-annotation private static final var prop1: int = 0
     public static final fun getProp1() : int = UastEmptyExpression
     public static final fun getProp2() : int {
         return 0
@@ -7,7 +7,7 @@ public final class PropertyWithAnnotationKt {
     public static final fun getProp3() : int {
         return 0
     }
-    public static final fun setProp3(value: int) : void {
+    public static final fun setProp3(@org.jetbrains.annotations.NotNull value: int) : void {
         field = value
     }
 }

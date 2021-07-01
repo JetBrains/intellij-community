@@ -7,10 +7,12 @@ UFile (package = ) [public final class PropertyTest {...]
                     UQualifiedReferenceExpression [this.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                         UThisExpression (label = null) [this] : PsiType:PropertyTest
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = setStringRepresentation) [public final fun setStringRepresentation(value: java.lang.String) : void {...}]
-            UParameter (name = value) [var value: java.lang.String]
+        UMethod (name = setStringRepresentation) [public final fun setStringRepresentation(@null value: java.lang.String) : void {...}]
+            UParameter (name = value) [@null var value: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = setDataFromString) [public final fun setDataFromString(data: java.lang.String) : void {...}]
-            UParameter (name = data) [var data: java.lang.String]
+        UMethod (name = setDataFromString) [public final fun setDataFromString(@null data: java.lang.String) : void {...}]
+            UParameter (name = data) [@null var data: java.lang.String]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Unit

@@ -18,6 +18,7 @@ UFile (package = )
                         [!] UnknownKotlinExpression (BINARY_EXPRESSION)
         UMethod (name = annotatedSwitch)
             UParameter (name = str)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (WHEN)

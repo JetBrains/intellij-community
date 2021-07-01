@@ -2,9 +2,11 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
 interface BaseKotlinConverter {
 
@@ -50,6 +52,31 @@ interface BaseKotlinConverter {
                 }
             }
         }
+    }
+
+    fun convertVariablesDeclaration(
+        psi: KtVariableDeclaration,
+        parent: UElement?
+    ): UDeclarationsExpression {
+        val declarationsExpression = parent as? KotlinUDeclarationsExpression
+            ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
+            ?: KotlinUDeclarationsExpression(
+                null,
+                parent,
+                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
+                psi
+            )
+        val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
+        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
+        val variable =
+            KotlinUAnnotatedLocalVariable(
+                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
+                psi,
+                declarationsExpression
+            ) { annotationParent ->
+                psi.annotationEntries.map { convertAnnotation(it, annotationParent) }
+            }
+        return declarationsExpression.apply { declarations = listOf(variable) }
     }
 
     fun convertPsiElement(

@@ -1,6 +1,7 @@
 UFile (package = )
     UClass (name = CycleInTypeParametersKt)
         UField (name = a)
+            UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBinaryExpressionWithType
                 ULiteralExpression (value = null)
                 UTypeReferenceExpression (name = Device<?>)

@@ -565,29 +565,4 @@ object KotlinConverter : BaseKotlinConverter {
         @Suppress("UNCHECKED_CAST")
         return declarations.first() as TDeclaration
     }
-
-    private fun convertVariablesDeclaration(
-        psi: KtVariableDeclaration,
-        parent: UElement?
-    ): UDeclarationsExpression {
-        val declarationsExpression = parent as? KotlinUDeclarationsExpression
-            ?: psi.parent.toUElementOfType<UDeclarationsExpression>() as? KotlinUDeclarationsExpression
-            ?: KotlinUDeclarationsExpression(
-                null,
-                parent,
-                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
-                psi
-            )
-        val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
-        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
-        val variable =
-            KotlinUAnnotatedLocalVariable(
-                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
-                psi,
-                declarationsExpression
-            ) { annotationParent ->
-                psi.annotationEntries.map { convertAnnotation(it, annotationParent) }
-            }
-        return declarationsExpression.apply { declarations = listOf(variable) }
-    }
 }

@@ -266,11 +266,6 @@ internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingCont
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
 
-internal val KtTypeReference.nameElement: PsiElement?
-    get() = this.typeElement?.let {
-        (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
-    }
-
 internal fun KotlinType.getFunctionalInterfaceType(source: UElement, element: KtElement): PsiType? =
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, false)
 

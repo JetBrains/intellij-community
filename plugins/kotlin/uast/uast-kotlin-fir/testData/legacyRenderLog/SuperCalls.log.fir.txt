@@ -1,44 +1,55 @@
 UFile (package = )
     UClass (name = SuperCallsKt)
         UField (name = anon)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             [!] UnknownKotlinExpression (OBJECT_LITERAL)
         UMethod (name = getAnon)
         UMethod (name = cons)
             UParameter (name = a)
+                UAnnotation (fqName = null)
             UBlockExpression
     UClass (name = A)
         UField (name = str)
+            UAnnotation (fqName = null)
         UMethod (name = A)
             UParameter (name = str)
+                UAnnotation (fqName = null)
         UMethod (name = A)
             UParameter (name = i)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getStr)
         UMethod (name = foo)
             UParameter (name = a)
+                UAnnotation (fqName = null)
             UBlockExpression
     UClass (name = B)
         UMethod (name = B)
             UParameter (name = param)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UastEmptyExpression
     UClass (name = C)
         UMethod (name = C)
             UParameter (name = p)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = C)
             UParameter (name = i)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UastEmptyExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = foo)
             UParameter (name = a)
+                UAnnotation (fqName = null)
             UBlockExpression
                 UQualifiedReferenceExpression
                     USuperExpression (label = null)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
     UClass (name = O)
         UField (name = INSTANCE)
+            UAnnotation (fqName = null)
         UMethod (name = O)

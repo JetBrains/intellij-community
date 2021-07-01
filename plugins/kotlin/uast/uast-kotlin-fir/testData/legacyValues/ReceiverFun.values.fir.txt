@@ -1,14 +1,18 @@
 UFile (package = ) [public final class ReceiverFunKt {...]
     UClass (name = ReceiverFunKt) [public final class ReceiverFunKt {...}]
-        UMethod (name = foo) [public static final fun foo($this$foo: java.lang.String) : int {...}]
-            UParameter (name = $this$foo) [var $this$foo: java.lang.String]
+        UMethod (name = foo) [public static final fun foo(@not-implemented-annotation @null $this$foo: java.lang.String) : int {...}]
+            UParameter (name = $this$foo) [@not-implemented-annotation @null var $this$foo: java.lang.String]
+                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this.length] = Nothing
                     UQualifiedReferenceExpression [this.length] = external length()
                         UThisExpression (label = null) [this] = Undetermined
                         USimpleNameReferenceExpression (identifier = length) [length] = external length()
-        UMethod (name = getRx) [public static final fun getRx($this$rx: java.lang.String) : kotlin.text.Regex {...}]
-            UParameter (name = $this$rx) [var $this$rx: java.lang.String]
+        UMethod (name = getRx) [public static final fun getRx(@not-implemented-annotation @null $this$rx: java.lang.String) : kotlin.text.Regex {...}]
+            UParameter (name = $this$rx) [@not-implemented-annotation @null var $this$rx: java.lang.String]
+                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
