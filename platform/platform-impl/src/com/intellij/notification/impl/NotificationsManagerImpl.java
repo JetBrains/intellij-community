@@ -713,7 +713,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     List<AnAction> actions = notification.getActions();
 
-    if (actions.size() > 2 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 
@@ -728,7 +728,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }, action));
     }
 
-    if (actions.size() > 2 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 
@@ -1265,7 +1265,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width;
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
-        if (myActionPanel.actionLinks.size() > 2) {
+        if (myActionPanel.actionLinks.size() > 1) {
           myActionPanel.groupedActionsLink.setVisible(false);
           for (LinkLabel<AnAction> link : myActionPanel.actionLinks) {
             link.setVisible(true);
