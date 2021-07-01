@@ -191,6 +191,33 @@ final class BuildTasksImpl extends BuildTasks {
     })
   }
 
+  static class ApplicationStarterClasspathCustomizer {
+    private BuildContext buildContext
+
+    ApplicationStarterClasspathCustomizer(BuildContext buildContext) {
+      this.buildContext = buildContext
+    }
+
+    protected static List<File> jars(String pluginPath) {
+      File libFile = new File(pluginPath, "lib")
+      return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
+        new File(libFile, jarName)
+      }
+    }
+
+    Set<String> customize(Set<String> ideClasspath) {
+      List<Path> additionalPluginPaths = buildContext.productProperties.getAdditionalPluginPaths(buildContext)
+      for (Path pluginPath : additionalPluginPaths) {
+        for (File jarFile : jars(pluginPath.toString())) {
+          if (ideClasspath.add(jarFile.absolutePath)) {
+            buildContext.messages.debug("$jarFile from plugin $pluginPath")
+          }
+        }
+      }
+      return ideClasspath
+    }
+  }
+
   static void runApplicationStarter(@NotNull BuildContext context,
                                     @NotNull Path tempDir,
                                     @NotNull Collection<String> modules,
@@ -198,7 +225,8 @@ final class BuildTasksImpl extends BuildTasks {
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
                                     List<String> pluginsToDisable = Collections.emptyList(),
-                                    long timeoutMillis = TimeUnit.MINUTES.toMillis(10L)) {
+                                    long timeoutMillis = TimeUnit.MINUTES.toMillis(10L),
+                                    ApplicationStarterClasspathCustomizer classpathCustomizer = new ApplicationStarterClasspathCustomizer(context)) {
     Files.createDirectories(tempDir)
 
     Set<String> ideClasspath = new LinkedHashSet<String>()
@@ -223,16 +251,7 @@ final class BuildTasksImpl extends BuildTasks {
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
 
-    List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-    for (Path pluginPath : additionalPluginPaths) {
-      File libFile = pluginPath.resolve("lib").toFile()
-      for (String jarName : libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }) {
-        File jarFile = new File(libFile, jarName)
-        if (ideClasspath.add(jarFile.absolutePath)) {
-          context.messages.debug("$jarFile from plugin ${libFile.parentFile.name}")
-        }
-      }
-    }
+    ideClasspath = classpathCustomizer.customize(ideClasspath)
 
     disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
 

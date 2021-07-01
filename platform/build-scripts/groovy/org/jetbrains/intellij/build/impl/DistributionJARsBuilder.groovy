@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
@@ -265,7 +266,9 @@ final class DistributionJARsBuilder {
   /**
    * Build index which is used to search options in the Settings dialog.
    */
-  static Path buildSearchableOptions(BuildContext buildContext, @NotNull List<String> modulesForPluginsToPublish) {
+  static Path buildSearchableOptions(BuildContext buildContext,
+                                     @NotNull List<String> modulesForPluginsToPublish,
+                                     BuildTasksImpl.ApplicationStarterClasspathCustomizer classpathCustomizer = new BuildTasksImpl.ApplicationStarterClasspathCustomizer(buildContext)) {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
     modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
@@ -279,7 +282,8 @@ final class DistributionJARsBuilder {
                                          buildContext.paths.tempDir.resolve("searchableOptions"),
                                          modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
                                          Collections.emptyMap(),
-                                         List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"))
+                                         List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"),
+                                         [], TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
     String[] modules = targetDirectory.toFile().list()
     if (modules == null || modules.length == 0) {
       buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
