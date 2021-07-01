@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,6 +36,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.server.MavenWrapperSupport;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
@@ -49,6 +51,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
+import static org.jetbrains.idea.maven.server.MavenServerManager.WRAPPED_MAVEN;
 
 /**
  * Do not use this project import builder directly.
@@ -161,12 +164,17 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
 
-    settings.generalSettings = getGeneralSettings();
-    settings.importingSettings = getImportingSettings();
+    settings.setGeneralSettings(getGeneralSettings());
+    settings.setImportingSettings(getImportingSettings());
 
     String settingsFile = System.getProperty("idea.maven.import.settings.file");
     if (!StringUtil.isEmptyOrSpaces(settingsFile)) {
-      settings.generalSettings.setUserSettingsFile(settingsFile.trim());
+      settings.getGeneralSettings().setUserSettingsFile(settingsFile.trim());
+    }
+
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(ProjectUtil.guessProjectDir(project));
+    if (distributionUrl != null) {
+      settings.getGeneralSettings().setMavenHome(WRAPPED_MAVEN);
     }
 
     MavenExplicitProfiles selectedProfiles = MavenExplicitProfiles.NONE.clone();
