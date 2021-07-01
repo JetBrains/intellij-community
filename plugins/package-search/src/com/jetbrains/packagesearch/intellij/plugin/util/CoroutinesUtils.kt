@@ -1,9 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -33,6 +37,16 @@ internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -
 @Suppress("unused") // The receiver is technically unused
 internal val Dispatchers.AppUI
     get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
+
+@Suppress("unused") // The receiver is technically unused
+internal val Dispatchers.ReadActions: CoroutineDispatcher
+    get() = ReadActionsCoroutineDispatcher
+
+internal object ReadActionsCoroutineDispatcher : CoroutineDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        ApplicationManager.getApplication().runReadAction(block)
+    }
+}
 
 internal fun <T> Flow<T>.replayOnSignal(signal: Flow<Any>) = channelFlow {
     var lastValue: T? = null
