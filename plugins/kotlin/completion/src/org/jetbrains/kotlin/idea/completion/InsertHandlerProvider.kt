@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.completion.VeryNaughtyAndBadEditorHolder.editor as dirtyEditor
 import org.jetbrains.kotlin.idea.completion.handlers.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.fuzzyType
@@ -23,6 +24,11 @@ class InsertHandlerProvider(
     private val editor: Editor? = null,
     expectedInfosCalculator: () -> Collection<ExpectedInfo>
 ) {
+    init {
+      println("!!! InsertHandlerProvider has editor=${editor}")
+      println("!!! dirtyWay editor = $dirtyEditor")
+    }
+
     private val expectedInfos by lazy(LazyThreadSafetyMode.NONE) { expectedInfosCalculator() }
 
     fun insertHandler(descriptor: DeclarationDescriptor): InsertHandler<LookupElement> {
@@ -33,7 +39,8 @@ class InsertHandlerProvider(
                         val needTypeArguments = needTypeArguments(descriptor)
                         val parameters = descriptor.valueParameters
                         when (parameters.size) {
-                            0 -> KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = false)
+                            0 -> createNormalFunctionInsertHandler(dirtyEditor, callType, needTypeArguments, inputValueArguments = false)
+                                //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = false)
 
                             1 -> {
                                 if (callType != CallType.SUPER_MEMBERS) { // for super call we don't suggest to generate "super.foo { ... }" (seems to be non-typical use)
@@ -42,7 +49,8 @@ class InsertHandlerProvider(
                                     if (parameterType.isBuiltinFunctionalType) {
                                         if (getValueParametersCountFromFunctionType(parameterType) <= 1 && !parameter.hasDefaultValue()) {
                                             // otherwise additional item with lambda template is to be added
-                                            return KotlinFunctionInsertHandler.Normal(
+                                            return createNormalFunctionInsertHandler(
+                                                dirtyEditor,
                                                 callType, needTypeArguments, inputValueArguments = false,
                                                 lambdaInfo = GenerateLambdaInfo(parameterType, false)
                                             )
@@ -50,10 +58,12 @@ class InsertHandlerProvider(
                                     }
                                 }
 
-                                KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
+                                //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
+                                createNormalFunctionInsertHandler(dirtyEditor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true)
                             }
 
-                            else -> KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
+                            else -> createNormalFunctionInsertHandler(dirtyEditor, callType, needTypeArguments, inputValueArguments = true)
+                                    //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
                         }
                     }
 

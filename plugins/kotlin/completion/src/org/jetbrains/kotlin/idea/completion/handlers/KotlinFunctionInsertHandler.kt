@@ -12,7 +12,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
@@ -115,7 +113,7 @@ fun createNormalFunctionInsertHandler(
         insertOperations.add(0 to stringToInsert.toString())
 
         val normalInsertHandler = DeclarativeInsertHandler2(
-            insertOperations = insertOperations,
+            textOperations = insertOperations.map { (position, newText) -> DeclarativeInsertHandler2.RelativeTextEdit(position, position, newText) },
             offsetToPutCaret = offsetToPutCaret,
             postInsertHandler = postInsertHandler
         )
@@ -177,8 +175,8 @@ fun createNormalFunctionInsertHandler(
 */
     //completionChar == ' ' || completionChar == '{' ???
 
-
-    return CompositeDeclarativeInsertHandler(handlers)
+    val fallbackHandler = KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
+    return CompositeDeclarativeInsertHandler(handlers = handlers, fallbackInsertHandler = fallbackHandler)
 }
 
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
@@ -208,8 +206,6 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         ) = Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
 
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
-            createNormalFunctionInsertHandler(context.editor, callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
-
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
             val document = context.document
 

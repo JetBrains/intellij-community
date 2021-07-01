@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PatternCondition
@@ -56,12 +57,18 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     dataClassComponentFunctions = parameters.invocationCount >= 2
 )
 
+// TODO: this blasphemy is here only to publish initial version of DeclarativeInsertHandlers
+object VeryNaughtyAndBadEditorHolder {
+    lateinit var editor: Editor
+}
+
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
     originalParameters: CompletionParameters,
     resultSet: CompletionResultSet
 ) {
     init {
+        VeryNaughtyAndBadEditorHolder.editor = originalParameters.editor
         CompletionBenchmarkSink.instance.onCompletionStarted(this)
     }
 
