@@ -1,26 +1,9 @@
-/*
- * Copyright 2011-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,11 +13,23 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class AmbiguousFieldAccessInspection extends BaseInspection {
 
-  private static final Logger LOGGER = Logger.getInstance(AmbiguousFieldAccessInspection.class);
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    final PsiClass fieldClass = (PsiClass)infos[0];
+    final PsiVariable variable = (PsiVariable)infos[1];
+    if (variable instanceof PsiLocalVariable) {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.local.variable.problem.descriptor", fieldClass.getName());
+    }
+    else if (variable instanceof PsiParameter) {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.parameter.problem.descriptor", fieldClass.getName());
+    }
+    else {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.field.problem.descriptor", fieldClass.getName());
+    }
+  }
 
   @Override
   public @NotNull BaseInspectionVisitor buildVisitor() {
@@ -75,17 +70,28 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       if (variable == null || field == variable) {
         return;
       }
-      final PsiElement commonParent = PsiTreeUtil.findCommonParent(variable, containingClass);
-      if (commonParent == null) {
+      if (variable.getContainingFile() != containingClass.getContainingFile()) {
         return;
       }
-      registerError(expression, fieldClass, variable);
+      registerError(expression, fieldClass, variable, isOnTheFly());
     }
   }
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     return new AmbiguousFieldAccessFix();
+  }
+
+  @Override
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    boolean isOnTheFly = (boolean)infos[2];
+    final PsiVariable variable = (PsiVariable)infos[1];
+    if (isOnTheFly) {
+      return new InspectionGadgetsFix[] { new NavigateToApparentlyAccessedElementFix(variable), new AmbiguousFieldAccessFix() };
+    }
+    else {
+      return new InspectionGadgetsFix[] { new AmbiguousFieldAccessFix() };
+    }
   }
 
   private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
@@ -106,60 +112,37 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       final String newExpressionText = "super." + referenceExpression.getText();
       PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
     }
-
   }
 
-  @Override
-  protected @NotNull String buildErrorString(Object... infos) {
-    final PsiClass fieldClass = (PsiClass)infos[0];
-    final PsiVariable variable = (PsiVariable)infos[1];
-    if (variable instanceof PsiLocalVariable) {
-      final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.local.variable.problem.descriptor",
-                                             fieldClass.getName(),
-                                             localVariable.getName());
+  private static class NavigateToApparentlyAccessedElementFix extends InspectionGadgetsFix {
+
+    private final int type;
+
+    NavigateToApparentlyAccessedElementFix(PsiVariable variable) {
+      if (variable instanceof PsiLocalVariable) type = 1;
+      else if (variable instanceof PsiParameter) type = 2;
+      else type = 3;
     }
-    else if (variable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)variable;
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.parameter.problem.descriptor",
-                                             fieldClass.getName(),
-                                             parameter.getName(),
-                                             getMethodName(parameter));
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.navigate.quickfix", type);
     }
-    else if (variable instanceof PsiField) {
-      final PsiField actualField = (PsiField)variable;
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.field.problem.descriptor",
-                                             fieldClass.getName(),
-                                             getFqFieldName(actualField));
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      PsiClass containingClass = ClassUtils.getContainingClass(element);
+      if (containingClass == null) {
+        return;
+      }
+      final PsiElement parent = containingClass.getParent();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+      final String referenceText = element.getText();
+      final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
+      if (variable != null) {
+        variable.navigate(true);
+      }
     }
-    LOGGER.error("Variable of " + variable.getClass() + " is neither PsiLocalVariable, nor PsiParameter, nor PsiField");
-    return "";
-  }
-
-  private static @NotNull String getFqFieldName(@NotNull PsiField field) {
-    final String fieldName = field.getName();
-
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) return fieldName;
-
-    final String classFqName = containingClass.getQualifiedName();
-    if (classFqName == null) return fieldName;
-
-    return Objects.requireNonNullElse(classFqName, "") + "#" + fieldName;
-  }
-
-  private static @NotNull String getMethodName(PsiParameter parameter) {
-    final PsiMethod method = ObjectUtils.tryCast(parameter.getDeclarationScope(), PsiMethod.class);
-    if (method == null) return "";
-
-    final String methodName = method.getName();
-
-    final PsiClass enclosingClass = method.getContainingClass();
-    if (enclosingClass == null) return methodName;
-
-    final String classFqName = enclosingClass.getQualifiedName();
-    if (classFqName == null) return methodName;
-
-    return classFqName + "#" + methodName;
   }
 }
