@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports <code>for</code> loops iterating over a collection using <code>withIndex()</code> function and not using index variable.
-<p>Paired "Remove indices in 'for' loop" quick-fix allows amending highlighted code snippet.</p>
-<p>Examples:</p>
+Reports <code>for</code> loops iterating over a collection using the <code>withIndex()</code> function and not using the index variable.
+<p>Use the "Remove indices in 'for' loop" quick-fix to clean up the code.</p>
+<p><b>Examples:</b></p>
 <pre><code>
   fun foo(bar: List&lt;String&gt;) {
      for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
@@ -18,6 +18,5 @@ Reports <code>for</code> loops iterating over a collection using <code>withIndex
       }
   }
 </code></pre>
-
 </body>
 </html>

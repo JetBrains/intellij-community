@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports unnecessary parentheses of function calls where the only parameter is a lambda that's outside the parentheses.
-<p>Associated 'Remove unnecessary parentheses from function call with lambda' allows amending the code.</p>
-
-<p>Examples:</p>
+Reports redundant empty parentheses of function calls where the only parameter is a lambda that's outside the parentheses.
+<p>Use the 'Remove unnecessary parentheses from function call with lambda' quick-fix to clean up the code.</p>
+<p><b>Examples:</b></p>
 <pre><code>
   fun foo() {
       listOf(1).forEach() {  }
@@ -15,6 +14,5 @@ Reports unnecessary parentheses of function calls where the only parameter is a 
       listOf(1).forEach {  }
   }
 </code></pre>
-
 </body>
 </html>
