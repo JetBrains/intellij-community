@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.xmlb.annotations.*
+import java.util.concurrent.TimeUnit
 
 @Tag("plugin")
 class PluginData @JvmOverloads constructor(
@@ -67,11 +69,16 @@ class PluginDataSet @JvmOverloads constructor(dataSet: Set<PluginData> = setOf()
 }
 
 @Tag("features")
-class PluginFeatureMap @JvmOverloads constructor(featureMap: Map<String, Set<PluginData>> = mapOf()) {
+class PluginFeatureMap @JvmOverloads constructor(featureMap: Map<String, Set<PluginData>> = mapOf()) : ModificationTracker {
 
   @JvmField
   @XMap
   val featureMap = mutableMapOf<String, PluginDataSet>()
+
+  @JvmField
+  var lastUpdateTime: Long = 0L
+
+  private var modificationCount = 0L
 
   init {
     featureMap.entries.forEach { entry ->
@@ -79,5 +86,17 @@ class PluginFeatureMap @JvmOverloads constructor(featureMap: Map<String, Set<Plu
     }
   }
 
+  fun update(featureMap: Map<String, Set<PluginData>>) {
+    for ((id, plugins) in featureMap) {
+      this.featureMap.getOrPut(id) { PluginDataSet() }.dataSet.addAll(plugins)
+    }
+    lastUpdateTime = System.currentTimeMillis()
+    modificationCount++
+  }
+
+  val outdated get() = System.currentTimeMillis() - lastUpdateTime > TimeUnit.DAYS.toMillis(1L)
+
   operator fun get(implementationName: String): Set<PluginData> = featureMap[implementationName]?.dataSet ?: setOf()
+
+  override fun getModificationCount(): Long = modificationCount
 }
