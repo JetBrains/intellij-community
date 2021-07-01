@@ -14,30 +14,78 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.idea.util.numberOfArguments
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
-
-    override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = when (element) {
-        is KtClassOrObject -> element.fqName
-            ?.asString()
-            ?.let(names::tryEnumerate)
-            ?.let(CompilerRef::JavaCompilerClassRef)
-
-        is KtConstructor<*> -> element.getContainingClassOrObject()
-            .fqName
+    override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = null
+    override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? = when (element) {
+        is KtClassOrObject -> element.asCompilerRef(names)?.let(::listOf)
+        is KtConstructor<*> -> element.asCompilerRef(names)?.let(::listOf)
+        is KtCallableDeclaration -> element.takeIf { it.isTopLevelKtOrJavaMember() }
+            ?.fqName
+            ?.let { PackagePartClassUtils.getPackagePartFqName(it.parent(), element.containingFile.name) }
             ?.asString()
             ?.let { qualifier ->
-                CompilerRef.JavaCompilerMethodRef(
-                    names.tryEnumerate(qualifier),
-                    names.tryEnumerate("<init>"),
-                    element.valueParameters.size,
-                )
+                when (element) {
+                    is KtNamedFunction -> element.asCompilerRef(qualifier, names).let(::listOf)
+                    is KtProperty -> element.asCompilerRef(qualifier, names)
+                    else -> null
+                }
             }
 
         else -> null
+    }
+
+    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = fqName?.asString()
+        ?.let(names::tryEnumerate)
+        ?.let(CompilerRef::JavaCompilerClassRef)
+
+    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef? = getContainingClassOrObject().fqName
+        ?.asString()
+        ?.let { qualifier ->
+            CompilerRef.JavaCompilerMethodRef(
+                names.tryEnumerate(qualifier),
+                names.tryEnumerate("<init>"),
+                valueParameters.size,
+            )
+        }
+
+    private fun KtNamedFunction.asCompilerRef(qualifier: String, names: NameEnumerator): CompilerRef = CompilerRef.JavaCompilerMethodRef(
+        names.tryEnumerate(qualifier),
+        names.tryEnumerate(name),
+        numberOfArguments(countReceiver = true),
+    )
+
+    private fun KtProperty.asCompilerRef(qualifier: String, names: NameEnumerator): List<CompilerRef>? = name?.let { propertyName ->
+        if (hasModifier(KtTokens.CONST_KEYWORD)) return@let listOf(
+            CompilerRef.JavaCompilerFieldRef(
+                names.tryEnumerate(qualifier),
+                names.tryEnumerate(propertyName),
+            )
+        )
+
+        val getter = CompilerRef.JavaCompilerMethodRef(
+            names.tryEnumerate(qualifier),
+            names.tryEnumerate(JvmAbi.getterName(propertyName)),
+            numberOfArguments(countReceiver = true),
+        )
+
+        val setter = if (isVar)
+            CompilerRef.JavaCompilerMethodRef(
+                names.tryEnumerate(qualifier),
+                names.tryEnumerate(JvmAbi.setterName(propertyName)),
+                numberOfArguments(countReceiver = true) + 1,
+            )
+        else
+            null
+
+        listOfNotNull(getter, setter)
     }
 
     override fun getHierarchyRestrictedToLibraryScope(

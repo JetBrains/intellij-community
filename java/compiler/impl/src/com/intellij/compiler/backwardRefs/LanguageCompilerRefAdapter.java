@@ -79,6 +79,21 @@ public interface LanguageCompilerRefAdapter {
   CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
 
   /**
+   * @param element PSI element written in corresponding language
+   * @param names enumerator to encode string names
+   * @return
+   */
+  default @Nullable List<@NotNull CompilerRef> asCompilerRefs(@NotNull PsiElement element, @NotNull NameEnumerator names)
+    throws IOException {
+    CompilerRef compilerRef = asCompilerRef(element, names);
+    if (compilerRef == null) {
+      return Collections.emptyList();
+    }
+
+    return Collections.singletonList(compilerRef);
+  }
+
+  /**
    * @return "hierarchy" of given element inside the libraries scope.
    */
   @NotNull

@@ -39,6 +39,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -228,10 +229,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
               constructorOccurrences += myReader.getOccurrenceCount(constructorRef);
             }
           }
-          final Integer anonymousCount = myReader.getAnonymousCount((CompilerRef.CompilerClassHierarchyElementDef)searchElementInfo.searchElements[0], searchElementInfo.place == ElementPlace.SRC);
+          final Integer anonymousCount = myReader.getAnonymousCount(
+            (CompilerRef.CompilerClassHierarchyElementDef)searchElementInfo.searchElements.get(0),
+            searchElementInfo.place == ElementPlace.SRC
+          );
           return anonymousCount == null ? constructorOccurrences : (constructorOccurrences + anonymousCount);
         } else {
-          return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
+          return myReader.getOccurrenceCount(searchElementInfo.searchElements.get(0));
         }
       }
       catch (IOException e) {
@@ -292,7 +296,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     if (!(scope instanceof GlobalSearchScope)) return null;
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
     if (searchElementInfo == null) return null;
-    CompilerRef searchElement = searchElementInfo.searchElements[0];
+    CompilerRef searchElement = searchElementInfo.searchElements.get(0);
 
     if (!myReadDataLock.tryLock()) return null;
     try {
@@ -395,25 +399,21 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       }
       final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file, true);
       if (adapter == null) return null;
-      final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
-      if (ref == null) return null;
+      final List<CompilerRef> refs = adapter.asCompilerRefs(psiElement, myReader.getNameEnumerator());
+      if (refs == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
         return computeInLibraryScope(() -> {
-          final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
-                                                                                          psiElement,
-                                                                                          myReader.getNameEnumerator(),
-                                                                                          ProjectScope.getLibrariesScope(myProject));
-          final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
-          fullHierarchy[0] = ref;
-          int i = 1;
-          for (CompilerRef element : elements) {
-            fullHierarchy[i++] = element;
+          GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
+          List<CompilerRef> resultList = new SmartList<>(refs);
+          for (CompilerRef ref : refs) {
+            resultList.addAll(adapter.getHierarchyRestrictedToLibraryScope(ref, psiElement, myReader.getNameEnumerator(), librariesScope));
           }
-          return new CompilerElementInfo(place, fullHierarchy);
+
+          return new CompilerElementInfo(place, resultList);
         });
       }
       else {
-        return new CompilerElementInfo(place, ref);
+        return new CompilerElementInfo(place, refs);
       }
     }
     catch (IOException e) {
@@ -537,10 +537,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected static final class CompilerElementInfo {
-    public final ElementPlace place;
-    public final CompilerRef[] searchElements;
+    public final @NotNull ElementPlace place;
+    public final @NotNull List<@NotNull CompilerRef> searchElements;
 
-    public CompilerElementInfo(ElementPlace place, CompilerRef... searchElements) {
+    public CompilerElementInfo(@NotNull ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
       this.place = place;
       this.searchElements = searchElements;
     }
