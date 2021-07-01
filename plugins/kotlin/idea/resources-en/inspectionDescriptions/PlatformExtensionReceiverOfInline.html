@@ -10,7 +10,30 @@
     It's recommended to add an explicit <code>!!</code> you want an exception to be thrown,
     or consider changing the function's receiver type to nullable if it should work without exceptions.
 </p>
-<p>After the quick-fix is applied: an explicit <code>!!</code> is added to receiver.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  inline fun String.removePrefix(prefix: String): String {
+      return this.substring(prefix.length)
+  }
+
+  fun main() {
+      // `System.getProperty` returns not denotable `String!` type
+      val property = System.getProperty("user.dir")
+      println(property.removePrefix("/home"))
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  inline fun String.removePrefix(prefix: String): String {
+      return this.substring(prefix.length)
+  }
+
+  fun main() {
+      // `System.getProperty` returns not denotable `String!` type
+      val property = System.getProperty("user.dir")
+      println(property!!.removePrefix("/home"))
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the Kotlin language level of the project or module is lower than 1.2.</p>
 </body>

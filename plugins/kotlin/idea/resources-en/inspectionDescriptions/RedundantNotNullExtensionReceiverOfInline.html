@@ -10,6 +10,30 @@
     Thus functions which do not use the fact that extension receiver is not nullable are dangerous in Kotlin until 1.2 and it's
     recommended to make such functions to have nullable receiver.
 </p>
+<p><b>Example:</b></p>
+<pre><code>
+  inline fun String.greet() {
+      println("Hello, $this!")
+  }
+
+  fun main() {
+      // `System.getProperty` returns not denotable `String!` type
+      val user = System.getProperty("user.name")
+      user.greet()
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  inline fun String.greet() {
+      println("Hello, $this!")
+  }
+
+  fun main() {
+      // `System.getProperty` returns not denotable `String!` type
+      val user = System.getProperty("user.name")
+      user.greet()
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the Kotlin language level of the project or module is lower than 1.2.</p>
 </body>
