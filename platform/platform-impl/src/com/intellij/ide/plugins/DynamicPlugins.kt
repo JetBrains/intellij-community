@@ -201,7 +201,7 @@ object DynamicPlugins {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return InstalledPluginsState.RESTART_REQUIRED_MESSAGE
     }
-    if (classloadersFromUnloadedPlugins.get(descriptor.pluginId)?.isEmpty() == false) {
+    if (classloadersFromUnloadedPlugins[descriptor.pluginId]?.isEmpty() == false) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
     }
     findMissingRequiredDependency(descriptor, context)?.let { pluginDependency ->
@@ -278,7 +278,8 @@ object DynamicPlugins {
     processOptionalDependenciesOnPlugin(descriptor, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
       if (subDescriptor.packagePrefix == null
           || mainDescriptor.pluginId.idString == "org.jetbrains.kotlin" || mainDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
-        dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} does not have a separate classloader for the dependency"
+        dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId}" +
+                            " does not have a separate classloader for the dependency"
         return@processOptionalDependenciesOnPlugin false
       }
 
@@ -305,7 +306,8 @@ object DynamicPlugins {
                                                            context = contextWithImplementationDetails,
                                                            checkImplementationDetailDependencies = false)
           if (dependencyMessage != null) {
-            dependencyMessage = "implementation-detail plugin ${dependentDescriptor.pluginId} which depends on ${descriptor.pluginId} requires restart: $dependencyMessage"
+            dependencyMessage = "implementation-detail plugin ${dependentDescriptor.pluginId} which depends on ${descriptor.pluginId}" +
+                                " requires restart: $dependencyMessage"
           }
         }
         dependencyMessage == null
@@ -540,7 +542,7 @@ object DynamicPlugins {
         classLoaderUnloaded = true
       }
       else {
-        classloadersFromUnloadedPlugins.put(pluginId, classLoaders)
+        classloadersFromUnloadedPlugins[pluginId] = classLoaders
         ClassLoaderTreeChecker(pluginDescriptor, classLoaders).checkThatClassLoaderNotReferencedByPluginClassLoader()
 
         val checkClassLoaderUnload = options.waitForClassloaderUnload ||
@@ -678,8 +680,8 @@ object DynamicPlugins {
     notification.notify(null)
   }
 
-  // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors, each of them depends on presense of another plugin,
-  // here not the whole plugin is unloaded, but only one part.
+  // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors,
+  // each of them depends on presense of another plugin, here not the whole plugin is unloaded, but only one part.
   private fun unloadPluginDescriptorNotRecursively(pluginDescriptor: IdeaPluginDescriptorImpl) {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
@@ -1120,7 +1122,7 @@ private fun processOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDesc
 private fun processOptionalDependenciesInOldFormatOnPlugin(dependencyPluginId: PluginId,
                                                            mainDescriptor: IdeaPluginDescriptorImpl,
                                                            isLoaded: Boolean,
-                                                           processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl) -> Boolean): Boolean {
+                                                           processor: (main: IdeaPluginDescriptorImpl, sub: IdeaPluginDescriptorImpl) -> Boolean): Boolean {
   for (dependency in mainDescriptor.pluginDependencies) {
     if (!dependency.isOptional) {
       continue

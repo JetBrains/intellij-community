@@ -47,7 +47,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -368,7 +367,7 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that current user is "new", i. e. this is the first launch of the IDE on this machine.
+   * Checks that current user is "new", i.e. this is the first launch of the IDE on this machine.
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
@@ -952,26 +951,24 @@ public final class ConfigImportHelper {
   static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
     String nameWithVersion = getNameWithVersion(oldConfigDir);
     Matcher m = Pattern.compile("\\.?[^\\d]+(\\d+\\.\\d+)?").matcher(nameWithVersion);
-    if (!m.matches() || VersionComparatorUtil.compare("2019.1", m.group(1)) < 0) {
-      return;
-    }
-
-    String keymapFileSpec = StoreUtilKt.getDefaultStoragePathSpec(KeymapManagerImpl.class);
-    Path keymapOptionFile = newConfigDir.resolve(OPTIONS_DIRECTORY).resolve(keymapFileSpec);
-    if (Files.exists(keymapOptionFile)) {
-      return;
-    }
-
-    try {
-      Files.createDirectories(keymapOptionFile.getParent());
-      Files.write(keymapOptionFile, ("<application>\n" +
-                                    "  <component name=\"KeymapManager\">\n" +
-                                    "    <active_keymap name=\"Mac OS X\" />\n" +
-                                    "  </component>\n" +
-                                    "</application>").getBytes(StandardCharsets.UTF_8));
-    }
-    catch (IOException e) {
-      log.error("Cannot set keymap", e);
+    if (m.matches() && VersionComparatorUtil.compare("2019.1", m.group(1)) >= 0) {
+      String keymapFileSpec = StoreUtilKt.getDefaultStoragePathSpec(KeymapManagerImpl.class);
+      if (keymapFileSpec != null) {
+        Path keymapOptionFile = newConfigDir.resolve(OPTIONS_DIRECTORY).resolve(keymapFileSpec);
+        if (!Files.exists(keymapOptionFile)) {
+          try {
+            Files.createDirectories(keymapOptionFile.getParent());
+            Files.writeString(keymapOptionFile, ("<application>\n" +
+                                                 "  <component name=\"KeymapManager\">\n" +
+                                                 "    <active_keymap name=\"Mac OS X\" />\n" +
+                                                 "  </component>\n" +
+                                                 "</application>"));
+          }
+          catch (IOException e) {
+            log.error("Cannot set keymap", e);
+          }
+        }
+      }
     }
   }
 

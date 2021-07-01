@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ref;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -19,9 +19,9 @@ public final class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
    * This method doesn't guarantee to succeed, and should not be used in the production code.
-   * In tests, if you can exactly point to objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
+   * In tests, if you can exactly point to the objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
    * which is faster and has more chances to succeed.
-   * <p></p>
+   * <p>
    * Commits / hours of tweaking method code: 13 / 7
    */
   @TestOnly
@@ -43,7 +43,7 @@ public final class GCUtil {
       System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up. Log:\n" + log);
     }
 
-    //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
+    //System.out.println("Done GCing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "StringConcatenationInsideStringBufferAppend"})
@@ -82,12 +82,12 @@ public final class GCUtil {
       list.clear();
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
-      System.err.println("Log: " + log + "freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
+      System.err.println("Log: " + log + "freeMemory() now: " + Runtime.getRuntime().freeMemory() + "; list.size(): " + size);
       System.err.println(ThreadDumper.dumpThreadsToString());
       throw e;
     }
     finally {
-      // do not leave a chance for our created SoftReference's content to lie around until next full GC's
+      // do not leave a chance for our created SoftReference's content to lie around until next full GC
       for (Reference<?> createdReference : list) {
         createdReference.clear();
       }
