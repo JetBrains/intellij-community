@@ -4,4 +4,5 @@ UFile (package = )
         UMethod (name = localPropertyTest)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = sdCardPathLocal)
         UMethod (name = getAnnotatedDelegate)

@@ -77,9 +77,11 @@ UFile (package = ) [public final class A {...]
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var local: <ErrorType> = s] = Undetermined
+                    ULocalVariable (name = local) [var local: <ErrorType> = s]
+                        USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
                 UQualifiedReferenceExpression [local.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    USimpleNameReferenceExpression (identifier = local) [local] = external local()
+                    USimpleNameReferenceExpression (identifier = local) [local] = (var local = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
         UMethod (name = setA) [public final fun setA(value: java.lang.String) : void = UastEmptyExpression]

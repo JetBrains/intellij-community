@@ -13,6 +13,8 @@ UFile (package = )
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = baz)
+                        [!] UnknownKotlinExpression (FUN)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = lambdaInPlaceCall)
             UBlockExpression

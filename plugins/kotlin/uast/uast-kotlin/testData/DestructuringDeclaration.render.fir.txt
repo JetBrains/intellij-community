@@ -1,6 +1,6 @@
 public final class DestructuringDeclarationKt {
     public static final fun foo(data: java.lang.Object) : void {
-
-
+        var var268d41a5: <ErrorType>
+        var var465978a0: <ErrorType>
     }
 }

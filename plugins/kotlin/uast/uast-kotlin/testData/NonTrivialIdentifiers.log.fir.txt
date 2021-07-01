@@ -5,6 +5,8 @@ UFile (package = )
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = p)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
     UClass (name = A)
         UMethod (name = A)

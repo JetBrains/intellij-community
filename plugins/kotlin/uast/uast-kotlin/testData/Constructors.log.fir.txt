@@ -78,6 +78,8 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = a)
                     USimpleNameReferenceExpression (identifier = s)
                 UDeclarationsExpression
+                    ULocalVariable (name = local)
+                        USimpleNameReferenceExpression (identifier = s)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = local)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

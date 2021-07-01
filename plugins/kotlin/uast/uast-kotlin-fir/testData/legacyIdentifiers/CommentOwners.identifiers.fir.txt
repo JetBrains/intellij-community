@@ -29,7 +29,7 @@ Int -> USimpleNameReferenceExpression (identifier = Int)
     funPlainCall -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     funNamedArgumentsCall -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     a -> USimpleNameReferenceExpression (identifier = a)
-    localValueDefinition -> UDeclarationsExpression
+    localValueDefinition -> ULocalVariable (name = localValueDefinition)
 MyBooleanEnum -> UClass (name = MyBooleanEnum)
 TRUE -> UastEmptyExpression
 FALSE -> UastEmptyExpression

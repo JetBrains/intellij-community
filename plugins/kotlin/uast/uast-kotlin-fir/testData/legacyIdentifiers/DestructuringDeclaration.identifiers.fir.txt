@@ -1,12 +1,12 @@
 foo -> UMethod (name = foo)
 data -> UParameter (name = data)
 Any -> USimpleNameReferenceExpression (identifier = Any)
-    a -> UDeclarationsExpression
-    b -> UDeclarationsExpression
+    a -> ULocalVariable (name = a)
+    b -> ULocalVariable (name = b)
     to -> USimpleNameReferenceExpression (identifier = to)
     Suppress -> USimpleNameReferenceExpression (identifier = Suppress)
-    k -> UDeclarationsExpression
-    v -> UDeclarationsExpression
+    k -> ULocalVariable (name = k)
+    v -> ULocalVariable (name = v)
     data -> USimpleNameReferenceExpression (identifier = data)
     as -> USimpleNameReferenceExpression (identifier = as)
     Pair -> USimpleNameReferenceExpression (identifier = Pair)

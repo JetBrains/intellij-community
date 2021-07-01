@@ -14,7 +14,6 @@ import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
-
 private fun createVariableReferenceExpression(variable: UVariable, containingElement: UElement?) =
     object : USimpleNameReferenceExpression {
             override val psi: PsiElement? = null
@@ -57,11 +56,9 @@ private fun createElvisExpressions(
         containingElement: UElement?,
         psiParent: PsiElement): List<UExpression> {
 
-    val declaration = KotlinUDeclarationsExpression(
-        containingElement,
-        ServiceManager.getService(left.project, BaseKotlinUastResolveProviderService::class.java)
-    )
-    val tempVariable = KotlinULocalVariable(UastKotlinPsiVariable.create(left, declaration, psiParent), null, declaration)
+    val service = ServiceManager.getService(left.project, BaseKotlinUastResolveProviderService::class.java)
+    val declaration = KotlinUDeclarationsExpression(containingElement, service)
+    val tempVariable = KotlinULocalVariable(UastKotlinPsiVariable.create(service, left, declaration, psiParent), null, declaration)
     declaration.declarations = listOf(tempVariable)
 
     val ifExpression = object : UIfExpression {

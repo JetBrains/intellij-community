@@ -79,6 +79,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
+        analyseForUast(ktExpression) {
+            return ktExpression.getPsiType(TypeMappingMode.DEFAULT_UAST)
+        }
+    }
+
+    override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
+        // TODO("Not yet implemented")
+        return null
+    }
+
+    override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
+        // TODO("Not yet implemented")
+        return null
+    }
+
     override fun evaluate(uExpression: UExpression): Any? {
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktExpression) {

@@ -200,7 +200,7 @@ internal object KotlinConverter : BaseKotlinConverter {
                 val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
                 declarationsExpression.apply {
                     val tempAssignment = KotlinULocalVariable(
-                        UastKotlinPsiVariable.create(expression, declarationsExpression),
+                        UastKotlinPsiVariable.create(service, expression, declarationsExpression),
                         expression,
                         declarationsExpression
                     )
@@ -210,7 +210,7 @@ internal object KotlinConverter : BaseKotlinConverter {
                                                                                 expression.containingFile)
                         initializer.destructuringDeclarationInitializer = true
                         KotlinULocalVariable(
-                            UastKotlinPsiVariable.create(entry, tempAssignment.javaPsi, declarationsExpression, initializer),
+                            UastKotlinPsiVariable.create(service, entry, tempAssignment.javaPsi, declarationsExpression, initializer),
                             entry,
                             declarationsExpression
                         )
@@ -577,9 +577,10 @@ internal object KotlinConverter : BaseKotlinConverter {
                 psi
             )
         val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
+        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
         val variable =
             KotlinUAnnotatedLocalVariable(
-                UastKotlinPsiVariable.create(psi, parentPsiElement, declarationsExpression),
+                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
                 psi,
                 declarationsExpression
             ) { annotationParent ->

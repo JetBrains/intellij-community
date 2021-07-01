@@ -5,10 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.psi.KtDoubleColonExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
@@ -32,6 +29,12 @@ interface BaseKotlinUastResolveProviderService {
     fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType?
 
     fun getExpressionType(uExpression: UExpression): PsiType?
+
+    fun getType(ktExpression: KtExpression, parent: UElement): PsiType?
+
+    fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType?
+
+    fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType?
 
     fun evaluate(uExpression: UExpression): Any?
 }
