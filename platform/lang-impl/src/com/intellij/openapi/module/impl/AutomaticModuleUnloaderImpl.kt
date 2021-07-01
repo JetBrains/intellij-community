@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.AutomaticModuleUnloader
-import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -71,18 +70,6 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       if (it is ModuleDependencyItem.Exportable.ModuleDependency) {
         processTransitiveDependencies(it.module, storage, explicitlyUnloaded, result)
       }
-    }
-  }
-
-  private fun processTransitiveDependencies(name: String, moduleDescriptions: Map<String, UnloadedModuleDescriptionImpl>,
-                                            explicitlyUnloaded: Set<String>, result: MutableSet<ModuleDescription>) {
-    if (name in explicitlyUnloaded) return
-
-    val module = moduleDescriptions[name]
-    if (module == null || !result.add(module)) return
-
-    module.dependencyModuleNames.forEach {
-      processTransitiveDependencies(it, moduleDescriptions, explicitlyUnloaded, result)
     }
   }
 
