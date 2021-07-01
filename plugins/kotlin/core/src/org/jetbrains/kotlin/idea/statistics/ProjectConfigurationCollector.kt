@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
-import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
@@ -77,7 +76,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 4)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 5)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())
