@@ -4,6 +4,14 @@ UFile (package = )
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = y)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = z)
+                        UQualifiedReferenceExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)

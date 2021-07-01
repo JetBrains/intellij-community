@@ -3,7 +3,14 @@ UFile (package = )
         UMethod (name = properties)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = a)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        UPrefixExpression (operator = -)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = a)
+                                USimpleNameReferenceExpression (identifier = mutableProp)
                 UBinaryExpression (operator = =)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = a)
@@ -26,6 +33,9 @@ UFile (package = )
             UParameter (name = $this$ext)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        UPrefixExpression (operator = -)
+                            USimpleNameReferenceExpression (identifier = mutableProp)
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = mutableProp)
                     ULiteralExpression (value = 1)
@@ -54,6 +64,8 @@ UFile (package = )
             UParameter (name = x)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = result)
+                        USimpleNameReferenceExpression (identifier = privateProp)
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = privateProp)
                     USimpleNameReferenceExpression (identifier = x)

@@ -8,7 +8,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                         UTypeReferenceExpression (name = T) [T]
         UMethod (name = test2) [public static final fun test2() : T {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression []
+                UDeclarationsExpression [var a: <ErrorType> = null]
+                    ULocalVariable (name = a) [var a: <ErrorType> = null]
+                        ULiteralExpression (value = null) [null] : PsiType:Void
                 UReturnExpression [return a as T] : PsiType:Void
                     UBinaryExpressionWithType [a as T] : PsiType:T
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:Object
@@ -39,7 +41,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test2"] : PsiType:Void
                         ULiteralExpression (value = "fail: test2") ["fail: test2"] : PsiType:String
-                UDeclarationsExpression []
+                UDeclarationsExpression [var result3: <ErrorType> = "fail"]
+                    ULocalVariable (name = result3) [var result3: <ErrorType> = "fail"]
+                        ULiteralExpression (value = "fail") ["fail"] : PsiType:String
                 [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)]
                 UIfExpression [if (result3 != "OK") return "fail: test3"] : PsiType:Unit
                     UBinaryExpression (operator = !=) [result3 != "OK"] : PsiType:boolean

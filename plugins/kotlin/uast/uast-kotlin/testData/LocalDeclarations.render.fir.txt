@@ -4,7 +4,7 @@ public final class LocalDeclarationsKt {
             public fun Local() = UastEmptyExpression
         }
         [!] UnknownKotlinExpression (FUN)
-
+        var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)
         [!] UnknownKotlinExpression (FUN)
         return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }

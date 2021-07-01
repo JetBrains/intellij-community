@@ -6,7 +6,9 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                     UClass (name = Local) [public static final class Local {...}]
                         UMethod (name = Local) [public fun Local() = UastEmptyExpression]
                 [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
+                    ULocalVariable (name = baz) [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
+                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
                 [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
                     UBinaryExpression (operator = ==) [[!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

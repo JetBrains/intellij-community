@@ -4,16 +4,26 @@ UFile (package = ) [import java.io.Closeable...]
     UClass (name = AnonymousKt) [public final class AnonymousKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
                 UQualifiedReferenceExpression [runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    USimpleNameReferenceExpression (identifier = runnable) [runnable] = external runnable()
+                    USimpleNameReferenceExpression (identifier = runnable) [runnable] = (var runnable = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var runnable2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = runnable2) [var runnable2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 UQualifiedReferenceExpression [runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = external runnable2()
+                    USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                    ULocalVariable (name = closeableRunnable) [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                UDeclarationsExpression [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                    ULocalVariable (name = runnableIs) [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined

@@ -47,5 +47,11 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression []
-                UDeclarationsExpression []
+                UDeclarationsExpression [var template1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = template1) [var template1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var template2: <ErrorType> = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = template2) [var template2: <ErrorType> = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UPolyadicExpression (operator = +) ["." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
+                            ULiteralExpression (value = ".") ["."] : PsiType:String
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

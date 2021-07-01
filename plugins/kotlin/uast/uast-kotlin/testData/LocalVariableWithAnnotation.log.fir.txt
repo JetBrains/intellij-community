@@ -3,4 +3,7 @@ UFile (package = )
         UMethod (name = foo)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = bar)
+                        UAnnotation (fqName = not-implemented-annotation)
+                        ULiteralExpression (value = "lorem ipsum")
     UClass (name = TestAnnotation)

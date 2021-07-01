@@ -1,6 +1,6 @@
 public final class LocalVariableWithAnnotationKt {
     public static final fun foo() : void {
-
+        @not-implemented-annotation var bar: <ErrorType> = "lorem ipsum"
     }
 }
 

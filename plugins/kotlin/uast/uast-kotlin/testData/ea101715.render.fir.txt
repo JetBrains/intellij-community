@@ -1,6 +1,6 @@
 public final class Ea101715Kt {
     public static final fun a() : void {
-
+        var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }
 

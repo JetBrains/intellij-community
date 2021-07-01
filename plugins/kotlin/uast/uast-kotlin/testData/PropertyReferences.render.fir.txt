@@ -1,14 +1,14 @@
 public final class PropertyReferencesKt {
     public static final fun properties() : void {
-
-
+        var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var x: <ErrorType> = -a.mutableProp
         a.mutableProp = 1
         a.mutableProp += x
         ++a.mutableProp
         a.mutableProp--
     }
     public static final fun ext($this$ext: A) : void {
-
+        var x: <ErrorType> = -mutableProp
         mutableProp = 1
         mutableProp += x
         ++mutableProp
@@ -27,7 +27,7 @@ public final class A {
     public final fun getMutableProp() : int = UastEmptyExpression
     public final fun setMutableProp(value: int) : void = UastEmptyExpression
     public final fun add(x: int) : int {
-
+        var result: <ErrorType> = privateProp
         privateProp = x
         return privateProp
     }
