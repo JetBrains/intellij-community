@@ -3,20 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
-import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -68,7 +61,7 @@ abstract class AbstractKotlinUVariable(givenParent: UElement?) : KotlinAbstractU
 
     override val uAnnotations by lz {
         val sourcePsi = sourcePsi ?: return@lz psi.annotations.map { WrappedUAnnotation(it, this) }
-        val annotations = SmartList<UAnnotation>(KotlinNullabilityUAnnotation(sourcePsi, this))
+        val annotations = SmartList<UAnnotation>(KotlinNullabilityUAnnotation(baseResolveProviderService, sourcePsi, this))
         if (sourcePsi is KtModifierListOwner) {
             sourcePsi.annotationEntries
                 .filter { acceptsAnnotationTarget(it.useSiteTarget?.getAnnotationUseSiteTarget()) }
@@ -224,57 +217,6 @@ class KotlinReceiverUParameter(
             .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER }
             .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) } +
         super.uAnnotations
-    }
-
-}
-
-class KotlinNullabilityUAnnotation(val annotatedElement: PsiElement, override val uastParent: UElement) : UAnnotationEx, UAnchorOwner,
-    DelegatedMultiResolve {
-
-    private fun getTargetType(annotatedElement: PsiElement): KotlinType? {
-        if (annotatedElement is KtTypeReference) {
-            annotatedElement.getType()?.let { return it }
-        }
-        if (annotatedElement is KtCallableDeclaration) {
-            annotatedElement.typeReference?.getType()?.let { return it }
-        }
-        if (annotatedElement is KtProperty) {
-            annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
-            annotatedElement.delegateExpression?.let { it.getType(it.analyze())?.arguments?.firstOrNull()?.type }?.let { return it }
-        }
-        annotatedElement.getParentOfType<KtProperty>(false)?.let {
-            it.typeReference?.getType() ?: it.initializer?.let { it.getType(it.analyze()) }
-        }?.let { return it }
-        return null
-    }
-
-    override val uastAnchor: UIdentifier? = null
-
-    val nullability by lz { getTargetType(annotatedElement)?.nullability() }
-
-    override val attributeValues: List<UNamedExpression>
-        get() = emptyList()
-    override val psi: PsiElement?
-        get() = null
-    override val javaPsi: PsiAnnotation?
-        get() = null
-    override val sourcePsi: PsiElement?
-        get() = null
-    override val qualifiedName: String?
-        get() = when (nullability) {
-            TypeNullability.NOT_NULL -> NotNull::class.qualifiedName
-            TypeNullability.NULLABLE -> Nullable::class.qualifiedName
-            TypeNullability.FLEXIBLE -> null
-            null -> null
-        }
-
-    override fun findAttributeValue(name: String?): UExpression? = null
-
-    override fun findDeclaredAttributeValue(name: String?): UExpression? = null
-
-    override fun resolve(): PsiClass? = qualifiedName?.let {
-        val project = annotatedElement.project
-        JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
     }
 
 }
