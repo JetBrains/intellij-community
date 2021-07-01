@@ -47,7 +47,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
 
   public void setRepositories(@NotNull List<? extends RemoteRepositoryDescription> repos) {
     myRepositories.clear();
-    myRepositories.addAll(repos.isEmpty()? RemoteRepositoryDescription.DEFAULT_REPOSITORIES : repos);
+    myRepositories.addAll(repos.isEmpty() ? RemoteRepositoryDescription.DEFAULT_REPOSITORIES : repos);
   }
 
   @Nullable
@@ -82,75 +82,75 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     return myRepositories.hashCode();
   }
 
-   static class State {
-     @Tag("remote-repository")
-     static class Repo{
-       public String id;
-       public String name;
-       public String url;
+  static class State {
+    @Tag("remote-repository")
+    static class Repo {
+      public String id;
+      public String name;
+      public String url;
 
-       Repo() {
-       }
+      Repo() {
+      }
 
-       Repo(String id, String name, String url) {
-         this.id = id;
-         this.name = name;
-         this.url = url;
-       }
+      Repo(String id, String name, String url) {
+        this.id = id;
+        this.name = name;
+        this.url = url;
+      }
 
-       @Override
-       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-         Repo repo = (Repo)o;
+        Repo repo = (Repo)o;
 
-         if (id != null ? !id.equals(repo.id) : repo.id != null) return false;
-         if (name != null ? !name.equals(repo.name) : repo.name != null) return false;
-         if (url != null ? !url.equals(repo.url) : repo.url != null) return false;
+        if (id != null ? !id.equals(repo.id) : repo.id != null) return false;
+        if (name != null ? !name.equals(repo.name) : repo.name != null) return false;
+        if (url != null ? !url.equals(repo.url) : repo.url != null) return false;
 
-         return true;
-       }
+        return true;
+      }
 
-       @Override
-       public int hashCode() {
-         int result = id != null ? id.hashCode() : 0;
-         result = 31 * result + (name != null ? name.hashCode() : 0);
-         result = 31 * result + (url != null ? url.hashCode() : 0);
-         return result;
-       }
-     }
+      @Override
+      public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (url != null ? url.hashCode() : 0);
+        return result;
+      }
+    }
 
-     @NotNull
-     @Property(surroundWithTag = false)
-     @XCollection
-     public final List<Repo> data = new SmartList<>();
+    @NotNull
+    @Property(surroundWithTag = false)
+    @XCollection
+    public final List<Repo> data = new SmartList<>();
 
-     State() {
-       this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
-     }
+    State() {
+      this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
+    }
 
-     State(List<? extends RemoteRepositoryDescription> repos) {
-       for (RemoteRepositoryDescription repository : repos) {
-         data.add(new Repo(repository.getId(), repository.getName(), repository.getUrl()));
-       }
-     }
+    State(List<? extends RemoteRepositoryDescription> repos) {
+      for (RemoteRepositoryDescription repository : repos) {
+        data.add(new Repo(repository.getId(), repository.getName(), repository.getUrl()));
+      }
+    }
 
-     @Override
-     public boolean equals(Object o) {
-       if (this == o) return true;
-       if (o == null || getClass() != o.getClass()) return false;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
-       State state = (State)o;
+      State state = (State)o;
 
-       if (!data.equals(state.data)) return false;
+      if (!data.equals(state.data)) return false;
 
-       return true;
-     }
+      return true;
+    }
 
-     @Override
-     public int hashCode() {
-       return data.hashCode();
-     }
-   }
+    @Override
+    public int hashCode() {
+      return data.hashCode();
+    }
+  }
 }
