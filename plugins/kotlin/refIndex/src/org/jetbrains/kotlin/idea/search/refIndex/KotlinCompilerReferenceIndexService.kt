@@ -37,6 +37,7 @@ import com.intellij.util.Processor
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
@@ -227,11 +228,11 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val fqName = when (element) {
-            is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
-            is KtConstructor<*> -> element.getContainingClassOrObject().fqName
-            is KtCallableDeclaration -> element.takeIf(KtCallableDeclaration::isTopLevelKtOrJavaMember)?.fqName
-            is PsiMethod -> element.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
+        val fqName = when (val originalElement = element.unwrapped) {
+            is KtClassOrObject, is PsiClass -> originalElement.getKotlinFqName()
+            is KtConstructor<*> -> originalElement.getContainingClassOrObject().fqName
+            is KtCallableDeclaration -> originalElement.takeIf(KtCallableDeclaration::isTopLevelKtOrJavaMember)?.fqName
+            is PsiMethod -> originalElement.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
             else -> null
         } ?: return null
 
