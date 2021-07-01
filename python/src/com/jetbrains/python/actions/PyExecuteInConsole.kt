@@ -25,9 +25,9 @@ object PyExecuteInConsole {
     var existingConsole: RunContentDescriptor? = null
     var isDebug = false
     var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
+    val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return
     if (canUseExistingConsole) {
-      val virtualFile = (editor as? EditorImpl)?.virtualFile
-      if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
+      if (PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
         val (descriptor, listener) = getCustomDescriptor(project, editor)
         existingConsole = descriptor
         newConsoleListener = listener
@@ -51,7 +51,9 @@ object PyExecuteInConsole {
       requestFocus(requestFocusToConsole, editor, consoleView)
     }
     else {
-      startNewConsoleInstance(project, commandText, config, newConsoleListener)
+      if (!PyExecuteConsoleCustomizer.instance.isConsoleStarting(virtualFile, commandText)) {
+        startNewConsoleInstance(project, virtualFile, commandText, config, newConsoleListener)
+      }
     }
   }
 
@@ -70,6 +72,9 @@ object PyExecuteInConsole {
         else {
           return Pair(null, createNewConsoleListener(project, executeCustomizer, virtualFile))
         }
+      }
+      DescriptorType.STARTING -> {
+        return Pair(null, null)
       }
       else -> {
         throw IllegalStateException("Custom descriptor for ${virtualFile} is null")
@@ -119,6 +124,7 @@ object PyExecuteInConsole {
   }
 
   private fun startNewConsoleInstance(project: Project,
+                                      virtualFile: VirtualFile,
                                       runFileText: String?,
                                       config: PythonRunConfiguration?,
                                       listener: PydevConsoleRunner.ConsoleListener?) {
@@ -139,6 +145,7 @@ object PyExecuteInConsole {
     if (listener != null) {
       runner.addConsoleListener(listener)
     }
+    PyExecuteConsoleCustomizer.instance.notifyRunnerStart(virtualFile, runner)
     runner.run(false)
   }
 
