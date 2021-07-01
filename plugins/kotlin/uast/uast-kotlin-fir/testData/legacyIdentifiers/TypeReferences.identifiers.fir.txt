@@ -2,10 +2,10 @@ foo -> UMethod (name = foo)
 parameter -> UParameter (name = parameter)
 Int -> USimpleNameReferenceExpression (identifier = Int)
 String -> USimpleNameReferenceExpression (identifier = String)
-    varWithType -> [!] UnknownKotlinExpression (PROPERTY)
+    varWithType -> UDeclarationsExpression
     String -> USimpleNameReferenceExpression (identifier = String)
-    varWithoutType -> [!] UnknownKotlinExpression (PROPERTY)
-    result -> [!] UnknownKotlinExpression (PROPERTY)
+    varWithoutType -> UDeclarationsExpression
+    result -> UDeclarationsExpression
     varWithType -> USimpleNameReferenceExpression (identifier = varWithType)
     + -> USimpleNameReferenceExpression (identifier = +)
     varWithoutType -> USimpleNameReferenceExpression (identifier = varWithoutType)
@@ -18,31 +18,31 @@ T -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
 parameterizedFoo -> UMethod (name = parameterizedFoo)
 arg -> UParameter (name = arg)
 T -> USimpleNameReferenceExpression (identifier = T)
-    a -> [!] UnknownKotlinExpression (PROPERTY)
+    a -> UDeclarationsExpression
     arg -> USimpleNameReferenceExpression (identifier = arg)
-    at -> [!] UnknownKotlinExpression (PROPERTY)
+    at -> UDeclarationsExpression
     T -> USimpleNameReferenceExpression (identifier = T)
     arg -> USimpleNameReferenceExpression (identifier = arg)
     ?: -> USimpleNameReferenceExpression (identifier = ?:)
-    tl -> [!] UnknownKotlinExpression (PROPERTY)
+    tl -> UDeclarationsExpression
     List -> USimpleNameReferenceExpression (identifier = List)
     T -> USimpleNameReferenceExpression (identifier = T)
     listOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     at -> USimpleNameReferenceExpression (identifier = at)
-    tsl -> [!] UnknownKotlinExpression (PROPERTY)
+    tsl -> UDeclarationsExpression
     List -> USimpleNameReferenceExpression (identifier = List)
     String -> USimpleNameReferenceExpression (identifier = String)
     tl -> USimpleNameReferenceExpression (identifier = tl)
     map -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
         it -> USimpleNameReferenceExpression (identifier = it)
         toString -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    lls -> [!] UnknownKotlinExpression (PROPERTY)
+    lls -> UDeclarationsExpression
     List -> USimpleNameReferenceExpression (identifier = List)
     List -> USimpleNameReferenceExpression (identifier = List)
     String -> USimpleNameReferenceExpression (identifier = String)
-    llsAliased -> [!] UnknownKotlinExpression (PROPERTY)
+    llsAliased -> UDeclarationsExpression
     ListOfLists -> USimpleNameReferenceExpression (identifier = ListOfLists)
-    llt -> [!] UnknownKotlinExpression (PROPERTY)
+    llt -> UDeclarationsExpression
     List -> USimpleNameReferenceExpression (identifier = List)
     List -> USimpleNameReferenceExpression (identifier = List)
     T -> USimpleNameReferenceExpression (identifier = T)

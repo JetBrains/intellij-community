@@ -77,7 +77,7 @@ UFile (package = ) [public final class A {...]
                 UBinaryExpression (operator = =) [a = s] : PsiType:void
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 UQualifiedReferenceExpression [local.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                     USimpleNameReferenceExpression (identifier = local) [local] : PsiType:String
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

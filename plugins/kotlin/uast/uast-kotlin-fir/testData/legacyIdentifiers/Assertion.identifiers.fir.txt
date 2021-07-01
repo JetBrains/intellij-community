@@ -1,6 +1,6 @@
 foo -> UMethod (name = foo)
 String -> USimpleNameReferenceExpression (identifier = String)
-    s -> [!] UnknownKotlinExpression (PROPERTY)
+    s -> UDeclarationsExpression
     String -> USimpleNameReferenceExpression (identifier = String)
     s -> USimpleNameReferenceExpression (identifier = s)
     !! -> USimpleNameReferenceExpression (identifier = !!)

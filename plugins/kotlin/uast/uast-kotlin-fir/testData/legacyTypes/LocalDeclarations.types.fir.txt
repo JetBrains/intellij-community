@@ -2,9 +2,11 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
     UClass (name = LocalDeclarationsKt) [public final class LocalDeclarationsKt {...}]
         UMethod (name = foo) [public static final fun foo() : boolean {...}]
             UBlockExpression [{...}] : PsiType:Void
-                [!] UnknownKotlinExpression (CLASS) [[!] UnknownKotlinExpression (CLASS)]
+                UDeclarationsExpression [public static final class Local {...}]
+                    UClass (name = Local) [public static final class Local {...}]
+                        UMethod (name = Local) [public fun Local() = UastEmptyExpression]
                 [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)]
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Void
                     UBinaryExpression (operator = ==) [[!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:boolean

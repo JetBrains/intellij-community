@@ -2,14 +2,14 @@ UFile (package = )
     UClass (name = BitwiseKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
                 UReturnExpression
                     UBinaryExpression (operator = -)
                         UBinaryExpression (operator = +)
@@ -22,14 +22,14 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = one)
         UMethod (name = bar)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
                 UReturnExpression
                     UBinaryExpression (operator = -)
                         UBinaryExpression (operator = +)

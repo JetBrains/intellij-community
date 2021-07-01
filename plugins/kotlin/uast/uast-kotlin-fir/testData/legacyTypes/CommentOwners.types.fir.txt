@@ -30,7 +30,7 @@ UFile (package = ) [public final class CommentOwnersKt {...]
                     ULiteralExpression (value = true) [true] : PsiType:boolean
                     UBlockExpression [{...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
     UClass (name = TopLevelClass) [public final class TopLevelClass {...}]
         UField (name = classLevelProperty) [private final var classLevelProperty: int = 42]
             ULiteralExpression (value = 42) [42] : PsiType:int

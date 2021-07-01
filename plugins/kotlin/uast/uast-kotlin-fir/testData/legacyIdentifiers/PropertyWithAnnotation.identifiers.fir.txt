@@ -4,12 +4,12 @@ prop1 -> UField (name = prop1)
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> null
 TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
-prop2 -> [!] UnknownKotlinExpression (PROPERTY)
+prop2 -> null
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
 set -> null
 TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
-prop3 -> [!] UnknownKotlinExpression (PROPERTY)
+prop3 -> null
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
 set -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)

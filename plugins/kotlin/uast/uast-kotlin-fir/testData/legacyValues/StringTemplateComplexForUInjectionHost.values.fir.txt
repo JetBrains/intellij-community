@@ -47,5 +47,5 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [] = Undetermined

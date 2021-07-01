@@ -4,16 +4,16 @@ UFile (package = )
     UClass (name = AnonymousKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable2)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression
         UMethod (name = withErr)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression

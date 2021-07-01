@@ -20,7 +20,7 @@ UFile (package = )
                 UQualifiedReferenceExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     USimpleNameReferenceExpression (identifier = indices)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UBinaryExpression (operator = =)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = date)
@@ -36,7 +36,7 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = entries)
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = intRange)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

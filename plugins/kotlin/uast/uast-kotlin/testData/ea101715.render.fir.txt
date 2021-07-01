@@ -1,6 +1,6 @@
 public final class Ea101715Kt {
     public static final fun a() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+
     }
 }
 
