@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -16,8 +16,7 @@ public enum LoadingState {
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),
   APP_STARTED("app started"),
-  PROJECT_OPENED("project opened"),
-  INDEXING_FINISHED("indexing finished");
+  PROJECT_OPENED("project opened");
 
   final String displayName;
 

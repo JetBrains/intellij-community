@@ -2,8 +2,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -352,8 +350,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
-
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.PROJECT_OPENED, LoadingState.INDEXING_FINISHED);
 
     myDumbEnterTrace = null;
     myDumbStart = null;

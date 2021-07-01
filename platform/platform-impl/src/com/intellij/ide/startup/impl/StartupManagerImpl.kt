@@ -155,8 +155,10 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
 
     indicator?.checkCanceled()
-    val phase = if (DumbService.isDumb(project)) LoadingState.PROJECT_OPENED else LoadingState.INDEXING_FINISHED
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase)
+
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)  // opened on startup
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)        // opened from the welcome screen
+
     if (app.isUnitTestMode && !app.isDispatchThread) {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
     }
