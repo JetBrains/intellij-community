@@ -273,14 +273,16 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     initValidation();
   }
 
-  private void initializeFilterPanel() {
+  private void initializeFilterPanel(@Nullable CompiledPattern compiledPattern) {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
-    if (compiledPattern == null) return;
+    final CompiledPattern finalCompiledPattern = compiledPattern == null
+                                                 ? PatternCompiler.compilePattern(getProject(), matchOptions, false, false)
+                                                 : compiledPattern;
+    if (finalCompiledPattern == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
       if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
-      myFilterPanel.setCompiledPattern(compiledPattern);
+      myFilterPanel.setCompiledPattern(finalCompiledPattern);
       if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
@@ -1017,7 +1019,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       }
 
-      initializeFilterPanel();
+      initializeFilterPanel(compiledPattern);
       if (compiledPattern != null) {
         addMatchHighlights();
       }
