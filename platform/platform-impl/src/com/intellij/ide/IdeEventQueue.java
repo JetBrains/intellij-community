@@ -128,6 +128,13 @@ public final class IdeEventQueue extends EventQueue {
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
 
+  /**
+   * Executes given {@code runnable} after all focus activities are finished.
+   *
+   * @apiNote be careful with this method. It may run {@code runnable} synchronously in the context of the current thread, or may queue
+   * runnable until the focus events queue is empty. In the latter case runnable is going to be run while processing the last focus
+   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer {@link IdeFocusManager#doWhenFocusSettlesDown(Runnable, ModalityState)}
+   */
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
       List<Runnable> runnables = myRunnablesWaitingFocusChange.get(e);
