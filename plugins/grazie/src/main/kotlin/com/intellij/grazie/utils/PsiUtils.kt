@@ -83,6 +83,14 @@ fun IntRange.isAtEnd(element: PsiElement, skipWhitespace: Boolean = true): Boole
  * Get all siblings of [element] that are accepted by [checkSibling]
  * which are separated by whitespace containing at most one line break
  */
+fun getNotSoDistantSimilarSiblings(element: PsiElement, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+  return getNotSoDistantSimilarSiblings(element, TokenSet.EMPTY, checkSibling)
+}
+
+/**
+ * Get all siblings of [element] that are accepted by [checkSibling]
+ * which are separated by whitespace ([PsiWhiteSpace] or anything in [whitespaceTokens]) containing at most one line break
+ */
 fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenSet, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
   require(checkSibling(element))
   fun PsiElement.process(next: Boolean): List<PsiElement> {
@@ -95,7 +103,7 @@ fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenS
       if (checkSibling(sibling)) {
         newLinesBetweenSiblingsCount = 0
         result.add(sibling)
-      } else if (sibling.elementType in whitespaceTokens) {
+      } else if (sibling is PsiWhiteSpace || sibling.elementType in whitespaceTokens) {
         newLinesBetweenSiblingsCount += sibling.text.count { char -> char == '\n' }
         if (newLinesBetweenSiblingsCount > 1) break
       } else break
