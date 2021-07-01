@@ -131,6 +131,8 @@ class PythonOnboardingTour :
 
     completionSteps()
 
+    waitBeforeContinue(500)
+
     contextActions()
 
     waitBeforeContinue(500)
@@ -409,13 +411,7 @@ class PythonOnboardingTour :
     }
     task {
       text(PythonLessonsBundle.message("python.onboarding.type.division", code(" / l")))
-      var wasEmpty = false
-      proposeRestore {
-        checkExpectedStateOfEditor(previous.sample) {
-          if (it.isEmpty()) wasEmpty = true
-          wasEmpty && "/len".contains(it.replace(" ", ""))
-        }
-      }
+      proposeRestoreForInvalidText("/len")
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
         it.toString().contains("string=len;")
       }
@@ -430,32 +426,33 @@ class PythonOnboardingTour :
       restoreByUi()
     }
 
-    lateinit var completionTask: TaskContext.TaskId
-    task("CodeCompletion") {
+    task {
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
                                        code("values"),
-                                       code("()"),
-                                       action(it)))
-      trigger(it)
-      restoreIfModifiedOrMoved()
-      completionTask = taskId
-    }
-
-    task {
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains("values")
+                                       code("()")))
+      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
+        it.toString().contains("values")
       }
-      restoreIfModifiedOrMoved()
-      restoreByTimer() // completion may be invoked in the another place, for example...
+      proposeRestoreForInvalidText("values")
     }
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
-                                       strong("val"), code("values"), action("EditorChooseLookupItem")))
+                                       code("values"), action("EditorChooseLookupItem")))
       stateCheck {
         checkEditorModification(completionPosition, "/len(values)")
       }
-      restoreByUi(restoreId = completionTask)
+      restoreByUi()
+    }
+  }
+
+  private fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
+    var wasEmpty = false
+    proposeRestore {
+      checkExpectedStateOfEditor(previous.sample) {
+        if (it.isEmpty()) wasEmpty = true
+        wasEmpty && needToType.contains(it.replace(" ", ""))
+      }
     }
   }
 
