@@ -49,9 +49,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "primitive.fields.ignore.option"),
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
       this, "m_ignorePrimitives");
   }
 
@@ -94,7 +92,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
         final PsiMethod[] methods = aClass.getMethods();
         for (PsiMethod method : methods) {
-          if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+          if (!method.hasModifierProperty(PsiModifier.STATIC) || !method.isPhysical() /* EA-263167 */) {
             continue;
           }
           final PsiCodeBlock body = method.getBody();
@@ -102,7 +100,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
         }
         final PsiExpression[] moreBadReads = uninitializedReadCollector.getUninitializedReads();
         for (PsiExpression badRead : moreBadReads) {
-          if (badRead.isPhysical()) registerError(badRead); // EA-263167
+          registerError(badRead);
         }
       }
     }
