@@ -85,7 +85,13 @@ void setPrincipal(id tbobj, const char * uid) {
 
 __used
 void releaseTouchBar(id tbobj) {
-    [tbobj release];
+      if ([NSThread isMainThread]) {
+          [tbobj release];
+      } else {
+          dispatch_async(dispatch_get_main_queue(), ^{
+              [tbobj release];
+          });
+      }
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
