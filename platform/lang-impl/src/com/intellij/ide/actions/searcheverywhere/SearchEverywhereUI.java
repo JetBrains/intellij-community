@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
@@ -1001,9 +1002,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
       ReadAction.run(() -> foundElements.stream()
-        .filter(o -> o instanceof PsiElement)
-        .forEach(o -> {
-          PsiElement element = (PsiElement)o;
+        .map(o -> toPsi(o))
+        .filter(Objects::nonNull)
+        .forEach(element -> {
           if (element.getTextRange() != null) {
             UsageInfo usageInfo = new UsageInfo(element);
             usages.add(new UsageInfo2UsageAdapter(usageInfo));
@@ -1012,6 +1013,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             targets.add(element);
           }
         }));
+    }
+
+    private PsiElement toPsi(Object o) {
+      if (o instanceof PsiElement) return (PsiElement)o;
+      if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
+
+      return null;
     }
 
     private void showInFindWindow(Collection<? extends PsiElement> targets, Collection<Usage> usages, UsageViewPresentation presentation) {
