@@ -12,7 +12,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -25,17 +24,15 @@ public final class StartupActionScriptManager {
   @ApiStatus.Internal
   public static synchronized void executeActionScript() throws IOException {
     Path scriptFile = getActionScriptFile();
-    List<ActionCommand> commands = null;
-    try {
-      commands = loadActionScript(scriptFile);
-      for (ActionCommand command : commands) {
-        command.execute();
+    if (Files.isRegularFile(scriptFile)) {
+      try {
+        List<ActionCommand> commands = loadActionScript(scriptFile);
+        for (ActionCommand command : commands) {
+          command.execute();
+        }
       }
-    }
-    finally {
-      // deleting a file should not cause an exception
-      if (commands == null /* error occurred on load */ || !commands.isEmpty() /* not empty list means that there is some data */) {
-        Files.deleteIfExists(scriptFile);
+      finally {
+        Files.deleteIfExists(scriptFile);  // deleting a file should not cause an exception
       }
     }
   }
@@ -63,19 +60,24 @@ public final class StartupActionScriptManager {
       }
     }
     else {
+      List<ActionCommand> script = new ArrayList<>(), originalScript = null;
       Path scriptFile = getActionScriptFile();
-      List<ActionCommand> savedScript = loadActionScript(scriptFile);
-      List<ActionCommand> script = new ArrayList<>(savedScript.size() + commands.size());
-      script.addAll(savedScript);
+      if (Files.exists(scriptFile)) {
+        originalScript = loadActionScript(scriptFile);
+        script.addAll(originalScript);
+      }
       script.addAll(commands);
+
       try {
         saveActionScript(script, scriptFile);
       }
       catch (Throwable t) {
-        try {
-          saveActionScript(savedScript, scriptFile);
+        if (originalScript != null) {
+          try {
+            saveActionScript(originalScript, scriptFile);
+          }
+          catch (Throwable tt) { t.addSuppressed(tt); }
         }
-        catch (Throwable tt) { t.addSuppressed(tt); }
         throw t;
       }
     }
@@ -87,25 +89,17 @@ public final class StartupActionScriptManager {
 
   @ApiStatus.Internal
   public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
-    try (InputStream inputStream = Files.newInputStream(scriptFile)) {
-      // don't load ObjectInputStream if file doesn't exist
-      Object data;
-      try (ObjectInputStream stream = new ObjectInputStream(inputStream)) {
-        data = stream.readObject();
-      }
-
+    try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
+      Object data = ois.readObject();
       if (data instanceof ActionCommand[]) {
         return Arrays.asList((ActionCommand[])data);
       }
-      else if (data instanceof List && ((List<?>)data).isEmpty()) {
-        return Collections.emptyList();
-      }
       else {
-        throw new IOException("An unexpected object: " + data + "/" + data.getClass());
+        throw new IOException("An unexpected object: " + data + "/" + data.getClass() + " in " + scriptFile);
       }
     }
     catch (NoSuchFileException | AccessDeniedException e) {
-      return Collections.emptyList();
+      return List.of();
     }
     catch (ReflectiveOperationException e) {
       throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);

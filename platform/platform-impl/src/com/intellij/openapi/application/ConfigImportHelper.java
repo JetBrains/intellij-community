@@ -12,13 +12,13 @@ import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -495,7 +495,7 @@ public final class ConfigImportHelper {
       exact = false;
     }
     else {
-      return new ConfigDirsSearchResult(Collections.emptyList(), true);
+      return new ConfigDirsSearchResult(List.of(), true);
     }
 
     List<Pair<Path, FileTime>> lastModified = new ArrayList<>();
@@ -749,7 +749,7 @@ public final class ConfigImportHelper {
     // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
     FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
 
-    List<StartupActionScriptManager.ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
+    List<ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
 
     // copy plugins, unless new plugin directory is not empty (the plugin manager will sort out incompatible ones)
     if (!options.importPlugins) {
@@ -771,33 +771,33 @@ public final class ConfigImportHelper {
 
     // apply stale plugin updates
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
+
     updateVMOptions(newConfigDir, log);
   }
 
-  private static @NotNull List<StartupActionScriptManager.ActionCommand> loadStartupActionScript(Path oldConfigDir,
-                                                                                                 @Nullable Path oldIdeHome,
-                                                                                                 Path oldPluginsDir) throws IOException {
-    if (!Files.isDirectory(oldPluginsDir)) {
-      return Collections.emptyList();
-    }
-
-    Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
-    if (!Files.isDirectory(oldSystemDir)) {
-      oldSystemDir = null;
-      if (oldIdeHome != null) {
-        oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, ConfigImportHelper::defaultSystemPath);
+  private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
+    if (Files.isDirectory(oldPluginsDir)) {
+      Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
+      if (!Files.isDirectory(oldSystemDir)) {
+        oldSystemDir = null;
+        if (oldIdeHome != null) {
+          oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, ConfigImportHelper::defaultSystemPath);
+        }
+        if (oldSystemDir == null) {
+          oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
+        }
       }
-      if (oldSystemDir == null) {
-        oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
+      Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+      if (Files.isRegularFile(script)) {
+        return StartupActionScriptManager.loadActionScript(script);
       }
     }
-    Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
-    return StartupActionScriptManager.loadActionScript(script);
+    return List.of();
   }
 
   private static void migratePlugins(Path oldPluginsDir,
                                      Path newPluginsDir,
-                                     List<? extends StartupActionScriptManager.ActionCommand> actionCommands,
+                                     List<ActionCommand> actionCommands,
                                      ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     try {
@@ -831,6 +831,7 @@ public final class ConfigImportHelper {
             dialog.setVisible(true);
           });
         }
+
         // Migrate plugins for which we couldn't download updates
         migratePlugins(newPluginsDir, incompatiblePlugins, pendingUpdates, log);
       }
@@ -841,10 +842,11 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static List<PluginId> collectPendingPluginUpdates(List<? extends StartupActionScriptManager.ActionCommand> commands,
-                                                            ConfigImportOptions options) {
+  private static List<PluginId> collectPendingPluginUpdates(List<ActionCommand> commands, ConfigImportOptions options) {
+    if (commands.isEmpty()) return List.of();
+
     List<PluginId> result = new ArrayList<>();
-    for (StartupActionScriptManager.ActionCommand command : commands) {
+    for (ActionCommand command : commands) {
       String source;
       if (command instanceof StartupActionScriptManager.CopyCommand) {
         source = ((StartupActionScriptManager.CopyCommand)command).getSource();
@@ -855,7 +857,6 @@ public final class ConfigImportHelper {
       else {
         continue;
       }
-
       try {
         IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(Paths.get(source), null);
         if (descriptor != null) {
