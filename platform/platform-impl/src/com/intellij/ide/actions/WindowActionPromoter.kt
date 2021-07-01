@@ -17,7 +17,7 @@ class WindowActionPromoter: ActionPromoter {
     val window = UIUtil.getWindow(context.getData(PlatformDataKeys.CONTEXT_COMPONENT))
     if (window != null && window !is JFrame
         && !JBPopupFactory.getInstance().isPopupActive
-        && actions.filterIsInstance<WindowAction>().isNotEmpty()) {
+        && actions.any { it is WindowAction }) {
       return ArrayList(actions.sortedWith(Comparator { a1, a2 -> a1.score().compareTo(a2.score()) })
                          .filter { it is WindowAction || it is EditorAction || it is ExpandableActions})
     }
