@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -711,7 +712,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return Collections.<DataProvider>singletonList(realDataId -> getSlowData(realDataId));
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiFile getSlowData(@NonNls String d) {
+    if (CommonDataKeys.NAVIGATABLE.is(d)) {
       String fqn = null;
       if (myPsiTree.hasFocus()) {
         final TreePath path = myPsiTree.getSelectionPath();
