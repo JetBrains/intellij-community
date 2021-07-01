@@ -2,8 +2,15 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] : PsiType:int
-                UDeclarationsExpression []
-                UDeclarationsExpression []
+                UDeclarationsExpression [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = a) [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var x: <ErrorType> = -a.mutableProp]
+                    ULocalVariable (name = x) [var x: <ErrorType> = -a.mutableProp]
+                        UPrefixExpression (operator = -) [-a.mutableProp] : PsiType:int
+                            UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
+                                USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
+                                USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                 UBinaryExpression (operator = =) [a.mutableProp = 1] : PsiType:void
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:void
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
@@ -25,7 +32,10 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = ext) [public static final fun ext($this$ext: A) : void {...}]
             UParameter (name = $this$ext) [var $this$ext: A]
             UBlockExpression [{...}] : PsiType:int
-                UDeclarationsExpression []
+                UDeclarationsExpression [var x: <ErrorType> = -mutableProp]
+                    ULocalVariable (name = x) [var x: <ErrorType> = -mutableProp]
+                        UPrefixExpression (operator = -) [-mutableProp] : PsiType:int
+                            USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                 UBinaryExpression (operator = =) [mutableProp = 1] : PsiType:void
                     USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     ULiteralExpression (value = 1) [1] : PsiType:int
@@ -53,7 +63,9 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
         UMethod (name = add) [public final fun add(x: int) : int {...}]
             UParameter (name = x) [var x: int]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression []
+                UDeclarationsExpression [var result: <ErrorType> = privateProp]
+                    ULocalVariable (name = result) [var result: <ErrorType> = privateProp]
+                        USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
                 UBinaryExpression (operator = =) [privateProp = x] : PsiType:void
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int

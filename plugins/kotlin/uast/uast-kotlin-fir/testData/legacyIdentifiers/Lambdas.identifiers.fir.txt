@@ -13,7 +13,7 @@ doSelectItem -> UMethod (name = doSelectItem)
 selectItemFunction -> UParameter (name = selectItemFunction)
 Unit -> USimpleNameReferenceExpression (identifier = Unit)
     selectItemFunction -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-    baz -> UDeclarationsExpression
+    baz -> ULocalVariable (name = baz)
         Local -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     baz -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
 lambdaInPlaceCall -> UMethod (name = lambdaInPlaceCall)

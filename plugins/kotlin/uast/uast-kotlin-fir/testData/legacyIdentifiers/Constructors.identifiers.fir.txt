@@ -64,7 +64,7 @@ String -> USimpleNameReferenceExpression (identifier = String)
     a -> USimpleNameReferenceExpression (identifier = a)
     = -> USimpleNameReferenceExpression (identifier = =)
     s -> USimpleNameReferenceExpression (identifier = s)
-    local -> UDeclarationsExpression
+    local -> ULocalVariable (name = local)
     String -> USimpleNameReferenceExpression (identifier = String)
     s -> USimpleNameReferenceExpression (identifier = s)
     local -> USimpleNameReferenceExpression (identifier = local)

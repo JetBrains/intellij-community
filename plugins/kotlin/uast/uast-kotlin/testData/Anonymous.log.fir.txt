@@ -5,15 +5,25 @@ UFile (package = )
         UMethod (name = foo)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = runnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = runnable2)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable2)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = closeableRunnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
                 UDeclarationsExpression
+                    ULocalVariable (name = runnableIs)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
         UMethod (name = withErr)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = runnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)

@@ -48,4 +48,10 @@ UFile (package = )
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = template1)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = template2)
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = ".")
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)

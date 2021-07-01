@@ -20,7 +20,13 @@ UFile (package = ) [public final class ResolveKt {...]
                 UQualifiedReferenceExpression [[!] UnknownKotlinExpression (CALL_EXPRESSION).indices] : PsiType:IntRange
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     USimpleNameReferenceExpression (identifier = indices) [indices] : PsiType:IntRange
-                UDeclarationsExpression []
+                UDeclarationsExpression [var date: <ErrorType> = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = date) [var date: <ErrorType> = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UQualifiedReferenceExpression [java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Date
+                            UQualifiedReferenceExpression [java.util] : PsiType:Unit
+                                USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
+                                USimpleNameReferenceExpression (identifier = util) [util] : PsiType:Unit
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 UBinaryExpression (operator = =) [date.time = 1000] : PsiType:void
                     UQualifiedReferenceExpression [date.time] : PsiType:void
                         USimpleNameReferenceExpression (identifier = date) [date] : PsiType:Date
@@ -36,7 +42,11 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = entries) [entries] : PsiType:Set<Entry<Integer, String>>
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression []
+                UDeclarationsExpression [var intRange: <ErrorType> = 0 .. 3]
+                    ULocalVariable (name = intRange) [var intRange: <ErrorType> = 0 .. 3]
+                        UBinaryExpression (operator = ..) [0 .. 3] : PsiType:LongRange
+                            ULiteralExpression (value = 0) [0] : PsiType:long
+                            ULiteralExpression (value = 3) [3] : PsiType:long
                 UQualifiedReferenceExpression [intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:boolean
                     USimpleNameReferenceExpression (identifier = intRange) [intRange] : PsiType:LongRange
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

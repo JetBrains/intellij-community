@@ -7,6 +7,7 @@ package org.jetbrains.uast.kotlin.declarations
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
@@ -146,6 +147,48 @@ class FirKotlinUField(
     }
 }
 
-// TODO: FirKotlinU(Annotated)LocalVariable
+open class FirKotlinULocalVariable(
+    psi: PsiLocalVariable,
+    override val sourcePsi: KtElement?,
+    givenParent: UElement?
+) : AbstractFirKotlinUVariable(givenParent), ULocalVariableEx, PsiLocalVariable by psi {
+    override val javaPsi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
+
+    override val psi = javaPsi
+
+    override fun getInitializer(): PsiExpression? {
+        return super<AbstractFirKotlinUVariable>.getInitializer()
+    }
+
+    override fun getOriginalElement(): PsiElement? {
+        return super<AbstractFirKotlinUVariable>.getOriginalElement()
+    }
+
+    override fun getNameIdentifier(): PsiIdentifier {
+        return super.getNameIdentifier()
+    }
+
+    override fun getContainingFile(): PsiFile {
+        return super.getContainingFile()
+    }
+
+    override fun accept(visitor: UastVisitor) {
+        if (visitor.visitLocalVariable(this)) return
+        uAnnotations.acceptList(visitor)
+        uastInitializer?.accept(visitor)
+        // TODO: delegateExpression
+        visitor.afterVisitLocalVariable(this)
+    }
+}
+
+class FirKotlinUAnnotatedLocalVariable(
+    psi: PsiLocalVariable,
+    sourcePsi: KtElement,
+    uastParent: UElement?,
+    computeAnnotations: (parent: UElement) -> List<UAnnotation>
+) : FirKotlinULocalVariable(psi, sourcePsi, uastParent) {
+
+    override val uAnnotations: List<UAnnotation> by lz { computeAnnotations(this) }
+}
 
 // TODO: FirKotlinUEnumConstant

@@ -4,18 +4,39 @@ UFile (package = )
             UParameter (name = parameter)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = varWithType)
+                        ULiteralExpression (value = "Not Null")
                 UDeclarationsExpression
+                    ULocalVariable (name = varWithoutType)
+                        ULiteralExpression (value = "lorem ipsum")
                 UDeclarationsExpression
+                    ULocalVariable (name = result)
+                        UBinaryExpression (operator = +)
+                            USimpleNameReferenceExpression (identifier = varWithType)
+                            USimpleNameReferenceExpression (identifier = varWithoutType)
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = result)
         UMethod (name = parameterizedFoo)
             UParameter (name = arg)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = a)
+                        USimpleNameReferenceExpression (identifier = arg)
                 UDeclarationsExpression
+                    ULocalVariable (name = at)
+                        [!] UnknownKotlinExpression (BINARY_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = tl)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = tsl)
+                        UQualifiedReferenceExpression
+                            USimpleNameReferenceExpression (identifier = tl)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
+                    ULocalVariable (name = lls)
                 UDeclarationsExpression
+                    ULocalVariable (name = llsAliased)
                 UDeclarationsExpression
+                    ULocalVariable (name = llt)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)

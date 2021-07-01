@@ -4,4 +4,6 @@ UFile (package = )
             UParameter (name = string)
             UBlockExpression
                 UDeclarationsExpression
+                    ULocalVariable (name = arr)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (WHEN)

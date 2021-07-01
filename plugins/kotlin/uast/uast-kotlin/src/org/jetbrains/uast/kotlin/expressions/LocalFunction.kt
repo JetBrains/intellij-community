@@ -65,15 +65,10 @@ internal class KotlinLocalFunctionULambdaExpressionImpl(
     }
 }
 
-
 fun createLocalFunctionDeclaration(function: KtFunction, parent: UElement?): UDeclarationsExpression {
-    return KotlinUDeclarationsExpression(
-        null,
-        parent,
-        ServiceManager.getService(function.project, BaseKotlinUastResolveProviderService::class.java),
-        function
-    ).apply {
-        val functionVariable = UastKotlinPsiVariable.create(function.name.orAnonymous(), function, this)
+    val service = ServiceManager.getService(function.project, BaseKotlinUastResolveProviderService::class.java)
+    return KotlinUDeclarationsExpression(null, parent, service, function).apply {
+        val functionVariable = UastKotlinPsiVariable.create(service, function.name.orAnonymous(), function, this)
         declarations = listOf(KotlinLocalFunctionUVariable(function, functionVariable, this))
     }
 }

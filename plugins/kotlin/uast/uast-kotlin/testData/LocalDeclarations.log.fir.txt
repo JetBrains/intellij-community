@@ -7,6 +7,8 @@ UFile (package = )
                         UMethod (name = Local)
                 [!] UnknownKotlinExpression (FUN)
                 UDeclarationsExpression
+                    ULocalVariable (name = baz)
+                        [!] UnknownKotlinExpression (FUN)
                 [!] UnknownKotlinExpression (FUN)
                 UReturnExpression
                     UBinaryExpression (operator = ==)

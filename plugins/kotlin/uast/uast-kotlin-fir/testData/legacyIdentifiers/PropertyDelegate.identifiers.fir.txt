@@ -1,7 +1,7 @@
 sdCardPath -> UMethod (name = getSdCardPath)
 lazy -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
 localPropertyTest -> UMethod (name = localPropertyTest)
-    sdCardPathLocal -> UDeclarationsExpression
+    sdCardPathLocal -> ULocalVariable (name = sdCardPathLocal)
     lazy -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress)
 annotatedDelegate -> UMethod (name = getAnnotatedDelegate)

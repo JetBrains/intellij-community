@@ -3,19 +3,40 @@ UFile (package = ) [public final class TypeReferencesKt {...]
         UMethod (name = foo) [public static final fun foo(parameter: int) : java.lang.String {...}]
             UParameter (name = parameter) [var parameter: int]
             UBlockExpression [{...}] = Nothing
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var varWithType: <ErrorType> = "Not Null"] = Undetermined
+                    ULocalVariable (name = varWithType) [var varWithType: <ErrorType> = "Not Null"]
+                        ULiteralExpression (value = "Not Null") ["Not Null"] = "Not Null"
+                UDeclarationsExpression [var varWithoutType: <ErrorType> = "lorem ipsum"] = Undetermined
+                    ULocalVariable (name = varWithoutType) [var varWithoutType: <ErrorType> = "lorem ipsum"]
+                        ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] = "lorem ipsum"
+                UDeclarationsExpression [var result: <ErrorType> = varWithType + varWithoutType] = Undetermined
+                    ULocalVariable (name = result) [var result: <ErrorType> = varWithType + varWithoutType]
+                        UBinaryExpression (operator = +) [varWithType + varWithoutType] = "Not Nulllorem ipsum" (depending on: (var varWithType = "Not Null"), (var varWithoutType = "lorem ipsum"))
+                            USimpleNameReferenceExpression (identifier = varWithType) [varWithType] = (var varWithType = "Not Null")
+                            USimpleNameReferenceExpression (identifier = varWithoutType) [varWithoutType] = (var varWithoutType = "lorem ipsum")
                 UReturnExpression [return result] = Nothing
-                    USimpleNameReferenceExpression (identifier = result) [result] = external result()
+                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = "Not Nulllorem ipsum" (depending on: (var varWithType = "Not Null"), (var varWithoutType = "lorem ipsum")))
         UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(arg: T) : void {...}]
             UParameter (name = arg) [var arg: T]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
-                UDeclarationsExpression [] = Undetermined
+                UDeclarationsExpression [var a: <ErrorType> = arg] = Undetermined
+                    ULocalVariable (name = a) [var a: <ErrorType> = arg]
+                        USimpleNameReferenceExpression (identifier = arg) [arg] = Undetermined
+                UDeclarationsExpression [var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = at) [var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)]
+                        [!] UnknownKotlinExpression (BINARY_EXPRESSION) [[!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = tl) [var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = tsl) [var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UQualifiedReferenceExpression [tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            USimpleNameReferenceExpression (identifier = tl) [tl] = (var tl = Undetermined)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var lls: <ErrorType>] = Undetermined
+                    ULocalVariable (name = lls) [var lls: <ErrorType>]
+                UDeclarationsExpression [var llsAliased: <ErrorType>] = Undetermined
+                    ULocalVariable (name = llsAliased) [var llsAliased: <ErrorType>]
+                UDeclarationsExpression [var llt: <ErrorType>] = Undetermined
+                    ULocalVariable (name = llt) [var llt: <ErrorType>]
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
