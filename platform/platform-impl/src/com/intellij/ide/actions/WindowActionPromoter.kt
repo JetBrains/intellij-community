@@ -14,7 +14,9 @@ import javax.swing.JFrame
 class WindowActionPromoter: ActionPromoter {
   override fun promote(actions: MutableList<out AnAction>, context: DataContext): MutableList<AnAction> {
     val window = UIUtil.getWindow(context.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-    if (window != null && window !is JFrame && !JBPopupFactory.getInstance().isPopupActive) {
+    if (window != null && window !is JFrame
+        && !JBPopupFactory.getInstance().isPopupActive
+        && actions.filterIsInstance<WindowAction>().isNotEmpty()) {
       return ArrayList(actions.sortedWith(Comparator { a1, a2 -> a1.score().compareTo(a2.score()) })
                          .filter { it is WindowAction || it is EditorAction })
     }
