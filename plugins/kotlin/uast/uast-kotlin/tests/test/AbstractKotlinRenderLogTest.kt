@@ -26,12 +26,6 @@ import java.io.File
 import java.util.*
 
 interface AbstractKotlinRenderLogTest : RenderLogTestBase {
-
-    fun File.withFe10Extension(): File {
-        return resolveSibling(name.removeSuffix(extension) + "fe10.$extension")
-    }
-
-
     override fun getTestFile(testName: String, ext: String) =
         File(File(TEST_KOTLIN_MODEL_DIR, testName).canonicalPath + '.' + ext)
 

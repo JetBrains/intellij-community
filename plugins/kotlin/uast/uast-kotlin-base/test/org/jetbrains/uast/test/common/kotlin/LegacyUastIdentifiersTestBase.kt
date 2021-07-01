@@ -2,7 +2,6 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import org.jetbrains.uast.test.common.kotlin.UastIdentifiersTestBase
 import java.io.File
 
 interface LegacyUastIdentifiersTestBase : UastIdentifiersTestBase {

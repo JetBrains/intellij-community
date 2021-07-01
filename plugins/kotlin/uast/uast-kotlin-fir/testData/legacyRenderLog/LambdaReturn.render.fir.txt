@@ -2,13 +2,13 @@ package org.jetbrains.uast.kotlin
 
 public final class LambdaReturnKt {
     public static final fun foo() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var lam1: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var lam2: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)
+        var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (PROPERTY)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
     }
 }
