@@ -2,14 +2,42 @@ UFile (package = )
     UClass (name = BitwiseKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = mask)
+                        ULiteralExpression (value = 127)
+                UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        ULiteralExpression (value = 2863311530)
+                UDeclarationsExpression
+                    ULocalVariable (name = pos)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = max)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = zebra)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = signed)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 2)
+                UDeclarationsExpression
+                    ULocalVariable (name = one)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 31)
+                UDeclarationsExpression
+                    ULocalVariable (name = zero)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 32)
                 UReturnExpression
                     UBinaryExpression (operator = -)
                         UBinaryExpression (operator = +)
@@ -22,14 +50,42 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = one)
         UMethod (name = bar)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = mask)
+                        ULiteralExpression (value = 127)
+                UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        ULiteralExpression (value = 6148914691236517205)
+                UDeclarationsExpression
+                    ULocalVariable (name = pos)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = max)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = zebra)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            USimpleNameReferenceExpression (identifier = mask)
+                UDeclarationsExpression
+                    ULocalVariable (name = signed)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 2)
+                UDeclarationsExpression
+                    ULocalVariable (name = one)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 63)
+                UDeclarationsExpression
+                    ULocalVariable (name = zero)
+                        UBinaryExpression (operator = <other>)
+                            USimpleNameReferenceExpression (identifier = x)
+                            ULiteralExpression (value = 64)
                 UReturnExpression
                     UBinaryExpression (operator = -)
                         UBinaryExpression (operator = +)

@@ -1,8 +1,10 @@
 public final class LocalDeclarationsKt {
     public static final fun foo() : boolean {
-        [!] UnknownKotlinExpression (CLASS)
+        public static final class Local {
+            public fun Local() = UastEmptyExpression
+        }
         [!] UnknownKotlinExpression (FUN)
-        [!] UnknownKotlinExpression (PROPERTY)
+        var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)
         [!] UnknownKotlinExpression (FUN)
         return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }

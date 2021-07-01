@@ -1,9 +1,0 @@
-UFile (package = )
-    UClass (name = DestructuringDeclarationKt)
-        UMethod (name = foo)
-            UParameter (name = data)
-            UBlockExpression
-                UDeclarationsExpression
-                    ULocalVariable (name = var268d41a5)
-                UDeclarationsExpression
-                    ULocalVariable (name = var465978a0)

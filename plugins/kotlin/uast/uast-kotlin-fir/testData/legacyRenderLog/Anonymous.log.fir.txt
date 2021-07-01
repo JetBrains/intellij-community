@@ -4,16 +4,26 @@ UFile (package = )
     UClass (name = AnonymousKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = runnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = runnable2)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable2)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = closeableRunnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                UDeclarationsExpression
+                    ULocalVariable (name = runnableIs)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
         UMethod (name = withErr)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = runnable)
+                        [!] UnknownKotlinExpression (OBJECT_LITERAL)

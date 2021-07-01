@@ -3,5 +3,7 @@ UFile (package = )
         UMethod (name = getElementsAdditionalResolve)
             UParameter (name = string)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = arr)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (WHEN)
