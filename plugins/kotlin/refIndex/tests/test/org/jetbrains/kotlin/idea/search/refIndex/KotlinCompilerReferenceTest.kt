@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.testFramework.SkipSlowTestLocally
+import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
@@ -140,6 +141,12 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testTopLevelConstantWithJvmName() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
+        // JvmName for constants isn't supported
+        assertThrows(AssertionFailedError::class.java) { rebuildProject() }
+    }
+
     fun testTopLevelConstantWithCustomFileName() {
         myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
         rebuildProject()
@@ -179,7 +186,29 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testTopLevelExtensionVariableWithJvmNameOnProperty() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java", "JavaWrite.java", "Write.kt")
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java", "JavaWrite.java", "Write.kt"),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
     fun testTopLevelVariable() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelVariableWithJvmNameOnProperty() {
         myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
         rebuildProject()
         TestCase.assertEquals(
@@ -224,6 +253,28 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     }
 
     fun testTopLevelPropertyWithCustomGetterAndSetter() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelVariableWithCustomGetterAndSetterAndMixedJvmName() {
+        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelVariableWithCustomGetterAndSetterAndJvmName() {
         myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
         rebuildProject()
         TestCase.assertEquals(

@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.util.jvmGetterName
 import org.jetbrains.kotlin.idea.util.jvmName
+import org.jetbrains.kotlin.idea.util.jvmSetterName
 import org.jetbrains.kotlin.idea.util.numberOfArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -69,20 +71,21 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
         if (hasModifier(KtTokens.CONST_KEYWORD)) return@let listOf(
             CompilerRef.JavaCompilerFieldRef(
                 names.tryEnumerate(qualifier),
+                // JvmName for constants isn't supported
                 names.tryEnumerate(propertyName),
             )
         )
 
         val getter = CompilerRef.JavaCompilerMethodRef(
             names.tryEnumerate(qualifier),
-            names.tryEnumerate(JvmAbi.getterName(propertyName)),
+            names.tryEnumerate(jvmGetterName ?: JvmAbi.getterName(propertyName)),
             numberOfArguments(countReceiver = true),
         )
 
         val setter = if (isVar)
             CompilerRef.JavaCompilerMethodRef(
                 names.tryEnumerate(qualifier),
-                names.tryEnumerate(JvmAbi.setterName(propertyName)),
+                names.tryEnumerate(jvmSetterName ?: JvmAbi.setterName(propertyName)),
                 numberOfArguments(countReceiver = true) + 1,
             )
         else
