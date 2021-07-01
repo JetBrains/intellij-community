@@ -5,10 +5,17 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
+import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeNullability
+import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeWithNullability
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
@@ -93,6 +100,45 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
         // TODO("Not yet implemented")
         return null
+    }
+
+    override fun nullability(psiElement: PsiElement): TypeNullability? {
+        if (psiElement is KtTypeReference) {
+            // TODO: KtTypeReference to KtType, and then nullability
+        }
+        if (psiElement is KtCallableDeclaration) {
+            // TODO typeReference to KtType, and then nullability
+        }
+        if (psiElement is KtProperty) {
+            psiElement.initializer?.let { propertyInitializer ->
+                analyseForUast(propertyInitializer) {
+                    propertyInitializer.getKtType().nullability()?.let { return it }
+                }
+            }
+            psiElement.delegateExpression?.let { delegatedExpression ->
+                analyseForUast(delegatedExpression) {
+                    val typeArgument = (delegatedExpression.getKtType() as? KtNonErrorClassType)?.typeArguments?.firstOrNull()
+                    (typeArgument as? KtTypeArgumentWithVariance)?.type?.nullability()?.let { return it }
+                }
+            }
+        }
+        psiElement.getParentOfType<KtProperty>(false)?.let { property ->
+            // TODO: try typeReference first
+            property.initializer?.let { propertyInitializer ->
+                analyseForUast(propertyInitializer) {
+                    propertyInitializer.getKtType().nullability()
+                }
+            }
+        }?.let { return it }
+        return null
+    }
+
+    private fun KtType.nullability(): TypeNullability? {
+        if (this !is KtTypeWithNullability) return null
+        return when (this.nullability) {
+            KtTypeNullability.NON_NULLABLE -> TypeNullability.NOT_NULL
+            KtTypeNullability.NULLABLE -> TypeNullability.NULLABLE
+        }
     }
 
     override fun evaluate(uExpression: UExpression): Any? {
