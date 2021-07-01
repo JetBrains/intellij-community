@@ -10,11 +10,16 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
@@ -87,6 +92,27 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             parameterNames = descriptor.valueParameters.map { it.name },
             returnType = returnType
         ).toPsiType(parent, ktFunction, boxed = false)
+    }
+
+    override fun nullability(psiElement: PsiElement): TypeNullability? {
+        return getTargetType(psiElement)?.nullability()
+    }
+
+    private fun getTargetType(annotatedElement: PsiElement): KotlinType? {
+        if (annotatedElement is KtTypeReference) {
+            annotatedElement.getType()?.let { return it }
+        }
+        if (annotatedElement is KtCallableDeclaration) {
+            annotatedElement.typeReference?.getType()?.let { return it }
+        }
+        if (annotatedElement is KtProperty) {
+            annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
+            annotatedElement.delegateExpression?.let { it.getType(it.analyze())?.arguments?.firstOrNull()?.type }?.let { return it }
+        }
+        annotatedElement.getParentOfType<KtProperty>(false)?.let {
+            it.typeReference?.getType() ?: it.initializer?.let { it.getType(it.analyze()) }
+        }?.let { return it }
+        return null
     }
 
     override fun evaluate(uExpression: UExpression): Any? {
