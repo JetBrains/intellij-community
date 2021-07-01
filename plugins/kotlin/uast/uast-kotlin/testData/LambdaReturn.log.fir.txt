@@ -2,11 +2,11 @@ UFile (package = org.jetbrains.uast.kotlin)
     UClass (name = LambdaReturnKt)
         UMethod (name = foo)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
+                UDeclarationsExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                UDeclarationsExpression

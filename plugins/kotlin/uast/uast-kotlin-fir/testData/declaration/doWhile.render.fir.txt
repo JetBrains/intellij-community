@@ -1,16 +1,16 @@
 public final class DoWhileKt {
     public static final fun test() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+
         do {
             x = "non-null"
         }while (x != null)
 
     }
     public static final fun kt44412() : void {
-        [!] UnknownKotlinExpression (PROPERTY)
+
         Outer@ while (true) {
             ++i
-            [!] UnknownKotlinExpression (PROPERTY)
+
             Inner@ do {
                 ++j
             }while (if (j >= 3) false else break)

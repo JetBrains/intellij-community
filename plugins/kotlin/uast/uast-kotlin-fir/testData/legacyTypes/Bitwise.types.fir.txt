@@ -2,14 +2,14 @@ UFile (package = ) [public final class BitwiseKt {...]
     UClass (name = BitwiseKt) [public final class BitwiseKt {...}]
         UMethod (name = foo) [public static final fun foo() : int {...}]
             UBlockExpression [{...}] : PsiType:Void
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
                 UReturnExpression [return pos + zero - zebra * signed / one] : PsiType:Void
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] : PsiType:int
                         UBinaryExpression (operator = +) [pos + zero] : PsiType:int
@@ -22,14 +22,14 @@ UFile (package = ) [public final class BitwiseKt {...]
                             USimpleNameReferenceExpression (identifier = one) [one] : PsiType:int
         UMethod (name = bar) [public static final fun bar() : long {...}]
             UBlockExpression [{...}] : PsiType:Void
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
+                UDeclarationsExpression []
                 UReturnExpression [return pos + zero - zebra * signed / one] : PsiType:Void
                     UBinaryExpression (operator = -) [pos + zero - zebra * signed / one] : PsiType:long
                         UBinaryExpression (operator = +) [pos + zero] : PsiType:long

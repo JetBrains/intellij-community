@@ -26,7 +26,7 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                     USimpleNameReferenceExpression (identifier = elem) [elem] : PsiType:String
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 UBinaryExpression (operator = =) [s[1, --1] = "O"] : PsiType:Unit
                     UArrayAccessExpression [s[1, --1]] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]

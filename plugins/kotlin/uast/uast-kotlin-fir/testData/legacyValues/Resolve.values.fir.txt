@@ -20,7 +20,7 @@ UFile (package = ) [public final class ResolveKt {...]
                 UQualifiedReferenceExpression [[!] UnknownKotlinExpression (CALL_EXPRESSION).indices] = external indices()
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = indices) [indices] = external indices()
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UBinaryExpression (operator = =) [date.time = 1000] = Undetermined
                     UQualifiedReferenceExpression [date.time] = external time()
                         USimpleNameReferenceExpression (identifier = date) [date] = external date()
@@ -36,7 +36,7 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = entries) [entries] = external entries()
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UQualifiedReferenceExpression [intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = intRange) [intRange] = external intRange()
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

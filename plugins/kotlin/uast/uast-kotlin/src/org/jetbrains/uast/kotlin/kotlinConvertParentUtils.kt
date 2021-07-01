@@ -32,7 +32,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
         when (parent) {
             is KtClassBody -> {
                 val grandParent = parent.parent
-                doConvertParent(uElement, grandParent)?.let { return it }
+                convertParentImpl(uElement, grandParent)?.let { return it }
                 parent = grandParent
             }
             is KtFile -> {
@@ -112,7 +112,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
         parent = parent.parent
     }
 
-    val result = doConvertParent(uElement, parent)
+    val result = convertParentImpl(uElement, parent)
     if (result == uElement) {
         throw KotlinExceptionWithAttachments("Loop in parent structure when converting a $psi of type ${psi?.javaClass} with parent $parent of type ${parent?.javaClass}")
             .withAttachment("text", parent?.text)
@@ -122,7 +122,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
     return result
 }
 
-fun doConvertParent(element: UElement, parent: PsiElement?): UElement? {
+fun convertParentImpl(element: UElement, parent: PsiElement?): UElement? {
     val parentUnwrapped = KotlinConverter.unwrapElements(parent) ?: return null
     if (parent is KtValueArgument && parentUnwrapped is KtAnnotationEntry) {
         return (KotlinUastLanguagePlugin().convertElementWithParent(parentUnwrapped, null) as? KotlinUAnnotation)

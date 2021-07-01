@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.BaseResolveProviderServiceSupplier
 import org.jetbrains.uast.kotlin.KotlinAbstractUExpression
-import org.jetbrains.uast.kotlin.doConvertParent
 
 open class KotlinUDeclarationsExpression(
     override val psi: PsiElement?,
@@ -19,20 +18,10 @@ open class KotlinUDeclarationsExpression(
         get() = psiAnchor
 
     override fun convertParent(): UElement? =
-            psiAnchor?.let { doConvertParent(this, it.parent) } ?: super.convertParent()
+            psiAnchor?.let { baseResolveProviderService.convertParent(this, it.parent) } ?: super.convertParent()
 
     constructor(uastParent: UElement?, baseResolveProviderService: BaseKotlinUastResolveProviderService) :
             this(null, uastParent, baseResolveProviderService)
 
     override lateinit var declarations: List<UDeclaration>
-        internal set
-}
-
-class KotlinUDestructuringDeclarationExpression(
-    givenParent: UElement?,
-    psiAnchor: PsiElement,
-    baseResolveProviderService: BaseKotlinUastResolveProviderService,
-) : KotlinUDeclarationsExpression(null, givenParent,baseResolveProviderService,  psiAnchor) {
-
-    val tempVarAssignment get() = declarations.first()
 }

@@ -2,7 +2,7 @@ UFile (package = ) [public final class AssertionKt {...]
     UClass (name = AssertionKt) [public final class AssertionKt {...}]
         UMethod (name = foo) [public static final fun foo() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)] = Undetermined
+                UDeclarationsExpression [] = Undetermined
                 UReturnExpression [return s!!] = Nothing
                     UPostfixExpression (operator = !!) [s!!] = Undetermined
                         USimpleNameReferenceExpression (identifier = s) [s] = external s()

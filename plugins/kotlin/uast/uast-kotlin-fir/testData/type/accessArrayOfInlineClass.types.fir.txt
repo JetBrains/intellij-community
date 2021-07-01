@@ -10,7 +10,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         USimpleNameReferenceExpression (identifier = xs) [xs] : PsiType:Z[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (PROPERTY) [[!] UnknownKotlinExpression (PROPERTY)]
+                UDeclarationsExpression []
                 UIfExpression [if (t.data != 12) throw [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                     UBinaryExpression (operator = !=) [t.data != 12] : PsiType:boolean
                         UQualifiedReferenceExpression [t.data] : PsiType:int
