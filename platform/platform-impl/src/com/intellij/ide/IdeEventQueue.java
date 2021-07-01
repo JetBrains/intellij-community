@@ -154,35 +154,33 @@ public final class IdeEventQueue extends EventQueue {
 
   @NotNull
   public String runnablesWaitingForFocusChangeState() {
-    return StringUtil.join(focusEventsList, event -> "[" + event.getID() + "; "+ event.getSource().getClass().getName()+"]", ", ");
+    return StringUtil.join(focusEventsList, event -> "[" + event.getID() + "; " + event.getSource().getClass().getName() + "]", ", ");
+  }
+
+  private @Nullable AWTEvent getLastFocusGainedEvent() {
+    AWTEvent result = null;
+    for (AWTEvent event : focusEventsList) {
+      if (event.getID() == FocusEvent.FOCUS_GAINED) {
+        result = event;
+      }
+    }
+    return result;
   }
 
   private void ifFocusEventsInTheQueue(@NotNull Consumer<? super AWTEvent> yes, @NotNull Runnable no) {
-    if (!focusEventsList.isEmpty()) {
+    AWTEvent lastFocusGainedEvent = getLastFocusGainedEvent();
+
+    if (lastFocusGainedEvent != null) {
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): "+runnablesWaitingForFocusChangeState());
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
+                                        "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
+                                        lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
       }
-
-      // find the latest focus gained
-      AWTEvent first = ContainerUtil.find(focusEventsList, e -> e.getID() == FocusEvent.FOCUS_GAINED);
-
-      if (first != null) {
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG
-            .debug("    runnable saved for : [" + first.getID() + "; " + first.getSource() + "] -> " + no.getClass().getName());
-        }
-        yes.accept(first);
-      }
-      else {
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
-        }
-        EdtInvocationManager.invokeLaterIfNeeded(no);
-      }
+      yes.accept(lastFocusGainedEvent);
     }
     else {
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+        FOCUS_AWARE_RUNNABLES_LOG.debug("No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
       }
       EdtInvocationManager.invokeLaterIfNeeded(no);
     }
