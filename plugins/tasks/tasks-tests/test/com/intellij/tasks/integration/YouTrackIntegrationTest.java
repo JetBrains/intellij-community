@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.tasks.*;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.tasks.youtrack.YouTrackIntellisense;
@@ -27,6 +28,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     static final String UNASSIGNED_OPEN_BUG = "TEST-3";
     static final String ASSIGNED_OPEN_TASK = "TEST-5";
     static final String FOR_STATE_UPDATING = "TEST-4";
+    static final String FOR_TIME_TRACKING = "TEST-6";
   }
 
   private YouTrackRepository myRepository;
@@ -157,6 +159,14 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     finally {
       myRepository.setTaskState(task, new CustomTaskState("Open", "Open"));
     }
+  }
+
+  public void testUpdatingTimeSpent() throws Exception {
+    Task task = myRepository.findTask(Issues.FOR_TIME_TRACKING);
+    assertNotNull(task);
+
+    LocalTaskImpl localTask = new LocalTaskImpl(task);
+    myRepository.updateTimeSpent(localTask, "0h 10m", "From unit tests");
   }
 
   public void testWrappingErrors() throws Exception {
