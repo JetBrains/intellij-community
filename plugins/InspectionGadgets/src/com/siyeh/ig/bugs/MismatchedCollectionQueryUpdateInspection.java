@@ -75,10 +75,11 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
   private static final Set<String> COLLECTIONS_ALL =
     StreamEx.of(COLLECTIONS_QUERIES).append(COLLECTIONS_UPDATES).toImmutableSet();
   private static final Set<String> defaultQueryNames =
-    Set.of("contains", "copyInto", "equals", "forEach", "get", "hashCode", "iterator", "parallelStream", "peek", "propertyNames", "save",
-           "size", "store", "stream", "toArray", "toString", "write");
+    Set.of("contains", "copyInto", "equals", "forEach", "get", "hashCode", "indexOf", "iterator", "lastIndexOf", "parallelStream", "peek",
+           "propertyNames", "save", "size", "store", "stream", "toArray", "toString", "write");
   private static final Set<String> defaultUpdateNames =
-    Set.of("add", "clear", "insert", "load", "merge", "offer", "poll", "pop", "push", "put", "remove", "replace", "retain", "set", "take");
+    Set.of("add", "clear", "insert", "load", "merge", "offer", "poll", "pop", "push", "put", "remove", "replace", "retain", "sort", "set",
+           "take");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet queryNames = new ExternalizableStringSet(defaultQueryNames.toArray(String[]::new));
   @SuppressWarnings("PublicField")
