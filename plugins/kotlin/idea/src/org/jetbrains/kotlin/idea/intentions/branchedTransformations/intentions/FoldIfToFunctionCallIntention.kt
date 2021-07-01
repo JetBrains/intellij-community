@@ -2,13 +2,11 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.intentions.branches
-import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -19,13 +17,12 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class FoldIfToFunctionCallIntention : SelfTargetingIntention<KtIfExpression>(
+class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,
     KotlinBundle.lazyMessage("lift.function.call.out.of.if"),
 ) {
-    override fun isApplicableTo(element: KtIfExpression, caretOffset: Int): Boolean {
-        return canFoldToFunctionCall(element)
-    }
+    override fun applicabilityRange(element: KtIfExpression): TextRange? =
+        if (canFoldToFunctionCall(element)) element.ifKeyword.textRange else null
 
     override fun applyTo(element: KtIfExpression, editor: Editor?) {
         foldToFunctionCall(element)

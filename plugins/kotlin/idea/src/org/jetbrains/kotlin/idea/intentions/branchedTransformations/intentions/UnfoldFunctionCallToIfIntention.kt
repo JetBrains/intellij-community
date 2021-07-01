@@ -2,20 +2,21 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
-class UnfoldFunctionCallToIfIntention : SelfTargetingIntention<KtCallExpression>(
+class UnfoldFunctionCallToIfIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
     KotlinBundle.lazyMessage("replace.function.call.with.if"),
 ) {
-    override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
-        return canUnFoldToIf<KtIfExpression>(element)
-    }
+    override fun applicabilityRange(element: KtCallExpression): TextRange? =
+        if (canUnFoldToIf<KtIfExpression>(element)) element.calleeExpression?.textRange else null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         unFoldToIf<KtIfExpression>(element)
