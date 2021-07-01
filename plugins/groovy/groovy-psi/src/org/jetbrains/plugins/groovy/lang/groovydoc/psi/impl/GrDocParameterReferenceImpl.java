@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -63,7 +62,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     final PsiElement firstChild = getFirstChild();
     if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
       final ASTNode node = firstChild.getNode();
-      if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
+      if (node != null) {
         final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
         for (PsiTypeParameter typeParameter : typeParameters) {
           if (typeParameterName.equals(typeParameter.getName())) {
@@ -133,7 +132,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     final PsiElement firstChild = getFirstChild();
     if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
       final ASTNode node = firstChild.getNode();
-      if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
+      if (node != null && node.getText().startsWith("<")) {
         return ((PsiTypeParameterListOwner)owner).getTypeParameters();
       }
     }

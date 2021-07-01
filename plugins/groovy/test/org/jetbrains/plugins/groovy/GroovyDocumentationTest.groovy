@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -155,6 +155,33 @@ f<caret>oo()""",
 <table class='sections'><p>\
 <tr><td valign='top' class='section'><p>Returns:</td>\
 <td valign='top'><p><code> lorem ipsum </code></td></table>\
+"""
+  }
+
+  void 'test web reference'() {
+    doTest """
+/**
+ * @see <a href="https://google.com">ref</a>
+ */
+class GroovyDocTest<T> { }
+
+new Gr<caret>oovyDocTest<Integer>()""", """\
+<div class='definition'><pre>class <b>GroovyDocTest</b>&lt;T&gt;
+extends <a href="psi_element://java.lang.Object"><code>Object</code></a></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>See Also:</td><td valign='top'><p><a href="https://google.com">ref</a></td></table>\
+"""
+  }
+
+
+  void 'test type parameter in param'() {
+    doTest """
+/**
+ * @param <T> kej
+ */
+class GroovyDocTest<T> { }
+
+new Gr<caret>oovyDocTest<Integer>()""", """\
+<div class='definition'><pre>class <b>GroovyDocTest</b>&lt;T&gt;
+extends <a href="psi_element://java.lang.Object"><code>Object</code></a></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'>&lt;T&gt; &ndash;  kej</td></table>\
 """
   }
 

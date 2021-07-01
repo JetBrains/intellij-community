@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.psi.TokenType;
@@ -22,8 +22,6 @@ public interface GroovyDocTokenTypes {
   IElementType mGDOC_TAG_PLAIN_VALUE_TOKEN = new GroovyDocElementType("GDOC_TAG_VALUE_TOKEN");
   IElementType mGDOC_TAG_VALUE_LPAREN = new GroovyDocElementType("GDOC_TAG_VALUE_LPAREN");
   IElementType mGDOC_TAG_VALUE_RPAREN = new GroovyDocElementType("GDOC_TAG_VALUE_RPAREN");
-  IElementType mGDOC_TAG_VALUE_GT = new GroovyDocElementType("GDOC_TAG_VALUE_GT");
-  IElementType mGDOC_TAG_VALUE_LT = new GroovyDocElementType("GDOC_TAG_VALUE_LT");
   IElementType mGDOC_INLINE_TAG_END = new GroovyDocElementType("GDOC_INLINE_TAG_END");
   IElementType mGDOC_INLINE_TAG_START = new GroovyDocElementType("DOC_INLINE_TAG_START");
   IElementType mGDOC_TAG_VALUE_COMMA = new GroovyDocElementType("GDOC_TAG_VALUE_COMMA");
@@ -41,8 +39,6 @@ public interface GroovyDocTokenTypes {
       mGDOC_TAG_VALUE_TOKEN,
       mGDOC_TAG_VALUE_LPAREN,
       mGDOC_TAG_VALUE_RPAREN,
-      mGDOC_TAG_VALUE_GT,
-      mGDOC_TAG_VALUE_LT,
       mGDOC_INLINE_TAG_END,
       mGDOC_INLINE_TAG_START,
       mGDOC_TAG_VALUE_COMMA,
