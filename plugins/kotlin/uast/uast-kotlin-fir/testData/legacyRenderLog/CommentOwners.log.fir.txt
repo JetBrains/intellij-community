@@ -30,7 +30,9 @@ UFile (package = )
                     ULiteralExpression (value = true)
                     UBlockExpression
                     UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = localValueDefinition)
+                        ULiteralExpression (value = 42)
     UClass (name = TopLevelClass)
         UField (name = classLevelProperty)
             ULiteralExpression (value = 42)
