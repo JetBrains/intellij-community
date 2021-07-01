@@ -3,11 +3,19 @@ UFile (package = )
         UMethod (name = foo)
             UBlockExpression
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = a)
+                        UAnnotation (fqName = not-implemented-annotation)
+                        ULiteralExpression (value = 1)
+                UDeclarationsExpression
+                    ULocalVariable (name = b)
+                        UAnnotation (fqName = not-implemented-annotation)
+                        ULiteralExpression (value = 2)
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = c)
+                        [!] UnknownKotlinExpression (BINARY_EXPRESSION)
         UMethod (name = annotatedSwitch)
             UParameter (name = str)
             UBlockExpression

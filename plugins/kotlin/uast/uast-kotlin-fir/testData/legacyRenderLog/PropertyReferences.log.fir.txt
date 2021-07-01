@@ -2,8 +2,15 @@ UFile (package = )
     UClass (name = PropertyReferencesKt)
         UMethod (name = properties)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = a)
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        UPrefixExpression (operator = -)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = a)
+                                USimpleNameReferenceExpression (identifier = mutableProp)
                 UBinaryExpression (operator = =)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = a)
@@ -25,7 +32,10 @@ UFile (package = )
         UMethod (name = ext)
             UParameter (name = $this$ext)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = x)
+                        UPrefixExpression (operator = -)
+                            USimpleNameReferenceExpression (identifier = mutableProp)
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = mutableProp)
                     ULiteralExpression (value = 1)
@@ -53,7 +63,9 @@ UFile (package = )
         UMethod (name = add)
             UParameter (name = x)
             UBlockExpression
-                [!] UnknownKotlinExpression (PROPERTY)
+                UDeclarationsExpression
+                    ULocalVariable (name = result)
+                        USimpleNameReferenceExpression (identifier = privateProp)
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = privateProp)
                     USimpleNameReferenceExpression (identifier = x)

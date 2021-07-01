@@ -2,6 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.uast
 
-import org.jetbrains.uast.test.common.kotlin.UastRenderLogTestBase
+import org.jetbrains.uast.test.common.kotlin.LegacyUastRenderLogTestBase
 
-abstract class AbstractFirLegacyUastDeclarationTest : AbstractFirUastDeclarationTest(), UastRenderLogTestBase
+abstract class AbstractFirLegacyUastDeclarationTest : AbstractFirUastDeclarationTest(), LegacyUastRenderLogTestBase
