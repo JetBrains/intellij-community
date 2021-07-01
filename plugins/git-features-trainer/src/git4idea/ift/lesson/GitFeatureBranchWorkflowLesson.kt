@@ -6,6 +6,7 @@ import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -196,6 +197,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.confirm.force.push", strong(forcePushText)))
+      text(GitLessonsBundle.message("git.feature.branch.force.push.tip", strong(forcePushText)))
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
