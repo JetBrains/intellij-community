@@ -34,9 +34,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
@@ -78,10 +75,7 @@ final class DistributionJARsBuilder {
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
 
-    def releaseDatePattern = "uuuuMMdd"
-    // cut off hours and minutes if any
-    def releaseDate = buildContext.applicationInfo.majorReleaseDate?.substring(0, releaseDatePattern.size()) ?:
-                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(releaseDatePattern))
+    def releaseDate = buildContext.applicationInfo.majorReleaseDate
     if (releaseDate.startsWith('__')) {
       buildContext.messages.error("Unresolved release-date: $releaseDate")
     }

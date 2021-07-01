@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter
 
 @CompileStatic
 class ApplicationInfoProperties {
+  private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
+  private static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
   private final String appInfoXml
   final String majorVersion
   final String minorVersion
@@ -73,7 +75,7 @@ class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    majorReleaseDate = root.build.first().@majorReleaseDate
+    majorReleaseDate = majorReleaseDate(root.build.first().@majorReleaseDate)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
@@ -87,6 +89,21 @@ class ApplicationInfoProperties {
     svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
 
     patchesUrl = root."update-urls"[0]?.@"patches"
+  }
+
+  private static String majorReleaseDate(String majorReleaseDateRaw) {
+    if (majorReleaseDateRaw == null || majorReleaseDateRaw.startsWith('__')) {
+      return ZonedDateTime.now(ZoneOffset.UTC).format(MAJOR_RELEASE_DATE_PATTERN)
+    }
+    else {
+      try {
+        ZonedDateTime.parse(majorReleaseDateRaw, MAJOR_RELEASE_DATE_PATTERN)
+        return majorReleaseDateRaw
+      }
+      catch (Exception ignored) {
+        return ZonedDateTime.parse(majorReleaseDateRaw, BUILD_DATE_PATTERN).format(MAJOR_RELEASE_DATE_PATTERN)
+      }
+    }
   }
 
   ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
@@ -110,7 +127,7 @@ class ApplicationInfoProperties {
 
   @NotNull
   ApplicationInfoProperties patch(BuildContext buildContext) {
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN)
     ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
