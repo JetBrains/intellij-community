@@ -84,6 +84,3 @@ private fun chooseMoreSpecific(type1: KotlinType, type2: KotlinType): KotlinType
         }
     }
 }
-
-fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
-    valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)

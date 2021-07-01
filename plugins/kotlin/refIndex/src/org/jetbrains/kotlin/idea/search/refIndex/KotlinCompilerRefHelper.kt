@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.util.jvmName
 import org.jetbrains.kotlin.idea.util.numberOfArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -60,7 +61,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
     private fun KtNamedFunction.asCompilerRef(qualifier: String, names: NameEnumerator): CompilerRef = CompilerRef.JavaCompilerMethodRef(
         names.tryEnumerate(qualifier),
-        names.tryEnumerate(name),
+        names.tryEnumerate(jvmName ?: name),
         numberOfArguments(countReceiver = true),
     )
 

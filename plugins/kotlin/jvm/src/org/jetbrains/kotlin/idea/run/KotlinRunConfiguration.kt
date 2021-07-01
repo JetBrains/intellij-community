@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.ge
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.util.jvmName
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils.getFilePartShortName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -360,13 +361,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         private fun KtNamedFunction.isAMainCandidate(): Boolean {
             if (isLocal) return false
 
-            val jvmName = annotationEntries.filter {
-                it.shortName?.asString() == "JvmName"
-            }.mapNotNull {
-                it.valueArguments.singleOrNull()?.getArgumentExpression()
-                    .safeAs<KtStringTemplateExpression>()?.entries?.singleOrNull()
-            }.singleOrNull()?.text
-
+            val jvmName = jvmName
             if (!(name == "main" && jvmName == null || jvmName == "main")) return false
 
             // method annotated with @JvmName("main") could be a candidate as well
@@ -378,7 +373,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                         // Array<String>
                         valueParameter?.typeReference?.typeElement?.run {
                             // to handle `Array` or `Array?`
-                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
+                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs()
                         }?.run {
                             referencedName == "Array" &&
                                     typeArgumentList?.arguments?.singleOrNull()?.run {

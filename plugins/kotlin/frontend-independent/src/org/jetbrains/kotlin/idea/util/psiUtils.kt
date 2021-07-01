@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.cfg.pseudocode.containingDeclarationForPseudocode
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -46,3 +47,11 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }
+
+val KtNamedFunction.jvmName: String?
+    get() = annotationEntries.firstOrNull { it.shortName?.asString() == JvmFileClassUtil.JVM_NAME_SHORT }
+        ?.let(JvmFileClassUtil::getLiteralStringFromAnnotation)
+
+
+fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
+    valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)

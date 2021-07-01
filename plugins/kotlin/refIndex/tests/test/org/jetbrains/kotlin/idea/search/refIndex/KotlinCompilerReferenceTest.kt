@@ -105,6 +105,13 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testTopLevelFunctionWithJvmName() {
+        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaClass.java"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
     fun testTopLevelExtension() {
         myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
         rebuildProject()
