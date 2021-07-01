@@ -24,7 +24,7 @@ public class PropertyTextExtractor extends TextExtractor {
   public @Nullable TextContent buildTextContent(@NotNull PsiElement root,
                                                 @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (root instanceof PsiComment) {
-      List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, PropertiesTokenTypes.WHITESPACES, e ->
+      List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         PropertiesTokenTypes.COMMENTS.contains(PsiUtilCore.getElementType(e)));
       return TextContent.joinWithWhitespace(ContainerUtil.mapNotNull(roots, c ->
         TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS)));
