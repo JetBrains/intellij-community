@@ -78,7 +78,7 @@ final class NST {
               ourNSTLibrary = null;
             }
             else {
-              ourNSTLibrary.releaseTouchBar(test);
+              ourNSTLibrary.releaseNativePeer(test);
               LOG.info("nst library works properly, successfully created and released native touchbar object");
             }
           }
@@ -111,8 +111,8 @@ final class NST {
     return ourNSTLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
   }
 
-  static void releaseTouchBar(ID tbObj) {
-    ourNSTLibrary.releaseTouchBar(tbObj);
+  static void releaseNativePeer(ID nativePeer) {
+    ourNSTLibrary.releaseNativePeer(nativePeer);
   }
 
   static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
@@ -257,10 +257,9 @@ final class NST {
     @NotNull List<TBItemScrubber.ItemData> items = scrubber.getItems();
     final Pair<Pointer, Integer> mem = _packItems(items.subList(fromIndex, fromIndex + itemsCount), itemsCount, withImages, withText);
     synchronized (scrubber) {
-      final ID scrubObj = scrubber.getNativePeer();
-      if (scrubObj.equals(ID.NIL))
+      if (scrubber.myNativePeer.equals(ID.NIL))
         return;
-      ourNSTLibrary.updateScrubberItems(scrubObj, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(), fromIndex);
+      ourNSTLibrary.updateScrubberItems(scrubber.myNativePeer, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(), fromIndex);
     }
     if (withImages && scrubber.getStats() != null)
       scrubber.getStats().incrementCounter(StatsCounters.scrubberIconsProcessingDurationNs, System.nanoTime() - startNs);

@@ -130,7 +130,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
     synchronized(this) {
       if (!myNativePeer.equals(ID.NIL)) {
-        NST.releaseTouchBar(myNativePeer);
+        NST.releaseNativePeer(myNativePeer);
         myNativePeer = ID.NIL;
       }
     }

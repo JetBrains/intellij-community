@@ -88,13 +88,13 @@ public class TouchbarTest {
         txt = "show";
         action = ()->SwingUtilities.invokeLater(()->{
           ourVisible = !ourVisible;
-          NST.showScrubberItem(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourVisible, false);
+          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible, false);
         });
       } else if (c == 2) {
         txt = "enable";
         action = ()->SwingUtilities.invokeLater(()->{
           ourEnabled = !ourEnabled;
-          NST.enableScrubberItems(scrubber.getNativePeer(), _makeRandomCollection(size - 1), ourEnabled);
+          NST.enableScrubberItems(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
         });
       }
 

@@ -127,9 +127,11 @@ class TBItemButton extends TBItem {
   TBItemButton setHasArrowIcon(boolean hasArrowIcon) {
     if (hasArrowIcon != myHasArrowIcon) {
       myHasArrowIcon = hasArrowIcon;
-      if (getNativePeer() != ID.NIL) {
-        final Icon ic = myHasArrowIcon ? AllIcons.Mac.Touchbar.PopoverArrow : null;
-        NST.setArrowImage(getNativePeer(), ic);
+      synchronized (this) {
+        if (myNativePeer != ID.NIL) {
+          final Icon ic = myHasArrowIcon ? AllIcons.Mac.Touchbar.PopoverArrow : null;
+          NST.setArrowImage(myNativePeer, ic);
+        }
       }
     }
     return this;
@@ -245,7 +247,7 @@ class TBItemButton extends TBItem {
 
   // Icons calculations can be slow, so we use async update
   boolean updateLater(boolean force) {
-    if (!force && (!myIsVisible || myUpdateOptions == 0 || getNativePeer() == ID.NIL))
+    if (!force && (!myIsVisible || myUpdateOptions == 0 || myNativePeer == ID.NIL))
       return false;
 
     if (myRasterPromise != null && !myRasterPromise.isDone())
@@ -267,10 +269,9 @@ class TBItemButton extends TBItem {
       myUpdateOptions = 0;
 
       synchronized (this) {
-        final ID nativePeer = getNativePeer();
-        if (nativePeer.equals(ID.NIL))
+        if (myNativePeer.equals(ID.NIL))
           return;
-        NST.updateButton(nativePeer, updateOptions, layoutBits, validFlags, text, hint, isHintDisabled, raster, callback);
+        NST.updateButton(myNativePeer, updateOptions, layoutBits, validFlags, text, hint, isHintDisabled, raster, callback);
       }
     });
 

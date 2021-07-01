@@ -8,10 +8,11 @@ import com.sun.jna.Pointer;
 
 interface NSTLibrary extends Library {
   ID createTouchBar(String name, ItemCreator creator, String escId); // if defined escId => replace esc button with custom item
-  void releaseTouchBar(ID tbObj);
   void setTouchBar(ID nsView, ID tbObj);
   void selectItemsToShow(ID tbObj, String[] ids, int count);
   void setPrincipal(ID tbObj, String uid);
+
+  void releaseNativePeer(ID nativePeerPtr);
 
   interface Action extends Callback {
     void execute();

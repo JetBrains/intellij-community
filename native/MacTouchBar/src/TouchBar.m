@@ -84,7 +84,7 @@ void setPrincipal(id tbobj, const char * uid) {
 }
 
 __used
-void releaseTouchBar(id tbobj) {
+void releaseNativePeer(id tbobj) {
       if ([NSThread isMainThread]) {
           [tbobj release];
       } else {
