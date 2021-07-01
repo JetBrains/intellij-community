@@ -35,7 +35,7 @@ internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
   companion object {
     var actions = lazy {
       Properties().apply {
-        load(ResourceUtil.getResourceAsStream(DefaultBundleActionAliasMatcher::class.java.classLoader, "com.intellij.ide.util.gotoByName",
+        load(ResourceUtil.getResourceAsStream(DefaultBundleActionAliasMatcher::class.java.classLoader, "com/intellij/ide/util/gotoByName",
                                                  "DefaultActionsBundle.properties"))
       }
     }
