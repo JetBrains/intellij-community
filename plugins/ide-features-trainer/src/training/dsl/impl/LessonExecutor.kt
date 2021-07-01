@@ -276,6 +276,12 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     clearRestore()
     taskContext.steps.forEach { it.cancel(true) }
     val restoreIndex = restoreId?.idx ?: taskActions[taskContext.taskIndex].restoreIndex
+    for (info in taskActions.subList(restoreIndex + 1, taskActions.size)) {
+      info.rehighlightComponent = null
+      info.userVisibleInfo = null
+      info.highlightPreviousUi = null
+      info.removeAfterDoneMessages.clear()
+    }
     val restoreInfo = taskActions[restoreIndex]
     restoreInfo.rehighlightComponent?.let { it() }
     LessonManager.instance.resetMessagesNumber(restoreInfo.messagesNumberBeforeStart)
