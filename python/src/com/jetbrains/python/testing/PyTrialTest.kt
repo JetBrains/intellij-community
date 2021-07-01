@@ -51,7 +51,7 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 }
 
 
-class PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
+class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFactory<PyTrialTestConfiguration>(type) {
   override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
   override fun getName(): String = PyBundle.message("runcfg.trial.display_name")

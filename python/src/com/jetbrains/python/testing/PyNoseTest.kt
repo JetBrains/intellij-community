@@ -48,7 +48,7 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
   override val symbolSymbolSeparator get() = "."
 }
 
-class PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
+class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyNoseTestConfiguration>(type) {
   companion object {
     const val id = "Nosetests"
   }

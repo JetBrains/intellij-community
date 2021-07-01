@@ -112,7 +112,10 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   }
 }
 
-class PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
+class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyTestConfiguration>(type) {
+  @Deprecated("Obtain instance from PythonTestConfigurationType")
+  constructor() : this(PythonTestConfigurationType.getInstance())
+
   companion object {
     const val id = "py.test"  //Do not rename: used as ID for run configurations
   }

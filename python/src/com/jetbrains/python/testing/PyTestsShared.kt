@@ -49,7 +49,6 @@ import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -61,24 +60,12 @@ import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.util.regex.Matcher
 
-/**
- * New configuration factories
- */
-internal val pythonFactories: Array<PyAbstractTestFactory<*>>
-  get() = arrayOf(
-    PyAutoDetectionConfigurationFactory(),
-    PyTestFactory(),
-    PyNoseTestFactory(),
-    PyTrialTestFactory(),
-    PyUnitTestFactory())
-
-internal val defaultFactory: PyAbstractTestFactory<*> get() = PyAutoDetectionConfigurationFactory()
-
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
   // user may have "pytest" because it was used instead of py.test (old id) for some time
-  pythonFactories.firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
+  PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
 
-fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
+fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id)
+                                                                    ?: PythonTestConfigurationType.getInstance().autoDetectFactory
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -683,8 +670,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
   open fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean = target == this.target
 }
 
-abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
-  PythonTestConfigurationType.getInstance()) {
+abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(type: PythonTestConfigurationType)
+  : PythonConfigurationFactoryBase(type) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
 
   // Several insances of the same class point to the same factory
