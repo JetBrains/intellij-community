@@ -178,6 +178,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
 
     if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
+      paintHover(g);
       if (myBehavior.isPressedByMouse()) {
         myHovered.paintIcon(this, g, 1, 1);
       }
@@ -195,6 +196,9 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
 
     g.translate(0, 0);
+  }
+
+  protected void paintHover(Graphics g) {
   }
 
   public void setTransform(int x, int y) {

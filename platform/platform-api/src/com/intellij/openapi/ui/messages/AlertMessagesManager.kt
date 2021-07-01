@@ -17,14 +17,14 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.TouchbarDataKeys
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.*
 import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
@@ -165,9 +165,29 @@ private class AlertDialog(project: Project?,
     setDoNotAskOption(doNotAskOption)
 
     if (myIsTitleComponent && !SystemInfoRt.isMac) {
-      myCloseButton = InplaceButton(IconButton(null, AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null)) {
+      myCloseButton = object : InplaceButton(IconButton(null, AllIcons.Windows.CloseActive, null, null), {
         doCancelAction()
+      }) {
+        override fun paintHover(g: Graphics) {
+          val g2 = g.create() as Graphics2D
+
+          try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+            g2.color = JBUI.CurrentTheme.ActionButton.hoverBorder()
+
+            val rect = Rectangle(size)
+            JBInsets.removeFrom(rect, insets)
+
+            val arc = JBUIScale.scale(JBUI.getInt("Button.arc", 6).toFloat())
+            g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc))
+          }
+          finally {
+            g2.dispose()
+          }
+        }
       }
+      myCloseButton.preferredSize = JBDimension(22, 22)
     }
     else {
       myCloseButton = null
@@ -299,7 +319,7 @@ private class AlertDialog(project: Project?,
       super.layoutContainer(target)
 
       if (myCloseButton != null) {
-        val offset = JBUI.scale(20)
+        val offset = JBUI.scale(24)
         val size = myCloseButton.preferredSize
         myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
       }
