@@ -543,11 +543,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       else {
         final ASTNode token = quantifier.getToken();
         assert token != null;
-        final String tokenText = token.getText();
-        if ("?".equals(tokenText) && mySupport == RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+        if (token.getElementType().equals(RegExpTT.QUEST) && mySupport == RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
           return;
         }
-        stopAndReportError(quantifier, RegExpBundle.message("error.0.repetition.not.allowed.inside.lookbehind", tokenText));
+        stopAndReportError(quantifier, RegExpBundle.message("error.0.repetition.not.allowed.inside.lookbehind", quantifier.getText()));
       }
     }
 
