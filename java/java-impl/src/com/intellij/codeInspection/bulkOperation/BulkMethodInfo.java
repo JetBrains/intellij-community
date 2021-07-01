@@ -112,7 +112,8 @@ public final class BulkMethodInfo {
 
 
   /**
-   * @return 2 if the simple method is <code>java.util.Map#put</code>, 1 otherwise
+   * @return 2 if the simple method is <code>java.util.Map#put</code>, 1 otherwise (e.g., for
+   * <code>java.util.Collection#add</code>)
    */
   public int getSimpleParametersCount() {
     return myClassName.equals(JAVA_UTIL_MAP) && mySimpleName.equals("put") ? 2 : 1;
