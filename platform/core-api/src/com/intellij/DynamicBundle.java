@@ -48,7 +48,7 @@ public class DynamicBundle extends AbstractBundle {
         ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader(), control);
         if (pluginBundle != null) {
           try {
-            if (DynamicBundleInternal.SET_PARENT != null) {
+            if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {
               DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
             }
             return pluginBundle;
