@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
-import com.intellij.java.JavaBundle;
+import com.intellij.find.FindBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.layout.ButtonSelectorAction;
 import com.intellij.ui.layout.ButtonSelectorToolbar;
@@ -119,15 +118,14 @@ public class MigrationDialog extends DialogWrapper {
     );
 
     myScopePanel.setLayout(new HorizontalLayout(UIUtil.DEFAULT_HGAP / 2));
-    myScopePanel.add(new JBLabel(JavaBundle.message("label.refactor.migrate.target")));
 
     PropertyGraph propertyGraph = new PropertyGraph();
     GraphProperty<ScopeOption> scopeProperty = new GraphPropertyImpl<>(propertyGraph, () -> ScopeOption.PROJECT);
     ButtonSelectorToolbar toolbar = new ButtonSelectorToolbar(
       "MigrationScopeSelector",
       new DefaultActionGroup(List.of(
-        new ButtonSelectorAction<>(ScopeOption.PROJECT, scopeProperty, JavaBundle.message("migration.target.project")),
-        new ButtonSelectorAction<>(ScopeOption.MODULE, scopeProperty, JavaBundle.message("migration.target.module"))
+        new ButtonSelectorAction<>(ScopeOption.PROJECT, scopeProperty, FindBundle.messagePointer("find.popup.scope.project")),
+        new ButtonSelectorAction<>(ScopeOption.MODULE, scopeProperty, FindBundle.messagePointer("find.popup.scope.module"))
       )),
       true,
       true
