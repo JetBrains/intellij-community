@@ -37,4 +37,9 @@ class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope {
   ModuleWithDependentsScope getBaseScope() {
     return (ModuleWithDependentsScope)myBaseScope;
   }
+
+  @Override
+  public String toString() {
+    return "Restricted by tests: (" + myBaseScope + ")";
+  }
 }
