@@ -140,8 +140,7 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
     }
 
-    //TODO: WSL
-    //MavenUtil.addEventListener(mavenVersion, params);
+    MavenUtil.addEventListener(myDistribution.getVersion(), params);
     return params;
   }
 
