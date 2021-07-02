@@ -244,7 +244,7 @@ public final class AboutPopup {
       String vmVersion = properties.getProperty("java.vm.name", "unknown");
       String vmVendor = properties.getProperty("java.vendor", "unknown");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
-      appendLast();
+      myInfo.append(MessageFormat.format("VM: {0} by {1}\n", vmVersion, vmVendor));
 
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(""));

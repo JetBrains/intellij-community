@@ -158,7 +158,8 @@ public class AboutDialog extends DialogWrapper {
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
     String vmVendorInfo = IdeBundle.message("about.box.vm", vmVersion, vmVendor);
-    addLine(lines, vmVendorInfo);
+    addLineWithoutLog(lines, vmVendorInfo);
+    myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
     addEmptyLine(lines);
 
     //Print extra information from plugins
