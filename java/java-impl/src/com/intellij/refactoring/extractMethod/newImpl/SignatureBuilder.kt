@@ -38,8 +38,6 @@ class SignatureBuilder(private val project: Project) {
 
     copyNotPresentAnnotations(annotations, method)
 
-    JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)
-
     val isInInterface = anchor.containingClass?.isInterface == true
     val isJava8 = PsiUtil.getLanguageLevel(anchor) == LanguageLevel.JDK_1_8
     val shouldHaveDefaultModifier = isJava8 && ! isStatic && isInInterface
@@ -52,7 +50,7 @@ class SignatureBuilder(private val project: Project) {
     method.modifierList.setModifierProperty(PsiModifier.DEFAULT, shouldHaveDefaultModifier)
     if (visibility != null) method.modifierList.setModifierProperty(visibility, true)
     thrownExceptions.forEach { exception -> method.throwsList.add(factory.createReferenceElementByType(exception)) }
-    return method
+    return JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method) as PsiMethod
   }
 
   private fun createParameterList(inputParameters: List<InputParameter>, scope: List<PsiElement>): PsiParameterList {

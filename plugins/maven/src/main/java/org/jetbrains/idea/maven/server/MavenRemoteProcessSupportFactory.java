@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -9,6 +10,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
+
+import java.util.function.Consumer;
 
 public interface MavenRemoteProcessSupportFactory {
   ExtensionPointName<MavenRemoteProcessSupportFactory> MAVEN_SERVER_SUPPORT_EP_NAME = new ExtensionPointName<>("org.jetbrains.idea.maven.mavenServerSupportFactory");
@@ -35,5 +38,7 @@ public interface MavenRemoteProcessSupportFactory {
       super(valueClass);
     }
     public abstract String type();
+
+    public abstract void onTerminate(Consumer<ProcessEvent> onTerminate);
   }
 }

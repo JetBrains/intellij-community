@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -92,7 +92,10 @@ final class PluginLoadingResult {
 
   void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginLoadingError error) {
     if (!idMap.containsKey(plugin.getPluginId())) {
-      incompletePlugins.put(plugin.getPluginId(), plugin);
+      IdeaPluginDescriptorImpl existingIncompletePlugin = incompletePlugins.get(plugin.getPluginId());
+      if (existingIncompletePlugin == null || VersionComparatorUtil.compare(plugin.getVersion(), existingIncompletePlugin.getVersion()) > 0) {
+        incompletePlugins.put(plugin.getPluginId(), plugin);
+      }
     }
     if (error != null) {
       pluginErrors.put(plugin.getPluginId(), error);

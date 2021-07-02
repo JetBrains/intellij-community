@@ -92,7 +92,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @ApiStatus.Internal
   public void shutdown(boolean wait) {
-    myManager.unregisterConnector(this);
+    myManager.cleanUp(this);
   }
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
@@ -107,6 +107,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public abstract String getSupportType();
 
   public abstract State getState();
+
+  public abstract boolean checkConnected();
 
   public enum State {
     STARTING,

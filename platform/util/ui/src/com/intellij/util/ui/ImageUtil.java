@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -109,11 +109,16 @@ public final class ImageUtil {
 
   @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image) {
-    return toBufferedImage(image, false);
+    return toBufferedImage(image, false, false);
   }
 
   @NotNull
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
+    return toBufferedImage(image, inUserSize, false);
+  }
+
+  @NotNull
+  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize, boolean ensureOneComponent) {
     if (image instanceof JBHiDPIScaledImage) {
       JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
       Image delegate = jbImage.getDelegate();
@@ -122,7 +127,7 @@ public final class ImageUtil {
         image = scaleImage(image, 1 / jbImage.getScale());
       }
     }
-    if (image instanceof BufferedImage) {
+    if (image instanceof BufferedImage && (!ensureOneComponent || ((BufferedImage) image).getColorModel().getNumComponents() == 1)) {
       return (BufferedImage)image;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -408,6 +408,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     };
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
+    myToolBar.setTargetComponent(this);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -1202,9 +1203,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       private Image getImage() {
         if (!myImageLoaded) {
           Image image = loadImageFromUrl();
-          myImage = ImageUtil.toBufferedImage(image != null ?
-                                              image :
-                                              ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
+          myImage = ImageUtil.toBufferedImage(
+            image != null ? image : ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage(),
+            false, true);
+
           myImageLoaded = true;
         }
         return myImage;

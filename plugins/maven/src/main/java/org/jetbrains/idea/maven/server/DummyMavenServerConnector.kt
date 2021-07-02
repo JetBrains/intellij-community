@@ -49,6 +49,7 @@ class DummyMavenServerConnector(project: @NotNull Project,
 
   override fun getState() = State.RUNNING
 
+  override fun checkConnected() = true;
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {

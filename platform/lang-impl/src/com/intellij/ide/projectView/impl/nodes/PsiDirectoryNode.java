@@ -34,8 +34,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -379,6 +381,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
-    return file == null || !file.isValid() || file.getChildren().length > 0;
+    if (file == null || !file.isValid()) return false;
+    VirtualFile[] children = file.getChildren();
+    if (ArrayUtil.isEmpty(children)) return false;
+    if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
+    ViewSettings settings = getSettings();
+    return settings == null || !settings.isFlattenPackages();
   }
 }

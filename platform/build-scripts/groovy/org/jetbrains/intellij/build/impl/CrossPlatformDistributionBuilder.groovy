@@ -78,8 +78,8 @@ final class CrossPlatformDistributionBuilder {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
 
-          if (linuxFiles.containsKey("lib/classpath.txt")) { //linux has extra dbus-java
-            exclude(name: "lib/classpath.txt")
+          if (linuxFiles.containsKey("classpath.txt")) { //linux has extra dbus-java
+            exclude(name: "classpath.txt")
           }
 
           extraExecutables.each {

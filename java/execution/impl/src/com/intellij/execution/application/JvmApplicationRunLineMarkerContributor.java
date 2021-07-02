@@ -31,7 +31,7 @@ public class JvmApplicationRunLineMarkerContributor extends JvmRunLineMarkerCont
 
   @NotNull
   private static Info info() {
-    final AnAction[] actions = ExecutorAction.getActions();
+    final AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
     return new Info(
       AllIcons.RunConfigurations.TestState.Run,
       actions,

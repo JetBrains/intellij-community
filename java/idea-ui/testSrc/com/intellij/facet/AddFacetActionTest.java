@@ -40,7 +40,7 @@ public class AddFacetActionTest extends FacetTestCase {
     myEditorFacade.getModel().addFacetInfo(subInfo);
 
     assertTrue(isVisible(MockFacetType.getInstance()));
-    assertFalse(isVisible(MockSubFacetType.getInstance()));
+    assertTrue(isVisible(MockSubFacetType.getInstance()));
   }
 
   private boolean isVisible(FacetType type) {

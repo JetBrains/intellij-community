@@ -24,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -348,8 +349,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       public void processTerminated(@NotNull ProcessEvent event) {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
-          onProcessTerminated(event);
         }
+        onProcessTerminated(event);
       }
 
       @Override
@@ -553,7 +554,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  private static class Heartbeat {
+  public static class Heartbeat {
     private final Registry myRegistry;
     private boolean live = true;
     private ScheduledFuture<?> myFuture = null;
@@ -582,6 +583,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
       Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
+    }
+
+    @TestOnly
+    public void kill(int exitCode){
+      try {
+        getWatchdog().dieNow(exitCode);
+      } catch (RemoteException|NotBoundException ignore) {}
+
     }
 
     private IdeaWatchdog getWatchdog() throws RemoteException, NotBoundException {

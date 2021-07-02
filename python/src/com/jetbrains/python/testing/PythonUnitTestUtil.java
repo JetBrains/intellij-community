@@ -3,6 +3,7 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -10,10 +11,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PythonUnitTestUtil {
-  private PythonUnitTestUtil() {}
+  private PythonUnitTestUtil() { }
 
   public static List<Location> findLocations(@NotNull final Project project,
                                              @NotNull String fileName,
@@ -80,5 +84,17 @@ public final class PythonUnitTestUtil {
       }
     }
     return locations;
+  }
+
+  /**
+   * @deprecated use {@link PythonUnitTestDetectorsBasedOnSettings#isTestClass(PyClass, ThreeState, TypeEvalContext)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static boolean isTestClass(@NotNull final PyClass cls,
+                                    @NotNull final ThreeState testCaseClassRequired,
+                                    @Nullable TypeEvalContext context) {
+    Logger.getInstance(PythonUnitTestUtil.class).warn("Please do not use deprecated class " + PythonUnitTestUtil.class.getCanonicalName());
+    return PythonUnitTestDetectorsBasedOnSettings.isTestClass(cls, testCaseClassRequired, context);
   }
 }

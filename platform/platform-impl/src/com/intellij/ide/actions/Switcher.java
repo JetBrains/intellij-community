@@ -162,6 +162,10 @@ public final class Switcher extends BaseSwitcherAction {
       updateMnemonics(windows);
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
+      if (pinned) {
+        registerAction(this::navigate, getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
+        registerAction(this::navigate, getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
+      }
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
       if (!pinned) {
@@ -517,9 +521,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
-      AnAction action = ActionManager.getInstance().getAction(actionId);
-      if (action == null) return;
-      for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+      for (Shortcut shortcut : getShortcutSet(actionId).getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
           keymap.put(onKeyRelease.getForbiddenMnemonic(keyboardShortcut.getFirstKeyStroke()), null);
@@ -746,11 +748,17 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
+    private static @NotNull ShortcutSet getShortcutSet(@NotNull @NonNls String id) {
+      AnAction action = ActionManager.getInstance().getAction(id);
+      return action == null ? CustomShortcutSet.EMPTY : action.getShortcutSet();
+    }
+
     private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
       registerAction(action, onKeyRelease.getShortcuts(keys));
     }
 
     private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
+      if (shortcuts.getShortcuts().length == 0) return; // ignore empty shortcut set
       LightEditActionFactory.create(event -> {
         if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
       }).registerCustomShortcutSet(shortcuts, this, this);

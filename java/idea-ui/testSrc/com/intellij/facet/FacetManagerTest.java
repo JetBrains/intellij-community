@@ -105,6 +105,26 @@ public class FacetManagerTest extends FacetTestCase {
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
   }
 
+  public void testTwoSubFacets() {
+    MockFacet mockFacet = addFacet();
+    Facet<?> subFacet1 = addSubFacet(mockFacet, "sub1");
+    Facet<?> subFacet2 = addSubFacet(mockFacet, "sub2");
+    assertSameElements(getFacetManager().getFacetsByType(mockFacet, MockSubFacetType.ID), subFacet1, subFacet2);
+
+    ModifiableFacetModel model = getFacetManager().createModifiableModel();
+    model.removeFacet(subFacet1);
+    commit(model);
+
+    assertSameElements(getFacetManager().getFacetsByType(mockFacet, MockSubFacetType.ID), subFacet2);
+    assertSameElements(getFacetManager().getFacetsByType(MockSubFacetType.ID), subFacet2);
+
+    model = getFacetManager().createModifiableModel();
+    model.removeFacet(mockFacet);
+    commit(model);
+    assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
+    assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
+  }
+
   public void testChangeFacetConfiguration() {
     String configData = "data";
     ModifiableFacetModel model = getFacetManager().createModifiableModel();
