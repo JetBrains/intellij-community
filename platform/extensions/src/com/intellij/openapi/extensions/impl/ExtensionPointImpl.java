@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -24,10 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -311,6 +308,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
       Supplier<T> supplier = () -> adapter.createInstance(componentManager);
       consumer.accept(supplier, adapter.getPluginDescriptor());
+    }
+  }
+
+  @TestOnly
+  public final void checkImplementations(@NotNull Consumer<ExtensionComponentAdapter> consumer) {
+    for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+      consumer.accept(adapter);
     }
   }
 
