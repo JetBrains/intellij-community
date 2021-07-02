@@ -469,21 +469,19 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test set property`() = runWriteAction {
-    runWriteAction {
-      runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
-        val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-        val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
-        artifact.setProperties(MockArtifactPropertiesProvider.getInstance(), MockArtifactProperties().apply { data = "data" })
-        modifiableModel.commit()
+    runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
+      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+      artifact.setProperties(MockArtifactPropertiesProvider.getInstance(), MockArtifactProperties().apply { data = "data" })
+      modifiableModel.commit()
 
-        val anotherModifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-        val anotherModifiableArtifact = anotherModifiableModel.getOrCreateModifiableArtifact(artifact)
-        anotherModifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), null)
-        anotherModifiableModel.commit()
+      val anotherModifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val anotherModifiableArtifact = anotherModifiableModel.getOrCreateModifiableArtifact(artifact)
+      anotherModifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), null)
+      anotherModifiableModel.commit()
 
-        val properties = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactPropertiesEntity::class.java).toList()
-        assertEmpty(properties)
-      }
+      val properties = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactPropertiesEntity::class.java).toList()
+      assertEmpty(properties)
     }
   }
 
