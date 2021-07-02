@@ -3,7 +3,9 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>, val fallbackInsertHandler: InsertHandler<LookupElement>?) : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     (handlers[context.completionChar] ?: fallbackInsertHandler)?.handleInsert(context, item)
@@ -25,6 +27,7 @@ class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInser
  *
  *  * offsetToPutCaret - should be calculated under assumption that all operations already applied.
  */
+@ApiStatus.Experimental
 class DeclarativeInsertHandler2 private constructor(
   val textOperations: List<RelativeTextEdit>,
   val offsetToPutCaret: Int,
