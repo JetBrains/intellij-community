@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.mac.foundation.ID;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -18,14 +19,37 @@ public class TouchbarTest {
   private static void _createFrame() {
     NST.loadLibraryImpl();
 
-    final TouchBar testTB = _createTestScrubberTouchbar();
-    testTB.selectVisibleItemsToShow();
-    testTB.setTo(null);
-
     final JFrame f = new JFrame();
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     f.setBounds(0, 0, 500, 110);
     f.setVisible(true);
+
+    new Thread(()-> {
+      int c = 1;
+      while (--c >= 0) {
+        final TouchBar testTB = _createSimpleTestTouchbar();
+        testTB.selectVisibleItemsToShow();
+        testTB.setTo(null);
+
+        try {
+          Thread.sleep(2000);
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+
+        NST.setTouchBar(null, ID.NIL);
+        testTB.release();
+      }
+    }).start();
+
+  }
+
+  private static TouchBar _createSimpleTestTouchbar() {
+    final int configPopoverWidth = 143;
+    final TouchBar testTB = new TouchBar("test_simple");
+    testTB.addButton().setText("butt").setAction(createPrintTextCallback("pressed button"), false);
+    return testTB;
   }
 
   private static TouchBar _createTestButtonsTouchbar() {
