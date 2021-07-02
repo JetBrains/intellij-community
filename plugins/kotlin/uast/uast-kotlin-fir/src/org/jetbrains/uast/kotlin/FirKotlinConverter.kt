@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.kotlin.declarations.*
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUArrayAccessExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBlockExpression

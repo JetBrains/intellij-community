@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.declarations
+package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -9,24 +9,19 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UastEmptyExpression
-import org.jetbrains.uast.kotlin.BaseKotlinConstructorUMethod
-import org.jetbrains.uast.kotlin.lz
 
 class FirKotlinConstructorUMethod(
     ktClass: KtClassOrObject?,
     psi: PsiMethod,
     kotlinOrigin: KtDeclaration?,
     givenParent: UElement?
-) : BaseKotlinConstructorUMethod(ktClass, psi, kotlinOrigin, givenParent), FirKotlinUMethodParametersProducer {
+) : BaseKotlinConstructorUMethod(ktClass, psi, kotlinOrigin, givenParent) {
     constructor(
         ktClass: KtClassOrObject?,
         psi: KtLightMethod,
         givenParent: UElement?
     ) : this(ktClass, psi, psi.kotlinOrigin, givenParent)
-
-    override val uastParameters: List<UParameter> by lz { produceUastParameters(this, receiverTypeReference) }
 
     override fun buildDelegationCall(delegationCall: KtCallElement, uastParent: UElement): UExpression {
         return UastEmptyExpression(uastParent)
