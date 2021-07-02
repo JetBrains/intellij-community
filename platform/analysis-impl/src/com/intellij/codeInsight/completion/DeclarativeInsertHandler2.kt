@@ -2,12 +2,19 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 
-class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>, val fallbackInsertHandler: InsertHandler<LookupElement>) : InsertHandler<LookupElement> {
+class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>, val fallbackInsertHandler: InsertHandler<LookupElement>?) : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    (handlers[context.completionChar] ?: handlers[Lookup.NORMAL_SELECT_CHAR])?.handleInsert(context, item)
+    (handlers[context.completionChar] ?: fallbackInsertHandler)?.handleInsert(context, item)
+  }
+
+  companion object {
+    fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+      val handlersMap = completionChars.associate { it to handler }
+      // it's important not to provide a fallbackInsertHandler
+      return CompositeDeclarativeInsertHandler(handlersMap, null)
+    }
   }
 }
 
@@ -55,7 +62,7 @@ class DeclarativeInsertHandler2 private constructor(
       if (element != null && popupController != null) {
         when(popupOptions) {
           PopupOptions.ParameterInfo -> popupController.autoPopupParameterInfo(context.editor, element)
-          PopupOptions.MemberLookup -> popupController.autoPopupMemberLookup(context.editor, null);
+          PopupOptions.MemberLookup -> popupController.autoPopupMemberLookup(context.editor, null)
           PopupOptions.DoNotShow -> Unit
         }
       }
