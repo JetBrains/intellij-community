@@ -227,11 +227,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
                 if (KotlinBuiltIns.isString(kotlinType)) {
+                    if (idx.getKotlinType()?.canBeNull() == true) {
+                        addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    }
                     val transfer = createTransfer("java.lang.StringIndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
                     addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
                 } else if (kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
                     kotlinType.supertypes().any { type -> KotlinBuiltIns.isListOrNullableList(type) })) {
+                    if (idx.getKotlinType()?.canBeNull() == true) {
+                        addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    }
                     val transfer = createTransfer("java.lang.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
                     pushUnknown()
