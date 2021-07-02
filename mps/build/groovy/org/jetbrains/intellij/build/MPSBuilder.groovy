@@ -35,9 +35,9 @@ class MPSBuilder {
         String jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
         new LayoutBuilder(buildContext, false).layout(jpsArtifactDir) {
             jar("jps-build-test.jar") {
-                moduleTests("jps-builders")
-                moduleTests("jps-model-tests")
-                moduleTests("jps-serialization-tests")
+                moduleTests("intellij.platform.jps.build")
+                moduleTests("intellij.platform.jps.model.tests")
+                moduleTests("intellij.platform.jps.model.serialization.tests")
             }
         }
         buildContext.notifyArtifactBuilt(jpsArtifactDir)
