@@ -16,7 +16,7 @@ public abstract class GradleImportPerformanceTestCase extends GradleImportingTes
     double percent = (double)tracedTime / time * 100;
     boolean condition = percent > threshold && percent < 100;
     if (!condition) {
-      LOG.debug("Trace counters: " + trace);
+      System.out.println("Trace counters: " + trace);
     }
     assertTrue(String.format("Test time [%d] traced time [%d], percentage [%.2f]", time, tracedTime, percent), condition);
   }
