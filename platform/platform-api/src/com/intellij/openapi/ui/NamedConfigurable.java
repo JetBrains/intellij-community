@@ -102,9 +102,11 @@ public abstract class NamedConfigurable<T> implements Configurable {
             try {
               checkName(name);
               myErrorLabel.setErrorText(null, null);
-              setDisplayName(name);
-              if (myUpdateTree != null) {
-                myUpdateTree.run();
+              if (!isUpdatingNameFieldFromDisplayName()) {
+                setDisplayName(name);
+                if (myUpdateTree != null) {
+                  myUpdateTree.run();
+                }
               }
             }
             catch (ConfigurationException exc) {
