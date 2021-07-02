@@ -683,6 +683,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return !myProject.isDisposed() ? myProject : null;
+    }
     return getData(dataId, () -> getSelection());
   }
 
