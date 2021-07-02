@@ -52,7 +52,7 @@ internal class MarkdownExportDialog(
     val fileTypeProperty = PropertyGraph().graphProperty { selectedFileType }
     fileTypeProperty.afterChange { selectedFileType = it }
 
-    selectedFileType = supportedExportProviders.first()
+    selectedFileType = findFirstValidProvider() ?: supportedExportProviders.first()
     label(MarkdownBundle.message("markdown.export.dialog.filetype.label"))
     fileTypeSelector = comboBox(model, fileTypeProperty, FileTypeRenderer())
       .withValidationOnApply { validateFileType(it) }
@@ -72,6 +72,9 @@ internal class MarkdownExportDialog(
 
     return panel
   }
+
+  private fun findFirstValidProvider(): MarkdownExportProvider? =
+    supportedExportProviders.find { it.validate(project, targetFile) == null }
 
   private fun JComponent.visible(predicate: ComponentPredicate) {
     isVisible = predicate()
@@ -100,7 +103,8 @@ internal class MarkdownExportDialog(
       if (errorMessage != null) {
         isEnabled = false
         toolTipText = errorMessage
-      } else {
+      }
+      else {
         isEnabled = true
       }
     }
