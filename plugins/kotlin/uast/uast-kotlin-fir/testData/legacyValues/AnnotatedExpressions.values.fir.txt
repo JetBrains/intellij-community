@@ -20,5 +20,24 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
             UParameter (name = str) [@null var str: java.lang.String]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
-                UReturnExpression [return [!] UnknownKotlinExpression (WHEN)] = Nothing
-                    [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)] = Undetermined
+                UReturnExpression [return switch  {...] = Nothing
+                    USwitchExpression [switch  {...] = null
+                        UExpressionList (when) [    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...    ] = null
+                            USwitchClauseExpressionWithBody [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...] = Undetermined
+                                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                                UExpressionList (when_entry) [{...] = Undetermined
+                                    UYieldExpression [yield null] = UYieldResult(null)
+                                        ULiteralExpression (value = null) [null] = null
+                            USwitchClauseExpressionWithBody [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {...] = Undetermined
+                                UBinaryExpression (operator = !=) [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] = Undetermined
+                                    UQualifiedReferenceExpression [str.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                    ULiteralExpression (value = null) [null] = null
+                                UExpressionList (when_entry) [{...] = Undetermined
+                                    UYieldExpression [yield null] = UYieldResult(null)
+                                        ULiteralExpression (value = null) [null] = null
+                            USwitchClauseExpressionWithBody [ -> {...] = Undetermined
+                                UExpressionList (when_entry) [{...] = Undetermined
+                                    UYieldExpression [yield 1] = UYieldResult((long)1)
+                                        ULiteralExpression (value = 1) [1] = (long)1

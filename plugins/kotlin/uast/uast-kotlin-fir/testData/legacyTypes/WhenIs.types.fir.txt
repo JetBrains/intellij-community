@@ -4,5 +4,21 @@ UFile (package = ) [public final class WhenIsKt {...]
             UParameter (name = bar) [@null var bar: java.lang.Object]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
-                UReturnExpression [return [!] UnknownKotlinExpression (WHEN)]
-                    [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)]
+                UReturnExpression [return switch (bar)  {...]
+                    USwitchExpression [switch (bar)  {...] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = bar) [bar] : PsiType:Object
+                        UExpressionList (when) [    it is java.lang.String -> {...    ] : PsiType:Unit
+                            USwitchClauseExpressionWithBody [it is java.lang.String -> {...]
+                                UBinaryExpressionWithType [it is java.lang.String]
+                                    USimpleNameReferenceExpression (identifier = it) [it]
+                                    UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield bar]
+                                        USimpleNameReferenceExpression (identifier = bar) [bar] : PsiType:String
+                            USwitchClauseExpressionWithBody [it !is java.lang.String -> {...]
+                                UBinaryExpressionWithType [it !is java.lang.String]
+                                    USimpleNameReferenceExpression (identifier = it) [it]
+                                    UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield "<error>"]
+                                        ULiteralExpression (value = "<error>") ["<error>"] : PsiType:String
