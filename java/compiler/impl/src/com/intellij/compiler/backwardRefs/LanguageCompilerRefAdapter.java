@@ -87,7 +87,7 @@ public interface LanguageCompilerRefAdapter {
     throws IOException {
     CompilerRef compilerRef = asCompilerRef(element, names);
     if (compilerRef == null) {
-      return Collections.emptyList();
+      return null;
     }
 
     return Collections.singletonList(compilerRef);
