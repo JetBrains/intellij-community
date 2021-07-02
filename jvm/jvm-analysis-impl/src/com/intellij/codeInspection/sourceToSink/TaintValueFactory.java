@@ -58,7 +58,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
         }
       }
     }
-    if (info instanceof RestrictionInfo.Unspecified) {
+    if (info.getKind() != RestrictionInfo.RestrictionInfoKind.KNOWN) {
       info = context.secondaryItems().map(item -> fromAnnotationOwner(item.getModifierList()))
         .filter(inf -> inf != TaintValue.Unknown).findFirst().orElse(info);
     }

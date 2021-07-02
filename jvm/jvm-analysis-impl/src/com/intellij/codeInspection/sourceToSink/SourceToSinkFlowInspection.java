@@ -28,7 +28,7 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
         if (contextValue != TaintValue.Untainted) return;
         TaintValue taintValue = TaintAnalyzer.getTaintValue(uExpression);
         if (taintValue == null) return;
-        taintValue = taintValue.and(contextValue);
+        taintValue = taintValue.join(contextValue);
         if (taintValue == TaintValue.Untainted) return;
         String errorMessage = Objects.requireNonNull(taintValue.getErrorMessage());
         LocalQuickFix fix = null;

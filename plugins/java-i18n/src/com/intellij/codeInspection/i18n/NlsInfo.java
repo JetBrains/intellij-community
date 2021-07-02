@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 
 /**
  * Contains information about localization status.
- * The class has three implementations {@link Localized}, {@link NonLocalized} and {@link Unspecified},
+ * The class has three implementations {@link Localized}, {@link NonLocalized} and {@link NlsUnspecified},
  * which may provide additional information.
  */
 public abstract class NlsInfo implements RestrictionInfo {
@@ -48,7 +48,7 @@ public abstract class NlsInfo implements RestrictionInfo {
   /**
    * @return {@link ThreeState#YES} if the string must be localized (see {@link Localized});<br>
    * {@link ThreeState#NO} if the string must not be localized (see {@link NonLocalized});<br>
-   * {@link ThreeState#UNSURE} if it's not explicitly specified (see {@link Unspecified});
+   * {@link ThreeState#UNSURE} if it's not explicitly specified (see {@link NlsUnspecified});
    */
   public @NotNull ThreeState getNlsStatus() {
     return myNls;
@@ -161,7 +161,7 @@ public abstract class NlsInfo implements RestrictionInfo {
         info = fromUVariable(uLocal);
       }
     }
-    if (info instanceof Unspecified) {
+    if (info.getKind() != RestrictionInfoKind.KNOWN) {
       info = context.secondaryItems().map(item -> fromAnnotationOwner(item.getModifierList()))
         .filter(inf -> inf != NlsUnspecified.UNKNOWN).findFirst().orElse(info);
     }
@@ -407,16 +407,26 @@ public abstract class NlsInfo implements RestrictionInfo {
       }
       return new Localized(myCapitalization, myPrefix, mySuffix, qualifiedName);
     }
+
+    @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.KNOWN;
+    }
   }
 
   /**
-   * Describes a string that should not be localized but it's still safe to be displayed in UI
+   * Describes a string that should not be localized, but it's still safe to be displayed in UI
    * (e.g. file name).
    */
   public static final class NlsSafe extends NlsInfo {
     private static final NlsSafe INSTANCE = new NlsSafe();
 
     private NlsSafe() { super(ThreeState.NO); }
+
+    @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.KNOWN;
+    }
   }
 
   /**
@@ -426,13 +436,18 @@ public abstract class NlsInfo implements RestrictionInfo {
     private static final NonLocalized INSTANCE = new NonLocalized();
 
     private NonLocalized() { super(ThreeState.NO); }
+
+    @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.KNOWN;
+    }
   }
 
   /**
    * Describes a string, whose localization status is not explicitly specified.
    * Whether the string should be localized or not may depend on the user settings and various heuristics.
    */
-  public static final class NlsUnspecified extends NlsInfo implements Unspecified {
+  public static final class NlsUnspecified extends NlsInfo {
     private static final NlsUnspecified UNKNOWN = new NlsUnspecified(null);
 
     private final @Nullable PsiModifierListOwner myCandidate;
@@ -444,15 +459,15 @@ public abstract class NlsInfo implements RestrictionInfo {
 
     /**
      * @return a place where it's desired to put an explicit {@link Nls} or {@link NonNls} annotation.
-     * May return null if such kind of a place cannot be determined.
+     * May return null if such kind of place cannot be determined.
      */
     public @Nullable PsiModifierListOwner getAnnotationCandidate() {
       return myCandidate;
     }
 
     @Override
-    public boolean isUnknown() {
-      return this == UNKNOWN;
+    public @NotNull RestrictionInfoKind getKind() {
+      return this == UNKNOWN ? RestrictionInfoKind.UNKNOWN : RestrictionInfoKind.UNSPECIFIED;
     }
   }
 }

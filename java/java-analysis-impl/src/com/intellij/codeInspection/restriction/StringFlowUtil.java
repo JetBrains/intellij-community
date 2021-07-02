@@ -125,12 +125,12 @@ public class StringFlowUtil {
   public static boolean isStringProcessingMethod(@Nullable PsiMethod method,
                                                  @NotNull RestrictionInfoFactory<?> factory) {
     if (method == null) return false;
-    if (!(factory.fromModifierListOwner(method) instanceof RestrictionInfo.Unspecified)) return false;
+    if (factory.fromModifierListOwner(method).getKind() == RestrictionInfo.RestrictionInfoKind.KNOWN) return false;
     if (!JavaMethodContractUtil.isPure(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
-      if (!(factory.fromModifierListOwner(parameter) instanceof RestrictionInfo.Unspecified)) return false;
+      if (factory.fromModifierListOwner(parameter).getKind() == RestrictionInfo.RestrictionInfoKind.KNOWN) return false;
     }
     return true;
   }
@@ -172,7 +172,7 @@ public class StringFlowUtil {
           parameterType = substitutor.substitute(parameterType);
         }
         RestrictionInfo info = factory.fromAnnotationOwner(parameterType);
-        if (!(info instanceof RestrictionInfo.Unspecified) || !((RestrictionInfo.Unspecified)info).isUnknown()) {
+        if (info.getKind() != RestrictionInfo.RestrictionInfoKind.UNKNOWN) {
           return false;
         }
         parameters = new PsiParameter[]{parameter};

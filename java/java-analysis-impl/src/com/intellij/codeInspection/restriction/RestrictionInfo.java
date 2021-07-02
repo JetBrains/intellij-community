@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.restriction;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Marker interface for lattice elements that provide restrictions on some named psi element (variable, class, method...)
  * 
@@ -10,13 +12,20 @@ package com.intellij.codeInspection.restriction;
  */
 public interface RestrictionInfo {
 
-  /**
-   * Represents restriction info that is not known right now (but maybe can be inferred in the future)
-   */
-  interface Unspecified extends RestrictionInfo {
+  @NotNull RestrictionInfoKind getKind();
+  
+  enum RestrictionInfoKind {
     /**
-     * @return true if restriction info cannot be inferred at all
+     * Restriction info is explicitly specified (e.g. annotated method)
      */
-    boolean isUnknown();
+    KNOWN,
+    /**
+     * Restriction info that is not known right now and cannot be inferred
+     */
+    UNKNOWN,
+    /**
+     * Restriction info that may be inferred in the future
+     */
+    UNSPECIFIED
   }
 }

@@ -13,12 +13,17 @@ interface TaintValue extends RestrictionInfo {
   TaintValue Untainted = new TaintValue() {
 
     @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.KNOWN;
+    }
+
+    @Override
     public @Nullable String getErrorMessage() {
       return null;
     }
 
     @Override
-    public @NotNull TaintValue and(@NotNull TaintValue other) {
+    public @NotNull TaintValue join(@NotNull TaintValue other) {
       return other;
     }
 
@@ -37,12 +42,17 @@ interface TaintValue extends RestrictionInfo {
   TaintValue Tainted = new TaintValue() {
 
     @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.KNOWN;
+    }
+
+    @Override
     public @NotNull String getErrorMessage() {
       return "jvm.inspections.source.unsafe.to.sink.flow.description";
     }
 
     @Override
-    public @NotNull TaintValue and(@NotNull TaintValue other) {
+    public @NotNull TaintValue join(@NotNull TaintValue other) {
       return this;
     }
 
@@ -61,16 +71,11 @@ interface TaintValue extends RestrictionInfo {
 
   @Nullable String getErrorMessage();
 
-  @NotNull TaintValue and(@NotNull TaintValue other);
+  @NotNull TaintValue join(@NotNull TaintValue other);
 
   @NotNull String getAnnotationName();
 
-  class TaintUnknown implements Unspecified, TaintValue {
-
-    @Override
-    public boolean isUnknown() {
-      return true;
-    }
+  class TaintUnknown implements TaintValue {
 
     @Override
     public @NotNull String getErrorMessage() {
@@ -78,7 +83,7 @@ interface TaintValue extends RestrictionInfo {
     }
 
     @Override
-    public @NotNull TaintValue and(@NotNull TaintValue other) {
+    public @NotNull TaintValue join(@NotNull TaintValue other) {
       return other == Tainted ? other : this;
     }
 
@@ -90,6 +95,11 @@ interface TaintValue extends RestrictionInfo {
     @Override
     public String toString() {
       return "UNKNOWN";
+    }
+
+    @Override
+    public @NotNull RestrictionInfoKind getKind() {
+      return RestrictionInfoKind.UNKNOWN;
     }
   }
 }
