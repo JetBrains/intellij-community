@@ -3,8 +3,28 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
         UMethod (name = getElementsAdditionalResolve) [public static final fun getElementsAdditionalResolve(@null string: java.lang.String) : java.lang.String {...}]
             UParameter (name = string) [@null var string: java.lang.String]
                 UAnnotation (fqName = null) [@null]
-            UBlockExpression [{...}] = Undetermined
+            UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     ULocalVariable (name = arr) [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)] = Undetermined
+                USwitchExpression [switch (string)  {...] = Nothing
+                    USimpleNameReferenceExpression (identifier = string) [string] = Undetermined
+                    UExpressionList (when) [    "aaaa" -> {...    ] = Nothing
+                        USwitchClauseExpressionWithBody ["aaaa" -> {...] = Undetermined
+                            ULiteralExpression (value = "aaaa") ["aaaa"] = "aaaa"
+                            UExpressionList (when_entry) [{...] = Undetermined
+                                UYieldExpression [yield return "bindingContext"] = UYieldResult(Nothing)
+                                    UReturnExpression [return "bindingContext"] = Nothing
+                                        ULiteralExpression (value = "bindingContext") ["bindingContext"] = "bindingContext"
+                        USwitchClauseExpressionWithBody ["empty-switch" -> {...] = Undetermined
+                            ULiteralExpression (value = "empty-switch") ["empty-switch"] = "empty-switch"
+                            UExpressionList (when_entry) [{...] = Undetermined
+                        USwitchClauseExpressionWithBody [ -> {...] = Undetermined
+                            UExpressionList (when_entry) [{...] = Undetermined
+                                UDeclarationsExpression [@null var var837f2350: <ErrorType> = arr] = Undetermined
+                                    ULocalVariable (name = var837f2350) [@null var var837f2350: <ErrorType> = arr]
+                                        UAnnotation (fqName = null) [@null]
+                                        USimpleNameReferenceExpression (identifier = arr) [arr] = (var arr = Undetermined)
+                                UYieldExpression [yield return bindingContext] = UYieldResult(Nothing)
+                                    UReturnExpression [return bindingContext] = Nothing
+                                        USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] = Undetermined

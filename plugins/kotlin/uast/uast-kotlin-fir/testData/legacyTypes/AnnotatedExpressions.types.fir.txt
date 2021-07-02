@@ -20,5 +20,24 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
             UParameter (name = str) [@null var str: java.lang.String]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
-                UReturnExpression [return [!] UnknownKotlinExpression (WHEN)]
-                    [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)]
+                UReturnExpression [return switch  {...]
+                    USwitchExpression [switch  {...] : PsiType:Integer
+                        UExpressionList (when) [    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...    ] : PsiType:Integer
+                            USwitchClauseExpressionWithBody [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...]
+                                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield null]
+                                        ULiteralExpression (value = null) [null] : PsiType:Void
+                            USwitchClauseExpressionWithBody [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {...]
+                                UBinaryExpression (operator = !=) [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] : PsiType:boolean
+                                    UQualifiedReferenceExpression [str.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:boolean
+                                        USimpleNameReferenceExpression (identifier = str) [str] : PsiType:String
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                    ULiteralExpression (value = null) [null] : PsiType:Void
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield null]
+                                        ULiteralExpression (value = null) [null] : PsiType:Void
+                            USwitchClauseExpressionWithBody [ -> {...]
+                                UExpressionList (when_entry) [{...]
+                                    UYieldExpression [yield 1]
+                                        ULiteralExpression (value = 1) [1] : PsiType:int
