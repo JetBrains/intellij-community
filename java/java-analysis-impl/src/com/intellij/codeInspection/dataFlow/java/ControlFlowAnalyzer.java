@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.TrapTracker;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -34,9 +35,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
@@ -44,7 +43,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -66,12 +64,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final int MAX_ARRAY_INDEX_FOR_INITIALIZER = 32;
   private final PsiElement myCodeFragment;
   private final boolean myInlining;
-  private final Project myProject;
   private final DfaValueFactory myFactory;
+  private final TrapTracker myTrapTracker;
   private ControlFlow myCurrentFlow;
-  private FList<Trap> myTrapStack = FList.emptyList();
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
-  private final Map<String, ExceptionTransfer> myExceptionCache;
   private ExpressionBlockContext myExpressionBlockContext;
 
   /**
@@ -83,13 +79,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    *                     If PsiClass then class initializers + field initializers will be analyzed
    * @param inlining if true inlining is performed for known method calls
    */
-  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean inlining) {
+  ControlFlowAnalyzer(@NotNull DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean inlining) {
     myInlining = inlining;
     myFactory = valueFactory;
     myCodeFragment = codeFragment;
-    myProject = codeFragment.getProject();
-    GlobalSearchScope scope = codeFragment.getResolveScope();
-    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(TypeConstraints.instanceOf(createClassType(scope, fqn))));
+    myTrapTracker = new TrapTracker(valueFactory, codeFragment);
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
@@ -147,12 +141,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   DfaValueFactory getFactory() {
     return myFactory;
-  }
-
-  private @NotNull PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
-    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
-    if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
-    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqn, scope);
   }
 
   private void removeVariable(@Nullable PsiVariable variable) {
@@ -275,7 +263,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         description.accept(this);
       }
 
-      throwException(myExceptionCache.get(JAVA_LANG_ASSERTION_ERROR), statement);
+      addInstruction(new ThrowInstruction(myTrapTracker.transferValue(JAVA_LANG_ASSERTION_ERROR), statement));
     }
     jump.setOffset(getInstructionCount());
     finishElement(statement);
@@ -430,8 +418,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   void addNullCheck(@Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
-      DfaControlTransferValue transfer = shouldHandleException() && problem.thrownException() != null
-                                         ? myFactory.controlTransfer(myExceptionCache.get(problem.thrownException()), myTrapStack) : null;
+      DfaControlTransferValue transfer =
+        problem.thrownException() != null ? myTrapTracker.maybeTransferValue(problem.thrownException()) : null;
       addInstruction(new CheckNotNullInstruction(problem, transfer));
     }
   }
@@ -439,10 +427,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void jumpOut(PsiElement exitedStatement) {
     if (exitedStatement != null && PsiTreeUtil.isAncestor(myCodeFragment, exitedStatement, false)) {
       controlTransfer(createTransfer(exitedStatement, exitedStatement),
-                      getTrapsInsideElement(exitedStatement));
+                      myTrapTracker.getTrapsInsideElement(exitedStatement));
     } else {
       // Jumping out of analyzed code fragment
-      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, getTrapsInsideElement(myCodeFragment));
+      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, myTrapTracker.getTrapsInsideElement(myCodeFragment));
     }
   }
 
@@ -450,20 +438,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
-  private @NotNull FList<Trap> getTrapsInsideElement(PsiElement element) {
-    return FList.createFromReversed(ContainerUtil.reverse(
-      ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
-  }
-
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, true)) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
-      controlTransfer(createTransfer(body, body), getTrapsInsideElement(body));
+      controlTransfer(createTransfer(body, body), myTrapTracker.getTrapsInsideElement(body));
     } else {
       // Jumping out of analyzed code fragment
-      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, getTrapsInsideElement(myCodeFragment));
+      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, myTrapTracker.getTrapsInsideElement(myCodeFragment));
     }
     finishElement(statement);
   }
@@ -867,7 +850,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PopInstruction());
       }
 
-      addInstruction(new ReturnInstruction(myFactory, myTrapStack, statement));
+      addInstruction(new ReturnInstruction(myFactory, myTrapTracker.trapStack(), statement));
     }
     finishElement(statement);
   }
@@ -1000,7 +983,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new GotoInstruction(getStartOffset(defaultLabel)));
       }
       else if (switchBlock instanceof PsiSwitchExpression) {
-        throwException(myExceptionCache.get("java.lang.IncompatibleClassChangeError"), null);
+        addInstruction(new ThrowInstruction(myTrapTracker.transferValue("java.lang.IncompatibleClassChangeError"), null));
       }
       else {
         addInstruction(new GotoInstruction(getEndOffset(body)));
@@ -1065,20 +1048,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void addConditionalErrorThrow() {
-    if (!shouldHandleException()) {
+    if (!myTrapTracker.shouldHandleException()) {
       return;
     }
-    DfaControlTransferValue transfer = myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_ERROR), myTrapStack);
+    DfaControlTransferValue transfer = myTrapTracker.transferValue(JAVA_LANG_ERROR);
     addInstruction(new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer));
-  }
-
-  private boolean shouldHandleException() {
-    for (Trap trap : myTrapStack) {
-      if (trap instanceof TryCatchTrap || trap instanceof EnterFinallyTrap || trap instanceof TryCatchAllTrap) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -1145,14 +1119,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void pushTrap(Trap elem) {
-    myTrapStack = myTrapStack.prepend(elem);
+    myTrapTracker.pushTrap(elem);
   }
 
   void popTrap(Class<? extends Trap> aClass) {
-    if (!aClass.isInstance(myTrapStack.getHead())) {
-      throw new IllegalStateException("Unexpected trap-stack head (wanted: "+aClass.getSimpleName()+"); stack: "+myTrapStack);
-    }
-    myTrapStack = myTrapStack.getTail();
+    myTrapTracker.popTrap(aClass);
   }
 
   private void processTryWithResources(@Nullable PsiResourceList resourceList, @Nullable PsiCodeBlock tryBlock) {
@@ -1454,7 +1425,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                         TypeConversionUtil.isNumericType(lType) &&
                                         TypeConversionUtil.isNumericType(rType);
 
-    // comparing object and primitive is not compilable code but we try to balance types to avoid noise warnings
+    // comparing object and primitive is not compilable code, but we try to balance types to avoid noise warnings
     boolean comparingObjectAndPrimitive = comparing && !comparingRef && !comparingPrimitiveNumeric &&
                                           (TypeConversionUtil.isNumericType(lType) || TypeConversionUtil.isNumericType(rType));
 
@@ -1656,14 +1627,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void addMethodThrows(PsiMethod method) {
-    if (shouldHandleException()) {
+    if (myTrapTracker.shouldHandleException()) {
       addThrows(method == null ? Collections.emptyList() : Arrays.asList(method.getThrowsList().getReferencedTypes()));
     }
   }
 
   private void addThrows(Collection<? extends PsiType> exceptions) {
     StreamEx<TypeConstraint> allExceptions = StreamEx.of(JAVA_LANG_ERROR, JAVA_LANG_RUNTIME_EXCEPTION)
-      .map(fqn -> myExceptionCache.get(fqn).getThrowable());
+      .map(fqn -> myTrapTracker.transfer(fqn).getThrowable());
     if (!exceptions.isEmpty()) {
       allExceptions = allExceptions.append(StreamEx.of(exceptions).map(TypeConstraints::instanceOf))
         .map(TypeConstraint::tryNegate).nonNull()
@@ -1672,19 +1643,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         .map(TypeConstraint.Exact::instanceOf);
     }
     allExceptions
-      .map(exc -> myFactory.controlTransfer(new ExceptionTransfer(exc), myTrapStack))
+      .map(exc -> myTrapTracker.transferValue(new ExceptionTransfer(exc)))
       .map(transfer -> new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
       .forEach(this::addInstruction);
   }
 
   void throwException(@Nullable PsiType ref, @Nullable PsiElement anchor) {
     if (ref != null) {
-      throwException(new ExceptionTransfer(TypeConstraints.instanceOf(ref)), anchor);
+      DfaControlTransferValue value = myTrapTracker.transferValue(new ExceptionTransfer(TypeConstraints.instanceOf(ref)));
+      addInstruction(new ThrowInstruction(value, anchor));
     }
-  }
-
-  private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {
-    addInstruction(new ThrowInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
   }
 
   @Override
@@ -1795,7 +1763,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable DfaControlTransferValue createTransfer(@NotNull String exception) {
-    return shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get(exception), myTrapStack) : null;
+    return myTrapTracker.maybeTransferValue(exception);
   }
 
   @Override
@@ -2215,7 +2183,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param psiBlock psi-block
    * @param targetFactory factory to bind the PSI block to
    * @param useInliners whether to use inliners
-   * @return resulting control flow; null if cannot be built (e.g. if the code block contains unrecoverable errors)
+   * @return resulting control flow; null if it cannot be built (e.g. if the code block contains unrecoverable errors)
    */
   @Nullable
   public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.inst.*
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
+import com.intellij.codeInspection.dataFlow.jvm.TrapTracker
 import com.intellij.codeInspection.dataFlow.jvm.transfer.*
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.CatchClauseDescriptor
 import com.intellij.codeInspection.dataFlow.lang.ir.*
@@ -24,7 +25,6 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
-import com.intellij.util.containers.FactoryMap
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
@@ -47,21 +47,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
-    // Will be used to track catch/finally blocks
-    private var traps: FList<Trap> = FList.emptyList()
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
-    private val exceptionCache = FactoryMap.create<String, ExceptionTransfer>
-    { fqn -> ExceptionTransfer(TypeConstraints.instanceOf(createClassType(fqn))) }
-    private val stringType = createClassType(CommonClassNames.JAVA_LANG_STRING)
-
-    private fun createClassType(fqn: String): PsiClassType {
-        val project = factory.project
-        val scope = context.resolveScope
-        val aClass = JavaPsiFacade.getInstance(project).findClass(fqn, scope)
-        val elementFactory = JavaPsiFacade.getElementFactory(project)
-        return if (aClass != null) elementFactory.createType(aClass) else elementFactory.createTypeByFQClassName(fqn, scope)
-    }
+    private val trapTracker = TrapTracker(factory, context)
+    private val stringType = PsiType.getJavaLangString(context.manager, context.resolveScope)
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
@@ -146,7 +135,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         val finallyStart = DeferredOffset()
         val finallyDescriptor = if (finallyBlock != null) EnterFinallyTrap(finallyBlock, finallyStart) else null
-        finallyDescriptor?.let { pushTrap(it) }
+        finallyDescriptor?.let { trapTracker.pushTrap(it) }
 
         val tempVar = flow.createTempVariable(DfType.TOP)
         val sections = statement.catchClauses
@@ -158,7 +147,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     clauses[KotlinCatchClauseDescriptor(section)] = DeferredOffset()
                 }
             }
-            pushTrap(TryCatchTrap(statement, clauses))
+            trapTracker.pushTrap(TryCatchTrap(statement, clauses))
         }
 
         processExpression(tryBlock)
@@ -169,7 +158,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         controlTransfer(gotoEnd, singleFinally)
 
         if (sections.isNotEmpty()) {
-            popTrap(TryCatchTrap::class.java)
+            trapTracker.popTrap(TryCatchTrap::class.java)
         }
 
         for (section in sections) {
@@ -182,12 +171,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         if (finallyBlock != null) {
             setOffset(finallyStart)
-            popTrap(EnterFinallyTrap::class.java)
-            pushTrap(InsideFinallyTrap(finallyBlock))
+            trapTracker.popTrap(EnterFinallyTrap::class.java)
+            trapTracker.pushTrap(InsideFinallyTrap(finallyBlock))
             processExpression(finallyBlock.finalExpression)
             addInstruction(PopInstruction())
             controlTransfer(ExitFinallyTransfer(finallyDescriptor!!), FList.emptyList())
-            popTrap(InsideFinallyTrap::class.java)
+            trapTracker.popTrap(InsideFinallyTrap::class.java)
         }
     }
 
@@ -261,7 +250,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(DfTypes.NULL, anchor))
             setOffset(endOffset)
         } else {
-            val transfer = createTransfer("java.lang.ClassCastException")
+            val transfer = trapTracker.maybeTransferValue("java.lang.ClassCastException")
             addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
             if (typeReference != null) {
                 val castType = typeReference.getAbbreviatedTypeOrType(typeReference.analyze(BodyResolveMode.FULL))
@@ -285,7 +274,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (idx.getKotlinType()?.canBeNull() == true) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
-                val transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException")
+                val transfer = trapTracker.maybeTransferValue("java.lang.ArrayIndexOutOfBoundsException")
                 addInstruction(ArrayAccessInstruction(transfer, anchor, KotlinArrayIndexProblem(SpecialField.ARRAY_LENGTH, idx), null))
                 curType = expr.builtIns.getArrayElementType(curType)
             } else {
@@ -293,7 +282,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (idx.getKotlinType()?.canBeNull() == true) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = createTransfer("java.lang.StringIndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("java.lang.StringIndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
                     addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
                 } else if (kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
@@ -301,7 +290,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (idx.getKotlinType()?.canBeNull() == true) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = createTransfer("java.lang.IndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("java.lang.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
                     pushUnknown()
                 } else {
@@ -397,8 +386,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         addInstruction(PushValueInstruction(expr.getKotlinType().toDfType(expr)))
         addInstruction(FlushFieldsInstruction())
-        if (shouldHandleException()) {
-            val transfer = factory.controlTransfer(exceptionCache[CommonClassNames.JAVA_LANG_THROWABLE], traps)
+        val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+        if (transfer != null) {
             addInstruction(EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
         }
     }
@@ -523,7 +512,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         } else if (ref == "!!") {
-            val transfer: DfaControlTransferValue? = createTransfer("java.lang.NullPointerException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
             addInstruction(EnsureInstruction(null, RelationType.NE, DfTypes.NULL, transfer))
             // Probably unbox
             addImplicitConversion(expr, operand?.getKotlinType(), expr.getKotlinType())
@@ -619,25 +608,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         processExpression(expr.returnedExpression)
-        addInstruction(ReturnInstruction(factory, traps, expr))
+        addInstruction(ReturnInstruction(factory, trapTracker.trapStack(), expr))
         pushUnknown()
-    }
-
-    private fun getTrapsInsideElement(element: PsiElement): FList<Trap> {
-        return FList.createFromReversed(traps.filter { trap -> PsiTreeUtil.isAncestor(element, trap.anchor, true) }.asReversed())
-    }
-
-    private fun shouldHandleException(): Boolean {
-        return traps.any { it is TryCatchTrap || it is EnterFinallyTrap || it is TryCatchAllTrap }
-    }
-
-    private fun pushTrap(elem: Trap?) {
-        traps = traps.prepend(elem)
-    }
-
-    private fun popTrap(aClass: Class<out Trap?>) {
-        check(aClass.isInstance(traps.head)) { "Unexpected trap-stack head (wanted: " + aClass.simpleName + "); stack: " + traps }
-        traps = traps.tail
     }
 
     private fun controlTransfer(target: TransferTarget, traps: FList<Trap>) {
@@ -660,10 +632,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processLabeledJumpExpression(expr: KtExpressionWithLabel) {
         val targetLoop = expr.targetLoop()
         if (targetLoop == null || !PsiTreeUtil.isAncestor(context, targetLoop, false)) {
-            addInstruction(ControlTransferInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, traps)))
+            addInstruction(ControlTransferInstruction(trapTracker.transferValue(DfaControlTransferValue.RETURN_TRANSFER)))
         } else {
             val body = if (expr is KtBreakExpression) targetLoop else targetLoop.body!!
-            val transfer = factory.controlTransfer(createTransfer(body, body, factory.unknown), getTrapsInsideElement(body))
+            val transfer = factory.controlTransfer(createTransfer(body, body, factory.unknown), trapTracker.getTrapsInsideElement(body))
             addInstruction(ControlTransferInstruction(transfer))
         }
     }
@@ -676,7 +648,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val psiType = exception.getKotlinType()?.toPsiType(expr)
             if (psiType != null) {
                 val kind = ExceptionTransfer(TypeConstraints.instanceOf(psiType))
-                addInstruction(ThrowInstruction(factory.controlTransfer(kind, traps), expr))
+                addInstruction(ThrowInstruction(trapTracker.transferValue(kind), expr))
                 return
             }
         }
@@ -866,7 +838,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addImplicitConversion(left, resultType)
         processExpression(right)
         if (mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) {
-            val transfer: DfaControlTransferValue? = createTransfer("java.lang.ArithmeticException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
             val zero = if (resultType?.isLong() == true) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
@@ -875,11 +847,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
     }
-
-    fun createTransfer(exception: String): DfaControlTransferValue? {
-        return if (!traps.isEmpty()) factory.controlTransfer(exceptionCache[exception], traps) else null
-    }
-
 
     private fun addImplicitConversion(expression: KtExpression?, expectedType: KotlinType?) {
         addImplicitConversion(expression, expression?.getKotlinType(), expectedType)
