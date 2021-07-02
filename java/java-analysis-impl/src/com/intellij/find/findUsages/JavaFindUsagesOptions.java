@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,6 +98,6 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     if (strings.isEmpty()) {
       return AnalysisBundle.message("find.usages.panel.title.usages");
     }
-    return NlsMessages.formatOrList(strings);
+    return StringUtil.capitalize(NlsMessages.formatOrList(strings));
   }
 }

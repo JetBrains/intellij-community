@@ -8,8 +8,10 @@ import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usages.UsageSearchPresentation
@@ -28,8 +30,13 @@ internal data class ShowTargetUsagesActionHandler<O>(
   override fun getPresentation(): UsageSearchPresentation =
     object: UsageSearchPresentation {
       override fun getSearchString(): String = usageHandler.getSearchString(allOptions)
-      override fun getSearchOptions(): String =
-        LangBundle.message(if (allOptions.textSearch == true) "target.usages.and.text.option" else "target.usages.option")
+      override fun getSearchOptions(): String {
+        val optionsList = ArrayList<String>()
+
+        if (allOptions.options.isUsages) optionsList.add(LangBundle.message("target.usages.option"))
+        if (allOptions.textSearch == true) optionsList.add(LangBundle.message("target.text.occurrences.option"))
+        return StringUtil.capitalize(NlsMessages.formatOrList(optionsList))
+      }
     }
 
   override fun createUsageSearcher(): UsageSearcher {
