@@ -52,7 +52,7 @@ class FeedbackForm(
   val isEvaluation: Boolean
 ) : DialogWrapper(project, false) {
   private var details = ""
-  private var email = LicensingFacade.INSTANCE.getLicenseeEmail().orEmpty()
+  private var email = LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty()
   private var needSupport = false
   private var shareSystemInformation = false
   private var ratingComponent: RatingComponent? = null
@@ -157,6 +157,7 @@ class FeedbackForm(
       row {
         cell {
           checkBox(ApplicationBundle.message("feedback.form.share.system.information"), ::shareSystemInformation)
+          @Suppress("DialogTitleCapitalization")
           HyperlinkLabel(ApplicationBundle.message("feedback.form.share.system.information.link"))().also {
             it.component.addHyperlinkListener {
               showSystemInformation()

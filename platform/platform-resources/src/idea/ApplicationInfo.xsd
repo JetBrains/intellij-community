@@ -31,7 +31,7 @@
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
         <xs:element type="urlType" name="support" minOccurs="0"/>
         <xs:element type="urlType" name="youtrack" minOccurs="0"/>
-        <xs:element type="urlType" name="feedback" minOccurs="0"/>
+        <xs:element type="zendeskFormType" name="feedback" minOccurs="0"/>
         <xs:element type="whatsNewUrlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
@@ -523,5 +523,18 @@
   <xs:complexType name="default-lafType">
     <xs:attribute type="xs:string" name="light"/>
     <xs:attribute type="xs:string" name="dark"/>
+  </xs:complexType>
+  <xs:complexType name="zendeskFormType">
+    <xs:sequence>
+      <xs:element name="field" type="zendeskFieldType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="url" use="required"/>
+    <xs:attribute type="xs:string" name="zendesk-form-id"/>
+    <xs:attribute type="xs:string" name="zendesk-url"/>
+  </xs:complexType>
+  <xs:complexType name="zendeskFieldType">
+    <xs:attribute type="xs:long" name="id" use="required"/>
+    <xs:attribute type="xs:string" name="type"/>
+    <xs:attribute type="xs:string" name="value"/>
   </xs:complexType>
 </xs:schema>
