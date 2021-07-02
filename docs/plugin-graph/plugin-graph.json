@@ -2743,6 +2743,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "Cn",
+    "name": "intellij.spring.boot.core/shared-indexes",
+    "n": "i.spring.boot.core/shared-indexes",
+    "package": "com.intellij.spring.boot.initializr.indexing",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.shared-indexes.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "c2Z",
     "n": "com.intellij.spring"
   }
@@ -4681,6 +4693,14 @@
     "id": "LR_EP",
     "source": "LR",
     "target": "EP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_Cn",
+    "source": "LR",
+    "target": "Cn",
     "type": 1
   }
 }, {
@@ -7121,6 +7141,14 @@
     "id": "EP_Up",
     "source": "EP",
     "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Cn_1t",
+    "source": "Cn",
+    "target": "1t",
     "type": 0
   }
 }, {
