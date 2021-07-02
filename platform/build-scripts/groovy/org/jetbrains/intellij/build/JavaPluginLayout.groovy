@@ -78,6 +78,8 @@ final class JavaPluginLayout {
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("jps-javac-extension")
+      withProjectLibrary("jb-jdi")
+      withProjectLibrary("precompiled_jshell-frontend")
 
       withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
 

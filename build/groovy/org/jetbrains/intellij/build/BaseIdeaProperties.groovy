@@ -97,7 +97,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
     "lib/util.jar!/com/intellij/serialization/"                  : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
-    "lib/jshell-frontend.jar"                                   : "9",
+    "plugins/java/lib/jshell-frontend.jar"                      : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
     "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
