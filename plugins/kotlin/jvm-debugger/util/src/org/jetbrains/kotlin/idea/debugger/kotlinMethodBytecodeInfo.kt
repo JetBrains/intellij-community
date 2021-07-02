@@ -13,6 +13,10 @@ fun Method.isSimpleGetter() =
     isJVMStaticVariableGetter()
 
 fun Method.isLateinitVariableGetter() =
+    isOldBackendLateinitVariableGetter() ||
+    isIRBackendLateinitVariableGetter()
+
+fun Method.isOldBackendLateinitVariableGetter() =
     verifyMethod(14,
         intArrayOf(
             Opcodes.ALOAD,
@@ -21,6 +25,25 @@ fun Method.isLateinitVariableGetter() =
             Opcodes.IFNONNULL,
             Opcodes.LDC,
             Opcodes.INVOKESTATIC
+        )
+    )
+
+fun Method.isIRBackendLateinitVariableGetter() =
+    verifyMethod(18,
+        MethodBytecodeVerifierFromArray(
+            intArrayOf(
+              Opcodes.ALOAD,
+              Opcodes.GETFIELD,
+              Opcodes.ASTORE,
+              Opcodes.ALOAD,
+              Opcodes.IFNULL,
+              Opcodes.ALOAD,
+              Opcodes.ARETURN,
+              Opcodes.LDC,
+              Opcodes.INVOKESTATIC,
+              Opcodes.ACONST_NULL,
+              Opcodes.ATHROW
+            )
         )
     )
 
@@ -44,7 +67,7 @@ private fun Method.isJVMStaticVariableGetter() =
 private fun Method.verifyMethod(
     expectedNumOfBytecodes: Int,
     opcodes: IntArray
-) = verifyMethod(expectedNumOfBytecodes, MethodBytecodeVerifierImpl(opcodes))
+) = verifyMethod(expectedNumOfBytecodes, MethodBytecodeVerifierWithReturnOpcode(opcodes))
 
 private fun Method.verifyMethod(
     expectedNumOfBytecodes: Int,
@@ -57,11 +80,19 @@ private fun Method.verifyMethod(
     return methodBytecodeVerifier.getResult()
 }
 
-private class MethodBytecodeVerifierImpl(val opcodes: IntArray) : MethodBytecodeVerifier(opcodes.size + 1) {
+private class MethodBytecodeVerifierWithReturnOpcode(val opcodes: IntArray) : MethodBytecodeVerifier(opcodes.size + 1) {
     override fun verify(opcode: Int, position: Int) =
         when {
             position > opcodes.size -> false
             position == opcodes.size -> opcode.isReturnOpcode()
+            else -> opcode == opcodes[position]
+        }
+}
+
+private class MethodBytecodeVerifierFromArray(val opcodes: IntArray) : MethodBytecodeVerifier(opcodes.size) {
+    override fun verify(opcode: Int, position: Int) =
+        when {
+            position >= opcodes.size -> false
             else -> opcode == opcodes[position]
         }
 }
