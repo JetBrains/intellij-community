@@ -8,7 +8,6 @@ import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
@@ -48,12 +47,6 @@ abstract class Node extends DefaultMutableTreeNode {
 
   Node() {
   }
-
-  /**
-   * debug method for producing string tree presentation
-   */
-  @TestOnly
-  abstract String tree2string(int indent, @NotNull String lineSeparator);
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.

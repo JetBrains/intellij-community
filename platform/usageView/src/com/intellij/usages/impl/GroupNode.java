@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -29,7 +28,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -285,28 +283,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       if (!(parent instanceof GroupNode)) return;
       groupNode = (GroupNode)parent;
     }
-  }
-
-  @Override
-  @TestOnly
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    StringBuffer result = new StringBuffer();
-    StringUtil.repeatSymbol(result, ' ', indent);
-
-    if (getGroup() != null) result.append(getGroup());
-    result.append("[");
-    result.append(lineSeparator);
-
-    for (Node node : myChildren) {
-      result.append(node.tree2string(indent + 4, lineSeparator));
-      result.append(lineSeparator);
-    }
-
-    StringUtil.repeatSymbol(result, ' ', indent);
-    result.append("]");
-    result.append(lineSeparator);
-
-    return result.toString();
   }
 
   @Override
