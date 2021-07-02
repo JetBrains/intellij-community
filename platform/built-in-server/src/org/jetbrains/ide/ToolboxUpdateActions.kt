@@ -54,7 +54,7 @@ internal class ToolboxSettingsActionRegistry : Disposable {
     scheduleUpdate()
   }
 
-  fun getActions() : List<SettingsEntryPointAction.UpdateAction> = pendingActions.toList().sortedBy { it.actionId }
+  fun getActions() : List<SettingsEntryPointAction.UpdateAction> = ArrayList(pendingActions).sortedBy { it.actionId }
 }
 
 class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
