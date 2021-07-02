@@ -57,18 +57,12 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     dataClassComponentFunctions = parameters.invocationCount >= 2
 )
 
-// TODO: this blasphemy is here only to publish initial version of DeclarativeInsertHandlers
-object VeryNaughtyAndBadEditorHolder {
-    lateinit var editor: Editor
-}
-
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
     originalParameters: CompletionParameters,
     resultSet: CompletionResultSet
 ) {
     init {
-        VeryNaughtyAndBadEditorHolder.editor = originalParameters.editor
         CompletionBenchmarkSink.instance.onCompletionStarted(this)
     }
 

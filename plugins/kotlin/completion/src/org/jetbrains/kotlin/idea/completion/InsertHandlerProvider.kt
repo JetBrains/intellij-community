@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.completion.VeryNaughtyAndBadEditorHolder.editor as dirtyEditor
 import org.jetbrains.kotlin.idea.completion.handlers.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.fuzzyType
@@ -21,12 +20,10 @@ import java.util.*
 
 class InsertHandlerProvider(
     private val callType: CallType<*>,
-    private val editor: Editor? = null,
+    private val editor: Editor,
     expectedInfosCalculator: () -> Collection<ExpectedInfo>
 ) {
     init {
-      println("!!! InsertHandlerProvider has editor=${editor}")
-      println("!!! dirtyWay editor = $dirtyEditor")
     }
 
     private val expectedInfos by lazy(LazyThreadSafetyMode.NONE) { expectedInfosCalculator() }
@@ -39,7 +36,7 @@ class InsertHandlerProvider(
                         val needTypeArguments = needTypeArguments(descriptor)
                         val parameters = descriptor.valueParameters
                         when (parameters.size) {
-                            0 -> createNormalFunctionInsertHandler(dirtyEditor, callType, needTypeArguments, inputValueArguments = false)
+                            0 -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = false)
                                 //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = false)
 
                             1 -> {
@@ -50,7 +47,7 @@ class InsertHandlerProvider(
                                         if (getValueParametersCountFromFunctionType(parameterType) <= 1 && !parameter.hasDefaultValue()) {
                                             // otherwise additional item with lambda template is to be added
                                             return createNormalFunctionInsertHandler(
-                                                dirtyEditor,
+                                                editor,
                                                 callType, needTypeArguments, inputValueArguments = false,
                                                 lambdaInfo = GenerateLambdaInfo(parameterType, false)
                                             )
@@ -59,10 +56,10 @@ class InsertHandlerProvider(
                                 }
 
                                 //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
-                                createNormalFunctionInsertHandler(dirtyEditor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true)
+                                createNormalFunctionInsertHandler(editor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true)
                             }
 
-                            else -> createNormalFunctionInsertHandler(dirtyEditor, callType, needTypeArguments, inputValueArguments = true)
+                            else -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = true)
                                     //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
                         }
                     }

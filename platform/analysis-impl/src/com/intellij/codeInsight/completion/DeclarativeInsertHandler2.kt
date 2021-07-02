@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 
@@ -10,15 +11,19 @@ class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInser
   }
 }
 
-// todo: merge with DeclarativeInsertHandler
-// todo: filter out empty insertion operations
-// todo: replace insertOperations with replaceOperations
-// todo: implement IntelliJ part
-data class DeclarativeInsertHandler2(
+/**
+ * Important statements of the contract.
+ * * Operations of RelativeTextEdit may NOT intersect, their offsets must also be independent (with regards to order of application), for example:
+ *    operations (0, 0, "AA) and (2, 2, "BB) - offsets of "BB" should not be calculated with expectation of operation "AA" applied first, and vice-versa.
+ *
+ *  * offsetToPutCaret - should be calculated under assumption that all operations already applied.
+ */
+class DeclarativeInsertHandler2 private constructor(
   val textOperations: List<RelativeTextEdit>,
   val offsetToPutCaret: Int,
-  val addCompletionChar: Boolean = true,
-  val postInsertHandler: InsertHandler<LookupElement>?
+  val addCompletionChar: Boolean,
+  val postInsertHandler: InsertHandler<LookupElement>?,
+  val popupOptions: PopupOptions
 ) : InsertHandler<LookupElement> {
   data class RelativeTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String) {
     fun toAbsolute(baseOffset: Int) = AbsoluteTextEdit(rangeFrom + baseOffset, rangeTo + baseOffset, newText)
@@ -42,16 +47,71 @@ data class DeclarativeInsertHandler2(
     }
 
     postInsertHandler?.handleInsert(context, item)
+
+    if (popupOptions.showPopup()) {
+      val element = context.file.findElementAt(context.startOffset)
+      val popupController = AutoPopupController.getInstance(context.project)
+
+      if (element != null && popupController != null) {
+        when(popupOptions) {
+          PopupOptions.ParameterInfo -> popupController.autoPopupParameterInfo(context.editor, element)
+          PopupOptions.MemberLookup -> popupController.autoPopupMemberLookup(context.editor, null);
+          PopupOptions.DoNotShow -> Unit
+        }
+      }
+    }
   }
 
-  //class Builder {
-  //  val textOperations = mutableListOf<RelativeTextEdit>()
-  //  var offsetToPutCaret : Int = 0
-  //  var addCompletionChar: Boolean = true
-  //  var postInsertHandler: InsertHandler<LookupElement>? = null
-  //
-  //  fun build(): DeclarativeInsertHandler2 {
-  //
-  //  }
-  //}
+  sealed class PopupOptions {
+    object DoNotShow: PopupOptions()
+    object ParameterInfo: PopupOptions()
+    object MemberLookup: PopupOptions()
+
+    fun showPopup() = when(this) {
+      is DoNotShow -> false
+      else -> true
+    }
+  }
+
+  class Builder {
+    private val textOperations = mutableListOf<RelativeTextEdit>()
+    var offsetToPutCaret : Int = 0
+    private var addCompletionChar: Boolean = false
+    private var postInsertHandler: InsertHandler<LookupElement>? = null
+    private var popupOptions: PopupOptions = PopupOptions.DoNotShow
+
+    fun addOperation(offsetAt: Int, newText: String) = addOperation(offsetAt, offsetAt, newText)
+    fun addOperation(offsetFrom: Int, offsetTo: Int, newText: String) = addOperation(RelativeTextEdit(offsetFrom, offsetTo, newText))
+    fun addOperation(operation: RelativeTextEdit): Builder {
+      val operationIsEmpty = (operation.rangeFrom == operation.rangeTo) && operation.newText.isEmpty()
+      if (!operationIsEmpty)
+        textOperations.add(operation)
+
+      return this
+    }
+
+    fun withPopupOptions(newOptions: PopupOptions): Builder {
+      popupOptions = newOptions
+      return this
+    }
+
+    fun withOffsetToPutCaret(newOffset: Int): Builder {
+      offsetToPutCaret = newOffset
+      return this
+    }
+
+    fun withAddCompletionCharFlag(newAddCompletionChar: Boolean): Builder {
+      addCompletionChar = newAddCompletionChar
+      return this
+    }
+
+    fun withPostInsertHandler(newHandler: InsertHandler<LookupElement>): Builder {
+      postInsertHandler = newHandler
+      return this
+    }
+
+    fun build(): DeclarativeInsertHandler2 {
+      return DeclarativeInsertHandler2(textOperations, offsetToPutCaret, addCompletionChar, postInsertHandler, popupOptions)
+    }
+  }
 }

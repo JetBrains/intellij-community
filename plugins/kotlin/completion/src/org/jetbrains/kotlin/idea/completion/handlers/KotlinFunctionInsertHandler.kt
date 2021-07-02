@@ -39,22 +39,15 @@ fun createNormalFunctionInsertHandler(
     }
 
     val handlers = mutableMapOf<Char, DeclarativeInsertHandler2>()
-    // todo: extract
-    val postInsertHandler = InsertHandler<LookupElement> { context, item ->
-        KotlinFunctionInsertHandler.Normal(
-            callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly
-        ).addImport(context, item)
-    }
 
     val chars = editor.document.charsSequence
 
 
-    // \n
+    // \n - NormalCompletion
     run {
-        val insertOperations = mutableListOf<Pair<Int, String>>()
-        val stringToInsert = StringBuilder()
+        val builder = DeclarativeInsertHandler2.Builder()
 
-        var offsetToPutCaret = 0 //relative
+        val stringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
@@ -64,7 +57,7 @@ fun createNormalFunctionInsertHandler(
         val insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
         if (insertTypeArguments) {
             stringToInsert.append("<>")
-            offsetToPutCaret += 1
+            builder.offsetToPutCaret += 1
         }
 
         var absoluteOpeningBracketOffset = chars.indexOfSkippingSpace(openingBracket, offset)
@@ -78,51 +71,40 @@ fun createNormalFunctionInsertHandler(
                 // todo: get file outside
                 val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
                 if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
-                    offsetToPutCaret = stringToInsert.length + 4
+                    builder.offsetToPutCaret = stringToInsert.length + 4
                     stringToInsert.append(" {  }")
                 } else {
-                    offsetToPutCaret = stringToInsert.length + 3
+                    builder.offsetToPutCaret = stringToInsert.length + 3
                     stringToInsert.append(" {}")
                 }
             } else {
-                offsetToPutCaret = stringToInsert.length + 1
+                builder.offsetToPutCaret = stringToInsert.length + 1
                 stringToInsert.append("($argumentText)")
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
             if (!insertTypeArguments && shouldPlaceCaretInBrackets) {
-                // todo: move to post action
-                //showParameterInfo = true
-                //AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
             }
         } else if (!(insertLambda && lambdaInfo!!.explicitParameters)) {
-            insertOperations.add(absoluteOpeningBracketOffset + 1 - offset to argumentText)
+            builder.addOperation(absoluteOpeningBracketOffset + 1 - offset, argumentText)
             if (absoluteCloseBracketOffset != null) {
                 absoluteCloseBracketOffset += argumentText.length
             }
 
             if (!insertTypeArguments) {
-                offsetToPutCaret = absoluteOpeningBracketOffset + 1 - offset
+                builder.offsetToPutCaret = absoluteOpeningBracketOffset + 1 - offset
                 val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
                 if (shouldPlaceCaretInBrackets) {
-                    // todo: move to post action
-                    //showParameterInfo = true
-                    //AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                    builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
                 }
             }
         }
-        insertOperations.add(0 to stringToInsert.toString())
+        builder.addOperation(0, stringToInsert.toString())
+        builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
+            KotlinCallableInsertHandler.addImport(context, item, callType)
+        })
 
-        val normalInsertHandler = DeclarativeInsertHandler2(
-            textOperations = insertOperations.map { (position, newText) -> DeclarativeInsertHandler2.RelativeTextEdit(position, position, newText) },
-            offsetToPutCaret = offsetToPutCaret,
-            postInsertHandler = postInsertHandler
-        )
-        handlers[Lookup.NORMAL_SELECT_CHAR] = normalInsertHandler
-
-        val offsetInc = offset + 10
-        println("!!! textAround = ${editor.document.text.substring(offset - 5, offsetInc)}")
-        println("!!! offset=${offset}, offsetInc=${offsetInc}, text=${editor.document.text.substring(offset, offsetInc)}")
-        println("!!! insertHandler=${normalInsertHandler}")
+        handlers[Lookup.NORMAL_SELECT_CHAR] = builder.build()
     }
 
     // \t
@@ -161,19 +143,6 @@ fun createNormalFunctionInsertHandler(
     }
 */
     // (
-/*
-    run {
-        var insertTypeArguments = false
-        var insertLambda = false
-        val parensInsertHandler = DeclarativeInsertHandler2(
-            insertOperations = insertOperations,
-            offsetToPutCaret = offsetToPutCaret,
-            addCompletionChar = false,
-            postInsertHandler = postInsertHandler
-        )
-    }
-*/
-    //completionChar == ' ' || completionChar == '{' ???
 
     val fallbackHandler = KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
     return CompositeDeclarativeInsertHandler(handlers = handlers, fallbackInsertHandler = fallbackHandler)
