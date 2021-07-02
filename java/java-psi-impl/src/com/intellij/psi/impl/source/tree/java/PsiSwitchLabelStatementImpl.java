@@ -12,6 +12,9 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl implements PsiSwitchLabelStatement {
   private static final Logger LOG = Logger.getInstance(PsiSwitchLabelStatementImpl.class);
@@ -61,14 +64,11 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    // Do not resolve references that come from the list of elements in this case rule
-    if (lastParent instanceof PsiCaseLabelElementList) return true;
-
-    if (isNotImmediateSwitchLabel()) return true;
+    if (!shouldAnalyzePatternVariablesInCaseLabel(place)) return true;
 
     final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
     if (patternsInCaseLabel == null) return true;
@@ -77,14 +77,33 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
   }
 
   /**
-   * When the resolving is happening inside a {@link PsiCodeBlock} it traverses through all the case labels,
-   * which is not what is expected for pattern variables, because their scope is bound only to the nearest case handler.
-   * The method checks if this {@link PsiSwitchLabelStatement} is the nearest one to the case handler.
-   *
-   * @return true if the this {@link PsiSwitchLabelStatement} is followed by another {@link PsiSwitchLabelStatement}, false otherwise
+   * Checks if the pattern variables in the case label list can be analyzed. The processing is allowed in the two following cases:
+   * <ol>
+   *   <li>The place that is being resolved is a code block. It just wants to build the map of the local and pattern variables in {@code PsiCodeBlockImpl#buildMaps}.</li>
+   *   <li>The current {@link PsiSwitchLabelStatement} is the switch label where it's legal to resolve the passed element.
+   *      <p>
+   *        Read more about scopes of variables in pattern matching for switch statements in
+   *        <a href="https://openjdk.java.net/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
+   *      </p>
+   *   </li>
+   * </ol>
+   * @param place element that is being resolved
+   * @return true when the pattern variables in the case label list can be analyzed.
    */
-  private boolean isNotImmediateSwitchLabel() {
-    final PsiElement rightNeighbour = PsiTreeUtil.skipWhitespacesForward(this);
-    return rightNeighbour instanceof PsiSwitchLabelStatement;
+  private boolean shouldAnalyzePatternVariablesInCaseLabel(@NotNull PsiElement place) {
+    if (place instanceof PsiCodeBlock) return true;
+
+    final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
+
+    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
+      final PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(currentScope.getPrevSibling());
+      if (sibling == this) {
+        thisSwitchLabelIsImmediate.set(true);
+        return false;
+      }
+      return true;
+    });
+
+    return thisSwitchLabelIsImmediate.get();
   }
 }
