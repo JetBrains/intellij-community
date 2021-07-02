@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.MathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -102,7 +103,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    if (isUnderRosetta()) {
+    // Temporary disable notification for Rider only for 212 release because we don't have M1 build yet.
+    if (isUnderRosetta() && !PlatformUtils.isRider()) {
       NotificationAction downloadAction =
         NotificationAction.createSimpleExpiring(
           IdeBundle.message("bundled.jre.m1.arch.message.download"), () ->
