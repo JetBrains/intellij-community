@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.declarations
+package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -9,20 +9,16 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.BaseKotlinUMethod
-import org.jetbrains.uast.kotlin.getKotlinMemberOrigin
 
 class FirKotlinUMethod(
     psi: PsiMethod,
     sourcePsi: KtDeclaration?,
     givenParent: UElement?
-) : BaseKotlinUMethod(psi, sourcePsi, givenParent), FirKotlinUMethodParametersProducer {
+) : BaseKotlinUMethod(psi, sourcePsi, givenParent) {
     constructor(
         psi: KtLightMethod,
         givenParent: UElement?
     ) : this(psi, getKotlinMemberOrigin(psi), givenParent)
-
-    override val uastParameters: List<UParameter> by org.jetbrains.uast.kotlin.lz { produceUastParameters(this, receiverTypeReference) }
 
     companion object {
         fun create(
@@ -34,7 +30,7 @@ class FirKotlinUMethod(
                 kotlinOrigin is KtConstructor<*> ->
                     FirKotlinConstructorUMethod(kotlinOrigin.containingClassOrObject, psi, givenParent)
                 kotlinOrigin is KtParameter && kotlinOrigin.getParentOfType<KtClass>(true)?.isAnnotation() == true ->
-                    FirKotlinUAnnotationMethod(psi, givenParent)
+                    KotlinUAnnotationMethod(psi, givenParent)
                 else ->
                     FirKotlinUMethod(psi, givenParent)
             }

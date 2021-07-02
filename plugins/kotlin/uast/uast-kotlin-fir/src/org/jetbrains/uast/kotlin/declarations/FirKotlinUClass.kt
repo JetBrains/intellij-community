@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.declarations
+package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiAnonymousClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.BaseKotlinUClass
-import org.jetbrains.uast.kotlin.KotlinUAnonymousClass
 
 class FirKotlinUClass(
     psi: KtLightClass,
