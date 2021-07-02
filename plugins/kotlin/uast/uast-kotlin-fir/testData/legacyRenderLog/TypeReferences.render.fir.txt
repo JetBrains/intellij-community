@@ -7,7 +7,10 @@ public final class TypeReferencesKt {
     }
     public static final fun parameterizedFoo(@null arg: T) : void {
         var a: <ErrorType> = arg
-        var at: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)
+        var at: <ErrorType> = elvis {
+            var var708e23eb: T = arg
+            if (var708e23eb != null) var708e23eb else return
+        }
         var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         var lls: <ErrorType>

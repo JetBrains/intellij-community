@@ -13,9 +13,18 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                         ULiteralExpression (value = 2) [2] = (long)2
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = c) [var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)]
-                        [!] UnknownKotlinExpression (BINARY_EXPRESSION) [[!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var c: <ErrorType> = elvis {...}] = Undetermined
+                    ULocalVariable (name = c) [var c: <ErrorType> = elvis {...}]
+                        UExpressionList (elvis) [elvis {...}] = Undetermined
+                            UDeclarationsExpression [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                                ULocalVariable (name = varae507364) [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
+                                    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                            UIfExpression [if (varae507364 != null) varae507364 else b] = Undetermined
+                                UBinaryExpression (operator = !=) [varae507364 != null] = Undetermined
+                                    USimpleNameReferenceExpression (identifier = varae507364) [varae507364] = Undetermined
+                                    ULiteralExpression (value = null) [null] = null
+                                USimpleNameReferenceExpression (identifier = varae507364) [varae507364] = Undetermined
+                                USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
         UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(@null str: java.lang.String) : java.lang.Integer {...}]
             UParameter (name = str) [@null var str: java.lang.String]
                 UAnnotation (fqName = null) [@null]

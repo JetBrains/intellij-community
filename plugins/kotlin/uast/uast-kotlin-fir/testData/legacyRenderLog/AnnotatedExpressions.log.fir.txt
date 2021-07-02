@@ -15,7 +15,16 @@ UFile (package = )
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = c)
-                        [!] UnknownKotlinExpression (BINARY_EXPRESSION)
+                        UExpressionList (elvis)
+                            UDeclarationsExpression
+                                ULocalVariable (name = varae507364)
+                                    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
+                            UIfExpression
+                                UBinaryExpression (operator = !=)
+                                    USimpleNameReferenceExpression (identifier = varae507364)
+                                    ULiteralExpression (value = null)
+                                USimpleNameReferenceExpression (identifier = varae507364)
+                                USimpleNameReferenceExpression (identifier = b)
         UMethod (name = annotatedSwitch)
             UParameter (name = str)
                 UAnnotation (fqName = null)
