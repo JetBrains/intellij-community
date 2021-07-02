@@ -55,7 +55,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_15;
   }
 
   public void testRandomActivity() {
@@ -65,9 +65,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
                                     new DeleteRange(file),
-                                    new IntroduceVariableActionOnFile(file),
-                                    new IfCanBeSwitchActionOnFile(file)
-      );
+                                    new IntroduceVariableActionOnFile(file));
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
