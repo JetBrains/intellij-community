@@ -3,7 +3,16 @@ UFile (package = )
         UMethod (name = TryCatch)
         UMethod (name = catches)
             UBlockExpression
-                [!] UnknownKotlinExpression (TRY)
+                UTryExpression
+                    UBlockExpression
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UCatchClause (e)
+                        UParameter (name = e)
+                            UAnnotation (fqName = null)
+                        UBlockExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UBlockExpression
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)
@@ -14,7 +23,17 @@ UFile (package = )
         UMethod (name = TryCatchAnnotations)
         UMethod (name = catches)
             UBlockExpression
-                [!] UnknownKotlinExpression (TRY)
+                UTryExpression
+                    UBlockExpression
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UCatchClause (e)
+                        UParameter (name = e)
+                            UAnnotation (fqName = null)
+                            UAnnotation (fqName = not-implemented-annotation)
+                        UBlockExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UBlockExpression
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)

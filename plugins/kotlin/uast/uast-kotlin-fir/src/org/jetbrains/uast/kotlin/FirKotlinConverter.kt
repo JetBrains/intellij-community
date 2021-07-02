@@ -239,6 +239,9 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtClassBody -> {
                     el<UExpressionList>(build(KotlinUExpressionList.Companion::createClassBody))
                 }
+                is KtCatchClause -> {
+                    el<UCatchClause>(build(::KotlinUCatchClause))
+                }
                 is KtVariableDeclaration -> {
                     if (element is KtProperty && !element.isLocal) {
                         convertNonLocalProperty(element, givenParent, this).firstOrNull()
@@ -366,6 +369,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 }
                 is KtReturnExpression -> expr<UReturnExpression>(build(::KotlinUReturnExpression))
                 is KtThrowExpression -> expr<UThrowExpression>(build(::KotlinUThrowExpression))
+                is KtTryExpression -> expr<UTryExpression>(build(::KotlinUTryExpression))
 
                 is KtBreakExpression -> expr<UBreakExpression>(build(::KotlinUBreakExpression))
                 is KtContinueExpression -> expr<UContinueExpression>(build(::KotlinUContinueExpression))
