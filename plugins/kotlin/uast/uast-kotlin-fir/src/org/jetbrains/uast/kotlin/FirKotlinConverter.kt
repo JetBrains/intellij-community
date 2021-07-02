@@ -260,6 +260,8 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     element.expression?.let { convertExpression(it, givenParent, requiredTypes) }
                         ?: expr<UExpression> { UastEmptyExpression(givenParent) }
                 }
+                is KtWhenEntry -> el<USwitchClauseExpressionWithBody>(build(::KotlinUSwitchEntry))
+                is KtWhenCondition -> convertWhenCondition(element, givenParent, requiredTypes)
                 is KtTypeReference ->
                     requiredTypes.accommodate(
                         alternative { KotlinUTypeReferenceExpression(element, givenParent, service) },
@@ -377,6 +379,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtWhileExpression -> expr<UWhileExpression>(build(::KotlinUWhileExpression))
                 is KtForExpression -> expr<UForEachExpression>(build(::KotlinUForEachExpression))
 
+                is KtWhenExpression -> expr<USwitchExpression>(build(::KotlinUSwitchExpression))
                 is KtIfExpression -> expr<UIfExpression>(build(::KotlinUIfExpression))
 
                 is KtBinaryExpressionWithTypeRHS -> expr<UBinaryExpressionWithType>(build(::KotlinUBinaryExpressionWithType))
