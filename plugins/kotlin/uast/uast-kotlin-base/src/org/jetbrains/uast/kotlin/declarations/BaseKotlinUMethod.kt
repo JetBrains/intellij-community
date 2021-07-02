@@ -6,18 +6,37 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiParameter
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
 import org.jetbrains.kotlin.asJava.elements.isSetter
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
 abstract class BaseKotlinUMethod(
     psi: PsiMethod,
     final override val sourcePsi: KtDeclaration?,
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UMethod, UAnchorOwner, PsiMethod by psi {
+
+    override val uastParameters: List<UParameter> by lz {
+
+        fun parameterOrigin(psiParameter: PsiParameter?): KtElement? = when (psiParameter) {
+            is KtLightElement<*, *> -> psiParameter.kotlinOrigin
+            is UastKotlinPsiParameter -> psiParameter.ktParameter
+            else -> null
+        }
+
+        val lightParams = psi.parameterList.parameters
+        val receiver = receiverTypeReference ?: return@lz lightParams.map { KotlinUParameter(it, parameterOrigin(it), this) }
+        val receiverLight = lightParams.firstOrNull() ?: return@lz emptyList()
+        val uParameters = SmartList<UParameter>(KotlinReceiverUParameter(receiverLight, receiver, this))
+        lightParams.drop(1).mapTo(uParameters) { KotlinUParameter(it, parameterOrigin(it), this) }
+        uParameters
+    }
 
     override val psi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
