@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedStructureWizardStep
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil.createSequentFileName
 import com.intellij.ui.layout.*
@@ -22,6 +20,8 @@ class MavenStructureWizardStep(
 ) : MavenizedStructureWizardStep<MavenProject>(context) {
 
   override fun getHelpId() = "reference.dialogs.new.project.fromScratch.maven"
+
+  override fun getBuilderId(): String? = builder.builderId
 
   override fun createView(data: MavenProject) = MavenDataView(data)
 

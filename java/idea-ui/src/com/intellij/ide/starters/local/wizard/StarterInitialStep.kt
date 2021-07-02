@@ -124,9 +124,10 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
           .focused()
 
         for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
-          component(nameGenerator.getUi {
-            entityNameProperty.set(it)
-          }).constraints(pushX)
+          val nameGeneratorUi = nameGenerator.getUi(moduleBuilder.builderId) { entityNameProperty.set(it) }
+          if (nameGeneratorUi != null) {
+            component(nameGeneratorUi).constraints(pushX)
+          }
         }
       }.largeGapAfter()
 
