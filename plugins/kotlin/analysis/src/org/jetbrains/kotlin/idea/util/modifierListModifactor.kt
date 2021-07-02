@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -17,8 +18,8 @@ fun KtModifierListOwner.addAnnotation(
     addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
 ): Boolean {
     val annotationText = when (annotationInnerText) {
-        null -> "@${annotationFqName.asString()}"
-        else -> "@${annotationFqName.asString()}($annotationInnerText)"
+        null -> "@${annotationFqName.render()}"
+        else -> "@${annotationFqName.render()}($annotationInnerText)"
     }
 
     val psiFactory = KtPsiFactory(this)
