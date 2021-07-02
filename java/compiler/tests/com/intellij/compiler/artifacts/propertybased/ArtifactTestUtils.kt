@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.propertybased
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
@@ -15,7 +16,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
 import org.junit.Assert
 
 internal fun artifact(project: Project, name: String): Artifact {
-  val bridgeArtifact = ArtifactManager.getInstance(project).findArtifact(name)
+  val bridgeArtifact = runReadAction { ArtifactManager.getInstance(project).findArtifact(name) }
   Assert.assertNotNull(bridgeArtifact)
   return bridgeArtifact!!
 }
