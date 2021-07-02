@@ -79,6 +79,13 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testNestedPrimaryConstructor() {
+        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("JavaClass.java", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
     fun testSecondaryConstructor() {
         myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
         rebuildProject()
@@ -350,6 +357,41 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
             getReferentFilesForElementUnderCaret(),
         )
 
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testInnerClass() {
+        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testInnerClassWithPackage() {
+        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testNestedClass() {
+        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testObject() {
+        myFixture.configureByFiles("MyObject.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("MyObject.kt", "Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testNestedObject() {
+        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
+        rebuildProject()
+        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
         addFileAndAssertIndexNotReady()
     }
 

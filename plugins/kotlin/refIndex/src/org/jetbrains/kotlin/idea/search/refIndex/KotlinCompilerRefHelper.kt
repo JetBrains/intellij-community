@@ -45,12 +45,11 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             else -> null
         }
 
-    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = fqName?.asString()
+    private fun KtClassOrObject.asCompilerRef(names: NameEnumerator): CompilerRef? = jvmFqName
         ?.let(names::tryEnumerate)
         ?.let(CompilerRef::JavaCompilerClassRef)
 
-    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef? = getContainingClassOrObject().fqName
-        ?.asString()
+    private fun KtConstructor<*>.asCompilerRef(names: NameEnumerator): CompilerRef? = getContainingClassOrObject().jvmFqName
         ?.let { qualifier ->
             CompilerRef.JavaCompilerMethodRef(
                 names.tryEnumerate(qualifier),

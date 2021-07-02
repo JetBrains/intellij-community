@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 fun KtElement.getElementTextInContext(): String {
     val context = parentOfType<KtImportDirective>()
@@ -44,6 +45,9 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
     if (classesNames.any { it == null }) return null
     return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
 }
+
+val KtClassOrObject.jvmFqName: String?
+    get() = classIdIfNonLocal()?.let { JvmClassName.byClassId(it) }?.fqNameForTopLevelClassMaybeWithDollars?.asString()
 
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)

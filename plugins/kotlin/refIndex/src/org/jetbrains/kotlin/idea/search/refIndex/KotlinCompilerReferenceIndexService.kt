@@ -228,13 +228,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val fqName = when (val originalElement = element.unwrapped) {
-            is KtClassOrObject, is PsiClass -> originalElement.getKotlinFqName()
-            is KtConstructor<*> -> originalElement.getContainingClassOrObject().fqName
-            is KtCallableDeclaration -> originalElement.takeIf(KtCallableDeclaration::isTopLevelKtOrJavaMember)?.fqName
-            is PsiMethod -> originalElement.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
-            else -> null
-        } ?: return null
+        val fqName = extractFqName(element) ?: return null
 
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
@@ -250,6 +244,14 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
         }
     })
+
+    private fun extractFqName(element: PsiElement): FqName? = when (val originalElement = element.unwrapped) {
+        is KtClassOrObject, is PsiClass -> originalElement.getKotlinFqName()
+        is KtConstructor<*> -> originalElement.getContainingClassOrObject().fqName
+        is KtCallableDeclaration -> originalElement.takeIf(KtCallableDeclaration::isTopLevelKtOrJavaMember)?.fqName
+        is PsiMethod -> originalElement.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
+        else -> null
+    }
 
     private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
     private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
