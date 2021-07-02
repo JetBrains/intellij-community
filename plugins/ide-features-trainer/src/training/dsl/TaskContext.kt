@@ -2,6 +2,7 @@
 package training.dsl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.ui.tree.TreeVisitor
@@ -136,7 +137,7 @@ abstract class TaskContext : LearningDslBase {
         checkTree(it) != null
       }
       if (tree != null) {
-        invokeLater {
+        invokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
             checkTree(tree)
           }
@@ -157,7 +158,7 @@ abstract class TaskContext : LearningDslBase {
         rectangle(it) != null
       }
       if (whole != null) {
-        invokeLater {
+        invokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
         }
       }
@@ -182,7 +183,7 @@ abstract class TaskContext : LearningDslBase {
         index != null && it.visibleRowCount > index
       }
       if (list != null) {
-        invokeLater {
+        invokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightJListItem(list, options) {
             checkList(list)
           }
@@ -204,7 +205,7 @@ abstract class TaskContext : LearningDslBase {
       }
       if (component != null) {
         val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
-        invokeLater {
+        invokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
       }
