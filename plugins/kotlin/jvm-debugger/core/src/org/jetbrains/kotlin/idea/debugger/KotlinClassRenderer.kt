@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -23,7 +24,7 @@ import java.util.function.Function
 class KotlinClassRenderer : ClassRenderer() {
     init {
         setIsApplicableChecker(Function { type: Type? ->
-            if (type is ReferenceType && type !is ArrayType) {
+            if (type is ReferenceType && type !is ArrayType && !type.canBeRenderedBetterByPlatformRenderers()) {
                 return@Function type.isInKotlinSourcesAsync()
             }
             CompletableFuture.completedFuture(false)
@@ -138,6 +139,25 @@ class KotlinClassRenderer : ClassRenderer() {
     private fun ReferenceType.hasPrivateConstructor(): Boolean {
         val constructor = methodsByName(JVMNameUtil.CONSTRUCTOR_NAME).singleOrNull() ?: return false
         return constructor.isPrivate && constructor.argumentTypeNames().isEmpty()
+    }
+
+    /**
+     * IntelliJ Platform has good collections' debugger renderers.
+     *
+     * We want to use them even when the collection is implemented completely in Kotlin
+     * (e.g. lists, sets and maps empty singletons; subclasses of `Abstract(List|Set|Map)`;
+     * collections, built by `build(List|Set|Map) { ... }` methods).
+     *
+     * Also we want to use platform renderer for Map entries.
+     */
+    private fun ReferenceType.canBeRenderedBetterByPlatformRenderers(): Boolean {
+        val typesWithGoodDefaultRenderers = listOf(
+            "java.util.Collection",
+            "java.util.Map",
+            "java.util.Map.Entry",
+        )
+
+        return typesWithGoodDefaultRenderers.any { superType -> DebuggerUtils.instanceOf(this, superType) }
     }
 
     private fun Field.isInstanceFieldOfType(type: Type) =
