@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
 
 open class AddAnnotationFix(
     element: KtModifierListOwner,
@@ -34,7 +35,7 @@ open class AddAnnotationFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val declaration = element ?: return
         val annotationEntry = existingAnnotationEntry?.element
-        val annotationInnerText = argumentClassFqName?.let { "$it::class" }
+        val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
         if (annotationEntry != null) {
             if (annotationInnerText == null) return
             val psiFactory = KtPsiFactory(declaration)
