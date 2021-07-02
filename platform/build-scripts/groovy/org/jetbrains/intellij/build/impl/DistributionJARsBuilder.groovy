@@ -86,20 +86,11 @@ final class DistributionJARsBuilder {
     Set<String> enabledPluginModules = getEnabledPluginModules()
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
-      final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
-      plugin.moduleJars.values().collectMany {
-        JpsModule module = buildContext.findRequiredModule(it)
-        Set<JpsLibrary> libraries =
-          JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
-            !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
-              it.libraryName == library.name && it.relativeOutputPath == ""
-            } && !libsToUnpack.contains(library.name)
-          }
-        if (!libraries.isEmpty()) {
-          buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect { "'$it.name'" }.join(",")}")
-        }
-        libraries
+      def libraries = computeProjectLibrariesWhichShouldBeProvidedByPlatform(plugin, buildContext)
+      libraries.entrySet().each { entry ->
+        buildContext.messages.debug(" plugin '$plugin.mainModule', library '$entry.key.name': used in ${entry.value.collect { "'$it.name'" }.join(",")}")
       }
+      libraries.keySet()
     }
 
     Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) +
@@ -112,6 +103,23 @@ final class DistributionJARsBuilder {
       }
 
     platform = PlatformModules.createPlatformLayout(productLayout, allProductDependencies, projectLibrariesUsedByPlugins, buildContext)
+  }
+
+  static MultiMap<JpsLibrary, JpsModule> computeProjectLibrariesWhichShouldBeProvidedByPlatform(BaseLayout plugin,
+                                                                                                BuildContext buildContext) {
+    MultiMap<JpsLibrary, JpsModule> result = MultiMap.createLinked()
+    final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
+    plugin.moduleJars.values().each {
+      JpsModule module = buildContext.findRequiredModule(it)
+      JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+        !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
+          it.libraryName == library.name && it.relativeOutputPath == ""
+        } && !libsToUnpack.contains(library.name)
+      }.each {
+        result.putValue(it, module)
+      }
+    }
+    return result
   }
 
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
