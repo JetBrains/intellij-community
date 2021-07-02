@@ -8,6 +8,20 @@ public final class AnnotatedExpressionsKt {
         var c: <ErrorType> = [!] UnknownKotlinExpression (BINARY_EXPRESSION)
     }
     public static final fun annotatedSwitch(@null str: java.lang.String) : java.lang.Integer {
-        return [!] UnknownKotlinExpression (WHEN)
+        return switch  {
+            [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {
+                yield null
+            }
+
+            str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {
+                yield null
+            }
+
+             -> {
+                yield 1
+            }
+
+        }
+
     }
 }

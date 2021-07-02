@@ -21,4 +21,23 @@ UFile (package = )
                 UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (WHEN)
+                    USwitchExpression
+                        UExpressionList (when)
+                            USwitchClauseExpressionWithBody
+                                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        ULiteralExpression (value = null)
+                            USwitchClauseExpressionWithBody
+                                UBinaryExpression (operator = !=)
+                                    UQualifiedReferenceExpression
+                                        USimpleNameReferenceExpression (identifier = str)
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                    ULiteralExpression (value = null)
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        ULiteralExpression (value = null)
+                            USwitchClauseExpressionWithBody
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        ULiteralExpression (value = 1)

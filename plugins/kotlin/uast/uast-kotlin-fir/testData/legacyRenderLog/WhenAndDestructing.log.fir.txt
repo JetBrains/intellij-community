@@ -7,4 +7,24 @@ UFile (package = )
                 UDeclarationsExpression
                     ULocalVariable (name = arr)
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (WHEN)
+                USwitchExpression
+                    USimpleNameReferenceExpression (identifier = string)
+                    UExpressionList (when)
+                        USwitchClauseExpressionWithBody
+                            ULiteralExpression (value = "aaaa")
+                            UExpressionList (when_entry)
+                                UYieldExpression
+                                    UReturnExpression
+                                        ULiteralExpression (value = "bindingContext")
+                        USwitchClauseExpressionWithBody
+                            ULiteralExpression (value = "empty-switch")
+                            UExpressionList (when_entry)
+                        USwitchClauseExpressionWithBody
+                            UExpressionList (when_entry)
+                                UDeclarationsExpression
+                                    ULocalVariable (name = var837f2350)
+                                        UAnnotation (fqName = null)
+                                        USimpleNameReferenceExpression (identifier = arr)
+                                UYieldExpression
+                                    UReturnExpression
+                                        USimpleNameReferenceExpression (identifier = bindingContext)
