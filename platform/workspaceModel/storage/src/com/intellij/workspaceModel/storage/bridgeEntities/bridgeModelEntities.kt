@@ -165,7 +165,7 @@ class JavaModuleSettingsEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, JavaModuleSettingsEntity>(ModuleEntity::class.java)
+    val moduleDelegate = OneToOneChild.NotNull<JavaModuleSettingsEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
