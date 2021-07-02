@@ -17,15 +17,13 @@ import org.jetbrains.kotlin.psi.KtFile
 
 
 object PackageIndexUtil {
-    fun getJavaAndKotlinSubPackageFqNames(
+    fun getKotlinSubPackageFqNames(
         packageFqName: FqName,
         scope: GlobalSearchScope,
         project: Project,
         targetPlatform: TargetPlatform,
         nameFilter: (Name) -> Boolean
     ) = sequence {
-        yieldAll(getSubPackageFqNames(packageFqName, scope, project, nameFilter))
-
         if (targetPlatform.isJvm()) {
             val javaPackage = JavaPsiFacade.getInstance(project).findPackage(packageFqName.asString())
             if (javaPackage != null) {

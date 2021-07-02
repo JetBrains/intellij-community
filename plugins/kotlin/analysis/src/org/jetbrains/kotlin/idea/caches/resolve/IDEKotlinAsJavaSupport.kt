@@ -40,18 +40,6 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     private val psiManager: PsiManager = PsiManager.getInstance(project)
     private val languageVersionSettings = project.getLanguageVersionSettings()
 
-    protected open fun createLightClassForSourceDeclaration(classOrObject: KtClassOrObject): KtLightClass? =
-        KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
-
-    protected open fun createLightClassForScript(script: KtScript): KtLightClass? =
-        KtLightClassForScript.create(script)
-
-    protected open fun createLightClassForFacade(
-        manager: PsiManager,
-        facadeClassFqName: FqName,
-        searchScope: GlobalSearchScope
-    ): KtLightClass? = KtLightClassForFacadeImpl.createForFacade(psiManager, facadeClassFqName, searchScope)
-
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
             KotlinFileFacadeClassByPackageIndex.getInstance().get(packageFqName.asString(), project, scope)
@@ -152,7 +140,10 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         if (virtualFile != null) {
             when {
                 ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
-                    return createLightClassForSourceDeclaration(classOrObject)
+                    return KtLightClassForSourceDeclaration.create(
+                        classOrObject,
+                        languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+                    )
                 ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
                     return getLightClassForDecompiledClassOrObject(classOrObject)
                 ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
@@ -165,7 +156,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             classOrObject.containingFile.originalFile.virtualFile != null
         ) {
             // explicit request to create light class from dummy.kt
-            return createLightClassForSourceDeclaration(classOrObject)
+            return KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
         }
         return null
     }
@@ -175,7 +166,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             return null
         }
 
-        return createLightClassForScript(script)
+        return KtLightClassForScript.create(script)
     }
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
@@ -225,7 +216,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         }
     }
 
-    fun createLightClassForFileFacade(
+    private fun createLightClassForFileFacade(
         facadeFqName: FqName,
         facadeFiles: List<KtFile>,
         moduleInfo: IdeaModuleInfo
@@ -242,7 +233,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     private fun tryCreateFacadesForSourceFiles(moduleInfo: IdeaModuleInfo, facadeFqName: FqName): PsiClass? {
         if (moduleInfo !is ModuleSourceInfo && moduleInfo !is PlatformModuleInfo) return null
-        return createLightClassForFacade(psiManager, facadeFqName, moduleInfo.contentScope())
+        return KtLightClassForFacadeImpl.createForFacade(psiManager, facadeFqName, moduleInfo.contentScope())
     }
 
     override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
@@ -253,6 +244,9 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass =
         KtDescriptorBasedFakeLightClass(classOrObject)
+
+    override fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): PsiClass =
+        KtLightClassForFacadeImpl.createForSyntheticFile(facadeClassFqName, file)
 
     // NOTE: this is a hacky solution to the following problem:
     // when building this light class resolver will be built by the first file in the list
