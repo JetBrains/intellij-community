@@ -532,16 +532,21 @@ private class AlertDialog(project: Project?,
   override fun createDoNotAskCheckbox(): JComponent? = null
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    val focusedComponent = super.getPreferredFocusedComponent()
-    if (SystemInfoRt.isMac && focusedComponent == null) {
-      if (myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible) {
-        return myCheckBoxDoNotShowDialog
-      }
-      if (myButtons.isNotEmpty()) {
-        return myButtons[0]
+    if (myPreferredFocusedComponent != null) {
+      return myPreferredFocusedComponent
+    }
+    val size = myButtons.size
+    if (size > 0) {
+      val buttons = if (SystemInfoRt.isMac) ArrayList<JButton>(myButtons).also { it.reverse() } else myButtons
+      val cancelButton = Messages.getCancelButton()
+
+      for ((index, button) in buttons.withIndex()) {
+        if (index != myDefaultOptionIndex && (size < 3 || cancelButton != button.text)) {
+          return button
+        }
       }
     }
-    return focusedComponent
+    return null
   }
 
   override fun doCancelAction() = close(-1)
