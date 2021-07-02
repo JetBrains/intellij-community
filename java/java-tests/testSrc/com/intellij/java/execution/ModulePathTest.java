@@ -124,13 +124,13 @@ public class ModulePathTest extends BaseConfigurationTestCase {
 
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().stream().anyMatch(filePath -> filePath.contains("junit-jupiter-api")));
-    //production module output is on the module path
-    assertTrue("module path: " + modulePath.getPathsString(),
+    //production module output is not on the module path
+    assertFalse("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(getCompilerOutputPath(module)));
     //test module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
-    assertSize(3, modulePath.getPathList());
+    assertSize(2, modulePath.getPathList());
 
     //launcher should be put on the classpath
     assertTrue(params4Tests.getClassPath().getPathList().stream().anyMatch(filePath -> filePath.contains("launcher")));
@@ -153,10 +153,43 @@ public class ModulePathTest extends BaseConfigurationTestCase {
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);
-    //production module output is on the module path
+    //production module output is not on the module path
     List<String> modulePathList = modulePath.getPathList();
-    assertTrue("module path: " + modulePath.getPathsString(),
+    assertFalse("module path: " + modulePath.getPathsString(),
                modulePathList.contains(getCompilerOutputPath(module)));
+    //test module output is on the module path
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePathList.contains(getCompilerOutputPath(module, true)));
+    assertTrue(modulePathList.stream().anyMatch(filePath -> filePath.contains("launcher")));
+  }
+  
+  public void testModuleInfoInTestModularizedJunitDependencyOnAnotherModule() throws Exception {
+    Module module1 = createEmptyModule();
+    setupModule("prod1", module1);
+    Module module = createEmptyModule();
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      model.addModuleOrderEntry(module1);
+    });
+    JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
+    JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "test2", module);
+    JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    assertEquals("--add-modules m2" +
+                 " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
+
+    PathsList classPath = params4Tests.getClassPath();
+    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+
+    PathsList modulePath = params4Tests.getModulePath();
+    checkLibrariesOnPathList(module, modulePath);
+    List<String> modulePathList = modulePath.getPathList();
+    assertFalse("module path: " + modulePath.getPathsString(),
+               modulePathList.contains(getCompilerOutputPath(module)));
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePathList.contains(getCompilerOutputPath(module1)));
     //test module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePathList.contains(getCompilerOutputPath(module, true)));
@@ -164,6 +197,20 @@ public class ModulePathTest extends BaseConfigurationTestCase {
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
+    setupModule(sources, module);
+    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor);
+
+    Sdk mockJdk = IdeaTestUtil.getMockJdk9();
+    ModuleRootModificationUtil.setModuleSdk(module, mockJdk);
+
+    PsiClass aClass = findClass(module, "p.MyTest");
+    assertNotNull(aClass);
+    assertNotNull(TestFrameworks.detectFramework(aClass));
+
+    return createConfiguration(aClass);
+  }
+
+  private static void setupModule(String sources, Module module) {
     VirtualFile contentRoot = getContentRoot(sources);
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry contentEntry = model.addContentEntry(contentRoot);
@@ -175,16 +222,6 @@ public class ModulePathTest extends BaseConfigurationTestCase {
       moduleExtension.setCompilerOutputPath(contentRoot.findFileByRelativePath("out/production"));
       moduleExtension.setCompilerOutputPathForTests(contentRoot.findFileByRelativePath("out/test"));
     });
-    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor);
-
-    Sdk mockJdk = IdeaTestUtil.getMockJdk9();
-    ModuleRootModificationUtil.setModuleSdk(module, mockJdk);
-
-    PsiClass aClass = findClass(module, "p.MyTest");
-    assertNotNull(aClass);
-    assertNotNull(TestFrameworks.detectFramework(aClass));
-
-    return createConfiguration(aClass);
   }
 
   protected static VirtualFile getContentRoot(String path) {

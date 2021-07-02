@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
-//RUN ON JAVA 11 ONLY
 public class JUnitModuleInfoIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
   @Override

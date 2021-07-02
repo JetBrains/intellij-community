@@ -200,24 +200,21 @@ public final class JavaParametersUtil {
 
   public static void putDependenciesOnModulePath(PathsList modulePath,
                                                  PathsList classPath,
-                                                 PsiJavaModule prodModule) {
-    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
-    allRequires.add(prodModule);    //put production output on the module path as well
+                                                 PsiJavaModule module) {
+    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(module);
+    allRequires.add(module);    //put production output on the module path as well
     JarFileSystem jarFS = JarFileSystem.getInstance();
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(prodModule.getProject());
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
 
-    boolean inTestSourceContent = fileIndex.isInTestSourceContent(PsiImplUtil.getModuleVirtualFile(prodModule));
     allRequires.stream()
       .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
-      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS, inTestSourceContent))
+      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
       .filter(Objects::nonNull)
       .forEach(file -> putOnModulePath(modulePath, classPath, file));
     
-    if (inTestSourceContent) {
-      VirtualFile productionOutput = getClasspathEntry(prodModule, fileIndex, jarFS, false);
-      if (productionOutput != null) {
-        putOnModulePath(modulePath, classPath, productionOutput);
-      }
+    VirtualFile productionOutput = getClasspathEntry(module, fileIndex, jarFS);
+    if (productionOutput != null) {
+      putOnModulePath(modulePath, classPath, productionOutput);
     }
   }
 
@@ -231,8 +228,7 @@ public final class JavaParametersUtil {
 
   private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
                                                ProjectFileIndex fileIndex,
-                                               JarFileSystem jarFileSystem, 
-                                               boolean testSourceContent) {
+                                               JarFileSystem jarFileSystem) {
     VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
 
     Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
@@ -242,8 +238,8 @@ public final class JavaParametersUtil {
 
     CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
     if (moduleExtension != null) {
-      return testSourceContent ? moduleExtension.getCompilerOutputPathForTests()
-                               : moduleExtension.getCompilerOutputPath();
+      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests() 
+                                                         : moduleExtension.getCompilerOutputPath();
     }
     return null;
   }
