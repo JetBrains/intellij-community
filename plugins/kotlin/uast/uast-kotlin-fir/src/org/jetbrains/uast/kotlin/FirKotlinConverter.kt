@@ -396,9 +396,8 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtSimpleNameExpression -> expr<USimpleNameReferenceExpression>(build(::FirKotlinUSimpleReferenceExpression))
 
                 is KtBinaryExpression -> {
-                    // TODO: elvis
                     if (expression.operationToken == KtTokens.ELVIS) {
-                        expr<UExpression>(build(::UnknownKotlinExpression))
+                        expr<UExpressionList>(build(::createElvisExpression))
                     } else {
                         expr<UBinaryExpression>(build(::FirKotlinUBinaryExpression))
                     }

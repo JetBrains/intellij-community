@@ -6,6 +6,12 @@ public final class ElvisKt {
         return 42
     }
     public static final fun baz() : java.lang.String {
-        return [!] UnknownKotlinExpression (BINARY_EXPRESSION)
+        return elvis {
+            var var243c51a0: java.lang.String = elvis {
+                var varc4aef569: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                if (varc4aef569 != null) varc4aef569 else [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            }
+            if (var243c51a0 != null) var243c51a0 else [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
 }
