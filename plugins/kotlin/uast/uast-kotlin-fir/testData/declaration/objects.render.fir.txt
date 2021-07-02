@@ -19,6 +19,8 @@ public final class RunnableManager {
         tasks.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public final fun runAll() : void {
-        [!] UnknownKotlinExpression (FOR)
+        for (t : UastEmptyExpression) {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
 }

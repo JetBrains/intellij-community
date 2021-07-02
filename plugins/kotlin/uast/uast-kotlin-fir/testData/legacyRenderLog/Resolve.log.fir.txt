@@ -65,7 +65,12 @@ UFile (package = )
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = listT)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (FOR)
+                UForEachExpression
+                    USimpleNameReferenceExpression (identifier = listT)
+                    UBlockExpression
+                        UQualifiedReferenceExpression
+                            USimpleNameReferenceExpression (identifier = a)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
     UClass (name = A)
         UMethod (name = A)
         UMethod (name = foo)
