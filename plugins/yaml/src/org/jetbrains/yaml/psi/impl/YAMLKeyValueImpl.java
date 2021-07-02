@@ -177,14 +177,15 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       @Override
       public String getPresentableText() {
         if (value instanceof YAMLScalar){
-          return getValueText();
+          ItemPresentation presentation = ((YAMLScalar)value).getPresentation();
+          return presentation != null ? presentation.getPresentableText() : getValueText();
         }
         return getName();
       }
 
       @Override
       public String getLocationString() {
-        return "[" + yamlFile.getName() + "]";
+        return yamlFile.getName();
       }
 
       @Override
