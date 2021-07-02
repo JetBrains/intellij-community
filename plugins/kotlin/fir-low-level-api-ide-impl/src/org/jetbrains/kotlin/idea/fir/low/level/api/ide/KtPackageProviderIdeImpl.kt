@@ -19,9 +19,9 @@ internal class KtPackageProviderIdeImpl(
     override fun isPackageExists(packageFqName: FqName): Boolean =
         PackageIndexUtil.packageExists(packageFqName, searchScope, project)
 
-    override fun getJavaAndKotlinSubPackageFqNames(packageFqName: FqName, targetPlatform: TargetPlatform): Set<Name> {
+    override fun getKotlinSubPackageFqNames(packageFqName: FqName): Set<Name> {
         return PackageIndexUtil
-            .getJavaAndKotlinSubPackageFqNames(packageFqName, searchScope, project, targetPlatform) { true }
+            .getSubPackageFqNames(packageFqName, searchScope, project) { true }
             .mapTo(mutableSetOf()) { it.shortName() }
     }
 }
