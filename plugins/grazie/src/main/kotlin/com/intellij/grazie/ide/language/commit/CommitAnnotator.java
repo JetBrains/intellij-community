@@ -42,7 +42,7 @@ public class CommitAnnotator implements Annotator {
         .newAnnotation(HighlightSeverity.WARNING, message)
         .tooltip(message)
         .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
-        .range(problem.getHighlightRange()); // we're in plain text, our PSI has the range of the whole file
+        .range(text.textRangeToFile(problem.getHighlightRange()));
       for (QuickFix<?> fix : runner.toFixes(problem)) {
         annotation = annotation.withFix((IntentionAction)fix);
       }
