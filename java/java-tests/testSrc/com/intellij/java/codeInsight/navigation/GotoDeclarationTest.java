@@ -130,6 +130,10 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     doTestPatternMatchingGuard();
   }
 
+  public void testReferenceFieldInPatternMatchingInSwitchStatement() {
+    doTestPatternMatchingGuard();
+  }
+
   private void doTestPatternMatchingGuard() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
