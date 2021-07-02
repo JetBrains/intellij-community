@@ -10,6 +10,7 @@ import java.nio.file.Path
 
 fun mergeJars(targetFile: Path, files: List<Path>) {
   Files.createDirectories(targetFile.parent)
+  val isKotlinArtifact = targetFile.toString().contains("kotlin", ignoreCase = true)
   FileChannel.open(targetFile, RW_CREATE_NEW).use { outChannel ->
     val packageIndexBuilder = PackageIndexBuilder()
 
@@ -18,8 +19,10 @@ fun mergeJars(targetFile: Path, files: List<Path>) {
       ImmutableZipFile.load(file).use { zipFile ->
         val entries = zipFile.entries.filter {
           val name = it.name
-          !name.endsWith(".kotlin_module") &&
-          !name.endsWith(".kotlin_metadata") &&
+          if (!isKotlinArtifact && (name.endsWith(".kotlin_module") || name.endsWith(".kotlin_metadata"))) {
+            return@filter false
+          }
+          
           name != "META-INF/MANIFEST.MF" && name != PACKAGE_INDEX_NAME &&
           name != "license" && !name.startsWith("license/") &&
           name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
