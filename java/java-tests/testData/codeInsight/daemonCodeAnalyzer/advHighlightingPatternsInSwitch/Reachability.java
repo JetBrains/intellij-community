@@ -49,8 +49,8 @@ class Test {
 
   void testSealedClassUnreachable1(I i) {
     switch (i) {
-      Object o:
-      throw new IllegalArgumentException();
+      case Object o:
+        throw new IllegalArgumentException();
     }
     <error descr="Unreachable statement">System.out.println();</error>
   }
