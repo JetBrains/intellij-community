@@ -85,11 +85,16 @@ void setPrincipal(id tbobj, const char * uid) {
 
 __used
 void releaseNativePeer(id tbobj) {
+    void (^doRelease)() = ^{
+        if ([tbobj isKindOfClass:[NSCustomTouchBarItem class]])
+            ((NSCustomTouchBarItem *)tbobj).view = nil;
+        [tbobj release];
+    };
       if ([NSThread isMainThread]) {
-          [tbobj release];
+          doRelease();
       } else {
           dispatch_async(dispatch_get_main_queue(), ^{
-              [tbobj release];
+              doRelease();
           });
       }
 }
