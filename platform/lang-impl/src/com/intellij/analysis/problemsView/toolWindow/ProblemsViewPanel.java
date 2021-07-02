@@ -55,8 +55,6 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
-  static final DataKey<ProblemsViewPanel> SELECTED = DataKey.create("ProblemsView/SelectedPanel");
-
   protected final ClientId myClientId = ClientId.getCurrent();
 
   private final Project myProject;
@@ -223,7 +221,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (SELECTED.is(dataId)) return this;
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
     if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {

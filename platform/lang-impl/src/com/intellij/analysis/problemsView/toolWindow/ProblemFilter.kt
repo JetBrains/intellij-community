@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
@@ -24,7 +24,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {
     val project = event?.project ?: return AnAction.EMPTY_ARRAY
     if (project.isDisposed) return AnAction.EMPTY_ARRAY
-    val panel = event.getData(ProblemsViewPanel.SELECTED) as? HighlightingPanel ?: return AnAction.EMPTY_ARRAY
+    val panel = ProblemsView.getSelectedPanel(project) as? HighlightingPanel ?: return AnAction.EMPTY_ARRAY
     return SeverityRegistrar.getSeverityRegistrar(project).allSeverities.reversed()
       .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
       .map {
