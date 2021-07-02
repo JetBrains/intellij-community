@@ -1,5 +1,18 @@
 <html>
 <body>
 Reports optionally expected annotations without actual annotation in some platform modules.
+<p><b>Example:</b></p>
+<pre><code>
+// common code
+@OptionalExpectation
+expect annotation class JvmName(val name: String)
+
+@JvmName(name = "JvmFoo")
+fun foo() { }
+
+// jvm code
+actual annotation class JvmName(val name: String)
+</code></pre>
+The inspection will report that platforms other than JVM (e.g. Native) miss <code>actual annotation class JvmName</code>
 </body>
 </html>
