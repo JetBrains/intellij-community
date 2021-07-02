@@ -2403,6 +2403,10 @@
                      key="unnecessary.qualifier.for.this.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryQualifierForThisInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryRecordModifier" bundle="messages.InspectionGadgetsBundle"
+                     key="unnecessary.record.modifier.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.siyeh.ig.style.UnnecessaryRecordModifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessarySemicolon" bundle="messages.InspectionGadgetsBundle" key="unnecessary.semicolon.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true" cleanupTool="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.UnnecessarySemicolonInspection"/>
