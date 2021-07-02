@@ -26,7 +26,16 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = arg)
                 UDeclarationsExpression
                     ULocalVariable (name = at)
-                        [!] UnknownKotlinExpression (BINARY_EXPRESSION)
+                        UExpressionList (elvis)
+                            UDeclarationsExpression
+                                ULocalVariable (name = var708e23eb)
+                                    USimpleNameReferenceExpression (identifier = arg)
+                            UIfExpression
+                                UBinaryExpression (operator = !=)
+                                    USimpleNameReferenceExpression (identifier = var708e23eb)
+                                    ULiteralExpression (value = null)
+                                USimpleNameReferenceExpression (identifier = var708e23eb)
+                                UReturnExpression
                 UDeclarationsExpression
                     ULocalVariable (name = tl)
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)

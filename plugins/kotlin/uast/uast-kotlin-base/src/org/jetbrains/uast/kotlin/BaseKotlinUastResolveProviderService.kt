@@ -29,6 +29,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType?
 
+    fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType?
+
     fun getExpressionType(uExpression: UExpression): PsiType?
 
     fun getType(ktExpression: KtExpression, parent: UElement): PsiType?
