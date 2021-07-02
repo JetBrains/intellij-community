@@ -612,7 +612,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       customizeComponents(token);
 
       ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-      if(artifactFactory instanceof CustomMaven3ArtifactFactory) {
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
         ((CustomMaven3ArtifactFactory)artifactFactory).customize();
       }
 
@@ -639,7 +639,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void customizeComponents(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     // replace some plexus components
-    if(VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+    if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
       myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
     }
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
@@ -781,7 +781,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             //Artifact projectArtifact = project.getArtifact();
             //Map managedVersions = project.getManagedVersionMap();
             //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
-            modelProblems = MavenVersionHelper.resolveVersionProblem(project, modelProblems);
             project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
             //
 
@@ -790,7 +789,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph")==null;
+              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
               Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
               project.setArtifacts(artifacts);
               executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
@@ -1065,7 +1064,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
     else {
       mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
-
     }
     return mavenMultiModuleProjectDirectory;
   }
