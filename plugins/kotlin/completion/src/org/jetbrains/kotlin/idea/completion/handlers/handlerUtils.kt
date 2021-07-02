@@ -77,19 +77,6 @@ fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
     return null
 }
 
-// TODO: rewrite using Sequence
-fun CharSequence.indexOfStopOnSpace(c: Char, startIndex: Int): Int? {
-    for (i in startIndex until this.length) {
-        when (this[i]) {
-            c -> return i
-            ' ' -> return null
-            '\t' -> return null
-            else -> continue
-        }
-    }
-    return null
-}
-
 fun CharSequence.skipSpaces(index: Int): Int = (index..length - 1).firstOrNull { val c = this[it]; c != ' ' && c != '\t' } ?: this.length
 
 fun CharSequence.skipSpacesAndLineBreaks(index: Int): Int =

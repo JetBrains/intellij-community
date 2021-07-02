@@ -228,34 +228,6 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
 
             var insertTypeArguments = inputTypeArguments && (isNormalCompletion || isReplaceCompletion || isSmartEnterCompletion)
 
-            //val a = intellijIdeaRulezzzz()       <Hello>
-            /**
-             *
-             *
-             * <intellijIdeaRulezzzz <List<ll>, List<ll>> >
-             *
-             * <intellijIdea| <T>| >
-             *
-             * <intellijIdea|123 <T>| >
-             * <intellijIdea1|123 <T>| >
-             * <intellijIdea1| <T>| >
-             *
-             *
-             *     declarativeIH = \t: base=replacementOffset;
-             *                      retain=ktTypeArgumentList.endOffset - replacementOffset;
-             *                      insert (){\n}
-             *                      retain 1
-             *
-             *                      insert=();
-             *                      insert={};
-             *                      insert=\n;
-             *
-             *
-             *
-             *                      retain=7
-             *
-             *                     \n: base=startOffset+lookupStringLength; insert=()
-             */
             val psiDocumentManager = PsiDocumentManager.getInstance(project)
             if (isReplaceCompletion) {
                 val offset1 = chars.skipSpaces(offset)

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * An object allowing to decouple {@link LookupElement#handleInsert} logic from the lookup element class, e.g. for the purposes
