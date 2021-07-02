@@ -65,7 +65,12 @@ UFile (package = ) [public final class ResolveKt {...]
                 UQualifiedReferenceExpression [listT.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = listT) [listT] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                [!] UnknownKotlinExpression (FOR) [[!] UnknownKotlinExpression (FOR)] = Undetermined
+                UForEachExpression [for (a : listT) {...}] = Undetermined
+                    USimpleNameReferenceExpression (identifier = listT) [listT] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+                        UQualifiedReferenceExpression [a.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            USimpleNameReferenceExpression (identifier = a) [a] = external a()
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
     UClass (name = A) [public class A {...}]
         UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = foo) [public final fun foo() : void {...}]

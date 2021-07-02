@@ -11,12 +11,16 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.psi.UastPsiParameterNotResolved
 
 class KotlinUForEachExpression(
-        override val sourcePsi: KtForExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtForExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UForEachExpression {
-    override val iteratedValue by lz { KotlinConverter.convertOrEmpty(sourcePsi.loopRange, this) }
-    override val body by lz { KotlinConverter.convertOrEmpty(sourcePsi.body, this) }
-    
+    override val iteratedValue by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.loopRange, this)
+    }
+    override val body by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.body, this)
+    }
+
     override val variable by lz {
         val parameter = sourcePsi.loopParameter?.let { UastKotlinPsiParameter.create(baseResolveProviderService, it, sourcePsi, this, 0) }
                 ?: UastPsiParameterNotResolved(sourcePsi, KotlinLanguage.INSTANCE)
