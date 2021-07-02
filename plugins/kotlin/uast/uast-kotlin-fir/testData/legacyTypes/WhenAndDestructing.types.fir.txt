@@ -7,4 +7,24 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                 UDeclarationsExpression [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     ULocalVariable (name = arr) [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (WHEN) [[!] UnknownKotlinExpression (WHEN)]
+                USwitchExpression [switch (string)  {...] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = string) [string] : PsiType:String
+                    UExpressionList (when) [    "aaaa" -> {...    ] : PsiType:Unit
+                        USwitchClauseExpressionWithBody ["aaaa" -> {...]
+                            ULiteralExpression (value = "aaaa") ["aaaa"] : PsiType:String
+                            UExpressionList (when_entry) [{...]
+                                UYieldExpression [yield return "bindingContext"]
+                                    UReturnExpression [return "bindingContext"] : PsiType:Void
+                                        ULiteralExpression (value = "bindingContext") ["bindingContext"] : PsiType:String
+                        USwitchClauseExpressionWithBody ["empty-switch" -> {...]
+                            ULiteralExpression (value = "empty-switch") ["empty-switch"] : PsiType:String
+                            UExpressionList (when_entry) [{...]
+                        USwitchClauseExpressionWithBody [ -> {...]
+                            UExpressionList (when_entry) [{...]
+                                UDeclarationsExpression [@null var var837f2350: <ErrorType> = arr]
+                                    ULocalVariable (name = var837f2350) [@null var var837f2350: <ErrorType> = arr]
+                                        UAnnotation (fqName = null) [@null]
+                                        USimpleNameReferenceExpression (identifier = arr) [arr] : PsiType:List<? extends String>
+                                UYieldExpression [yield return bindingContext]
+                                    UReturnExpression [return bindingContext] : PsiType:Void
+                                        USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : PsiType:String

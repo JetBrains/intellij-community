@@ -5,4 +5,20 @@ UFile (package = )
                 UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (WHEN)
+                    USwitchExpression
+                        USimpleNameReferenceExpression (identifier = bar)
+                        UExpressionList (when)
+                            USwitchClauseExpressionWithBody
+                                UBinaryExpressionWithType
+                                    USimpleNameReferenceExpression (identifier = it)
+                                    UTypeReferenceExpression (name = java.lang.String)
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        USimpleNameReferenceExpression (identifier = bar)
+                            USwitchClauseExpressionWithBody
+                                UBinaryExpressionWithType
+                                    USimpleNameReferenceExpression (identifier = it)
+                                    UTypeReferenceExpression (name = java.lang.String)
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        ULiteralExpression (value = "<error>")
