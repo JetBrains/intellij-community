@@ -3,7 +3,16 @@ UFile (package = ) [public final class TryCatch {...]
         UMethod (name = TryCatch) [public fun TryCatch() = UastEmptyExpression]
         UMethod (name = catches) [public final fun catches() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)]
+                UTryExpression [try {...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:Unit
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                        UBlockExpression [{...}] : PsiType:Unit
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UBlockExpression [{...}] : PsiType:Unit
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = catcher) [public final fun catcher() : void {...}]
@@ -14,7 +23,17 @@ UFile (package = ) [public final class TryCatch {...]
         UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]
         UMethod (name = catches) [public final fun catches() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)]
+                UTryExpression [try {...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:Unit
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCatchClause (e) [catch (@null @not-implemented-annotation var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null @not-implemented-annotation var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                            UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                        UBlockExpression [{...}] : PsiType:Unit
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UBlockExpression [{...}] : PsiType:Unit
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = catcher) [public final fun catcher() : void {...}]

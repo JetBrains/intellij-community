@@ -3,7 +3,16 @@ UFile (package = ) [public final class TryCatch {...]
         UMethod (name = TryCatch) [public fun TryCatch() = UastEmptyExpression]
         UMethod (name = catches) [public final fun catches() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)] = Undetermined
+                UTryExpression [try {...}] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                        UBlockExpression [{...}] = Undetermined
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = catcher) [public final fun catcher() : void {...}]
@@ -14,7 +23,17 @@ UFile (package = ) [public final class TryCatch {...]
         UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]
         UMethod (name = catches) [public final fun catches() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)] = Undetermined
+                UTryExpression [try {...}] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UCatchClause (e) [catch (@null @not-implemented-annotation var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null @not-implemented-annotation var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                            UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                        UBlockExpression [{...}] = Undetermined
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = catcher) [public final fun catcher() : void {...}]
