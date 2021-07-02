@@ -6,18 +6,18 @@ import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.uast.*
 
 class KotlinUTryExpression(
-        override val sourcePsi: KtTryExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtTryExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UTryExpression, KotlinUElementWithType {
-    override val tryClause by lz { KotlinConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
-    override val catchClauses by lz { sourcePsi.catchClauses.map { KotlinUCatchClause(it, this) } }
+    override val tryClause by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.tryBlock, this)
+    }
+    override val catchClauses by lz {
+        sourcePsi.catchClauses.map { KotlinUCatchClause(it, this) }
+    }
     override val finallyClause by lz {
         sourcePsi.finallyBlock?.finalExpression?.let {
-            KotlinConverter.convertExpression(
-                it,
-                this,
-                DEFAULT_EXPRESSION_TYPES_LIST
-            )
+            baseResolveProviderService.baseKotlinConverter.convertExpression(it, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
     }
 
