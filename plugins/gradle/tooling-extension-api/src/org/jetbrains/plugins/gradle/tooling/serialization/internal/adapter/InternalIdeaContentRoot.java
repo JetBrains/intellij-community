@@ -49,22 +49,12 @@ public final class InternalIdeaContentRoot implements IdeaContentRoot {
   }
 
   @Override
-  public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getGeneratedSourceDirectories() {
-    return ImmutableDomainObjectSet.of(generated(this.sourceDirectories));
-  }
-
-  @Override
   public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getTestDirectories() {
     return wrap(testDirectories);
   }
 
   public void setTestDirectories(Set<InternalIdeaSourceDirectory> testDirectories) {
     this.testDirectories = ImmutableDomainObjectSet.of(testDirectories);
-  }
-
-  @Override
-  public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getGeneratedTestDirectories() {
-    return ImmutableDomainObjectSet.of(generated(this.testDirectories));
   }
 
   @Override
@@ -98,17 +88,6 @@ public final class InternalIdeaContentRoot implements IdeaContentRoot {
 
   public void setExcludeDirectories(Set<File> excludeDirectories) {
     this.excludeDirectories = excludeDirectories;
-  }
-
-  private static Set<InternalIdeaSourceDirectory> generated(Set<InternalIdeaSourceDirectory> directories) {
-    Set<InternalIdeaSourceDirectory> generated = new LinkedHashSet<InternalIdeaSourceDirectory>();
-    for (InternalIdeaSourceDirectory sourceDirectory : directories) {
-      if (sourceDirectory.isGenerated()) {
-        generated.add(sourceDirectory);
-      }
-    }
-
-    return generated;
   }
 
   public String toString() {

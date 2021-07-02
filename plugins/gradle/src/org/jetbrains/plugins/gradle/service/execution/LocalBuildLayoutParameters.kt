@@ -49,7 +49,8 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
 
     if (wrapperConfiguration == null) return null
     val localGradleUserHome = gradleUserHome.maybeGetLocalValue() ?: return null
-    val localDistribution = PathAssembler(File(localGradleUserHome)).getDistribution(wrapperConfiguration)
+    val localDistribution = PathAssembler(File(localGradleUserHome), File(gradleProjectSettings.externalProjectPath))
+      .getDistribution(wrapperConfiguration)
     val distributionDir = localDistribution.distributionDir ?: return null
     if (!distributionDir.exists()) return null
     try {

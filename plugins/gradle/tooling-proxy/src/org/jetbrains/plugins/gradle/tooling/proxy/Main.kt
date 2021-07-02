@@ -6,13 +6,14 @@ import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
 import org.gradle.internal.remote.internal.inet.InetEndpoint
-import org.gradle.launcher.cli.action.BuildActionSerializer
+//import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
 import org.gradle.launcher.daemon.protocol.Failure
 import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
+import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment

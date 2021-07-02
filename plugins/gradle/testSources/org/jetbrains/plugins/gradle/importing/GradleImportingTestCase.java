@@ -399,9 +399,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
     createProjectSubFile("gradle/wrapper/gradle-wrapper.properties", writer.toString());
 
-    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(getProjectPath());
-    PathAssembler.LocalDistribution localDistribution = new PathAssembler(
-      StartParameter.DEFAULT_GRADLE_USER_HOME).getDistribution(wrapperConfiguration);
+    String projectPath = getProjectPath();
+    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(projectPath);
+    PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(projectPath));
+    PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(wrapperConfiguration);
 
     File zip = localDistribution.getZipFile();
     try {
