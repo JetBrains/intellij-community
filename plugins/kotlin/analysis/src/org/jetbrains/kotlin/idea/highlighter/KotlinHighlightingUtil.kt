@@ -28,6 +28,8 @@ object KotlinHighlightingUtil {
         if (ktFile is KtCodeFragment && ktFile.context != null) {
             return true
         }
+        
+        if (ktFile.isCompiled) return false
 
         if (OutsidersPsiFileSupportWrapper.isOutsiderFile(ktFile.virtualFile)) {
             val origin = OutsidersPsiFileSupportUtils.getOutsiderFileOrigin(ktFile.project, ktFile.virtualFile) ?: return false
