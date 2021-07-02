@@ -16,14 +16,12 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.util.jvmGetterName
-import org.jetbrains.kotlin.idea.util.jvmName
-import org.jetbrains.kotlin.idea.util.jvmSetterName
-import org.jetbrains.kotlin.idea.util.numberOfArguments
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
@@ -38,7 +36,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
                 ?.asString()
                 ?.let { qualifier ->
                     when (originalElement) {
-                        is KtNamedFunction -> originalElement.asCompilerRef(qualifier, names).let(::listOf)
+                        is KtNamedFunction -> originalElement.asCompilerRef(qualifier, names)
                         is KtProperty -> originalElement.asCompilerRef(qualifier, names)
                         else -> null
                     }
@@ -61,32 +59,45 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
             )
         }
 
-    private fun KtNamedFunction.asCompilerRef(qualifier: String, names: NameEnumerator): CompilerRef = CompilerRef.JavaCompilerMethodRef(
-        names.tryEnumerate(qualifier),
-        names.tryEnumerate(jvmName ?: name),
-        numberOfArguments(countReceiver = true),
-    )
+    private fun KtNamedFunction.asCompilerRef(qualifier: String, names: NameEnumerator): List<CompilerRef> {
+        val qualifierId = names.tryEnumerate(qualifier)
+        val nameId = names.tryEnumerate(jvmName ?: name)
+        val numberOfArguments = numberOfArguments(countReceiver = true)
+        if (findAnnotation(JVM_OVERLOADS_FQ_NAME.shortName().asString()) == null) {
+            return CompilerRef.JavaCompilerMethodRef(
+                qualifierId,
+                nameId,
+                numberOfArguments,
+            ).let(::listOf)
+        }
+
+        return numberOfArguments.minus(valueParameters.count(KtParameter::hasDefaultValue)).rangeTo(numberOfArguments).map {
+            CompilerRef.JavaCompilerMethodRef(qualifierId, nameId, it)
+        }
+    }
 
     private fun KtProperty.asCompilerRef(qualifier: String, names: NameEnumerator): List<CompilerRef>? = name?.let { propertyName ->
+        val qualifierId = names.tryEnumerate(qualifier)
         if (hasModifier(KtTokens.CONST_KEYWORD)) return@let listOf(
             CompilerRef.JavaCompilerFieldRef(
-                names.tryEnumerate(qualifier),
+                qualifierId,
                 // JvmName for constants isn't supported
                 names.tryEnumerate(propertyName),
             )
         )
 
+        val numberOfArguments = numberOfArguments(countReceiver = true)
         val getter = CompilerRef.JavaCompilerMethodRef(
-            names.tryEnumerate(qualifier),
+            qualifierId,
             names.tryEnumerate(jvmGetterName ?: JvmAbi.getterName(propertyName)),
-            numberOfArguments(countReceiver = true),
+            numberOfArguments,
         )
 
         val setter = if (isVar)
             CompilerRef.JavaCompilerMethodRef(
-                names.tryEnumerate(qualifier),
+                qualifierId,
                 names.tryEnumerate(jvmSetterName ?: JvmAbi.setterName(propertyName)),
-                numberOfArguments(countReceiver = true) + 1,
+                numberOfArguments + 1,
             )
         else
             null

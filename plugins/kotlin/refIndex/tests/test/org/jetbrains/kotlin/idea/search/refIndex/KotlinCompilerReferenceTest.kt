@@ -285,6 +285,74 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testTopLevelFunctionWithJvmOverloads() {
+        myFixture.configureByFiles(
+            "utilFile.kt",
+            "AllArguments.java",
+            "AllArguments.kt",
+            "WithoutAll.java",
+            "WithoutAll.kt",
+            "WithoutLast.java",
+            "WithoutLast.kt",
+            "WithoutSecond.java",
+            "WithoutSecond.kt",
+            "Empty.java",
+            "Empty.kt",
+        )
+
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf(
+                "utilFile.kt",
+                "AllArguments.java",
+                "AllArguments.kt",
+                "WithoutAll.java",
+                "WithoutAll.kt",
+                "WithoutLast.java",
+                "WithoutLast.kt",
+                "WithoutSecond.java",
+                "WithoutSecond.kt",
+            ),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testTopLevelExtensionWithJvmOverloadsAndJvmName() {
+        myFixture.configureByFiles(
+            "utilFile.kt",
+            "AllArguments.java",
+            "AllArguments.kt",
+            "WithoutAll.java",
+            "WithoutAll.kt",
+            "WithoutLast.java",
+            "WithoutLast.kt",
+            "WithoutSecond.java",
+            "WithoutSecond.kt",
+            "Empty.java",
+            "Empty.kt",
+        )
+
+        rebuildProject()
+        TestCase.assertEquals(
+            setOf(
+                "utilFile.kt",
+                "AllArguments.java",
+                "AllArguments.kt",
+                "WithoutAll.java",
+                "WithoutAll.kt",
+                "WithoutLast.java",
+                "WithoutLast.kt",
+                "WithoutSecond.java",
+                "WithoutSecond.kt",
+            ),
+            getReferentFilesForElementUnderCaret(),
+        )
+
+        addFileAndAssertIndexNotReady()
+    }
+
     private fun assertIndexUnavailable() = assertNull(getReferentFilesForElementUnderCaret())
     private fun assertUsageInMainFile() = assertEquals(setOf("Main.kt"), getReferentFilesForElementUnderCaret())
     private fun addFileAndAssertIndexNotReady(fileName: String = "Another.kt") {
