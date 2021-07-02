@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
@@ -54,9 +54,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       return null;
     }
   }
-
-  public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
-  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
 
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
