@@ -361,6 +361,17 @@ final class CommunityRepositoryModules {
       withProjectLibrary("layoutinspector-proto")
       withProjectLibrary("emulator-proto")
 
+      //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
+      withProjectLibrary("aapt-proto")
+      withProjectLibrary("aia-proto")
+      withProjectLibrary("baksmali")
+      withProjectLibrary("dexlib2")
+      withProjectLibrary("kotlin-gradle-plugin-model")
+      withProjectLibrary("libam-instrumentation-data-proto")
+      withProjectLibrary("studio-analytics-proto")
+      withProjectLibrary("HdrHistogram")
+      withProjectLibrary("zxing-core")
+
       // Asset Studio images.
       withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")
 
