@@ -21,7 +21,6 @@ public final class ProjectGroup {
   //used in different places, i.e. closing tutorials group should hide all nested items too
   private boolean myTutorials = false;
   private boolean myBottomGroup = false;
-  private Runnable myProjectOpenedLogger;
 
   public ProjectGroup(@NotNull @NlsSafe String name) {
     myName = name;
@@ -114,14 +113,6 @@ public final class ProjectGroup {
 
   public void setBottomGroup(boolean bottomGroup) {
     myBottomGroup = bottomGroup;
-  }
-
-  public Runnable getProjectOpenedLogger() {
-    return myProjectOpenedLogger;
-  }
-
-  public void setProjectOpenedLogger(Runnable projectOpenedLogger) {
-    myProjectOpenedLogger = projectOpenedLogger;
   }
 
   @Override

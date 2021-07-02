@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import java.io.File;
@@ -91,7 +92,6 @@ class EclipseProjectDetector extends ProjectDetector {
         if (group == null) {
           group = new ProjectGroup(groupName);
           group.setBottomGroup(true);
-          group.setProjectOpenedLogger(() -> EclipseProjectDetectorUsagesCollector.logProjectOpened(false));
           group.setProjects(new ArrayList<>(set));
           manager.addGroup(group);
         }
@@ -105,6 +105,13 @@ class EclipseProjectDetector extends ProjectDetector {
         LOG.error(e);
       }
     });
+  }
+
+  @Override
+  public void logRecentProjectOpened(@Nullable ProjectGroup projectGroup) {
+    if (projectGroup != null && EclipseBundle.message("eclipse.projects").equals(projectGroup.getName())) {
+      EclipseProjectDetectorUsagesCollector.logProjectOpened(false);
+    }
   }
 
   static void collectProjects(List<String> projects, Path path) {

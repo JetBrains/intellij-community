@@ -77,7 +77,7 @@ open class RecentProjectListActionProvider {
       for (path in group.projects) {
         val action = createOpenAction(path!!, duplicates)
         if (action is ReopenProjectAction) {
-          action.setProjectOpenedLogger { group.projectOpenedLogger }
+          action.setProjectGroup(group)
         }
         children.add(action)
         if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
