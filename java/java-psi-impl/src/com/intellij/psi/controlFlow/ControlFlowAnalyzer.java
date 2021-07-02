@@ -931,10 +931,10 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     PsiCodeBlock body = statement.getBody();
-    PsiType exprType = expr == null ? null : expr.getType();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       boolean needToCreateDefault = false;
+      PsiType exprType = expr == null ? null : expr.getType();
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
         if (!(aStatement instanceof PsiSwitchLabelStatementBase)) continue;
