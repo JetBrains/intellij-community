@@ -380,8 +380,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     // paint all backgrounds
     int gutterSeparatorX = getWhitespaceSeparatorOffset();
-    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
-    paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
+    Color caretRowColor = getCaretRowColor();
+    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
+    paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
 
     paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
@@ -578,20 +579,32 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                final Rectangle clip,
                                final int x,
                                final int width,
-                               Color background) {
+                               Color background,
+                               Color caretRowColor) {
     g.setColor(background);
     g.fillRect(x, clip.y, width, clip.height);
 
-    paintCaretRowBackground(g, x, width);
+    paintCaretRowBackground(g, x, width, caretRowColor);
   }
 
-  private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
-    if (!myEditor.getSettings().isCaretRowShown()) return;
-    int caretLine = myEditor.getCaretModel().getVisualPosition().line;
-    Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-    if (caretRowColor != null) {
+  private Color getCaretRowColor() {
+    if (!myEditor.getSettings().isCaretRowShown()) {
+      return null;
+    }
+    if (!Registry.is("highlight.caret.line.at.custom.fold")) {
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset) instanceof CustomFoldRegion) {
+        return null;
+      }
+    }
+    return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+  }
+
+  private void paintCaretRowBackground(final Graphics g, final int x, final int width, Color color) {
+    if (color != null) {
+      int caretLine = myEditor.getCaretModel().getVisualPosition().line;
       int[] yRange = myEditor.visualLineToYRange(caretLine);
-      g.setColor(caretRowColor);
+      g.setColor(color);
       g.fillRect(x, yRange[0], width, yRange[1] - yRange[0]);
     }
   }
