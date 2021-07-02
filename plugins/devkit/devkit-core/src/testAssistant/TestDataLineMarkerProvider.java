@@ -31,10 +31,7 @@ import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 public final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -116,8 +113,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
       if (!StringUtil.isEmpty(testDataPath)) {
         pathComponents.add(testDataPath);
       }
-      PsiElement element = psiClass.getParent();
-      psiClass = element instanceof PsiClass ? (PsiClass)element : null;
+      psiClass = psiClass.getContainingClass();
     }
     if (pathComponents.isEmpty()) return null;
     Collections.reverse(pathComponents);
@@ -126,10 +122,12 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
 
   @Nullable
   public static String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
-    final UAnnotation annotation =
-      UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(owner,
-                                                                        Collections.singleton(annotationFqName)),
-                               UAnnotation.class);
+    Set<String> annotationNames = Collections.singleton(annotationFqName);
+    boolean nestedClass = owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() != null;
+    PsiAnnotation element = nestedClass
+                            ? AnnotationUtil.findAnnotation(owner, annotationNames)
+                            : AnnotationUtil.findAnnotationInHierarchy(owner, annotationNames);
+    final UAnnotation annotation = UastContextKt.toUElement(element, UAnnotation.class);
     if (annotation != null) {
       UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value != null) {
