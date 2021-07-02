@@ -31,4 +31,9 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = runAll)
             UBlockExpression
-                [!] UnknownKotlinExpression (FOR)
+                UForEachExpression
+                    UastEmptyExpression
+                    UBlockExpression
+                        UQualifiedReferenceExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
