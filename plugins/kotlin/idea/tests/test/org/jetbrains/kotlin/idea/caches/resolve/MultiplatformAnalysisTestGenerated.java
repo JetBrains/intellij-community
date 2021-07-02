@@ -118,6 +118,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/duplicateExpectsWithStrongIncompatibility/");
     }
 
+    @TestMetadata("expectActualLineMarkers")
+    public void testExpectActualLineMarkers() throws Exception {
+        runTest("testData/multiplatform/expectActualLineMarkers/");
+    }
+
     @TestMetadata("extensionOnExpect")
     public void testExtensionOnExpect() throws Exception {
         runTest("testData/multiplatform/extensionOnExpect/");

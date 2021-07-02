@@ -26,7 +26,12 @@ private fun ModuleDescriptor?.getPlatformName(): String? {
     // TODO(dsavvinov): use better description
     return when {
         platform.isCommon() -> "common"
-        else -> platform.single().platformName
+        else -> {
+            assert(platform.componentPlatforms.map { it.platformName }.toSet().size == 1) {
+                "Expected the same platform name for component platforms in non-common module"
+            }
+            platform.first().platformName
+        }
     }
 }
 
