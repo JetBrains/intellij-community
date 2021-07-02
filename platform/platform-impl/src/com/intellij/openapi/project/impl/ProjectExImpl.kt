@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.ActivityCategory
@@ -140,10 +140,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun getBasePath() = componentStore.projectBasePath.systemIndependentPath
 
-  final override fun getPresentableUrl(): String {
-    val store = componentStore
-    return if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.systemIndependentPath else store.projectFilePath.systemIndependentPath
-  }
+  final override fun getPresentableUrl() = componentStore.presentableUrl
 
   override fun getLocationHash(): String {
     val store = componentStore

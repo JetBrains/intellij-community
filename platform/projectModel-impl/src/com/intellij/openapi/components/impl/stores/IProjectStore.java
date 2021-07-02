@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
@@ -18,6 +18,8 @@ public interface IProjectStore extends IComponentStore {
   @NotNull String getProjectName();
 
   @NotNull StorageScheme getStorageScheme();
+  
+  @NotNull String getPresentableUrl();
 
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
