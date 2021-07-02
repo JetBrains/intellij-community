@@ -164,7 +164,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
     }
 
-    FileDocumentManager.getInstance().saveAllDocuments();
+    if(ApplicationManager.getApplication().isDispatchThread()){
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
+
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
       return Collections.emptyList();
