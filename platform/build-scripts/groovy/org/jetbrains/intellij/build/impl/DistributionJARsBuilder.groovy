@@ -505,7 +505,7 @@ final class DistributionJARsBuilder {
   }
 
   /**
-   * @return predicate to test if a given plugin should ne auto-published
+   * @return predicate to test if a given plugin should be auto-published
    */
   @NotNull
   private Predicate<PluginLayout> loadPluginsAutoPublishList() {

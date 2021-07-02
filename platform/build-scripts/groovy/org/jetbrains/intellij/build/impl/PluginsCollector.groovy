@@ -50,6 +50,11 @@ final class PluginsCollector {
       }
       return false
     }
+    for (incompatiblePlugin in plugin.incompatiblePlugins) {
+      if (availableModulesAndPlugins.contains(incompatiblePlugin)) {
+        return false
+      }
+    }
     availableModulesAndPlugins.add(plugin.id)
     availableModulesAndPlugins.addAll(plugin.declaredModules)
     return true
@@ -158,7 +163,12 @@ final class PluginsCollector {
         }
       }
 
-      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, optionalDependencies, pluginLayout)
+      def incompatiblePlugins = new HashSet<String>()
+      for (pluginId in xml.getChildren('incompatible-with')) {
+        incompatiblePlugins += pluginId.getTextTrim()
+      }
+
+      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout)
       pluginDescriptors[id] = pluginDescriptor
       for (module in declaredModules) {
         pluginDescriptors[module] = pluginDescriptor
@@ -171,14 +181,17 @@ final class PluginsCollector {
     final String id
     final Set<String> declaredModules
     final Set<String> requiredDependencies
+    final Set<String> incompatiblePlugins
     final List<Pair<String, String>> optionalDependencies
     final PluginLayout pluginLayout
 
-    PluginDescriptor(String id, Set<String> declaredModules, Set<String> requiredDependencies,
+    PluginDescriptor(String id, Set<String> declaredModules,
+                     Set<String> requiredDependencies, Set<String> incompatiblePlugins,
                      List<Pair<String, String>> optionalDependencies, PluginLayout pluginLayout) {
       this.id = id
       this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
+      this.incompatiblePlugins = incompatiblePlugins
       this.optionalDependencies = optionalDependencies
       this.pluginLayout = pluginLayout
     }
