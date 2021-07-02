@@ -13,4 +13,24 @@ UFile (package = )
         UMethod (name = baz)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (BINARY_EXPRESSION)
+                    UExpressionList (elvis)
+                        UDeclarationsExpression
+                            ULocalVariable (name = var243c51a0)
+                                UExpressionList (elvis)
+                                    UDeclarationsExpression
+                                        ULocalVariable (name = varc4aef569)
+                                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                    UIfExpression
+                                        UBinaryExpression (operator = !=)
+                                            USimpleNameReferenceExpression (identifier = varc4aef569)
+                                            ULiteralExpression (value = null)
+                                        USimpleNameReferenceExpression (identifier = varc4aef569)
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UIfExpression
+                            UBinaryExpression (operator = !=)
+                                USimpleNameReferenceExpression (identifier = var243c51a0)
+                                ULiteralExpression (value = null)
+                            USimpleNameReferenceExpression (identifier = var243c51a0)
+                            UQualifiedReferenceExpression
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION)

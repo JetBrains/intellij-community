@@ -12,5 +12,25 @@ UFile (package = ) [public final class ElvisKt {...]
                     ULiteralExpression (value = 42) [42] = (long)42
         UMethod (name = baz) [public static final fun baz() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
-                UReturnExpression [return [!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Nothing
-                    [!] UnknownKotlinExpression (BINARY_EXPRESSION) [[!] UnknownKotlinExpression (BINARY_EXPRESSION)] = Undetermined
+                UReturnExpression [return elvis {...}] = Nothing
+                    UExpressionList (elvis) [elvis {...}] = Undetermined
+                        UDeclarationsExpression [var var243c51a0: java.lang.String = elvis {...}] = Undetermined
+                            ULocalVariable (name = var243c51a0) [var var243c51a0: java.lang.String = elvis {...}]
+                                UExpressionList (elvis) [elvis {...}] = Undetermined
+                                    UDeclarationsExpression [var varc4aef569: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        ULocalVariable (name = varc4aef569) [var varc4aef569: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                    UIfExpression [if (varc4aef569 != null) varc4aef569 else [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        UBinaryExpression (operator = !=) [varc4aef569 != null] = Undetermined
+                                            USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = Undetermined
+                                            ULiteralExpression (value = null) [null] = null
+                                        USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = Undetermined
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UIfExpression [if (var243c51a0 != null) var243c51a0 else [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            UBinaryExpression (operator = !=) [var243c51a0 != null] = Undetermined
+                                USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = Undetermined
+                                ULiteralExpression (value = null) [null] = null
+                            USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = Undetermined
+                            UQualifiedReferenceExpression [[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

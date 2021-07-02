@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isError
@@ -60,6 +61,17 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ktDoubleColonExpression.analyze()[BindingContext.DOUBLE_COLON_LHS, ktDoubleColonExpression.receiverExpression]?.type
                 ?: return null
         return ktType.toPsiType(source, ktDoubleColonExpression, boxed = true)
+    }
+
+    override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
+        val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
+
+        val leftType = left.analyze()[BindingContext.EXPRESSION_TYPE_INFO, left]?.type ?: return null
+        val rightType = right.analyze()[BindingContext.EXPRESSION_TYPE_INFO, right]?.type ?: return null
+
+        return CommonSupertypes
+            .commonSupertype(listOf(leftType, rightType))
+            .toPsiType(uExpression, ktElement, boxed = false)
     }
 
     override fun getExpressionType(uExpression: UExpression): PsiType? {
