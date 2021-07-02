@@ -12,9 +12,7 @@ class KotlinSecondaryConstructorWithInitializersUMethod(
     ktClass: KtClassOrObject?,
     psi: KtLightMethod,
     givenParent: UElement?
-) : BaseKotlinSecondaryConstructorWithInitializersUMethod(ktClass, psi, givenParent), KotlinUMethodParametersProducer {
-
-    override val uastParameters by lz { produceUastParameters(this, receiverTypeReference) }
+) : BaseKotlinSecondaryConstructorWithInitializersUMethod(ktClass, psi, givenParent) {
 
     override fun buildDelegationCall(delegationCall: KtCallElement, uastParent: UElement): UExpression {
         return KotlinUFunctionCallExpression(delegationCall, uastParent)

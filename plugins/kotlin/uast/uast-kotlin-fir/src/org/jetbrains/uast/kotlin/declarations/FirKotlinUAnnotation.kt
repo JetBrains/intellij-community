@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.declarations
+package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -8,7 +8,6 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.KotlinAbstractUElement
 
 class FirKotlinUAnnotation(
     annotationEntry: KtAnnotationEntry,

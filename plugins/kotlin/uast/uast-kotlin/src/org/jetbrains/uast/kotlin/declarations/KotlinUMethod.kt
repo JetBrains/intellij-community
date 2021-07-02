@@ -14,13 +14,11 @@ open class KotlinUMethod(
     psi: PsiMethod,
     sourcePsi: KtDeclaration?,
     givenParent: UElement?
-) : BaseKotlinUMethod(psi, sourcePsi, givenParent), KotlinUMethodParametersProducer {
+) : BaseKotlinUMethod(psi, sourcePsi, givenParent) {
     constructor(
         psi: KtLightMethod,
         givenParent: UElement?
     ) : this(psi, getKotlinMemberOrigin(psi), givenParent)
-
-    override val uastParameters by lz { produceUastParameters(this, receiverTypeReference) }
 
     companion object {
         fun create(psi: KtLightMethod, containingElement: UElement?): UMethod {

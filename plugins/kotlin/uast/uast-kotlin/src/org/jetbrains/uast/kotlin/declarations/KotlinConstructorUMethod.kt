@@ -15,14 +15,12 @@ class KotlinConstructorUMethod(
     psi: PsiMethod,
     kotlinOrigin: KtDeclaration?,
     givenParent: UElement?
-) : BaseKotlinConstructorUMethod(ktClass, psi, kotlinOrigin, givenParent), KotlinUMethodParametersProducer {
+) : BaseKotlinConstructorUMethod(ktClass, psi, kotlinOrigin, givenParent) {
     constructor(
         ktClass: KtClassOrObject?,
         psi: KtLightMethod,
         givenParent: UElement?
     ) : this(ktClass, psi, psi.kotlinOrigin, givenParent)
-
-    override val uastParameters by lz { produceUastParameters(this, receiverTypeReference) }
 
     override fun buildDelegationCall(delegationCall: KtCallElement, uastParent: UElement): UExpression {
         return KotlinUFunctionCallExpression(delegationCall, uastParent)
