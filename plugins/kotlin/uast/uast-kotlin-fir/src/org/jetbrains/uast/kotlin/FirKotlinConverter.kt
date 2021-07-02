@@ -371,6 +371,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtContinueExpression -> expr<UContinueExpression>(build(::KotlinUContinueExpression))
                 is KtDoWhileExpression -> expr<UDoWhileExpression>(build(::KotlinUDoWhileExpression))
                 is KtWhileExpression -> expr<UWhileExpression>(build(::KotlinUWhileExpression))
+                is KtForExpression -> expr<UForEachExpression>(build(::KotlinUForEachExpression))
 
                 is KtIfExpression -> expr<UIfExpression>(build(::KotlinUIfExpression))
 
