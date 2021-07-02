@@ -3,9 +3,9 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.ide.plugins.PluginModelValidator.Companion.homePath
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PathManager.getHomePath
 import com.intellij.util.XmlElement
+import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.readXmlAsModel
@@ -14,29 +14,71 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.div
 
-private val emptyPath = Path.of("/")
+private val emptyPath by lazy {
+  Path.of("/")
+}
 
-internal class PluginModelValidator {
+internal val homePath by lazy {
+  Path.of(getHomePath())
+}
+
+private val modulesSkipList = setOf(
+  "fleet",
+  "intellij.indexing.shared.ultimate.plugin.internal.generator",
+  "intellij.indexing.shared.ultimate.plugin.public",
+  "kotlin-ultimate.mobile-native.overrides",
+  "kotlin-ultimate.appcode-with-mobile",
+  "intellij.javaFX.community",
+  "intellij.lightEdit",
+  "intellij.webstorm",
+  "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
+)
+
+internal class PluginModelValidator(sourceModules: List<Module>) {
+
   internal interface Module {
     val name: String
 
-    fun getSourceRoots(): List<Path>
-  }
-
-  companion object {
-    internal val homePath by lazy { Path.of(PathManager.getHomePath()) }
+    val sourceRoots: List<Path>
   }
 
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
 
-  private val errors = mutableListOf<Throwable>()
+  private val _errors = mutableListOf<Throwable>()
 
-  fun getErrors(): List<Throwable> = java.util.List.copyOf(errors)
+  val errors: List<Throwable>
+    get() = java.util.List.copyOf(_errors)
 
-  fun validate(sourceModules: List<Module>): List<Throwable> {
+  val errorsAsString: CharSequence
+    get() =
+      if (_errors.isEmpty()) ""
+      else
+        getErrorsAsString(_errors, includeStackTrace = false)
+
+  init {
     // 1. collect plugin and module file info set
-    val sourceModuleNameToFileInfo = computeModuleSet(sourceModules, errors)
+    val sourceModuleNameToFileInfo = sourceModules.associate {
+      it.name to ModuleDescriptorFileInfo(it)
+    }
+
+    for (module in sourceModules) {
+      val moduleName = module.name
+      if (moduleName.startsWith("fleet.")
+          || modulesSkipList.contains(moduleName)) {
+        continue
+      }
+
+      for (sourceRoot in module.sourceRoots) {
+        updateFileInfo(
+          moduleName,
+          sourceRoot,
+          sourceModuleNameToFileInfo[moduleName]!!
+        )
+      }
+    }
+
     val moduleNameToInfo = HashMap<String, ModuleInfo>()
     // 2. process plugins - process content to collect modules
     for ((sourceModuleName, moduleMetaInfo) in sourceModuleNameToFileInfo) {
@@ -46,10 +88,14 @@ internal class PluginModelValidator {
 
       val id = descriptor.getChild("id")?.content ?: descriptor.getChild("name")?.content
       if (id == null) {
-        errors.add(PluginValidationError("Plugin id is not specified (descriptorFile=${pathToShortString(descriptorFile)})"))
+        _errors.add(PluginValidationError(
+          "Plugin id is not specified",
+          mapOf(
+            "descriptorFile" to descriptorFile
+          ),
+        ))
         continue
       }
-
 
       val moduleInfo = ModuleInfo(pluginId = id,
                                   name = null,
@@ -59,7 +105,13 @@ internal class PluginModelValidator {
                                   descriptor = descriptor)
       val prev = pluginIdToInfo.put(id, moduleInfo)
       if (prev != null) {
-        throw PluginValidationError("Duplicated plugin id: $id (prev=$prev, current=$moduleInfo)")
+        throw PluginValidationError(
+          "Duplicated plugin id: $id",
+          mapOf(
+            "prev" to prev,
+            "current" to moduleInfo,
+          ),
+        )
       }
 
       descriptor.getChild("content")?.let { contentElement ->
@@ -76,11 +128,12 @@ internal class PluginModelValidator {
 
       val dependenciesElements = descriptor.getChildren("dependencies")
       if (dependenciesElements.size > 1) {
-        errors.add(PluginValidationError(
+        _errors.add(PluginValidationError(
           "The only `dependencies` tag is expected",
           mapOf(
             "descriptorFile" to pluginInfo.descriptorFile,
-          )))
+          ),
+        ))
       }
       else if (dependenciesElements.size == 1) {
         checkDependencies(dependenciesElements.first(), pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
@@ -89,19 +142,28 @@ internal class PluginModelValidator {
       // in the end after processing content and dependencies
       if (pluginInfo.packageName == null && hasContentOrDependenciesInV2Format(descriptor)) {
         // some plugins cannot be yet fully migrated
-        System.err.println("Plugin ${pluginInfo.pluginId} is not fully migrated: package is not specified" +
-                           " (pluginId=${pluginInfo.pluginId}, descriptor=${pathToShortString(pluginInfo.descriptorFile)})")
+        val error = PluginValidationError(
+          "Plugin ${pluginInfo.pluginId} is not fully migrated: package is not specified",
+          mapOf(
+            "pluginId" to pluginInfo.pluginId,
+            "descriptor" to pluginInfo.descriptorFile,
+          ),
+        )
+        System.err.println(error.message)
       }
 
       if (pluginInfo.packageName != null) {
-        descriptor.children.firstOrNull { it.name == "depends" && it.getAttributeValue("optional") == null }?.let {
-          errors.add(PluginValidationError(
-            "Old format must be not used for a plugin with a specified package prefix but `depends` tag is used, use a new format, see " +
-            "(https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
+        descriptor.children.firstOrNull {
+          it.name == "depends" && it.getAttributeValue("optional") == null
+        }?.let {
+          _errors.add(PluginValidationError(
+            "The old format should not be used for a plugin with the specified package prefix, but `depends` tag is used." +
+            " Please use the new format (see https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md#the-dependencies-element)",
             mapOf(
               "descriptorFile" to pluginInfo.descriptorFile,
               "depends" to it,
-            )))
+            ),
+          ))
         }
       }
 
@@ -111,16 +173,16 @@ internal class PluginModelValidator {
         }
 
         contentModuleInfo.descriptor.getChild("depends")?.let {
-          errors.add(PluginValidationError(
+          _errors.add(PluginValidationError(
             "Old format must be not used for a module but `depends` tag is used",
             mapOf(
               "descriptorFile" to contentModuleInfo.descriptorFile,
               "depends" to it,
-            )))
+            ),
+          ))
         }
       }
     }
-    return getErrors()
   }
 
   fun graphAsString(): CharSequence {
@@ -155,11 +217,11 @@ internal class PluginModelValidator {
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
     if (referencingModuleInfo.packageName == null) {
-      errors.add(PluginValidationError(
+      _errors.add(PluginValidationError(
         "`dependencies` must be specified only for plugin in a new format: package prefix is not specified",
         mapOf(
-        "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
-      )))
+          "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
+        )))
     }
 
     for (child in element.children) {
@@ -175,25 +237,40 @@ internal class PluginModelValidator {
           // todo check that the referenced plugin exists
           val id = child.getAttributeValue("id")
           if (id == null) {
-            errors.add(PluginValidationError("Id is not specified for dependency on plugin", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "Id is not specified for dependency on plugin",
+              getErrorInfo(),
+            ))
             continue
           }
           if (id == "com.intellij.modules.java") {
-            errors.add(PluginValidationError("Use com.intellij.modules.java id instead of com.intellij.modules.java", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "Use com.intellij.modules.java id instead of com.intellij.modules.java",
+              getErrorInfo(),
+            ))
             continue
           }
           if (id == "com.intellij.modules.platform") {
-            errors.add(PluginValidationError("No need to specify dependency on $id", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "No need to specify dependency on $id",
+              getErrorInfo(),
+            ))
             continue
           }
           if (id == referencingPluginInfo.pluginId) {
-            errors.add(PluginValidationError("Do not add dependency on a parent plugin", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "Do not add dependency on a parent plugin",
+              getErrorInfo(),
+            ))
             continue
           }
 
-          val dependency = pluginIdToInfo.get(id)
+          val dependency = pluginIdToInfo[id]
           if (!id.startsWith("com.intellij.modules.") && dependency == null) {
-            errors.add(PluginValidationError("Plugin not found: $id", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "Plugin not found: $id",
+              getErrorInfo(),
+            ))
             continue
           }
 
@@ -204,7 +281,10 @@ internal class PluginModelValidator {
                                                   XmlElement("", Collections.emptyMap(), Collections.emptyList(), null))
           )
           if (referencingModuleInfo.dependencies.contains(ref)) {
-            errors.add(PluginValidationError("Referencing module dependencies contains $id: $id", getErrorInfo()))
+            _errors.add(PluginValidationError(
+              "Referencing module dependencies contains $id: $id",
+              getErrorInfo(),
+            ))
             continue
           }
           referencingModuleInfo.dependencies.add(ref)
@@ -212,14 +292,20 @@ internal class PluginModelValidator {
         }
 
         if (referencingModuleInfo.isPlugin) {
-          errors.add(PluginValidationError("Unsupported dependency type: ${child.name}", getErrorInfo()))
+          _errors.add(PluginValidationError(
+            "Unsupported dependency type: ${child.name}",
+            getErrorInfo(),
+          ))
           continue
         }
       }
 
       val moduleName = child.getAttributeValue("name")
       if (moduleName == null) {
-        errors.add(PluginValidationError("Module name is not specified", getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "Module name is not specified",
+          getErrorInfo(),
+        ))
         continue
       }
 
@@ -228,28 +314,31 @@ internal class PluginModelValidator {
       }
 
       if (child.attributes.size > 1) {
-        errors.add(PluginValidationError("Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}", getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}",
+          getErrorInfo(),
+        ))
         continue
       }
 
-      val moduleInfo = moduleNameToInfo.get(moduleName)
+      val moduleInfo = moduleNameToInfo[moduleName]
       if (moduleInfo == null) {
-        val moduleDescriptorFileInfo = sourceModuleNameToFileInfo.get(moduleName)
+        val moduleDescriptorFileInfo = sourceModuleNameToFileInfo[moduleName]
         if (moduleDescriptorFileInfo != null) {
           if (moduleDescriptorFileInfo.pluginDescriptor != null) {
-            errors.add(PluginValidationError(
+            _errors.add(PluginValidationError(
               message = "Dependency on plugin must be specified using `plugin` and not `module`",
               params = getErrorInfo(),
               fix = """
                     Change dependency element to:
                     
                     <plugin id="${moduleDescriptorFileInfo.pluginDescriptor!!.getChild("id")?.content}"/>
-                  """
+                  """,
             ))
             continue
           }
         }
-        errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
+        _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
         continue
       }
 
@@ -261,7 +350,10 @@ internal class PluginModelValidator {
         }
 
         if (dependsElement.getAttributeValue("config-file")?.removePrefix("/META-INF/") == moduleInfo.descriptorFile.fileName.toString()) {
-          errors.add(PluginValidationError("Module, that used as dependency, must be not specified in `depends`", getErrorInfo()))
+          _errors.add(PluginValidationError(
+            "Module, that used as dependency, must be not specified in `depends`",
+            getErrorInfo(),
+          ))
           break
         }
       }
@@ -285,23 +377,34 @@ internal class PluginModelValidator {
       }
 
       if (child.name != "module") {
-        errors.add(PluginValidationError("Unexpected element: $child", getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "Unexpected element: $child",
+          getErrorInfo(),
+        ))
         continue
       }
 
       val moduleName = child.getAttributeValue("name")
       if (moduleName == null) {
-        errors.add(PluginValidationError("Module name is not specified", getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "Module name is not specified",
+          getErrorInfo(),
+        ))
         continue
       }
       if (child.attributes.size > 1) {
-        errors.add(PluginValidationError("Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}", getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}",
+          getErrorInfo(),
+        ))
         continue
       }
 
       if (moduleName == "intellij.platform.commercial.verifier") {
-        errors.add(PluginValidationError("intellij.platform.commercial.verifier is not supposed to be used as content of plugin",
-                                         getErrorInfo()))
+        _errors.add(PluginValidationError(
+          "intellij.platform.commercial.verifier is not supposed to be used as content of plugin",
+          getErrorInfo(),
+        ))
         continue
       }
 
@@ -309,11 +412,14 @@ internal class PluginModelValidator {
       val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(moduleName, referencingModuleInfo, sourceModuleNameToFileInfo) ?: continue
 
       val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor!!
-      val aPackage = moduleDescriptor.getAttributeValue("package")
-      if (aPackage == null) {
-        errors.add(PluginValidationError("Module package is not specified", mapOf(
-          "descriptorFile" to moduleDescriptorFileInfo.moduleDescriptorFile!!,
-        )))
+      val packageName = moduleDescriptor.getAttributeValue("package")
+      if (packageName == null) {
+        _errors.add(PluginValidationError(
+          "Module package is not specified",
+          mapOf(
+            "descriptorFile" to moduleDescriptorFileInfo.moduleDescriptorFile!!,
+          ),
+        ))
         continue
       }
 
@@ -321,9 +427,9 @@ internal class PluginModelValidator {
                                   name = moduleName,
                                   sourceModuleName = moduleDescriptorFileInfo.sourceModule.name,
                                   descriptorFile = moduleDescriptorFileInfo.moduleDescriptorFile!!,
-                                  packageName = aPackage,
+                                  packageName = packageName,
                                   descriptor = moduleDescriptor)
-      moduleNameToInfo.put(moduleName, moduleInfo)
+      moduleNameToInfo[moduleName] = moduleInfo
       referencingModuleInfo.content.add(moduleInfo)
 
       @Suppress("GrazieInspection")
@@ -334,19 +440,23 @@ internal class PluginModelValidator {
         }
 
         if (dependsElement.getAttributeValue("config-file")?.removePrefix("/META-INF/") == moduleInfo.descriptorFile.fileName.toString()) {
-          errors.add(PluginValidationError(
+          _errors.add(PluginValidationError(
             "Module must be not specified in `depends`.",
             getErrorInfo() + mapOf(
               "referencedDescriptorFile" to moduleInfo.descriptorFile
-            )))
+            ),
+          ))
           continue
         }
       }
 
       moduleDescriptor.getChild("content")?.let {
-        errors.add(PluginValidationError("Module cannot define content", getErrorInfo() + mapOf(
-          "referencedDescriptorFile" to moduleInfo.descriptorFile
-        )))
+        _errors.add(PluginValidationError(
+          "Module cannot define content",
+          getErrorInfo() + mapOf(
+            "referencedDescriptorFile" to moduleInfo.descriptorFile
+          ),
+        ))
       }
     }
   }
@@ -354,7 +464,7 @@ internal class PluginModelValidator {
   private fun getModuleDescriptorFileInfo(moduleName: String,
                                           referencingModuleInfo: ModuleInfo,
                                           sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>): ModuleDescriptorFileInfo? {
-    var module = sourceModuleNameToFileInfo.get(moduleName)
+    var module = sourceModuleNameToFileInfo[moduleName]
     if (module != null) {
       return module
     }
@@ -365,31 +475,37 @@ internal class PluginModelValidator {
       )
     }
 
-    val prefix = "${referencingModuleInfo.sourceModuleName}/"
+    val prefix = referencingModuleInfo.sourceModuleName + "/"
     if (!moduleName.startsWith(prefix)) {
-      errors.add(PluginValidationError("Cannot find module $moduleName", getErrorInfo()))
+      _errors.add(PluginValidationError(
+        "Cannot find module $moduleName",
+        getErrorInfo(),
+      ))
       return null
     }
 
     val slashIndex = prefix.length - 1
     val containingModuleName = moduleName.substring(0, slashIndex)
-    module = sourceModuleNameToFileInfo.get(containingModuleName)
+    module = sourceModuleNameToFileInfo[containingModuleName]
     if (module == null) {
-      errors.add(PluginValidationError("Cannot find module $containingModuleName", getErrorInfo()))
+      _errors.add(PluginValidationError(
+        "Cannot find module $containingModuleName",
+        getErrorInfo(),
+      ))
       return null
     }
 
     val fileName = "$containingModuleName.${moduleName.substring(slashIndex + 1)}.xml"
     val result = loadFileInModule(sourceModule = module.sourceModule, fileName = fileName)
     if (result == null) {
-      errors.add(PluginValidationError(
+      _errors.add(PluginValidationError(
         message = "Module ${module.sourceModule.name} doesn't have descriptor file",
         params = mapOf(
           "expectedFile" to fileName,
           "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
         ),
         fix = """
-              Create file $fileName in ${pathToShortString(module.sourceModule.getSourceRoots().first())}
+              Create file $fileName in ${pathToShortString(module.sourceModule.sourceRoots.first())}
               with content:
               
               <idea-plugin package="REPLACE_BY_MODULE_PACKAGE">
@@ -398,6 +514,80 @@ internal class PluginModelValidator {
       ))
     }
     return result
+  }
+
+  private fun updateFileInfo(
+    moduleName: String,
+    sourceRoot: Path,
+    fileInfo: ModuleDescriptorFileInfo,
+  ) {
+    val metaInf = sourceRoot / "META-INF"
+    val moduleXml = metaInf / "$moduleName.xml"
+    if (Files.exists(moduleXml)) {
+      _errors.add(PluginValidationError(
+        "Module descriptor must be in the root of module root",
+        mapOf(
+          "module" to moduleName,
+          "moduleDescriptor" to moduleXml,
+        ),
+      ))
+      return
+    }
+
+    val pluginDescriptorFile = metaInf / "plugin.xml"
+    val pluginDescriptor = pluginDescriptorFile.readXmlAsModel()
+
+    val moduleDescriptorFile = sourceRoot / "$moduleName.xml"
+    val moduleDescriptor = moduleDescriptorFile.readXmlAsModel()
+
+    if (pluginDescriptor == null && moduleDescriptor == null) {
+      return
+    }
+
+    if (fileInfo.pluginDescriptorFile != null && pluginDescriptor != null) {
+      _errors.add(PluginValidationError(
+        "Duplicated plugin.xml",
+        mapOf(
+          "module" to moduleName,
+          "firstPluginDescriptor" to fileInfo.pluginDescriptorFile,
+          "secondPluginDescriptor" to pluginDescriptorFile,
+        ),
+      ))
+      return
+    }
+
+    if (fileInfo.pluginDescriptorFile != null && moduleDescriptor != null) {
+      _errors.add(PluginValidationError(
+        "Module cannot have both plugin.xml and module descriptor",
+        mapOf(
+          "module" to moduleName,
+          "pluginDescriptor" to fileInfo.pluginDescriptorFile,
+          "moduleDescriptor" to moduleDescriptorFile,
+        ),
+      ))
+      return
+    }
+
+    if (fileInfo.moduleDescriptorFile != null && pluginDescriptor != null) {
+      _errors.add(PluginValidationError(
+        "Module cannot have both plugin.xml and module descriptor",
+        mapOf(
+          "module" to moduleName,
+          "pluginDescriptor" to pluginDescriptorFile,
+          "moduleDescriptor" to fileInfo.moduleDescriptorFile,
+        ),
+      ))
+      return
+    }
+
+    if (pluginDescriptor == null) {
+      fileInfo.moduleDescriptorFile = moduleDescriptorFile
+      fileInfo.moduleDescriptor = moduleDescriptor
+    }
+    else {
+      fileInfo.pluginDescriptorFile = pluginDescriptorFile
+      fileInfo.pluginDescriptor = pluginDescriptor
+    }
   }
 }
 
@@ -430,96 +620,6 @@ private class ModuleDescriptorFileInfo(val sourceModule: PluginModelValidator.Mo
 
   var pluginDescriptor: XmlElement? = null
   var moduleDescriptor: XmlElement? = null
-}
-
-private fun computeModuleSet(sourceModules: List<PluginModelValidator.Module>,
-                             errors: MutableList<Throwable>): LinkedHashMap<String, ModuleDescriptorFileInfo> {
-  val sourceModuleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorFileInfo>()
-  for (module in sourceModules) {
-    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now
-    if (module.name.startsWith("fleet.") ||
-        module.name == "fleet" ||
-        // https://youtrack.jetbrains.com/issue/IDEA-261850
-        module.name == "intellij.indexing.shared.ultimate.plugin.internal.generator" ||
-        module.name == "intellij.indexing.shared.ultimate.plugin.public" ||
-        module.name == "kotlin-ultimate.mobile-native.overrides" ||
-        module.name == "kotlin-ultimate.appcode-with-mobile" ||
-        module.name == "intellij.javaFX.community" ||
-        module.name == "intellij.lightEdit" ||
-        module.name == "intellij.webstorm" ||
-        module.name == "intellij.cwm.plugin") {
-      continue
-    }
-
-    for (sourceRoot in module.getSourceRoots()) {
-      val metaInf = sourceRoot.resolve("META-INF")
-      val pluginDescriptorFile = metaInf.resolve("plugin.xml")
-      val pluginDescriptor = try {
-        readXmlAsModel(Files.newInputStream(pluginDescriptorFile))
-      }
-      catch (ignore: NoSuchFileException) {
-        null
-      }
-
-      val moduleDescriptorFile = sourceRoot.resolve("${module.name}.xml")
-      val moduleDescriptor = try {
-        readXmlAsModel(Files.newInputStream(moduleDescriptorFile))
-      }
-      catch (ignore: NoSuchFileException) {
-        null
-      }
-
-      if (Files.exists(metaInf.resolve("${module.name}.xml"))) {
-        errors.add(PluginValidationError("Module descriptor must be in the root of module root", mapOf(
-          "module" to module.name,
-          "moduleDescriptor" to metaInf.resolve("${module.name}.xml"),
-        )))
-        continue
-      }
-
-      if (pluginDescriptor == null && moduleDescriptor == null) {
-        continue
-      }
-
-      val item = sourceModuleNameToFileInfo.computeIfAbsent(module.name) { ModuleDescriptorFileInfo(module) }
-      if (item.pluginDescriptorFile != null && pluginDescriptor != null) {
-        errors.add(PluginValidationError("Duplicated plugin.xml", mapOf(
-          "module" to module.name,
-          "firstPluginDescriptor" to item.pluginDescriptorFile,
-          "secondPluginDescriptor" to pluginDescriptorFile,
-        )))
-        continue
-      }
-
-      if (item.pluginDescriptorFile != null && moduleDescriptor != null) {
-        errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
-          "module" to module.name,
-          "pluginDescriptor" to item.pluginDescriptorFile,
-          "moduleDescriptor" to moduleDescriptorFile,
-        )))
-        continue
-      }
-
-      if (item.moduleDescriptorFile != null && pluginDescriptor != null) {
-        errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
-          "module" to module.name,
-          "pluginDescriptor" to pluginDescriptorFile,
-          "moduleDescriptor" to item.moduleDescriptorFile,
-        )))
-        continue
-      }
-
-      if (pluginDescriptor == null) {
-        item.moduleDescriptorFile = moduleDescriptorFile
-        item.moduleDescriptor = moduleDescriptor
-      }
-      else {
-        item.pluginDescriptorFile = pluginDescriptorFile
-        item.pluginDescriptor = pluginDescriptor
-      }
-    }
-  }
-  return sourceModuleNameToFileInfo
 }
 
 private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo) {
@@ -559,14 +659,20 @@ private fun writeDependencies(items: List<Reference>, writer: JsonGenerator) {
   }
 }
 
-private class PluginValidationError(message: String) : RuntimeException(message) {
-  constructor(message: String, params: Map<String, Any?>) :
-    this(message + " (\n  ${params.entries.joinToString(separator = ",\n  ") { "${it.key}=${paramValueToString(it.value)}" }}\n)")
+private class PluginValidationError private constructor(message: String) : RuntimeException(message) {
 
-  constructor(message: String, params: Map<String, Any?>, fix: String) : this(
-    message +
-    " (\n  ${params.entries.joinToString(separator = ",\n  ") { "${it.key}=${paramValueToString(it.value)}" }}\n)" +
-    "\n\nProposed fix:\n\n" + fix.trimIndent() + "\n\n"
+  constructor(
+    message: String,
+    params: Map<String, Any?> = mapOf(),
+    fix: String? = null,
+  ) : this(
+    params.entries.joinToString(
+      prefix = "$message (\n  ",
+      separator = ",\n  ",
+      postfix = "\n)" + (fix?.let { "\n\nProposed fix:\n\n" + fix.trimIndent() + "\n\n" } ?: "")
+    ) {
+      it.key + "=" + paramValueToString(it.value)
+    }
   )
 }
 
@@ -578,18 +684,26 @@ private fun paramValueToString(value: Any?): String {
 }
 
 private fun loadFileInModule(sourceModule: PluginModelValidator.Module, fileName: String): ModuleDescriptorFileInfo? {
-  for (sourceRoot in sourceModule.getSourceRoots()) {
-    try {
-      val file = sourceRoot.resolve(fileName)
-      val info = ModuleDescriptorFileInfo(sourceModule)
-      info.moduleDescriptor = readXmlAsModel(Files.newInputStream(file))
-      info.moduleDescriptorFile = file
-      return info
-    }
-    catch (ignore: NoSuchFileException) {
+  for (sourceRoot in sourceModule.sourceRoots) {
+    val moduleDescriptorFile = sourceRoot / fileName
+    val moduleDescriptor = moduleDescriptorFile.readXmlAsModel()
+    if (moduleDescriptor != null) {
+      return ModuleDescriptorFileInfo(sourceModule).also {
+        it.moduleDescriptor = moduleDescriptor
+        it.moduleDescriptorFile = moduleDescriptorFile
+      }
     }
   }
   return null
+}
+
+private fun Path.readXmlAsModel(): XmlElement? {
+  return try {
+    Files.newInputStream(this).use(::readXmlAsModel)
+  }
+  catch (ignore: NoSuchFileException) {
+    null
+  }
 }
 
 internal fun hasContentOrDependenciesInV2Format(descriptor: XmlElement): Boolean {
