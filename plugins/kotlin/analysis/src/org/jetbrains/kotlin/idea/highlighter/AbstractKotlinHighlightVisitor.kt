@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
@@ -99,24 +100,22 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             candidate is DeclarationDescriptor || candidate is Collection<*> && candidate.any(::checkIfDescriptor)
 
         val analysisResult =
-        // TODO: [VD] following code has to be uncommented with 1.5M1 migration
-            //   relates to original commit 913c298be858b63e472cfd6c58af11702b3a101d
-            file.analyzeWithAllCompilerChecks(/*{
-                                                      val element = it.psiElement
-                                                      if (element in elements &&
-                                                          it !in highlightInfoByDiagnostic &&
-                                                          !RenderingContext.parameters(it).any(::checkIfDescriptor)
-                                                      ) {
-                                                          annotateDiagnostic(
-                                                              file,
-                                                              element,
-                                                              holder,
-                                                              it,
-                                                              highlightInfoByDiagnostic,
-                                                              highlightInfoByTextRange
-                                                          )
-                                                      }
-                                                  }*/
+            file.analyzeWithAllCompilerChecks(
+                {
+                    val element = it.psiElement
+                    if (element in elements &&
+                        it !in highlightInfoByDiagnostic &&
+                        !RenderingContext.parameters(it).any(::checkIfDescriptor)
+                    ) {
+                        annotateDiagnostic(
+                            element,
+                            holder,
+                            it,
+                            highlightInfoByDiagnostic,
+                            highlightInfoByTextRange
+                        )
+                    }
+                }
             ).also { it.throwIfError() }
         // resolve is done!
 
