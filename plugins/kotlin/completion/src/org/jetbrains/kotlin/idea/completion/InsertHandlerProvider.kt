@@ -37,7 +37,6 @@ class InsertHandlerProvider(
                         val parameters = descriptor.valueParameters
                         when (parameters.size) {
                             0 -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = false)
-                                //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = false)
 
                             1 -> {
                                 if (callType != CallType.SUPER_MEMBERS) { // for super call we don't suggest to generate "super.foo { ... }" (seems to be non-typical use)
@@ -46,8 +45,7 @@ class InsertHandlerProvider(
                                     if (parameterType.isBuiltinFunctionalType) {
                                         if (getValueParametersCountFromFunctionType(parameterType) <= 1 && !parameter.hasDefaultValue()) {
                                             // otherwise additional item with lambda template is to be added
-                                            return createNormalFunctionInsertHandler(
-                                                editor,
+                                            return KotlinFunctionInsertHandler.Normal(
                                                 callType, needTypeArguments, inputValueArguments = false,
                                                 lambdaInfo = GenerateLambdaInfo(parameterType, false)
                                             )
@@ -55,12 +53,10 @@ class InsertHandlerProvider(
                                     }
                                 }
 
-                                //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
                                 createNormalFunctionInsertHandler(editor, callType, inputTypeArguments = needTypeArguments, inputValueArguments = true)
                             }
 
                             else -> createNormalFunctionInsertHandler(editor, callType, needTypeArguments, inputValueArguments = true)
-                                    //KotlinFunctionInsertHandler.Normal(callType, needTypeArguments, inputValueArguments = true)
                         }
                     }
 
