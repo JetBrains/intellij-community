@@ -142,6 +142,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "c9",
+    "name": "intellij.clouds.docker.ssh",
+    "n": "i.clouds.docker.ssh",
+    "package": "com.intellij.docker.ssh",
+    "sourceModule": "intellij.clouds.docker.ssh",
+    "descriptor": "plugins/Docker/Docker-ssh/resources/intellij.clouds.docker.ssh.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "cup",
     "n": "com.intellij.kubernetes"
   }
@@ -2671,6 +2683,66 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "XO",
+    "name": "intellij.spring.boot.core/diagram",
+    "n": "i.spring.boot.core/diagram",
+    "package": "com.intellij.spring.boot.run.lifecycle.beans.diagram",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.diagram.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4q",
+    "name": "intellij.spring.boot.run",
+    "n": "i.spring.boot.run",
+    "package": "com.intellij.spring.boot.run",
+    "sourceModule": "intellij.spring.boot.run",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-run/resources/intellij.spring.boot.run.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "bk",
+    "name": "intellij.spring.boot.core/intelliLang",
+    "n": "i.spring.boot.core/intelliLang",
+    "package": "com.intellij.spring.boot.intelliLang",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.intelliLang.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hJ",
+    "name": "intellij.spring.boot.core/gradle",
+    "n": "i.spring.boot.core/gradle",
+    "package": "com.intellij.spring.boot.initializr.gradle",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.gradle.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "EP",
+    "name": "intellij.spring.boot.core/maven",
+    "n": "i.spring.boot.core/maven",
+    "package": "com.intellij.spring.boot.initializr.maven",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.maven.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "c2Z",
     "n": "com.intellij.spring"
   }
@@ -3147,6 +3219,17 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "Rw",
+    "name": "com.intellij.modules.ssh",
+    "n": "c.i.m.ssh",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "KQ",
     "name": "com.intellij.modules.vcs",
     "n": "c.i.m.vcs",
@@ -3584,17 +3667,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Rw",
-    "name": "com.intellij.modules.ssh",
-    "n": "c.i.m.ssh",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "uu1",
     "name": "com.intellij.modules.phpstorm",
     "n": "c.i.m.phpstorm",
@@ -3649,6 +3721,14 @@
     "id": "7x_ra",
     "source": "7x",
     "target": "ra",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_c9",
+    "source": "7x",
+    "target": "c9",
     "type": 1
   }
 }, {
@@ -4566,6 +4646,46 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "LR_XO",
+    "source": "LR",
+    "target": "XO",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_4q",
+    "source": "LR",
+    "target": "4q",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_bk",
+    "source": "LR",
+    "target": "bk",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_hJ",
+    "source": "LR",
+    "target": "hJ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_EP",
+    "source": "LR",
+    "target": "EP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "2Z_6z",
     "source": "2Z",
     "target": "6z",
@@ -4729,6 +4849,14 @@
     "id": "tU_cV",
     "source": "tU",
     "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "c9_Rw",
+    "source": "c9",
+    "target": "Rw",
     "type": 0
   }
 }, {
@@ -6894,6 +7022,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "Kg_4q",
+    "source": "Kg",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "Kg_nx",
     "source": "Kg",
     "target": "nx",
@@ -6918,9 +7054,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "eo_nQ",
+    "id": "eo_oO1",
     "source": "eo",
-    "target": "nQ",
+    "target": "oO1",
     "type": 0
   }
 }, {
@@ -6945,6 +7081,46 @@
     "id": "5v_cV",
     "source": "5v",
     "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XO_Bv",
+    "source": "XO",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XO_4q",
+    "source": "XO",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "bk_HN",
+    "source": "bk",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hJ_87",
+    "source": "hJ",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "EP_Up",
+    "source": "EP",
+    "target": "Up",
     "type": 0
   }
 }, {
