@@ -15,17 +15,22 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.xml.DomManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
+import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.convertOpt
+import java.util.*
+import kotlin.collections.HashSet
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
@@ -69,11 +74,16 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
       area = getArea(extensionPoint)
       isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
-      serviceClientKind = when (extensionPoint?.xmlTag?.getAttribute("client")?.value) {
-        "ALL" -> ServiceDescriptor.ClientKind.ALL
-        "GUEST" -> ServiceDescriptor.ClientKind.GUEST
-        "LOCAL" -> ServiceDescriptor.ClientKind.LOCAL
-        else -> null
+      if (isService) {
+        val extension = ContainerUtil.getOnlyItem(locateExtensionsByPsiClass(javaPsi))?.pointer?.element
+        val extensionTag = DomManager.getDomManager(manager.project).getDomElement(extension) as? Extension
+
+        serviceClientKind = when (extensionTag?.xmlTag?.getAttribute("client")?.value?.toLowerCase(Locale.US)) {
+          "all" -> ServiceDescriptor.ClientKind.ALL
+          "guest" -> ServiceDescriptor.ClientKind.GUEST
+          "local" -> ServiceDescriptor.ClientKind.LOCAL
+          else -> null
+        }
       }
     }
 
