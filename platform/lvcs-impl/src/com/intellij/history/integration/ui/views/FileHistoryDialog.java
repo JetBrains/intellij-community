@@ -36,6 +36,7 @@ import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,11 +49,13 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
   private SearchTextArea mySearchTextArea;
-  private final Alarm myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private Future<?> myFilterFuture;
+  private final Alarm myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this);
 
   public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
@@ -105,7 +108,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     mySearchTextArea.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        applyFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()), decorator);
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(() -> applyFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()), decorator), 100);
       }
     });
     toolBarPanel.add(decorator.getComponent(), BorderLayout.CENTER);
@@ -119,20 +123,25 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     return request;
   }
 
+  @RequiresEdt
   private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
     decorator.stopLoading();
-    myAlarm.cancelAllRequests();
+    if (myFilterFuture != null) {
+      myFilterFuture.cancel(true);
+      myFilterFuture = null;
+    }
     if (StringUtil.isEmpty(filter)) {
       applyFilteredRevisions(null);
     }
     else {
       decorator.startLoading(false);
       updateEditorSearch();
-      myAlarm.addRequest(() -> {
+      myFilterFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         Set<Long> revisions = new HashSet<>();
         FileHistoryDialogModel model = myModel;
         if (model != null) {
           model.processContents((r, c) -> {
+            if (Thread.currentThread().isInterrupted()) return false;
             if (c != null && StringUtil.containsIgnoreCase(c, filter)) {
               revisions.add(r.getChangeSetId());
             }
@@ -141,7 +150,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
         }
         decorator.stopLoading();
         UIUtil.invokeLaterIfNeeded(() -> applyFilteredRevisions(revisions));
-      }, 0);
+      });
     }
   }
 
