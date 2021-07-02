@@ -19,7 +19,9 @@ public final class ResolveKt {
     }
     public static final fun barTL(@null listT: T) : void {
         listT.[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (FOR)
+        for (a : listT) {
+            a.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
 }
 
