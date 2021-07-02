@@ -35,7 +35,18 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
-    <orderEntry type="library" name="qdox-java-parser" level="project" />
+    <orderEntry type="module-library">
+      <library name="qdox-java-parser" type="repository">
+        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.0/qdox-2.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.0/qdox-2.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
