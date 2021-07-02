@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -18,7 +19,8 @@ import java.time.format.DateTimeFormatter
 @CompileStatic
 class ApplicationInfoProperties {
   private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
-  private static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
+  @VisibleForTesting
+  static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
   private final String appInfoXml
   final String majorVersion
   final String minorVersion
@@ -75,7 +77,7 @@ class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    majorReleaseDate = majorReleaseDate(root.build.first().@majorReleaseDate)
+    majorReleaseDate = formatMajorReleaseDate(root.build.first().@majorReleaseDate)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
@@ -91,17 +93,18 @@ class ApplicationInfoProperties {
     patchesUrl = root."update-urls"[0]?.@"patches"
   }
 
-  private static String majorReleaseDate(String majorReleaseDateRaw) {
+  @VisibleForTesting
+  static String formatMajorReleaseDate(String majorReleaseDateRaw) {
     if (majorReleaseDateRaw == null || majorReleaseDateRaw.startsWith('__')) {
       return ZonedDateTime.now(ZoneOffset.UTC).format(MAJOR_RELEASE_DATE_PATTERN)
     }
     else {
       try {
-        ZonedDateTime.parse(majorReleaseDateRaw, MAJOR_RELEASE_DATE_PATTERN)
+        MAJOR_RELEASE_DATE_PATTERN.parse(majorReleaseDateRaw)
         return majorReleaseDateRaw
       }
       catch (Exception ignored) {
-        return ZonedDateTime.parse(majorReleaseDateRaw, BUILD_DATE_PATTERN).format(MAJOR_RELEASE_DATE_PATTERN)
+        return MAJOR_RELEASE_DATE_PATTERN.format(BUILD_DATE_PATTERN.parse(majorReleaseDateRaw))
       }
     }
   }
