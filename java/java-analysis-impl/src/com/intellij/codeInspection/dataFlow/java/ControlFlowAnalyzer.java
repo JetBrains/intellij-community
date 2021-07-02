@@ -20,9 +20,10 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
-import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TryFinally;
-import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TwrFinally;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.*;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TwrFinally;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.CatchClauseDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.JavaCatchClauseDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
@@ -1073,7 +1074,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private boolean shouldHandleException() {
     for (Trap trap : myTrapStack) {
-      if (trap instanceof TryCatchTrap || trap instanceof TryFinally || trap instanceof TwrFinally || trap instanceof TryCatchAllTrap) {
+      if (trap instanceof TryCatchTrap || trap instanceof EnterFinallyTrap || trap instanceof TryCatchAllTrap) {
         return true;
       }
     }
@@ -1088,18 +1089,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock tryBlock = statement.getTryBlock();
     PsiCodeBlock finallyBlock = statement.getFinallyBlock();
 
-    TryFinally finallyDescriptor = finallyBlock != null ? new TryFinally(finallyBlock, getStartOffset(finallyBlock)) : null;
+    EnterFinallyTrap finallyDescriptor = finallyBlock != null ? new EnterFinallyTrap(finallyBlock, getStartOffset(finallyBlock)) : null;
     if (finallyDescriptor != null) {
       pushTrap(finallyDescriptor);
     }
 
     PsiCatchSection[] sections = statement.getCatchSections();
     if (sections.length > 0) {
-      LinkedHashMap<PsiCatchSection, ControlFlowOffset> clauses = new LinkedHashMap<>();
+      LinkedHashMap<CatchClauseDescriptor, ControlFlowOffset> clauses = new LinkedHashMap<>();
       for (PsiCatchSection section : sections) {
         PsiCodeBlock catchBlock = section.getCatchBlock();
         if (catchBlock != null) {
-          clauses.put(section, getStartOffset(catchBlock));
+          clauses.put(new JavaCatchClauseDescriptor(section), getStartOffset(catchBlock));
         }
       }
       pushTrap(new TryCatchTrap(statement, clauses));
@@ -1124,7 +1125,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (finallyBlock != null) {
-      popTrap(TryFinally.class);
+      popTrap(EnterFinallyTrap.class);
       pushTrap(new InsideFinallyTrap(finallyBlock));
 
       finallyBlock.accept(this);

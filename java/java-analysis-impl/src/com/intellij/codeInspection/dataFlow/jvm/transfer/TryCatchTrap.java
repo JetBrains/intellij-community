@@ -12,20 +12,51 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class TryCatchTrap implements Trap {
-  private final PsiTryStatement myStatement;
-  private final LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset> myClauses;
+  private final PsiElement myStatement;
+  private final LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlow.ControlFlowOffset> myClauses;
 
-  public TryCatchTrap(@NotNull PsiTryStatement tryStatement, @NotNull LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset> clauses) {
+  public TryCatchTrap(@NotNull PsiElement tryStatement,
+                      @NotNull LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlow.ControlFlowOffset> clauses) {
     myStatement = tryStatement;
     myClauses = clauses;
+  }
+
+  public interface CatchClauseDescriptor {
+    @NotNull List<TypeConstraint> constraints();
+    @Nullable VariableDescriptor parameter();
+  }
+
+  public static class JavaCatchClauseDescriptor implements CatchClauseDescriptor {
+    private final PsiCatchSection mySection;
+
+    public JavaCatchClauseDescriptor(PsiCatchSection section) {
+      mySection = section;
+    }
+
+    @Override
+    public @NotNull List<TypeConstraint> constraints() {
+      PsiParameter parameter = mySection.getParameter();
+      if (parameter == null) return Collections.emptyList();
+      PsiType type = parameter.getType();
+      List<PsiType> types = type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : List.of(type);
+      return ContainerUtil.map(types, TypeConstraints::instanceOf);
+    }
+
+    @Override
+    public @Nullable VariableDescriptor parameter() {
+      PsiParameter parameter = mySection.getParameter();
+      return parameter == null ? null : new PlainDescriptor(parameter);
+    }
   }
 
   @Override
@@ -39,17 +70,15 @@ public class TryCatchTrap implements Trap {
     state.emptyStack();
     TypeConstraint throwableType = ((ExceptionTransfer)target).getThrowable();
     List<DfaInstructionState> result = new ArrayList<>();
-    for (Map.Entry<PsiCatchSection, ControlFlow.ControlFlowOffset> entry : myClauses.entrySet()) {
-      PsiCatchSection catchSection = entry.getKey();
+    for (var entry : myClauses.entrySet()) {
       ControlFlow.ControlFlowOffset jumpOffset = entry.getValue();
-      PsiParameter param = catchSection.getParameter();
-      if (param == null) continue;
+      CatchClauseDescriptor catchSection = entry.getKey();
 
-      for (TypeConstraint caughtType : allCaughtTypes(param)) {
+      for (TypeConstraint caughtType : catchSection.constraints()) {
         TypeConstraint caught = Objects.requireNonNull(throwableType).meet(caughtType);
         if (caught != TypeConstraints.BOTTOM) {
           result.add(new DfaInstructionState(interpreter.getInstruction(jumpOffset.getInstructionOffset()),
-                                             stateForCatchClause(state, interpreter, param, caught)));
+                                             stateForCatchClause(state, interpreter, catchSection.parameter(), caught)));
         }
 
         TypeConstraint negated = caughtType.tryNegate();
@@ -63,19 +92,15 @@ public class TryCatchTrap implements Trap {
                                 DfaControlTransferValue.dispatch(state, interpreter, new ExceptionTransfer(throwableType), nextTraps));
   }
 
-  private static List<TypeConstraint> allCaughtTypes(PsiParameter param) {
-    PsiType type = param.getType();
-    List<PsiType> types = type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : List.of(type);
-    return ContainerUtil.map(types, TypeConstraints::instanceOf);
-  }
-
   private static DfaMemoryState stateForCatchClause(@NotNull DfaMemoryState state,
                                                     @NotNull DataFlowInterpreter interpreter,
-                                                    @NotNull PsiParameter param,
+                                                    @Nullable VariableDescriptor param,
                                                     @NotNull TypeConstraint constraint) {
     DfaMemoryState catchingCopy = state.createCopy();
-    DfaVariableValue value = PlainDescriptor.createVariableValue(interpreter.getFactory(), param);
-    catchingCopy.meetDfType(value, constraint.asDfType().meet(DfaNullability.NOT_NULL.asDfType()));
+    if (param != null) {
+      DfaVariableValue value = interpreter.getFactory().getVarFactory().createVariableValue(param);
+      catchingCopy.meetDfType(value, constraint.asDfType().meet(DfaNullability.NOT_NULL.asDfType()));
+    }
     return catchingCopy;
   }
 

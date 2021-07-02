@@ -4651,6 +4651,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicThis.kt");
         }
 
+        @TestMetadata("basicTryCatch.kt")
+        public void testBasicTryCatch() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicTryCatch.kt");
+        }
+
         @TestMetadata("basicWhen.kt")
         public void testBasicWhen() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicWhen.kt");

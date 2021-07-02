@@ -194,7 +194,7 @@ public interface TypeConstraint {
    * @param type {@link DfType} to extract {@link TypeConstraint} from
    * @return an extracted type constraint
    */
-  static @NotNull TypeConstraint fromDfType(DfType type) {
+  static @NotNull TypeConstraint fromDfType(@NotNull DfType type) {
     return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() :
            type == DfType.BOTTOM ? TypeConstraints.BOTTOM :
            TypeConstraints.TOP;
