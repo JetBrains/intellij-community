@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.invokeMethod;
+
 /**
  * @deprecated use org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
  */
@@ -77,7 +79,10 @@ public class CompileDependenciesProvider {
     // resolve compile dependencies
     boolean isMainSourceSet = mySourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME);
     String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : GUtil.toCamelCase(mySourceSet.getName()) + "Compile";
-    String compileConfigurationName = mySourceSet.getCompileConfigurationName();
+
+    Object configurationName = invokeMethod(mySourceSet, "getCompileConfigurationName");
+    assert configurationName != null;
+    String compileConfigurationName = configurationName.toString();
 
     myConfiguration = myProject.getConfigurations().findByName(deprecatedCompileConfigurationName);
     myCompileClasspathConfiguration = myProject.getConfigurations().findByName(compileConfigurationName + "Classpath");
