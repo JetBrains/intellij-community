@@ -1,7 +1,15 @@
 public final class TryCatch {
     public fun TryCatch() = UastEmptyExpression
     public final fun catches() : void {
-        [!] UnknownKotlinExpression (TRY)
+        try {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
+        catch (@null var e: <ErrorType>) {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
+        finally {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
     public final fun body() : void {
     }
@@ -14,7 +22,15 @@ public final class TryCatch {
 public final class TryCatchAnnotations {
     public fun TryCatchAnnotations() = UastEmptyExpression
     public final fun catches() : void {
-        [!] UnknownKotlinExpression (TRY)
+        try {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
+        catch (@null @not-implemented-annotation var e: <ErrorType>) {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
+        finally {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
     public final fun body() : void {
     }

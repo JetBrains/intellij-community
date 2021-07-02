@@ -45,13 +45,30 @@ UFile (package = ) [public final class WithGenericKt {...]
                 UDeclarationsExpression [var result3: <ErrorType> = "fail"]
                     ULocalVariable (name = result3) [var result3: <ErrorType> = "fail"]
                         ULiteralExpression (value = "fail") ["fail"] : PsiType:String
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)]
+                UTryExpression [try {...] : PsiType:Object
+                    UBlockExpression [{...}] : PsiType:int
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                        UBlockExpression [{...}] : PsiType:Unit
+                            UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:void
+                                USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
+                                ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                 UIfExpression [if (result3 != "OK") return "fail: test3"] : PsiType:Unit
                     UBinaryExpression (operator = !=) [result3 != "OK"] : PsiType:boolean
                         USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
                         ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                     UReturnExpression [return "fail: test3"] : PsiType:Void
                         ULiteralExpression (value = "fail: test3") ["fail: test3"] : PsiType:String
-                [!] UnknownKotlinExpression (TRY) [[!] UnknownKotlinExpression (TRY)]
+                UTryExpression [try {...] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:Unit
+                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
+                        UParameter (name = e) [@null var e: <ErrorType>]
+                            UAnnotation (fqName = null) [@null]
+                        UBlockExpression [{...}] : PsiType:Void
+                            UReturnExpression [return "OK"] : PsiType:Void
+                                ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                 UReturnExpression [return "Fail"] : PsiType:Void
                     ULiteralExpression (value = "Fail") ["Fail"] : PsiType:String
