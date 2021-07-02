@@ -537,10 +537,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected static final class CompilerElementInfo {
-    public final @NotNull ElementPlace place;
+    public final ElementPlace place;
     public final @NotNull List<@NotNull CompilerRef> searchElements;
 
-    public CompilerElementInfo(@NotNull ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
+    public CompilerElementInfo(ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
       this.place = place;
       this.searchElements = searchElements;
     }
