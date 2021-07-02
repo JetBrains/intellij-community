@@ -30,6 +30,7 @@ class MPSBuilder {
         buildContext.proprietaryBuildTools = buildTools
 
         def buildTasks = BuildTasks.create(buildContext)
+        buildTasks.compileProjectAndTests(["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"])
         buildTasks.buildDistributions()
 
         String jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
