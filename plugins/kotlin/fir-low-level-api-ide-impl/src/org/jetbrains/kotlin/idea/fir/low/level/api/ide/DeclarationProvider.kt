@@ -10,6 +10,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.idea.fir.low.level.api.DeclarationProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.KtDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -69,6 +70,20 @@ internal class DeclarationProviderByIndexesImpl(
         return KotlinTopLevelFunctionByPackageIndex
             .getInstance()[packageFqName.asStringForIndexes(), project, searchScope]
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
+    }
+
+    override fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile> {
+        return KotlinFileFacadeClassByPackageIndex.getInstance()
+            .get(packageFqName.asString(), project, searchScope)
+    }
+
+
+    override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+        return KotlinFileFacadeFqNameIndex.INSTANCE.get(
+            key = facadeFqName.asString(),
+            project = project,
+            scope = searchScope
+        ) //TODO original LC has platformSourcesFirst()
     }
 
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? = firstMatchingOrNull<String, KtTypeAlias>(
