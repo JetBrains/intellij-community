@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
@@ -79,6 +80,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 true
             }
         else -> null
+    }?.takeIf { conversion ->
+        conversion.sinceKotlin?.let { it <= moduleApiVersion } ?: true
     }
 
 
@@ -188,6 +191,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
     private data class Conversion(
         val from: SymbolInfo,
         val to: Info,
+        val sinceKotlin: ApiVersion? = null,
         val replaceType: ReplaceType = ReplaceType.REPLACE_SELECTOR,
         val filter: ((JKExpression) -> Boolean)? = null,
         val byArgumentsFilter: ((List<JKExpression>) -> Boolean)? = null,
@@ -197,6 +201,9 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private infix fun SymbolInfo.convertTo(to: Info) =
         Conversion(this, to)
+
+    private infix fun Conversion.sinceKotlin(apiVersion: ApiVersion) =
+        copy(sinceKotlin = apiVersion)
 
     private infix fun Conversion.withReplaceType(replaceType: ReplaceType) =
         copy(replaceType = replaceType)
