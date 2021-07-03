@@ -402,6 +402,9 @@
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
+    <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
+    <commandLineCustomHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler" />
+
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"

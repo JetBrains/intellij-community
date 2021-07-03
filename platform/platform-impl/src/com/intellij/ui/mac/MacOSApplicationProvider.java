@@ -2,9 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.CommandLineProcessor;
-import com.intellij.ide.CommandLineProcessorResult;
-import com.intellij.ide.DataManager;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
@@ -39,10 +37,9 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacOSApplicationProvider {
@@ -205,14 +202,25 @@ public final class MacOSApplicationProvider {
         @Override
         public void openURI(OpenURIEvent event) {
           Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+
+          String uri = event.getURI().toString();
+          LOG.debug("Open URI: " + uri);
+
           String file = ContainerUtil.getFirstItem(parameters.get("file"));
-          if (file == null) {
+
+          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+            if (file == null) {
+              CommandLineCustomHandler.StartupService.initialArguments = List.of(uri);
+            } else {
+              // handle paths like /file/foo\qwe
+              Path path = Paths.get(FileUtilRt.toSystemDependentName(file)).normalize();
+              IdeStarter.Companion.openFilesOnLoading(Collections.singletonList(path));
+            }
             return;
           }
 
-          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            // handle paths like /file/foo\qwe
-            IdeStarter.Companion.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
+          if (file == null) {
+            CommandLineCustomHandler.Companion.process(List.of(uri));
             return;
           }
 
