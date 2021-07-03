@@ -3461,6 +3461,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/methodCallExpression/callWithKeywords.java");
         }
 
+        @TestMetadata("characterDigit.java")
+        public void testCharacterDigit() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/characterDigit.java");
+        }
+
         @TestMetadata("collectionsMethods.java")
         public void testCollectionsMethods() throws Exception {
             runTest("testData/newJ2k/methodCallExpression/collectionsMethods.java");

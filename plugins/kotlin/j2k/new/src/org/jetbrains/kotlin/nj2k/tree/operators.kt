@@ -48,6 +48,7 @@ interface JKOperatorToken {
         val EXCL = JKKtSingleValueOperatorToken(KtTokens.EXCL)
         val EQEQEQ = JKKtSingleValueOperatorToken(KtTokens.EQEQEQ)
         val EXCLEQEQEQ = JKKtSingleValueOperatorToken(KtTokens.EXCLEQEQEQ)
+        val ELVIS = JKKtSingleValueOperatorToken(KtTokens.ELVIS)
 
         val AND = JKKtWordOperatorToken("and")
         val OR = JKKtWordOperatorToken("or")

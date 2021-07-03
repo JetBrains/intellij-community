@@ -290,6 +290,28 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     sinceKotlin ApiVersion.KOTLIN_1_5
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            Method("java.lang.Character.digit") convertTo CustomExpression { expression ->
+                val arguments = (expression as JKCallExpression).arguments.arguments
+                if (arguments.size != 2) return@CustomExpression expression
+
+                val digit = arguments[0]::value.detached()
+                val radix = arguments[1]::value.detached()
+                val argumentList = if (radix is JKLiteralExpression && radix.literal == "10") JKArgumentList() else JKArgumentList(radix)
+                JKBinaryExpression(
+                    JKQualifiedExpression(
+                        digit,
+                        JKCallExpressionImpl(
+                            symbolProvider.provideMethodSymbol("kotlin.text.digitToIntOrNull"),
+                            argumentList
+                        )
+                    ),
+                    JKLiteralExpression("-1", JKLiteralExpression.LiteralType.INT),
+                    JKKtOperatorImpl(JKOperatorToken.ELVIS, typeFactory.types.int)
+                )
+            }
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall,
