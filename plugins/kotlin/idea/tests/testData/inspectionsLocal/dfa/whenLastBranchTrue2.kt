@@ -1,9 +1,5 @@
 // PROBLEM: none
-fun test(obj : Boolean, obj2 : Any) {
-    when(obj) {
-        true -> {}
-        <caret>false -> {}
-    }
+fun test(obj2 : Any) {
     when(obj2) {
         is String -> {}
         is Int -> {}
@@ -11,7 +7,7 @@ fun test(obj : Boolean, obj2 : Any) {
     }
     when(obj2) {
         is String -> {}
-        is Int -> {}
+        <caret>is Int -> {}
         else -> return
     }
 }

@@ -4886,6 +4886,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/whenLastBranchTrue.kt");
         }
 
+        @TestMetadata("whenLastBranchTrue2.kt")
+        public void testWhenLastBranchTrue2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenLastBranchTrue2.kt");
+        }
+
         @TestMetadata("whenSubjectIs.kt")
         public void testWhenSubjectIs() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whenSubjectIs.kt");

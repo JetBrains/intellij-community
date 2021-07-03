@@ -220,6 +220,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private fun isLastCondition(condition: KtWhenCondition): Boolean {
         val entry = condition.parent as? KtWhenEntry ?: return false
         val whenExpr = entry.parent as? KtWhenExpression ?: return false
-        return entry.conditions.last() == condition && whenExpr.entries.last() == entry
+        if (entry.conditions.last() == condition) {
+            val entries = whenExpr.entries
+            val lastEntry = entries.last()
+            if (lastEntry == entry) return true
+            if (condition is KtWhenConditionIsPattern) {
+                val size = entries.size
+                // Also, do not report the always reachable entry right before 'else',
+                // usually it's necessary for the smart-cast, and the report is just noise
+                if (lastEntry.isElse && size > 1 && entries[size - 2] == entry) return true
+            }
+        }
+        return false
     }
 }
