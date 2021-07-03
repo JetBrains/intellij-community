@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
 
 sealed class KotlinProblem: UnsatisfiedConditionProblem {
     data class KotlinCastProblem(val operand: KtExpression, val cast: KtExpression): KotlinProblem()
@@ -12,4 +13,5 @@ sealed class KotlinProblem: UnsatisfiedConditionProblem {
         KotlinProblem(), IndexOutOfBoundsProblem {
         override fun getLengthDescriptor(): DerivedVariableDescriptor = lengthDescriptor
     }
+    data class KotlinNullCheckProblem(val expr: KtPostfixExpression): KotlinProblem()
 }

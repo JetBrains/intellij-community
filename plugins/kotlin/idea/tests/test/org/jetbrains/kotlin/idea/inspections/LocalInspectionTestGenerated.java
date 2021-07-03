@@ -4586,9 +4586,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/arrayIndexNegative.kt");
         }
 
+        @TestMetadata("asNumber.kt")
+        public void testAsNumber() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/asNumber.kt");
+        }
+
         @TestMetadata("assertNotNull.kt")
         public void testAssertNotNull() throws Exception {
             runTest("testData/inspectionsLocal/dfa/assertNotNull.kt");
+        }
+
+        @TestMetadata("assertNotNull2.kt")
+        public void testAssertNotNull2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/assertNotNull2.kt");
         }
 
         @TestMetadata("assignment.kt")

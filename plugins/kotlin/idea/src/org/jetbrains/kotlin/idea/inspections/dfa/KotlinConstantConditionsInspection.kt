@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -196,6 +195,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 when (problem) {
                     is KotlinArrayIndexProblem ->
                         holder.registerProblem(problem.index, KotlinBundle.message("inspection.message.index.out.of.bounds"))
+                    is KotlinProblem.KotlinNullCheckProblem ->
+                        holder.registerProblem(problem.expr.operationReference,
+                                               KotlinBundle.message("inspection.message.nonnull.cast.will.always.fail"))
                     is KotlinCastProblem ->
                         holder.registerProblem(
                             (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast,

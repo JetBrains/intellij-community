@@ -29,8 +29,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
@@ -43,8 +42,10 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.LinkedHashMap
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
@@ -513,7 +514,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         } else if (ref == "!!") {
             val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
-            addInstruction(EnsureInstruction(null, RelationType.NE, DfTypes.NULL, transfer))
+            addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
             // Probably unbox
             addImplicitConversion(expr, operand?.getKotlinType(), expr.getKotlinType())
         } else {
