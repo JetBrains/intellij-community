@@ -56,4 +56,16 @@ public class IfMayBeConditional {
             value = "d";
         }
     }
+
+  void x() {
+    String nullable = null;
+    String a = nullable;
+    if (a == null) {
+      a = nullable(2);
+    }
+  }
+
+  private String nullable(int i) {
+    return null;
+  }
 }

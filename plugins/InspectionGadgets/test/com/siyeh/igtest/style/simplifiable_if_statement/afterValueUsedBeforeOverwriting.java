@@ -3,8 +3,7 @@ class ValueUsedBforeOverwriting {
 
   void x() {
     String nullable = null;
-    String a = nullable;
-      a = a == null ? nullable(2) : nullable;
+    String a = (a = nullable(3)) == null ? nullable(2) : nullable;
   }
 
   private String nullable(int i) {

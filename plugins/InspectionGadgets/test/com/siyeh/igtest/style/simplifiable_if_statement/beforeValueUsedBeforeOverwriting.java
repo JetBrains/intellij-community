@@ -4,7 +4,7 @@ class ValueUsedBforeOverwriting {
   void x() {
     String nullable = null;
     String a = nullable;
-    if<caret> (a == null) {
+    if<caret> ((a = nullable(3)) == null) {
       a = nullable(2);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -105,6 +105,10 @@ public final class IfConditionalModel extends ConditionalModel {
     if (thenExpression == null || thenExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
     PsiExpression thenRhs = thenExpression.getRExpression();
     if (thenRhs == null) return null;
+    final ReadBeforeWrittenVisitor visitor = new ReadBeforeWrittenVisitor(local);
+    condition.accept(visitor);
+    thenRhs.accept(visitor);
+    if (visitor.isReadBeforeWritten()) return null;
     if (ExpressionUtils.resolveLocalVariable(thenExpression.getLExpression()) != local) return null;
     PsiType elseType = initializer.getType();
     PsiType thenType = thenExpression.getType();
@@ -281,5 +285,27 @@ public final class IfConditionalModel extends ConditionalModel {
       }
     }
     return model;
+  }
+
+  private static class ReadBeforeWrittenVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final PsiLocalVariable myVariable;
+    private boolean myReadBeforeWritten;
+
+    ReadBeforeWrittenVisitor(PsiLocalVariable variable) {
+      myVariable = variable;
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      if (expression.isReferenceTo(myVariable)) {
+        myReadBeforeWritten = PsiUtil.isAccessedForReading(expression);
+        stopWalking();
+      }
+    }
+
+    public boolean isReadBeforeWritten() {
+      return myReadBeforeWritten;
+    }
   }
 }
