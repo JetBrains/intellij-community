@@ -192,15 +192,16 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
     application.assertIsWriteThread();
-    if (project != null && project.isDisposed()) {
-      CommandLog.LOG.error("Project "+project+" already disposed");
-      return;
-    }
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
                            ", in command = " + (myCurrentCommand != null) +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+
+    if (project != null && project.isDisposed()) {
+      CommandLog.LOG.error("Project "+project+" already disposed");
+      return;
     }
 
     if (myCurrentCommand != null) {
