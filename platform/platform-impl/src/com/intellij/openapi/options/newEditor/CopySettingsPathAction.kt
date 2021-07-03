@@ -54,7 +54,8 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
         return null
       }
 
-      val sb = StringBuilder(if (isMac) "Preferences" else "File | Settings")
+      val prefix = if (isMac) CommonBundle.message("action.settings.path.mac") else CommonBundle.message("action.settings.path.mac")
+      val sb = StringBuilder(prefix)
       for (name in names) {
         sb.append(" | ").append(name)
       }
