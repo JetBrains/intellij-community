@@ -120,22 +120,22 @@ public final class LombokProcessorUtil {
       return PsiModifier.PUBLIC;
     }
 
-    if ("PUBLIC".equals(value)) {
+    if (ACCESS_LEVEL_PUBLIC.equals(value)) {
       return PsiModifier.PUBLIC;
     }
     if ("MODULE".equals(value)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
-    if ("PROTECTED".equals(value)) {
+    if (ACCESS_LEVEL_PROTECTED.equals(value)) {
       return PsiModifier.PROTECTED;
     }
-    if ("PACKAGE".equals(value)) {
+    if (ACCESS_LEVEL_PACKAGE_LOCAL.equals(value)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
-    if ("PRIVATE".equals(value)) {
+    if (ACCESS_LEVEL_PRIVATE.equals(value)) {
       return PsiModifier.PRIVATE;
     }
-    if ("NONE".equals(value)) {
+    if (ACCESS_LEVEL_NONE.equals(value)) {
       return null;
     }
     return null;
@@ -144,17 +144,21 @@ public final class LombokProcessorUtil {
   @NotNull
   public static PsiAnnotation createAnnotationWithAccessLevel(@NotNull PsiModifierListOwner psiModifierListOwner,
                                                               String annotationClassName) {
-    String value = "";
+    Optional<String> value = convertModifierToLombokAccessLevel(psiModifierListOwner);
+    return PsiAnnotationUtil.createPsiAnnotation(psiModifierListOwner, value.orElse(""), annotationClassName);
+  }
+
+  @NotNull
+  public static Optional<String> convertModifierToLombokAccessLevel(@NotNull PsiModifierListOwner psiModifierListOwner) {
     final PsiModifierList modifierList = psiModifierListOwner.getModifierList();
     if (null != modifierList) {
       final int accessLevelCode = PsiUtil.getAccessLevel(modifierList);
 
       final String accessLevel = ACCESS_LEVEL_MAP.get(accessLevelCode);
       if (null != accessLevel && !ACCESS_LEVEL_PUBLIC.equals(accessLevel)) {
-        value = LombokClassNames.ACCESS_LEVEL + "." + accessLevel;
+        return Optional.of(LombokClassNames.ACCESS_LEVEL + "." + accessLevel);
       }
     }
-
-    return PsiAnnotationUtil.createPsiAnnotation(psiModifierListOwner, value, annotationClassName);
+    return Optional.empty();
   }
 }
