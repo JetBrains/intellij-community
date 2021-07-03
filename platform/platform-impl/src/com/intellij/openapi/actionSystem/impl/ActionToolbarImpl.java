@@ -33,8 +33,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +44,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -968,32 +964,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
-    private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<>();
-    private volatile Disposable myDisposable;
-
-    ToolbarReference(@NotNull ActionToolbarImpl toolbar) {
-      super(toolbar, ourQueue);
-      processQueue();
-    }
-
-    private static void processQueue() {
-      while (true) {
-        ToolbarReference ref = (ToolbarReference)ourQueue.poll();
-        if (ref == null) break;
-        ref.disposeReference();
-      }
-    }
-
-    private void disposeReference() {
-      Disposable disposable = myDisposable;
-      if (disposable != null) {
-        myDisposable = null;
-        Disposer.dispose(disposable);
-      }
-    }
-  }
-
   protected @NotNull Color getSeparatorColor() {
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
@@ -1355,31 +1325,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (myTargetComponent == null) {
       putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
     }
-    myTargetComponent = component;
-
-    if (myTargetComponent != null) {
-      updateWhenFirstShown(myTargetComponent, new ToolbarReference(this));
+    if (myTargetComponent != component) {
+      myTargetComponent = component;
+      if (isShowing()) {
+        updateActionsImmediately();
+      }
     }
-  }
-
-  private static void updateWhenFirstShown(@NotNull JComponent targetComponent, @NotNull ToolbarReference ref) {
-    Activatable activatable = new Activatable() {
-      @Override
-      public void showNotify() {
-        ActionToolbarImpl toolbar = ref.get();
-        if (toolbar != null) {
-          toolbar.myUpdater.updateActions(false, false, false);
-        }
-      }
-    };
-
-    ref.myDisposable = new UiNotifyConnector(targetComponent, activatable) {
-      @Override
-      protected void showNotify() {
-        super.showNotify();
-        ref.disposeReference();
-      }
-    };
   }
 
   @Override
