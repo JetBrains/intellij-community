@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 class NewJavaToKotlinConverter(
     val project: Project,
-    private val targetModule: Module?,
+    val targetModule: Module?,
     val settings: ConverterSettings,
     val oldConverterServices: JavaToKotlinConverterServices
 ) : JavaToKotlinConverter() {
