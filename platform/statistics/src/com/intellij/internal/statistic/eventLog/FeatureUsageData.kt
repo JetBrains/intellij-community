@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -83,9 +85,18 @@ class FeatureUsageData(private val recorderId: String) {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
+      data["project"] = if (isIdeaProject(project)) "intellij"
+                        else EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
     }
     return this
+  }
+
+  private fun isIdeaProject(project: Project): Boolean {
+    if (Registry.`is`("ide.disable.intellij.project.analytics")) return false
+
+    val moduleManager = ModuleManager.getInstance(project)
+    return moduleManager.findModuleByName("intellij.platform.commercial") != null
+           && moduleManager.findModuleByName("intellij.platform.commercial.verifier") != null
   }
 
   fun addVersionByString(@NonNls version: String?): FeatureUsageData {
