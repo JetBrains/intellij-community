@@ -204,11 +204,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
-    if (isLoadFromJsonEnabled()) {
-      return null;
-    }
-    String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
-    return getPrefix() + "_" + osSuffix;
+    return null;
   }
 
   @Override
@@ -275,16 +271,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    if (isLoadFromJsonEnabled()) {
-      loadDefaultsFromJson(defaults);
-    }
-    else {
-      loadDefaultsFromProperties(defaults);
-    }
-  }
-
-  private static boolean isLoadFromJsonEnabled() {
-    return Boolean.parseBoolean(System.getProperty("ide.load.laf.as.json", "true"));
+    loadDefaultsFromJson(defaults);
   }
 
   protected void loadDefaultsFromJson(UIDefaults defaults) {
@@ -300,69 +287,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       assert stream != null : "Can't load " + filename;
       UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
       theme.applyProperties(defaults);
-    }
-    catch (IOException e) {
-      log(e);
-    }
-  }
-
-  protected void loadDefaultsFromProperties(UIDefaults defaults) {
-    try {
-      Map<String, String> map = new HashMap<>(300);
-      //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
-      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-      Properties properties = new Properties() {
-        @Override
-        public Object put(Object key, Object value) {
-          return map.put((String)key, (String)value);
-        }
-      };
-      try (InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties")) {
-        properties.load(stream);
-      }
-
-      String systemPrefix = getSystemPrefix();
-      if (systemPrefix != null && !systemPrefix.isEmpty()) {
-        try (InputStream stream = getClass().getResourceAsStream(systemPrefix + ".properties")) {
-          properties.load(stream);
-        }
-      }
-
-      Map<String, Object> darculaGlobalSettings = new HashMap<>(32);
-      String prefix = getPrefix();
-      prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
-
-      for (String key : map.keySet()) {
-        if (key.startsWith(prefix)) {
-          Object value = parseValue(key, map.get(key));
-          String darculaKey = key.substring(prefix.length());
-          if (value == SYSTEM) {
-            darculaGlobalSettings.remove(darculaKey);
-          }
-          else {
-            darculaGlobalSettings.put(darculaKey, value);
-          }
-        }
-      }
-
-      UIDefaults multiUiDefaults = UIManager.getDefaults();
-      for (Object key : defaults.keySet()) {
-        if (key instanceof String && ((String)key).contains(".")) {
-          String s = (String)key;
-          String darculaKey = s.substring(s.lastIndexOf('.') + 1);
-          if (darculaGlobalSettings.containsKey(darculaKey)) {
-            // MultiUIDefaults misses correct property merging
-            multiUiDefaults.remove(key);
-            defaults.put(key, darculaGlobalSettings.get(darculaKey));
-          }
-        }
-      }
-
-      for (Map.Entry<String, String> entry : map.entrySet()) {
-        // MultiUIDefaults misses correct property merging
-        multiUiDefaults.remove(entry.getKey());
-        defaults.put(entry.getKey(), parseValue(entry.getKey(), entry.getValue()));
-      }
     }
     catch (IOException e) {
       log(e);
