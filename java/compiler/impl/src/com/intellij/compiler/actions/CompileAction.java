@@ -140,7 +140,7 @@ public class CompileAction extends CompileActionBase {
     StringBuilder buffer = new StringBuilder(40);
     buffer.append(ActionsBundle.actionText(bundleKey)).append(" ");
     int length = elementDescription.length();
-    if (length > 23) {
+    if (length > 50) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {
         buffer.append("'");
       }
