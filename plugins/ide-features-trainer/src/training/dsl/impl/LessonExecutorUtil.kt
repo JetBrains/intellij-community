@@ -21,10 +21,12 @@ import training.ui.UISettings
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
+import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
@@ -198,7 +200,32 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?)  {
+  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
+                                                                  highlightBorder: Boolean,
+                                                                  highlightInside: Boolean,
+                                                                  usePulsation: Boolean,
+                                                                  selector: ((candidates: Collection<T>) -> T?)?,
+                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+    hasDetection = true
+  }
+
+  @Suppress("OverridingDeprecatedMember")
+  override fun <ComponentType : Component> triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
+                                                                                highlightBorder: Boolean,
+                                                                                highlightInside: Boolean,
+                                                                                usePulsation: Boolean,
+                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                                                                finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                              checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     hasDetection = true
   }
 
