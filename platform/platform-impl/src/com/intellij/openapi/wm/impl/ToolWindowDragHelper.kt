@@ -141,16 +141,19 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   override fun mouseReleased(e: MouseEvent?) {
+    if (getToolWindow() == null) return
     super.mouseReleased(e)
     stopDrag()
   }
 
   override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
+    if (getToolWindow() == null) return
     relocate(event)
     event.consume()
   }
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+    if (getToolWindow() == null) return
     if (willDragOutStart) {
       setDragOut(true)
       return
