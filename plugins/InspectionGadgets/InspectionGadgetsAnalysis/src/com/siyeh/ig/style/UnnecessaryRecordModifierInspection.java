@@ -41,7 +41,7 @@ public class UnnecessaryRecordModifierInspection extends BaseInspection implemen
       if (modifiers == null) return;
       for (PsiElement modifier : modifiers.getChildren()) {
         String modifierText = modifier.getText();
-        if (PsiModifier.FINAL.equals(modifierText) || !PsiUtil.isLocalClass(aClass) && PsiModifier.STATIC.equals(modifierText)) {
+        if (PsiModifier.FINAL.equals(modifierText) || PsiModifier.STATIC.equals(modifierText) && !PsiUtil.isLocalClass(aClass)) {
           registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, modifierText);
         }
       }
