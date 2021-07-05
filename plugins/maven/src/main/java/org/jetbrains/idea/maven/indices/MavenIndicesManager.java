@@ -137,8 +137,9 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private MavenIndices getIndicesObject() {
-    IndexKeeper indexKeeper = ensureInitialized();
-    return indexKeeper.myIndices;
+    return ReadAction.nonBlocking(() -> {
+      return ensureInitialized().myIndices;
+    }).executeSynchronously();
   }
 
   @NotNull
