@@ -49,6 +49,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -1867,6 +1868,16 @@ public class UsageViewImpl implements UsageViewEx {
     return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
+  private boolean hasSelectedNodes() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    TreePath[] selectionPaths = myTree.getSelectionPaths();
+    return selectionPaths != null && ContainerUtil.or(selectionPaths, p -> p.getLastPathComponent() instanceof TreeNode);
+  }
+
+  private @NotNull List<@NotNull TreeNode> allSelectedNodes() {
+    return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse().toList();
+  }
+
   @Override
   @NotNull
   public Set<Usage> getSelectedUsages() {
@@ -2027,36 +2038,26 @@ public class UsageViewImpl implements UsageViewEx {
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class)).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
-      else if (USAGES_KEY.is(dataId)) {
-        return getSelectedUsages().toArray(Usage.EMPTY_ARRAY);
+      else if (USAGES_KEY.is(dataId) && !hasSelectedNodes()) {
+        return Usage.EMPTY_ARRAY;
+      }
+      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && !hasSelectedNodes()) {
+        return PsiElement.EMPTY_ARRAY;
       }
       else if (USAGE_TARGETS_KEY.is(dataId)) {
         return ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null).toArray(UsageTarget.EMPTY_ARRAY);
       }
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes())
-          .traverse()
-          .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
-                          o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
-                        o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
-                        o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
-                        Collections.emptyList())
-          .filter(VirtualFile::isValid)
-          .unique()
-          .toArray(VirtualFile.EMPTY_ARRAY);
+      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && !hasSelectedNodes()) {
+        return VirtualFile.EMPTY_ARRAY;
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
         if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-          Set<Usage> selectedUsages = getSelectedUsages();
+          List<TreeNode> selectedNodes = allSelectedNodes();
           Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
           slowProviders = ObjectUtils.notNull(slowProviders, Collections.emptyList());
-          slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedUsages)), slowProviders);
+          slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedNodes)), slowProviders);
           return slowProviders;
-        }
-        if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && selectedNodes().isEmpty()) {
-          return PsiElement.EMPTY_ARRAY;
         }
         if (selectedProvider != null) {
           return selectedProvider.getData(dataId);
@@ -2066,12 +2067,38 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private static Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends Usage> selectedUsages) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<@NotNull TreeNode> selectedNodes) {
+    if (USAGES_KEY.is(dataId)) {
+      return selectedUsages(selectedNodes)
+        .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
+    }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return ContainerUtil.mapNotNull(selectedUsages, u -> u instanceof PsiElementUsage ? ((PsiElementUsage)u).getElement() : null)
-        .toArray(PsiElement.EMPTY_ARRAY);
+      return selectedUsages(selectedNodes)
+        .filter(usage -> usage instanceof PsiElementUsage)
+        .map(usage -> ((PsiElementUsage)usage).getElement())
+        .filter(element -> element != null)
+        .toArray(PsiElement.ARRAY_FACTORY::create);
+    }
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      return JBIterable.from(selectedNodes)
+        .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
+                        o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+        .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
+                      o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
+                      o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
+                      Collections.emptyList())
+        .filter(VirtualFile::isValid)
+        .unique()
+        .toArray(VirtualFile.EMPTY_ARRAY);
     }
     return null;
+  }
+
+  private static @NotNull Stream<@NotNull Usage> selectedUsages(@NotNull List<@NotNull TreeNode> selectedNodes) {
+    return selectedNodes.stream()
+      .filter(node -> node instanceof UsageNode)
+      .map(node -> ((UsageNode)node).getUsage())
+      .distinct();
   }
 
   private final class ButtonPanel extends JPanel {
