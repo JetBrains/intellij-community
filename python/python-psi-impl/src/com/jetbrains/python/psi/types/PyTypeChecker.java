@@ -813,7 +813,8 @@ public final class PyTypeChecker {
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
       final PyType expectedType = paramWrapper.getArgumentType(context);
-      PyType actualType = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
+      var actualType = promotedToLiteral != null ? promotedToLiteral : context.getType(entry.getKey());
       if (paramWrapper.isSelf()) {
         // TODO find out a better way to pass the corresponding function inside
         final PyParameter param = paramWrapper.getParameter();
