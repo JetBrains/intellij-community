@@ -591,13 +591,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!myEditor.getSettings().isCaretRowShown()) {
       return null;
     }
-    if (!Registry.is("highlight.caret.line.at.custom.fold")) {
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset) instanceof CustomFoldRegion) {
-        return null;
-      }
+    if (!Registry.is("highlight.caret.line.at.custom.fold") && isCaretAtCustomFolding()) {
+      return null;
     }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+  }
+
+  private boolean isCaretAtCustomFolding() {
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
+    FoldRegion[] topLevelRegions = foldingModel.fetchTopLevel();
+    if (topLevelRegions == null) {
+      return false;
+    }
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    int idx = foldingModel.getLastCollapsedRegionBefore(caretOffset);
+    return idx >= 0 && topLevelRegions[idx].getEndOffset() == caretOffset ||
+           idx + 1 < topLevelRegions.length && topLevelRegions[idx + 1].getStartOffset() <= caretOffset;
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width, Color color) {

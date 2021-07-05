@@ -266,16 +266,25 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testCustomFoldRegion() throws Exception {
     initText("a\nb\nc");
-    FoldingModel foldingModel = getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    addCustomLinesFolding(1, 1);
     checkResultWithGutter();
   }
 
   public void testCustomFoldRegionWithCaret() throws Exception {
     initText("a\n<caret>b\nc");
-    FoldingModel foldingModel = getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, new OurCustomFoldRegionRenderer()));
+    addCustomLinesFolding(1, 1);
     checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
+    initText("a\nb<caret>\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  private void addCustomLinesFolding(int startLine, int endLine) {
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
   }
 
   private void runIndentsPass() {
