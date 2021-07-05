@@ -2652,7 +2652,6 @@
                      groupPath="Kotlin"
                      groupName="Probable bugs"
                      enabledByDefault="true"
-                     isInternal="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.kotlin.constant.conditions.display.name" bundle="messages.KotlinBundle"/>
