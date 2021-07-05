@@ -103,13 +103,18 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       showWarningIfCommitWindowClosed()
     }
 
+    task {
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+        ActionManager.getInstance().getId(ui.action) == "ChangesView.ShowCommitOptions"
+      }
+    }
+
     lateinit var showOptionsTaskId: TaskContext.TaskId
     task {
       showOptionsTaskId = taskId
       text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
-        ActionManager.getInstance().getId(ui.action) == "ChangesView.ShowCommitOptions"
-      }
+      text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
       showWarningIfCommitWindowClosed()
     }

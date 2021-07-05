@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -64,20 +65,25 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       proceedLink()
     }
 
-    val interactiveRebaseMenuItemText = GitBundle.message("action.Git.Interactive.Rebase.text")
-    lateinit var openRebaseDialogTaskId: TaskContext.TaskId
     task {
-      openRebaseDialogTaskId = taskId
       var commitHashToHighlight: Hash? = null
       before {
         LearningUiHighlightingManager.clearHighlights()
         val vcsData = VcsProjectLog.getInstance(project).dataManager
         commitHashToHighlight = vcsData?.findFirstCommitInBranch(branchName)
       }
-      text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       highlightSubsequentCommitsInGitLog {
         it.id == commitHashToHighlight
       }
+    }
+
+    val interactiveRebaseMenuItemText = GitBundle.message("action.Git.Interactive.Rebase.text")
+    lateinit var openRebaseDialogTaskId: TaskContext.TaskId
+    task {
+      openRebaseDialogTaskId = taskId
+      text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
+      text(GitLessonsBundle.message("git.interactive.rebase.click.commit.tooltip"),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }

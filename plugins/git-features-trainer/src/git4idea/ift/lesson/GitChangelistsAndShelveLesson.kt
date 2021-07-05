@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
@@ -129,16 +130,21 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     val shelfText = VcsBundle.message("shelf.tab")
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.explanation", strong(shelfText)))
+      proceedLink()
+    }
+
+    task {
       triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
       }
-      proceedLink()
     }
 
     lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
       letsShelveTaskId = taskId
       text(GitLessonsBundle.message("git.changelists.shelf.open.context.menu"))
+      text(GitLessonsBundle.message("git.changelists.shelf.click.changelist.tooltip", strong(newChangeListName)),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }

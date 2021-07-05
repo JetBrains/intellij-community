@@ -2,7 +2,9 @@
 package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
@@ -59,23 +61,30 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
-      }
-      text(GitLessonsBundle.message("git.project.history.apply.branch.filter"))
       triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
         path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE"
       }
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.project.history.apply.branch.filter"))
+      text(GitLessonsBundle.message("git.project.history.click.head.tooltip"),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
       showWarningIfGitWindowClosed()
     }
 
+    task {
+      triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
+    }
+
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
     task {
       text(GitLessonsBundle.message("git.project.history.apply.user.filter"))
-      triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
+      text(GitLessonsBundle.message("git.project.history.click.filter.tooltip"),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }
@@ -93,7 +102,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.apply.message.filter", code(textToFind), LessonUtil.rawEnter()))
       triggerByUiComponentAndHighlight { ui: SearchTextField ->
-        UIUtil.getParentOfType(MainFrame::class.java, ui) != null
+        (UIUtil.getParentOfType(MainFrame::class.java, ui) != null).also {
+          if (it) IdeFocusManager.getInstance(project).requestFocus(ui, true)
+        }
       }
       triggerByUiComponentAndHighlight(false, false) l@{ ui: VcsLogGraphTable ->
         val model = ui.model as? GraphTableModel ?: return@l false
