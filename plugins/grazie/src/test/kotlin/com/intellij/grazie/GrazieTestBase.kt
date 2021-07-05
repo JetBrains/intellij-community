@@ -7,6 +7,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.filterFor
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
@@ -22,6 +23,8 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   protected open val additionalEnabledRules: Set<String> = emptySet()
 
+  protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
+
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
@@ -32,7 +35,8 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       val checkingContext = state.checkingContext.copy(
         isCheckInStringLiteralsEnabled = true,
         isCheckInCommentsEnabled = true,
-        isCheckInDocumentationEnabled = true
+        isCheckInDocumentationEnabled = true,
+        enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
       )
       state.copy(
         enabledLanguages = enabledLanguages,
