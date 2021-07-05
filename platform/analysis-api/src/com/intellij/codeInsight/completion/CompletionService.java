@@ -45,7 +45,7 @@ public abstract class CompletionService {
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
-   * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
+   * Run all contributors until any of them returns false or the list is exhausted. If {@code from} parameter is not null, contributors
    * will be run starting from the next one after that.
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
