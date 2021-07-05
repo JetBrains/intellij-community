@@ -30,6 +30,7 @@ public final class PythonIcons {
       /** 16x16 */ public static final @NotNull Icon Buildout = load("icons/com/jetbrains/python/buildout/buildout.svg", 8721917823666541547L, 0);
     }
 
+    /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/python/commandQueue.svg", 7404191449404154063L, 2);
     /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/python/condaenv.svg", 5490797336848440601L, 0);
     /** 13x13 */ public static final @NotNull Icon DataView = load("icons/com/jetbrains/python/DataView.svg", 4852798720151080547L, 2);
 
