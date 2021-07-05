@@ -31,7 +31,7 @@ internal object GrazieReplaceTypoQuickFix {
     @IntentionFamilyName private val family: String,
     @NlsSafe private val suggestion: String,
     private val replacement: String,
-    private val underlineRange: SmartPsiFileRange,
+    private val underlineRanges: List<SmartPsiFileRange>,
     private val replacementRange: SmartPsiFileRange,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
@@ -53,7 +53,9 @@ internal object GrazieReplaceTypoQuickFix {
       val replacementRange = this.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
-      underlineRange.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
+      underlineRanges.forEach { underline ->
+        underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
+      }
 
       document.replaceString(replacementRange.startOffset, replacementRange.endOffset, replacement)
     }
@@ -61,7 +63,7 @@ internal object GrazieReplaceTypoQuickFix {
     override fun startInWriteAction(): Boolean = true
   }
 
-  fun getReplacementFixes(problem: TextProblem, underlineRange: SmartPsiFileRange, file: PsiFile): List<LocalQuickFix> {
+  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
     val replacementRange = problem.replacementRange
     val replacedText = replacementRange.subSequence(problem.text)
     val spm = SmartPointerManager.getInstance(file.project)
@@ -74,7 +76,7 @@ internal object GrazieReplaceTypoQuickFix {
       val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
       val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
       result.add(ChangeToVariantAction(
-        index, familyName, suggestion, replacement, underlineRange,
+        index, familyName, suggestion, replacement, underlineRanges,
         spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange))))
     }
     return result

@@ -17,8 +17,11 @@ import com.intellij.psi.SmartPsiFileRange
 import javax.swing.Icon
 
 class GrazieAddExceptionQuickFix(
-  private val suppressionPattern: SuppressionPattern, private val underlineRange: SmartPsiFileRange
+  private val suppressionPattern: SuppressionPattern, private val underlineRanges: List<SmartPsiFileRange>
 ) : IntentionAndQuickFixAction(), Iconable {
+
+  @Suppress("unused") // used in Grazie Professional
+  constructor(suppressionPattern: SuppressionPattern, underlineRange: SmartPsiFileRange) : this(suppressionPattern, listOf(underlineRange))
 
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.AddToDictionary
 
@@ -51,7 +54,9 @@ class GrazieAddExceptionQuickFix(
 
     action.redo()
 
-    underlineRange.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(file.viewProvider.document, project, it) }
+    underlineRanges.forEach { underline ->
+      underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(file.viewProvider.document, project, it) }
+    }
 
     UndoManager.getInstance(project).undoableActionPerformed(action)
   }

@@ -46,13 +46,15 @@ internal class CheckerRunner(val text: TextContent) {
 
   fun toProblemDescriptors(problems: List<TextProblem>, isOnTheFly: Boolean): List<ProblemDescriptor> {
     val parent = text.commonParent
-    return problems.map { problem ->
-      ProblemDescriptorBase(
-        parent, parent, problem.getDescriptionTemplate(isOnTheFly),
-        if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
-        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-        fileHighlightRange(problem).shiftLeft(parent.startOffset),
-        true, isOnTheFly)
+    return problems.flatMap { problem ->
+      fileHighlightRanges(problem).map { range ->
+        ProblemDescriptorBase(
+          parent, parent, problem.getDescriptionTemplate(isOnTheFly),
+          if (isOnTheFly) toFixes(problem) else LocalQuickFix.EMPTY_ARRAY,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+          range.shiftLeft(parent.startOffset),
+          true, isOnTheFly)
+      }
     }
   }
 
@@ -119,7 +121,7 @@ internal class CheckerRunner(val text: TextContent) {
     val file = text.commonParent.containingFile
     val result = arrayListOf<LocalQuickFix>()
     val spm = SmartPointerManager.getInstance(file.project)
-    val underline = spm.createSmartPsiFileRangePointer(file, fileHighlightRange(problem))
+    val underline = fileHighlightRanges(problem).map { spm.createSmartPsiFileRangePointer(file, it) }
 
     val fixes = problem.corrections
     if (fixes.isNotEmpty()) {
@@ -132,20 +134,9 @@ internal class CheckerRunner(val text: TextContent) {
     return result.toTypedArray()
   }
 
-  private fun fileHighlightRange(problem: TextProblem): TextRange {
-    val range = problem.highlightRange
-    var start = text.textOffsetToFile(range.startOffset)
-    var end = text.textOffsetToFile(range.endOffset)
-    val allRanges = text.rangesInFile
-    for (i in allRanges.indices) {
-      if (allRanges[i].endOffset == start && i < allRanges.size - 1) {
-        start = allRanges[i + 1].startOffset
-      }
-      if (allRanges[i].startOffset == end && i > 0) {
-        end = allRanges[i - 1].endOffset
-      }
-    }
-    return TextRange(start, end)
+  private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
+    val range = text.textRangeToFile(problem.highlightRange)
+    return text.rangesInFile.asSequence().mapNotNull { it.intersection(range) }.filterNot { it.isEmpty }.toList()
   }
 
   private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
