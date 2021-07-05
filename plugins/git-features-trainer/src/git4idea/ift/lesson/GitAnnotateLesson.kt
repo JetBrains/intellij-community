@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
@@ -41,6 +42,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   private val partOfTargetCommitMessage = "Edit ear number of martian cat"
 
   private var backupDiffLocation: Point? = null
+  private var backupRevisionsLocation: Point? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -188,6 +190,11 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
 
     task("EditorEscape") {
+      before {
+        if (backupRevisionsLocation == null) {
+          backupRevisionsLocation = adjustPopupPosition(ChangeListViewerDialog.DIMENSION_SERVICE_KEY)
+        }
+      }
       text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName),
                                     if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
       stateCheck {
@@ -224,6 +231,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     restorePopupPosition(project, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
     backupDiffLocation = null
+    restorePopupPosition(project, ChangeListViewerDialog.DIMENSION_SERVICE_KEY, backupRevisionsLocation)
+    backupRevisionsLocation = null
   }
 
   private fun TaskContext.highlightGutterComponent(splitter: DiffSplitter?, partOfEditorText: String, highlightRight: Boolean) {
