@@ -98,12 +98,11 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
           defaultFound = true;
         }
         else {
-          PsiExpressionList values = child.getCaseValues();
-          if (values == null) {
-            // Erroneous switch: compilation error is reported instead
+          final PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
+          if (labelElementList == null) {
             return null;
           }
-          branches += values.getExpressionCount();
+          branches += labelElementList.getElementCount();
           if (branches >= m_limit) {
             return null;
           }
