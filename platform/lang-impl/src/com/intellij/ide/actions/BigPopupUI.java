@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,6 +122,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
 
     myResultsList = createList();
+    HintUpdateSupply.installDataContextHintUpdateSupply(myResultsList);
 
     JPanel topLeftPanel = createTopLeftPanel();
     JPanel settingsPanel = createSettingsPanel();
