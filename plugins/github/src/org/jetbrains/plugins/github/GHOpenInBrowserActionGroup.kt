@@ -26,6 +26,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -227,7 +228,7 @@ open class GHOpenInBrowserActionGroup
           builder.append(path.toUrl()).append("/tree/").append(branch)
         }
         else {
-          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(relativePath)
+          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
         }
 
         if (editor != null && editor.document.lineCount >= 1) {
