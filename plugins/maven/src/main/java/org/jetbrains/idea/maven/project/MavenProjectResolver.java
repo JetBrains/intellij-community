@@ -128,14 +128,10 @@ public class MavenProjectResolver {
     process.setText(MavenProjectBundle.message("maven.resolving.pom", text));
     process.setText2("");
 
-    final MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(new LinkedHashSet<>(), new LinkedHashSet<>());
-    Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> {
-      explicitProfiles.getEnabledProfiles().addAll(p.getActivatedProfilesIds().getEnabledProfiles());
-      explicitProfiles.getDisabledProfiles().addAll(p.getActivatedProfilesIds().getDisabledProfiles());
-      return p.getFile();
-    });
-    Collection<MavenProjectReaderResult> results = new MavenProjectReader(project).resolveProject(
-      generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
+    MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
+    Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
+    Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
+      .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
 
     MavenUtil.notifySyncForUnresolved(project, results);
     for (MavenProjectReaderResult result : results) {
