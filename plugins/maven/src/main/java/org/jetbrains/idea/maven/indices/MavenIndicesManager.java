@@ -215,14 +215,16 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndex ensureRemoteIndexExist(@NotNull Pair<String, String> remoteIndexIdAndUrl) {
     try {
-      MavenIndices indicesObjectCache = ReadAction.compute(() -> {
+      MavenIndices indicesObjectCache = ReadAction.nonBlocking(() -> {
         if (myProject.isDisposed()) {
           return null;
         }
         else {
           return getIndicesObject();
         }
-      });
+      }).executeSynchronously();
+
+
       if (indicesObjectCache == null) return null;
       return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
     }
