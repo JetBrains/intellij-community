@@ -5,8 +5,8 @@ class ForMultiLanguageSupport {
 
 
     // My
-    // <warning descr="COMMA_WHICH">name
-    //    which</warning> I occurred is
+    // <warning descr="COMMA_WHICH">name</warning>
+    //    <warning descr="COMMA_WHICH">which</warning> I occurred is
     // bad
 
 
