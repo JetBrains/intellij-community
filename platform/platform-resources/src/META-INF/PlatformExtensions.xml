@@ -289,6 +289,7 @@
     <iconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
+    <diff.tools.combined.diffBlockFactory implementation="com.intellij.diff.tools.combined.CombinedSimpleDiffBlockFactory" order="last"/>
 
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
