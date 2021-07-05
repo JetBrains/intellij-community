@@ -5,6 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,10 +21,12 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   @Nullable
@@ -168,7 +171,13 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
+      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        return List.of((DataProvider)this::getSlowData);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getPsiClass();
       }
