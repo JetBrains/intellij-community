@@ -618,6 +618,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (testFramework instanceof JUnit3Framework) {
         return isClassConfiguration ? JUnitStarter.JUNIT4_PARAMETER : JUnitStarter.JUNIT3_PARAMETER;
       }
+      if (testFramework != null) return JUnitStarter.JUNIT4_PARAMETER;
     }
     return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
   }
