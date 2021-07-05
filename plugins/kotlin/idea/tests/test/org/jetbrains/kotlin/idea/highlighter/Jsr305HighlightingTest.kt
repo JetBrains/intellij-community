@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.utils.ReportLevel
+import org.jetbrains.kotlin.load.java.ReportLevel
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
