@@ -22,9 +22,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -57,6 +59,7 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
     if (!model.hasSelection()) return false;
     PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, file);
     if (elements == null || elements.length == 0) return false;
+    if (PsiTreeUtil.getParentOfType(elements[0], PsiClass.class) == null) return false;
     ExtractMethodProcessor processor = ExtractMethodHandler.getProcessor(project, elements, file, false);
     if (processor == null) return false;
     try {
