@@ -111,7 +111,7 @@ public final class PluginManagerCore {
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
-  public static @NotNull IdeaPluginDescriptor @NotNull[] getPlugins() {
+  public static @NotNull IdeaPluginDescriptor @NotNull [] getPlugins() {
     return getPluginSet().allPlugins.toArray(new IdeaPluginDescriptor[0]);
   }
 
@@ -1282,13 +1282,22 @@ public final class PluginManagerCore {
                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                 @NotNull Set<IdeaPluginDescriptor> depProcessed,
                                                 @NotNull BiFunction<@NotNull PluginId, @Nullable IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+    ArrayList<PluginId> dependencies = new ArrayList<>();
     for (PluginDependency dependency : rootDescriptor.pluginDependencies) {
       if (!withOptionalDeps && dependency.isOptional()) {
         continue;
       }
 
-      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependency.getPluginId());
-      PluginId pluginId = descriptor == null ? dependency.getPluginId() : descriptor.getPluginId();
+      dependencies.add(dependency.getPluginId());
+    }
+    for (ModuleDependenciesDescriptor.PluginReference plugin : rootDescriptor.dependencies.plugins) {
+      // TODO withOptionalDeps ?
+      dependencies.add(plugin.id);
+    }
+
+    for (PluginId dependencyId : dependencies) {
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependencyId);
+      PluginId pluginId = descriptor == null ? dependencyId : descriptor.getPluginId();
       switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;
