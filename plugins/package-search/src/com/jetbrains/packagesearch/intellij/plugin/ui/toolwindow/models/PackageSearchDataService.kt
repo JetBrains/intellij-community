@@ -4,6 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -28,6 +29,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combine
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
@@ -56,8 +58,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
+import org.jetbrains.uast.util.isInstanceOf
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.URISyntaxException
@@ -304,16 +308,16 @@ internal class PackageSearchDataService(
         }.sortedBy { it.sortKey }
     }
 
-    private fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
+    private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
         modules.associateWith { module -> module.installedDependencies(traceInfo) }
 
-    private fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = runReadAction {
+    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = readAction { progress ->
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-
-        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listDependenciesInModule(this)
-            ?.toList()
-            ?: emptyList()
+            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+                ?.also { progress.checkCancelled() }
+                ?.listDependenciesInModule(this)
+                ?.toList()
+                ?: emptyList()
     }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
