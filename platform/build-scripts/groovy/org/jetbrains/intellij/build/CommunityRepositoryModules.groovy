@@ -194,7 +194,8 @@ final class CommunityRepositoryModules {
       withModule("intellij.grazie.properties")
       withModule("intellij.grazie.xml")
       withModule("intellij.grazie.yaml")
-    }
+    },
+    plugin("intellij.java.rareRefactorings")
   ]
 
   static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
