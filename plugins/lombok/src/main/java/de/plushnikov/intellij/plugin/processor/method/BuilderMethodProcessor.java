@@ -30,9 +30,12 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
     return true;//builderHandler.validate(psiMethod, psiAnnotation, builder);
   }
 
+  /**
+   * Checks the given annotation to be supported 'Builder' annotation
+   */
   @Override
   protected boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
-    return getHandler().checkAnnotationFQN(psiClass, psiAnnotation, psiMethod);
+    return BuilderHandler.checkAnnotationFQN(psiClass, psiAnnotation, psiMethod);
   }
 
   @Override

@@ -79,7 +79,17 @@ public class BuilderHandler {
     return substitutor;
   }
 
-  public boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
+  /**
+   * Checks if given annotation could be a '@lombok.Builder' annotation.
+   * <b>Attention</b>: As a workaround it accepts the annotation immediately,
+   * if calculated name for the Builder class is equal to 'Builder' (same as shortName of the lombok annotation),
+   * to prevent recursive calls to AugmentProvider.
+   * In this case the given annotation is most likely '@Builder' one, because calculation of Builder-Class-Name is based on attributes
+   * of the @lombok.Builder annotation!
+   * But still can going wrong, if somebody makes global configuration like 'lombok.builder.className=Builder'
+   * and used annotation like '@crazy_stuff.Builder'"
+   */
+  public static boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
     return BUILDER_ANNOTATION_SHORT_NAME.equals(getBuilderClassName(psiClass, psiAnnotation, psiMethod)) ||
            PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(psiAnnotation, LombokClassNames.BUILDER);
   }
@@ -303,7 +313,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @Nullable PsiMethod psiMethod) {
+  public static String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @Nullable PsiMethod psiMethod) {
     final String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, "");
     if (!StringUtil.isEmptyOrSpaces(builderClassName)) {
       return builderClassName;
@@ -322,7 +332,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
+  static String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
     return replace(builderClassNamePattern, "*", capitalize(returnTypeName));

@@ -54,6 +54,9 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     return result;
   }
 
+  /**
+   * Checks the given annotation to be supported annotation by this processor
+   */
   protected boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
     return PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(psiAnnotation, getSupportedAnnotationClasses());
   }
