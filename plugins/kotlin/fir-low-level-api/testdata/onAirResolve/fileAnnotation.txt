@@ -1,1 +1,0 @@
-@FILE:R|kotlin/Deprecated|(String(hello))
