@@ -1,0 +1,18 @@
+Index: community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/BuildTasksImpl.groovy
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/BuildTasksImpl.groovy	(revision 95be84d2872d853bad95e742f238759f6e950a18)
++++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/BuildTasksImpl.groovy	(date 1625250149488)
+@@ -140,6 +140,10 @@
+           if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
+             def file = JpsPathUtil.urlToFile(url)
+             if (file.isFile()) {
++              if (file.absolutePath.contains("kotlin-stdlib-common-1.4.32-release-380-sources.jar")) {
++                buildContext.messages.debug("Skip kotlin-stdlib-common-1.4.32-release-380-sources.jar");
++                continue;
++              }
+               buildContext.messages.debug("  $file.absolutePath, ${StringUtil.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
+               buildContext.ant.zipfileset(src: file.absolutePath) {
+                 patternset(refid: sourceFilesId)

@@ -261,6 +261,18 @@
             <arg value="apply"/>
             <arg value="${patchJBUIScale}"/>
         </exec>
+
+        <property name="patchKotlinLibRead"
+                  value="${basedir}/patches/problem_read_kotlin_lib.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchKotlinLibRead}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchKotlinLibRead}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
