@@ -190,6 +190,8 @@
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="Lombok"
@@ -199,6 +201,8 @@
       bundle="messages.LombokBundle"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="SpringQualifierCopyableLombok"
@@ -208,6 +212,8 @@
       bundle="messages.LombokBundle"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="DeprecatedLombok"
@@ -216,7 +222,8 @@
       key="inspection.deprecated.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValueLombok"
@@ -225,7 +232,8 @@
       key="inspection.redundant.modifiers.value.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersUtilityClassLombok"
@@ -234,16 +242,8 @@
       key="inspection.redundant.modifiers.utility.class.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
-      groupKey="inspection.lombok.group.name.redundant.definitions"
-      groupBundle="messages.LombokBundle"
-      shortName="RedundantSlf4jDefinition"
-      enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
-      key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
-
-    <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValLombok"
@@ -251,25 +251,40 @@
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValLombokAnnotationInspection"
       key="inspection.redundant.modifiers.val.lombok.display.name" bundle="messages.LombokBundle"/>
 
+    <localInspection
+      language="JAVA"
+      groupPath="Java,Lombok"
+      groupKey="inspection.lombok.group.name.redundant.definitions"
+      groupBundle="messages.LombokBundle"
+      shortName="RedundantSlf4jDefinition"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
+      key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
+
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithValIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithVarIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceValWithExplicitTypeIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceVarWithExplicitTypeIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
