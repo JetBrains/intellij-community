@@ -69,7 +69,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     @NlsSafe String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
-    JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
+    JPanel panel = new CellRendererPanel(new VerticalFlowLayout(0, 0));
     if (index != 0) {
       panel.add(createSeparatorLine(colorsScheme));
     }
@@ -92,13 +92,13 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                                  @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
                                                  @NotNull EditorColorsScheme colorsScheme,
                                                  boolean selected) {
-    JComponent title = JBUI.Panels
-      .simplePanel()
-      .withBorder(JBUI.Borders.empty())
-      .addToLeft(createTitleTextComponent(project, list, speedSearch, placeInfo, colorsScheme, breadcrumb, selected));
+    CellRendererPanel title = new CellRendererPanel(new BorderLayout());
+    SimpleColoredComponent textComponent = createTitleTextComponent(
+      project, list, speedSearch, placeInfo, colorsScheme, breadcrumb, selected);
+    title.add(textComponent, BorderLayout.WEST);
 
     title.setBorder(JBUI.Borders.empty(8, 6, 5, 0));
-    title.setBackground(getBackgroundColor(colorsScheme, selected));
+    title.setForcedBackground(getBackgroundColor(colorsScheme, selected));
 
     return title;
   }
@@ -110,7 +110,9 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       color = JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51));
     }
 
-    return JBUI.Panels.simplePanel().withBorder(JBUI.Borders.customLine(color, 1, 0, 0, 0));
+    CellRendererPanel panel = new CellRendererPanel();
+    panel.setBorder(JBUI.Borders.customLine(color, 1, 0, 0, 0));
+    return panel;
   }
 
   @NotNull
