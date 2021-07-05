@@ -20,9 +20,11 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,12 +73,17 @@ public class DiffManagerImpl extends DiffManagerEx {
     if (diffEditorTabFilesManager != null &&
         !Registry.is("show.diff.as.frame") &&
         DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME &&
+        !isFromDialog(project) &&
         hints.getWindowConsumer() == null) {
       ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(requests, DiffBundle.message("label.default.diff.editor.tab.name"));
       diffEditorTabFilesManager.showDiffFile(diffFile, true);
       return;
     }
     new DiffWindow(project, requests, hints).show();
+  }
+
+  private static boolean isFromDialog(@Nullable Project project) {
+    return DialogWrapper.findInstance(IdeFocusManager.getInstance(project).getFocusOwner()) != null;
   }
 
   @NotNull
