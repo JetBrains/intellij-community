@@ -8,26 +8,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.immutableSet;
 import static com.intellij.util.containers.ContainerUtil.union;
+import static java.util.Set.of;
 
 public final class SingularHandlerFactory {
 
   private static final Set<String> COLLECTION_TYPES =
     union(
-      immutableSet(SingularCollectionClassNames.JAVA_LANG_ITERABLE,
-                   SingularCollectionClassNames.JAVA_UTIL_COLLECTION,
-                   SingularCollectionClassNames.JAVA_UTIL_LIST),
-      immutableSet(SingularCollectionClassNames.JAVA_SETS));
+      of(SingularCollectionClassNames.JAVA_LANG_ITERABLE,
+         SingularCollectionClassNames.JAVA_UTIL_COLLECTION,
+         SingularCollectionClassNames.JAVA_UTIL_LIST),
+      of(SingularCollectionClassNames.JAVA_SETS));
 
   private static final Set<String> GUAVA_COLLECTION_TYPES =
     union(
-      immutableSet(SingularCollectionClassNames.GUAVA_COLLECTIONS),
-      immutableSet(SingularCollectionClassNames.GUAVA_SETS));
+      of(SingularCollectionClassNames.GUAVA_COLLECTIONS),
+      of(SingularCollectionClassNames.GUAVA_SETS));
 
-  private static final Set<String> MAP_TYPES = immutableSet(SingularCollectionClassNames.JAVA_MAPS);
-  private static final Set<String> GUAVA_MAP_TYPES = immutableSet(SingularCollectionClassNames.GUAVA_MAPS);
-  private static final Set<String> GUAVA_TABLE_TYPES = immutableSet(SingularCollectionClassNames.GUAVA_TABLE);
+  private static final Set<String> MAP_TYPES = of(SingularCollectionClassNames.JAVA_MAPS);
+  private static final Set<String> GUAVA_MAP_TYPES = of(SingularCollectionClassNames.GUAVA_MAPS);
+  private static final Set<String> GUAVA_TABLE_TYPES = of(SingularCollectionClassNames.GUAVA_TABLE);
 
   private static final Set<String> VALID_SINGULAR_TYPES =
     union(COLLECTION_TYPES,

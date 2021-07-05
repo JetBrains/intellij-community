@@ -41,7 +41,7 @@ interface SingularCollectionClassNames {
   };
 
   String JAVA_UTIL_SET = CommonClassNames.JAVA_UTIL_SET;
-  String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_SORTED_SET = CommonClassNames.JAVA_UTIL_SORTED_SET;
   String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String[] JAVA_SETS = new String[]{
     JAVA_UTIL_SET,
