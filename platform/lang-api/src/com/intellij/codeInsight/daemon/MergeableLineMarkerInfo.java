@@ -38,6 +38,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
 
+  private @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> myPresentationProvider = null;
+
   /**
    * @deprecated Use {@link #MergeableLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} instead
    */
@@ -78,6 +80,18 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     super(element, textRange, icon, tooltipProvider, navHandler, alignment, accessibleNameProvider);
   }
 
+  public MergeableLineMarkerInfo(@NotNull T element,
+                                 @NotNull TextRange textRange,
+                                 @NotNull Icon icon,
+                                 @Nullable Function<? super T, String> tooltipProvider,
+                                 @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
+                                 @Nullable GutterIconNavigationHandler<T> navHandler,
+                                 @NotNull GutterIconRenderer.Alignment alignment,
+                                 @NotNull Supplier<@NotNull @Nls String> accessibleNameProvider) {
+    super(element, textRange, icon, tooltipProvider, navHandler, alignment, accessibleNameProvider);
+    myPresentationProvider = presentationProvider;
+  }
+
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
 
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
@@ -107,8 +121,9 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getElementPresentation(@NotNull PsiElement element) {
-    return element.getText();
+    return myPresentationProvider != null ? myPresentationProvider.fun(element) : element.getText();
   }
 
   @NotNull
