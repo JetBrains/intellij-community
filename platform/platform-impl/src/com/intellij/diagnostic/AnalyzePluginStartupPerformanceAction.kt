@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
@@ -117,9 +117,12 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
 
   override fun doOKAction() {
     super.doOKAction()
-    if (pluginsToDisable.isNotEmpty()) {
-      val plugins = pluginsToDisable.map { PluginManagerCore.getPlugin(PluginId.getId(it)) }.toSet()
-      IdeErrorsDialog.confirmDisablePlugins(project, plugins)
-    }
+    IdeErrorsDialog.confirmDisablePlugins(
+      project,
+      pluginsToDisable.asSequence()
+        .map(PluginId::getId)
+        .mapNotNull(PluginManagerCore::getPlugin)
+        .toList(),
+    )
   }
 }

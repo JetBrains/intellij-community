@@ -17,10 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileVisitResult;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -47,21 +44,20 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     togglePluginState(enabled, Set.of(plugin));
   }
 
-  public static void togglePluginState(boolean enabled, Set<IdeaPluginDescriptor> plugins) {
+  public static void togglePluginState(boolean enabled,
+                                       @NotNull Set<IdeaPluginDescriptor> plugins) {
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     Set<IdeaPluginDescriptor> autoSwitchedIds = new HashSet<>();
     for (IdeaPluginDescriptor descriptor : plugins) {
-      if (enabled) {
-        autoSwitchedIds.addAll(getPluginsIdsToEnable(descriptor));
-      }
-      else {
-        autoSwitchedIds.addAll(getPluginsIdsToDisable(descriptor));
-      }
+      Set<IdeaPluginDescriptor> descriptors = enabled ?
+                                              getPluginsIdsToEnable(descriptor, pluginIdMap) :
+                                              getPluginsIdsToDisable(descriptor, pluginIdMap);
+      autoSwitchedIds.addAll(descriptors);
     }
 
-    boolean enabledWithoutRestart = ProjectPluginTrackerManager.getInstance().updatePluginsState(
-      autoSwitchedIds,
-      PluginEnableDisableAction.globally(enabled)
-    );
+    boolean enabledWithoutRestart = ProjectPluginTrackerManager.getInstance()
+      .updatePluginsState(autoSwitchedIds,
+                          PluginEnableDisableAction.globally(enabled));
 
     if (autoSwitchedIds.size() > plugins.size()) {
       showAutoSwitchNotification(plugins, autoSwitchedIds, enabled);
@@ -116,21 +112,17 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     return builder.toString();
   }
 
-  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
     if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
-                                               false,
-                                               descriptor -> PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ||
-                                                             descriptor.isEnabled() ||
-                                                             !result.add(descriptor)
-                                                             ?
-                                                             // if descriptor has already been added/enabled, no need to process it's dependencies
-                                                             FileVisitResult.SKIP_SUBTREE
-                                                             :
-                                                             FileVisitResult.CONTINUE);
+      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor ->
+        PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ||
+        descriptor.isEnabled() || !result.add(descriptor) ?
+        FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process it's dependencies */ :
+        FileVisitResult.CONTINUE);
     }
 
     return result;
@@ -141,7 +133,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
    *
    * @see {@link com.intellij.ide.plugins.newui.MyPluginModel#getDependents(IdeaPluginDescriptor)}
    */
-  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
@@ -166,7 +159,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.processAllDependencies(pluginDescriptor, false, descriptor -> {
+      PluginManagerCore.processAllDependencies(pluginDescriptor, pluginIdMap, descriptor -> {
         if (Objects.equals(descriptor.getPluginId(), rootId)) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;

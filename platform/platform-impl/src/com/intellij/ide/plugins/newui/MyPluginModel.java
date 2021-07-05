@@ -1090,6 +1090,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     PluginId rootId = rootDescriptor.getPluginId();
 
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     for (IdeaPluginDescriptor descriptor : getAllPlugins()) {
       PluginId pluginId = descriptor.getPluginId();
@@ -1100,9 +1101,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           isHidden(descriptor)) {
         continue;
       }
-
       IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
-      PluginManagerCore.processAllDependencies(descriptorImpl, false, dependency -> {
+      PluginManagerCore.processAllDependencies(descriptorImpl, pluginIdMap, dependency -> {
         if (Objects.equals(dependency.getPluginId(), rootId)) {
           result.add(descriptorImpl);
           return FileVisitResult.TERMINATE;

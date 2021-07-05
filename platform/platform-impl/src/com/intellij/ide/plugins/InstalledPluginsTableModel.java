@@ -135,7 +135,7 @@ public class InstalledPluginsTableModel {
 
       boolean loaded = isLoaded(pluginId);
       if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-        PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, (depId, __) -> {
+        PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, (depId, __) -> {
           if (depId.equals(pluginId)) {
             return FileVisitResult.CONTINUE;
           }
@@ -250,7 +250,7 @@ public class InstalledPluginsTableModel {
       }
       IdeaPluginDescriptorImpl pluginDescriptor = ((IdeaPluginDescriptorImpl)descriptorToCheckDependencies);
 
-      PluginManagerCore.processAllDependencies(pluginDescriptor, false, pluginIdMap, (depId, descriptor) -> {
+      PluginManagerCore.processAllDependencies(pluginDescriptor, pluginIdMap, (depId, descriptor) -> {
         if (depId.equals(pluginDescriptor.getPluginId())) {
           return FileVisitResult.CONTINUE;
         }

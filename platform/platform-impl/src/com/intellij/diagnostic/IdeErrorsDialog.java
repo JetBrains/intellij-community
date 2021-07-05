@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -63,6 +63,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -643,12 +644,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void disablePlugin() {
     IdeaPluginDescriptor plugin = selectedCluster().plugin;
     if (plugin != null) {
-      confirmDisablePlugins(myProject, Collections.singleton(plugin));
+      confirmDisablePlugins(myProject, List.of(plugin));
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project, @NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    boolean hasDependents = morePluginsAffected(pluginsToDisable);
+  public static void confirmDisablePlugins(@Nullable Project project,
+                                           @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
+    if (pluginsToDisable.isEmpty()) {
+      return;
+    }
+
+    Set<PluginId> pluginIdsToDisable = pluginsToDisable.stream()
+      .map(IdeaPluginDescriptor::getPluginId)
+      .collect(Collectors.toUnmodifiableSet());
+    boolean hasDependents = morePluginsAffected(pluginIdsToDisable);
 
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
 
@@ -656,9 +665,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
       message = "<html>" +
-                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
-                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
-                DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
+                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) +
+                "<br/>" +
+                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") +
+                "<br/><br/>" +
+                DiagnosticBundle.message(
+                  canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
                 "</html>";
     }
     else {
@@ -686,29 +698,25 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     if (doDisable) {
-      for (IdeaPluginDescriptor plugin: pluginsToDisable) {
-        PluginManagerCore.disablePlugin(plugin.getPluginId());
-      }
+      PluginEnabler.HEADLESS.disablePlugins(pluginsToDisable);
       if (doRestart) {
         ApplicationManager.getApplication().restart();
       }
     }
   }
 
-  private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
+  private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
-      if (!rootDescriptor.isEnabled() || pluginsToDisable.contains(rootDescriptor)) {
+      if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, descriptor -> {
-        if (!descriptor.isEnabled()) {
-          // if disabled, no need to process it's dependencies
-          return FileVisitResult.SKIP_SUBTREE;
-        }
-        return pluginsToDisable.contains(descriptor) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-      })) {
+      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, (pluginId, descriptor) ->
+        Objects.requireNonNull(descriptor).isEnabled() ?
+        pluginIdsToDisable.contains(pluginId) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE :
+        FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      )) {
         return true;
       }
     }
