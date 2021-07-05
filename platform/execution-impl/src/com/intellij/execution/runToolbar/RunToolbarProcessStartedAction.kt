@@ -24,7 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
+class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   companion object {
     val PROP_ACTIVE_ENVIRONMENT = Key<ExecutionEnvironment>("PROP_ACTIVE_ENVIRONMENT")
   }
@@ -36,6 +36,7 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.isEnabledAndVisible =  e.project?.let { project ->
       if(!shouldBeShown(e)) return@let false
 
@@ -64,6 +65,7 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
     return object : ComboBoxButton(presentation) {
+
       override fun showPopup() {
         presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
           ToolWindowManager.getInstance(environment.project).getToolWindow(
@@ -82,6 +84,7 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
             true
           }
         } ?: false
+
       }
 
       private fun updatePresentation(it: RunToolbarProcess) {
@@ -95,7 +98,8 @@ class RunToolbarProcessStartedAction() : ComboBoxAction(), RTRunConfiguration {
           icon = null
         }
 
-        setting.isEnabled = presentation.isEnabled
+       // setting.isEnabled = presentation.isEnabled
+        pane.isEnabled = presentation.isEnabled
         toolTipText = presentation.description
         process.text = it.name
         putClientProperty("JButton.backgroundColor", it.pillColor)

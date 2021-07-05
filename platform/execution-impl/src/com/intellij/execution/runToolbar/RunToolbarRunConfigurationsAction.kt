@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -39,10 +40,17 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : RunConfigurationsComboBoxButton(presentation) {
+      init {
+        margin = JBUI.insets(0, 8, 0, 8)
+      }
       override fun getPreferredSize(): Dimension? {
         val d = super.getPreferredSize()
         d.width = JBUIScale.scale(180)
         return d
+      }
+
+      override fun getArrowGap(): Int {
+        return JBUIScale.scale(5)
       }
     }
   }

@@ -353,7 +353,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       if (UIUtil.isUnderWin10LookAndFeel()) {
         Icon icon = getArrowIcon(isEnabled());
-        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUIScale.scale(3);
+        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUIScale.scale(3) + getArrowGap();
         int y = (getHeight() - icon.getIconHeight()) / 2;
         icon.paintIcon(null, g, x, y);
       }
@@ -361,7 +361,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         Graphics2D g2 = (Graphics2D)g.create();
         try {
           int iconSize = JBUIScale.scale(16);
-          int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
+          int x = getWidth() - iconSize - getInsets().right - getMargin().right + getArrowGap(); // Different icons correction
           int y = (getHeight() - iconSize)/2;
 
           g2.translate(x, y);
@@ -382,6 +382,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           g2.dispose();
         }
       }
+    }
+
+    /*
+    should be used with margin
+     */
+    protected int getArrowGap() {
+      return 0;
     }
 
     protected boolean isArrowVisible(@NotNull Presentation presentation) {
