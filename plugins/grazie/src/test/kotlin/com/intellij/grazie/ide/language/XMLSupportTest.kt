@@ -24,8 +24,4 @@ class XMLSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/xml/Example.html")
   }
 
-  override fun tearDown() {
-    GrazieConfig.update { GrazieConfig.State() }
-    super.tearDown()
-  }
 }
