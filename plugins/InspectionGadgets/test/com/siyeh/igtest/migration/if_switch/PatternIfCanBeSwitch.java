@@ -57,6 +57,17 @@ class PatternIfCanBeSwitch {
     }
   }
 
+  void testSideEffectInGuard(Object obj) {
+    int x = 0;
+    if (x++ < 10 && obj instanceof String) {
+      System.out.println(((String) obj).trim());
+    } else if (x++ < 10 && obj instanceof Integer) {
+      System.out.println(((Integer) obj).byteValue());
+    } else {
+      System.out.println("None");
+    }
+  }
+
   void patternMatchingWithoutNullCheck(@Nullable Object o) {
    //should be ignored if 'only suggest null safe' option is enabled
    if (o instanceof Integer i && i > 0) {
