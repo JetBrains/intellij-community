@@ -29,6 +29,10 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         className = "SpringApiIcons",
         packageName = "com.intellij.spring",
       )
+      "intellij.spring.mvc" -> IntellijIconClassGeneratorModuleConfig(
+        className = "SpringMvcApiIcons",
+        packageName = "com.intellij.spring.mvc",
+      )
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
       "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
       else -> super.getConfigForModule(moduleName)
