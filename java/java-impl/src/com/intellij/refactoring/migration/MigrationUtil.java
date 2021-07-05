@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +32,9 @@ public final class MigrationUtil {
     return findRefs(aPackage, searchScope).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static PsiElement bindNonJavaReference(PsiElement bindTo, PsiElement element, UsageInfo usage) {
+  private static @Nullable PsiElement bindNonJavaReference(PsiElement bindTo, PsiElement element, UsageInfo usage) {
+    if (element instanceof PsiFile) return null; // rename of files is not supported yet, IDEA-272542
+
     final TextRange range = usage.getRangeInElement();
     for (PsiReference reference : element.getReferences()) {
       if (reference instanceof JavaClassReference) {
