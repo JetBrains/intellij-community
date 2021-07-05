@@ -16,10 +16,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -243,9 +242,12 @@ public final class SwitchUtils {
       final IElementType operationToken = polyadicExpression.getOperationTokenType();
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (JavaTokenType.ANDAND.equals(operationToken)) {
+        final PsiExpression patternOperand = findPossiblePatternOperand(operands[0]);
+        if (patternOperand != null) return patternOperand;
         for (PsiExpression operand : operands) {
-          final PsiExpression patternOperand = findPossiblePatternOperand(operand);
-          if (patternOperand != null) return patternOperand;
+          final PsiExpression pattern = findPossiblePatternOperand(operand);
+          if (pattern != null) return pattern;
+          if (SideEffectChecker.mayHaveSideEffects(operand)) break;
         }
       }
     }
@@ -308,12 +310,12 @@ public final class SwitchUtils {
       final PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)expression;
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
       if (pattern != null) return pattern.getText();
-      final PsiTypeElement type = instanceOf.getCheckType();
-      String typeElement = type != null ? type.getText() : CommonClassNames.JAVA_LANG_OBJECT;
-      String variableName = StringUtil.toLowerCase(typeElement.substring(0, 1));
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(instanceOf.getProject());
-      String uniqueName = styleManager.suggestUniqueVariableName(variableName, instanceOf.getContext(), false);
-      return typeElement + " " + uniqueName;
+      final PsiTypeElement typeElement = instanceOf.getCheckType();
+      final PsiType type = typeElement != null ? typeElement.getType() : null;
+      String typeText = typeElement != null ? typeElement.getText() : CommonClassNames.JAVA_LANG_OBJECT;
+      VariableNameGenerator nameGenerator = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE);
+      String variableName = nameGenerator.byName(typeText.substring(0, 1)).byType(type).generate(true);
+      return typeText + " " + variableName;
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;

@@ -526,12 +526,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   private static Nullability getNullability(PsiExpression expression) {
     // expression.equals("string") -> expression == NOT_NULL
-    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-    if (parent instanceof PsiReferenceExpression) {
-      PsiElement grandparent = parent.getParent();
-      if (grandparent instanceof PsiMethodCallExpression) {
-        return Nullability.NOT_NULL;
-      }
+    if (ExpressionUtils.getCallForQualifier(expression) != null) {
+      return Nullability.NOT_NULL;
     }
     // inferred nullability
     Nullability normal = NullabilityUtil.getExpressionNullability(expression, false);
