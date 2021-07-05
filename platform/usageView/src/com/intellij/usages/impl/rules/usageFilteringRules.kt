@@ -13,6 +13,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun usageFilteringRules(project: Project): List<UsageFilteringRule> {
+  val result = ArrayList(platformUsageFilteringRules(project))
+  fromExtensions(project, result)
+  return ContainerUtil.immutableCopy(result)
+}
+
+@ApiStatus.Internal
+fun platformUsageFilteringRules(project: Project): List<UsageFilteringRule> {
   val result = ArrayList<UsageFilteringRule>()
   result.add(ReadAccessFilteringRule)
   result.add(WriteAccessFilteringRule)
@@ -22,8 +29,7 @@ fun usageFilteringRules(project: Project): List<UsageFilteringRule> {
   if (ImportFilteringRule.EP_NAME.hasAnyExtensions()) {
     result.add(ImportUsageFilteringRule)
   }
-  fromExtensions(project, result)
-  return ContainerUtil.immutableCopy(result)
+  return result
 }
 
 private fun fromExtensions(project: Project, result: MutableList<UsageFilteringRule>) {
