@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +76,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(JavaBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
+      setText(JavaBundle.message("intention.bind.fields.from.parameters.text", JavaElementKind.fromElement(method).object()));
     }
     return isAvailable(psiParameter);
   }
