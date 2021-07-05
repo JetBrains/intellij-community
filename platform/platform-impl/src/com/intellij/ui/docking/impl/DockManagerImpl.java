@@ -329,6 +329,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
           createNewDockContainerFor(myContent, point);
+          e.consume();//Marker for DragHelper: drag into separate window is not tabs reordering
         }
         else {
           myCurrentOverContainer.add(myContent, point);
