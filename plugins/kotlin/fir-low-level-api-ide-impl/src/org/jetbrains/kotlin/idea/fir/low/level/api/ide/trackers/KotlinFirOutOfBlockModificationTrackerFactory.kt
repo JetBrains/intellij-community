@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.trackers
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
@@ -26,6 +27,7 @@ class KotlinFirOutOfBlockModificationTrackerFactory(private val project: Project
 
     @TestOnly
     override fun incrementModificationsCount() {
+        (createLibraryOutOfBlockModificationTracker() as SimpleModificationTracker).incModificationCount()
         project.getService(KotlinFirModificationTrackerService::class.java).increaseModificationCountForAllModules()
     }
 }
