@@ -212,6 +212,11 @@ class ClassLoaderConfigurator(
           loaders.add(it)
         }
       }
+      "com.intellij.modules.clion" -> {
+        pluginSet.findEnabledModule("intellij.profiler.clion")?.classLoader?.let {
+          loaders.add(it)
+        }
+      }
     }
   }
 
