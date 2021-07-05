@@ -231,12 +231,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             val entries = whenExpr.entries
             val lastEntry = entries.last()
             if (lastEntry == entry) return true
-            if (condition is KtWhenConditionIsPattern) {
-                val size = entries.size
-                // Also, do not report the always reachable entry right before 'else',
-                // usually it's necessary for the smart-cast, and the report is just noise
-                if (lastEntry.isElse && size > 1 && entries[size - 2] == entry) return true
-            }
+            val size = entries.size
+            // Also, do not report the always reachable entry right before 'else',
+            // usually it's necessary for the smart-cast, or for definite assignment, and the report is just noise
+            if (lastEntry.isElse && size > 1 && entries[size - 2] == entry) return true
         }
         return false
     }
