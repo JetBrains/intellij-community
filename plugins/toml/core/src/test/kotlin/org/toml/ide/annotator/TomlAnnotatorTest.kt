@@ -15,4 +15,15 @@ class TomlAnnotatorTest : TomlAnnotatorTestBase(TomlAnnotator::class) {
                 "foo", "bar"
             ]}
     """)
+
+    fun `test trailing comma in inline table`() = checkByText("""
+        foo = { bar = "", baz = ""<error>,</error> }
+        foo = [ "bar", "baz", ]
+    """)
+
+    fun `test trailing comma in inline table fix`() = checkFixByText("Remove trailing comma", """
+        foo = { bar = "", baz = ""<error>,/*caret*/</error> }
+    """, """
+        foo = { bar = "", baz = "" }
+    """)
 }
