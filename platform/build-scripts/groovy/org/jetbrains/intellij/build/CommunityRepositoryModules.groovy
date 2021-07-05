@@ -371,6 +371,8 @@ final class CommunityRepositoryModules {
       withProjectLibrary("studio-analytics-proto")
       withProjectLibrary("HdrHistogram")
       withProjectLibrary("zxing-core")
+      withProjectLibrary("sqlite")
+      withProjectLibrary("javax-inject")
 
       // Asset Studio images.
       withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")
