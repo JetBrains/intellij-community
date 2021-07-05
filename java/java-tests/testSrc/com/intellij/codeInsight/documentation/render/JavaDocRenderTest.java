@@ -5,14 +5,18 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +51,16 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "  /** doc */\n" +
               "  int a;\n" +
               "}\n", true);
-    verifyFoldingState("[FoldRegion +(11:24), placeholder='']");
+    verifyFoldingState(11, 23);
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    checkResultByText("class C {\n" +
+    checkResultByText(Registry.is("doc.render.old.backend") ?
+                      "class C {\n" +
                       "  /** doc */\n" +
                       "<caret>  int a;\n" +
+                      "}\n" :
+                      "class C {\n" +
+                      "<caret>  /** doc */\n" +
+                      "  int a;\n" +
                       "}\n");
   }
 
@@ -60,7 +69,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "/** doc */\n" +
               "int a;<caret>\n" +
               "}\n", true);
-    verifyFoldingState("[FoldRegion +(10:21), placeholder='']");
+    verifyFoldingState(10, 20);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
     type(' ');
     checkResultByText("class C {\n" +
@@ -74,17 +83,17 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "  /** doc */\n" +
               "  int a;<caret>\n" +
               "}\n", false);
-    verifyFoldingState("[]");
+    verifyFoldingState();
     verifyItem(12, 22, null);
     toggleItem();
-    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
+    verifyFoldingState(10, 22);
     verifyItem(12, 22, "doc");
     toggleItem();
-    verifyFoldingState("[]");
+    verifyFoldingState();
     verifyItem(12, 22, null);
     runWriteCommand(() -> getEditor().getDocument().setText(getEditor().getDocument().getText().replace("doc", "another")));
     toggleItem();
-    verifyFoldingState("[FoldRegion +(10:27), placeholder='']");
+    verifyFoldingState(10, 26);
     verifyItem(12, 26, "another");
   }
 
@@ -105,7 +114,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               " * comment\n" +
               " */\n" +
               "class C {}", true);
-    verifyFoldingState("[FoldRegion +(0:19), placeholder='']");
+    verifyFoldingState(0, 18);
   }
 
   public void testPackageInfo() {
@@ -142,9 +151,9 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "    <caret>\n" +
               "  }\n" +
               "}", false);
-    verifyFoldingState("[]");
+    verifyFoldingState();
     toggleItem();
-    verifyFoldingState("[FoldRegion +(27:51), placeholder='']");
+    verifyFoldingState(27, 50);
   }
 
   public void testExpandAll() {
@@ -175,17 +184,22 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "class C {}", false);
     toggleItem();
     type("  ");
-    checkResultByText("/**\n" +
+    checkResultByText(Registry.is("doc.render.old.backend") ?
+                      "/**\n" +
                       " * doc\n" +
                       " */\n" +
-                      "  <caret>class C {}");
+                      "  <caret>class C {}" :
+                      "  <caret>/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "class C {}");
   }
 
   public void testAddedCommentIsNotCollapsed() {
     configure("class C {}", true);
     runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
     updateRenderedItems(false);
-    verifyFoldingState("[]");
+    verifyFoldingState();
   }
 
   public void testLineToYAndBackConversions() {
@@ -195,18 +209,29 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "   */\n" +
               "  void m() {}\n" +
               "}", true);
-    List<Inlay<?>> inlays = getEditor().getInlayModel().getBlockElementsForVisualLine(1, true);
-    assertSize(1, inlays);
-    Rectangle inlayBounds = inlays.get(0).getBounds();
-    assertNotNull(inlayBounds);
-    assertFalse(inlayBounds.isEmpty());
+    Rectangle rendererBounds;
+    if (Registry.is("doc.render.old.backend")) {
+      List<Inlay<?>> inlays = getEditor().getInlayModel().getBlockElementsForVisualLine(1, true);
+      assertSize(1, inlays);
+      rendererBounds = inlays.get(0).getBounds();
+    }
+    else {
+      FoldRegion foldRegion = getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
+      assertInstanceOf(foldRegion, CustomFoldRegion.class);
+      CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+      Point location = cfr.getLocation();
+      assertNotNull(location);
+      rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
+    }
+    assertNotNull(rendererBounds);
+    assertFalse(rendererBounds.isEmpty());
 
     @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 2);
-    assertEquals(inlayBounds.y, p.first.intervalStart());
-    assertEquals(inlayBounds.y + inlayBounds.height, p.first.intervalEnd());
+    assertEquals(rendererBounds.y, p.first.intervalStart());
+    assertEquals(rendererBounds.y + rendererBounds.height, p.first.intervalEnd());
     assertNull(p.second);
 
-    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), inlayBounds.y + inlayBounds.height / 2);
+    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), rendererBounds.y + rendererBounds.height / 2);
     assertEquals(1, lineRange.intervalStart());
     assertEquals(3, lineRange.intervalEnd());
   }
@@ -247,12 +272,25 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     assertNotNull("Item is not found at offset " + startOffset, item);
     assertEquals("Unexpected item start offset", startOffset, item.highlighter.getStartOffset());
     assertEquals("Unexpected item end offset", endOffset, item.highlighter.getEndOffset());
+    Object toCheck = Registry.is("doc.render.old.backend") ? item.inlay : item.foldRegion;
     if (textInContent == null) {
-      assertNull("Unexpected inlay", item.inlay);
+      assertNull("Item in rendered state", toCheck);
     }
     else {
-      assertNotNull("Inlay doesn't exist", item.inlay);
+      assertNotNull("Item not in rendered state", toCheck);
       assertTrue("Unexpected rendered text: " + item.textToRender, item.textToRender != null && item.textToRender.contains(textInContent));
+    }
+  }
+
+  private void verifyFoldingState(int... collapsedRegionOffsets) {
+    int expectedNumberOfCollapsedRegions = collapsedRegionOffsets.length / 2;
+    List<FoldRegion> foldRegions = ContainerUtil.filter(getEditor().getFoldingModel().getAllFoldRegions(), region -> !region.isExpanded());
+    assertEquals("Unexpected number of collapsed fold regions", expectedNumberOfCollapsedRegions, foldRegions.size());
+    for (int i = 0; i < expectedNumberOfCollapsedRegions; i++) {
+      FoldRegion region = foldRegions.get(i);
+      assertEquals("Unexpected region " + i + " start offset", collapsedRegionOffsets[i * 2], region.getStartOffset());
+      assertEquals("Unexpected region " + i + " end offset",
+                   collapsedRegionOffsets[i * 2 + 1] + (Registry.is("doc.render.old.backend") ? 1 : 0), region.getEndOffset());
     }
   }
 }
