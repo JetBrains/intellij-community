@@ -337,7 +337,7 @@ final class CommunityRepositoryModules {
 
       withModule("intellij.android.jps.model")
 
-      withProjectLibrary("kxml2") //todo[nik] move to module libraries
+      withProjectLibrary("kxml2")
 
       withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
