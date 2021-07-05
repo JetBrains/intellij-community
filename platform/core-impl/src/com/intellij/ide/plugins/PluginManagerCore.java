@@ -111,7 +111,7 @@ public final class PluginManagerCore {
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
-  public static @NotNull IdeaPluginDescriptor @NotNull[] getPlugins() {
+  public static @NotNull IdeaPluginDescriptor @NotNull [] getPlugins() {
     return getPluginSet().allPlugins.toArray(new IdeaPluginDescriptor[0]);
   }
 
@@ -764,7 +764,7 @@ public final class PluginManagerCore {
       Set<IdeaPluginDescriptorImpl> finalExplicitlyEnabled = explicitlyEnabled;
       Set<IdeaPluginDescriptor> depProcessed = new HashSet<>();
       for (IdeaPluginDescriptorImpl descriptor : new ArrayList<>(explicitlyEnabled)) {
-        processAllDependencies(descriptor, false, idMap, depProcessed, (id, dependency) -> {
+        processAllDependencies(descriptor, idMap, depProcessed, (id, dependency) -> {
           finalExplicitlyEnabled.add(dependency);
           return FileVisitResult.CONTINUE;
         });
@@ -1249,58 +1249,53 @@ public final class PluginManagerCore {
     return buildPluginIdMap(Objects.requireNonNull(pluginSet).allPlugins);
   }
 
-  /**
-   * You must not use this method in cycle, in this case use {@link #processAllDependencies(IdeaPluginDescriptorImpl, boolean, Map, Function)} instead
-   * (to reuse result of {@link #buildPluginIdMap()}).
-   *
-   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
-   *
-   * Returns {@code false} if processing was terminated because of {@link FileVisitResult#TERMINATE}, and {@code true} otherwise.
-   */
-  @SuppressWarnings("UnusedReturnValue")
   @ApiStatus.Internal
   public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                               boolean withOptionalDeps,
-                                               @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    return processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(), consumer);
-  }
-
-  @ApiStatus.Internal
-  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                               boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), (id, descriptor) -> descriptor != null ? consumer.apply(descriptor) : FileVisitResult.SKIP_SUBTREE);
+    return processAllDependencies(rootDescriptor,
+                                  idToMap,
+                                  (id, descriptor) -> descriptor != null ? consumer.apply(descriptor) : FileVisitResult.SKIP_SUBTREE);
   }
 
-  @SuppressWarnings("UnusedReturnValue")
   @ApiStatus.Internal
   public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                               boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull BiFunction<@NotNull PluginId, @Nullable IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), consumer);
+    return processAllDependencies(rootDescriptor, idToMap, new HashSet<>(), consumer);
   }
 
+  /**
+   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
+   * <p>
+   * Returns {@code false} if processing was terminated because of {@link FileVisitResult#TERMINATE}, and {@code true} otherwise.
+   */
   @ApiStatus.Internal
   private static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                boolean withOptionalDeps,
                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                 @NotNull Set<IdeaPluginDescriptor> depProcessed,
                                                 @NotNull BiFunction<@NotNull PluginId, @Nullable IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+    ArrayList<PluginId> dependencies = new ArrayList<>();
     for (PluginDependency dependency : rootDescriptor.pluginDependencies) {
-      if (!withOptionalDeps && dependency.isOptional()) {
+      if (dependency.isOptional()) {
         continue;
       }
 
-      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependency.getPluginId());
-      PluginId pluginId = descriptor == null ? dependency.getPluginId() : descriptor.getPluginId();
+      dependencies.add(dependency.getPluginId());
+    }
+    for (ModuleDependenciesDescriptor.PluginReference plugin : rootDescriptor.dependencies.plugins) {
+      dependencies.add(plugin.id);
+    }
+
+    for (PluginId dependencyId : dependencies) {
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependencyId);
+      PluginId pluginId = descriptor == null ? dependencyId : descriptor.getPluginId();
       switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;
         case CONTINUE:
           if (descriptor != null && depProcessed.add(descriptor)) {
-            processAllDependencies(descriptor, withOptionalDeps, idToMap, depProcessed, consumer);
+            processAllDependencies(descriptor, idToMap, depProcessed, consumer);
           }
           break;
         case SKIP_SUBTREE:

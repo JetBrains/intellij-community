@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -115,7 +115,7 @@ public class InstalledPluginsTableModel {
 
       boolean loaded = isLoaded(pluginId);
       if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-        PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, (depId, __) -> {
+        PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, (depId, __) -> {
           if (depId.equals(pluginId)) {
             return FileVisitResult.CONTINUE;
           }
@@ -233,7 +233,7 @@ public class InstalledPluginsTableModel {
       }
       IdeaPluginDescriptorImpl pluginDescriptor = ((IdeaPluginDescriptorImpl)descriptorToCheckDependencies);
 
-      PluginManagerCore.processAllDependencies(pluginDescriptor, false, pluginIdMap, (depId, descriptor) -> {
+      PluginManagerCore.processAllDependencies(pluginDescriptor, pluginIdMap, (depId, descriptor) -> {
         if (depId.equals(pluginDescriptor.getPluginId())) {
           return FileVisitResult.CONTINUE;
         }
