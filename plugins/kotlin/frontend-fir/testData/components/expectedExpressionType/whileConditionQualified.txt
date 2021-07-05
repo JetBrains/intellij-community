@@ -1,2 +1,0 @@
-expression: fdfd
-expected type: kotlin/Boolean
