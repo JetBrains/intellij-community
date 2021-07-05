@@ -900,4 +900,24 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 4, settingsAccess = 17, notified = false, event = "revert config file move")
     }
   }
+
+  @Test
+  fun `test configuration for unknown file type`() {
+    simpleTest("unknown") { file ->
+      assertState(refresh = 1, notified = false, event = "register project without cache")
+      resetAssertionCounters()
+
+      file.replaceContent(byteArrayOf(1, 2, 3))
+      assertState(refresh = 0, notified = true, event = "modification")
+      refreshProject()
+      assertState(refresh = 1, notified = false, event = "reload")
+
+      file.replaceContent(byteArrayOf(1, 2, 3))
+      assertState(refresh = 1, notified = false, event = "empty modification")
+      file.replaceContent(byteArrayOf(3, 2, 1))
+      assertState(refresh = 1, notified = true, event = "modification")
+      file.replaceContent(byteArrayOf(1, 2, 3))
+      assertState(refresh = 1, notified = false, event = "revert modification")
+    }
+  }
 }
