@@ -188,7 +188,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
-            ke.getKeyCode() != KeyEvent.VK_META) {
+            ke.getKeyCode() != KeyEvent.VK_META &&
+            ke.getKeyCode() != KeyEvent.VK_WINDOWS) {
           boolean doHide = false;
           // Close the balloon is ESC is pressed inside the balloon
           if (ke.getKeyCode() == KeyEvent.VK_ESCAPE && SwingUtilities.isDescendingFrom(ke.getComponent(), myComp)) {
