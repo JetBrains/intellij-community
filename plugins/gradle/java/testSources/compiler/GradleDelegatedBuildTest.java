@@ -43,9 +43,9 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     importProject(
       builder
         .allprojects(GradleBuildScriptBuilder::withJavaPlugin)
-        .addImplementationDependency(builder.code("project(':api')"), null)
+        .addImplementationDependency(builder.project(":api"))
         .project(":api", p -> {
-          p.addImplementationDependency(p.code("project(':impl')"), null);
+          p.addImplementationDependency(p.project(":impl"));
         })
         .generate()
     );
@@ -172,9 +172,9 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     importProject(script(it -> {
       it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
-        .addImplementationDependency(it.code("project(':impl')"), null)
+        .addImplementationDependency(it.project(":impl"))
         .project(":impl", p -> {
-          p.addImplementationDependency(p.code("project(':api')"), null);
+          p.addImplementationDependency(p.project(":api"));
         });
     }));
     assertModules("project", "project.main", "project.test",

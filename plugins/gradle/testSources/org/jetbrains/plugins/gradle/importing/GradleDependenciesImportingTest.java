@@ -149,10 +149,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(script(it -> {
       it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
-        .addImplementationDependency(it.code("project(':api')"), null)
-        .addTestImplementationDependency(it.code("project(':impl')"))
+        .addImplementationDependency(it.project(":api"))
+        .addTestImplementationDependency(it.project(":impl"))
         .addTestImplementationDependency("junit:junit:4.11")
-        .addRuntimeOnlyDependency(it.code("project(':impl')"), null);
+        .addRuntimeOnlyDependency(it.project(":impl"));
     }));
 
     assertModules("project", "project.main", "project.test",
@@ -250,12 +250,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPostfix("configurations { provided }");
         })
-        .project(":web", it -> { it.addDependency("provided", "junit:junit:4.11", null); })
+        .project(":web", it -> { it.addDependency("provided", "junit:junit:4.11"); })
         .project(":user", it -> {
           it
             .applyPlugin("'war'")
-            .addImplementationDependency(it.code("project(':web')"), null)
-            .addDependency("providedCompile", it.code("project(path: ':web', configuration: 'provided')"), null);
+            .addImplementationDependency(it.project(":web"))
+            .addDependency("providedCompile", it.project(":web", "provided"));
         })
         .generate()
     );
@@ -289,7 +289,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                       "  myAnotherSourceSet",
                       "}")
             .addImplementationDependency(it.code("sourceSets.main.output"), "myCustomSourceSet")
-            .addImplementationDependency(it.code("project(':api')"), "myCustomSourceSet")
+            .addImplementationDependency(it.project(":api"), "myCustomSourceSet")
             .addRuntimeOnlyDependency("junit:junit:4.11", "myCustomSourceSet");
         });
     }));
@@ -330,9 +330,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       createBuildScriptBuilder()
         .withJavaPlugin()
         .addRepository("maven { url file('lib') }")
-        .addImplementationDependency("dep:dep:1.0", null)
+        .addImplementationDependency("dep:dep:1.0")
         .addTestImplementationDependency("dep:dep:1.0:tests")
-        .addRuntimeOnlyDependency("dep:dep:1.0@someExt", null)
+        .addRuntimeOnlyDependency("dep:dep:1.0@someExt")
         .generate()
     );
 
@@ -390,7 +390,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .allprojects(p -> {
           p
             .withJavaPlugin()
-            .addImplementationDependency(p.code("rootProject.files('lib/dep.jar', 'lib_other/dep.jar')"), null);
+            .addImplementationDependency(p.code("rootProject.files('lib/dep.jar', 'lib_other/dep.jar')"));
         })
         .generate());
 
@@ -421,7 +421,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                                                     .allprojects(p -> {
                                                       p
                                                         .withJavaPlugin()
-                                                        .addImplementationDependency(p.code("files('lib/dep.jar')"), null);
+                                                        .addImplementationDependency(p.code("files('lib/dep.jar')"));
                                                     })
                                                     .generate());
 
@@ -461,8 +461,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       createBuildScriptBuilder()
         .withJavaPlugin()
         .addRepository("maven { url file('lib') }")
-        .addImplementationDependency("dep:dep:1.0", null)
-        .addImplementationDependency("some:unresolvable-lib:0.1", null)
+        .addImplementationDependency("dep:dep:1.0")
+        .addImplementationDependency("some:unresolvable-lib:0.1")
         .generate()
     );
 
@@ -579,8 +579,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       builder.withJavaPlugin()
         .addPrefix("sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")")
-        .addRuntimeOnlyDependency("junit:junit:4.11", null)
-        .addRuntimeOnlyDependency(builder.code("files('lib/dep.jar')"), null)
+        .addRuntimeOnlyDependency("junit:junit:4.11")
+        .addRuntimeOnlyDependency(builder.code("files('lib/dep.jar')"))
         .generate()
     );
 
@@ -613,12 +613,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":projectB", it -> {
           it
             .withJavaPlugin()
-            .addImplementationDependency(it.code("project(':projectA')"), null);
+            .addImplementationDependency(it.project(":projectA"));
         })
         .project(":projectC", it -> {
           it
             .withJavaPlugin()
-            .addRuntimeOnlyDependency(it.code("project(':projectB')"), null);
+            .addRuntimeOnlyDependency(it.project(":projectB"));
         })
         .generate()
     );
@@ -727,7 +727,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":impl", it -> {
-          it.addTestImplementationDependency(it.code("project(path: ':api', configuration: 'tests')"));
+          it.addTestImplementationDependency(it.project(":api", "tests"));
         })
         .generate()
     );
@@ -766,16 +766,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project1", it -> {
           it
             .withJavaLibraryPlugin()
-            .addApiDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", null);
+            .addApiDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0");
         })
         .project(":project2", it -> {
-          it.addRuntimeOnlyDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", null);
+          it.addRuntimeOnlyDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1");
         })
         .project(":project-tests", it -> {
           it
-            .addImplementationDependency(it.code("project(':project1')"), null)
-            .addRuntimeOnlyDependency(it.code("project(':project2')"), null)
-            .addImplementationDependency("junit:junit:4.11", null);
+            .addImplementationDependency(it.project(":project1"))
+            .addRuntimeOnlyDependency(it.project(":project2"))
+            .addImplementationDependency("junit:junit:4.11");
         })
         .generate()
     );
@@ -898,7 +898,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project2", it -> {
           it
             .withJavaPlugin()
-            .addTestImplementationDependency(it.code("project(path: ':project1', configuration: 'tests')"));
+            .addTestImplementationDependency(it.project(":project1", "tests"));
         })
         .generate()
     );
@@ -960,7 +960,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     GradleBuildScriptBuilder builder = createBuildScriptBuilder();
     createProjectSubFile("project2/build.gradle", builder
       .withJavaPlugin()
-      .addImplementationDependency(builder.code("project(':project1')"), null)
+      .addImplementationDependency(builder.project(":project1"))
       .generate());
 
     importProject("");
@@ -995,7 +995,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project2", it -> {
           it
             .withJavaPlugin()
-            .addTestImplementationDependency(it.code("project(path: ':project1', configuration: 'testArtifacts')"));
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
         })
         .generate()
     );
@@ -1035,8 +1035,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project2", it -> {
           it
             .withJavaPlugin()
-            .addImplementationDependency(it.code("project(path: ':project1')"), null)
-            .addTestImplementationDependency(it.code("project(path: ':project1', configuration: 'testArtifacts')"));
+            .addImplementationDependency(it.code("project(path: ':project1')"))
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
         })
         .generate()
     );
@@ -1088,7 +1088,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project2", it -> {
           it
             .withJavaPlugin()
-            .addTestImplementationDependency(it.code("project(path: ':project1', configuration: 'testArtifacts')"));
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
         })
         .generate()
     );
@@ -1134,10 +1134,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":core", p -> {
           p
             .withJavaLibraryPlugin()
-            .addApiDependency(p.code("project(':util')"), null);
+            .addApiDependency(p.project(":util"));
         })
         .project(":service", p -> {
-          p.addImplementationDependency("mygroup:core:latest.release", null);
+          p.addImplementationDependency("mygroup:core:latest.release");
         })
         .generate()
     );
@@ -1174,7 +1174,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addVersion("1.0.0");
         })
         .project(":app", it -> {
-          it.addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3", null)
+          it.addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
             .addTestImplementationDependency("project:modA:1.0.0")
             .addPostfix("configurations.all {",
                         "  resolutionStrategy.dependencySubstitution {",
@@ -1183,8 +1183,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                         "  }",
                         "}");
         })
-        .project(":modA", it -> { it.addApiDependency(it.code("project(':modB')"), null); })
-        .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3", null); })
+        .project(":modA", it -> { it.addApiDependency(it.project(":modB")); })
+        .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3"); })
         .generate()
     );
 
@@ -1253,8 +1253,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
-        .addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3", null)
-        .addCompileOnlyDependency("org.hamcrest:hamcrest-core:1.3", null)
+        .addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
+        .addCompileOnlyDependency("org.hamcrest:hamcrest-core:1.3")
         .generate()
     );
 
@@ -1287,12 +1287,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       builder
         .withJavaPlugin()
-        .addCompileOnlyDependency(builder.code("project(':app')"), null)
-        .addImplementationDependency("junit:junit:4.11", null)
+        .addCompileOnlyDependency(builder.project(":app"))
+        .addImplementationDependency("junit:junit:4.11")
         .project(":app", it -> {
           it
             .withJavaPlugin()
-            .addImplementationDependency("junit:junit:4.11", null);
+            .addImplementationDependency("junit:junit:4.11");
         })
         .generate()
     );
@@ -1321,13 +1321,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":project1", p -> {
           p
             .withJavaPlugin()
-            .addImplementationDependency(p.code("project(path: ':project2')"), null);
+            .addImplementationDependency(p.project(":project2"));
         })
         .project(":project2", p -> {
           p
             .withJavaLibraryPlugin()
-            .addImplementationDependency("junit:junit:4.11", null)
-            .addApiDependency("org.hamcrest:hamcrest-core:1.3", null);
+            .addImplementationDependency("junit:junit:4.11")
+            .addApiDependency("org.hamcrest:hamcrest-core:1.3");
         })
         .generate()
     );
@@ -1405,12 +1405,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":projectB", it -> {
           it
             .withJavaLibraryPlugin()
-            .addApiDependency(it.code("project(':projectA')"), null);
+            .addApiDependency(it.project(":projectA"));
         })
         .project(":projectC", it -> {
           it
             .applyPlugin("'war'")
-            .addDependency("providedCompile", it.code("project(':projectB')"), null);
+            .addDependency("providedCompile", it.project(":projectB"));
         })
         .generate()
     );
@@ -1450,14 +1450,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                        "  testOutput",
                        "  testOutput.extendsFrom (" + testCompileConfiguration + ")",
                        "}")
-            .addDependency("testOutput", it.code("sourceSets.test.output"), null)
+            .addDependency("testOutput", it.code("sourceSets.test.output"))
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":project2", it -> {
           it.withJavaPlugin()
-            .addImplementationDependency(it.code("project(path: ':project1')"), null)
+            .addImplementationDependency(it.code("project(path: ':project1')"))
             .addTestImplementationDependency("junit:junit:4.11")
-            .addTestImplementationDependency(it.code("project(path: ':project1', configuration: 'testOutput')"));
+            .addTestImplementationDependency(it.project(":project1", "testOutput"));
         })
         .generate()
     );
@@ -1512,7 +1512,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       createBuildScriptBuilder()
         .withJavaPlugin()
         .addPrefix("repositories { ivy { url file('repo') } }")
-        .addImplementationDependency("depGroup:depArtifact:1.0-SNAPSHOT", null)
+        .addImplementationDependency("depGroup:depArtifact:1.0-SNAPSHOT")
         .withIdeaPlugin()
         .addPrefix("idea.module.downloadJavadoc true")
         .generate()
@@ -1817,7 +1817,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
-        .addImplementationDependency("junit:junit:4.11", null)
+        .addImplementationDependency("junit:junit:4.11")
         .addPrefix("afterEvaluate {",
                    "    def mainSourceSet = sourceSets['main']",
                    "    def mainClassPath = mainSourceSet.compileClasspath",

@@ -77,8 +77,8 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
     createProjectSubFile("dep-module/build.gradle", buildscript {
       withJavaPlugin()
       withJUnit4()
-      addImplementationDependency(code("project(':module')"))
-      addImplementationDependency(code("project(path: ':module', configuration: 'testArtifacts')"))
+      addImplementationDependency(project(":module"))
+      addImplementationDependency(project(":module", "testArtifacts"))
     })
     createSettingsFile("""
       rootProject.name = 'project'

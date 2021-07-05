@@ -14,7 +14,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     createSettingsFile("include 'api', 'impl', 'brokenProject' ")
     createProjectSubFile("impl/build.gradle",
                          buildscript {
-                           addImplementationDependency(code("project(':api')"))
+                           addImplementationDependency(project(":api"))
                          })
     createProjectSubFile("api/src/main/java/my/pack/Api.java",
                          "package my.pack;\n" +

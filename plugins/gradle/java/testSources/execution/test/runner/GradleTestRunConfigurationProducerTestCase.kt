@@ -196,7 +196,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
           code("automation.compileClasspath += sourceSets.test.compileClasspath")
         }
       }
-      addImplementationDependency(code("project(path: ':', configuration: 'tests')"), sourceSet = "automation")
+      addImplementationDependency(project(":", "tests"), "automation")
       withTask("autoTest", "Test") {
         code("classpath = sourceSets.automation.runtimeClasspath")
         code("testClassesDirs = sourceSets.automation.output.classesDirs")
@@ -225,13 +225,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     createProjectSubFile("module/build.gradle", buildscript {
       withJavaPlugin()
       withJUnit4()
-      addTestImplementationDependency(code("project(path: ':', configuration: 'tests')"))
+      addTestImplementationDependency(project(":", "tests"))
     })
     createProjectSubFile("my module/build.gradle", buildscript {
       withJavaPlugin()
       withJUnit4()
       withGroovyPlugin()
-      addTestImplementationDependency(code("project(path: ':', configuration: 'tests')"))
+      addTestImplementationDependency(project(":", "tests"))
     })
     importProject()
     assertModulesContains("project", "project.module", "project.my_module")

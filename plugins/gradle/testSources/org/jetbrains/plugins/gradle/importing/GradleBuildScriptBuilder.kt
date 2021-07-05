@@ -6,7 +6,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
@@ -50,6 +50,11 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
     else
       applyPlugin("'idea'")
 
+  // Note: These are Element building functions
+  fun project(name: String) = call("project", name)
+  fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
+
+  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
   fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("project", name) {
@@ -57,27 +62,21 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
       }
     }
 
-  fun configure(expression: ScriptElement.Statement.Expression, configure: Consumer<GradleBuildScriptBuilder>) =
-    configure(expression) { configure.accept(this) }
-
-  fun configure(expression: ScriptElement.Statement.Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
+  fun configure(expression: Expression, configure: Consumer<GradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("configure", expression) {
         code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
       }
     }
 
-  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
-
-
+  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
   fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
-    withPrefix() {
+    withPrefix {
       call("allprojects") {
         code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
       }
     }
-
-  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
 
   fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {

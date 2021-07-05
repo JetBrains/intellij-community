@@ -400,11 +400,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
 
     importProject(script(it -> {
       it.allprojects(GradleBuildScriptBuilder::withJavaPlugin)
-        .addImplementationDependency(it.code("project(':impl')"), null)
+        .addImplementationDependency(it.project(":impl"))
         .project(":impl", p -> {
           p
             .withJavaLibraryPlugin()
-            .addApiDependency(p.code("project(':api')"), null);
+            .addApiDependency(p.project(":api"));
         });
     }));
 
