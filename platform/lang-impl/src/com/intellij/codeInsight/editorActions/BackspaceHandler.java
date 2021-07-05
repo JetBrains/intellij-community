@@ -12,10 +12,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtilEx;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -94,10 +91,15 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     myOriginalHandler.execute(originalEditor, caret, dataContext);
 
     if (!toWordStart && Character.isBmpCodePoint(c)) {
-      for(BackspaceHandlerDelegate delegate: delegates) {
-        if (delegate.charDeleted((char)c, file, editor)) {
-          return true;
+      try {
+        for(BackspaceHandlerDelegate delegate: delegates) {
+          if (delegate.charDeleted((char)c, file, editor)) {
+            return true;
+          }
         }
+      }
+      finally {
+        deleteCustomFoldRegionIfNeeded(caret);
       }
     }
 
@@ -137,6 +139,15 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     }
 
     return true;
+  }
+
+  private static void deleteCustomFoldRegionIfNeeded(Caret caret) {
+    int caretOffset = caret.getOffset();
+    Editor editor = caret.getEditor();
+    FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset - 1);
+    if (foldRegion instanceof CustomFoldRegion && foldRegion.getEndOffset() == caretOffset) {
+      editor.getDocument().deleteString(foldRegion.getStartOffset(), foldRegion.getEndOffset());
+    }
   }
 
   public static char getRightChar(final char c) {

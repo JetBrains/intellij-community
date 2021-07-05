@@ -235,6 +235,20 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
     assertEquals(new Dimension(40, 30), getEditor().getContentComponent().getPreferredSize());
   }
 
+  public void testDelete() {
+    initText("line1\n<caret>line2\nline3");
+    assertNotNull(addCustomFoldRegion(1, 1));
+    delete();
+    checkResultByText("line1\n<caret>\nline3");
+  }
+
+  public void testBackspace() {
+    initText("line1\nline2\n<caret>\nline4");
+    assertNotNull(addCustomFoldRegion(1, 1));
+    backspace();
+    checkResultByText("line1\n<caret>\nline4");
+  }
+
   private void checkOverlapWithNormalRegion(int regionStartOffset,
                                             int regionEndOffset,
                                             int customRegionStartLine,
