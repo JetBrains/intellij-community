@@ -39,6 +39,9 @@ data class SshConnectionConfigPatch(
       HTTP,
 
       SOCKS,
+
+      IDE_WIDE_PROXY
+
     }
 
     data class ProxyAuthData(
@@ -77,6 +80,7 @@ data class SshConnectionConfigPatch(
     serverAliveInterval = null,
     proxyParams = null,
   )
+
 
   fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
   fun withServerAliveInterval(value: Duration): SshConnectionConfigPatch = apply { serverAliveInterval = value }
