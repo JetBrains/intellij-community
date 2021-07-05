@@ -783,8 +783,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFilteringAutoImportTest> {
-            model("editor/autoimportExtension", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoimportExtension", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImportExtension", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
