@@ -35,8 +35,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation kotlin('test-common')
-                implementation kotlin('test-annotations-common')
+                implementation kotlin('test')
             }
         }
         jvmMain {
@@ -47,20 +46,16 @@ kotlin {
             }
         }
         jvmTest {
-            dependencies {
-                implementation kotlin('test-junit')
-            }
+
         }
         jsMain {
             dependencies {
-                implementation 'org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.206-kotlin-1.5.10'
-                implementation 'org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.206-kotlin-1.5.10'
+                implementation 'org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.206-kotlin-KOTLIN_VERSION'
+                implementation 'org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.206-kotlin-KOTLIN_VERSION'
             }
         }
         jsTest {
-            dependencies {
-                implementation kotlin('test-js')
-            }
+
         }
     }
 }

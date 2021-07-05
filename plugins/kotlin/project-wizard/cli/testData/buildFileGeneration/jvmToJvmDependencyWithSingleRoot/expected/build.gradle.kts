@@ -8,7 +8,7 @@ group = "testGroupId"
 version = "1.0-SNAPSHOT"
 
 dependencies {
-    testImplementation(kotlin("test-junit"))
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

@@ -9,7 +9,7 @@ version = "1.0-SNAPSHOT"
 
 dependencies {
     rootProject
-    testImplementation(kotlin("test-junit"))
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
