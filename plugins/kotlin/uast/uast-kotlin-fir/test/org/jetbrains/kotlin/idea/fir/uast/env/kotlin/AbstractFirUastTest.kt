@@ -11,7 +11,7 @@ import com.intellij.testFramework.registerServiceInstance
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.fir.uast.invalidateAllCachesForUastTests
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
@@ -60,7 +60,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override fun tearDown() {
         runAll(
             ThrowableRunnable {
-                project.invalidateCaches(context = null)
+                project.invalidateAllCachesForUastTests()
             },
             ThrowableRunnable { super.tearDown() },
         )
