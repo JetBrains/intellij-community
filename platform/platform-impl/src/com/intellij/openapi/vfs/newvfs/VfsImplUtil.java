@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -36,8 +36,7 @@ public final class VfsImplUtil {
 
   private VfsImplUtil() { }
 
-  @Nullable
-  public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+  public static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
     if (data == null) return null;
 
@@ -63,13 +62,11 @@ public final class VfsImplUtil {
     return file;
   }
 
-  @Nullable
-  public static NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+  public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     return findCachedFileByPath(vfs, path).first;
   }
 
-  @NotNull
-  public static Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+  public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
     if (data == null) return Pair.empty();
 
@@ -100,8 +97,7 @@ public final class VfsImplUtil {
     return new Pair<>(file, null);
   }
 
-  @Nullable
-  public static NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+  public static @Nullable NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
     if (data == null) return null;
 
@@ -128,8 +124,7 @@ public final class VfsImplUtil {
     return file;
   }
 
-  @Nullable
-  private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+  private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = vfs.normalize(path);
     if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
@@ -163,10 +158,9 @@ public final class VfsImplUtil {
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
    * <p>
-   * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
+   * If you're sure that a file is changed twice in a second, and you have to get the latest file's state - use this method.
    * <p>
-   * Likely you need this method if you have following code:
-   *
+   * Likely you need this method if you have the following code:
    * <code><pre>
    * FileDocumentManager.getInstance().saveDocument(document);
    * runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
@@ -183,10 +177,9 @@ public final class VfsImplUtil {
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; its Set<String> is guarded by ourLock too
 
-  @NotNull
-  public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
-                                                        @NotNull VirtualFile entryFile,
-                                                        @NotNull Function<? super String, ? extends T> producer) {
+  public static @NotNull <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
+                                                                 @NotNull VirtualFile entryFile,
+                                                                 @NotNull Function<? super String, ? extends T> producer) {
     String localPath = vfs.extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
@@ -275,8 +268,7 @@ public final class VfsImplUtil {
   }
 
   // must be called under ourLock
-  @Nullable
-  private static InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
+  private static @Nullable InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
     Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
     if (handlerPair != null) {
       handlerPair.second.dispose();
@@ -364,8 +356,7 @@ public final class VfsImplUtil {
    * should generate {@link VFileDeleteEvent}('file://x.jar').</p>
    * (The latter might happen when someone explicitly called {@code fileInsideJar.refresh()} without refreshing jar file in local file system).
    */
-  @NotNull
-  public static List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
+  public static @NotNull List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
