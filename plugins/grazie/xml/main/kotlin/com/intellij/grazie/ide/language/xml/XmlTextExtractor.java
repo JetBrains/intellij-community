@@ -35,11 +35,7 @@ public class XmlTextExtractor extends TextExtractor {
   @Override
   protected @Nullable TextContent buildTextContent(@NotNull PsiElement element,
                                                    @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    if (!myEnabledDialects.contains(element.getLanguage().getClass())) {
-      return null;
-    }
-
-    if (element instanceof XmlText && !isNonText(((XmlText) element).getParentTag())) {
+    if (element instanceof XmlText && !isNonText(((XmlText) element).getParentTag()) && hasSuitableDialect(element)) {
       return markEdgesUnknown(builder
         .excluding(e -> PsiUtilCore.getElementType(e) == XmlElementType.XML_CDATA)
         .build(element, PLAIN_TEXT));
@@ -47,19 +43,24 @@ public class XmlTextExtractor extends TextExtractor {
 
     IElementType type = PsiUtilCore.getElementType(element);
     if (type == XmlTokenType.XML_DATA_CHARACTERS &&
-        PsiUtilCore.getElementType(element.getParent()) == XmlElementType.XML_CDATA) {
+        PsiUtilCore.getElementType(element.getParent()) == XmlElementType.XML_CDATA &&
+        hasSuitableDialect(element)) {
       return markEdgesUnknown(builder.build(element, PLAIN_TEXT));
     }
 
-    if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS)) {
+    if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS) && hasSuitableDialect(element)) {
       return builder.build(element, COMMENTS);
     }
 
-    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS)) {
+    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
       return builder.build(element, LITERALS);
     }
 
     return null;
+  }
+
+  private boolean hasSuitableDialect(@NotNull PsiElement element) {
+    return myEnabledDialects.contains(element.getContainingFile().getLanguage().getClass());
   }
 
   private static final Set<String> NON_TEXT_TAGS = Set.of("code", "pre");
