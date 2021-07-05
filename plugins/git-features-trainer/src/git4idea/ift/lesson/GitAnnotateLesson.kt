@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -85,13 +86,16 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
+    task {
+      highlightAnnotation(null, firstStateText, highlightRight = true)
+    }
+
     val showDiffText = ActionsBundle.message("action.Diff.ShowDiff.text")
     lateinit var openFirstDiffTaskId: TaskContext.TaskId
     task {
-      before { LearningUiHighlightingManager.clearHighlights() }
       openFirstDiffTaskId = taskId
-      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName),strong("Johnny Catsville")))
-      highlightAnnotation(null, firstStateText, highlightRight = true)
+      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName), strong("Johnny Catsville")))
+      text(GitLessonsBundle.message("git.annotate.click.annotation.tooltip"), LearningBalloonConfig(Balloon.Position.above, 200))
       highlightShowDiffMenuItem()
     }
 
