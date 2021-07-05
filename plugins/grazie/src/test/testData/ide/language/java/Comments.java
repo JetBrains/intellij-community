@@ -31,4 +31,6 @@ class ForMultiLanguageSupport {
   // Thrown when an UPLOAD_ERR_CANT_WRITE error occurred with UploadedFile.
 
   // We don't use the PHP php_strip_whitespace() function
+
+  // If Content-Type is set to text/html, or is unset -> html
 }
