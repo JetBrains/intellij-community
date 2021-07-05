@@ -185,6 +185,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "  @Attribute @RequiredElement(allowEmpty=true) public String canBeEmptyString; " +
                        "  @Attribute public boolean forClass; " +
                        "  @Attribute(\"class\") public boolean _class; " +
+                       "  @Attribute(\"myClassName\") public boolean className; " +
                        "}")
 
     configureByFile()
