@@ -87,6 +87,9 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
                                                           NotificationType.ERROR));
                 return;
               }
+              finally {
+                myTargetDependentParameters = null;
+              }
               CoverageDataManager.getInstance(configuration.getProject()).processGatheredCoverage(configuration, runnerSettings);
             }
           }.queue();
