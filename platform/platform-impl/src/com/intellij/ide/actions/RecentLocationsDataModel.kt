@@ -114,11 +114,11 @@ internal class RecentLocationsDataModel(val project: Project,
     val fileDocument = positionOffset.document
     val lineNumber = fileDocument.getLineNumber(positionOffset.startOffset)
     val ranges = getTrimmedRange(fileDocument, lineNumber)
-    var documentText = ranges.joinToString("\n") { fileDocument.getText(it) }
-    if (documentText.isEmpty()) {
-      documentText = getEmptyFileText()
-    }
-    return RecentLocationItem(place, documentText, ranges)
+    val documentText = ranges
+      .joinToString("\n") { fileDocument.getText(it) }
+      .ifEmpty { getEmptyFileText() }
+    val linesShift = if (ranges.isNotEmpty()) fileDocument.getLineNumber(ranges[0].startOffset) else 0
+    return RecentLocationItem(place, documentText, linesShift, ranges)
   }
 
   fun removeItems(project: Project, isChanged: Boolean, items: List<RecentLocationItem>) {
@@ -191,13 +191,22 @@ internal class RecentLocationsDataModel(val project: Project,
 internal data class RecentLocationItem(
   @JvmField val info: IdeDocumentHistoryImpl.PlaceInfo,
   @JvmField val text: String,
+  @JvmField val linesShift: Int,
   @JvmField val ranges: Array<TextRange>
 ) {
-  override fun equals(other: Any?): Boolean = if (other !is RecentLocationItem) false else {
+  override fun equals(other: Any?): Boolean = if (other !is RecentLocationItem) false
+  else {
     info.file == other.info.file &&
-    info.caretPosition?.startOffset == other.info.caretPosition?.startOffset &&
-    info.caretPosition?.startOffset == other.info.caretPosition?.endOffset
+    linesShift == other.linesShift &&
+    text.length == other.text.length &&
+    ranges.size == other.ranges.size
   }
 
-    override fun hashCode(): Int = info.file.hashCode() + 31 * (info.caretPosition?.hashCode() ?: 0)
+  override fun hashCode(): Int {
+    var result = info.file.hashCode()
+    result = 31 * result + linesShift
+    result = 31 * result + text.length
+    result = 31 * result + ranges.size
+    return result
+  }
 }

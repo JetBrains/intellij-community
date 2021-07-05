@@ -145,23 +145,18 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
     getEditor().getCaretModel().removeSecondaryCarets();
     getEditor().getSelectionModel().removeSelection(true);
     getEditor().getMarkupModel().removeAllHighlighters();
-    getEditor().getGutterComponentEx().setLineNumberConverter(LineNumberConverter.DEFAULT);
-
+    getEditor().getGutterComponentEx().setLineNumberConverter(
+      value.linesShift == 0 ? LineNumberConverter.DEFAULT : new LineNumberConverter.Increasing() {
+        @Override
+        public Integer convert(@NotNull Editor editor, int lineNumber) {
+          return lineNumber + value.linesShift;
+        }
+      });
     setText(value.text);
+    getEditor().getGutterComponentEx().updateUI();
   }
 
   private void applyEditorHighlighting(RecentLocationItem value) {
-    RangeMarker caretPosition = value.info.getCaretPosition();
-    int linesShift = caretPosition != null && caretPosition.isValid() ?
-                     caretPosition.getDocument().getLineNumber(value.ranges[0].getStartOffset()) : 0;
-    if (linesShift > 0) {
-      getEditor().getGutterComponentEx().setLineNumberConverter(new LineNumberConverter.Increasing() {
-        @Override
-        public Integer convert(@NotNull Editor editor, int lineNumber) {
-          return lineNumber + linesShift;
-        }
-      });
-    }
     Couple<Highlight[]> highlights = myItemHighlights.get(value);
     if (highlights == null) {
       myItemsDeque.addFirst(value);
