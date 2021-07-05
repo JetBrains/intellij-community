@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
@@ -1268,5 +1269,57 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                   "<version>1</version>");
 
     assertNotNull(myProjectRoot.findChild("foo"));
+  }
+
+  @Test
+  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+    assumeVersionMoreThan("3.0.5");
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "  <artifactId>parent</artifactId>\n" +
+                     "  <packaging>pom</packaging>\n" +
+                     "  <version>1</version>\n" +
+                     "  <modules>\n" +
+                     "   <module>m1</module>\n" +
+                     "  </modules>\n" +
+                     "  <properties>\n" +
+                     "   <junit.group.id>junit</junit.group.id>\n" +
+                     "   <junit.artifact.id>junit</junit.artifact.id>\n" +
+                     "  </properties>\n" +
+                     "  <profiles>\n" +
+                     "    <profile>\n" +
+                     "      <id>profile-test</id>\n" +
+                     "      <dependencies>\n" +
+                     "        <dependency>\n" +
+                     "          <groupId>${junit.group.id}</groupId>\n" +
+                     "          <artifactId>${junit.artifact.id}</artifactId>\n" +
+                     "        </dependency>\n" +
+                     "      </dependencies>\n" +
+                     "    </profile>\n" +
+                     "  </profiles>\n" +
+                     "  \n" +
+                     "  <dependencyManagement>\n" +
+                     "    <dependencies>\n" +
+                     "      <dependency>\n" +
+                     "        <groupId>junit</groupId>\n" +
+                     "        <artifactId>junit</artifactId>\n" +
+                     "        <version>4.0</version> \n" +
+                     "      </dependency>\n" +
+                     "    </dependencies>\n" +
+                     "  </dependencyManagement>");
+
+    createModulePom("m1", "<parent>\n" +
+                          "<groupId>test</groupId>\n" +
+                          "<artifactId>parent</artifactId>\n" +
+                          "<version>1</version>\t\n" +
+                          "</parent>\n" +
+                          "<artifactId>m1</artifactId>\t\n" +
+                          "<dependencies>\n" +
+                          "  <dependency>\n" +
+                          "    <groupId>junit</groupId>\n" +
+                          "    <artifactId>junit</artifactId>\n" +
+                          "  </dependency>\n" +
+                          "</dependencies>");
+
+    doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
   }
 }
