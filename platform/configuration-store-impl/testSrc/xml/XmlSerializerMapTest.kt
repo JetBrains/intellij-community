@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 
 package com.intellij.configurationStore.xml
@@ -306,6 +306,7 @@ internal class XmlSerializerMapTest {
               </plugins>
             </entry>
           </featureMap>
+          <option name="lastUpdateTime" value="0" />
         </features>
       """.trimIndent(),
       extensions,
@@ -323,6 +324,7 @@ internal class XmlSerializerMapTest {
           <option name="extensions">
             <features>
               <featureMap />
+              <option name="lastUpdateTime" value="0" />
             </features>
           </option>
         </State>
