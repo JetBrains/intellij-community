@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -530,7 +530,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {
-        if (lookupItemObject instanceof PsiElement) {
+        PsiElement psiElement = toPsi(lookupItemObject);
+        if (psiElement != null) {
           doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null, null,
                             useStoredPopupSize, onAutoUpdate);
         }
@@ -574,15 +575,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
-      public void updatePopup(Object lookupIteObject) {
-        if (lookupIteObject == null) {
+      public void updatePopup(Object lookupItemObject) {
+        if (lookupItemObject == null) {
           doShowJavaDocInfo(elementFuture, false, this, originalElement, closeCallback,
                             CodeInsightBundle.message("no.documentation.found"),
                             true, onAutoUpdate);
           return;
         }
-        if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, this, originalElement, closeCallback,
+        PsiElement psiElement = toPsi(lookupItemObject);
+        if (psiElement != null) {
+          doShowJavaDocInfo(psiElement, false, this, originalElement, closeCallback,
                             null, true, onAutoUpdate);
           return;
         }
@@ -591,7 +593,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         PsiElement element = documentationProvider.getDocumentationElementForLookupItem(
           PsiManager.getInstance(myProject),
-          lookupIteObject,
+          lookupItemObject,
           originalElement
         );
 
