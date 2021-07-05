@@ -39,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenIndicesManager implements Disposable {
@@ -279,10 +282,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public void fixArtifactIndex(File artifactFile, File localRepository) {
-    MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      myIndexFixer.fixIndex(artifactFile, index);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
+      if (index != null) {
+        myIndexFixer.fixIndex(artifactFile, index);
+      }
+    });
   }
 
   private static String getRepositoryUrl(File artifactFile, String name) {
