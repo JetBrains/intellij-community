@@ -5,6 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
@@ -173,7 +175,14 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
+      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        return List.of((DataProvider)this::getSlowData);
+      }
+      return null;
+    }
+
+    @Nullable
+    private Object getSlowData(@NotNull String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getMethod();
       }
