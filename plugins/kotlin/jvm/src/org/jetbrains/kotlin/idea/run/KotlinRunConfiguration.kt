@@ -45,6 +45,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -56,7 +57,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.util.jvmName
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils.getFilePartShortName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -434,7 +434,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return psiFacade.findPackage(packageName)?.let { pkg ->
                     pkg.getFiles(scope).filterIsInstance<KtFile>().filter { ktFile ->
                         // for top level functions
-                        getFilePartShortName(ktFile.virtualFile.name) == shortName ||
+                        ktFile.javaFileFacadeFqName.shortName().asString() == shortName ||
                                 run {
                                     // or within a nested class-or-object
                                     var parent: KtDeclarationContainer? = ktFile
