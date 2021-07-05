@@ -20,10 +20,16 @@ import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
+import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiUtil
 import java.awt.Component
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                private val recorder: ActionsRecorder,
@@ -266,7 +272,91 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {
+  override fun <ComponentType : Component>
+    triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
+                                         highlightBorder: Boolean,
+                                         highlightInside: Boolean,
+                                         usePulsation: Boolean,
+                                         selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                         finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
+    @Suppress("DEPRECATION")
+    triggerByUiComponentAndHighlight l@{
+      val component = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+        finderFunction(it)
+      }
+      if (component != null) {
+        val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+        invokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightComponent(component, options)
+        }
+      }
+      component
+    }
+  }
+
+  @Suppress("OverridingDeprecatedMember")
+  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
+                                                                  highlightBorder: Boolean,
+                                                                  highlightInside: Boolean,
+                                                                  usePulsation: Boolean,
+                                                                  selector: ((candidates: Collection<T>) -> T?)?,
+                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
+    @Suppress("DEPRECATION")
+    triggerByUiComponentAndHighlight l@{
+      val whole = LearningUiUtil.findComponentOrNull(componentClass, selector) {
+        rectangle(it) != null
+      }
+      if (whole != null) {
+        invokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
+        }
+      }
+      whole
+    }
+  }
+
+  override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
+    @Suppress("DEPRECATION")
+    triggerByUiComponentAndHighlight l@{
+      val list = LearningUiUtil.findComponentOrNull(JList::class.java) l@{
+        val index = checkList(it)
+        index != null && it.visibleRowCount > index
+      }
+      if (list != null) {
+        invokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightJListItem(list, options) {
+            checkList(list)
+          }
+        }
+      }
+      list
+    }
+  }
+
+  // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
+  override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                    checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
+    @Suppress("DEPRECATION")
+    triggerByUiComponentAndHighlight l@{
+      val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
+        checkTree(it) != null
+      }
+      if (tree != null) {
+        invokeLater(ModalityState.any()) {
+          LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
+            checkTree(tree)
+          }
+        }
+      }
+      tree
+    }
+  }
+
+
+
+  fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {
     val step = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().executeOnPooledThread {
       while (true) {
