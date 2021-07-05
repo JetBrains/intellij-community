@@ -26,20 +26,20 @@ public final class LombokProcessorUtil {
   private static final String ACCESS_LEVEL_PUBLIC = "PUBLIC";
   @NonNls
   private static final String ACCESS_LEVEL_NONE = "NONE";
+  @NonNls
+  private static final String ACCESS_LEVEL_MODULE = "MODULE";
 
-  private static final Map<Integer, String> ACCESS_LEVEL_MAP = new HashMap<>() {{
-    put(PsiUtil.ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PUBLIC);
-    put(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PACKAGE_LOCAL);
-    put(PsiUtil.ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PROTECTED);
-    put(PsiUtil.ACCESS_LEVEL_PRIVATE, ACCESS_LEVEL_PRIVATE);
-  }};
+  private static final Map<Integer, String> ACCESS_LEVEL_MAP = Map.of(
+    PsiUtil.ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PUBLIC,
+    PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PACKAGE_LOCAL,
+    PsiUtil.ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PROTECTED,
+    PsiUtil.ACCESS_LEVEL_PRIVATE, ACCESS_LEVEL_PRIVATE);
 
-  private static final Map<String, String> VALUE_ACCESS_LEVEL_MAP = new HashMap<>() {{
-    put(ACCESS_LEVEL_PUBLIC, PsiModifier.PUBLIC);
-    put(ACCESS_LEVEL_PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL);
-    put(ACCESS_LEVEL_PROTECTED, PsiModifier.PROTECTED);
-    put(ACCESS_LEVEL_PRIVATE, PsiModifier.PRIVATE);
-  }};
+  private static final Map<String, String> VALUE_ACCESS_LEVEL_MAP = Map.of(
+    ACCESS_LEVEL_PUBLIC, PsiModifier.PUBLIC,
+    ACCESS_LEVEL_PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL,
+    ACCESS_LEVEL_PROTECTED, PsiModifier.PROTECTED,
+    ACCESS_LEVEL_PRIVATE, PsiModifier.PRIVATE);
 
   private static final String NULL_DEFAULT = "@@@NULL@@@";
 
@@ -119,26 +119,13 @@ public final class LombokProcessorUtil {
     if (null == value || value.isEmpty()) {
       return PsiModifier.PUBLIC;
     }
-
-    if (ACCESS_LEVEL_PUBLIC.equals(value)) {
-      return PsiModifier.PUBLIC;
-    }
-    if ("MODULE".equals(value)) {
+    if (ACCESS_LEVEL_MODULE.equals(value)) {
       return PsiModifier.PACKAGE_LOCAL;
-    }
-    if (ACCESS_LEVEL_PROTECTED.equals(value)) {
-      return PsiModifier.PROTECTED;
-    }
-    if (ACCESS_LEVEL_PACKAGE_LOCAL.equals(value)) {
-      return PsiModifier.PACKAGE_LOCAL;
-    }
-    if (ACCESS_LEVEL_PRIVATE.equals(value)) {
-      return PsiModifier.PRIVATE;
     }
     if (ACCESS_LEVEL_NONE.equals(value)) {
       return null;
     }
-    return null;
+    return VALUE_ACCESS_LEVEL_MAP.get(value);
   }
 
   @NotNull
