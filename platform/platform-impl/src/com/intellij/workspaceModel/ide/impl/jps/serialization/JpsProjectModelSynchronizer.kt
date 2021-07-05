@@ -209,6 +209,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
     if (storeToEntitySources == null) return
     WriteAction.runAndWait<RuntimeException> {
+      if (project.isDisposed) return@runAndWait
       childActivity = childActivity?.endAndStart("project model changes saving")
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
