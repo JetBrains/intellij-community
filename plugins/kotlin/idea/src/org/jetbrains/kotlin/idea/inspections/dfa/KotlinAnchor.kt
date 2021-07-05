@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtWhenCondition
 
 sealed class KotlinAnchor: DfaAnchor {
@@ -12,4 +13,10 @@ sealed class KotlinAnchor: DfaAnchor {
     data class KotlinWhenConditionAnchor(val condition : KtWhenCondition): KotlinAnchor()
 
     data class KotlinExpressionAnchor(val expression : KtExpression): KotlinAnchor()
+
+    /**
+     * An anchor used to mark boolean condition that tells whether for-expression is ever visited or not.
+     * If its value is always false then for-expression is never visited
+     */
+    data class KotlinForVisitedAnchor(val forExpression : KtForExpression): KotlinAnchor()
 }

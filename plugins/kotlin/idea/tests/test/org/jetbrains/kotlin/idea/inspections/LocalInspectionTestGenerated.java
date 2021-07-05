@@ -4606,6 +4606,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/assignment.kt");
         }
 
+        @TestMetadata("basicFor.kt")
+        public void testBasicFor() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor.kt");
+        }
+
+        @TestMetadata("basicFor2.kt")
+        public void testBasicFor2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor2.kt");
+        }
+
+        @TestMetadata("basicFor3.kt")
+        public void testBasicFor3() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor3.kt");
+        }
+
+        @TestMetadata("basicFor4.kt")
+        public void testBasicFor4() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor4.kt");
+        }
+
+        @TestMetadata("basicFor5.kt")
+        public void testBasicFor5() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor5.kt");
+        }
+
+        @TestMetadata("basicFor6.kt")
+        public void testBasicFor6() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFor6.kt");
+        }
+
         @TestMetadata("basicForLoop.kt")
         public void testBasicForLoop() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
@@ -4714,6 +4744,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("classParameter.kt")
         public void testClassParameter() throws Exception {
             runTest("testData/inspectionsLocal/dfa/classParameter.kt");
+        }
+
+        @TestMetadata("collectionFor.kt")
+        public void testCollectionFor() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/collectionFor.kt");
         }
 
         @TestMetadata("continueLoop.kt")

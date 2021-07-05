@@ -23,12 +23,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.LinkedHashMap
@@ -420,33 +419,30 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return true
     }
 
+    private fun findSpecialField(type: KotlinType?): SpecialField? {
+        type ?: return null
+        return when {
+            KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) -> {
+                return SpecialField.ARRAY_LENGTH
+            }
+            KotlinBuiltIns.isCollectionOrNullableCollection(type) || KotlinBuiltIns.isMapOrNullableMap(type) ||
+                    type.supertypes().any {
+                            st -> KotlinBuiltIns.isCollectionOrNullableCollection(st) || KotlinBuiltIns.isMapOrNullableMap(st)} -> {
+                return SpecialField.COLLECTION_SIZE
+            }
+            KotlinBuiltIns.isStringOrNullableString(type) -> SpecialField.STRING_LENGTH
+            else -> null
+        }
+    }
+
     private fun findSpecialField(expr: KtQualifiedExpression): SpecialField? {
         val selector = expr.selectorExpression ?: return null
         val receiver = expr.receiverExpression
-        when (selector.text) {
-            "size" -> {
-                val type = receiver.getKotlinType() ?: return null
-                when {
-                    KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) -> {
-                        return SpecialField.ARRAY_LENGTH
-                    }
-                    KotlinBuiltIns.isCollectionOrNullableCollection(type) || KotlinBuiltIns.isMapOrNullableMap(type) ||
-                    type.supertypes().any {
-                            st -> KotlinBuiltIns.isCollectionOrNullableCollection(st) || KotlinBuiltIns.isMapOrNullableMap(st)} -> {
-                        return SpecialField.COLLECTION_SIZE
-                    }
-                    else -> return null
-                }
-            }
-            "length" -> {
-                val type = receiver.getKotlinType() ?: return null
-                return when {
-                    KotlinBuiltIns.isStringOrNullableString(type) -> SpecialField.STRING_LENGTH
-                    else -> null
-                }
-            }
-            else -> return null
-        }
+        val selectorText = selector.text
+        if (selectorText != "size" && selectorText != "length") return null
+        val field = findSpecialField(receiver.getKotlinType()) ?: return null
+        if ((selectorText == "length") != (field == SpecialField.STRING_LENGTH)) return null
+        return field
     }
 
     private fun processPrefixExpression(expr: KtPrefixExpression) {
@@ -549,22 +545,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processForExpression(expr: KtForExpression) {
-        val range = expr.loopRange
-        processExpression(range)
-        addInstruction(PopInstruction())
-        // TODO: process collections and integer ranges in a special way
-        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
-        val endOffset = DeferredOffset()
-        pushUnknown()
-        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
         val parameter = expr.loopParameter
         if (parameter == null) {
             // TODO: support destructuring declarations
             broken = true
             return
         }
-        val descriptor = KtLocalVariableDescriptor(parameter)
-        addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(descriptor)))
+        val parameterVar = factory.varFactory.createVariableValue(KtLocalVariableDescriptor(parameter))
+        val parameterType = parameter.type()
+        val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
+        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
+        val endOffset = DeferredOffset()
+        addInstruction(FlushVariableInstruction(parameterVar))
+        pushLoopCondition()
+        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
         processExpression(expr.body)
         addInstruction(PopInstruction())
         addInstruction(GotoInstruction(startOffset))
@@ -572,6 +566,74 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         flow.finishElement(expr)
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
+    }
+
+    private fun processForRange(expr: KtForExpression, parameterVar: DfaVariableValue, parameterType: KotlinType?): () -> Unit {
+        val range = expr.loopRange
+        if (parameterVar.dfType is DfIntegralType) {
+            if (range is KtBinaryExpression) {
+                val ref = range.operationReference.text
+                val (leftRelation, rightRelation) = when(ref) {
+                    ".." -> RelationType.GE to RelationType.LE
+                    "until" -> RelationType.GE to RelationType.LT
+                    "downTo" -> RelationType.LE to RelationType.GT
+                    else -> null to null
+                }
+                if (leftRelation != null && rightRelation != null) {
+                    val left = range.left
+                    val right = range.right
+                    val leftType = left?.getKotlinType()
+                    val rightType = right?.getKotlinType()
+                    if (leftType.toDfType(range) is DfIntegralType && rightType.toDfType(range) is DfIntegralType) {
+                        processExpression(left)
+                        val leftVar = flow.createTempVariable(parameterVar.dfType)
+                        addImplicitConversion(left, parameterType)
+                        addInstruction(SimpleAssignmentInstruction(null, leftVar))
+                        addInstruction(PopInstruction())
+                        processExpression(right)
+                        val rightVar = flow.createTempVariable(parameterVar.dfType)
+                        addImplicitConversion(right, parameterType)
+                        addInstruction(SimpleAssignmentInstruction(null, rightVar))
+                        addInstruction(PopInstruction())
+                        return {
+                            val forAnchor = KotlinForVisitedAnchor(expr)
+                            addInstruction(PushInstruction(parameterVar, null))
+                            addInstruction(PushInstruction(leftVar, null))
+                            addInstruction(BooleanBinaryInstruction(leftRelation, false, null))
+                            val offset = DeferredOffset()
+                            addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
+                            addInstruction(PushInstruction(parameterVar, null))
+                            addInstruction(PushInstruction(rightVar, null))
+                            addInstruction(BooleanBinaryInstruction(rightRelation, false, forAnchor))
+                            val finalOffset = DeferredOffset()
+                            addInstruction(GotoInstruction(finalOffset))
+                            setOffset(offset)
+                            addInstruction(PushValueInstruction(DfTypes.FALSE, forAnchor))
+                            setOffset(finalOffset)
+                        }
+                    }
+                }
+            }
+        }
+        processExpression(range)
+        if (range != null) {
+            val kotlinType = range.getKotlinType()
+            val lengthField = findSpecialField(kotlinType)
+            if (lengthField != null) {
+                val collectionVar = flow.createTempVariable(kotlinType.toDfType(range))
+                addInstruction(SimpleAssignmentInstruction(null, collectionVar))
+                addInstruction(PopInstruction())
+                return {
+                    addInstruction(PushInstruction(lengthField.createValue(factory, collectionVar), null))
+                    addInstruction(PushValueInstruction(DfTypes.intValue(0)))
+                    addInstruction(BooleanBinaryInstruction(RelationType.GT, false, null))
+                    pushUnknown()
+                    addInstruction(BooleanAndOrInstruction(false, KotlinForVisitedAnchor(expr)))
+                }
+            }
+        }
+        addInstruction(PopInstruction())
+        return { pushUnknown() }
     }
 
     private fun processBlock(expr: KtBlockExpression) {

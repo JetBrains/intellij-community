@@ -19,8 +19,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinWhenConditionAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -185,6 +184,12 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             val key = if (cv == ConstantValue.TRUE) "inspection.message.when.condition.always.true"
                             else "inspection.message.when.condition.always.false"
                             holder.registerProblem(condition, KotlinBundle.message(key))
+                        }
+                    }
+                    is KotlinForVisitedAnchor -> {
+                        if (cv == ConstantValue.FALSE) {
+                            val message = KotlinBundle.message("inspection.message.for.never.visited")
+                            holder.registerProblem(anchor.forExpression.loopRange!!, message)
                         }
                     }
                 }
