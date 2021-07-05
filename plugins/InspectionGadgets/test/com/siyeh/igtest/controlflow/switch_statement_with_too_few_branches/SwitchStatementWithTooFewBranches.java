@@ -59,5 +59,14 @@ class SwitchStatementWithTooFewBranches {
     System.out.println(switch(i) {case 1 -> "bar"; case 2 -> "baz"; default -> "foo";});
     
     switch (i)<EOLError descr="'{' expected"></EOLError>
+
+    Object o = new Object();
+    switch (o) {
+      case null -> System.out.println();
+      case String s -> {
+        System.out.println(s);
+      }
+      default -> System.out.println();
+    }
   }
 }
