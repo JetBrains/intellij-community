@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.psi.YAMLFile
 import java.util.*
 
@@ -28,7 +29,7 @@ fun preserveIndentStateBeforeProcessing(file: PsiFile, dataContext: DataContext)
   val hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext) as? EditorEx ?: return
   val virtualFile = hostEditor.virtualFile
   val hostFile = hostEditor.project?.let { PsiManager.getInstance(it).findFile(virtualFile) } ?: return
-  if (hostFile !is YAMLFile) return
+  if (!hostFile.viewProvider.hasLanguage(YAMLLanguage.INSTANCE)) return
 
   if (file.virtualFile !is VirtualFileWindow) return
   val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) ?: return

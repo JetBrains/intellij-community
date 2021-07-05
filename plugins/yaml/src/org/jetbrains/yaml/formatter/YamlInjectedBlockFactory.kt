@@ -11,20 +11,28 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
+import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.util.SmartList
 import com.intellij.util.text.escLBr
 
 
-fun collectInjectedBlocks(settings: CodeStyleSettings,
-                          injectionHost: ASTNode,
-                          wrap: Wrap?,
-                          alignment: Alignment?,
-                          indent: Indent?): List<Block> =
-  SmartList<Block>().apply {
-    YamlInjectedLanguageBlockBuilder(settings).addInjectedBlocks(this, injectionHost, wrap, alignment, indent)
+fun substituteInjectedBlocks(settings: CodeStyleSettings,
+                             rawSubBlocks: List<Block>,
+                             injectionHost: ASTNode,
+                             wrap: Wrap?,
+                             alignment: Alignment?,
+                             indent: Indent?): List<Block> {
+  val injectedBlocks = SmartList<Block>().apply {
+    val outerBLocks = rawSubBlocks.filter { (it as? ASTBlock)?.node is OuterLanguageElement }
+    YamlInjectedLanguageBlockBuilder(settings, outerBLocks).addInjectedBlocks(this, injectionHost, wrap, alignment, indent)
   }
+  if (injectedBlocks.isEmpty()) return rawSubBlocks
+  return injectedBlocks
+}
 
-private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : DefaultInjectedLanguageBlockBuilder(settings) {
+private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val outerBlocks: List<Block>)
+  : DefaultInjectedLanguageBlockBuilder(settings) {
+
   override fun supportsMultipleFragments(): Boolean = true
 
   lateinit var injectionHost: ASTNode
@@ -66,7 +74,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : De
                                    range: TextRange,
                                    language: Language): Block {
     val trimmedRange = trimBlank(range, range.substring(node.text))
-    return YamlInjectedLanguageBlockWrapper(originalBlock, injectedToHost(trimmedRange), trimmedRange, indent, language)
+    return YamlInjectedLanguageBlockWrapper(originalBlock, injectedToHost(trimmedRange), trimmedRange, outerBlocks, indent, language)
   }
 
   private fun trimBlank(range: TextRange, substring: String): TextRange {
@@ -78,6 +86,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : De
   private inner class YamlInjectedLanguageBlockWrapper(val original: Block,
                                                        val rangeInHost: TextRange,
                                                        val myRange: TextRange,
+                                                       outerBlocks: Collection<Block>,
                                                        private val indent: Indent?,
                                                        private val language: Language?) : BlockEx {
 
@@ -87,10 +96,20 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : De
     override fun getTextRange(): TextRange = rangeInHost
 
     private val myBlocks by lazy(LazyThreadSafetyMode.NONE) {
-      original.subBlocks.mapNotNull { block ->
-        myRange.intersection(block.textRange)?.let { blockRange ->
-          YamlInjectedLanguageBlockWrapper(block, injectedToHost(blockRange), blockRange, block.indent, language)
+      SmartList<Block>().also { result ->
+        val outerBlocksQueue = ArrayDeque(outerBlocks)
+        for (block in original.subBlocks) {
+          myRange.intersection(block.textRange)?.let { blockRange ->
+            val blockRangeInHost = injectedToHost(blockRange)
+            result.addAll(outerBlocksQueue.popWhile { it.textRange.endOffset <= blockRangeInHost.startOffset })
+            result.add(YamlInjectedLanguageBlockWrapper(block,
+                                                        blockRangeInHost,
+                                                        blockRange,
+                                                        outerBlocksQueue.popWhile { blockRangeInHost.contains(it.textRange) },
+                                                        block.indent, language))
+          }
         }
+        result.addAll(outerBlocksQueue)
       }
     }
 
@@ -104,6 +123,14 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : De
     override fun isIncomplete(): Boolean = original.isIncomplete
     override fun isLeaf(): Boolean = original.isLeaf
     override fun getLanguage(): Language? = language
+  }
+
+  private fun <T> ArrayDeque<T>.popWhile(pred: (T) -> Boolean): List<T> {
+    if (this.isEmpty()) return emptyList()
+    val result = SmartList<T>()
+    while (this.isNotEmpty() && pred(this.first()))
+      result.add(this.removeFirst())
+    return result;
   }
 
 }

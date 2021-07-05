@@ -85,15 +85,11 @@ class YAMLFormattingBlock extends AbstractBlock {
         // just skip them (comment processed above)
       }
       else if (YAMLElementTypes.CONTAINERS.contains(subNodeType)) {
-        List<Block> injectedBLocks = YamlInjectedBlockFactory.collectInjectedBlocks(
-          context.mySettings, subNode, getWrap(), context.computeAlignment(subNode), context.computeNewChildIndent(subNode)
-        );
-        if (injectedBLocks.isEmpty()) {
-          res.addAll(buildSubBlocks(context, subNode));
-        }
-        else {
-          res.addAll(injectedBLocks);
-        }
+        res.addAll(YamlInjectedBlockFactory.substituteInjectedBlocks(
+          context.mySettings,
+          buildSubBlocks(context, subNode),
+          subNode, getWrap(), context.computeAlignment(subNode), context.computeNewChildIndent(subNode)
+        ));
       }
       else {
         res.add(YAMLFormattingModelBuilder.createBlock(context, subNode));
