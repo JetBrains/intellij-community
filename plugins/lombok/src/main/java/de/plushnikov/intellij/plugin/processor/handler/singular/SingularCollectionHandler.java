@@ -4,6 +4,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
@@ -114,9 +115,7 @@ class SingularCollectionHandler extends AbstractSingularHandler {
 
   @Override
   protected String getEmptyCollectionCall() {
-    if (SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_SET.equals(collectionQualifiedName) ||
-      SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName) ||
-      SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
+    if (ContainerUtil.exists(SingularCollectionClassNames.JAVA_SETS, collectionQualifiedName::equals)) {
       return "java.util.Collections.emptySet()";
     } else {
       return "java.util.Collections.emptyList()";
