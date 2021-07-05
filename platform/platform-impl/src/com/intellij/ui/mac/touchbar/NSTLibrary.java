@@ -34,8 +34,6 @@ interface NSTLibrary extends Library {
   // creator returns non-autorelease obj to be owned by java-wrapper
   ID createButton(String uid, int buttWidth, int buttonFlags,
                   String text, String hint, int isHintDisabled, Pointer raster4ByteRGBA, int w, int h, Action action);
-
-  ID createPopover(String uid, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   ID createScrubber(String uid, int itemWidth, ScrubberDelegate delegate, ScrubberCacheUpdater updater, Pointer packedItems, int byteCount);
   ID createGroupItem(String uid, ID[] items, int count);
 
