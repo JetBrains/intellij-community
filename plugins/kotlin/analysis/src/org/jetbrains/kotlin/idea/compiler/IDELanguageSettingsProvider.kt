@@ -28,7 +28,8 @@ import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.utils.JavaTypeEnhancementState
+import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
+import kotlin.KotlinVersion
 
 class IDELanguageSettingsProviderHelper(private val project: Project) {
     internal val languageVersionSettings: LanguageVersionSettings
@@ -48,11 +49,14 @@ class IDELanguageSettingsProviderHelper(private val project: Project) {
         for (module in ModuleManager.getInstance(project).modules) {
             val settings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(module) ?: continue
             val compilerArguments = settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: continue
+            val kotlinVersion =
+                LanguageVersion.fromVersionString(compilerArguments.languageVersion)?.toKotlinVersion() ?: KotlinVersion.CURRENT
 
-            result = JavaTypeEnhancementStateParser(MessageCollector.NONE).parse(
+            result = JavaTypeEnhancementStateParser(MessageCollector.NONE, kotlinVersion).parse(
                 compilerArguments.jsr305,
                 compilerArguments.supportCompatqualCheckerFrameworkAnnotations,
-                compilerArguments.jspecifyAnnotations
+                compilerArguments.jspecifyAnnotations,
+                compilerArguments.nullabilityAnnotations
             )
 
         }
