@@ -124,7 +124,7 @@ public class MavenProjectResolver {
     process.setText(MavenProjectBundle.message("maven.resolving.pom", text));
     process.setText2("");
 
-    MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
+    MavenExplicitProfiles explicitProfiles = myTree.getExplicitProfiles();
     Collection<VirtualFile> files = ContainerUtil.map(mavenProjects, p -> p.getFile());
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
       .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
