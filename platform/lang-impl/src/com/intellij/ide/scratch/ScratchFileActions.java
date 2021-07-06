@@ -111,7 +111,9 @@ public final class ScratchFileActions {
       LanguageItem selectionItem =
         context.language != null ? LanguageItem.fromLanguage(context.language) :
         context.fileExtension != null ? new LanguageItem(
-          null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) : null;
+          null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) :
+        StringUtil.isNotEmpty(context.text) ? new LanguageItem(
+          null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
       // extract text from the focused component, e.g. a tree or a list
       ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
