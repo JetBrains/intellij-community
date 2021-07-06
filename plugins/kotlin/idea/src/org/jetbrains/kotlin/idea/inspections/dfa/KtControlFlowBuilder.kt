@@ -576,7 +576,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 val (leftRelation, rightRelation) = when(ref) {
                     ".." -> RelationType.GE to RelationType.LE
                     "until" -> RelationType.GE to RelationType.LT
-                    "downTo" -> RelationType.LE to RelationType.GT
+                    "downTo" -> RelationType.LE to RelationType.GE
                     else -> null to null
                 }
                 if (leftRelation != null && rightRelation != null) {
