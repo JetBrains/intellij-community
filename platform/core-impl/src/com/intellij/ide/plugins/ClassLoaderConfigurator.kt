@@ -37,7 +37,7 @@ class ClassLoaderConfigurator(
   private val hasAllModules = pluginSet.isPluginEnabled(PluginManagerCore.ALL_MODULES_MARKER)
 
   // todo for dynamic reload this guard doesn't contain all used plugin prefixes
-  private val pluginPackagePrefixUniqueGuard = HashSet<String>()
+  private val pluginPackagePrefixUniqueGuard = HashMap<String, IdeaPluginDescriptorImpl>()
   @Suppress("JoinDeclarationAndAssignment")
   private val resourceFileFactory: Function<Path, ResourceFile>?
 
@@ -278,8 +278,11 @@ class ClassLoaderConfigurator(
 
   private fun checkPackagePrefixUniqueness(module: IdeaPluginDescriptorImpl) {
     val packagePrefix = module.packagePrefix
-    if (packagePrefix != null && !pluginPackagePrefixUniqueGuard.add(packagePrefix)) {
-      throw PluginException("Package prefix $packagePrefix is already used (module=$module)", module.pluginId)
+    if (packagePrefix != null) {
+      val old = pluginPackagePrefixUniqueGuard.putIfAbsent(packagePrefix, module)
+      if (old != null) {
+        throw PluginException("Package prefix $packagePrefix is already used (second=$module, first=$old)", module.pluginId)
+      }
     }
   }
 
