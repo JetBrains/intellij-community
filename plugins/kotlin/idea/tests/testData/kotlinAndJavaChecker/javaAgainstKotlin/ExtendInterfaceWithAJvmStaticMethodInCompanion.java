@@ -1,0 +1,1 @@
+public class ExtendInterfaceWithAJvmStaticMethodInCompanion implements KotlinWithCompanion {}
