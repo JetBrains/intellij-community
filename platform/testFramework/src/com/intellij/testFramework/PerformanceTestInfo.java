@@ -97,6 +97,7 @@ public class PerformanceTestInfo {
       //noinspection CallToSystemGC
       System.gc();
     }
+    int initialMaxRetries = maxRetries;
 
     boolean testPassed = false;
     String logMessage;
@@ -131,12 +132,12 @@ public class PerformanceTestInfo {
       }
 
       JitUsageResult jitUsage = updateJitUsage();
-      if (attempt == maxRetries && jitUsage == JitUsageResult.DEFINITELY_LOW) {
+      if (attempt == maxRetries) {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30 && maxRetries != 1) {
-        // completely ignore this attempt (by incrementing maxRetries) and do retry
+      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < initialMaxRetries+30 && maxRetries != 1) {
+        // completely ignore this attempt (by incrementing maxRetries) and retry (but do no more than 30 extra retries caused by JIT)
         maxRetries++;
       }
       String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" +
