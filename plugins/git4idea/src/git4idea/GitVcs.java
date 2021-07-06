@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
+import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -215,6 +216,7 @@ public final class GitVcs extends AbstractVcs {
     myProject.getService(VcsUserRegistry.class);
 
     GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
+    GitAdvancedSettingsListener.registerListener(myProject, myDisposable);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
