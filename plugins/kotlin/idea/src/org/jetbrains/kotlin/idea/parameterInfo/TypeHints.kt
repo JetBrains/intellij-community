@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
@@ -35,9 +36,6 @@ import org.jetbrains.kotlin.types.typeUtil.containsError
 import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-
-//hack to separate type presentation from param info presentation
-const val TYPE_INFO_PREFIX = "@TYPE@"
 
 class ImportAwareClassifierNamePolicy(
     val bindingContext: BindingContext,
@@ -76,7 +74,7 @@ fun getInlayHintsTypeRenderer(bindingContext: BindingContext, context: KtElement
         classifierNamePolicy = ImportAwareClassifierNamePolicy(bindingContext, context)
     }
 
-fun providePropertyTypeHint(elem: PsiElement): List<InlayInfo> {
+fun providePropertyTypeHint(elem: PsiElement): List<HintType.InlayInfoDetails> {
     (elem as? KtCallableDeclaration)?.let { property ->
         property.nameIdentifier?.let { ident ->
             return provideTypeHint(property, ident.endOffset)
@@ -85,10 +83,11 @@ fun providePropertyTypeHint(elem: PsiElement): List<InlayInfo> {
     return emptyList()
 }
 
-fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<InlayInfo> {
+fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<HintType.InlayInfoDetails> {
     var type: KotlinType = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(element).unwrap()
     if (type.containsError()) return emptyList()
-    val name = type.constructor.declarationDescriptor?.name
+    val declarationDescriptor = type.constructor.declarationDescriptor
+    val name = declarationDescriptor?.name
     if (name == SpecialNames.NO_NAME_PROVIDED) {
         if (element is KtProperty && element.isLocal) {
             // for local variables, an anonymous object type is not collapsed to its supertype,
@@ -115,8 +114,8 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<InlayInfo
 
     return if (isUnclearType(type, element)) {
         val settings = element.containingKtFile.kotlinCustomSettings
+        val renderType = getInlayHintsTypeRenderer(element.analyze(), element).renderType(type)
         val declString = buildString {
-            append(TYPE_INFO_PREFIX)
             if (settings.SPACE_BEFORE_TYPE_COLON) {
                 append(" ")
             }
@@ -126,10 +125,12 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<InlayInfo
                 append(" ")
             }
 
-            append(getInlayHintsTypeRenderer(element.analyze(), element).renderType(type))
+            append(renderType)
         }
 
-        listOf(InlayInfo(declString, offset, isShowOnlyIfExistedBefore = false, isFilterByBlacklist = true, relatesToPrecedingText = true))
+        val inlayInfo =
+            InlayInfo(declString, offset, isShowOnlyIfExistedBefore = false, isFilterByBlacklist = true, relatesToPrecedingText = true)
+        listOf(HintType.TypedInlayInfoDetails(inlayInfo, type))
     } else {
         emptyList()
     }
