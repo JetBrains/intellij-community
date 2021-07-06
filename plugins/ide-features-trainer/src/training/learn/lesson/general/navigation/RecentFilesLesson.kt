@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -185,7 +184,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
                 }
               }
             }
-            invokeLater { completeStep() }
+            taskInvokeLater { completeStep() }
           }
         }
 

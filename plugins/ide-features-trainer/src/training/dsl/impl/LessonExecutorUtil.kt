@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl.impl
 
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -48,15 +47,14 @@ internal object LessonExecutorUtil {
                          ui: JComponent,
                          balloonConfig: LearningBalloonConfig,
                          actionsRecorder: ActionsRecorder,
-                         project: Project,
-                         visualIndexNumber: Int) {
+                         lessonExecutor: LessonExecutor) {
     if (balloonConfig.delayBeforeShow == 0) {
-      showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, true)
+      showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
     }
     else {
       val delayed = {
         if (!actionsRecorder.disposed) {
-          showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, true)
+          showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
         }
       }
       Alarm().addRequest(delayed, balloonConfig.delayBeforeShow)
@@ -67,15 +65,14 @@ internal object LessonExecutorUtil {
                                  ui: JComponent,
                                  balloonConfig: LearningBalloonConfig,
                                  actionsRecorder: ActionsRecorder,
-                                 project: Project,
-                                 visualIndexNumber: Int,
+                                 lessonExecutor: LessonExecutor,
                                  useAnimationCycle: Boolean) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
     messagesPane.border = UISettings.instance.balloonAdditionalBorder
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
-    messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = visualIndexNumber))
+    messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
 
     val preferredSize = messagesPane.preferredSize
 
@@ -118,9 +115,9 @@ internal object LessonExecutorUtil {
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         val checkStopLesson = {
-          invokeLater {
+          lessonExecutor.taskInvokeLater {
             if (!actionsRecorder.disposed)
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber, false)
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, false)
           }
         }
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit

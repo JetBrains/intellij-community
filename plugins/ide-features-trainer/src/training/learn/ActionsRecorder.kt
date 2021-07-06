@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import training.dsl.TaskContext
+import training.dsl.impl.LessonExecutor
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
@@ -32,11 +33,12 @@ import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<ActionsRecorder>()
 
-class ActionsRecorder(private val project: Project,
-                      private val document: Document?,
-                      parentDisposable: Disposable) : Disposable {
+internal class ActionsRecorder(private val project: Project,
+                               private val document: Document?,
+                               private val lessonExecutor: LessonExecutor) : Disposable {
 
   private val documentListeners: MutableList<DocumentListener> = mutableListOf()
+
   // TODO: do we really need a lot of listeners?
   private val actionListeners: MutableList<AnActionListener> = mutableListOf()
   private val eventDispatchers: MutableList<IdeEventQueue.EventDispatcher> = mutableListOf()
@@ -57,7 +59,7 @@ class ActionsRecorder(private val project: Project,
   private var focusChangeListener: PropertyChangeListener? = null
 
   init {
-    Disposer.register(parentDisposable, this)
+    Disposer.register(lessonExecutor, this)
 
     // We could not unregister a listener (it will be done in dispose)
     // So the simple solution is to use a proxy
@@ -254,7 +256,7 @@ class ActionsRecorder(private val project: Project,
 
       override fun documentChanged(event: DocumentEvent) {
         if (document != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
-          ApplicationManager.getApplication().invokeLater {
+          lessonExecutor.taskInvokeLater {
             if (!disposed && !project.isDisposed) {
               PsiDocumentManager.getInstance(project).commitAndRunReadAction { onDocumentChange() }
             }

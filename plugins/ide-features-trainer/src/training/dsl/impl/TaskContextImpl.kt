@@ -4,6 +4,7 @@ package training.dsl.impl
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -93,7 +94,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     fun restoreNotification(file: VirtualFile) =
       RestoreNotification(LearnBundle.message("learn.restore.notification.wrong.editor"),
                           LearnBundle.message("learn.restore.get.back.link.text")) {
-        invokeLater {
+        lessonExecutor.taskInvokeLater {
           FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
         }
       }
@@ -164,14 +165,13 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                             ui,
                                             useBalloon,
                                             runtimeContext.actionsRecorder,
-                                            lessonExecutor.project,
-                                            lessonExecutor.visualIndexNumber)
+                                            lessonExecutor)
     }
   }
 
 
   override fun type(text: String) = before {
-    invokeLater(ModalityState.current()) {
+    taskInvokeLater(ModalityState.current()) {
       WriteCommandAction.runWriteCommandAction(project) {
         val startOffset = editor.caretModel.offset
         editor.document.insertString(startOffset, text)
@@ -286,7 +286,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       }
       if (component != null) {
         val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation)
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightComponent(component, options)
         }
       }
@@ -308,7 +308,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         rectangle(it) != null
       }
       if (whole != null) {
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightPartOfComponent(whole, options) { rectangle(it) }
         }
       }
@@ -325,7 +325,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         index != null && it.visibleRowCount > index
       }
       if (list != null) {
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightJListItem(list, options) {
             checkList(list)
           }
@@ -344,7 +344,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         checkTree(it) != null
       }
       if (tree != null) {
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           LearningUiHighlightingManager.highlightJTreeItem(tree, options) {
             checkTree(tree)
           }
@@ -367,7 +367,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         try {
           val highlightFunction = { findAndHighlight(runtimeContext) }
           val foundComponent = highlightFunction() ?: continue
-          invokeLater(ModalityState.any()) {
+          lessonExecutor.taskInvokeLater(ModalityState.any()) {
             lessonExecutor.foundComponent = foundComponent
             lessonExecutor.rehighlightComponent = highlightFunction
             step.complete(true)
@@ -378,6 +378,9 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
         catch (e: ComponentLookupException) {
           continue
+        }
+        catch (e: Throwable) {
+          thisLogger().error(lessonExecutor.getLessonInfoString(), e)
         }
         break
       }
