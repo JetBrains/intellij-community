@@ -40,6 +40,7 @@ abstract class VcsLogUserResolverBase : VcsLogUserResolver {
   private val allUsersByEmails: MultiMap<String, VcsUser> get() = cachedUsers.value.second
 
   protected fun buildCache() = cachedUsers.value
+  protected fun clearCache() = cachedUsers.drop()
 
   override fun resolveUserName(name: String): Set<VcsUser> {
     val standardName = VcsUserUtil.getNameInStandardForm(name)

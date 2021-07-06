@@ -161,7 +161,7 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromUserNames(userNames: Collection<String>, vcsLogData: VcsLogData): VcsLogUserFilter {
-    return VcsLogUserFilterImpl(userNames, vcsLogData.currentUser, vcsLogData.allUsers)
+    return VcsLogUserFilterImpl(userNames, vcsLogData.userNameResolver)
   }
 
   @JvmStatic
