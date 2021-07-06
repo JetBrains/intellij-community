@@ -97,6 +97,14 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     return header.getToolbar();
   }
 
+  public ActionGroup getHeaderToolbarActions() {
+    return header.getToolbarActions();
+  }
+
+  public ActionGroup getHeaderToolbarWestActions() {
+    return header.getToolbarWestActions();
+  }
+
   @Override
   public void setBounds(int x, int y, int width, int height) {
     super.setBounds(x, y, width, height);
