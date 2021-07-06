@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
       return message;
     }
     else {
-      return Strings.notNullize(message) + " [Plugin: " + myPluginId + "]";
+      return StringUtilRt.notNullize(message) + " [Plugin: " + myPluginId + "]";
     }
   }
 
@@ -87,7 +87,7 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
    */
   @NotNull
   public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class<?> pluginClass) {
-    return PluginProblemReporter.getInstance().createPluginExceptionByClass(Strings.notNullize(cause.getMessage()), cause, pluginClass);
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtilRt.notNullize(cause.getMessage()), cause, pluginClass);
   }
 
   /**
