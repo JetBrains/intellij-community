@@ -1,3 +1,4 @@
+// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
 import java.util.*
 
 internal enum class E {
@@ -22,7 +23,7 @@ internal class A {
         val i = 10.1.toInt()
         val f = 10.1.toFloat()
         val l = 10.1.toLong()
-        val s = 10.1.toInt().toShort()
+        val s = 10.1.toShort()
 
         try {
             val removed = list.removeAt(10)
