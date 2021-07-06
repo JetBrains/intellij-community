@@ -1270,6 +1270,16 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
+            @TestMetadata("collectionRenderer.kt")
+            public void testCollectionRenderer() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/renderer/collectionRenderer.kt");
+            }
+
+            @TestMetadata("mapRenderer.kt")
+            public void testMapRenderer() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/renderer/mapRenderer.kt");
+            }
+
             @TestMetadata("toStringRenderer.kt")
             public void testToStringRenderer() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/renderer/toStringRenderer.kt");
