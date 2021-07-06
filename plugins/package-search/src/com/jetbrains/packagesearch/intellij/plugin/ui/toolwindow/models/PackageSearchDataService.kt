@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -492,7 +491,7 @@ internal class PackageSearchDataService(
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
                     try {
-                        val file = PsiUtil.getPsiFile(project, virtualFile)
+                        val file = psiManager.findFile(virtualFile) ?: return@filter false
                         ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
                             ?.hasSupportFor(project, file)
                             ?: false
