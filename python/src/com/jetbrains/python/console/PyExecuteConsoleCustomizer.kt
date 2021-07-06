@@ -57,7 +57,7 @@ interface PyExecuteConsoleCustomizer {
   /**
    * Return true if console is starting and schedule command execution
    */
-  fun isConsoleStarting(virtualFile: VirtualFile, commandText: String?): Boolean = false
+  fun isConsoleStarting(virtualFile: VirtualFile?, commandText: String?): Boolean = false
 
   /**
    * Notify that runner started execution, but console process will be started later

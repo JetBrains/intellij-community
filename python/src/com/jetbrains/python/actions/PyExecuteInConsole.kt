@@ -25,9 +25,9 @@ object PyExecuteInConsole {
     var existingConsole: RunContentDescriptor? = null
     var isDebug = false
     var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
-    val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return
+    val virtualFile = (editor as? EditorImpl)?.virtualFile
     if (canUseExistingConsole) {
-      if (PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
+      if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
         val (descriptor, listener) = getCustomDescriptor(project, editor)
         existingConsole = descriptor
         newConsoleListener = listener
@@ -124,7 +124,7 @@ object PyExecuteInConsole {
   }
 
   private fun startNewConsoleInstance(project: Project,
-                                      virtualFile: VirtualFile,
+                                      virtualFile: VirtualFile?,
                                       runFileText: String?,
                                       config: PythonRunConfiguration?,
                                       listener: PydevConsoleRunner.ConsoleListener?) {
@@ -145,7 +145,9 @@ object PyExecuteInConsole {
     if (listener != null) {
       runner.addConsoleListener(listener)
     }
-    PyExecuteConsoleCustomizer.instance.notifyRunnerStart(virtualFile, runner)
+    virtualFile?.let {
+      PyExecuteConsoleCustomizer.instance.notifyRunnerStart(it, runner)
+    }
     runner.run(false)
   }
 
