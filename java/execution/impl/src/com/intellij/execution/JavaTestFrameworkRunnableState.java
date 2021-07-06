@@ -58,7 +58,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -499,9 +498,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       vmParametersList.add("--add-modules");
       vmParametersList.add(testModule.getName());
       //setup module path
-      PathsList classPath = javaParameters.getClassPath();
-      PathsList modulePath = javaParameters.getModulePath();
-      JavaParametersUtil.putDependenciesOnModulePath(modulePath, classPath, testModule);
+      JavaParametersUtil.putDependenciesOnModulePath(javaParameters, testModule, true);
     }
     else {
       PsiJavaModule prodModule = findJavaModule(module, false);
@@ -519,10 +516,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     CompilerModuleExtension compilerExt = CompilerModuleExtension.getInstance(module);
     if (compilerExt == null) return;
 
-    PathsList modulePath = javaParameters.getModulePath();
-    PathsList classPath = javaParameters.getClassPath();
-
-    JavaParametersUtil.putDependenciesOnModulePath(modulePath, classPath, prodModule);
+    JavaParametersUtil.putDependenciesOnModulePath(javaParameters, prodModule, true);
 
     ParametersList vmParametersList = javaParameters.getVMParametersList()
       .addParamsGroup(JIGSAW_OPTIONS)

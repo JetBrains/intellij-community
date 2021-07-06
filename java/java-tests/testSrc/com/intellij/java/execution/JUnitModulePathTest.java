@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-public class ModulePathTest extends BaseConfigurationTestCase {
+public class JUnitModulePathTest extends BaseConfigurationTestCase {
 
   public void testModuleInfoInProductionNonModularizedJunit() throws Exception {
     Module module = createEmptyModule();
