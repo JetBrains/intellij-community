@@ -401,7 +401,7 @@ public final class ReplaceInProjectManager {
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.progress.title"),
       myProject,
       null,
       indicator -> {
