@@ -182,7 +182,9 @@ public final class FindManagerImpl extends FindManager {
       myHelper.setModel(model);
       myHelper.setOkHandler(okHandler);
     }
-    myHelper.showUI();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myHelper.showUI();
+    });
   }
 
   @Override
