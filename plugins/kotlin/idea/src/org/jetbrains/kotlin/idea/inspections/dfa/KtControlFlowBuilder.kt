@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -102,7 +103,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtSuperExpression -> pushUnknown()
             is KtCallableReferenceExpression -> processCallableReference(expr)
             is KtTryExpression -> processTryExpression(expr)
-            // KtObjectLiteralExpression, KtDestructuringDeclaration, KtNamedFunction, KtClass
+            is KtDestructuringDeclaration -> processDestructuringDeclaration(expr)
+            // KtObjectLiteralExpression, KtNamedFunction, KtClass
             else -> {
                 // unsupported construct
                 if (LOG.isDebugEnabled) {
@@ -115,6 +117,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processDestructuringDeclaration(expr: KtDestructuringDeclaration) {
+        processExpression(expr.initializer)
     }
 
     data class KotlinCatchClauseDescriptor(val clause : KtCatchClause): CatchClauseDescriptor {
@@ -665,14 +671,21 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processReturnExpression(expr: KtReturnExpression) {
+        val returnedExpression = expr.returnedExpression
+        processExpression(returnedExpression)
         if (expr.labeledExpression != null) {
-            // TODO: support labels
-            broken = true
-            return
+            val targetFunction = expr.getTargetFunction(expr.analyze(BodyResolveMode.FULL))
+            if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
+                if (returnedExpression != null) {
+                    val retVar = flow.createTempVariable(returnedExpression?.getKotlinType().toDfType(expr))
+                    addInstruction(SimpleAssignmentInstruction(null, retVar))
+                    createTransfer(targetFunction, targetFunction, retVar)
+                } else {
+                    createTransfer(targetFunction, targetFunction, factory.unknown)
+                }
+            }
         }
-        processExpression(expr.returnedExpression)
         addInstruction(ReturnInstruction(factory, trapTracker.trapStack(), expr))
-        pushUnknown()
     }
 
     private fun controlTransfer(target: TransferTarget, traps: FList<Trap>) {

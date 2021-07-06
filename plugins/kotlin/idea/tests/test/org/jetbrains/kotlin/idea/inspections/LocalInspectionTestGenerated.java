@@ -4606,6 +4606,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/assignment.kt");
         }
 
+        @TestMetadata("basicDestructuringDeclaration.kt")
+        public void testBasicDestructuringDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicDestructuringDeclaration.kt");
+        }
+
         @TestMetadata("basicFor.kt")
         public void testBasicFor() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicFor.kt");
