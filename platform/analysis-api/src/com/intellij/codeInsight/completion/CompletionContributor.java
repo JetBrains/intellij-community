@@ -90,7 +90,7 @@ import java.util.List;
  *
  * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
  * A: To be more responsive, when first lookup elements are produced, the completion infrastructure waits for some short time
- * and then displays the lookup with whatever items are ready. After that, few of the most relevant of the displayed items
+ * and then displays the lookup with whatever items are ready. After that, few of the most relevant displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
  * Therefore, you should try to create the most relevant items as early as possible. If you can't reliably produce
@@ -120,7 +120,8 @@ import java.util.List;
  * Q: How can I trigger showing completion popup programmatically?<br>
  * A: See {@link com.intellij.codeInsight.AutoPopupController}.<p>
  *
- * Q: The suggestion popup hides when I type some exotic character, but I want completion keep going matching against typed character.<br>
+ * Q: The suggestion popup hides when I type some exotic character,
+ * but I want completion to keep going, matching against the typed character.<br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  *
  * @author peter
