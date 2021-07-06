@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir-low-level-api")
+@TestRoot("fir-low-level-api-ide-impl")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testdata/outOfBlockProjectWide")
+@TestMetadata("testData/outOfBlockProjectWide")
 public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends AbstractProjectWideOutOfBlockKotlinModificationTrackerTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,116 +25,116 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
 
     @TestMetadata("funInCompanionObject.kt")
     public void testFunInCompanionObject() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/funInCompanionObject.kt");
+        runTest("testData/outOfBlockProjectWide/funInCompanionObject.kt");
     }
 
     @TestMetadata("localFun.kt")
     public void testLocalFun() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/localFun.kt");
+        runTest("testData/outOfBlockProjectWide/localFun.kt");
     }
 
     @TestMetadata("memberFunWithType.kt")
     public void testMemberFunWithType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/memberFunWithType.kt");
+        runTest("testData/outOfBlockProjectWide/memberFunWithType.kt");
     }
 
     @TestMetadata("memberPropertyWithType.kt")
     public void testMemberPropertyWithType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/memberPropertyWithType.kt");
+        runTest("testData/outOfBlockProjectWide/memberPropertyWithType.kt");
     }
 
     @TestMetadata("topLevelExpressionBodyFunWithType.kt")
     public void testTopLevelExpressionBodyFunWithType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topLevelExpressionBodyFunWithType.kt");
+        runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithType.kt");
     }
 
     @TestMetadata("topLevelExpressionBodyFunWithoutType.kt")
     public void testTopLevelExpressionBodyFunWithoutType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topLevelExpressionBodyFunWithoutType.kt");
+        runTest("testData/outOfBlockProjectWide/topLevelExpressionBodyFunWithoutType.kt");
     }
 
     @TestMetadata("topLevelFunWithType.kt")
     public void testTopLevelFunWithType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topLevelFunWithType.kt");
+        runTest("testData/outOfBlockProjectWide/topLevelFunWithType.kt");
     }
 
     @TestMetadata("topLevelUnitFun.kt")
     public void testTopLevelUnitFun() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topLevelUnitFun.kt");
+        runTest("testData/outOfBlockProjectWide/topLevelUnitFun.kt");
     }
 
     @TestMetadata("topPropertyWithTypeInGetter.kt")
     public void testTopPropertyWithTypeInGetter() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithTypeInGetter.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInGetter.kt");
     }
 
     @TestMetadata("topPropertyWithTypeInGetterOnNextLine.kt")
     public void testTopPropertyWithTypeInGetterOnNextLine() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithTypeInGetterOnNextLine.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInGetterOnNextLine.kt");
     }
 
     @TestMetadata("topPropertyWithTypeInInititalzer.kt")
     public void testTopPropertyWithTypeInInititalzer() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithTypeInInititalzer.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInInititalzer.kt");
     }
 
     @TestMetadata("topPropertyWithTypeInSetter.kt")
     public void testTopPropertyWithTypeInSetter() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithTypeInSetter.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithTypeInSetter.kt");
     }
 
     @TestMetadata("topPropertyWithoutTypeInGetter.kt")
     public void testTopPropertyWithoutTypeInGetter() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithoutTypeInGetter.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInGetter.kt");
     }
 
     @TestMetadata("topPropertyWithoutTypeInInititalzer.kt")
     public void testTopPropertyWithoutTypeInInititalzer() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithoutTypeInInititalzer.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInInititalzer.kt");
     }
 
     @TestMetadata("topPropertyWithoutTypeInSetter.kt")
     public void testTopPropertyWithoutTypeInSetter() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/topPropertyWithoutTypeInSetter.kt");
+        runTest("testData/outOfBlockProjectWide/topPropertyWithoutTypeInSetter.kt");
     }
 
     @TestMetadata("typeInFunctionAnnotation.kt")
     public void testTypeInFunctionAnnotation() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionAnnotation.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionAnnotation.kt");
     }
 
     @TestMetadata("typeInFunctionAnnotationParameter.kt")
     public void testTypeInFunctionAnnotationParameter() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionAnnotationParameter.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionAnnotationParameter.kt");
     }
 
     @TestMetadata("typeInFunctionModifiers.kt")
     public void testTypeInFunctionModifiers() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionModifiers.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionModifiers.kt");
     }
 
     @TestMetadata("typeInFunctionName.kt")
     public void testTypeInFunctionName() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionName.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionName.kt");
     }
 
     @TestMetadata("typeInFunctionParams.kt")
     public void testTypeInFunctionParams() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionParams.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionParams.kt");
     }
 
     @TestMetadata("typeInFunctionParamsType.kt")
     public void testTypeInFunctionParamsType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionParamsType.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionParamsType.kt");
     }
 
     @TestMetadata("typeInFunctionReturnType.kt")
     public void testTypeInFunctionReturnType() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionReturnType.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionReturnType.kt");
     }
 
     @TestMetadata("typeInFunctionTypeParams.kt")
     public void testTypeInFunctionTypeParams() throws Exception {
-        runTest("testdata/outOfBlockProjectWide/typeInFunctionTypeParams.kt");
+        runTest("testData/outOfBlockProjectWide/typeInFunctionTypeParams.kt");
     }
 }
