@@ -120,7 +120,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         return before.controlFlowStatementBefore()?.let { controlFlowKeywordPosition ->
             val indent = when {
                 controlFlowKeywordPosition.similarToCatchKeyword() -> if (before.isAt(RightParenthesis)) Indent.getNoneIndent() else Indent.getNormalIndent()
-                after.isAt(LeftParenthesis) -> Indent.getContinuationIndent()
+                after.isAt(LeftParenthesis) -> if (before.isAt(BlockOpeningBrace)) Indent.getNormalIndent() else Indent.getContinuationIndent()
                 after.isAtAnyOf(BlockOpeningBrace, Arrow) || controlFlowKeywordPosition.isWhileInsideDoWhile() -> Indent.getNoneIndent()
                 else -> Indent.getNormalIndent()
             }

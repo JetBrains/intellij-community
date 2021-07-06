@@ -333,6 +333,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
+            @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
+            public void testBetweenOpenBraceAndParenthesis() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
+            }
+
             @TestMetadata("Catch.after.kt")
             public void testCatch() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/controlFlowConstructions/Catch.after.kt");
