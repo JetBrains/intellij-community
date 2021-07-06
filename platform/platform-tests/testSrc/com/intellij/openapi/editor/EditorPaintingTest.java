@@ -264,6 +264,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testCaretAtFoldRegion() throws Exception {
+    initText("test");
+    addCollapsedFoldRegion(0, 4, ".");
+    checkResultWithGutter();
+  }
+
   public void testCustomFoldRegion() throws Exception {
     initText("a\nb\nc");
     addCustomLinesFolding(1, 1);

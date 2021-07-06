@@ -605,8 +605,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     int caretOffset = myEditor.getCaretModel().getOffset();
     int idx = foldingModel.getLastCollapsedRegionBefore(caretOffset);
-    return idx >= 0 && topLevelRegions[idx].getEndOffset() == caretOffset ||
-           idx + 1 < topLevelRegions.length && topLevelRegions[idx + 1].getStartOffset() <= caretOffset;
+    if (idx >= 0) {
+      FoldRegion region = topLevelRegions[idx];
+      if (region instanceof CustomFoldRegion && region.getEndOffset() == caretOffset) {
+        return true;
+      }
+    }
+    if (idx + 1 < topLevelRegions.length) {
+      FoldRegion region = topLevelRegions[idx + 1];
+      if (region instanceof CustomFoldRegion && region.getStartOffset() <= caretOffset) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width, Color color) {
