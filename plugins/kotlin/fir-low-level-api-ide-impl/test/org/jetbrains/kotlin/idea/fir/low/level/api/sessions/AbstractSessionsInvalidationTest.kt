@@ -22,7 +22,7 @@ import java.nio.file.Paths
 
 abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("fir-low-level-api").resolve("testdata").resolve("sessionInvalidation")
+        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sessionInvalidation")
 
     protected fun doTest(path: String) {
         val testStructure = TestProjectStructureReader.readToTestStructure(
