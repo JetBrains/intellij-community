@@ -220,7 +220,7 @@ public class PluginUpdateDialog extends DialogWrapper {
                 PluginManagerConfigurable.shutdownOrRestartApp();
               }
             }
-          });
+          }, ModalityState.any());
         }
       }
 

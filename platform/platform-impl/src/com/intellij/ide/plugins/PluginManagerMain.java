@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
@@ -116,12 +117,12 @@ public final class PluginManagerMain {
                 if (onSuccess != null) {
                   onSuccess.run();
                 }
-              });
+              }, ModalityState.any());
             }
           }
           finally {
             if (function != null) {
-              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]));
+              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
             }
           }
         }
