@@ -24,28 +24,25 @@ object DownloadArtifactBuildIssue {
       override fun getNavigatable(project: Project): Navigatable? = null
     }
   }
-
-  @JvmStatic
-  fun removeBadArtifact(file: File?) {
-    if (file == null) return
-    val deleted = FileUtil.delete(file)
-    if (!deleted) {
-      MavenLog.LOG.warn("${file} not deleted")
-    }
-  }
 }
 
-class MavenReimportQuickFix() : BuildIssueQuickFix {
+class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Collection<File>) : BuildIssueQuickFix {
 
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
+    unresolvedArtifactFiles.forEach {
+      val deleted = FileUtil.delete(it)
+      if (!deleted) {
+        MavenLog.LOG.warn("${it} not deleted")
+      }
+    }
     MavenProjectsManager.getInstance(project).forceUpdateProjects()
     return CompletableFuture.completedFuture(null)
   }
 
   companion object {
-    const val ID = "maven_reimport_quick_fix"
+    const val ID = "clean_broken_artifacts_and_reimport_quick_fix"
   }
 }
 
