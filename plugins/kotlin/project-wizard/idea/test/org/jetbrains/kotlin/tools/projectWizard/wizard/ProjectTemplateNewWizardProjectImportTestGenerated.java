@@ -40,11 +40,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
         }
 
-        @TestMetadata("emptyKotlinJvmApplication")
-        public void testEmptyKotlinJvmApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
-        }
-
         @TestMetadata("frontendApplication")
         public void testFrontendApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
@@ -103,11 +98,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
         }
 
-        @TestMetadata("emptyKotlinJvmApplication")
-        public void testEmptyKotlinJvmApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
-        }
-
         @TestMetadata("frontendApplication")
         public void testFrontendApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
@@ -164,11 +154,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
-        }
-
-        @TestMetadata("emptyKotlinJvmApplication")
-        public void testEmptyKotlinJvmApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
         }
 
         @TestMetadata("frontendApplication")

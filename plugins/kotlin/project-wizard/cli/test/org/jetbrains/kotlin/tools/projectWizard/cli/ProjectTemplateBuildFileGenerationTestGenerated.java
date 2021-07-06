@@ -38,11 +38,6 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
         runTest("testData/projectTemplatesBuildFileGeneration/consoleApplication/");
     }
 
-    @TestMetadata("emptyKotlinJvmApplication")
-    public void testEmptyKotlinJvmApplication() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/emptyKotlinJvmApplication/");
-    }
-
     @TestMetadata("frontendApplication")
     public void testFrontendApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/frontendApplication/");

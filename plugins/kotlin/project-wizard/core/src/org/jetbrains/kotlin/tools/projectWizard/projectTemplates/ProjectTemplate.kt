@@ -73,7 +73,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 
     companion object {
         val ALL = listOf(
-            EmptyKotlinJvmProjectTemplate,
             ConsoleApplicationProjectTemplate,
             MultiplatformMobileApplicationProjectTemplate,
             MultiplatformMobileLibraryProjectTemplate,
@@ -144,23 +143,6 @@ private fun createDefaultSourcesets() =
 private fun ModuleType.createDefaultTarget(
     name: String = this.name
 ) = MultiplatformTargetModule(name, defaultTarget, createDefaultSourcesets())
-
-object EmptyKotlinJvmProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.empty.singleplatform.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.empty.singleplatform.description")
-    override val id = "emptyKotlinJvmApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myKotlinJvmProject"
-    override val projectKind = ProjectKind.Singleplatform
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            KotlinPlugin.modules.reference withValue listOf(
-                Module("mainModule", JvmSinglePlatformModuleConfigurator, permittedTemplateIds = emptySet())
-            )
-        )
-}
 
 object MultiplatformApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.mpp.title")

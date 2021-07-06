@@ -26,7 +26,7 @@ class ScriptHighlightingGradleDistributionTypeTest : AbstractProjectTemplateNewW
     }
 
     private fun doTest(distributionType: DistributionType) {
-        val directory = Paths.get("emptyKotlinJvmApplication")
+        val directory = Paths.get("consoleApplication")
         val tempDirectory = Files.createTempDirectory(null)
 
         prepareGradleBuildSystem(tempDirectory, distributionType)
