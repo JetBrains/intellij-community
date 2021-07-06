@@ -21,21 +21,19 @@ import com.intellij.ui.PopupBorder
 import com.intellij.ui.TitlePanel
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.core.GridConstraints
 import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Window
 import java.awt.event.KeyEvent
 import java.io.File
 import javax.swing.*
@@ -273,12 +271,12 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false
-        EdtExecutorService.getInstance().execute(myRepaintRunnable)
+        UIUtil.invokeLaterIfNeeded(myRepaintRunnable)
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed && myUpdateAlarm.isEmpty) {
-          EdtExecutorService.getInstance().execute {
+          UIUtil.invokeLaterIfNeeded {
             if (!myUpdateAlarm.isDisposed) {
               myUpdateAlarm.request(myProgressWindow.modalityState)
             }
