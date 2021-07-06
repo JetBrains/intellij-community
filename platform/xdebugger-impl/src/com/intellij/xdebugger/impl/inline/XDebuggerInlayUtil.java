@@ -62,7 +62,7 @@ public final class XDebuggerInlayUtil {
             }
           }
           DebuggerUIUtil.repaintCurrentEditor(project); // to update inline debugger data
-        });
+        }, project.getDisposed());
       }
     });
   }
