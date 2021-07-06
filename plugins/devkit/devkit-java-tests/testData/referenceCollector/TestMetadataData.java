@@ -2,7 +2,7 @@
 @org.jetbrains.kotlin.test.TestMetadata("testData/refactoring")
 public class ATest extends LightCodeInsightFixtureTestCase {
 
-  @org.jetbrains.kotlin.test.TestMetadata("introduceVariable")
+  @org.jetbrains.kotlin.test.TestMetadata("testData/refactoring/introduceVariable")
   public static class IntroduceVariable extends ATest {
     private void runTest(String testDataFilePath) throws Exception {
 

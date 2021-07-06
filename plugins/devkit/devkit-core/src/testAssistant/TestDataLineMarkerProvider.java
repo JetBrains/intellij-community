@@ -21,6 +21,9 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
@@ -103,21 +106,26 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
   public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
 
-    final List<String> pathComponents = new ArrayList<>();
-    while (psiClass != null) {
-      String testMetaData = annotationValue(psiClass, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
-      if (!StringUtil.isEmpty(testMetaData)) {
-        pathComponents.add(testMetaData);
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      final List<String> pathComponents = new ArrayList<>();
+      PsiClass currentPsiClass = psiClass;
+      while (currentPsiClass != null) {
+        String testMetaData = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
+        String testDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        PsiClass containingClass = currentPsiClass.getContainingClass();
+        if (!StringUtil.isEmpty(testMetaData) && (currentPsiClass.equals(psiClass) || containingClass != null)) {
+          pathComponents.add(testMetaData);
+        }
+        if (!StringUtil.isEmpty(testDataPath)) {
+          pathComponents.add(testDataPath);
+        }
+        currentPsiClass = containingClass;
       }
-      String testDataPath = annotationValue(psiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
-      if (!StringUtil.isEmpty(testDataPath)) {
-        pathComponents.add(testDataPath);
-      }
-      psiClass = psiClass.getContainingClass();
-    }
-    if (pathComponents.isEmpty()) return null;
-    Collections.reverse(pathComponents);
-    return FileUtil.toSystemIndependentName(Strings.join(pathComponents, File.separator));
+      if (pathComponents.isEmpty()) return null;
+      Collections.reverse(pathComponents);
+      String path = FileUtil.toSystemIndependentName(Strings.join(pathComponents, File.separator));
+      return new CachedValueProvider.Result<>(path, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Nullable
