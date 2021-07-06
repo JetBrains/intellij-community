@@ -43,7 +43,8 @@ public class UserDefinedJsonSchemaConfiguration {
     return o1.path.compareToIgnoreCase(o2.path);
   };
 
-  public @Nls String name;
+  private @Nls String name;
+  private @Nullable @Nls String generatedName;
   public String relativePathToSchema;
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
@@ -71,6 +72,14 @@ public class UserDefinedJsonSchemaConfiguration {
     this.schemaVersion = schemaVersion;
     this.applicationDefined = applicationDefined;
     setPatterns(patterns);
+  }
+
+  public void setGeneratedName(@NotNull @Nls String generatedName) {
+    this.generatedName = generatedName;
+  }
+
+  public @Nls String getGeneratedName() {
+    return this.generatedName;
   }
 
   public @Nls String getName() {
