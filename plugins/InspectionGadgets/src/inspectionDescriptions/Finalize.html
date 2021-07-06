@@ -20,10 +20,10 @@ Reports overriding the <code>Object.finalize()</code> method.
     Use the <b>Ignore for trivial 'finalize()' implementations</b> option to ignore
     <code>finalize()</code> implementations with an empty method body or a body
     containing only <code>if</code> statements that have a condition which evaluates
-    to <code>false</code> at compile time. For performance reasons it can be beneficial
-    to override a non-trivial <code>finalize()</code> with an empty implementation in a
-    subclass. An empty final <code>finalize()</code> implementation can also be used to
-    prevent subclasses from overriding.
+    to <code>false</code> and is a compile-time constant. For performance reasons it
+    can be beneficial to override a non-trivial <code>finalize()</code> with an empty
+    implementation in a subclass. An empty final <code>finalize()</code> implementation
+    can also be used to prevent subclasses from overriding.
   </li>
 </ul>
 </body>
