@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.junit.Assume
 import org.junit.Test
 import java.util.function.Predicate
 
@@ -87,7 +86,6 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   @TargetVersions("3.3+")
   fun `test composite project partial re-import`() {
-    Assume.assumeFalse("To be investigated", isGradleNewerOrSameAs("3.5") && isGradleOlderThan("5.0"))
     createAndImportTestCompositeProject()
 
     // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project

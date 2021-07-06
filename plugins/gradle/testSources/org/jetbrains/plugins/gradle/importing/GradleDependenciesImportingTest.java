@@ -919,13 +919,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
     }
     if (isGradleOlderThan("7.0")) {
-      if (isGradleNewerOrSameAs("3.5") && isGradleOlderThan("4.10.3")) {
-        // todo to be investigated
-        assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test", "project.project1.main");
-      }
-      else {
-        assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
-      }
+      assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
       assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     }
     else {
@@ -975,13 +969,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test", "project.project1.aParentSrc",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    if (isGradleOlderThan("4.10.3")) {
-      assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.aParentSrc");
-    }
-    else {
-      // todo investigate duplicated order entry
-      assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.main", "project.project1.aParentSrc");
-    }
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.aParentSrc");
   }
 
 
@@ -1207,21 +1195,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project.app.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
     assertModuleModuleDeps("project.app.main");
     assertModuleLibDepScope("project.app.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
-    if (isGradleNewerOrSameAs("3.5") && isGradleOlderThan("4.10.3")) {
-      // todo to be investigated
-    }
-    else {
-      assertModuleModuleDeps("project.app.test", "project.app.main", "project.modA.main", "project.modB.main");
-    }
+    assertModuleModuleDeps("project.app.test", "project.app.main", "project.modA.main", "project.modB.main");
+
     assertModuleLibDepScope("project.modA.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleModuleDeps("project.modA.main", "project.modB.main");
     assertModuleLibDepScope("project.modA.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
-    if (isGradleNewerOrSameAs("3.5") && isGradleOlderThan("4.10.3")) {
-      // todo to be investigated
-    }
-    else {
-      assertModuleModuleDeps("project.modA.test", "project.modA.main", "project.modB.main");
-    }
+    assertModuleModuleDeps("project.modA.test", "project.modA.main", "project.modB.main");
+
     assertModuleLibDepScope("project.modB.main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleModuleDeps("project.modB.main");
     assertModuleLibDepScope("project.modB.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
@@ -1442,14 +1422,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDepScope("project.projectB.main", "project.projectA.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.PROVIDED);
-
-    if (isGradleNewerOrSameAs("3.5") && isGradleOlderThan("4.10.3")) {
-      // todo to be investigated
-      assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.PROVIDED, DependencyScope.COMPILE);
-    }
-    else {
-      assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.PROVIDED);
-    }
+    assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.PROVIDED);
 
     createProjectSubDirs("projectA", "projectB", "projectC");
     maybeAssertCompileClasspathOrderingWithEnabledClasspathPackaging("project.projectC.main");
