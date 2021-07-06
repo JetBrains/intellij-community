@@ -140,8 +140,13 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
     }
 
-    MavenUtil.addEventListener(myDistribution.getVersion(), params);
+    setupMainExt(params);
     return params;
+  }
+
+  private void setupMainExt(SimpleJavaParameters params) {
+    //it is critical to setup maven.ext.class.path for maven >=3.6, otherwise project extensions will not be loaded
+    MavenUtil.addEventListener(myDistribution.getVersion(), params);
   }
 
   private void configureSslRelatedOptions(Map<String, String> defs) {
