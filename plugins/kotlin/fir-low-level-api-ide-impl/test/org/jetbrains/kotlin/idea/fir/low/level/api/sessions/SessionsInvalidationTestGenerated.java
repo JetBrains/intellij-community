@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir-low-level-api")
+@TestRoot("fir-low-level-api-ide-impl")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testdata/sessionInvalidation")
+@TestMetadata("testData/sessionInvalidation")
 public class SessionsInvalidationTestGenerated extends AbstractSessionsInvalidationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,36 +25,36 @@ public class SessionsInvalidationTestGenerated extends AbstractSessionsInvalidat
 
     @TestMetadata("binaryTree")
     public void testBinaryTree() throws Exception {
-        runTest("testdata/sessionInvalidation/binaryTree/");
+        runTest("testData/sessionInvalidation/binaryTree/");
     }
 
     @TestMetadata("binaryTreeNoInvalidated")
     public void testBinaryTreeNoInvalidated() throws Exception {
-        runTest("testdata/sessionInvalidation/binaryTreeNoInvalidated/");
+        runTest("testData/sessionInvalidation/binaryTreeNoInvalidated/");
     }
 
     @TestMetadata("binaryTreeWithAdditionalEdge")
     public void testBinaryTreeWithAdditionalEdge() throws Exception {
-        runTest("testdata/sessionInvalidation/binaryTreeWithAdditionalEdge/");
+        runTest("testData/sessionInvalidation/binaryTreeWithAdditionalEdge/");
     }
 
     @TestMetadata("binaryTreeWithInvalidInRoot")
     public void testBinaryTreeWithInvalidInRoot() throws Exception {
-        runTest("testdata/sessionInvalidation/binaryTreeWithInvalidInRoot/");
+        runTest("testData/sessionInvalidation/binaryTreeWithInvalidInRoot/");
     }
 
     @TestMetadata("linear")
     public void testLinear() throws Exception {
-        runTest("testdata/sessionInvalidation/linear/");
+        runTest("testData/sessionInvalidation/linear/");
     }
 
     @TestMetadata("rhombus")
     public void testRhombus() throws Exception {
-        runTest("testdata/sessionInvalidation/rhombus/");
+        runTest("testData/sessionInvalidation/rhombus/");
     }
 
     @TestMetadata("rhombusWithTwoInvalid")
     public void testRhombusWithTwoInvalid() throws Exception {
-        runTest("testdata/sessionInvalidation/rhombusWithTwoInvalid/");
+        runTest("testData/sessionInvalidation/rhombusWithTwoInvalid/");
     }
 }
