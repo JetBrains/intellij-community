@@ -4,6 +4,6 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.DynamicBundle
 
-abstract class AbstractKotlinBundleIndependent protected constructor(pathToBundle: String) : DynamicBundle(pathToBundle) {
+abstract class AbstractKotlinBundleIndependentBundle protected constructor(pathToBundle: String) : DynamicBundle(pathToBundle) {
     protected fun String.withHtml(): String = "<html>$this</html>"
 }
