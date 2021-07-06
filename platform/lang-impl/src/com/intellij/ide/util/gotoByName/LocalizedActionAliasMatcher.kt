@@ -5,7 +5,6 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.util.DefaultBundleService
-import com.intellij.util.ResourceUtil
 import java.util.*
 
 internal class LocalizedActionAliasMatcher : GotoActionAliasMatcher {
@@ -20,8 +19,17 @@ internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
     if (DynamicBundle.findLanguageBundle() == null) return false
 
     val id = ActionManager.getInstance().getId(action)
-    val text = actions.value.getProperty("action.$id.text")
-    val description = actions.value.getProperty("action.$id.description")
+    val bundle = actions.value
+
+    var text: String? = null
+    if (bundle?.containsKey("action.$id.text") == true) {
+      text = bundle.getString("action.$id.text")
+    }
+
+    var description: String? = null
+    if (bundle?.containsKey("action.$id.description") == true ) {
+      description = bundle.getString("action.$id.description")
+    }
 
     val buildMatcher = GotoActionItemProvider.buildMatcher(name)
 
@@ -34,10 +42,8 @@ internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
 
   companion object {
     var actions = lazy {
-      Properties().apply {
-        load(ResourceUtil.getResourceAsStream(DefaultBundleActionAliasMatcher::class.java.classLoader, "com/intellij/ide/util/gotoByName",
-                                                 "DefaultActionsBundle.properties"))
-      }
+      ResourceBundle.getBundle("defaultBundleActions.DefaultActionsBundle", Locale.getDefault(),
+                               DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader ?: return@lazy null)
     }
   }
 }
