@@ -546,10 +546,11 @@ public class BreakpointManager {
           .map(r -> newFilterThread != null ? r.addThreadFilterAsync(newFilterThread) : r.removeThreadFilterAsync(oldFilterThread));
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
       }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
       catch (Exception e) {
+        Throwable cause = DebuggerUtilsAsync.unwrap(e);
+        if (cause instanceof VMDisconnectedException) {
+          throw (VMDisconnectedException)cause;
+        }
         LOG.error(new Exception(e));
       }
     }
