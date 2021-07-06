@@ -44,7 +44,7 @@ class AboutDialogUI(val project: Project?) {
       }
     }
     val appName = ApplicationNamesInfo.getInstance().fullProductName
-    dialog("About $appName", ui, resizable = false, project = project ).apply {
+    dialog(IdeBundle.message("dialog.title.about", appName), ui, resizable = false, project = project ).apply {
       setSize(600, 400)
     }.show()
   }
