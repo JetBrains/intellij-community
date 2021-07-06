@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -77,9 +77,10 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @Nullable Throwable error,
                                                @NotNull PluginId pluginId,
                                                @Nullable Map<String, String> attachments) {
-    return getDelegate().createError(message, pluginId, attachments);
+    return getDelegate().createError(message, null, pluginId, attachments);
   }
 
   @Override
