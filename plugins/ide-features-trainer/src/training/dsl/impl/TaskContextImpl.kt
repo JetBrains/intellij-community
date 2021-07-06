@@ -133,7 +133,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
                                                notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
                                                setNotification: (RestoreNotification) -> Unit) {
     addRestoreCheck(delayMillis, { true }) {
-      val notification = notificationRequired(runtimeContext) ?: checkEditor()
+      val notification = checkEditor() ?: notificationRequired(runtimeContext)
       val lessonManager = LessonManager.instance
       val activeNotification = lessonManager.shownRestoreNotification
       if (notification != null && notification.message != activeNotification?.message) {
