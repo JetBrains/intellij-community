@@ -54,6 +54,7 @@ import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -391,14 +392,16 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   private static void updateSdkPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
-    final Pair<List<VirtualFile>, List<VirtualFile>> pair = splitIntoLibraryAndSourceRoots(sdk, paths, project);
+    final var sdkRoots = splitIntoLibraryAndSourceRoots(sdk, paths, project, it -> sdkPathToRoot(sdk, it));
+    final var userAddedRoots = splitIntoLibraryAndSourceRoots(sdk, getUserAddedPaths(sdk), project, Function.identity());
 
     final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, pair.first);
+    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
     if (project != null) {
-      addSourceRoots(project, pair.second);
+      addSourceRoots(project, sdkRoots.second);
+      addSourceRoots(project, userAddedRoots.second);
     }
   }
 
@@ -413,11 +416,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   @NotNull
-  private static List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk, @NotNull List<VirtualFile> sdkRoots) {
+  private static List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
+                                                 @NotNull List<VirtualFile> sdkRoots,
+                                                 @NotNull List<VirtualFile> userAddedRoots) {
     return ImmutableList.<VirtualFile>builder()
       .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
-      .addAll(getUserAddedPaths(sdk))
+      .addAll(userAddedRoots)
       .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
@@ -452,9 +457,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     return Collections.emptyList();
   }
 
-  private static @NotNull Pair<@NotNull List<VirtualFile>, @NotNull List<VirtualFile>> splitIntoLibraryAndSourceRoots(@NotNull Sdk sdk,
-                                                                                                                      @NotNull List<String> paths,
-                                                                                                                      @Nullable Project project) {
+  private static <T> @NotNull Pair<@NotNull List<VirtualFile>, @NotNull List<VirtualFile>> splitIntoLibraryAndSourceRoots(@NotNull Sdk sdk,
+                                                                                                                          @NotNull List<T> paths,
+                                                                                                                          @Nullable Project project,
+                                                                                                                          @NotNull Function<T, @Nullable VirtualFile> mapper) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
                                                   Collections.emptyList();
@@ -467,27 +473,34 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
     final List<VirtualFile> lib = new ArrayList<>();
     final List<VirtualFile> source = new ArrayList<>();
-    // TODO: Refactor SDK so they can provide exclusions for root paths
-    final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
-    for (String path : paths) {
-      if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
-        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
-        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
-          final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-          if (!excludedPaths.contains(rootFile)) {
-            if (isUnderModuleRootsButNotSdk(rootFile, moduleRoots, sdk)) {
-              source.add(rootFile);
-            }
-            else {
-              lib.add(rootFile);
-            }
-            continue;
-          }
+    for (T path : paths) {
+      final VirtualFile rootFile = mapper.apply(path);
+      if (rootFile != null && !excludedPaths.contains(rootFile)) {
+        if (isUnderModuleRootsButNotSdk(rootFile, moduleRoots, sdk)) {
+          source.add(rootFile);
         }
+        else {
+          lib.add(rootFile);
+        }
+        continue;
       }
       LOG.info("Bogus sys.path entry " + path);
     }
     return Pair.createNonNull(lib, source);
+  }
+
+  private static @Nullable VirtualFile sdkPathToRoot(@NotNull Sdk sdk, @Nullable String path) {
+    if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
+      // TODO: Refactor SDK so they can provide exclusions for root paths
+      final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
+
+      final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
+      if (virtualFile != null && !virtualFile.equals(condaFolder)) {
+        return PythonSdkType.getSdkRootVirtualFile(virtualFile);
+      }
+    }
+
+    return null;
   }
 
   private static boolean isUnderModuleRootsButNotSdk(@NotNull VirtualFile file, @NotNull Set<VirtualFile> moduleRoots, @NotNull Sdk sdk) {
