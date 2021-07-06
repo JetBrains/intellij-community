@@ -26,6 +26,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -90,7 +91,12 @@ public final class RunContentBuilder extends RunTab {
     }
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
     if (Registry.is("debugger.new.tool.window.layout")) {
-      mySupplier = new RunTabSupplier(toolbar);
+      mySupplier = new RunTabSupplier(toolbar) {
+        @Override
+        public @NotNull List<AnAction> getContentActions() {
+          return Collections.singletonList(myUi.getOptions().getLayoutActions());
+        }
+      };
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
       }
@@ -203,8 +209,12 @@ public final class RunContentBuilder extends RunTab {
         public boolean isDumbAware() {
           return true;
         }
+
+        @Override
+        public boolean hideIfNoVisibleChildren() {
+          return true;
+        }
       };
-      more.add(myUi.getOptions().getLayoutActions());
       actionGroup.add(more);
     }
     return actionGroup;

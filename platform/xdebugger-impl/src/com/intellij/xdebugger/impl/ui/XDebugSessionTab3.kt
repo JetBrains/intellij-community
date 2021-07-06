@@ -8,6 +8,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -52,8 +53,6 @@ class XDebugSessionTab3(
   private val xThreadsFramesView = XFramesView(myProject)
 
   private var variables: XVariablesView? = null
-
-  private val toolWindow get() = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
 
   private val focusTraversalPolicy = MyFocusTraversalPolicy()
 
@@ -150,11 +149,15 @@ class XDebugSessionTab3(
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    mySingleContentSupplier = RunTabSupplier(toolbar)
-
-    val settings = DefaultActionGroup(*myUi.options.settingsActionsList)
-    registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
-    (toolWindow as ToolWindowEx).setAdditionalGearActions(settings)
+    mySingleContentSupplier = object : RunTabSupplier(toolbar) {
+      override fun getContentActions(): List<AnAction> {
+        val settings = DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), myUi.options.settingsActionsList.toList())
+        registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
+        settings.isPopup = true
+        settings.templatePresentation.icon = AllIcons.General.Settings
+        return super.getContentActions() + settings
+      }
+    }
   }
 
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier

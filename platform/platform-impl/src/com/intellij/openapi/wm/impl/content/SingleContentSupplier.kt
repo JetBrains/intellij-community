@@ -49,9 +49,11 @@ interface SingleContentSupplier {
   /**
    * This method is called after a single view mode is activated.
    *
-   * @param toolbar main toolbar that can be customized, e.g. [ActionToolbar.setTargetComponent]
+   * @param mainToolbar main toolbar that can be customized, e.g. [ActionToolbar.setTargetComponent]
+   * @param contentToolbar right sided toolbar with close action and others from [getContentActions]
    */
-  fun init(toolbar: ActionToolbar?) {
+  @JvmDefault
+  fun init(mainToolbar: ActionToolbar?, contentToolbar: ActionToolbar?) {
   }
 
   /**

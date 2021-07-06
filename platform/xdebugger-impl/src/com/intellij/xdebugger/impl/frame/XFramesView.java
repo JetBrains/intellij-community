@@ -194,7 +194,6 @@ public final class XFramesView extends XDebugView {
 
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
-    myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
     if (myThreadComboBox instanceof XDebuggerEmbeddedComboBox) {
       myToolbar.setOpaque(false);
       ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(myToolbar);
@@ -392,9 +391,11 @@ public final class XFramesView extends XDebugView {
       if (invisible != (myThreadComboBox.getParent() == null)) {
         if (invisible) {
           myThreadsPanel.remove(myThreadComboBox);
+          myThreadsPanel.setBorder(null);
         }
         else {
           myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+          myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
         }
         myThreadsPanel.revalidate();
       }

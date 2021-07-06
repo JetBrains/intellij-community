@@ -6,13 +6,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.BusyObject
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.*
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -25,12 +23,16 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -103,12 +105,20 @@ internal class SingleContentLayout(
     }
 
     let {
+
+      val contentActions = DefaultActionGroup()
+      contentActions.add(CloseCurrentContentAction())
+      contentActions.add(Separator.create())
+      contentActions.addAll(supplier.getContentActions())
+      contentActions.add(MyInvisibleAction())
+
       toolbars[ActionToolbarPosition.RIGHT] = createToolbar(
         "CloseSingleContentGroup",
-        DefaultActionGroup(emptyList<AnAction>() + CloseCurrentContentAction() + supplier.getContentActions()),
+        contentActions,
         content.component
       ).apply {
         setReservePlaceAutoPopupIcon(false)
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       }
     }
 
@@ -119,7 +129,7 @@ internal class SingleContentLayout(
     myUi.tabComponent.add(wrapper)
 
     isSingleContentView = true
-    supplier.init(toolbars[ActionToolbarPosition.LEFT])
+    supplier.init(toolbars[ActionToolbarPosition.LEFT], toolbars[ActionToolbarPosition.RIGHT])
     supplier.customize(wrapper)
   }
 
@@ -207,10 +217,16 @@ internal class SingleContentLayout(
     }
     else if (myTabs.size == 1) {
       label.icon = myTabs[0].content.icon
-      label.text = myTabs[0].content.displayName
-      label.border = JBUI.Borders.empty(0, 2, 0, 7)
+      label.text = createProcessName(
+        prefix = myUi.window.stripeTitle,
+        title = myTabs[0].content.displayName
+      )
+      label.border = JBUI.Borders.empty(0, 2, 0, 10)
     }
   }
+
+  @NlsSafe
+  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let { "$it $title" } ?: title
 
   private inner class TabAdapter(
     val content: Content,
@@ -223,6 +239,17 @@ internal class SingleContentLayout(
 
     val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) = showPopup(comp, x, y)
+    }
+
+    val closeHandler = object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
+          val tabLabel = e.component as? MyContentTabLabel
+          if (tabLabel != null && tabLabel.content.isCloseable) {
+            retrieveInfo(tabLabel).let(jbTabs::removeTab)
+          }
+        }
+      }
     }
 
     val containerListener = object : ContainerListener {
@@ -274,7 +301,9 @@ internal class SingleContentLayout(
       if (jbTabs.tabs.size > 1) {
         labels.addAll(jbTabs.tabs.map { info ->
           info.changeSupport.addPropertyChangeListener(this)
-          MyContentTabLabel(FakeContent(supplier, info), this@SingleContentLayout)
+          MyContentTabLabel(FakeContent(supplier, info), this@SingleContentLayout).apply {
+            addMouseListener(closeHandler)
+          }
         })
         labels.forEach(::add)
       }
@@ -591,6 +620,20 @@ internal class SingleContentLayout(
 
     override fun getExecutionId(): Long {
       error("An operation is not supported")
+    }
+  }
+
+  /**
+   * Workaround action to prevent [Separator] disappearing when [SingleContentSupplier.getContentActions] is empty.
+   */
+  private class MyInvisibleAction : DumbAwareAction(), CustomComponentAction {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      error("An operation is not supported")
+    }
+
+    override fun createCustomComponent(presentation: Presentation): JComponent {
+      return NonOpaquePanel()
     }
   }
 }

@@ -183,7 +183,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     }
 
     @Override
-    public void init(@Nullable ActionToolbar toolbar) {
+    public void init(@Nullable ActionToolbar mainToolbar, @Nullable ActionToolbar contentToolbar) {
       JBTabs tabs = getTabs();
       if (tabs instanceof JBTabsEx) {
         ((JBTabsEx)tabs).setHideTopPanel(true);
