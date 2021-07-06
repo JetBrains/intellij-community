@@ -38,6 +38,7 @@ import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteInConsole;
+import com.jetbrains.python.actions.PyRunFileInConsoleAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -72,6 +73,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         // disable "Show command line" for all executors except of Run and Debug, because it's useless
         return super.execute(executor, processStarter, patchers);
       }
+
+      PyRunFileInConsoleAction.configExecuted(myConfig);
 
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
