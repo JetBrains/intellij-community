@@ -181,7 +181,7 @@ internal class PackagesListPanel(
             val conn = project.messageBus.simpleConnect()
             conn.subscribe(
                 LafManagerListener.TOPIC,
-                LafManagerListener { offer(Unit) }
+                LafManagerListener { trySend(Unit) }
             )
             awaitClose { conn.disconnect() }
         }.onEach {
