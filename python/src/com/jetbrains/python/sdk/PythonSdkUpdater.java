@@ -392,8 +392,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   private static void updateSdkPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
-    final var sdkRoots = splitIntoLibraryAndSourceRoots(sdk, paths, project, it -> sdkPathToRoot(sdk, it));
-    final var userAddedRoots = splitIntoLibraryAndSourceRoots(sdk, getUserAddedPaths(sdk), project, Function.identity());
+    final var moduleRoots = getModuleRoots(project);
+    final var excludedPaths = getExcludedPaths(sdk);
+    final var sdkRoots = splitIntoLibraryAndSourceRoots(sdk, paths, moduleRoots, excludedPaths, it -> sdkPathToRoot(sdk, it));
+    final var userAddedRoots = splitIntoLibraryAndSourceRoots(sdk, getUserAddedPaths(sdk), moduleRoots, excludedPaths, Function.identity());
 
     final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
@@ -459,18 +461,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
 
   private static <T> @NotNull Pair<@NotNull List<VirtualFile>, @NotNull List<VirtualFile>> splitIntoLibraryAndSourceRoots(@NotNull Sdk sdk,
                                                                                                                           @NotNull List<T> paths,
-                                                                                                                          @Nullable Project project,
+                                                                                                                          @NotNull Set<VirtualFile> moduleRoots,
+                                                                                                                          @NotNull Collection<VirtualFile> excludedPaths,
                                                                                                                           @NotNull Function<T, @Nullable VirtualFile> mapper) {
-    final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
-    final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
-                                                  Collections.emptyList();
-    final Set<VirtualFile> moduleRoots = new HashSet<>();
-    if (project != null) {
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (Module module : modules) {
-        moduleRoots.addAll(PyUtil.getSourceRoots(module));
-      }
-    }
     final List<VirtualFile> lib = new ArrayList<>();
     final List<VirtualFile> source = new ArrayList<>();
     for (T path : paths) {
@@ -487,6 +480,23 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       LOG.info("Bogus sys.path entry " + path);
     }
     return Pair.createNonNull(lib, source);
+  }
+
+  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
+    if (project != null) {
+      final Set<VirtualFile> moduleRoots = new HashSet<>();
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (Module module : modules) {
+        moduleRoots.addAll(PyUtil.getSourceRoots(module));
+      }
+      return moduleRoots;
+    }
+    return Collections.emptySet();
+  }
+
+  private static @NotNull Collection<VirtualFile> getExcludedPaths(@NotNull Sdk sdk) {
+    final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
+    return pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() : Collections.emptyList();
   }
 
   private static @Nullable VirtualFile sdkPathToRoot(@NotNull Sdk sdk, @Nullable String path) {
