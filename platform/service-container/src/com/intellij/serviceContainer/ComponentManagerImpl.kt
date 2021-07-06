@@ -925,8 +925,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
-  final override fun createError(message: String, pluginId: PluginId, attachments: MutableMap<String, String>?): RuntimeException {
-    return PluginException(message, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
+  final override fun createError(message: String,
+                                 error: Throwable?,
+                                 pluginId: PluginId, 
+                                 attachments: MutableMap<String, String>?): RuntimeException {
+    return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
   }
 
   @Internal
