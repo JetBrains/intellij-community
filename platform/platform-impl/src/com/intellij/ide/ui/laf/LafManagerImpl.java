@@ -158,6 +158,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final Lazy<ActionToolbar> settingsToolbar = new SynchronizedClearableLazy<>(() -> {
     DefaultActionGroup group = new DefaultActionGroup(new PreferredLafAction());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true);
+    toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.getComponent().setOpaque(false);
     return toolbar;
   });
