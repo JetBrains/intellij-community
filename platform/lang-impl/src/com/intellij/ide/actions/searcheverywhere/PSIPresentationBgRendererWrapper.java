@@ -156,7 +156,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
         }
       };
       add(leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.WEST);
-
+      accessibleContext = leftRenderer.getAccessibleContext();
       return this;
     }
 
