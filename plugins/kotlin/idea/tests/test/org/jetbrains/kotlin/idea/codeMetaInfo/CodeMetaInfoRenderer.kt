@@ -69,7 +69,11 @@ object CodeMetaInfoRenderer {
         checkOpenedAndCloseStringIfNeeded(opened, offset, builder)
     }
 
-    private val metaInfoComparator = (compareBy<CodeMetaInfo> { it.start } then compareByDescending { it.end }) then compareBy { it.tag }
+    private val metaInfoComparator =
+        compareBy<CodeMetaInfo> { it.start }
+            .thenByDescending { it.end }
+            .thenBy { it.tag }
+            .thenBy { it.asString() }
 
     private fun getSortedCodeMetaInfos(metaInfos: Collection<CodeMetaInfo>): List<CodeMetaInfo> {
         return metaInfos.sortedWith(metaInfoComparator)
