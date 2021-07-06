@@ -93,7 +93,8 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) {
       return false;
     }
-    setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values", JavaElementKind.fromElement(method).object()));
+    setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
+                                   JavaElementKind.fromElement(method).lessDescriptive().object()));
     return true;
   }
 
