@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -405,11 +405,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return MultiMap.empty();
     }
-    PsiModifierList copy = (PsiModifierList)modifierList.copy();
-    copy.setModifierProperty(modifier.toPsiModifier(), true);
+    
     SearchScope useScope = member.getUseScope();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+      PsiModifierList copy = (PsiModifierList)modifierList.copy();
+      copy.setModifierProperty(modifier.toPsiModifier(), true);
+
       if (member instanceof PsiMethod) {
         JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
       }
