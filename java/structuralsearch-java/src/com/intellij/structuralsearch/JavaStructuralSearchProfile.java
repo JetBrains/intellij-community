@@ -107,7 +107,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     else if (element instanceof PsiAnnotation) {
       final PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
-      text = referenceElement == null ? null : referenceElement.getQualifiedName();
+      text = referenceElement == null ? null : referenceElement.getText();
     }
     else if (element instanceof PsiNameValuePair) {
       text = ((PsiNameValuePair)element).getName();
