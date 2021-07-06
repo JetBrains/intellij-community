@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -43,41 +43,33 @@ import java.util.Map;
  * @author peter
  */
 public final class ChunkExtractor {
+
   private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);
+
   static final int MAX_LINE_LENGTH_TO_SHOW = 200;
   static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 40;
   static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 100;
 
   private final EditorColorsScheme myColorsScheme;
-
   private final Document myDocument;
   private long myDocumentStamp;
   private final SyntaxHighlighterOverEditorHighlighter myHighlighter;
 
-  private abstract static class WeakFactory<T> {
-    private WeakReference<T> myRef;
+  private static final class WeakFactory {
+
+    private WeakReference<Map<PsiFile, ChunkExtractor>> myRef;
 
     @NotNull
-    protected abstract T create();
-
-    @NotNull
-    public T getValue() {
-      final T cur = SoftReference.dereference(myRef);
+    public Map<PsiFile, ChunkExtractor> getValue() {
+      final Map<PsiFile, ChunkExtractor> cur = SoftReference.dereference(myRef);
       if (cur != null) return cur;
-      final T result = create();
+      final Map<PsiFile, ChunkExtractor> result = FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
       myRef = new WeakReference<>(result);
       return result;
     }
   }
 
-  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = ThreadLocal.withInitial(
-    () -> new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
-    @NotNull
-    @Override
-    protected Map<PsiFile, ChunkExtractor> create() {
-      return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
-    }
-  });
+  private static final ThreadLocal<WeakFactory> ourExtractors = ThreadLocal.withInitial(() -> new WeakFactory());
 
   static TextChunk @NotNull [] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
     return getExtractor(file).extractChunks(usageAdapter, file);
@@ -116,8 +108,12 @@ public final class ChunkExtractor {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
-    Document visibleDocument = myDocument instanceof DocumentWindow ? ((DocumentWindow)myDocument).getDelegate() : myDocument;
-    int visibleStartOffset = myDocument instanceof DocumentWindow ? ((DocumentWindow)myDocument).injectedToHost(absoluteStartOffset) : absoluteStartOffset;
+    Document visibleDocument = myDocument instanceof DocumentWindow
+                               ? ((DocumentWindow)myDocument).getDelegate()
+                               : myDocument;
+    int visibleStartOffset = myDocument instanceof DocumentWindow
+                             ? ((DocumentWindow)myDocument).injectedToHost(absoluteStartOffset)
+                             : absoluteStartOffset;
 
     int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
     int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
@@ -135,7 +131,7 @@ public final class ChunkExtractor {
 
       final int lineEndOffset = fragmentToShowEnd;
       Segment segment = usageInfo2UsageAdapter.getUsageInfo().getSegment();
-      int usage_length = segment != null ? segment.getEndOffset() - segment.getStartOffset():0;
+      int usage_length = segment != null ? segment.getEndOffset() - segment.getStartOffset() : 0;
       fragmentToShowEnd = Math.min(lineEndOffset, absoluteStartOffset + usage_length + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
 
       // if we search something like a word, then expand shown context from one symbol before / after at least for word boundary
@@ -143,8 +139,12 @@ public final class ChunkExtractor {
       if (usage_length > 0 &&
           StringUtil.isJavaIdentifierStart(chars.charAt(absoluteStartOffset)) &&
           StringUtil.isJavaIdentifierStart(chars.charAt(absoluteStartOffset + usage_length - 1))) {
-        while(fragmentToShowEnd < lineEndOffset && StringUtil.isJavaIdentifierStart(chars.charAt(fragmentToShowEnd - 1))) ++fragmentToShowEnd;
-        while(fragmentToShowStart > lineStartOffset && StringUtil.isJavaIdentifierStart(chars.charAt(fragmentToShowStart))) --fragmentToShowStart;
+        while (fragmentToShowEnd < lineEndOffset && StringUtil.isJavaIdentifierStart(chars.charAt(fragmentToShowEnd - 1))) {
+          ++fragmentToShowEnd;
+        }
+        while (fragmentToShowStart > lineStartOffset && StringUtil.isJavaIdentifierStart(chars.charAt(fragmentToShowStart))) {
+          --fragmentToShowStart;
+        }
         if (fragmentToShowStart != lineStartOffset) ++fragmentToShowStart;
         if (fragmentToShowEnd != lineEndOffset) --fragmentToShowEnd;
       }
@@ -177,25 +177,29 @@ public final class ChunkExtractor {
     if (myDocumentStamp != myDocument.getModificationStamp()) {
       highlighter.restart(chars);
       myDocumentStamp = myDocument.getModificationStamp();
-    } else if(lexer.getTokenType() == null || lexer.getTokenStart() > start) {
+    }
+    else if (lexer.getTokenType() == null || lexer.getTokenStart() > start) {
       highlighter.resetPosition(0);  // todo restart from nearest position with initial state
     }
 
     boolean isBeginning = true;
 
-    for(;lexer.getTokenType() != null; lexer.advance()) {
+    for (; lexer.getTokenType() != null; lexer.advance()) {
       int hiStart = lexer.getTokenStart();
       int hiEnd = lexer.getTokenEnd();
-
-      if (hiStart >= end) break;
-
+      if (hiStart >= end) {
+        break;
+      }
       hiStart = Math.max(hiStart, start);
       hiEnd = Math.min(hiEnd, end);
-      if (hiStart >= hiEnd) { continue; }
-
+      if (hiStart >= hiEnd) {
+        continue;
+      }
       if (isBeginning) {
         String text = chars.subSequence(hiStart, hiEnd).toString();
-        if(text.trim().isEmpty()) continue;
+        if (text.trim().isEmpty()) {
+          continue;
+        }
       }
       isBeginning = false;
       IElementType tokenType = lexer.getTokenType();
@@ -244,10 +248,11 @@ public final class ChunkExtractor {
 
   public static boolean isHighlightedAsComment(TextAttributesKey... keys) {
     for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
-          key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
-          key == DefaultLanguageHighlighterColors.BLOCK_COMMENT
-        ) {
+      if (
+        key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
+        key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
+        key == DefaultLanguageHighlighterColors.BLOCK_COMMENT
+      ) {
         return true;
       }
       if (key == null) continue;
