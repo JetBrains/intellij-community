@@ -29,7 +29,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
-import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combine
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
@@ -58,13 +57,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.util.isInstanceOf
 import java.net.SocketTimeoutException
 import java.net.URI
-import java.net.URISyntaxException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
 import kotlin.time.hours
@@ -388,7 +384,7 @@ internal class PackageSearchDataService(
     private fun tryParsingAsURI(rawValue: String): URI? =
         try {
             URI(rawValue.trim().trimEnd('/', '?', '#'))
-        } catch (e: URISyntaxException) {
+        } catch (e: Exception) {
             logInfo("PackageSearchDataService#tryParsingAsURI") { "Unable to parse URI: '$rawValue'" }
             null
         }
@@ -500,8 +496,8 @@ internal class PackageSearchDataService(
                         ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
                             ?.hasSupportFor(project, file)
                             ?: false
-                    } catch (e: Throwable) {
-                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", e) {
+                    } catch (ignored: Throwable) {
+                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", ignored) {
                             "Error while filtering open files to trigger highlight rerun for"
                         }
                         false
