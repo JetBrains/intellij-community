@@ -85,7 +85,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   defaultStateAsResource = true,
   storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)]
 )
-open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), PersistentStateComponent<Element?> {
+open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
   private var layout = DesktopLayout()
   private val idToEntry: MutableMap<String, ToolWindowEntry> = HashMap()
@@ -114,6 +114,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
   }
+
+  override fun dispose() = Unit
 
   companion object {
     /**
