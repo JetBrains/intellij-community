@@ -2,8 +2,8 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,12 +35,14 @@ public final class DirectoryUtil {
       }
     }
 
-    PsiDirectory directory = findLongestExistingDirectory(manager, path);
-    if (directory == null) {
+    @Nullable Pair<PsiDirectory, String> pair = findLongestExistingDirectoryAndItsPath(manager, path);
+    if (pair == null) {
       return null;
     }
-    String existingPath = directory.getVirtualFile().getPath();
-    if (FileUtil.comparePaths(existingPath, path) == 0) {
+    PsiDirectory directory = pair.first;
+    String existingPath = pair.second;
+    
+    if (path.equals(existingPath)) {
       return directory;
     }
 
@@ -59,7 +61,16 @@ public final class DirectoryUtil {
    */
   @Nullable
   public static PsiDirectory findLongestExistingDirectory(@NotNull PsiManager manager, @NotNull String path) {
+    Pair<PsiDirectory, String> pair = findLongestExistingDirectoryAndItsPath(manager, path);
+    return pair != null ? pair.first : null;
+  }
 
+  /**
+   * virtualFile.getPath() is not guaranteed to be the same as path by which virtualFile was found, e.g. on case insensitive OS
+   * thus returning the path by which file was found
+   */
+  @Nullable
+  private static Pair<PsiDirectory, String> findLongestExistingDirectoryAndItsPath(@NotNull PsiManager manager, @NotNull String path) {
     PsiDirectory directory = null;
     // find longest existing path
     while (path.length() > 0) {
@@ -87,7 +98,7 @@ public final class DirectoryUtil {
 
       path = path.substring(0, index);
     }
-    return directory;
+    return Pair.create(directory, path);
   }
   
   public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
