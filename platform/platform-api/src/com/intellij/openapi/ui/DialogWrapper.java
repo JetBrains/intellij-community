@@ -1153,11 +1153,11 @@ public abstract class DialogWrapper {
    *
    * @return dimension service key
    */
-  protected @Nullable String getDimensionServiceKey() {
+  protected @NonNls @Nullable String getDimensionServiceKey() {
     return null;
   }
 
-  public final @Nullable String getDimensionKey() {
+  public final @NonNls @Nullable String getDimensionKey() {
     return getDimensionServiceKey();
   }
 
@@ -1495,7 +1495,7 @@ public abstract class DialogWrapper {
   }
 
   /** Returns the help identifier, or {@code null} if no help is available. */
-  protected @Nullable String getHelpId() {
+  protected @NonNls @Nullable String getHelpId() {
     return null;
   }
 
