@@ -541,7 +541,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (DebuggerUtilsAsync.isAsyncEnabled() && thread instanceof ThreadReferenceImpl) {
         ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
         try {
-          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get();
+          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get(1, TimeUnit.SECONDS);
         }
         catch (InterruptedException ignored) {
         }
