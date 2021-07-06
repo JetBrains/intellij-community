@@ -1204,6 +1204,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/first.kt");
                 }
 
+                @TestMetadata("firstNotNullOf.kt")
+                public void testFirstNotNullOf() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstNotNullOf.kt");
+                }
+
+                @TestMetadata("firstNotNullOfOrNull.kt")
+                public void testFirstNotNullOfOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstNotNullOfOrNull.kt");
+                }
+
                 @TestMetadata("firstOrNull.kt")
                 public void testFirstOrNull() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstOrNull.kt");
