@@ -132,13 +132,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "    <warning descr=\"'Final' name should be initialized with a value\">a</warning>: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">Final</warning>\n" +
                          "    <warning descr=\"'Final' name should be initialized with a value\">b</warning>: Final[int]\n" +
                          "    c: int\n" +
-                         "\n" +
-                         "MY_FINAL = Final\n" +
-                         "MY_FINAL_INT = Final[int]\n" +
-                         "\n" +
-                         "class B:\n" +
-                         "    <warning descr=\"'Final' name should be initialized with a value\">c</warning>: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">MY_FINAL</warning>\n" +
-                         "    d: MY_FINAL_INT" +
+                         "    d: Final[int]\n" +
                          "\n" +
                          "    def __init__(self):\n" +
                          "        self.d = 10")
