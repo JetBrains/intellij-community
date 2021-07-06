@@ -223,7 +223,7 @@ public class SoftWrapApplianceManager implements Dumpable {
                            myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+        LOG.debug("Soft wrap recalculation done: " + event + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
       }
       if (event.getActualEndOffset() > endOffsetUpperEstimate) {
         LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
