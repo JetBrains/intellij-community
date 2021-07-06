@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -10,9 +11,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.map2Array
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleByEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -25,6 +26,8 @@ interface ModuleModelProxy {
   fun findModuleByName(name: String): Module?
   fun newModule(path: String, moduleTypeId: String): Module
   fun setModuleGroupPath(module: Module, groupPath: Array<String>?)
+  @Throws(ModuleWithNameAlreadyExists::class)
+  fun renameModule(module: Module, moduleName: String)
   val modules: Array<Module>
 }
 
@@ -43,6 +46,10 @@ class ModuleModelProxyWrapper(val delegate: ModifiableModuleModel) : ModuleModel
 
   override fun setModuleGroupPath(module: Module, groupPath: Array<String>?) {
     delegate.setModuleGroupPath(module, groupPath)
+  }
+
+  override fun renameModule(module: Module, moduleName: String) {
+    delegate.renameModule(module, moduleName)
   }
 
   override val modules: Array<Module>
@@ -94,7 +101,7 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
       dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
     }
     val moduleManager = getInstance(project)
-    val module = moduleManager.createModuleInstance(moduleEntity, versionedStorage, diff, true)
+    val module = moduleManager.createModuleInstance(moduleEntity, versionedStorage, diff, true, null)
     diff.getMutableExternalMapping<Module>("intellij.modules.bridge").addMapping(moduleEntity, module)
     return module
   }
@@ -124,6 +131,10 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
         else -> error("Should not be reached")
       }
     }
+  }
+
+  override fun renameModule(module: Module, moduleName: String) {
+    TODO("Not yet implemented")
   }
 
   init {
