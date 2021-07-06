@@ -59,7 +59,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     }
 
   val editor: Editor
-    get() = selectedEditor ?: throw NoTextEditor()
+    get() = selectedEditor ?: throw throw NoTextEditor()
 
   /**
    * @property [shouldRestore] - function that should invoke some check for restore
@@ -176,10 +176,32 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     }
   }
 
+  inline fun invokeInBackground(crossinline runnable: () -> Unit) {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      try {
+        runnable()
+      }
+      catch (e: Throwable) {
+        thisLogger().error(getLessonInfoString(), e)
+      }
+    }
+  }
+
+  inline fun taskInvokeLater(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
+    invokeLater(modalityState) {
+      try {
+        runnable()
+      }
+      catch (e: Throwable) {
+        thisLogger().error(getLessonInfoString(), e)
+      }
+    }
+  }
+
   private fun processNextTask(taskIndex: Int) {
     // ModalityState.current() or without argument - cannot be used: dialog steps can stop to work.
     // Good example: track of rename refactoring
-    invokeLater(ModalityState.any()) {
+    taskInvokeLater(ModalityState.any()) {
       disposeRecorders()
       continuePreviousHighlighting.set(false)
       continuePreviousHighlighting = Ref(true)
@@ -309,7 +331,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
       val restoreFunction = shouldRestore() ?: return
       val restoreIfNeeded = {
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           if (canBeRestored(taskContext)) {
             restoreFunction()
           }
@@ -418,4 +440,6 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
     }
   }
+
+  fun getLessonInfoString() = """lesson ID = ${lesson.id}, language ID = ${lesson.languageId}, taskId = $currentTaskIndex"""
 }

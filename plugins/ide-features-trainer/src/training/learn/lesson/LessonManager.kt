@@ -3,7 +3,6 @@ package training.learn.lesson
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -166,7 +165,7 @@ class LessonManager {
   fun setRestoreNotification(notification: TaskContext.RestoreNotification) {
     val callback = Runnable {
       notification.callback()
-      invokeLater {
+      currentLessonExecutor?.taskInvokeLater {
         clearRestoreMessage()
       }
     }

@@ -382,7 +382,7 @@ fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boole
         LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
         ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
       }
-      invokeLater {
+      taskInvokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {
           val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
@@ -400,15 +400,28 @@ inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi
   usePulsation: Boolean = false,
   crossinline finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
 ) {
+  val componentClass = ComponentType::class.java
+  @Suppress("DEPRECATION")
+  highlightAllFoundUiWithClass(componentClass, clearPreviousHighlights, highlightInside, usePulsation) {
+    finderFunction(it)
+  }
+}
+
+@Deprecated("Use inline form instead")
+fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(componentClass: Class<ComponentType>,
+                                                                           clearPreviousHighlights: Boolean,
+                                                                           highlightInside: Boolean,
+                                                                           usePulsation: Boolean,
+                                                                           finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
   prepareRuntimeTask {
     if (clearPreviousHighlights) LearningUiHighlightingManager.clearHighlights()
-    ApplicationManager.getApplication().executeOnPooledThread {
+    invokeInBackground {
       val result =
-        LearningUiUtil.findAllShowingComponentWithTimeout(null, ComponentType::class.java, seconds01) { ui ->
-        finderFunction(ui)
-      }
+        LearningUiUtil.findAllShowingComponentWithTimeout(null, componentClass, seconds01) { ui ->
+          finderFunction(ui)
+        }
 
-      invokeLater {
+      taskInvokeLater {
         for (ui in result) {
           val options = LearningUiHighlightingManager.HighlightingOptions(clearPreviousHighlights = false,
                                                                           highlightInside = highlightInside,
