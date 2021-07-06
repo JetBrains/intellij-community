@@ -21,7 +21,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlin.streams.toList
-import kotlin.time.milliseconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 internal val Project.packageSearchDataService
     get() = service<PackageSearchDataService>()
@@ -35,20 +36,20 @@ internal val Project.nativeModulesChangesFlow
             ProjectTopics.MODULES,
             object : ModuleListener {
                 override fun moduleAdded(project: Project, module: Module) {
-                    offer(getNativeModules())
+                    trySend(getNativeModules())
                 }
 
                 override fun moduleRemoved(project: Project, module: Module) {
-                    offer(getNativeModules())
+                    trySend(getNativeModules())
                 }
 
                 override fun modulesRenamed(project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>) {
-                    offer(getNativeModules())
+                    trySend(getNativeModules())
                 }
             }
         )
         awaitClose { connection.disconnect() }
-    }.debounce(200.milliseconds).map { it.toList() }
+    }.debounce(200.toDuration(DurationUnit.MILLISECONDS)).map { it.toList() }
 
 internal val Project.packageSearchModulesChangesFlow
     get() = nativeModulesChangesFlow.replayOnSignal(moduleChangesSignalFlow)
@@ -80,7 +81,7 @@ internal val Project.lookAndFeelFlow
         send(LafManager.getInstance()!!)
         connection.subscribe(
             LafManagerListener.TOPIC,
-            LafManagerListener { offer(it) }
+            LafManagerListener { trySend(it) }
         )
         awaitClose { connection.disconnect() }
     }
