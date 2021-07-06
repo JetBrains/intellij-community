@@ -83,6 +83,10 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testConditionalExitPoint(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

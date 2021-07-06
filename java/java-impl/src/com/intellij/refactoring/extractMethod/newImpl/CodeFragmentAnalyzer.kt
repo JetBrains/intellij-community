@@ -182,9 +182,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
     val gotoInstructions = (flowRange.first until flowRange.last)
       .asSequence()
-      .filter { offset -> isNonLocalJump(offset) }
+      .filter { offset -> isNonLocalJump(offset) && isInstructionReachable(offset) }
       .distinctBy { offset -> (flow.instructions[offset] as BranchingInstruction).offset }
-      .filter { offset -> isInstructionReachable(offset) }
       .toList()
 
     val jumpPoints = gotoInstructions
