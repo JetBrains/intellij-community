@@ -23,6 +23,11 @@ public class BackspaceHandlerTestGenerated extends AbstractBackspaceHandlerTest 
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("beforeUnpairedBrace.kt")
+    public void testBeforeUnpairedBrace() throws Exception {
+        runTest("testData/editor/backspaceHandler/beforeUnpairedBrace.kt");
+    }
+
     @TestMetadata("rawStringDelete.kt")
     public void testRawStringDelete() throws Exception {
         runTest("testData/editor/backspaceHandler/rawStringDelete.kt");
