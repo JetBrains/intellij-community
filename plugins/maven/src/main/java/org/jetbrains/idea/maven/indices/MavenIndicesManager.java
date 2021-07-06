@@ -60,15 +60,15 @@ public final class MavenIndicesManager implements Disposable {
 
   private final AtomicBoolean myInitStarted = new AtomicBoolean(false);
 
-  private class IndexKeeper implements @NotNull Disposable {
-    private final MavenIndexerWrapper myIndexer;
-    private final MavenIndices myIndices;
-    private final List<MavenArchetype> myUserArchetypes;
-    private final MavenServerDownloadListener myDownloadListener;
+  private class IndexKeeper implements Disposable {
+    private final @NotNull MavenIndexerWrapper myIndexer;
+    private final @NotNull MavenIndices myIndices;
+    private final @NotNull List<MavenArchetype> myUserArchetypes;
+    private final @NotNull MavenServerDownloadListener myDownloadListener;
 
-    private IndexKeeper(MavenIndexerWrapper indexer,
-                        MavenIndices indices,
-                        List<MavenArchetype> archetypes, MavenServerDownloadListener downloadListener) {
+    private IndexKeeper(@NotNull MavenIndexerWrapper indexer,
+                        @NotNull MavenIndices indices,
+                        @NotNull List<MavenArchetype> archetypes, MavenServerDownloadListener downloadListener) {
       myIndexer = indexer;
       myIndices = indices;
       myUserArchetypes = archetypes;
@@ -136,6 +136,7 @@ public final class MavenIndicesManager implements Disposable {
     myUpdatingQueue.clear();
   }
 
+  @NotNull
   private MavenIndices getIndicesObject() {
     return ReadAction.nonBlocking(() -> {
       return ensureInitialized().myIndices;
@@ -277,7 +278,6 @@ public final class MavenIndicesManager implements Disposable {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
     MavenIndices indices = getIndicesObject();
-    if (indices == null) return;
     MavenIndex index = indices.find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
