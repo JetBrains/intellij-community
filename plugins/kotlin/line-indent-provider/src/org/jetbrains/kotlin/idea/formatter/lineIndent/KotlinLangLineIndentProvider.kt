@@ -221,6 +221,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 it.moveToLeftParenthesisBackwardsSkippingNested(leftBraceType, rightBraceType)
             }
 
+            if (leftBrace.isAtEnd) {
+                return createIndentCalculator(defaultIndent, 0)
+            }
+
             if (after.after().afterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET).isAt(Comma)) {
                 return createIndentCalculator(createAlignMultilineIndent(leftBrace), leftBrace.startOffset)
             }
