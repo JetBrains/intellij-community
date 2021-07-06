@@ -30,7 +30,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class FirModuleResolveStateConfiguratorIdeImpl(private val project: Project) : FirModuleResolveStateConfigurator() {
-    override fun createPackagePartsProvider(scope: GlobalSearchScope): PackagePartProvider =
+    override fun createPackagePartsProvider(moduleInfo: ModuleSourceInfoBase, scope: GlobalSearchScope): PackagePartProvider =
         IDEPackagePartProvider(scope)
 
     override fun createModuleDataProvider(moduleInfo: ModuleSourceInfoBase): ModuleDataProvider {
