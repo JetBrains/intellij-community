@@ -15,13 +15,11 @@
  */
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
 
 internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider() {
@@ -29,17 +27,15 @@ internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider
     if (!pathQuery.searchInArtifacts) {
       return null
     }
-    val artifacts = if (ApplicationManager.getApplication().isReadAccessAllowed) {
-      ArtifactManager.getInstance(project).artifacts
-    }
-    else {
-      ReadAction.compute(ThrowableComputable<Array<Artifact>, RuntimeException> { ArtifactManager.getInstance(project).artifacts })
-    }
-    for (artifact in artifacts) {
-      val root = artifact.outputFile ?: continue
-      return resolver.resolve(path, root, pathQuery = pathQuery) ?: continue
-    }
-    return null
+
+    return ReadAction.compute(ThrowableComputable<PathInfo?, RuntimeException> {
+      val artifacts = ArtifactManager.getInstance(project).artifacts
+      for (artifact in artifacts) {
+        val root = artifact.outputFile ?: continue
+        return@ThrowableComputable resolver.resolve(path, root, pathQuery = pathQuery) ?: continue
+      }
+      return@ThrowableComputable null
+    })
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
