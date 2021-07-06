@@ -141,6 +141,7 @@ public class FlipCommaIntention implements IntentionAction {
   @NotNull
   private static JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
     SyntaxTraverser.ApiEx<PsiElement> api = fwd ? SyntaxTraverser.psiApi() : SyntaxTraverser.psiApiReversed();
+    api.next(element);
     JBIterable<PsiElement> flatSiblings = JBIterable.generate(element, api::next).skip(1);
     return SyntaxTraverser.syntaxTraverser(api)
       .withRoots(flatSiblings)
@@ -149,8 +150,8 @@ public class FlipCommaIntention implements IntentionAction {
   }
 
   private static boolean isFlippable(PsiElement e) {
-    if (e instanceof PsiWhiteSpace || e instanceof PsiComment) return false;
-    return StringUtil.isNotEmpty(e.getText());
+    if (e instanceof PsiWhiteSpace || e instanceof PsiComment || e.textMatches("\n")) return false;
+    return !StringUtil.collapseWhiteSpace(e.getText()).isEmpty();
   }
 
   @Nullable
