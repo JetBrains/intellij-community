@@ -29,8 +29,8 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun getPresentation(): UsageSearchPresentation =
     object: UsageSearchPresentation {
-      override fun getSearchString(): String = usageHandler.getSearchString(allOptions)
-      override fun getSearchOptions(): String {
+      override fun getSearchTargetString(): String = usageHandler.getSearchString(allOptions)
+      override fun getOptionsString(): String {
         val optionsList = ArrayList<String>()
 
         if (allOptions.options.isUsages) optionsList.add(LangBundle.message("target.usages.option"))

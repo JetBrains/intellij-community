@@ -274,11 +274,32 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }));
   }
 
+  private static @Nls @NotNull String getUsagesTitle(@NotNull PsiElement element) {
+    HtmlBuilder builder = new HtmlBuilder();
+
+    builder.append(StringUtil.capitalize(UsageViewUtil.getType(element))).nbsp().
+      append(HtmlChunk.text(UsageViewUtil.getLongName(element)).bold());
+
+    if (element instanceof NavigationItem) {
+      ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
+      if (itemPresentation != null && StringUtil.isNotEmpty(itemPresentation.getLocationString())) {
+        builder.nbsp().append(HtmlChunk.text(itemPresentation.getLocationString()).
+                                wrapWith("font").attr("color", "#" + ColorUtil.toHex(SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor())));
+      }
+    }
+
+    return builder.toString();
+  }
+
   @NotNull
   private static ShowUsagesActionHandler createActionHandler(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions options) {
     // show super method warning dialogs before starting finding usages
     PsiElement[] primaryElements = handler.getPrimaryElements();
     PsiElement[] secondaryElements = handler.getSecondaryElements();
+
+    String title = getUsagesTitle(handler.getPsiElement());
+    String optionsString = options.generateUsagesString();
+
     return new ShowUsagesActionHandler() {
       @Override
       public boolean isValid() {
@@ -290,28 +311,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return new UsageSearchPresentation() {
           @Nls
           @Override
-          public @NotNull String getSearchString() {
-            PsiElement element = handler.getPsiElement();
-            HtmlBuilder builder = new HtmlBuilder();
-
-            builder.append(StringUtil.capitalize(UsageViewUtil.getType(element))).nbsp().
-              append(HtmlChunk.text(UsageViewUtil.getLongName(element)).bold());
-
-            if (element instanceof NavigationItem) {
-              ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
-              if (itemPresentation != null && StringUtil.isNotEmpty(itemPresentation.getLocationString())) {
-                builder.nbsp().append(HtmlChunk.text(itemPresentation.getLocationString()).
-                                        wrapWith("font").attr("color", "#" + ColorUtil.toHex(SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor())));
-              }
-            }
-
-            return builder.toString();
+          public @NotNull String getSearchTargetString() {
+            return title;
           }
 
           @Nls
           @Override
-          public @NotNull String getSearchOptions() {
-            return options.generateUsagesString();
+          public @NotNull String getOptionsString() {
+            return optionsString;
           }
         };
       }
@@ -659,7 +666,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                           @NotNull ShowUsagesActionHandler actionHandler) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = parameters.project;
-    String title = actionHandler.getPresentation().getSearchString();
+    String title = actionHandler.getPresentation().getSearchTargetString();
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>")).
@@ -773,7 +780,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setOpaque(false);
 
-    JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getSearchOptions());
+    JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getOptionsString());
     northPanel.add(optionsLabel, gc.next());
     northPanel.add(toolbarComponent, gc.next());
 

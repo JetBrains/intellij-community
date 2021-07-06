@@ -9,15 +9,18 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 @ApiStatus.Experimental
 public interface UsageSearchPresentation {
-
   /**
-   * Basically returns formatted psi element name.
+   * Returns formatted psi element name: {item type} {item name} {item origin}
+   * Where:
+   * {item type} is capitalized type like "Method", "Local variable"
+   * {item name} is element name enclosed in HTML bold attributes
+   * {item origin} optional origin of the element e.g. FQN of enclosing class
    */
-  @Nls(capitalization = Title) @NotNull String getSearchString();
+  @Nls(capitalization = Title) @NotNull String getSearchTargetString();
 
   /**
    * Search options converted to formatted string.
    */
   @Nls
-  @NotNull String getSearchOptions();
+  @NotNull String getOptionsString();
 }
