@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.diagnostics.rendering.*
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
@@ -42,12 +40,16 @@ open class LineMarkerConfiguration(var renderDescription: Boolean = true) : Abst
 }
 
 open class HighlightingConfiguration(
-    val renderDescription: Boolean = true,
+    val descriptionRenderingOption: DescriptionRenderingOption = DescriptionRenderingOption.ALWAYS,
     val renderTextAttributesKey: Boolean = true,
     val renderSeverity: Boolean = true,
     val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
-    val checkNoError: Boolean = false
+    val checkNoError: Boolean = false,
 ) : AbstractCodeMetaInfoRenderConfiguration() {
+
+    enum class DescriptionRenderingOption {
+        ALWAYS, NEVER, IF_NOT_NULL
+    }
 
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is HighlightingCodeMetaInfo) return ""
@@ -62,13 +64,22 @@ open class HighlightingConfiguration(
         val params = mutableListOf<String>()
         if (renderSeverity)
             params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity}'")
-        if (renderDescription)
-            params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
+        }
+
+        when (descriptionRenderingOption) {
+            DescriptionRenderingOption.NEVER -> {}
+
+            DescriptionRenderingOption.ALWAYS, DescriptionRenderingOption.IF_NOT_NULL -> {
+                params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
+            }
+        }
+
         if (renderTextAttributesKey)
             highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
                 params.add("textAttributesKey='${this}'")
             }
-            params.add(getAdditionalParams(highlightingCodeMetaInfo))
+
+        params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")
 
         return if (paramsString.isEmpty()) "" else "(\"$paramsString\")"
