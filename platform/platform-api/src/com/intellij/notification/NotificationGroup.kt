@@ -42,7 +42,6 @@ class NotificationGroup private constructor(val displayId: String,
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
   @JvmOverloads
   @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   constructor(displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
