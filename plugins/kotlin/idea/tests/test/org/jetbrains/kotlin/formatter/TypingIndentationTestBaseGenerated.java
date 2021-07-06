@@ -333,6 +333,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
+            @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
+            public void testBetweenOpenBraceAndParenthesis() throws Exception {
+                runTest("testData/indentationOnNewline/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
+            }
+
             @TestMetadata("Catch.after.kt")
             public void testCatch() throws Exception {
                 runTest("testData/indentationOnNewline/controlFlowConstructions/Catch.after.kt");
