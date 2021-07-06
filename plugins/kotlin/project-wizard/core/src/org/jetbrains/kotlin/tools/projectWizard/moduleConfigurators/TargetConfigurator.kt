@@ -17,12 +17,9 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurat
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.cssSupport
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator.createTargetIrs
-import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
@@ -170,7 +167,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
                     }
 
                 }
-                if (Settings.javaSupport.reference.settingValue) {
+                if (!module.hasAndroidSibling()) {
                     "withJava"()
                 }
             }
@@ -185,17 +182,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
         }
     }
 
-    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super.getConfiguratorSettings() +
-                Settings.javaSupport
-
-    object Settings : ModuleConfiguratorSettings() {
-        val javaSupport by booleanSetting(
-            KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.java.support"),
-            GenerationPhase.PROJECT_GENERATION
-        ) {
-            description = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.java.support.description")
-            defaultValue = value(false)
-        }
-    }
+    private fun Module.hasAndroidSibling(): Boolean =
+        configurator is TargetConfigurator
+                && parent?.subModules?.any { it.configurator is AndroidModuleConfigurator } ?: false
 }
