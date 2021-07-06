@@ -1383,7 +1383,7 @@ public abstract class DialogWrapper {
   protected void startTrackingValidation() {
     if (!continuousValidation()) return;
     SwingUtilities.invokeLater(() -> {
-      if (!myValidationStarted && !myDisposed) {
+      if (!myValidationStarted) {
         myValidationStarted = true;
         initValidation();
       }
@@ -1391,12 +1391,13 @@ public abstract class DialogWrapper {
   }
 
   protected final void initValidation() {
+    if (myDisposed) return;
     myValidationAlarm.cancelAllRequests();
     Runnable validateRequest = () -> {
       if (myDisposed) return;
       updateErrorInfo(doValidateAll());
 
-      if (!myDisposed && continuousValidation()) {
+      if (continuousValidation()) {
         initValidation();
       }
     };
