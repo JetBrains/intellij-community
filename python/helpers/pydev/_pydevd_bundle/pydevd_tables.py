@@ -5,6 +5,8 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
+import sys
+
 MAX_COLS = 500
 MAX_COLWIDTH = 200
 
@@ -26,9 +28,10 @@ def is_error_on_eval(val):
 
 def exec_table_command(init_command, command_type, f_globals, f_locals):
     # noinspection PyUnresolvedReferences
-    import pandas as pd
     res = ""
     if command_type == TableCommandType.DF_INFO:
+        if 'pd' not in sys.modules:
+            exec('import pandas as pd', f_globals, f_locals)
         tmp_var = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
         is_exception_on_eval = is_error_on_eval(tmp_var)
         if is_exception_on_eval:
