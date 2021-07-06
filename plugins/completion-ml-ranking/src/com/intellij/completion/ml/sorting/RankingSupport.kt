@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
 import com.intellij.application.options.CodeCompletionOptions
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
@@ -74,18 +73,19 @@ object RankingSupport {
     val settings = CompletionMLRankingSettings.getInstance()
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
+    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
+
     if (application.isEAP && experimentInfo.inExperiment && !experimentStatus.isDisabled()) {
       settings.updateShowDiffInExperiment(experimentInfo.shouldShowArrows)
+    } else {
+      showNotificationAboutMLOnce(shouldSort, provider.isEnabledByDefault, provider.id)
     }
-
-    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    showNotificationAboutMLOnce(shouldSort, provider.isEnabledByDefault)
 
     return shouldSort
   }
 
-  private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean) {
-    if (shouldSort && isEnabledByDefault && (PlatformUtils.isWebStorm() || PlatformUtils.isGoIde())) {
+  private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean, providerId: String) {
+    if (shouldSort && isEnabledByDefault && providerId == "Kotlin") {
       val properties = PropertiesComponent.getInstance()
       if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
         properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
