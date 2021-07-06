@@ -1048,7 +1048,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (resolved instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
 
-      if (eventuallyResolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
+      if (resolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           return getType(indexExpr, context);
@@ -1072,64 +1072,27 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
                                                                                         @NotNull TypeEvalContext context) {
     final PyExpression annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PySubscriptionExpression) {
-      return eventuallyResolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
+      return resolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
     }
     else if (annotation instanceof PyReferenceExpression) {
-      return eventuallyResolvesToFinal(annotation, context);
+      return resolvesToFinal(annotation, context);
     }
 
     final String typeCommentValue = owner.getTypeCommentAnnotation();
     final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
     if (typeComment instanceof PySubscriptionExpression) {
-      return eventuallyResolvesToFinal(((PySubscriptionExpression)typeComment).getOperand(), context);
+      return resolvesToFinal(((PySubscriptionExpression)typeComment).getOperand(), context);
     }
     else if (typeComment instanceof PyReferenceExpression) {
-      return eventuallyResolvesToFinal(typeComment, context);
+      return resolvesToFinal(typeComment, context);
     }
 
     return false;
   }
 
-  public static boolean eventuallyResolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<PyExpression> currentQueue = new HashSet<>();
-    final Set<PyExpression> nextQueue = new HashSet<>();
-    nextQueue.add(expression);
-    final Set<PyExpression> visited = new HashSet<>();
-
-    while (!nextQueue.isEmpty()) {
-      currentQueue.clear();
-      currentQueue.addAll(nextQueue);
-      nextQueue.clear();
-
-      for (PyExpression element : currentQueue) {
-        if (resolvesToFinal(element, context, nextQueue, visited)) return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean resolvesToFinal(@NotNull PyExpression expression,
-                                         @NotNull TypeEvalContext context,
-                                         @NotNull Set<PyExpression> queue,
-                                         @NotNull Set<PyExpression> visited) {
-    final List<Pair<PyTargetExpression, PsiElement>> pairs = tryResolvingWithAliases(expression, context);
-
-    for (Pair<PyTargetExpression, PsiElement> pair : pairs) {
-      if (pair.second instanceof PyExpression) {
-        final PyExpression resolved = (PyExpression)pair.second;
-
-        final String qualifiedName = getQualifiedName(resolved);
-        if (FINAL.equals(qualifiedName) || FINAL_EXT.equals(qualifiedName)) {
-          return true;
-        }
-        else if (pair.first != null && visited.add(resolved) && visited.add(pair.first)) {
-          queue.add(resolved);
-        }
-      }
-    }
-
-    return false;
+  private static boolean resolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final var qualifiedNames = resolveToQualifiedNames(expression, context);
+    return qualifiedNames.contains(FINAL) || qualifiedNames.contains(FINAL_EXT);
   }
 
   @Nullable
