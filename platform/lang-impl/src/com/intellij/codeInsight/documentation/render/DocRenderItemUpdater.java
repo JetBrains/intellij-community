@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeperProvider;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +62,7 @@ public final class DocRenderItemUpdater implements Runnable {
       if (element.isValid()) {
         Editor editor = element.getEditor();
         keepers.computeIfAbsent(editor, e -> {
-          EditorScrollingPositionKeeper keeper = ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class)
-            .createEditorScrollingPositionKeeper(editor);
+          EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
           keeper.savePosition();
           return keeper;
         });

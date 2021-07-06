@@ -32,7 +32,10 @@ import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.ex.util.*;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -535,8 +538,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
                                () -> ContextMenuPopupHandler.getGroupForId(myContextMenuGroupId));
 
-    myScrollingPositionKeeper =
-      ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class).createEditorScrollingPositionKeeper(this);
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
     putUserData(INITIALIZED, Boolean.TRUE);
   }

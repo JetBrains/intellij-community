@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -80,8 +79,7 @@ public class EditorScrollingPositionKeeper implements Disposable {
       operation.run();
       return;
     }
-    EditorScrollingPositionKeeper keeper = ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class)
-      .createEditorScrollingPositionKeeper(editor);
+    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
     keeper.savePosition();
     try {
       operation.run();
@@ -118,9 +116,7 @@ public class EditorScrollingPositionKeeper implements Disposable {
         myKeepers = Collections.emptyList();
       }
       else {
-        myKeepers = EditorFactory.getInstance().editors(document).map(
-          editor -> ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class)
-            .createEditorScrollingPositionKeeper(editor)).collect(Collectors.toList());
+        myKeepers = EditorFactory.getInstance().editors(document).map(EditorScrollingPositionKeeper::new).collect(Collectors.toList());
       }
     }
 

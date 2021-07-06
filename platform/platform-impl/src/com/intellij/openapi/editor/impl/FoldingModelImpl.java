@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeperProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -104,7 +103,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     };
     myFoldRegionsProcessed = false;
 
-    myScrollingPositionKeeper = ApplicationManager.getApplication().getService(EditorScrollingPositionKeeperProvider.class).createEditorScrollingPositionKeeper(editor);
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(editor);
     Disposer.register(editor.getDisposable(), myScrollingPositionKeeper);
 
     updateTextAttributes();
