@@ -59,7 +59,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     }
 
   val editor: Editor
-    get() = selectedEditor ?: throw throw NoTextEditor()
+    get() = selectedEditor ?: throw NoTextEditor()
 
   /**
    * @property [shouldRestore] - function that should invoke some check for restore
