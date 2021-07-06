@@ -166,6 +166,18 @@ public final class ChunkExtractor {
                                                 int end,
                                                 boolean selectUsageWithBold,
                                                 @NotNull List<? super TextChunk> result) {
+    processTokens(chars, start, end, (startOffset, endOffset, textAttributesKeys) -> {
+      processIntersectingRange(usageInfo2UsageAdapter, chars, startOffset, endOffset, textAttributesKeys, selectUsageWithBold, result);
+      return true;
+    });
+    return result.toArray(TextChunk.EMPTY_ARRAY);
+  }
+
+  private interface TokenHighlightProcessor {
+    boolean process(int startOffset, int endOffset, @NotNull TextAttributesKey @NotNull [] textAttributesKeys);
+  }
+
+  private void processTokens(@NotNull CharSequence chars, int start, int end, @NotNull TokenHighlightProcessor tokenHighlightProcessor) {
     final Lexer lexer = myHighlighter.getHighlightingLexer();
     final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
@@ -204,11 +216,10 @@ public final class ChunkExtractor {
       isBeginning = false;
       IElementType tokenType = lexer.getTokenType();
       TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
-
-      processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
+      if (!tokenHighlightProcessor.process(hiStart, hiEnd, tokenHighlights)) {
+        return;
+      }
     }
-
-    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
   private void processIntersectingRange(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
