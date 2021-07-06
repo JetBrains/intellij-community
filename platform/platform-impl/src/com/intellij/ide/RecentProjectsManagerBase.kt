@@ -254,6 +254,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return projectIconHelper.getProjectIcon(path, false)
   }
 
+  @Deprecated("Use getProjectIcon(String, Boolean)", ReplaceWith("getProjectIcon(path, generateFromName)"))
+  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean) = getProjectIcon(path, generateFromName)
+
   fun getProjectIcon(path: String, generateFromName: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, generateFromName)
   }
