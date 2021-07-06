@@ -100,7 +100,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
       UISettings.getInstance().fireUISettingsChanged();
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification =
-          new Notification("", IdeBundle.message("alphabetical.mode.is.on.notification"), "", NotificationType.INFORMATION);
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("alphabetical.mode.is.on.notification"), "", NotificationType.INFORMATION);
         notification.addAction(
           DumbAwareAction.create(ApplicationBundle.message("checkbox.sort.tabs.alphabetically"), e -> {
             UISettings.getInstance().setSortTabsAlphabetically(true);
