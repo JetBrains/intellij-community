@@ -382,8 +382,6 @@
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
       <separator/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
-      <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
-      <action id="ReplaceConstructorWithBuilder" class="com.intellij.refactoring.actions.ReplaceConstructorWithBuilderAction"/>
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>

@@ -66,22 +66,6 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<TypeCookAction>())
   }
 
-  fun testReplaceConstructorWithFactoryFilteredOnParameters() {
-    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
-  }
-
-  fun testReplaceConstructorWithFactoryFilteredOnStatement() {
-    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
-  }
-
-  fun testReplaceConstructorWithFactoryOnCall() {
-    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
-  }
-
-  fun testReplaceConstructorWithFactoryOnDeclaration() {
-    assertTrue(doActionExists<ReplaceConstructorWithFactoryAction>())
-  }
-
   fun testUseInterfaceWherePossibleOnDeclaration() {
     assertTrue(doActionExists<TurnRefsToSuperAction>())
   }

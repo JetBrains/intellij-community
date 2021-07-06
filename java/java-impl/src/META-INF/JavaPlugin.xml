@@ -1926,6 +1926,16 @@
       <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.refactorings</categoryKey>
