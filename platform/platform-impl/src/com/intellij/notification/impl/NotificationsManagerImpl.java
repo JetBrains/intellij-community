@@ -998,14 +998,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       });
     }
-
-    @Override
-    protected @NotNull Rectangle getTextBounds() {
-      Rectangle bounds = super.getTextBounds();
-      bounds.x -= getIcon().getIconWidth();
-      bounds.width += 8;
-      return bounds;
-    }
   }
 
   private static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
