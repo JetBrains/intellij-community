@@ -173,9 +173,15 @@ class CodeMetaInfoTestCase(
                 getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
             )
         }
-        val parsedMetaInfo = CodeMetaInfoParser.getCodeMetaInfoFromText(
-            expectedFile.readText().replace(LineSeparator.CRLF.separatorString, LineSeparator.LF.separatorString) // Fix for Windows
-        ).toMutableList()
+
+        val parsedMetaInfo = if (expectedFile.exists()) {
+            // Fix for Windows
+            val expectedText = expectedFile.readText().replace(LineSeparator.CRLF.separatorString, LineSeparator.LF.separatorString)
+            CodeMetaInfoParser.getCodeMetaInfoFromText(expectedText).toMutableList()
+        } else {
+            mutableListOf()
+        }
+
         codeMetaInfoForCheck.forEach { codeMetaInfo ->
             val correspondingParsed = parsedMetaInfo.firstOrNull { it == codeMetaInfo }
             if (correspondingParsed != null) {
