@@ -45,4 +45,6 @@ class ForMultiLanguageSupport {
   // gamma integrals where
   //   <TYPO>igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
   //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
+
+  // value between hours and minutes (":" is used by default)
 }

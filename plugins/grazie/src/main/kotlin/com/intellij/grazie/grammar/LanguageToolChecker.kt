@@ -116,7 +116,8 @@ class LanguageToolChecker : TextChecker() {
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 && text.startsWith("\")", match.fromPos - 1)) {
+      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 &&
+          (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
         return true //https://github.com/languagetool-org/languagetool/issues/5269
       }
 
