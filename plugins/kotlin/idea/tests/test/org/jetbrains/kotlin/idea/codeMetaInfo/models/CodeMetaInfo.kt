@@ -110,7 +110,8 @@ fun createCodeMetaInfo(obj: Any, renderConfiguration: AbstractCodeMetaInfoRender
 
 fun getCodeMetaInfo(
     objects: List<Any>,
-    renderConfiguration: AbstractCodeMetaInfoRenderConfiguration
+    renderConfiguration: AbstractCodeMetaInfoRenderConfiguration,
+    filterMetaInfo: (CodeMetaInfo) -> Boolean
 ): List<CodeMetaInfo> {
-    return objects.flatMap { createCodeMetaInfo(it, renderConfiguration) }
+    return objects.flatMap { createCodeMetaInfo(it, renderConfiguration) }.filter(filterMetaInfo)
 }
