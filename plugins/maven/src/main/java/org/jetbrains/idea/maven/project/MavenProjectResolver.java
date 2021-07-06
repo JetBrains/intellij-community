@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.MavenReimportQuickFix;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
@@ -172,7 +173,7 @@ public class MavenProjectResolver {
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
-      Map<MavenPlugin, File> unresolvedPlugins = new HashMap<>();
+      Set<MavenPlugin> unresolvedPlugins = new HashSet<>();
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
@@ -187,13 +188,13 @@ public class MavenProjectResolver {
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
-          unresolvedPlugins.put(each, file);
+          DownloadArtifactBuildIssue.removeBadArtifact(file);
+          unresolvedPlugins.add(each);
         }
       }
       if (!unresolvedPlugins.isEmpty()) {
-        Collection<File> files = unresolvedPlugins.values();
-        CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-        for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
+        MavenReimportQuickFix fix = new MavenReimportQuickFix();
+        for (MavenPlugin mavenPlugin : unresolvedPlugins) {
           MavenProjectsManager.getInstance(myProject)
             .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
             .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
