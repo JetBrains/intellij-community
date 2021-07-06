@@ -146,6 +146,14 @@ abstract class ToolWindowHeader internal constructor(
     return toolbar
   }
 
+  fun getToolbarActions(): ActionGroup? {
+    return actionGroup
+  }
+
+  fun getToolbarWestActions(): ActionGroup? {
+    return actionGroupWest
+  }
+
   override fun getData(dataId: String): Any? {
     if (MorePopupAware.KEY.`is`(dataId)) {
       return contentUi.getData(dataId)
