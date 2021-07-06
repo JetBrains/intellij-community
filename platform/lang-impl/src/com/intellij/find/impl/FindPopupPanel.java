@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -1910,7 +1910,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       @NotNull
       private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
         SimpleTextAttributes at = textChunk.getSimpleAttributesIgnoreBackground();
-        boolean highlighted = textChunk.getType() != null || at.getFontStyle() == Font.BOLD;
+        boolean highlighted = at.getFontStyle() == Font.BOLD;
         return highlighted
                ? new SimpleTextAttributes(null, at.getFgColor(), at.getWaveColor(),
                                           at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD |
