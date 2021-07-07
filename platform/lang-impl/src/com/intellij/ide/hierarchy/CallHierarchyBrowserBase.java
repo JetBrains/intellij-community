@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,9 +73,9 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   private final class ChangeViewTypeActionBase extends ToggleAction {
-    private final String myTypeName;
+    private final @Nls String myTypeName;
 
-    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, @Nls String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
@@ -105,12 +106,12 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  public static @NotNull String getCalleeType() {
+  public static @NotNull @Nls String getCalleeType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  public static @NotNull String getCallerType() {
+  public static @NotNull @Nls String getCallerType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }

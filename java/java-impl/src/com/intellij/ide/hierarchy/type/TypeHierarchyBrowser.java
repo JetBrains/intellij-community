@@ -16,6 +16,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<? super String, ? super JTree> trees) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 

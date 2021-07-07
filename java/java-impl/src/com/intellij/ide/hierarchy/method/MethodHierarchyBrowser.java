@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<? super String, ? super JTree> trees) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
     JTree tree = createTree(false);
     PopupHandler.installPopupMenu(tree, IdeActions.GROUP_METHOD_HIERARCHY_POPUP, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP);
 

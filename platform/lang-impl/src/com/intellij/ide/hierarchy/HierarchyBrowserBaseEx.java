@@ -85,12 +85,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private static class Sheet implements Disposable {
     private AsyncTreeModel myAsyncTreeModel;
     private StructureTreeModel<HierarchyTreeStructure> myStructureTreeModel;
-    private final @NotNull String myType;
+    private final @Nls @NotNull String myType;
     private final JTree myTree;
     private String myScope;
     private final OccurenceNavigator myOccurenceNavigator;
 
-    Sheet(@NotNull String type, @NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
+    Sheet(@Nls @NotNull String type, @NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
       myType = type;
       myTree = tree;
       myScope = scope;
@@ -120,7 +120,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCardLayout = new CardLayout();
     myTreePanel = new JPanel(myCardLayout);
 
-    Map<String, JTree> type2treeMap = new HashMap<>();
+    Map<@Nls String, JTree> type2treeMap = new HashMap<>();
     createTrees(type2treeMap);
 
     myI18nMap = getPresentableNameMap();
@@ -128,8 +128,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getSettings(project);
     String scope = state.SCOPE == null ? SCOPE_ALL : state.SCOPE;
 
-    for (Map.Entry<String, JTree> entry : type2treeMap.entrySet()) {
-      String type = entry.getKey();
+    for (Map.Entry<@Nls String, JTree> entry : type2treeMap.entrySet()) {
+      @Nls String type = entry.getKey();
       JTree tree = entry.getValue();
 
       OccurenceNavigatorSupport occurenceNavigatorSupport = new OccurenceNavigatorSupport(tree) {
@@ -194,7 +194,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NotNull
   protected abstract String getNextOccurenceActionNameImpl();
 
-  protected abstract void createTrees(@NotNull Map<? super String, ? super JTree> trees);
+  protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
   /**
    * Put (scope type -> presentable name) pairs into a map.
@@ -346,11 +346,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCursorAlarm.request();
   }
 
-  public void changeView(@NotNull String typeName) {
+  public void changeView(@Nls @NotNull String typeName) {
     changeView(typeName, true);
   }
 
-  public void changeView(@NotNull String typeName, boolean requestFocus) {
+  public void changeView(@Nls @NotNull String typeName, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Sheet sheet = myType2Sheet.get(typeName);
     myCurrentSheet.set(sheet);
@@ -529,11 +529,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @Override
   protected JTree getCurrentTree() {
-    String currentViewType = getCurrentViewType();
+    @Nls String currentViewType = getCurrentViewType();
     return currentViewType == null ? null : myType2Sheet.get(currentViewType).myTree;
   }
 
-  protected final String getCurrentViewType() {
+  protected final @Nls String getCurrentViewType() {
     Sheet sheet = myCurrentSheet.get();
     return sheet == null ? null : sheet.myType;
   }
@@ -575,7 +575,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    String currentViewType = getCurrentViewType();
+    @Nls String currentViewType = getCurrentViewType();
     List<Object> pathsToExpand = new ArrayList<>();
     List<Object> selectionPaths = new ArrayList<>();
     if (currentViewType != null) {
@@ -655,7 +655,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       PsiElement selectedElement = browser.getSelectedElement();
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
-      String currentViewType = browser.getCurrentViewType();
+      @Nls String currentViewType = browser.getCurrentViewType();
       Disposer.dispose(browser);
       HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(
         myProviderLanguageExtension, selectedElement, selectedElement.getContainingFile(), event.getDataContext());
@@ -666,7 +666,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
+    @Nls
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       return viewType;
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull String groupId) {
+  protected void createTreeAndSetupCommonActions(@NotNull Map<? super @Nls String, ? super JTree> trees, @NotNull String groupId) {
     BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
     JTree tree1 = createTree(true);
     PopupHandler.installPopupMenu(tree1, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
@@ -150,7 +151,8 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
+    @Nls
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       if (((TypeHierarchyBrowserBase)browser).myIsInterface && getTypeHierarchyType().equals(viewType)) {
         return getSubtypesHierarchyType();
       }
@@ -158,18 +160,19 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getTypeHierarchyType() {
+  public static @Nls String getTypeHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.class");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
+  @Nls
   public static String getSubtypesHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.subtypes");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getSupertypesHierarchyType() {
+  public static @Nls String getSupertypesHierarchyType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.supertypes");
   }
 }
