@@ -314,7 +314,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
-    return new GradleBuildScriptBuilder(getCurrentGradleVersion(), 0)
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
       .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
   }
 

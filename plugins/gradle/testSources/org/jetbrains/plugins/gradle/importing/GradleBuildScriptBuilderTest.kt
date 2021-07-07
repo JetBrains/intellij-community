@@ -209,4 +209,44 @@ class GradleBuildScriptBuilderTest {
         }
       """.trimIndent())
   }
+
+  @Test
+  fun `test child build script build`() {
+    assertThat(buildscript(GradleVersion.current()) {
+      withJUnit4()
+      allprojects {
+        withJavaPlugin()
+        withJUnit5()
+      }
+    }).isEqualTo("""
+        allprojects {
+            apply plugin: 'java'
+        
+            repositories {
+                maven {
+                    url 'https://repo.labs.intellij.net/repo1'
+                }
+            }
+        
+            dependencies {
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+            }
+        
+            test {
+                useJUnitPlatform()
+            }
+        }
+        
+        repositories {
+            maven {
+                url 'https://repo.labs.intellij.net/repo1'
+            }
+        }
+        
+        dependencies {
+            testImplementation 'junit:junit:4.12'
+        }
+      """.trimIndent())
+  }
 }

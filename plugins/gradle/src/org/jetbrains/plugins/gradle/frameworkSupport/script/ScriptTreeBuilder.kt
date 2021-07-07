@@ -13,17 +13,18 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
   private val roots = ArrayList<ScriptElement>()
 
-  fun join(builder: ScriptTreeBuilder) = builder.generate().apply {
-    roots.addAll(statements)
-  }
+  fun join(builder: ScriptTreeBuilder) = builder.generate().also(::addElements)
 
+  fun addElements(block: BlockElement) = addElements(block) { true }
+  fun addElements(builder: ScriptTreeBuilder) = addElements(builder.generate())
+  fun addElements(configure: ScriptTreeBuilder.() -> Unit) = addElements(ScriptTreeBuilder(configure))
+
+  fun addNonExistedElements(block: BlockElement) = addElements(block) { it !in roots }
+  fun addNonExistedElements(builder: ScriptTreeBuilder) = addNonExistedElements(builder.generate())
   fun addNonExistedElements(configure: ScriptTreeBuilder.() -> Unit) = addNonExistedElements(ScriptTreeBuilder(configure))
-  fun addNonExistedElements(builder: ScriptTreeBuilder) = builder.generate().apply {
-    for (statement in statements) {
-      if (statement !in roots) {
-        roots.add(statement)
-      }
-    }
+
+  fun addElements(block: BlockElement, filter: (ScriptElement) -> Boolean) = apply {
+    block.statements.filterTo(roots, filter)
   }
 
   private fun <E : ScriptElement> process(vararg children: ScriptElement, element: () -> E) = process(children.toList(), element)

@@ -13,8 +13,11 @@ import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent: Int = 0) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
-  override val scriptBuilder = GroovyScriptBuilder(indent)
+open class GradleBuildScriptBuilder(
+  gradleVersion: GradleVersion
+) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
+
+  override val scriptBuilder = GroovyScriptBuilder()
 
   override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
@@ -29,27 +32,6 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
       }
     }
 
-  override fun withJavaPlugin(): GradleBuildScriptBuilder =
-    if (indent == 0)
-      super.withJavaPlugin()
-    else
-      applyPlugin("'java'")
-
-  override fun withJavaLibraryPlugin(): GradleBuildScriptBuilder =
-    if (indent == 0)
-      super.withJavaLibraryPlugin()
-    else
-      if (isSupportedJavaLibraryPlugin(gradleVersion))
-        applyPlugin("'java-library'")
-      else
-        applyPlugin("'java'")
-
-  override fun withIdeaPlugin() =
-    if (indent == 0)
-      super.withIdeaPlugin()
-    else
-      applyPlugin("'idea'")
-
   // Note: These are Element building functions
   fun project(name: String) = call("project", name)
   fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
@@ -58,7 +40,7 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
   fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("project", name) {
-        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
@@ -66,7 +48,7 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
   fun configure(expression: Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("configure", expression) {
-        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
@@ -74,14 +56,14 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
   fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("allprojects") {
-        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
   fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
     withPrefix {
       call("subprojects") {
-        code(GradleBuildScriptBuilder(gradleVersion, indent + 1).also(configure).generate())
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
       }
     }
 
@@ -139,6 +121,21 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion, private val indent:
         }
       }
     }
+  }
+
+  private inner class GradleBuildScriptChildBuilder : GradleBuildScriptBuilder(gradleVersion) {
+
+    override fun withJavaPlugin() =
+      applyPlugin("'java'")
+
+    override fun withJavaLibraryPlugin() =
+      if (isSupportedJavaLibraryPlugin(gradleVersion))
+        applyPlugin("'java-library'")
+      else
+        applyPlugin("'java'")
+
+    override fun withIdeaPlugin() =
+      applyPlugin("'idea'")
   }
 
   companion object {
