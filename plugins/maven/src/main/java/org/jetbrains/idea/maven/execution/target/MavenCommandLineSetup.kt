@@ -61,7 +61,7 @@ class MavenCommandLineSetup(private val project: Project,
   fun setupCommandLine(settings: MavenRunConfiguration.MavenSettings, setupEventListener: Boolean = true): MavenCommandLineSetup {
     val mavenOptsValues = mutableListOf<TargetValue<String>>()
     setupExePath()
-    setupTargetJavaRuntime(settings.myRunnerSettings)
+    setupTargetJavaRuntime(mavenRunnerSettings(settings))
     setupTargetProjectDirectories(settings)
     if (setupEventListener) {
       setupMavenExtClassPath()
