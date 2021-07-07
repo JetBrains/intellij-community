@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -56,6 +57,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.LightDirectoryIndex;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,8 +122,8 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       }
     });
 
-    ApplicationManager.getApplication().getMessageBus().connect(this)
-      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         RootType rootType = getRootType(file);
@@ -134,18 +136,27 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
         if (ApplicationManager.getApplication().isUnitTestMode()) return;
-        RootType rootType = getRootType(file);
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document == null || rootType == null || rootType.isHidden()) return;
-        if (document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText())) {
-          Project project = source.getProject();
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!file.isValid() || source.isFileOpen(file)) return;
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-            if (psiFile != null) {
-              DeleteHandler.deletePsiElement(new PsiElement[]{psiFile}, project, false);
-            }
-          }, project.getDisposed());
+        if (!isToBeDeletedOnClose(file)) return;
+        Project project = source.getProject();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!file.isValid() || source.isFileOpen(file)) return;
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (psiFile == null) return;
+          DeleteHandler.deletePsiElement(new PsiElement[]{psiFile}, project, false);
+        }, project.getDisposed());
+      }
+    });
+    messageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return;
+        List<PsiFile> psiFiles = new ArrayList<>();
+        for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
+          if (!isToBeDeletedOnClose(file)) continue;
+          ContainerUtil.addIfNotNull(psiFiles, PsiManager.getInstance(project).findFile(file));
+        }
+        if (!psiFiles.isEmpty()) {
+          DeleteHandler.deletePsiElement(PsiUtilCore.toPsiElementArray(psiFiles), project, false);
         }
       }
     });
@@ -172,6 +183,13 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         }
       }
     }, null);
+  }
+
+  private boolean isToBeDeletedOnClose(@NotNull VirtualFile file) {
+    RootType rootType = getRootType(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null || rootType == null || rootType.isHidden()) return false;
+    return document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText());
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
