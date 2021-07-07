@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -263,9 +264,12 @@ public final class MavenServerManager implements Disposable {
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
       return true;
     }
-    JavaSdkVersion version = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
-    if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-      return true;
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
     }
     return false;
   }
