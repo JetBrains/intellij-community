@@ -4,13 +4,12 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyAction extends AnAction implements DumbAware, LightEditCompatible {
+public class CopyAction extends AnAction implements DumbAware, LightEditCompatible, UpdateInBackground {
 
   public CopyAction() {
     setEnabledInModalContext(true);
@@ -37,20 +36,28 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       return;
     }
     boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
-    if (provider instanceof UpdateInBackground && ((UpdateInBackground)provider).isUpdateInBackground()) {
-      ReadAction.nonBlocking(() -> ProviderState.create(dataContext, isEditorPopup, provider))
-        .coalesceBy(this)
-        .finishOnUiThread(ModalityState.current(), providerState -> {
-          presentation.setEnabled(providerState.isCopyEnabled);
-          presentation.setVisible(providerState.isVisible);
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-    else {
+    if (provider instanceof UpdateInBackground && ((UpdateInBackground)provider).isUpdateInBackground() ||
+        EDT.isCurrentThreadEdt()) {
       ProviderState providerState = ProviderState.create(dataContext, isEditorPopup, provider);
       presentation.setEnabled(providerState.isCopyEnabled);
       presentation.setVisible(providerState.isVisible);
+      return;
     }
+    Presentation updatedPresentation = Utils.getOrCreateUpdateSession(event).presentation(new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        ProviderState providerState = ProviderState.create(dataContext, isEditorPopup, provider);
+        e.getPresentation().setEnabled(providerState.isCopyEnabled);
+        e.getPresentation().setVisible(providerState.isVisible);
+      }
+    });
+    presentation.setEnabled(updatedPresentation.isEnabled());
+    presentation.setVisible(updatedPresentation.isVisible());
   }
 
   private static class ProviderState {
