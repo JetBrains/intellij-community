@@ -7,8 +7,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 4
-    // smart step into f2.invoke(), one-line lambda
+    // SMART_STEP_INTO_BY_INDEX: 1
     myClass.f1 { test() }
            .f2 { test() }
 
@@ -16,8 +15,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
-    // smart step into f1.invoke(), one-line lambda
+    // SMART_STEP_INTO_BY_INDEX: 3
     myClass.f1 { test() }
         .f2 { test() }
 
@@ -25,8 +23,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
-    // smart step into map.invoke(), multiline lambda
+    // SMART_STEP_INTO_BY_INDEX: 1
     array.map {
         it *2
     }
@@ -35,8 +32,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 4
-    // smart step into filter.invoke()
+    // SMART_STEP_INTO_BY_INDEX: 1
     array.map { it * 2 }
          .filter {
              it > 2
@@ -46,8 +42,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
-    // smart step into map.invoke()
+    // SMART_STEP_INTO_BY_INDEX: 3
     array.map { it * 2 }
         .filter {
             it > 2
@@ -57,16 +52,14 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 4
-    // smart step into f2.invoke(), one-line lambda
+    // SMART_STEP_INTO_BY_INDEX: 1
     myClass.f1 { test() }.f2 { test() }
 
     // RESUME: 1
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
-    // smart step into f1.invoke(), one-line lambda
+    // SMART_STEP_INTO_BY_INDEX: 3
     myClass.f1 { test() }.f2 { test() }
 }
 

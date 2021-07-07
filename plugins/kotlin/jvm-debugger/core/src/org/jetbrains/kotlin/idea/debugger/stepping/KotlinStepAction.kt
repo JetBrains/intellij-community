@@ -5,35 +5,38 @@ package org.jetbrains.kotlin.idea.debugger.stepping
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverFilter
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 
 sealed class KotlinStepAction {
     object JvmStepOver : KotlinStepAction() {
-        override fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean) {
-            debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext)
+        override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
+            return debugProcess.run {
+                StepOverCommand(suspendContext, ignoreBreakpoints, null, StepRequest.STEP_LINE)
+            }
         }
     }
 
     class StepInto(private val filter: MethodFilter?) : KotlinStepAction() {
-        override fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean) {
-            debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, filter).contextAction(suspendContext)
+        override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
+            return KotlinStepActionFactory.createStepIntoCommand(debugProcess, suspendContext, ignoreBreakpoints, filter, StepRequest.STEP_LINE)
         }
     }
 
     object StepOut : KotlinStepAction() {
-        override fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean) {
-            debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext)
+        override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
+            return KotlinStepActionFactory.createStepOutCommand(debugProcess, suspendContext)
         }
     }
 
     class KotlinStepOver(private val tokensToSkip: Set<LocationToken>, private val callerInfo: StepOverCallerInfo) : KotlinStepAction() {
-        override fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean) {
+        override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
             val filter = KotlinStepOverFilter(debugProcess.project, tokensToSkip, callerInfo)
-            KotlinStepActionFactory.createStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter).contextAction(suspendContext)
+            return KotlinStepActionFactory.createKotlinStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter)
         }
     }
 
-    abstract fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean)
+    abstract fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand
 }

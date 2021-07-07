@@ -183,11 +183,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
             filters.forEach {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, it))
+                doStepInto(ignoreFilters, it)
             }
         } else {
             try {
-                dp.managerThread.schedule(dp.createStepIntoCommand(this, ignoreFilters, filters[chooseFromList - 1]))
+                doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
                 val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)

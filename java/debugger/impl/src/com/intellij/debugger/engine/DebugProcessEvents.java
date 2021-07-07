@@ -498,41 +498,50 @@ public class DebugProcessEvents extends DebugProcessImpl {
     boolean shouldResume = false;
 
     final Project project = getProject();
-    if (hint != null) {
-      final int nextStepDepth = hint.getNextStepDepth(suspendContext);
-      if (nextStepDepth == RequestHint.RESUME) {
-        getSession().clearSteppingThrough();
-        shouldResume = true;
-      }
-      else if (nextStepDepth != RequestHint.STOP) {
-        final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-        doStep(suspendContext, threadProxy, hint.getSize(), nextStepDepth, hint);
-        shouldResume = true;
-      }
-
-      if(!shouldResume && hint.isRestoreBreakpoints()) {
-        DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().enableBreakpoints(this);
-      }
-    }
-
-    if(shouldResume) {
-      getSuspendManager().voteResume(suspendContext);
-    }
-    else {
-      showStatusText("");
-      stopWatchingMethodReturn();
-      getSuspendManager().voteSuspend(suspendContext);
+    while (true) {
       if (hint != null) {
-        final MethodFilter methodFilter = hint.getMethodFilter();
-        if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-          final String message =
-            JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
-          XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+        final int nextStepDepth = hint.getNextStepDepth(suspendContext);
+        if (nextStepDepth == RequestHint.RESUME) {
+          getSession().clearSteppingThrough();
+          shouldResume = true;
         }
-        if (hint.wasStepTargetMethodMatched()) {
-          suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+        else if (nextStepDepth == RequestHint.STOP) {
+          if (hint.getParentHint() != null) {
+            hint = hint.getParentHint();
+            continue;
+          }
+        }
+        else {
+          final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+          hint.doStep(this, suspendContext, threadProxy, hint.getSize(), nextStepDepth);
+          shouldResume = true;
+        }
+
+        if (!shouldResume && hint.isRestoreBreakpoints()) {
+          DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().enableBreakpoints(this);
         }
       }
+
+      if (shouldResume) {
+        getSuspendManager().voteResume(suspendContext);
+      }
+      else {
+        showStatusText("");
+        stopWatchingMethodReturn();
+        getSuspendManager().voteSuspend(suspendContext);
+        if (hint != null) {
+          final MethodFilter methodFilter = hint.getMethodFilter();
+          if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
+            final String message =
+              JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+          }
+          if (hint.wasStepTargetMethodMatched()) {
+            suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+          }
+        }
+      }
+      return;
     }
   }
 
