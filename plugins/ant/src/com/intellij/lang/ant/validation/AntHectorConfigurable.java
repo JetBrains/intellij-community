@@ -130,7 +130,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     applyItem(myOriginalContext);
   }
 
-  private void applyItem(final String contextStr) {
+  private void applyItem(@NlsSafe final String contextStr) {
     XmlFile context = null;
     if (!myNoneText.equals(contextStr)) {
       context = myPathToFileMap.get(contextStr);
