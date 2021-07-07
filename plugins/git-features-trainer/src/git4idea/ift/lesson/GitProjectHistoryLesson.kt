@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
@@ -26,10 +25,6 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import javax.swing.Icon
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "git/sphinx_cat.yml"
@@ -56,7 +51,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation", icon(commitBackgroundColorIcon)))
+      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
       proceedLink()
     }
 
@@ -153,20 +148,5 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
-  }
-
-  private val commitBackgroundColorIcon = object: Icon {
-    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-      val g2d = g as Graphics2D
-      val oldColor = g2d.color
-      // todo Add real background colors. Now it is colors with hover.
-      g2d.color = JBColor(0xD0E2EE, 0x464A4D)
-      g2d.fillRect(x, y, iconWidth, iconHeight)
-      g2d.color = oldColor
-    }
-
-    override fun getIconWidth(): Int = 16
-
-    override fun getIconHeight(): Int = 16
   }
 }
