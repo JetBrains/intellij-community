@@ -11,14 +11,14 @@ import javax.swing.*;
 public final class UsageNodePresentation {
 
   private final @Nullable Icon myIcon;
-  private final @NotNull TextChunk @NotNull [] myText;
+  private final @NotNull Object myText;
 
   public UsageNodePresentation(
     @Nullable Icon icon,
     @NotNull TextChunk @NotNull [] text
   ) {
     myIcon = icon;
-    myText = text;
+    myText = TextChunk.compact(text);
   }
 
   public @Nullable Icon getIcon() {
@@ -26,6 +26,6 @@ public final class UsageNodePresentation {
   }
 
   public @NotNull TextChunk @NotNull [] getText() {
-    return myText;
+    return TextChunk.inflate(myText);
   }
 }
