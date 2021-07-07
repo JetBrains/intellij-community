@@ -6,12 +6,10 @@ class BeforeDefault {
   
   String test(X x) {
     return switch (x) {
-      case A: yield "foo";
-        case B:
-            yield null;
-        case C:
-            yield null;
-        default: yield "bar";
+      case A -> "foo";
+        case B -> null;
+        case C -> null;
+        default -> "bar";
     };
   }
 }

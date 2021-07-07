@@ -1,46 +1,44 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 
 /**
  * @author peter
  */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> implements TypedLookupItem {
+  private static final Logger LOGGER = Logger.getInstance(JavaPsiClassReferenceElement.class.getName());
+
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final SmartPsiElementPointer<PsiClass> myClass;
   private final String myQualifiedName;
+  private final String myClassName;
   private String myForcedPresentableName;
   private final String myPackageDisplayName;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
@@ -48,6 +46,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
     myQualifiedName = psiClass.getQualifiedName();
+    myClassName = psiClass.getName();
     myClass = SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
@@ -231,5 +230,48 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
         JavaResolveUtil.isAccessible(ctor, cls, ctor.getModifierList(), position, null, null));
     }
     return false;
+  }
+
+  @Override
+  public void handleInsert(@NotNull InsertionContext context) {
+    final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
+    if (element != null &&
+        HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(element) &&
+        JavaCompletionContributor.IN_SWITCH_LABEL.accepts(element)) {
+
+      final String variableName = getVariableName();
+      if (!variableName.isEmpty()) {
+        context.getDocument().insertString(context.getTailOffset(), " " + variableName);
+
+        final CaretModel model = context.getEditor().getCaretModel();
+        model.moveToOffset(context.getTailOffset());
+      }
+    }
+
+    super.handleInsert(context);
+  }
+
+  @Contract(value = "-> !null", pure = true)
+  private String getVariableName() {
+    final PsiElement psi = getPsiElement();
+    LOGGER.assertTrue(psi instanceof PsiClass, "Mismatched element type");
+
+    final String[] strings = getPossibleVariableNames((PsiClass)psi);
+
+    if (strings.length > 0) return strings[0];
+
+    if (myClassName.isEmpty()) return "";
+
+    return myClassName.substring(0, 1).toLowerCase(Locale.ROOT);
+  }
+
+  @Contract(pure = true)
+  private static String@NotNull [] getPossibleVariableNames(@NotNull PsiClass psi) {
+    final PsiClassType type = TypeUtils.getType(psi);
+
+    final JavaCodeStyleManager instance = JavaCodeStyleManager.getInstance(psi.getProject());
+    final SuggestedNameInfo info = instance.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
+
+    return JavaCompletionUtil.completeVariableNameForRefactoring(instance, type, VariableKind.LOCAL_VARIABLE, info);
   }
 }

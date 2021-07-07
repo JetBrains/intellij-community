@@ -6,8 +6,8 @@ class BeforeDefault {
   
   String test(X x) {
     return <caret>switch (x) {
-      case A: yield "foo";
-      default: yield "bar";
+      case A -> "foo";
+      default -> "bar";
     };
   }
 }
