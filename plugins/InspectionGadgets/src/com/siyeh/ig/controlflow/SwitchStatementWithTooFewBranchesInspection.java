@@ -102,7 +102,14 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
           if (labelElementList == null) {
             return null;
           }
-          branches += labelElementList.getElementCount();
+          for (PsiCaseLabelElement element : labelElementList.getElements()) {
+            if (element instanceof PsiDefaultCaseLabelElement) {
+              defaultFound = true;
+            }
+            else {
+              branches++;
+            }
+          }
           if (branches >= m_limit) {
             return null;
           }
