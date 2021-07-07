@@ -242,8 +242,8 @@ internal class SingleContentLayout(
     }
 
     val closeHandler = object : MouseAdapter() {
-      override fun mousePressed(e: MouseEvent) {
-        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
+      override fun mouseReleased(e: MouseEvent) {
+        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
             retrieveInfo(tabLabel).let(jbTabs::removeTab)
