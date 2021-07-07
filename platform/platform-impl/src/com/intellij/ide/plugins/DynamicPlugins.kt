@@ -1096,6 +1096,10 @@ private fun processOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDesc
   }
 
   for (plugin in pluginSet.enabledPlugins) {
+    if (plugin === dependencyPlugin) {
+      continue
+    }
+
     if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyPlugin.id, plugin, isLoaded, processor)) {
       return
     }
