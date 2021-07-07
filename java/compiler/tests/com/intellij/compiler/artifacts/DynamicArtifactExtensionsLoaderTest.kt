@@ -22,7 +22,7 @@ import javax.swing.Icon
 
 class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
   fun `test unload and load artifact type`() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
     val artifactManager = ArtifactManager.getInstance(myProject)
     runWithRegisteredExtension(MockArtifactType(), ArtifactType.EP_NAME) {
       artifactManager.addArtifact("mock", MockArtifactType.getInstance(), PackagingElementFactory.getInstance().createArtifactRootElement())
@@ -99,7 +99,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
   }
 }
 

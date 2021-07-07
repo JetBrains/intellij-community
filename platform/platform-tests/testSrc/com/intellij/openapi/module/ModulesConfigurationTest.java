@@ -44,7 +44,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     assertThat(moduleFile).exists();
     WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleFile.toString())).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(getTestRootDisposable(), errors::add);
     Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);

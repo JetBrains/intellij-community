@@ -28,17 +28,14 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
             "Unknown artifact type: exploded-war"
         )
 
-        ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(
-            { errorDescription ->
-                val description = errorDescription.description
-                if (description !in allowedErrorDescription) {
-                    throw RuntimeException(description)
-                }
-                else {
-                    logMessage { "project loading error: '$description' at '${errorDescription.elementName}'" }
-                }
-            }, testRootDisposable
-        )
+        ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) { errorDescription ->
+            val description = errorDescription.description
+            if (description !in allowedErrorDescription) {
+                throw RuntimeException(description)
+            } else {
+                logMessage { "project loading error: '$description' at '${errorDescription.elementName}'" }
+            }
+        }
     }
 
     fun testHighlightAllKtFilesInProject() {

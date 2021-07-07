@@ -111,7 +111,7 @@ class ReloadProjectTest {
   @Test
   fun `change iml file content to invalid xml`() {
     val errors = ArrayList<ConfigurationErrorDescription>()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, disposable.disposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, errors::add)
     loadProjectAndCheckResults("changeImlContentToInvalidXml/initial") { project ->
       copyFilesAndReload(project, "changeImlContentToInvalidXml/update")
       assertThat(ModuleManager.getInstance(project).modules.single().name).isEqualTo("foo")
