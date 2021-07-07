@@ -35,7 +35,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 
     protected open val setsPluginSettings: List<SettingWithValue<*, *>> = emptyList()
     protected open val setsModules: List<Module> = emptyList()
-    private val setsAdditionalSettingValues = mutableListOf<SettingWithValue<*, *>>()
+    val setsAdditionalSettingValues = mutableListOf<SettingWithValue<*, *>>()
 
     val setsValues: List<SettingWithValue<*, *>>
         get() = buildList {
@@ -59,11 +59,10 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-    protected fun <C : ModuleConfigurator> Module.withConfiguratorSettings(
-        configurator: C,
+    protected inline fun <reified C: ModuleConfigurator> Module.withConfiguratorSettings(
         createSettings: ConfiguratorSettingsBuilder<C>.() -> Unit = {}
     ) = apply {
-        assert(this.configurator === configurator)
+        check(configurator is C)
         with(ConfiguratorSettingsBuilder(this, configurator)) {
             createSettings()
             setsAdditionalSettingValues += setsSettings
@@ -202,7 +201,7 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
                         ModuleType.common.createDefaultTarget(),
                         ModuleType.jvm.createDefaultTarget(),
                         MultiplatformTargetModule("js", MppLibJsBrowserTargetConfigurator, createDefaultSourcesets())
-                            .withConfiguratorSettings(MppLibJsBrowserTargetConfigurator) {
+                            .withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
                                 JSConfigurator.kind withValue JsTargetKind.LIBRARY
                             },
                         ModuleType.native.createDefaultTarget()
@@ -360,7 +359,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     null,
                     sourceSets = createDefaultSourcesets(),
                     subModules = emptyList()
-                ).withConfiguratorSettings(AndroidTargetConfigurator) {
+                ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                 },
                 Module(
@@ -403,7 +402,7 @@ object MultiplatformMobileLibraryProjectTemplate : ProjectTemplate() {
                             sourceSets = SourcesetType.ALL.map { type ->
                                 Sourceset(type, dependencies = emptyList())
                             }
-                        ).withConfiguratorSettings(AndroidTargetConfigurator) {
+                        ).withConfiguratorSettings<AndroidTargetConfigurator> {
                             configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                         },
                         Module(
@@ -469,7 +468,7 @@ object ComposeDesktopApplicationProjectTemplate : ProjectTemplate() {
                     Sourceset(type, dependencies = emptyList())
                 },
                 subModules = emptyList()
-            ).withConfiguratorSettings(JvmSinglePlatformModuleConfigurator) {
+            ).withConfiguratorSettings<JvmSinglePlatformModuleConfigurator> {
                 ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
                 JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
             }
@@ -497,7 +496,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 "common",
                 template = ComposeMppModuleTemplate(),
                 listOf(
-                    ModuleType.common.createDefaultTarget().withConfiguratorSettings(CommonTargetConfigurator) {
+                    ModuleType.common.createDefaultTarget().withConfiguratorSettings<CommonTargetConfigurator> {
                         ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
                     },
                     Module(
@@ -506,7 +505,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         template = null,
                         sourceSets = createDefaultSourcesets(),
                         subModules = emptyList()
-                    ).withConfiguratorSettings(AndroidTargetConfigurator) {
+                    ).withConfiguratorSettings<AndroidTargetConfigurator> {
                         configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                         ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
                     },
@@ -516,7 +515,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         template = null,
                         sourceSets = createDefaultSourcesets(),
                         subModules = emptyList()
-                    ).withConfiguratorSettings(JvmTargetConfigurator) {
+                    ).withConfiguratorSettings<JvmTargetConfigurator> {
                         ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
                         JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
                     }
@@ -529,7 +528,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 sourceSets = createDefaultSourcesets(),
                 subModules = emptyList(),
                 dependencies = mutableListOf(ModuleReference.ByModule(common))
-            ).withConfiguratorSettings(AndroidSinglePlatformModuleConfigurator) {
+            ).withConfiguratorSettings<AndroidSinglePlatformModuleConfigurator> {
                 ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
             }
             +Module(
@@ -545,7 +544,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         sourceSets = createDefaultSourcesets(),
                         subModules = emptyList(),
                         dependencies = mutableListOf(ModuleReference.ByModule(common))
-                    ).withConfiguratorSettings(JvmTargetConfigurator) {
+                    ).withConfiguratorSettings<JvmTargetConfigurator> {
                         ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
                         JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
                     }
