@@ -64,13 +64,17 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = containingClass.getParent();
+      if (parent instanceof PsiFile) {
+        return;
+      }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
       final String referenceText = expression.getText();
       final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
       if (variable == null || field == variable) {
         return;
       }
-      if (variable.getContainingFile() != containingClass.getContainingFile()) {
+      if (expression.advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+        // is statically imported
         return;
       }
       registerError(expression, fieldClass, variable, isOnTheFly());
