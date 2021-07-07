@@ -83,17 +83,27 @@ public final class TextChunk {
   private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull TextChunk @NotNull [] chunks) {
     AttributesFlyweight defaultFlyweight = defaultAttributes().getFlyweight();
     if (ContainerUtil.and(chunks, chunk -> !chunk.myAttributes.equals(defaultFlyweight))) {
-      return chunks;
+      return chunks.length == 1
+             ? chunks[0]                      // TextChunk
+             : chunks;                        // TextChunk[] with non-default attributes
     }
     List<Object> result = ContainerUtil.map(chunks, chunk -> chunk.myAttributes.equals(defaultFlyweight) ? chunk.myText : chunk);
-    return ArrayUtil.toObjectArray(result);
+    return result.size() == 1
+           ? result.get(0)                    // String
+           : ArrayUtil.toObjectArray(result); // Object[] with String or TextChunk elements
   }
 
   static @NotNull TextChunk @NotNull [] inflate(@NotNull Object compact) {
+    if (compact instanceof TextChunk) {
+      return new TextChunk[]{(TextChunk)compact};
+    }
     if (compact instanceof TextChunk[]) {
       return (TextChunk[])compact;
     }
     TextAttributes defaultAttributes = defaultAttributes();
+    if (compact instanceof String) {
+      return new TextChunk[]{new TextChunk(defaultAttributes, (String)compact)};
+    }
     return ContainerUtil.map(
       (Object[])compact,
       stringOrChunk -> stringOrChunk instanceof String ? new TextChunk(defaultAttributes, (String)stringOrChunk) : (TextChunk)stringOrChunk
