@@ -128,7 +128,7 @@ public final class SwitchUtils {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     if (operation.equals(JavaTokenType.OROR)) {
       for (PsiExpression operand : operands) {
-        if (!canBeSwitchCase(operand, switchExpression, languageLevel, existingCaseValues, isPatternMatch)) {
+        if (!canBeSwitchCase(operand, switchExpression, languageLevel, existingCaseValues, false)) {
           return false;
         }
       }
@@ -147,16 +147,36 @@ public final class SwitchUtils {
 
   /**
    * Returns true if given switch block has a rule-based format (like 'case 0 ->')
-   * @param block block to test
+   * @param block a switch block to test
    * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
-   * If switch body has no labels yet and language level permits, rule-based format is assumed.
+   * If switch body has no labels yet and language level permits,
+   * the rule-based format is assumed if the switch block is of the {@link PsiSwitchExpression} type.
    */
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
     if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
     }
+
     final PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
-    return label == null || label instanceof PsiSwitchLabeledRuleStatement;
+
+    if (label == null || isBeingCompletedSwitchLabel(label)) {
+      return block instanceof PsiSwitchExpression;
+    }
+
+    return label instanceof PsiSwitchLabeledRuleStatement;
+  }
+
+  /**
+   * Checks if the passed switch label is the one that is being completed
+   * (see {@link com.intellij.codeInsight.completion.CompletionProvider}).
+   * A switch label that is being completed is distinct from the other switch labels
+   * by the fact that the very last child of the label is a {@link PsiErrorElement}
+   * which notifies that the colon character <code>":"</code> is expected.
+   * @param label a case label to check
+   * @return true if the passed case label is the one that is being completed right now.
+   */
+  private static boolean isBeingCompletedSwitchLabel(@NotNull PsiSwitchLabelStatementBase label) {
+    return label.getLastChild() instanceof PsiErrorElement;
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {

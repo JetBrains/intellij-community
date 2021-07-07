@@ -10,7 +10,7 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
+    return JAVA_17
   }
 
   void testDefaultInRuleSwitch() { doTest() }
@@ -22,4 +22,8 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testInsideYieldInSwitchExpression() { doTest() }
   void testInsideRuleInSwitchExpression() { doTest() }
   void testBreakDeepInsideSwitchExpression() { doTest() }
+
+  void testCompletePatternVariableInSwitchExpr() { doTest() }
+  void testCompletePatternVariableInSwitchStmt() { doTest() }
+
 }
