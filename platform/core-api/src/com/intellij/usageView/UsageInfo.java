@@ -268,10 +268,14 @@ public class UsageInfo {
   @Nullable
   public Segment getSegment() {
     PsiElement element = getElement();
+    TextRange range;
     if (element == null
         // in case of binary file
-        || myPsiFileRange == null && element instanceof PsiFile) return null;
-    TextRange range = element.getTextRange();
+        || myPsiFileRange == null && element instanceof PsiFile
+        || (range = element.getTextRange()) == null) {
+      return null;
+    }
+
     TextRange.assertProperRange(range, element);
     if (element instanceof PsiFile) {
       // hack: it's actually a range inside file, use document for range checking since during the "find|replace all" operation, file range might have been changed
