@@ -43,7 +43,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
 
   public void testJava12() {
     doMemberTest("    public void foo(int x) {\n" +
-                 "         /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "         /*'switch' has too many branches (13)*/switch/**/ (x) {\n" +
                  "            case 1 -> {}\n" +
                  "            case 2 -> {}\n" +
                  "            case 3 -> {}\n" +
@@ -62,7 +62,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
 
   public void testJava13Expression() {
     doMemberTest("    public int foo(int x) {\n" +
-                 "         return /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "         return /*'switch' has too many branches (13)*/switch/**/ (x) {\n" +
                  "            case 1 -> 0;\n" +
                  "            case 2 -> 0;\n" +
                  "            case 3 -> 0;\n" +
