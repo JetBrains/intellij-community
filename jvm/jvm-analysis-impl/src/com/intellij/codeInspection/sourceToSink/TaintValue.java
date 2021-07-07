@@ -3,103 +3,61 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInspection.UntaintedAnnotationProvider;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-interface TaintValue extends RestrictionInfo {
-
-  TaintValue Untainted = new TaintValue() {
-
+enum TaintValue implements RestrictionInfo {
+  UNTAINTED(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION, RestrictionInfoKind.KNOWN, null) {
     @Override
-    public @NotNull RestrictionInfoKind getKind() {
-      return RestrictionInfoKind.KNOWN;
-    }
-
-    @Override
-    public @Nullable String getErrorMessage() {
-      return null;
-    }
-
-    @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
       return other;
     }
-
+  },
+  TAINTED(UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION, RestrictionInfoKind.KNOWN,
+          "jvm.inspections.source.unsafe.to.sink.flow.description") {
     @Override
-    public @NotNull String getAnnotationName() {
-      return UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION;
-    }
-
-    @Override
-    public String toString() {
-      return "UNTAINTED";
-    }
-  };
-  TaintValue Unknown = new TaintUnknown();
-
-  TaintValue Tainted = new TaintValue() {
-
-    @Override
-    public @NotNull RestrictionInfoKind getKind() {
-      return RestrictionInfoKind.KNOWN;
-    }
-
-    @Override
-    public @NotNull String getErrorMessage() {
-      return "jvm.inspections.source.unsafe.to.sink.flow.description";
-    }
-
-    @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
       return this;
     }
-
+  },
+  UNKNOWN(UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION, RestrictionInfoKind.UNKNOWN,
+          "jvm.inspections.source.unknown.to.sink.flow.description") {
     @Override
-    public @NotNull String getAnnotationName() {
-      return UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION;
-    }
-
-    @Override
-    public String toString() {
-      return "TAINTED";
+    @NotNull
+    public TaintValue join(@NotNull TaintValue other) {
+      return other == TAINTED ? other : this;
     }
   };
-  
-  Set<String> NAMES = Set.of(Tainted.getAnnotationName(), Untainted.getAnnotationName(), Unknown.getAnnotationName());
 
-  @Nullable String getErrorMessage();
+  public static final Set<String> NAMES = ContainerUtil.map2Set(values(), v -> v.getAnnotationName());
 
-  @NotNull TaintValue join(@NotNull TaintValue other);
+  private final String myName;
+  private final RestrictionInfoKind myKind;
+  private final String myErrorMessage;
 
-  @NotNull String getAnnotationName();
+  TaintValue(@NotNull String name, @NotNull RestrictionInfoKind kind, @Nullable String errorMessage) {
+    this.myName = name;
+    this.myKind = kind;
+    this.myErrorMessage = errorMessage;
+  }
 
-  class TaintUnknown implements TaintValue {
+  public abstract @NotNull TaintValue join(@NotNull TaintValue other);
 
-    @Override
-    public @NotNull String getErrorMessage() {
-      return "jvm.inspections.source.unknown.to.sink.flow.description";
-    }
+  @NotNull String getAnnotationName() {
+    return myName;
+  }
 
-    @Override
-    public @NotNull TaintValue join(@NotNull TaintValue other) {
-      return other == Tainted ? other : this;
-    }
+  @Override
+  public @NotNull RestrictionInfoKind getKind() {
+    return myKind;
+  }
 
-    @Override
-    public @NotNull String getAnnotationName() {
-      return UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION;
-    }
-
-    @Override
-    public String toString() {
-      return "UNKNOWN";
-    }
-
-    @Override
-    public @NotNull RestrictionInfoKind getKind() {
-      return RestrictionInfoKind.UNKNOWN;
-    }
+  String getErrorMessage() {
+    return myErrorMessage;
   }
 }

@@ -18,12 +18,12 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
   @Override
   public @NotNull TaintValue fromAnnotationOwner(@Nullable PsiAnnotationOwner annotationOwner) {
-    if (annotationOwner == null) return TaintValue.Unknown;
+    if (annotationOwner == null) return TaintValue.UNKNOWN;
     for (PsiAnnotation annotation : annotationOwner.getAnnotations()) {
       TaintValue value = fromAnnotation(annotation);
       if (value != null) return value;
     }
-    if (!(annotationOwner instanceof PsiModifierListOwner)) return TaintValue.Unknown;
+    if (!(annotationOwner instanceof PsiModifierListOwner)) return TaintValue.UNKNOWN;
     return of((PsiModifierListOwner)annotationOwner);
   }
 
@@ -36,15 +36,15 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
   @NotNull TaintValue of(@NotNull AnnotationContext context) {
     PsiType type = context.getType();
     TaintValue info = INSTANCE.fromAnnotationOwner(type);
-    if (info != TaintValue.Unknown) return info;
+    if (info != TaintValue.UNKNOWN) return info;
     PsiModifierListOwner owner = context.getOwner();
-    if (owner == null) return TaintValue.Unknown;
+    if (owner == null) return TaintValue.UNKNOWN;
     info = fromAnnotationOwner(owner.getModifierList());
-    if (info != TaintValue.Unknown) return info;
+    if (info != TaintValue.UNKNOWN) return info;
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
       info = of(parameter);
-      if (info != TaintValue.Unknown) return info;
+      if (info != TaintValue.UNKNOWN) return info;
       if (parameter.isVarArgs() && type instanceof PsiEllipsisType) {
         info = INSTANCE.fromAnnotationOwner(((PsiEllipsisType)type).getComponentType());
       }
@@ -60,9 +60,9 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     }
     if (info.getKind() != RestrictionInfo.RestrictionInfoKind.KNOWN) {
       info = context.secondaryItems().map(item -> fromAnnotationOwner(item.getModifierList()))
-        .filter(inf -> inf != TaintValue.Unknown).findFirst().orElse(info);
+        .filter(inf -> inf != TaintValue.UNKNOWN).findFirst().orElse(info);
     }
-    if (info == TaintValue.Unknown) {
+    if (info == TaintValue.UNKNOWN) {
       PsiMember member =
         ObjectUtils.tryCast(owner instanceof PsiParameter ? ((PsiParameter)owner).getDeclarationScope() : owner, PsiMember.class);
       if (member != null) {
@@ -76,30 +76,30 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
   static TaintValue of(PsiModifierListOwner annotationOwner) {
     PsiAnnotation annotation =
       AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
-    if (annotation == null) return TaintValue.Unknown;
+    if (annotation == null) return TaintValue.UNKNOWN;
     TaintValue value = fromAnnotation(annotation);
-    return value == null ? TaintValue.Unknown : value;
+    return value == null ? TaintValue.UNKNOWN : value;
   }
 
   private static TaintValue of(PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       TaintValue classInfo = INSTANCE.fromAnnotationOwner(containingClass.getModifierList());
-      if (classInfo != TaintValue.Unknown) {
+      if (classInfo != TaintValue.UNKNOWN) {
         return classInfo;
       }
       containingClass = containingClass.getContainingClass();
     }
-    return TaintValue.Unknown;
+    return TaintValue.UNKNOWN;
   }
 
   private static @Nullable TaintValue fromAnnotation(@NotNull PsiAnnotation annotation) {
-    if (annotation.hasQualifiedName(TaintValue.Tainted.getAnnotationName())) {
-      return TaintValue.Tainted;
+    if (annotation.hasQualifiedName(TaintValue.TAINTED.getAnnotationName())) {
+      return TaintValue.TAINTED;
     }
     if (annotation.hasQualifiedName(
-      TaintValue.Untainted.getAnnotationName())) {
-      return TaintValue.Untainted;
+      TaintValue.UNTAINTED.getAnnotationName())) {
+      return TaintValue.UNTAINTED;
     }
     return null;
   }

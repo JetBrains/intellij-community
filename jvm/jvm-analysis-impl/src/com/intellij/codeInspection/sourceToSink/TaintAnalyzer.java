@@ -27,12 +27,12 @@ class TaintAnalyzer {
       if (returnValue != null && current.add(returnValue)) {
         TaintValue taintValue = analyze(returnValue, current);
         current.remove(returnValue);
-        if (taintValue != TaintValue.Unknown) return taintValue;
+        if (taintValue != TaintValue.UNKNOWN) return taintValue;
       }
     }
     if (expression instanceof UResolvable) {
       // ignore possible plus operator overload in kotlin
-      if (isPlus(expression)) return TaintValue.Untainted;
+      if (isPlus(expression)) return TaintValue.UNTAINTED;
       return analyseResolvableExpression((UResolvable)expression, current);
     }
     return null;
@@ -50,13 +50,13 @@ class TaintAnalyzer {
     if (target instanceof PsiModifierListOwner) {
       PsiModifierListOwner owner = (PsiModifierListOwner)target;
       taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
-      if (taintValue == TaintValue.Unknown) taintValue = TaintValueFactory.of(owner);
-      if (taintValue != TaintValue.Unknown) return taintValue;
+      if (taintValue == TaintValue.UNKNOWN) taintValue = TaintValueFactory.of(owner);
+      if (taintValue != TaintValue.UNKNOWN) return taintValue;
     }
     PsiType type = ((UExpression)ref).getExpressionType();
     if (type != null) {
       taintValue = TaintValueFactory.INSTANCE.fromAnnotationOwner(type);
-      if (taintValue != TaintValue.Unknown) return taintValue;
+      if (taintValue != TaintValue.UNKNOWN) return taintValue;
     }
     if (target instanceof PsiLocalVariable) {
       ULocalVariable uLocalVariable = UastContextKt.toUElementOfExpectedTypes(target, ULocalVariable.class);
@@ -66,7 +66,7 @@ class TaintAnalyzer {
       current.remove(uLocalVariable);
       return taintValue;
     }
-    return TaintValue.Unknown;
+    return TaintValue.UNKNOWN;
   }
 
   private static @Nullable TaintValue getTaintValue(@NotNull PsiLocalVariable target,
@@ -76,17 +76,17 @@ class TaintAnalyzer {
     if (codeBlock == null) return null;
     UExpression initializer = localVariable.getUastInitializer();
     TaintValue taintValue = getTaintValue(initializer, current);
-    if (taintValue == TaintValue.Tainted) return taintValue;
+    if (taintValue == TaintValue.TAINTED) return taintValue;
     MyTaintValueVisitor taintValueVisitor = new MyTaintValueVisitor(target, current, taintValue);
     codeBlock.accept(taintValueVisitor);
     return taintValueVisitor.myTaintValue;
   }
 
   private static @Nullable TaintValue getTaintValue(@Nullable UExpression uExpression, @NotNull Set<UElement> current) {
-    if (uExpression == null) return TaintValue.Untainted;
+    if (uExpression == null) return TaintValue.UNTAINTED;
     uExpression = UastUtils.skipParenthesizedExprDown(uExpression);
     ULiteralExpression literal = ObjectUtils.tryCast(uExpression, ULiteralExpression.class);
-    if (literal != null) return TaintValue.Untainted;
+    if (literal != null) return TaintValue.UNTAINTED;
     if (uExpression instanceof UCallExpression || uExpression instanceof UReferenceExpression) {
       return analyze(uExpression, current);
     }
@@ -117,14 +117,14 @@ class TaintAnalyzer {
 
     @Override
     public boolean visitBinaryExpression(@NotNull UBinaryExpression node) {
-      if (myTaintValue == TaintValue.Tainted) return super.visitExpression(node);
+      if (myTaintValue == TaintValue.TAINTED) return super.visitExpression(node);
       UastBinaryOperator operator = node.getOperator();
       if (operator != UastBinaryOperator.ASSIGN && operator != UastBinaryOperator.PLUS_ASSIGN) return super.visitBinaryExpression(node);
       UReferenceExpression lhs = ObjectUtils.tryCast(node.getLeftOperand(), UReferenceExpression.class);
       if (lhs == null || !myVariable.equals(lhs.resolve())) return super.visitBinaryExpression(node);
       UExpression rhs = node.getRightOperand();
       TaintValue taintValue = getTaintValue(rhs, myCurrent);
-      if (taintValue != TaintValue.Untainted) myTaintValue = taintValue;
+      if (taintValue != TaintValue.UNTAINTED) myTaintValue = taintValue;
       return super.visitBinaryExpression(node);
     }
   }

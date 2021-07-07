@@ -25,14 +25,14 @@ public class SourceToSinkFlowInspection extends AbstractBaseJavaLocalInspectionT
         UExpression usage = StringFlowUtil.goUp(uExpression, true, TaintValueFactory.INSTANCE);
         AnnotationContext annotationContext = AnnotationContext.fromExpression(usage);
         TaintValue contextValue = TaintValueFactory.INSTANCE.of(annotationContext);
-        if (contextValue != TaintValue.Untainted) return;
+        if (contextValue != TaintValue.UNTAINTED) return;
         TaintValue taintValue = TaintAnalyzer.getTaintValue(uExpression);
         if (taintValue == null) return;
         taintValue = taintValue.join(contextValue);
-        if (taintValue == TaintValue.Untainted) return;
+        if (taintValue == TaintValue.UNTAINTED) return;
         String errorMessage = Objects.requireNonNull(taintValue.getErrorMessage());
         LocalQuickFix fix = null;
-        if (taintValue == TaintValue.Unknown) {
+        if (taintValue == TaintValue.UNKNOWN) {
           PsiModifierListOwner target = getTarget(uExpression);
           if (target == null) return;
           fix = new UntaintedAnnotationProvider().createFix(target);
