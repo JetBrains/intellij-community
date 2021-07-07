@@ -869,6 +869,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   // public for tests
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isInitialized) return;
+
     myActionGroup = new DefaultActionGroup();
 
     myAutoScrollFromSourceHandler.install();
