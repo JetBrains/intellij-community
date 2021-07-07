@@ -50,7 +50,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
     defaults.put("MenuItem.acceleratorDelimiter", "-");
 
-    defaults.put("TitledBorder.titleColor", IdeaBlueMetalTheme.primary1);
+    defaults.put("TitledBorder.titleColor", new ColorUIResource(10, 36, 106));
     ColorUIResource col = new ColorUIResource(230, 230, 230);
     defaults.put("ScrollBar.background", col);
     defaults.put("ScrollBar.track", col);

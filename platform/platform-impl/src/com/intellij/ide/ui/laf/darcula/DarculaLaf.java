@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.DarculaMetalTheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -128,7 +127,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
-      MetalLookAndFeel.setCurrentTheme(createMetalTheme());
       if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",
@@ -148,8 +146,11 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return super.getDefaults();
   }
 
+  /** @deprecated metal themes are obsolete, since everything's in JSON now */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   protected DefaultMetalTheme createMetalTheme() {
-    return new DarculaMetalTheme();
+    return new DefaultMetalTheme();
   }
 
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
