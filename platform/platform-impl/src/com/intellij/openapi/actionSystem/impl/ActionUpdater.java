@@ -483,7 +483,6 @@ final class ActionUpdater {
     if (myEventTransform != null) {
       event = myEventTransform.apply(event);
     }
-    event.setInjectedContext(action.isInInjectedContext());
     event.setUpdateSession(asUpdateSession());
     return event;
   }
