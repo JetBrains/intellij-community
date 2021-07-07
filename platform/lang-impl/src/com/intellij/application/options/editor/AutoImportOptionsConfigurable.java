@@ -22,12 +22,15 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.Configurable.VariableProjectAppLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +43,7 @@ public class AutoImportOptionsConfigurable
   implements EditorOptionsProvider, VariableProjectAppLevel, Configurable.WithEpDependencies {
 
   private final Project myProject;
-  private final JPanel myProvidersPanel = new JPanel(new MigLayout("insets 0, novisualpadding, fillx"));
+  private final JPanel myProvidersPanel = new JPanel(new GridBagLayout());
 
   public AutoImportOptionsConfigurable(Project project) {
     myProject = project;
@@ -65,15 +68,22 @@ public class AutoImportOptionsConfigurable
 
   @Override
   public JComponent createComponent() {
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.weightx = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+
     myProvidersPanel.removeAll();
     List<AutoImportOptionsProvider> providers = getConfigurables();
     for (AutoImportOptionsProvider provider : providers) {
       JComponent component = provider.createComponent();
       assert component != null : "AutoImportOptionsProvider " + provider.getClass() + " has a null component.";
-      myProvidersPanel.add(component, "wrap, growx, pushx, spanx");
+      gbc.insets = component instanceof DialogPanel ? JBUI.emptyInsets() : JBUI.insetsBottom(10);
+      myProvidersPanel.add(component, gbc);
     }
-    myProvidersPanel.add(Box.createVerticalGlue(), "wrap");
-    myProvidersPanel.add(Box.createVerticalGlue(), "wrap");
+    myProvidersPanel.add(Box.createVerticalGlue(), gbc);
+    myProvidersPanel.add(Box.createVerticalGlue(), gbc);
     return myProvidersPanel;
   }
 
