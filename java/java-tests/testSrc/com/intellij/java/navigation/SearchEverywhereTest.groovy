@@ -116,10 +116,10 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     mixingResultsFlag.set(true)
     twoTabsFlag.set(false)
 
-    def action1 = new StubAction("Imaginary Action")
-    def action2 = new StubAction("Another Imaginary Action")
-    def class1 = myFixture.addClass("class ImaginaryAction{}")
-    def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+    def action1 = new StubAction("Bravo Charlie")
+    def action2 = new StubAction("Alpha Bravo Charlie")
+    def class1 = myFixture.addClass("class BravoCharlie{}")
+    def class2 = myFixture.addClass("class AlphaBravoCharlie{}")
 
     def ui = createTestUI([
             ChooseByNameTest.createClassContributor(project, testRootDisposable),
@@ -130,14 +130,14 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def actionManager = ActionManager.getInstance()
     actions.each {actionManager.registerAction(it.key, it.value)}
     try {
-      def future = ui.findElementsForPattern("imaginaryaction")
-      def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginaryaction")
-      def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginaryaction")
+      def future = ui.findElementsForPattern("bravocharlie")
+      def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravocharlie")
+      def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravocharlie")
       assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
 
-      future = ui.findElementsForPattern("imaginary action")
-      matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary action")
-      matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary action")
+      future = ui.findElementsForPattern("bravo charlie")
+      matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo charlie")
+      matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo charlie")
       assert waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
     }
     finally {
@@ -149,10 +149,10 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     mixingResultsFlag.set(true)
     twoTabsFlag.set(false)
 
-    def action1 = new StubAction("Imaginary Action")
-    def action2 = new StubAction("Another Imaginary Action")
-    def class1 = myFixture.addClass("class ImaginaryAction{}")
-    def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+    def action1 = new StubAction("Bravo Charlie")
+    def action2 = new StubAction("Alpha Bravo Charlie")
+    def class1 = myFixture.addClass("class BravoCharlie{}")
+    def class2 = myFixture.addClass("class AlphaBravoCharlie{}")
 
     def ui = createTestUI([
             ChooseByNameTest.createClassContributor(project, testRootDisposable),
@@ -165,13 +165,13 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def abbreviationManager = AbbreviationManager.getInstance()
     actions.each {actionManager.registerAction(it.key, it.value)}
     try {
-      def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary")
-      def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary")
-      def future = ui.findElementsForPattern("imaginary")
+      def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo")
+      def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo")
+      def future = ui.findElementsForPattern("bravo")
       assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
 
-      abbreviationManager.register("imaginary", "ia2")
-      future = ui.findElementsForPattern("imaginary")
+      abbreviationManager.register("bravo", "ia2")
+      future = ui.findElementsForPattern("bravo")
       assert waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
     }
     finally {
