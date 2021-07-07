@@ -154,5 +154,7 @@
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ml.models.local.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.laf.macos" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.laf.win10" scope="RUNTIME" />
   </component>
 </module>
