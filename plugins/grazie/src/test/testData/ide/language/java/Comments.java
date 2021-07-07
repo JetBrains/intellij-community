@@ -41,6 +41,8 @@ class ForMultiLanguageSupport {
   }
   */
 
+  // // We have an "hours" value of 42, when...
+
   // Test various properties of <TYPO>igamma</TYPO> & <TYPO>igammac</TYPO>.  These are normalized
   // gamma integrals where
   //   <TYPO>igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)

@@ -125,6 +125,10 @@ class LanguageToolChecker : TextChecker() {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
       }
 
+      if (match.rule.id == "EN_A_VS_AN" && text.subSequence(match.toPos, text.length).matches(Regex("[^\\p{javaLetterOrDigit}]*hour.*"))) {
+        return true // https://github.com/languagetool-org/languagetool/issues/5260
+      }
+
       return false
     }
 
