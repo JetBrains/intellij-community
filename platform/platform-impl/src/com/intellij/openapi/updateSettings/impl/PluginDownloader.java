@@ -313,26 +313,24 @@ public final class PluginDownloader {
 
   public boolean tryInstallWithoutRestart(@Nullable JComponent ownerComponent) {
     assert myDescriptor instanceof IdeaPluginDescriptorImpl;
-    final IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)myDescriptor;
-    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptorImpl)) {
+    IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myDescriptor;
+    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
       return false;
     }
 
     if (myOldFile != null) {
-      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myDescriptor.getPluginId());
-      IdeaPluginDescriptorImpl fullDescriptor = installedPlugin instanceof IdeaPluginDescriptorImpl ?
-                                                (IdeaPluginDescriptorImpl)installedPlugin :
-                                                null;
-      if (fullDescriptor == null ||
-          !DynamicPlugins.INSTANCE.unloadPlugin(fullDescriptor,
-                                                new DynamicPlugins.UnloadPluginOptions()
-                                                  .withUpdate(true)
-                                                  .withWaitForClassloaderUnload(true))) {
+      IdeaPluginDescriptorImpl installedPlugin = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(myDescriptor.getPluginId());
+      // yes, if no installed plugin by id, it means that something goes wrong, so do not try to install and load
+      if (installedPlugin == null || !DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
+                                                                           new DynamicPlugins.UnloadPluginOptions()
+                                                                             .withDisable(false)
+                                                                             .withUpdate(true)
+                                                                             .withWaitForClassloaderUnload(true))) {
         return false;
       }
     }
 
-    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptorImpl);
+    return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptor);
   }
 
   private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator, boolean showMessageOnError) {

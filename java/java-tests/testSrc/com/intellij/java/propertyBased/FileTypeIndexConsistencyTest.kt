@@ -24,8 +24,8 @@ private const val FILE_NAME = "FileIdentifiableByText"
 @SkipSlowTestLocally
 class FileTypeIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
   fun testFuzzActions() {
-    Disposer.register(testRootDisposable, loadExtensionWithText("<fileTypeDetector implementation=\"${MyFileTypeDetector::class.java.name}\"/>",
-                                                                MyFileTypeDetector::class.java.classLoader))
+    Disposer.register(testRootDisposable, loadExtensionWithText(
+      "<fileTypeDetector implementation=\"${MyFileTypeDetector::class.java.name}\"/>"))
 
     val genAction: Generator<PsiIndexConsistencyTester.Action> =  Generator.from { data ->
       MyTextChange(
