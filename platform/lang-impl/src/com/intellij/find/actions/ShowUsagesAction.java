@@ -1238,7 +1238,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
       }
       else {
-        HintManager.getInstance().showInformationHint(editor, label);
+        HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
       }
     };
 

@@ -725,22 +725,34 @@ public class HintManagerImpl extends HintManager {
                                    @Nullable HyperlinkListener listener,
                                    @PositionFlags short position) {
     JComponent label = HintUtil.createInformationLabel(text, listener, null, null);
-    showInformationHint(editor, label, position);
+    showInformationHint(editor, label, position, null);
   }
 
   @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component) {
-    // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
-    // when the tooltip gets the focus.
-    showInformationHint(editor, component, ABOVE);
+    showInformationHint(editor, component, null);
   }
 
-  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @PositionFlags short position) {
+  @Override
+  public void showInformationHint(@NotNull Editor editor,
+                                  @NotNull JComponent component,
+                                  @Nullable Runnable onHintHidden) {
+    // Set the accessible name so that screen readers announce the panel type (e.g. "Hint panel")
+    // when the tooltip gets the focus.
+    showInformationHint(editor, component, ABOVE, onHintHidden);
+  }
+
+  public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @PositionFlags short position, @Nullable Runnable onHintHidden) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
     AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
     LightweightHint hint = new LightweightHint(component);
+    if (onHintHidden != null) {
+      hint.addHintListener((event) -> {
+        onHintHidden.run();
+      });
+    }
     Point p = getHintPosition(hint, editor, position);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
   }
