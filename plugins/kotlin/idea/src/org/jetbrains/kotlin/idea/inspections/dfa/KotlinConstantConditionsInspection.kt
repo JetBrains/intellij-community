@@ -20,8 +20,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinArrayIndexProblem
-import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.KotlinCastProblem
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -200,14 +199,19 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 when (problem) {
                     is KotlinArrayIndexProblem ->
                         holder.registerProblem(problem.index, KotlinBundle.message("inspection.message.index.out.of.bounds"))
-                    is KotlinProblem.KotlinNullCheckProblem ->
-                        holder.registerProblem(problem.expr.operationReference,
-                                               KotlinBundle.message("inspection.message.nonnull.cast.will.always.fail"))
-                    is KotlinCastProblem ->
-                        holder.registerProblem(
-                            (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast,
-                            KotlinBundle.message("inspection.message.cast.will.always.fail")
-                        )
+                    is KotlinNullCheckProblem -> {
+                        val expr = problem.expr
+                        if (expr.baseExpression?.isNull() != true) {
+                            holder.registerProblem(expr.operationReference, KotlinBundle.message("inspection.message.nonnull.cast.will.always.fail"))
+                        }
+                    }
+                    is KotlinCastProblem -> {
+                        val anchor = (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast
+                        val context = anchor.analyze(BodyResolveMode.FULL)
+                        if (!context.diagnostics.forElement(anchor).any { it.factory != Errors.CAST_NEVER_SUCCEEDS }) {
+                            holder.registerProblem(anchor, KotlinBundle.message("inspection.message.cast.will.always.fail"))
+                        }
+                    }
                 }
             }
         }
