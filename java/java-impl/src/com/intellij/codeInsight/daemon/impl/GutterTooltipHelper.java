@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -141,7 +141,7 @@ public final class GutterTooltipHelper {
           break;
         }
       }
-      if (name != null && parent != null) sb.append(" in ");
+      if (name != null && parent != null) sb.append(" ").append(JavaBundle.message("tooltip.in")).append(" ");
       element = parent;
     }
     if (addedSingleLink) sb.append("</code></a>");
@@ -209,7 +209,7 @@ public final class GutterTooltipHelper {
       return initializer.getEnumConstant().getName();
     }
     if (element instanceof PsiAnonymousClass) {
-      return "Anonymous";
+      return JavaBundle.message("tooltip.anonymous");
     }
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
