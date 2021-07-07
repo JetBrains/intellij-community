@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
@@ -20,13 +18,12 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassKind
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.idea.util.findLabelAndCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 
 internal class ThisKeywordHandler(
     private val basicContext: FirBasicCompletionContext
