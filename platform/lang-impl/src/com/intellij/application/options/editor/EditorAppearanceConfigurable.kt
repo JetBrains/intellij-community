@@ -93,7 +93,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       row {
         checkBox(myCodeLensCheckBox)
       }
-      row {
+      fullRow {
         checkBox(myRenderedDocCheckBox)
         component(createReaderModeComment()).withLargeLeftGap()
       }
