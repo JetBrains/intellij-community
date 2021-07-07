@@ -170,7 +170,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     else super.showCommitOptions(popup, isFromToolbar, dataContext)
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
-    commitMessage.changeLists = changeLists
+    commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
   override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
