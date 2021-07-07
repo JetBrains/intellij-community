@@ -416,10 +416,6 @@ abstract class Cell : BaseBuilder {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
 
-  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
-    return intTextField(binding, columns, range, null)
-  }
-
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
