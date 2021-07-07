@@ -557,41 +557,32 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Nullable
   public UsageType getUsageType() {
     UsageType usageType = myUsageType;
-
     if (usageType == null) {
-      usageType = UsageType.UNCLASSIFIED;
-      PsiFile file = getPsiFile();
-
-      if (file != null) {
-        Segment segment = getFirstSegment();
-
-        if (segment != null) {
-          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-          if (document != null) {
-            ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
-            SmartList<TextChunk> chunks = new SmartList<>();
-            extractor.createTextChunks(
-              this,
-              document.getCharsSequence(),
-              segment.getStartOffset(),
-              segment.getEndOffset(),
-              false,
-              chunks
-            );
-
-            for(TextChunk chunk:chunks) {
-              UsageType chunkUsageType = chunk.getType();
-              if (chunkUsageType != null) {
-                usageType = chunkUsageType;
-                break;
-              }
-            }
-          }
-        }
+      usageType = computeUsageType();
+      if (usageType == null) {
+        usageType = UsageType.UNCLASSIFIED;
       }
       myUsageType = usageType;
     }
     return usageType;
+  }
+
+  private @Nullable UsageType computeUsageType() {
+    PsiFile file = getPsiFile();
+    if (file == null) {
+      return null;
+    }
+    Segment segment = getFirstSegment();
+    if (segment == null) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    if (document == null) {
+      return null;
+    }
+    return ChunkExtractor.getExtractor(file).deriveUsageTypeFromHighlighting(
+      document.getCharsSequence(), segment.getStartOffset(), segment.getEndOffset()
+    );
   }
 
   @Override

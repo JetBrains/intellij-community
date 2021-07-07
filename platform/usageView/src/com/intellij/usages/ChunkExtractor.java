@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -241,9 +242,7 @@ public final class ChunkExtractor {
       if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
         addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, null, result);
 
-        UsageType usageType = isHighlightedAsString(tokenHighlights)
-                         ? UsageType.LITERAL_USAGE
-                         : isHighlightedAsComment(tokenHighlights) ? UsageType.COMMENT_USAGE : null;
+        UsageType usageType = deriveUsageTypeFromHighlighting(tokenHighlights);
         addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, usageType, result);
         lastOffset[0] = usageEnd;
         if (usageEnd > hiEnd) {
@@ -255,6 +254,27 @@ public final class ChunkExtractor {
     if (lastOffset[0] < hiEnd) {
       addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, null, result);
     }
+  }
+
+  @Nullable UsageType deriveUsageTypeFromHighlighting(@NotNull CharSequence chars, int usageStartOffset, int usageEndOffset) {
+    Ref<UsageType> result = new Ref<>();
+    processTokens(chars, usageStartOffset, usageEndOffset, (tokenStart, tokenEnd, tokenAttributeKeys) -> {
+      UsageType usageType = deriveUsageTypeFromHighlighting(tokenAttributeKeys);
+      if (usageType != null) {
+        result.set(usageType);
+        return false;
+      }
+      return true;
+    });
+    return result.get();
+  }
+
+  private static @Nullable UsageType deriveUsageTypeFromHighlighting(@NotNull TextAttributesKey @NotNull [] tokenAttributeKeys) {
+    return isHighlightedAsString(tokenAttributeKeys)
+           ? UsageType.LITERAL_USAGE
+           : isHighlightedAsComment(tokenAttributeKeys)
+             ? UsageType.COMMENT_USAGE
+             : null;
   }
 
   public static boolean isHighlightedAsComment(TextAttributesKey... keys) {
