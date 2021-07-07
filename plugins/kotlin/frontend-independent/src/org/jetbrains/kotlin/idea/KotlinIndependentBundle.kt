@@ -5,9 +5,10 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.KotlinIdeaAnalysisBundleIndependentBundle"
+private const val BUNDLE = "messages.KotlinIndependentBundle"
 
-object KotlinIdeaAnalysisBundleIndependentBundle : AbstractKotlinBundleIndependentBundle(BUNDLE) {
+//TODO Copy-pasted from KotlinBundle.kt
+object KotlinIndependentBundle : AbstractKotlinIndependentBundle(BUNDLE) {
     @JvmStatic
     fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
 
