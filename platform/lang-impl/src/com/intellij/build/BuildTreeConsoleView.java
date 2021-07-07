@@ -945,6 +945,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myToolbar.setTargetComponent(myView);
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
+        if (Disposer.isDisposed(myView)) return;
         TreePath path = e.getPath();
         if (path == null || !e.isAddedPath()) {
           return;
