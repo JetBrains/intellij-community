@@ -1,0 +1,8 @@
+// IGNORE_FIR
+package testing
+
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>tst<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>d<!>: <!HIGHLIGHTING("severity='ERROR'; descr='[UNSUPPORTED] Unsupported [Dynamic types are not supported in this context]'; textAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>dynamic<!>) {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>d<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_DYNAMIC_FUNCTION_CALL'")!>foo<!>()
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>d<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_DYNAMIC_PROPERTY_CALL'")!>foo<!>
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>d<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_DYNAMIC_PROPERTY_CALL'")!>foo<!> = 1
+}

@@ -1,0 +1,18 @@
+// IGNORE_FIR
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Foo<!> {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>constructor<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>i<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>)
+}
+
+class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Bar<!> : <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Foo<!> {
+    <!HIGHLIGHTING("severity='ERROR'; descr='[EXPLICIT_DELEGATION_CALL_REQUIRED] Explicit 'this' or 'super' call is required. There is no constructor in superclass that can be called without arguments'; textAttributesKey='ERRORS_ATTRIBUTES'")!><!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>constructor<!>(s: String)<!>
+}
+
+class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>F<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>foo<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>String<!>) {
+    <!HIGHLIGHTING("severity='ERROR'; descr='[PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED] Primary constructor call expected'; textAttributesKey='ERRORS_ATTRIBUTES'")!><!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>constructor<!>()<!> {}
+}
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>enum<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>E<!>(val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>a<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>String<!>) {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>A<!>;
+    <!HIGHLIGHTING("severity='ERROR'; descr='[PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED] Primary constructor call expected'; textAttributesKey='ERRORS_ATTRIBUTES'")!><!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>constructor<!>()<!>
+}
