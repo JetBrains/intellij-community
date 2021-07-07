@@ -58,13 +58,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
-  private static final Logger LOG = Logger.getInstance(PersistentFS.class);
+  private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
-  // FS roots must be in this map too. findFileById() relies on this.
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache =
-    ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
+  private final VirtualDirectoryCache myIdToDirCache = new VirtualDirectoryCache();
   private final ReadWriteLock myInputLock = new ReentrantReadWriteLock();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
@@ -139,13 +137,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return FSRecords.getCreationTimestamp();
   }
 
-  public @NotNull VirtualFileSystemEntry getOrCacheDir(int id, @NotNull VirtualDirectoryImpl newDir) {
-    VirtualFileSystemEntry dir = myIdToDirCache.get(id);
-    if (dir != null) return dir;
-    return myIdToDirCache.cacheOrGet(id, newDir);
+  public @NotNull VirtualFileSystemEntry getOrCacheDir(@NotNull VirtualDirectoryImpl newDir) {
+    return myIdToDirCache.getOrCacheDir(newDir);
   }
+
   public VirtualFileSystemEntry getCachedDir(int id) {
-    return myIdToDirCache.get(id);
+    return myIdToDirCache.getCachedDir(id);
   }
 
   private static @NotNull NewVirtualFileSystem getDelegate(@NotNull VirtualFile file) {
@@ -1364,7 +1361,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       mark = writeAttributesToRecord(rootId, null, 0, rootName, fs, attributes) != -1;
 
       myRoots.put(rootUrl, newRoot);
-      myIdToDirCache.put(rootId, newRoot);
+      myIdToDirCache.cacheDir(newRoot);
     }
 
     if (!mark && attributes.lastModified != FSRecords.getTimestamp(rootId)) {
@@ -1390,12 +1387,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public void clearIdCache() {
     // remove all except roots
-    myIdToDirCache.entrySet().removeIf(e -> e.getValue().getParent() != null);
+    myIdToDirCache.dropNonRootCachedDirs();
   }
 
   @Override
   public @Nullable NewVirtualFile findFileById(int id) {
-    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
+    VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(id);
     return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
   }
 
@@ -1747,8 +1744,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
-    return myIdToDirCache;
+  @NotNull Collection<VirtualFileSystemEntry> getDirCache() {
+    return myIdToDirCache.getCachedDirs();
   }
 
   static @Attributes int fileAttributesToFlags(@NotNull FileAttributes attributes) {

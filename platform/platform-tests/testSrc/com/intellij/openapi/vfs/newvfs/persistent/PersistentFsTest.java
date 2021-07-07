@@ -639,7 +639,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       assertNull(fs.findFileById(f.getId()));
     }
 
-    for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
+    for (VirtualFileSystemEntry f : fs.getDirCache()) {
       assertTrue(f.isValid());
     }
   }
