@@ -2111,8 +2111,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     finally {
       embeddersManager.releaseInTests();
     }
-    //no enabled profiles
-    assertTrue(project.getActivatedProfilesIds().getEnabledProfiles().isEmpty());
+    assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
+                                    "projectProfileXml",
+                                    "projectProfile",
+                                    "parent1Profile",
+                                    "parent1ProfileXml",
+                                    "parent2Profile",
+                                    "parent2ProfileXml",
+                                    "settings");
   }
 
   @Test 
