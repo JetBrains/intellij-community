@@ -240,10 +240,8 @@ public final class ChunkExtractor {
       int usageStart = segment.getStartOffset();
       int usageEnd = segment.getEndOffset();
       if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
-        addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, null, result);
-
-        UsageType usageType = deriveUsageTypeFromHighlighting(tokenHighlights);
-        addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, usageType, result);
+        addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, result);
+        addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, result);
         lastOffset[0] = usageEnd;
         if (usageEnd > hiEnd) {
           return false;
@@ -252,7 +250,7 @@ public final class ChunkExtractor {
       return true;
     });
     if (lastOffset[0] < hiEnd) {
-      addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, null, result);
+      addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, result);
     }
   }
 
@@ -314,14 +312,13 @@ public final class ChunkExtractor {
                                int end,
                                @NotNull TextAttributes originalAttrs,
                                boolean bold,
-                               @Nullable UsageType usageType,
                                @NotNull List<? super TextChunk> result) {
     if (start >= end) return;
 
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end)), usageType));
+    result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end))));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
