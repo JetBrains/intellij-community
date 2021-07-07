@@ -1,0 +1,27 @@
+// IGNORE_FIR
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>A<!>
+
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>block<!>: () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>) = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>private<!>
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+    1 + <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 2
+
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
+
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
+
+    @<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Err'; textAttributesKey='null'")!>Err<!>
+    5
+}
+
+@<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Err'; textAttributesKey='null'")!>Err<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Err1<!>
+
+class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>NotAnn<!>
+<!HIGHLIGHTING("severity='ERROR'; descr='[NOT_AN_ANNOTATION_CLASS] 'NotAnn' is not an annotation class'; textAttributesKey='ERRORS_ATTRIBUTES'")!>@NotAnn<!>
+class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>C<!>
