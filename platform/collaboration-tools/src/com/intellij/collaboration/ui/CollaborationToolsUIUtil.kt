@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
@@ -9,6 +11,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.KeyStroke
@@ -70,5 +73,13 @@ object CollaborationToolsUIUtil {
       listener.invoke(component)
     })
     listener.invoke(component)
+  }
+
+  /**
+   * Makes the button blue like a default button in dialogs
+   */
+  fun JButton.defaultButton(): JButton {
+    ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+    return this
   }
 }
