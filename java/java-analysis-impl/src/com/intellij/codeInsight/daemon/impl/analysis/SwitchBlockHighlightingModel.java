@@ -350,7 +350,7 @@ public class SwitchBlockHighlightingModel {
     @Nullable
     SelectorKind getSwitchSelectorKind() {
       if (TypeConversionUtil.getTypeRank(mySelectorType) <= TypeConversionUtil.INT_RANK) return SelectorKind.INT;
-      if (mySelectorType instanceof PsiPrimitiveType) return null;
+      if (TypeConversionUtil.isPrimitiveAndNotNull(mySelectorType)) return null;
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (psiClass != null) {
         if (psiClass.isEnum()) return SelectorKind.ENUM;
@@ -412,7 +412,7 @@ public class SwitchBlockHighlightingModel {
     private HighlightInfo checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label) {
       if (label instanceof PsiDefaultCaseLabelElement) return null;
       if (isNullType(label)) {
-        if (!(mySelectorType instanceof PsiClassType)) {
+        if (!(mySelectorType instanceof PsiClassType) && !isNullType(mySelector)) {
           return createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
                                                             JavaHighlightUtil.formatType(mySelectorType)));
         }
@@ -478,7 +478,7 @@ public class SwitchBlockHighlightingModel {
         elements.putValue(switchLabel, labelElement);
       }
       else if (labelElement instanceof PsiExpression) {
-        if (isConstantLabelElement(labelElement)) {
+        if (isNullType(labelElement) || isConstantLabelElement(labelElement)) {
           elements.putValue(switchLabel, labelElement);
         }
       }
@@ -513,14 +513,24 @@ public class SwitchBlockHighlightingModel {
       for (var entry : elements.entrySet()) {
         Collection<PsiCaseLabelElement> labelElements = entry.getValue();
         if (labelElements.size() <= 1) continue;
-        boolean existPattern = false, existsConst = false, existsDefault = false;
+        boolean existPattern = false, existsTypeTestPattern = false, existsConst = false, existsNull = false, existsDefault = false;
         for (PsiCaseLabelElement currentElement : labelElements) {
           if (currentElement instanceof PsiPattern) {
-            if (existPattern || existsConst || existsDefault) {
+            if (currentElement instanceof PsiTypeTestPattern) {
+              existsTypeTestPattern = true;
+            }
+            if (existPattern || existsConst || (existsNull && !existsTypeTestPattern) || existsDefault) {
               alreadyFallThroughElements.add(currentElement);
               results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to")));
             }
             existPattern = true;
+          }
+          else if (isNullType(currentElement)) {
+            if (existPattern && !existsTypeTestPattern) {
+              alreadyFallThroughElements.add(currentElement);
+              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+            }
+            existsNull = true;
           }
           else if (isConstantLabelElement(currentElement)) {
             if (existPattern) {
@@ -658,8 +668,6 @@ public class SwitchBlockHighlightingModel {
             }
           }
         }
-        // for now javac just looks check completeness using only the direct inherited classes of selector class.
-        // but here is a new PR https://github.com/openjdk/jdk17/pull/78 that extends that functionality
         directInheritedClasses = new ArrayList<>(
           DirectClassInheritorsSearch.search(selectorClass, selectorClass.getUseScope(), false).findAll());
         while (!patternClasses.isEmpty() && !directInheritedClasses.isEmpty()) {

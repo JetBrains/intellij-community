@@ -192,6 +192,18 @@ class Main {
       case Object oo:
         break;
     }
+
+    // null selector
+    switch (null) {
+      case null:
+        break;
+      default:
+        break;
+    };
+    str = switch (null) {
+      case null -> "null";
+      default -> "def";
+    };
   }
 
   void duplicateLabels(Integer i) {
@@ -244,16 +256,36 @@ class Main {
   }
 
   void fallThroughToPatterns(Object o, Integer ii) {
-    /* wasn't implemented in javac
-      If a switch label has a null case label element then if the switch label also has any pattern case element labels, t
-      they must be type patterns (14.30.1).
-     */
+    // If a switch label has a null case label element then if the switch label also has any pattern case element labels, t
+    // they must be type patterns (14.30.1).
+    switch (o) {
+      case Integer i && i != null, <error descr="Illegal fall-through from a pattern">null</error>:
+        break;
+      case default:
+        break;
+    }
+    String str;
+    str = switch (o) {
+      case Integer i && i != null, <error descr="Illegal fall-through from a pattern">null</error> -> "s";
+      default -> "null";
+    };
+
+    switch (o) {
+      case null, <error descr="Illegal fall-through to a pattern">Integer i && i != null</error>:
+        break;
+      case default:
+        break;
+    }
+    str = switch (o) {
+      case null, <error descr="Illegal fall-through to a pattern">Integer i && i != null</error> -> "s";
+      default -> "null";
+    };
+
     // A switch label may not have more than one pattern case label element.
     switch (o) {
       case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error>: System.out.println("s");
       default: System.out.println("null");
     }
-    String str;
     str = switch (o) {
       case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error> -> "s";
       default -> "null";
@@ -366,7 +398,7 @@ class Main {
       case List n:
         System.out.println("num");
         break;
-      case <error descr="This case label is dominated by a preceding case label 'List n'">List i</error>:
+      case <error descr="Label is dominated by a preceding case label 'List n'">List i</error>:
         System.out.println("int");
         break;
       default:
@@ -376,7 +408,7 @@ class Main {
     String str;
     str = switch (o) {
       case List n -> "num";
-      case <error descr="This case label is dominated by a preceding case label 'List n'">List i</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label 'List n'">List i</error> -> "int";
       default -> "def";
     };
 
@@ -384,7 +416,7 @@ class Main {
       case Number n:
         System.out.println("num");
         break;
-      case <error descr="This case label is dominated by a preceding case label 'Number n'">Integer i</error>:
+      case <error descr="Label is dominated by a preceding case label 'Number n'">Integer i</error>:
         System.out.println("int");
         break;
       default:
@@ -393,7 +425,7 @@ class Main {
     }
     str = switch (o) {
       case Number n -> "num";
-      case <error descr="This case label is dominated by a preceding case label 'Number n'">Integer i</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label 'Number n'">Integer i</error> -> "int";
       default -> "def";
     };
 
@@ -419,7 +451,7 @@ class Main {
       case (Integer i):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error>:
+      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error>:
         System.out.println("num");
         break;
       default:
@@ -428,7 +460,7 @@ class Main {
     }
     str = switch (o) {
       case (Integer i) -> "num";
-      case <error descr="This case label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error> -> "int";
       default -> "def";
     };
 
@@ -470,7 +502,7 @@ class Main {
       case (Integer i && true):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error>:
+      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error>:
         System.out.println("num");
         break;
       default:
@@ -479,7 +511,7 @@ class Main {
     }
     str = switch (o) {
       case (Integer i && true) -> "num";
-      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error> -> "int";
       default -> "def";
     };
 
@@ -489,7 +521,7 @@ class Main {
       case Object obj:
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error>:
+      case <error descr="Label is dominated by a preceding case label 'Object obj'">null</error>:
         System.out.println("num");
         break;
       default:
@@ -498,12 +530,12 @@ class Main {
     }
     str = switch (ii) {
       case Object obj -> "num";
-      case <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
       default -> "def";
     };
 
     switch (ii) {
-      case Object obj, <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error>:
+      case Object obj, <error descr="Label is dominated by a preceding case label 'Object obj'">null</error>:
         System.out.println("int");
         break;
       default:
@@ -511,7 +543,7 @@ class Main {
         break;
     }
     str = switch (ii) {
-      case Object obj, <error descr="This case label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
+      case Object obj, <error descr="Label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
       default -> "def";
     };
 
@@ -519,7 +551,7 @@ class Main {
       case (Integer i && true):
         System.out.println("int");
         break;
-      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">null</error>:
+      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">null</error>:
         System.out.println("num");
         break;
       default:
@@ -528,7 +560,7 @@ class Main {
     }
     str = switch (ii) {
       case (Integer i && true) -> "int";
-      case <error descr="This case label is dominated by a preceding case label '(Integer i && true)'">null</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">null</error> -> "int";
       default -> "def";
     };
 
