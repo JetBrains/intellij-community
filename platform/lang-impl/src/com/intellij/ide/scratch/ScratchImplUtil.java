@@ -394,7 +394,7 @@ final class ScratchImplUtil {
       sb.append(((JTextComponent)renderer).getText());
     }
     else if (renderer instanceof SimpleColoredComponent) {
-      sb.append(((SimpleColoredComponent)renderer).getCharSequence(true));
+      sb.append(((SimpleColoredComponent)renderer).getCharSequence(false));
     }
     else {
       return false;
