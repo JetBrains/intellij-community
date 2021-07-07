@@ -28,7 +28,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -36,7 +36,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
@@ -46,23 +45,21 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
-import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
+  public static final Key<Supplier<Iterable<Change>>> CHANGES_SUPPLIER_KEY = Key.create("Vcs.CommitMessage.CompletionContext");
 
   private final @NotNull JBLoadingPanel myLoadingPanel;
 
@@ -84,8 +81,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
-
-  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with this
 
   public CommitMessage(@NotNull Project project) {
     this(project, true, true, true);
@@ -276,27 +271,17 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField.selectAll();
   }
 
+  @RequiresEdt
+  public void setChangesSupplier(@NotNull Supplier<Iterable<Change>> changesSupplier) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myEditorField.getDocument().putUserData(CHANGES_SUPPLIER_KEY, changesSupplier);
+  }
+
   @Override
   public void dispose() {
     removeAll();
     myEditorField.getDocument().putUserData(DATA_KEY, null);
-  }
-
-  @RequiresEdt
-  public synchronized void setChangeList(@NotNull ChangeList value) {
-    setChangeLists(singletonList(value));
-  }
-
-  @RequiresEdt
-  public synchronized void setChangeLists(@NotNull List<ChangeList> value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myChangeLists = newUnmodifiableList(value);
-  }
-
-  @NotNull
-  @RequiresReadLock
-  public synchronized List<ChangeList> getChangeLists() {
-    return myChangeLists;
+    myEditorField.getDocument().putUserData(CHANGES_SUPPLIER_KEY, null);
   }
 
   private static final class RightMarginCustomization implements EditorCustomization {

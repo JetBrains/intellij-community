@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,10 +30,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Iterator;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
@@ -48,14 +47,14 @@ public class ChangedFilesCommitCompletionContributor extends CompletionContribut
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
 
-    CommitMessage commitMessage = document.getUserData(CommitMessage.DATA_KEY);
-    if (commitMessage == null) return;
+    Supplier<Iterable<Change>> changesSupplier = document.getUserData(CommitMessage.CHANGES_SUPPLIER_KEY);
+    if (changesSupplier == null) return;
 
     result.stopHere();
     int count = parameters.getInvocationCount();
 
-    List<ChangeList> lists = commitMessage.getChangeLists();
-    if (lists.isEmpty()) return;
+    Iterator<Change> changeIterator = changesSupplier.get().iterator();
+    if (!changeIterator.hasNext()) return;
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     if (count == 0 && prefix.length() < 5) {
@@ -65,20 +64,19 @@ public class ChangedFilesCommitCompletionContributor extends CompletionContribut
     CompletionResultSet resultSet = result.caseInsensitive().withPrefixMatcher(
       count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
-    for (ChangeList list : lists) {
+    while (changeIterator.hasNext()) {
       ProgressManager.checkCanceled();
-      for (Change change : list.getChanges()) {
-        ProgressManager.checkCanceled();
-        FilePath beforePath = ChangesUtil.getBeforePath(change);
-        FilePath afterPath = ChangesUtil.getAfterPath(change);
-        if (afterPath != null) {
-          addFilePathName(resultSet, afterPath, false);
-          addLanguageSpecificElements(project, count, prefixed, afterPath);
-        }
-        if (beforePath != null) {
-          if (afterPath == null || !beforePath.getName().equals(afterPath.getName())) {
-            addFilePathName(resultSet, beforePath, true);
-          }
+
+      Change change = changeIterator.next();
+      FilePath beforePath = ChangesUtil.getBeforePath(change);
+      FilePath afterPath = ChangesUtil.getAfterPath(change);
+      if (afterPath != null) {
+        addFilePathName(resultSet, afterPath, false);
+        addLanguageSpecificElements(project, count, prefixed, afterPath);
+      }
+      if (beforePath != null) {
+        if (afterPath == null || !beforePath.getName().equals(afterPath.getName())) {
+          addFilePathName(resultSet, beforePath, true);
         }
       }
     }

@@ -3,7 +3,6 @@ package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
@@ -34,6 +33,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val progressPanel = GitStageCommitProgressPanel()
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
+  @Volatile
   private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY)
 
   val rootsToCommit get() = state.rootsToCommit
@@ -47,6 +47,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   init {
     Disposer.register(this, commitMessage)
 
+    commitMessage.setChangesSupplier { state.stagedChanges }
     progressPanel.setup(this, commitMessage.editorField)
     bottomPanel = {
       add(progressPanel.apply { border = empty(6) })
