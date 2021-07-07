@@ -108,7 +108,6 @@
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
-      <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
       <group id="Internal.Dump" internal="true" popup="true">
         <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
         <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
