@@ -87,10 +87,7 @@ public final class SwitchUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (isPatternMatch) {
       if(canBePatternSwitchCase(expression, switchExpression)) {
-        final PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
-        final String switchText = "switch(o) { case " + createPatternCaseText(expression) + ": break; }";
-        final PsiElement switchStatement = factory.createStatementFromText(switchText, expression.getContext());
-        final PsiPattern pattern = PsiTreeUtil.findChildOfType(switchStatement, PsiPattern.class);
+        final PsiPattern pattern = createPatternFromExpression(expression);
         if (pattern == null) return true;
         for (Object caseValue : existingCaseValues) {
           if (caseValue instanceof PsiPattern && JavaPsiPatternUtil.dominates((PsiPattern) caseValue, pattern)) {
@@ -143,6 +140,13 @@ public final class SwitchUtils {
     else {
       return false;
     }
+  }
+
+  public static @Nullable PsiPattern createPatternFromExpression(@NotNull PsiExpression expression) {
+    PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
+    final String switchText = "switch(o) { case " + createPatternCaseText(expression) + ": break; }";
+    final PsiElement switchStatement = factory.createStatementFromText(switchText, expression.getContext());
+    return PsiTreeUtil.findChildOfType(switchStatement, PsiPattern.class);
   }
 
   /**

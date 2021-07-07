@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -181,7 +182,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
-      if (! ContainerUtil.exists(branches, (branch) -> branch.isElse())){
+      final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
+      if (!hasDefaultElse && !hasTotalPatternCheck(ifStatement, switchExpression)){
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
       if (getNullability(switchExpression) != Nullability.NOT_NULL && findNullCheckedOperand(statementToReplace) == null) {
@@ -509,7 +511,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
         Nullability nullability = getNullability(switchExpression);
         if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
-          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null) {
+          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasTotalPatternCheck(ifStatement, switchExpression)) {
             nullability = Nullability.NOT_NULL;
           }
         }
@@ -522,6 +524,41 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
       return !SideEffectChecker.mayHaveSideEffects(switchExpression);
     }
+  }
+
+  private static boolean hasTotalPatternCheck(PsiIfStatement ifStatement, PsiExpression switchExpression){
+    final PsiType type = switchExpression.getType();
+    if (type == null) return false;
+
+    PsiIfStatement currentIfInChain = ifStatement;
+    while (currentIfInChain != null) {
+      final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(currentIfInChain.getCondition());
+      if (condition instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+        if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+          if (ContainerUtil.exists(polyadicExpression.getOperands(), (operand) -> hasTotalPatternCheck(type, operand))) {
+            return true;
+          }
+        }
+      }
+      if (hasTotalPatternCheck(type, condition)) {
+        return true;
+      }
+      final PsiStatement elseBranch = currentIfInChain.getElseBranch();
+      if (elseBranch instanceof PsiIfStatement) {
+        currentIfInChain = (PsiIfStatement)elseBranch;
+      } else {
+        currentIfInChain = null;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean hasTotalPatternCheck(PsiType type, PsiExpression check) {
+    final PsiPattern pattern = SwitchUtils.createPatternFromExpression(check);
+    if (pattern == null) return false;
+    return JavaPsiPatternUtil.isTotalForType(pattern, type);
   }
 
   private static Nullability getNullability(PsiExpression expression) {
