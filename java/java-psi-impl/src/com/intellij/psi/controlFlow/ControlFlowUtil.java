@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntStack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -564,10 +565,19 @@ public final class ControlFlowUtil {
           for (int writeOffset : writeOffsets.get(variable).toIntArray()) {
             LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
             final BitSet reachableOffsets = calculator.fun(writeOffset);
+            //skip current assignment
+            reachableOffsets.set(writeOffset, false);
+            if (writeOffset + 1 < flow.getSize()) {
+              final PsiElement nextOffsetElement = flow.getElement(writeOffset + 1);
+              if (nextOffsetElement instanceof PsiExpressionStatement) {
+                if (flow.getElement(writeOffset) == ((PsiExpressionStatement)nextOffsetElement).getExpression()) {
+                  reachableOffsets.set(writeOffset + 1, false);
+                }
+              }
+            }
             collectedOffsets.or(reachableOffsets);
           }
-          Set<PsiElement> throwSources = afterWrite.get(variable);
-          if (throwSources == null) afterWrite.put(variable, throwSources = new HashSet<>());
+          Set<PsiElement> throwSources = afterWrite.getOrDefault(variable, new HashSet<>());
           for (int i = flowStart; i < flowEnd; i++) {
             if (collectedOffsets.get(i)) {
               throwSources.add(flow.getElement(i));
@@ -580,6 +590,11 @@ public final class ControlFlowUtil {
             }
           }
           throwSources.removeAll(subordinates);
+          if (throwSources.isEmpty()) {
+            afterWrite.remove(variable);
+          } else {
+            afterWrite.put(variable, throwSources);
+          }
         }
         LOG.debug("afterWrite:", afterWrite);
         return afterWrite;
@@ -665,11 +680,17 @@ public final class ControlFlowUtil {
     final Map<PsiVariable, Set<PsiElement>> afterWrite = worker.getReachableAfterWrite(writeOffsets, visibleReadOffsets);
     if (afterWrite.isEmpty()) return false;
 
+    final PsiClassType runtimeException = PsiType.getJavaLangRuntimeException(tryBlock.getManager(), tryBlock.getResolveScope());
+    final boolean runtimeExceptionIsCaught = ContainerUtil.
+      exists(tryStatements, (tryStatement) -> isExceptionCaught(tryStatement, runtimeException));
+
     for (Map.Entry<PsiVariable, Set<PsiElement>> entry : afterWrite.entrySet()) {
       final PsiVariable variable = entry.getKey();
       final PsiElement[] psiElements = entry.getValue().toArray(PsiElement.EMPTY_ARRAY);
       final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(psiElements);
-
+      if (runtimeExceptionIsCaught) {
+        thrownExceptions.add(runtimeException);
+      }
       if (!thrownExceptions.isEmpty()) {
         final IntList catchOrFinallyOffsets = worker.getCatchOrFinallyOffsets(tryStatements, thrownExceptions);
         if (worker.isAnyReadOffsetReachableFrom(visibleReadOffsets.get(variable), catchOrFinallyOffsets)) {
@@ -678,6 +699,10 @@ public final class ControlFlowUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isExceptionCaught(@NotNull PsiTryStatement tryStatement, @NotNull PsiClassType exceptionType){
+    return ContainerUtil.exists(tryStatement.getCatchBlockParameters(), (parameter) -> exceptionType.isAssignableFrom(exceptionType));
   }
 
   @Nullable

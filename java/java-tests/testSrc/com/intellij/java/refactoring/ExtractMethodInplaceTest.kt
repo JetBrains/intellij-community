@@ -87,6 +87,30 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testRuntimeCatchMayChangeSemantic1(){
+    try {
+      doTest()
+      fail("RuntimeException may change code semantic")
+    } catch (e: RefactoringErrorHintException) {
+    }
+  }
+
+  fun testRuntimeCatchMayChangeSemantic2(){
+    try {
+      doTest()
+      fail("RuntimeException may change code semantic")
+    } catch (e: RefactoringErrorHintException) {
+    }
+  }
+
+  fun testRuntimeCatchWithLastAssignment(){
+    doTest()
+  }
+
+  fun testSpecificCatch(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
