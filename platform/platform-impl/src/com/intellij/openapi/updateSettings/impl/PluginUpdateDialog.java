@@ -187,34 +187,38 @@ final class PluginUpdateDialog extends DialogWrapper {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<PluginDownloader> downloaders = downloadPluginUpdates(toDownload, indicator);
-        if (!downloaders.isEmpty()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, dl -> !dl.tryInstallWithoutRestart(ownerComponent));
-            if (result.getPluginsInstalled().size() > 0) {
-              if (!result.getRestartRequired()) {
-                String message;
-                if (result.getPluginsInstalled().size() == 1) {
-                  IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
-                  message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
-                }
-                else {
-                  String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
-                  message = IdeBundle.message("notification.content.updated.plugins", names);
-                }
-                UpdateChecker.getNotificationGroupForUpdateResults()
-                  .createNotification(message, NotificationType.INFORMATION)
-                  .setDisplayId("plugins.updated.without.restart")
-                  .notify(myProject);
-              }
-              else if (WelcomeFrame.getInstance() == null) {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-              else {
-                PluginManagerConfigurable.shutdownOrRestartApp();
-              }
-            }
-          }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
+        if (downloaders.isEmpty()) {
+          return;
         }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, dl -> !dl.tryInstallWithoutRestart(ownerComponent));
+          if (result.getPluginsInstalled().isEmpty()) {
+            return;
+          }
+
+          if (!result.getRestartRequired()) {
+            String message;
+            if (result.getPluginsInstalled().size() == 1) {
+              IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
+              message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
+            }
+            else {
+              String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
+              message = IdeBundle.message("notification.content.updated.plugins", names);
+            }
+            UpdateChecker.getNotificationGroupForUpdateResults()
+              .createNotification(message, NotificationType.INFORMATION)
+              .setDisplayId("plugins.updated.without.restart")
+              .notify(myProject);
+          }
+          else if (WelcomeFrame.getInstance() == null) {
+            PluginManagerMain.notifyPluginsUpdated(null);
+          }
+          else {
+            PluginManagerConfigurable.shutdownOrRestartApp();
+          }
+        }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
       }
 
       @Override
