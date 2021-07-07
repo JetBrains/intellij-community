@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -108,7 +109,15 @@ public final class PsiSuperMethodUtil {
       return psiClass;
     }
 
-    return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+    PsiClass aClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+    VirtualFile mappedVFile = PsiUtilCore.getVirtualFile(aClass);
+    if (mappedVFile != null) {
+      Module module = index.getModuleForFile(vFile);
+      if (module != null && module == index.getModuleForFile(mappedVFile)) {
+        return psiClass;
+      }
+    }
+    return aClass;
   }
 
 }
