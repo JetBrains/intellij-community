@@ -36,14 +36,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       return;
     }
 
-    if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
-      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
-    }
-    else {
-      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
-      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
-    }
+    setTextAndDescription(e, log);
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {
@@ -64,5 +57,16 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
     if (changes == null || changes.length != 1 || changes[0] == null) return;
 
     ShowDiffAction.showDiffForChange(project, Arrays.asList(changes));
+  }
+
+  public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLog log) {
+    if (log.getSelectedCommits().size() >= 2) {
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
+    }
+    else {
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
+    }
   }
 }

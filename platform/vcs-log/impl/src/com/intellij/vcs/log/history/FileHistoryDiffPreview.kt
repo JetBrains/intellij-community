@@ -5,11 +5,14 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChainBackedDiffPreviewProvider
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider
 import com.intellij.vcs.log.ui.frame.EditorDiffPreview
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -48,5 +51,10 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
     val change = fileHistoryPanel.selectedChange ?: return null
     val producer = ChangeDiffRequestProducer.create(project, change) ?: return null
     return SimpleDiffRequestChain.fromProducer(producer)
+  }
+
+  override fun updateAvailability(event: AnActionEvent) {
+    val log = event.getData(VcsLogDataKeys.VCS_LOG) ?: return
+    CompareRevisionsFromFileHistoryActionProvider.setTextAndDescription(event, log)
   }
 }
