@@ -104,6 +104,7 @@ import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractExpectedExp
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractHLExpressionTypeTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractRendererTest
+import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
@@ -466,6 +467,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHighlightingTest> {
             model("highlighter")
+        }
+
+        testClass<AbstractHighlightingMetaInfoTest> {
+            model("highlighterMetaInfo")
         }
 
         testClass<AbstractDslHighlighterTest> {
@@ -1074,6 +1079,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirHighlightingTest> {
             model("highlighter")
             model("../../../fir/testData/highlighterFir", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractFirHighlightingMetaInfoTest> {
+            model("highlighterMetaInfo")
         }
 
         testClass<AbstractFirKotlinHighlightingPassTest> {
