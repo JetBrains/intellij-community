@@ -532,6 +532,9 @@ private class AlertDialog(project: Project?,
   override fun createDoNotAskCheckbox(): JComponent? = null
 
   override fun getPreferredFocusedComponent(): JComponent? {
+    if (!SystemInfoRt.isMac) {
+      return null
+    }
     if (myPreferredFocusedComponent != null) {
       return myPreferredFocusedComponent
     }
