@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListActions;
+import com.intellij.ui.MouseMovementTracker;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
@@ -53,6 +54,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   private MyMouseMotionListener myMouseMotionListener;
   private MyMouseListener myMouseListener;
+  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
 
   private ListPopupModel myListModel;
 
@@ -492,6 +494,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
     setIndexForShowingChild(myList.getSelectedIndex());
+    myMouseMovementTracker.reset();
 
     if (Registry.is("ide.list.popup.separate.next.step.button")) {
       myList.setNextStepButtonSelected(true);
@@ -541,15 +544,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       int index = myList.locationToIndex(point);
 
       if (isSelectableAt(index)) {
-        if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
+        if (index != myLastSelectedIndex && !isMovingToSubmenu(e)) {
           myExtendMode = calcExtendMode(index);
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
+            if (myShowSubmenuOnHover) {
+              disposeChildren();
+            }
             if (myExtendMode == ExtendMode.EXTEND_ON_HOVER) {
               showSubMenu(index, true);
-            }
-            else if (getIndexForShowingChild() != -1) {
-              disposeChildren();
             }
           }
           restartTimer();
@@ -590,21 +593,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return myShowSubmenuOnHover ? ExtendMode.EXTEND_ON_HOVER : ExtendMode.NO_EXTEND;
     }
 
-    private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
+    private boolean isMovingToSubmenu(MouseEvent e) {
       if (myChild == null || myChild.isDisposed()) return false;
 
       Rectangle childBounds = myChild.getBounds();
       childBounds.setLocation(myChild.getLocationOnScreen());
 
-      Polygon triangle = childBounds.x > prevPoint.x
-          ? new Polygon(
-                new int[]{prevPoint.x, childBounds.x, childBounds.x},
-                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3)
-          : new Polygon(
-                new int[]{prevPoint.x, childBounds.x + childBounds.width, childBounds.x + childBounds.width},
-                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3);
-
-      return triangle.contains(newPoint);
+      return myMouseMovementTracker.isMovingTowards(e, childBounds);
     }
 
     private void showSubMenu(int forIndex, boolean withTimer) {
