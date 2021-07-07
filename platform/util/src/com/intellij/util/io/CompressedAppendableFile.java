@@ -444,51 +444,51 @@ public class CompressedAppendableFile {
     return myDirty;
   }
 
-  private static class FileChunkReadCache extends SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> {
+  private static class FileChunkReadCache {
     private static final FileChunkReadCache ourDecompressedCache = new FileChunkReadCache();
+
+    private final SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> myMap = new SLRUMap<>(64, 64);
 
     static {
       @SuppressWarnings("unused") // TODO disable watcher when it's not needed (on index close?)
-      LowMemoryWatcher registered = LowMemoryWatcher.register(() -> {
-        synchronized (ourDecompressedCache) {
-          ourDecompressedCache.clear();
-        }
-      });
-    }
-
-    FileChunkReadCache() {
-      super(64, 64);
+      LowMemoryWatcher registered = LowMemoryWatcher.register(() -> ourDecompressedCache.clear());
     }
 
     byte @NotNull [] get(CompressedAppendableFile file, int page) throws IOException {
       byte[] bytes;
       synchronized (this) {
-        bytes = get(new FileChunkKey<>(file, page));
+        bytes = myMap.get(new FileChunkKey<>(file, page));
         if (bytes != null) return bytes;
       }
 
       bytes = file.loadChunk(page);   // out of lock
-      synchronized (this) {
-        put(file, page, bytes);
-      }
+      put(file, page, bytes);
       return bytes;
     }
 
     void put(CompressedAppendableFile file, long page, byte[] bytes) {
       synchronized (this) {
-        put(new FileChunkKey<>(file, page), bytes);
+        myMap.put(new FileChunkKey<>(file, page), bytes);
       }
     }
 
-    void clear(CompressedAppendableFile file) {
+    void clear() {
+      synchronized (this) {
+        myMap.clear();
+      }
+    }
+
+    void clear(@NotNull CompressedAppendableFile file) {
       Set<FileChunkKey<CompressedAppendableFile>> toClean = new HashSet<>();
-      iterateKeys(key -> {
-        if (key.getOwner() == file) {
-          toClean.add(key);
+      synchronized (this) {
+        myMap.iterateKeys(key -> {
+          if (key.getOwner() == file) {
+            toClean.add(key);
+          }
+        });
+        for (FileChunkKey<CompressedAppendableFile> key : toClean) {
+          myMap.remove(key);
         }
-      });
-      for (FileChunkKey<CompressedAppendableFile> key : toClean) {
-        remove(key);
       }
     }
   }
