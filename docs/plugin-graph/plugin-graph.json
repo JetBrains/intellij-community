@@ -1178,6 +1178,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cck",
+    "n": "com.intellij.cdi"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "ck",
     "name": "intellij.javaee.cdi",
     "n": "i.javaee.cdi",
@@ -1185,7 +1191,20 @@
     "sourceModule": "intellij.javaee.cdi",
     "descriptor": "plugins/javaee/cdi/cdi-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.cdi",
-    "type": 1
+    "parent": "cck",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eI",
+    "name": "intellij.javaee.cdi/diagram",
+    "n": "i.javaee.cdi/diagram",
+    "package": "com.intellij.cdi.diagram",
+    "sourceModule": "intellij.javaee.cdi",
+    "descriptor": "plugins/javaee/cdi/cdi-core/resources/intellij.javaee.cdi.diagram.xml",
+    "parent": "cck",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -4198,6 +4217,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "ck_eI",
+    "source": "ck",
+    "target": "eI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "Xe_pA",
     "source": "Xe",
     "target": "pA",
@@ -5705,6 +5732,14 @@
     "id": "ck_It",
     "source": "ck",
     "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eI_Bv",
+    "source": "eI",
+    "target": "Bv",
     "type": 0
   }
 }, {
