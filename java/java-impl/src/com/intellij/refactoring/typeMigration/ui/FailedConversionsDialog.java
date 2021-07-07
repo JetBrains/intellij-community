@@ -44,7 +44,7 @@ public class FailedConversionsDialog extends DialogWrapper {
     myConflictDescriptions = conflictDescriptions;
     setTitle(JavaRefactoringBundle.message("usages.detected.title"));
     setOKButtonText(JavaRefactoringBundle.message("ignore.button"));
-    getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('I'));
+    getOKAction().putValue(Action.MNEMONIC_KEY, Integer.valueOf('I'));
     init();
   }
 
@@ -93,7 +93,7 @@ public class FailedConversionsDialog extends DialogWrapper {
   private class ViewUsagesAction extends AbstractAction {
     ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
-      putValue(Action.MNEMONIC_KEY, new Integer('V'));
+      putValue(Action.MNEMONIC_KEY, Integer.valueOf('V'));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }
 

@@ -238,7 +238,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
           try {
             Class<?> appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
             Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, int.class, boolean.class);
-            s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
+            s1 = (String)getModifiers.invoke(appleLaf, new Object[] {Integer.valueOf(j1), Boolean.FALSE});
           }
           catch (Exception e) {
             s1 = KeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);

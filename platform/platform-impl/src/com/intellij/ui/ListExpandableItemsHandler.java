@@ -76,13 +76,13 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
 
   private void updateSelection(JList list) {
     int selection = list.getSelectedIndices().length == 1 ? list.getSelectedIndex() : -1;
-    handleSelectionChange(selection == -1 ? null : new Integer(selection));
+    handleSelectionChange(selection == -1 ? null : Integer.valueOf(selection));
   }
 
   @Override
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.locationToIndex(point);
-    return rowIndex != -1 ? new Integer(rowIndex) : null;
+    return rowIndex != -1 ? Integer.valueOf(rowIndex) : null;
   }
 
   @Override

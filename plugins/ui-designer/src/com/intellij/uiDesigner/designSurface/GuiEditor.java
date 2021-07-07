@@ -115,16 +115,16 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   /**
    * This is the topmost layer. It gets and redispatch all incoming events
    */
-  private static final Integer LAYER_GLASS = new Integer(JLayeredPane.DRAG_LAYER.intValue() + 100);
+  private static final Integer LAYER_GLASS = Integer.valueOf(JLayeredPane.DRAG_LAYER.intValue() + 100);
   /**
    * This layer contains all "active" decorators. This layer should be over
    * LAYER_GLASS because active decorators must get AWT events to work correctly.
    */
-  private static final Integer LAYER_ACTIVE_DECORATION = new Integer(LAYER_GLASS.intValue() + 100);
+  private static final Integer LAYER_ACTIVE_DECORATION = Integer.valueOf(LAYER_GLASS.intValue() + 100);
   /**
    * This layer contains all inplace editors.
    */
-  private static final Integer LAYER_INPLACE_EDITING = new Integer(LAYER_ACTIVE_DECORATION.intValue() + 100);
+  private static final Integer LAYER_INPLACE_EDITING = Integer.valueOf(LAYER_ACTIVE_DECORATION.intValue() + 100);
 
   private final EventListenerList myListenerList;
   /**

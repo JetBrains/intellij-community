@@ -388,7 +388,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
         myWasSelected = myButton.isSelected();
         myUnitsCombo.setEnabled(myButton.isSelected());
         mySpinner.setEnabled(myButton.isSelected());
-        if (myButton.isSelected() && mySpinner.getValue().equals(new Integer(0))) {
+        if (myButton.isSelected() && mySpinner.getValue().equals(Integer.valueOf(0))) {
           mySpinner.setValue(100);
         }
         updateOnRadioChange();

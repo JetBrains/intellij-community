@@ -302,8 +302,8 @@ public final class GridBuildUtil {
 
 
     return Couple.of(
-      new Integer(Util.eliminate(y, rowSpans, null)),
-      new Integer(Util.eliminate(x, colSpans, null))
+      Integer.valueOf(Util.eliminate(y, rowSpans, null)),
+      Integer.valueOf(Util.eliminate(x, colSpans, null))
     );
   }
 
