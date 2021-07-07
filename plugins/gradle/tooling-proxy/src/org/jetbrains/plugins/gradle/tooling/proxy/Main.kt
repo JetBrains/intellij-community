@@ -6,7 +6,6 @@ import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
 import org.gradle.internal.remote.internal.inet.InetEndpoint
-//import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
 import org.gradle.launcher.daemon.protocol.Failure
