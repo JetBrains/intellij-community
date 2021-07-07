@@ -124,7 +124,6 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  @JvmOverloads
   fun unloadPlugins(
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
@@ -139,17 +138,17 @@ object DynamicPlugins {
   private fun updateDescriptorsWithoutRestart(
     plugins: Collection<IdeaPluginDescriptor>,
     load: Boolean,
-    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
+    executor: (IdeaPluginDescriptorImpl) -> Boolean,
   ): Boolean {
     if (plugins.isEmpty()) {
       return true
     }
 
-    val loadedPlugins = PluginManagerCore.getLoadedPlugins().map { it.pluginId }
+    val pluginSet = PluginManagerCore.getPluginSet()
     val descriptors = plugins
       .asSequence()
       .filterIsInstance<IdeaPluginDescriptorImpl>()
-      .filterNot { loadedPlugins.contains(it.pluginId) == load }
+      .filterNot { pluginSet.isPluginEnabled(it.pluginId) == load }
       .toList()
 
     val operationText = if (load) "load" else "unload"
@@ -162,10 +161,9 @@ object DynamicPlugins {
       return false
     }
 
-    pluginsSortedByDependency(descriptors, load).forEach { descriptor ->
+    for (descriptor in pluginsSortedByDependency(descriptors, load)) {
       descriptor.isEnabled = load
-
-      if (!predicate.invoke(descriptor)) {
+      if (!executor.invoke(descriptor)) {
         LOG.info("Failed to $operationText: $descriptor, restart required")
         InstalledPluginsState.getInstance().isRestartRequired = true
         return false
@@ -177,7 +175,7 @@ object DynamicPlugins {
 
   private fun pluginsSortedByDependency(descriptors: List<IdeaPluginDescriptorImpl>, load: Boolean): List<IdeaPluginDescriptorImpl> {
     val plugins = getTopologicallySorted(descriptors = descriptors, pluginSet = PluginManagerCore.getPluginSet(), withOptional = true)
-    return if (load) plugins else plugins.reversed()
+    return if (load) plugins else plugins.asReversed()
   }
 
   /**
@@ -799,7 +797,7 @@ object DynamicPlugins {
     return loadPlugin(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
+  private fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
