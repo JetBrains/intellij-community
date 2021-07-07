@@ -758,7 +758,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (this != current) {
-      LOG.error(current + "!=" + this);
+      LOG.error(current + "!=" + this + ";" +
+                "current phase=" + CompletionServiceImpl.getCompletionPhase() + ";" +
+                "clientId=" + ClientId.getCurrent());
     }
 
     hideAutopopupIfMeaningless();
