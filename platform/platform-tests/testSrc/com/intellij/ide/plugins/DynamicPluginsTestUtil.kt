@@ -39,19 +39,12 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
 }
 
 @JvmOverloads
-fun loadExtensionWithText(
-  extensionTag: String,
-  loader: ClassLoader = DynamicPlugins::class.java.classLoader,
-  ns: String = "com.intellij"
-): Disposable {
+fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Disposable {
   val builder = PluginBuilder().extensions(extensionTag, ns)
   return loadPluginWithText(builder, FileSystems.getDefault())
 }
 
-internal fun loadPluginWithText(
-  pluginBuilder: PluginBuilder,
-  fs: FileSystem,
-): Disposable {
+internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): Disposable {
   val directory = if (fs == FileSystems.getDefault()) {
     FileUtil.createTempDirectory("test", "test", true).toPath()
   }
@@ -68,13 +61,13 @@ internal fun loadPluginWithText(
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
   }
   catch (e: Exception) {
-    DynamicPlugins.unloadPlugin(descriptor)
+    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
     throw e
   }
 
   return Disposable {
     val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
-    DynamicPlugins.unloadPlugin(descriptor)
+    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
     assertThat(reason).isNull()
   }
 }

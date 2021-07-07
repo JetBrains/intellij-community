@@ -96,7 +96,7 @@ public final class PluginInstaller {
                                                boolean isUpdate) {
     boolean uninstalledWithoutRestart = true;
     if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 

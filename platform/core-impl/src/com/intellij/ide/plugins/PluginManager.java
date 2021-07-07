@@ -11,20 +11,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphAlgorithms;
-import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.lang.Java11Shim;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -181,32 +175,6 @@ public final class PluginManager {
 
   public boolean hideImplementationDetails() {
     return !Registry.is("plugins.show.implementation.details");
-  }
-
-  @ApiStatus.Internal
-  public void setPlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
-    PluginManagerCore.doSetPlugins(Java11Shim.INSTANCE.copyOf(descriptors));
-  }
-
-  @ApiStatus.Internal
-  public boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                boolean withOptionalDeps,
-                                                @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    @NotNull PluginSet pluginSet = PluginManagerCore.getPluginSet();
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = CachingSemiGraphKt.createPluginIdGraph(pluginSet.enabledPlugins, pluginSet,
-                                                                                                  withOptionalDeps);
-    Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
-    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
-    GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
-    for (IdeaPluginDescriptorImpl dependency : dependencies) {
-      if (dependency == rootDescriptor) {
-        continue;
-      }
-      if (consumer.apply(dependency) == FileVisitResult.TERMINATE) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {

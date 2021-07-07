@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
@@ -16,7 +16,7 @@ import kotlin.streams.toList
 class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test infrastructure extension drops all indexes when it requires invalidation`() {
     val text = "<fileBasedIndexInfrastructureExtension implementation=\"" + TestIndexInfrastructureExtension::class.java.name + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text, TestIndexInfrastructureExtension::class.java.classLoader))
+    Disposer.register(testRootDisposable, loadExtensionWithText(text))
 
     val before = Files.list(PathManager.getIndexRoot()).use {
       it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()

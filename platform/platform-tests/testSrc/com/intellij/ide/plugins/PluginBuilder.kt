@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
@@ -32,19 +33,6 @@ fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") des
   outDir.resolve("$ownerId/$moduleId.xml").write(descriptor.trimIndent())
 }
 
-//class PluginV2Builder(val id: String, private var b: PluginBuilder) {
-//  var packagePrefix: String
-//    get() = throw IllegalStateException("set only")
-//    set(value) {
-//      b.packagePrefix(value)
-//    }
-//
-//  @Language("XML")
-//  val extensionPoints = mutableListOf<@Language("XML") String>()
-//
-//  val pluginDependencies
-//}
-
 class PluginBuilder {
   private data class ExtensionBlock(val ns: String, val text: String)
   private data class DependsTag(val pluginId: String, val configFile: String?)
@@ -67,6 +55,7 @@ class PluginBuilder {
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
   private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
+  private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
 
   private val subDescriptors = HashMap<String, PluginBuilder>()
 
@@ -123,6 +112,11 @@ class PluginBuilder {
 
   fun dependency(moduleName: String): PluginBuilder {
     dependencies.add(ModuleDependenciesDescriptor.ModuleReference(moduleName))
+    return this
+  }
+
+  fun pluginDependency(pluginId: String): PluginBuilder {
+    pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
@@ -206,9 +200,15 @@ class PluginBuilder {
         content.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
         append("\n</content>")
       }
-      if (dependencies.isNotEmpty()) {
+
+      if (dependencies.isNotEmpty() || pluginDependencies.isNotEmpty()) {
         append("\n<dependencies>\n  ")
-        dependencies.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+        if (dependencies.isNotEmpty()) {
+          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+        }
+        if (pluginDependencies.isNotEmpty()) {
+          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it.id}" />""" }
+        }
         append("\n</dependencies>")
       }
 

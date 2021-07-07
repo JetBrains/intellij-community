@@ -990,13 +990,18 @@ public final class StartupUtil {
     }
 
     @Override
-    public <E> Set<E> copyOf(Set<? extends E> collection) {
+    public <E> @NotNull Set<E> copyOf(Set<? extends E> collection) {
       return Set.copyOf(collection);
     }
 
     @Override
-    public <E> List<E> copyOf(List<? extends E> collection) {
+    public <E> @NotNull List<E> copyOf(List<? extends E> collection) {
       return List.copyOf(collection);
+    }
+
+    @Override
+    public @NotNull <E> List<E> listOf(E[] collection) {
+      return List.of(collection);
     }
   }
 }

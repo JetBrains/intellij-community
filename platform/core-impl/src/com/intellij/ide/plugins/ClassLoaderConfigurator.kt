@@ -19,7 +19,7 @@ import java.util.function.BiPredicate
 import java.util.function.Function
 
 private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
-private val EMPTY_DESCRIPTOR_ARRAY = arrayOfNulls<IdeaPluginDescriptorImpl>(0)
+private val EMPTY_DESCRIPTOR_ARRAY = emptyArray<IdeaPluginDescriptorImpl>()
 
 @ApiStatus.Internal
 class ClassLoaderConfigurator(
@@ -31,8 +31,7 @@ class ClassLoaderConfigurator(
 
   // temporary set to produce arrays (avoid allocation for each plugin)
   // set to remove duplicated classloaders
-  private val loaders = LinkedHashSet<ClassLoader>()
-  private val dependencies = ArrayList<IdeaPluginDescriptorImpl>()
+  private val dependencies = LinkedHashSet<IdeaPluginDescriptorImpl>()
 
   private val hasAllModules = pluginSet.isPluginEnabled(PluginManagerCore.ALL_MODULES_MARKER)
 
@@ -71,17 +70,17 @@ class ClassLoaderConfigurator(
         }
       }
       else {
-        mainDependentClassLoader.attachParent(dependencyPlugin.classLoader!!)
+        mainDependentClassLoader.attachParent(dependencyPlugin)
         for (module in modules) {
           module.classLoader = mainDependentClassLoader
         }
       }
     }
-    loaders.clear()
+    dependencies.clear()
   }
 
   fun configureAll() {
-    val postTasks = mutableListOf<() -> Unit>()
+    val postTasks = ArrayList<() -> Unit>()
     for (plugin in pluginSet.enabledPlugins) {
       // not only for core plugin, but also for a plugin from classpath (run TraverseUi)
       if (plugin.pluginId == PluginManagerCore.CORE_ID || (plugin.isUseCoreClassLoader && !plugin.content.modules.isEmpty())) {
@@ -109,7 +108,7 @@ class ClassLoaderConfigurator(
       return
     }
 
-    loaders.clear()
+    dependencies.clear()
 
     // first, set class loader for main descriptor
     if (hasAllModules) {
@@ -120,7 +119,12 @@ class ClassLoaderConfigurator(
         }
         javaDep!!.orElse(null)
       }
-      implicitDependency?.let { addLoaderOrLogError(plugin, it, loaders) }
+      implicitDependency?.let {
+        if (it.classLoader !== coreLoader) {
+          dependencies.add(it)
+        }
+        Unit
+      }
     }
 
     var files = plugin.jarFiles
@@ -142,7 +146,7 @@ class ClassLoaderConfigurator(
           addContentModulesIfNeeded(dependency)
         }
         // must be after adding implicit module class loaders
-        loaders.add(loader)
+        dependencies.add(p)
       }
 
       dependency.subDescriptor?.let {
@@ -155,9 +159,8 @@ class ClassLoaderConfigurator(
 
     // new format
     processDirectDependencies(plugin, pluginSet) {
-      val classLoader = it.classLoader!!
-      if (classLoader !== coreLoader) {
-        loaders.add(classLoader)
+      if (it.classLoader !== coreLoader) {
+        dependencies.add(it)
       }
     }
 
@@ -193,28 +196,28 @@ class ClassLoaderConfigurator(
     }
 
     // reset to ensure that stalled data will be not reused somehow later
-    loaders.clear()
+    dependencies.clear()
   }
 
   private fun addContentModulesIfNeeded(dependency: PluginDependency) {
     when (dependency.pluginId.idString) {
       "Docker" -> {
-        pluginSet.findEnabledModule("intellij.clouds.docker.file")?.classLoader?.let {
-          loaders.add(it)
+        pluginSet.findEnabledModule("intellij.clouds.docker.file")?.let {
+          dependencies.add(it)
         }
-        pluginSet.findEnabledModule("intellij.clouds.docker.remoteRun")?.classLoader?.let {
-          loaders.add(it)
+        pluginSet.findEnabledModule("intellij.clouds.docker.remoteRun")?.let {
+          dependencies.add(it)
         }
       }
       "com.intellij.diagram" -> {
         // https://youtrack.jetbrains.com/issue/IDEA-266323
-        pluginSet.findEnabledModule("intellij.diagram.java")?.classLoader?.let {
-          loaders.add(it)
+        pluginSet.findEnabledModule("intellij.diagram.java")?.let {
+          dependencies.add(it)
         }
       }
       "com.intellij.modules.clion" -> {
-        pluginSet.findEnabledModule("intellij.profiler.clion")?.classLoader?.let {
-          loaders.add(it)
+        pluginSet.findEnabledModule("intellij.profiler.clion")?.let {
+          dependencies.add(it)
         }
       }
     }
@@ -290,14 +293,14 @@ class ClassLoaderConfigurator(
                                       files: List<Path>,
                                       libDirectories: MutableList<String>,
                                       classPath: ClassPath): PluginClassLoader {
-    val parentLoaders = if (loaders.isEmpty()) {
-      PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
+    val parents: Array<IdeaPluginDescriptorImpl> = if (dependencies.isEmpty()) {
+      EMPTY_DESCRIPTOR_ARRAY
     }
     else {
-      loaders.toArray(arrayOfNulls(loaders.size))
+      dependencies.toArray(arrayOfNulls(dependencies.size))
     }
 
-    return createPluginClassLoader(parentLoaders = parentLoaders,
+    return createPluginClassLoader(parents = parents,
                                    descriptor = descriptor,
                                    files = files,
                                    coreLoader = coreLoader,
@@ -322,11 +325,7 @@ class ClassLoaderConfigurator(
 
     for (item in module.dependencies.modules) {
       // Module dependency is always optional. If the module depends on an unavailable plugin, it will not be loaded.
-      val descriptor = (pluginSet.findEnabledModule(item.name) ?: return)
-      val classLoader = descriptor.classLoader
-      if (classLoader !== coreLoader) {
-        dependencies.add(descriptor)
-      }
+      dependencies.add(pluginSet.findEnabledModule(item.name) ?: return)
     }
     for (item in module.dependencies.plugins) {
       val descriptor = pluginSet.findEnabledPlugin(item.id) ?: return
@@ -352,25 +351,12 @@ class ClassLoaderConfigurator(
     module.classLoader = PluginClassLoader(
       files,
       classPath,
-      null,
       array,
       module,
       coreLoader,
       createModuleResolveScopeManager(), module.packagePrefix,
       libDirectories
     )
-  }
-
-  private fun addLoaderOrLogError(dependent: IdeaPluginDescriptorImpl,
-                                  dependency: IdeaPluginDescriptorImpl,
-                                  loaders: MutableCollection<ClassLoader>) {
-    val loader = dependency.classLoader
-    if (loader == null) {
-      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.name}'"))
-    }
-    else if (loader !== coreLoader) {
-      loaders.add(loader)
-    }
   }
 
   private fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
@@ -400,7 +386,7 @@ private val log: Logger
   get() = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
 // static to ensure that anonymous classes will not hold ClassLoaderConfigurator
-private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
+private fun createPluginClassLoader(parents: Array<IdeaPluginDescriptorImpl>,
                                     descriptor: IdeaPluginDescriptorImpl,
                                     files: List<Path>,
                                     libDirectories: MutableList<String>,
@@ -412,7 +398,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
     when (descriptor.id.idString) {
       "com.intellij.diagram" -> {
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
-        return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
+        return createPluginClassLoaderWithExtraPackage(parents = parents,
                                                        descriptor = descriptor,
                                                        files = files,
                                                        coreLoader = coreLoader,
@@ -421,7 +407,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                                        customPackage = "com.intellij.diagram.")
       }
       "com.intellij.struts2" -> {
-        return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
+        return createPluginClassLoaderWithExtraPackage(parents = parents,
                                                        descriptor = descriptor,
                                                        files = files,
                                                        coreLoader = coreLoader,
@@ -431,7 +417,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
       }
       "com.intellij.properties" -> {
         // todo ability to customize (cannot move due to backward compatibility)
-        return createPluginClassloader(parentLoaders = parentLoaders,
+        return createPluginClassloader(parents = parents,
                                        descriptor = descriptor,
                                        files = files,
                                        coreLoader = coreLoader,
@@ -455,7 +441,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
   else {
     if (!descriptor.content.modules.isEmpty()) {
       // see "The `content.module` element" section about content handling for a module
-      return createPluginClassloader(parentLoaders = parentLoaders,
+      return createPluginClassloader(parents = parents,
                                      descriptor = descriptor,
                                      files = files,
                                      coreLoader = coreLoader,
@@ -464,7 +450,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                      resolveScopeManager = createModuleContentBasedScope(descriptor))
     }
     else if (descriptor.packagePrefix != null) {
-      return createPluginClassloader(parentLoaders = parentLoaders,
+      return createPluginClassloader(parents = parents,
                                      descriptor = descriptor,
                                      files = files,
                                      coreLoader = coreLoader,
@@ -474,7 +460,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
   }
 
   return createPluginClassloader(
-    parentLoaders = parentLoaders,
+    parents = parents,
     descriptor = descriptor,
     files = files,
     coreLoader = coreLoader,
@@ -492,25 +478,25 @@ private fun createModuleResolveScopeManager(): PluginClassLoader.ResolveScopeMan
   }
 }
 
-private fun createPluginClassloader(parentLoaders: Array<ClassLoader>,
+private fun createPluginClassloader(parents: Array<IdeaPluginDescriptorImpl>,
                                     descriptor: IdeaPluginDescriptorImpl,
                                     files: List<Path>,
                                     libDirectories: MutableList<String>,
                                     coreLoader: ClassLoader,
                                     classPath: ClassPath,
                                     resolveScopeManager: PluginClassLoader.ResolveScopeManager?): PluginClassLoader {
-  return PluginClassLoader(files, classPath, parentLoaders, null, descriptor, coreLoader, resolveScopeManager, descriptor.packagePrefix,
+  return PluginClassLoader(files, classPath, parents, descriptor, coreLoader, resolveScopeManager, descriptor.packagePrefix,
                            libDirectories)
 }
 
-private fun createPluginClassLoaderWithExtraPackage(parentLoaders: Array<ClassLoader>,
+private fun createPluginClassLoaderWithExtraPackage(parents: Array<IdeaPluginDescriptorImpl>,
                                                     descriptor: IdeaPluginDescriptorImpl,
                                                     files: List<Path>,
                                                     libDirectories: MutableList<String>,
                                                     coreLoader: ClassLoader,
                                                     classPath: ClassPath,
                                                     customPackage: String): PluginClassLoader {
-  return createPluginClassloader(parentLoaders = parentLoaders,
+  return createPluginClassloader(parents = parents,
                                  descriptor = descriptor,
                                  files = files,
                                  coreLoader = coreLoader,

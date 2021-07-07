@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
@@ -91,7 +90,7 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = loadResult.getEnabledPlugins()
     assertThat(plugins).hasSize(2)
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet(plugins, plugins))
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
     plugins.forEach(classLoaderConfigurator::configure)
     return loadResult
   }
