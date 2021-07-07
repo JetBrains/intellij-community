@@ -2279,7 +2279,7 @@
     "id": "5r",
     "name": "intellij.ruby.puppet.java",
     "n": "i.ruby.puppet.java",
-    "package": "com.intellij.lang.puppet.ruby.java.ide",
+    "package": "com.intellij.lang.puppet.ruby.java.ide.project.idea",
     "sourceModule": "intellij.ruby.puppet.java",
     "descriptor": "ruby/ruby-puppet-java/resources/intellij.ruby.puppet.java.xml",
     "parent": "c2K",
@@ -2444,12 +2444,36 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "m21",
-    "name": "intellij.ruby.plugin/watcher",
-    "n": "i.ruby.plugin/watcher",
+    "id": "Fa",
+    "name": "intellij.ruby.fileWatcher",
+    "n": "i.ruby.fileWatcher",
     "package": "org.jetbrains.plugins.ruby.watcher",
-    "sourceModule": "intellij.ruby.plugin",
-    "descriptor": "ruby/pluginResources/intellij.ruby.plugin.watcher.xml",
+    "sourceModule": "intellij.ruby.fileWatcher",
+    "descriptor": "ruby/ruby-fileWatcher/resources/intellij.ruby.fileWatcher.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hE",
+    "name": "intellij.ruby.css",
+    "n": "i.ruby.css",
+    "package": "org.jetbrains.plugins.ruby.css",
+    "sourceModule": "intellij.ruby.css",
+    "descriptor": "ruby/ruby-css/resources/intellij.ruby.css.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "YF",
+    "name": "intellij.ruby.sass",
+    "n": "i.ruby.sass",
+    "package": "org.jetbrains.plugins.ruby.sass",
+    "sourceModule": "intellij.ruby.sass",
+    "descriptor": "ruby/ruby-sass/resources/intellij.ruby.sass.xml",
     "parent": "c2K",
     "type": 0
   }
@@ -3668,7 +3692,7 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Fa",
+    "id": "Fa1",
     "name": "com.intellij.modules.database",
     "n": "c.i.m.database",
     "package": null,
@@ -3686,6 +3710,18 @@
     "sourceModule": "intellij.gherkin",
     "descriptor": "contrib/cucumber/resources/META-INF/plugin.xml",
     "pluginId": "gherkin",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tn",
+    "name": "intellij.sass",
+    "n": "i.sass",
+    "package": null,
+    "sourceModule": "intellij.sass",
+    "descriptor": "plugins/sass/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.sass",
     "type": 1
   }
 }, {
@@ -4642,9 +4678,25 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "2K_m21",
+    "id": "2K_Fa",
     "source": "2K",
-    "target": "m21",
+    "target": "Fa",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_hE",
+    "source": "2K",
+    "target": "hE",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_YF",
+    "source": "2K",
+    "target": "YF",
     "type": 1
   }
 }, {
@@ -6770,9 +6822,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "P5_Fa",
+    "id": "P5_Fa1",
     "source": "P5",
-    "target": "Fa",
+    "target": "Fa1",
     "type": 0
   }
 }, {
@@ -6970,9 +7022,25 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "m21_uY",
-    "source": "m21",
+    "id": "Fa_uY",
+    "source": "Fa",
     "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hE_Pn",
+    "source": "hE",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YF_tn",
+    "source": "YF",
+    "target": "tn",
     "type": 0
   }
 }, {
