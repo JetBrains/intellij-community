@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -283,14 +283,14 @@ class TBItemButton extends TBItem {
 
       // load icon (can be quite slow)
       final long startNs = myActionStats != null ? System.nanoTime() : 0;
-      final Icon icon = ReadAction.compute(() -> {
+      final Icon icon = ReadAction.nonBlocking(() -> {
         if (TEST_DELAY_MS > 0) waitTheTestDelay();
         final Icon darkIcon = getDarkIcon(myOriginIcon);
         if (darkIcon == null)
           return null;
 
         return myNeedGetDisabledIcon ? IconLoader.getDisabledIcon(darkIcon) : darkIcon;
-      });
+      }).executeSynchronously();
 
       // prepare raster (not very fast)
       Pair<Pointer, Dimension> raster = NST.get4ByteRGBARaster(icon);
