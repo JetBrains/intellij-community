@@ -232,12 +232,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
     LOG.assertTrue(region.isValid());
 
-    collapseFoldRegion(region, true);
+    collapseFoldRegion(region, false);
     if (region.isExpanded()) { // caret inside region and 'do not collapse caret' flag is active
       region.putUserData(DO_NOT_NOTIFY, Boolean.TRUE);
       myRegionTree.removeInterval(region);
       return null;
     }
+    notifyListenersOnFoldRegionStateChange(region);
 
     LOG.assertTrue(region.isValid());
     return region;
