@@ -655,25 +655,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     // set L&F
-    // that is IDEA default LAF
-    if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
-      IdeaLaf laf = new IdeaLaf(null);
-      MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
-      try {
-        UIManager.setLookAndFeel(laf);
-        updateIconsUnderSelection(false);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        Messages.showMessageDialog(
-          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-        return true;
-      }
-    }
-    else if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
