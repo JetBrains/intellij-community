@@ -114,7 +114,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   val bucket: Int = deviceId.asBucket()
 
   private val salt: ByteArray = getOrGenerateSalt()
-  private val anonymizedCache = ConcurrentHashMap<String, String>()
+  private val anonymizedCache: AnonymizedIdsCache = AnonymizedIdsCache()
   private val machineIdReference: AtomicLazyValue<MachineId>
 
   val machineId: MachineId
@@ -214,5 +214,13 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       EventLogConfiguration.LOG.info("Generating new salt for $recorderId")
     }
     return salt
+  }
+}
+
+private class AnonymizedIdsCache {
+  private val anonymizedCache = ConcurrentHashMap<String, String>()
+
+  fun computeIfAbsent(data: String, mappingFunction: (String) -> String): String {
+    return anonymizedCache.computeIfAbsent(data, mappingFunction)
   }
 }
