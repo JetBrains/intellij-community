@@ -1106,7 +1106,8 @@
     <daemon.intentionActionFilter implementation="com.intellij.ide.lightEdit.intentions.LightEditIntentionActionFilter"/>
     <intentionAction>
       <className>com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention</className>
-      <category>LightEdit mode</category>
+      <bundleName>messages.ApplicationBundle</bundleName>
+      <categoryKey>intention.category.light.edit.mode</categoryKey>
     </intentionAction>
     <editorNotificationProvider implementation="com.intellij.ide.lightEdit.LightEditNonExistentFileNotificationProvider"/>
 
