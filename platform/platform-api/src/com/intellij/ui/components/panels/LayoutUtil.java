@@ -13,10 +13,12 @@ final class LayoutUtil {
   static @NotNull Dimension getPreferredSize(@NotNull Component component) {
     Dimension size = component.getPreferredSize();
     if (size == null) return new Dimension(); // rare
-    Dimension max = component.getMaximumSize();
-    if (max != null) {
-      if (size.width > max.width) size.width = max.width;
-      if (size.height > max.height) size.height = max.height;
+    if (component.isMaximumSizeSet()) {
+      Dimension max = component.getMaximumSize();
+      if (max != null) {
+        if (size.width > max.width) size.width = max.width;
+        if (size.height > max.height) size.height = max.height;
+      }
     }
     return size;
   }
