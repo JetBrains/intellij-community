@@ -119,7 +119,7 @@ public class PerformanceTestInfo {
 
       testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
 
-      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
+      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
 
       if (iterationResult == IterationResult.ACCEPTABLE) {
         TeamCityLogger.info(logMessage);
@@ -151,7 +151,10 @@ public class PerformanceTestInfo {
     }
   }
 
-  private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
+  private @NotNull String formatMessage(@NotNull CpuUsageData data,
+                                        int expectedOnMyMachine,
+                                        @NotNull IterationResult iterationResult,
+                                        int initialMaxRetries) {
     long duration = data.durationMs;
     int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
     String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
@@ -159,7 +162,7 @@ public class PerformanceTestInfo {
                        "31;1m"; // red
     return
       what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
-      (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
+      (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1 ? " (but JIT compilation took too long, will retry anyway)" : "") +
       "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
       "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
       "\n  Timings:  " + Timings.getStatistics() +
