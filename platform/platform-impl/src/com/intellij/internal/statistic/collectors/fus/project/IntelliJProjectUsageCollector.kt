@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector
 
 /**
  * @author Konstantin Bulenkov
@@ -29,7 +30,7 @@ class IntelliJProjectUsageCollector : ProjectUsagesCollector() {
   }
 
   private fun isIdeaProject(project: Project): Boolean {
-    if (Registry.`is`("ide.disable.intellij.project.analytics")) return false
+    if (Registry.`is`(RegistryApplicationUsagesCollector.DISABLE_INTELLIJ_PROJECT_ANALYTICS)) return false
 
     val moduleManager = ModuleManager.getInstance(project)
     return moduleManager.findModuleByName("intellij.platform.commercial") != null
