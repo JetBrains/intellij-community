@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.6.0'  # patched PY-37054
+__version__ = '2.7.0'  # patched PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -104,6 +104,7 @@ BLANK_LINES_CONFIG = {
     'method': 1,
 }
 MAX_DOC_LENGTH = 72
+INDENT_SIZE = 4
 REPORT_FORMAT = {
     'default': '%(path)s:%(row)d:%(col)d: %(code)s %(text)s',
     'pylint': '%(path)s:%(row)d: [%(code)s] %(text)s',
@@ -264,7 +265,7 @@ def trailing_blank_lines(physical_line, lines, line_number, total_lines):
     However the last line should end with a new line (warning W292).
     """
     if line_number == total_lines:
-        stripped_last_line = physical_line.rstrip()
+        stripped_last_line = physical_line.rstrip('\r\n')
         if physical_line and not stripped_last_line:
             return 0, "W391 blank line at end of file"
         if stripped_last_line == physical_line:
@@ -543,8 +544,9 @@ def missing_whitespace(logical_line):
 
 @register_check
 def indentation(logical_line, previous_logical, indent_char,
-                indent_level, previous_indent_level):
-    r"""Use 4 spaces per indentation level.
+                indent_level, previous_indent_level,
+                indent_size, indent_size_str):
+    r"""Use indent_size (PEP8 says 4) spaces per indentation level.
 
     For really old code that you don't want to mess up, you can continue
     to use 8-space tabs.
@@ -564,8 +566,11 @@ def indentation(logical_line, previous_logical, indent_char,
     """
     c = 0 if logical_line else 3
     tmpl = "E11%d %s" if logical_line else "E11%d %s (comment)"
-    if indent_level % 4:
-        yield 0, tmpl % (1 + c, "indentation is not a multiple of four")
+    if indent_level % indent_size:
+        yield 0, tmpl % (
+            1 + c,
+            "indentation is not a multiple of " + indent_size_str,
+        )
     indent_expect = previous_logical.endswith(':')
     if indent_expect and indent_level <= previous_indent_level:
         yield 0, tmpl % (2 + c, "expected an indented block")
@@ -581,7 +586,8 @@ def indentation(logical_line, previous_logical, indent_char,
 
 @register_check
 def continued_indentation(logical_line, tokens, indent_level, hang_closing,
-                          indent_char, noqa, verbose):
+                          indent_char, indent_size, indent_size_str, noqa,
+                          verbose):
     r"""Continuation lines indentation.
 
     Continuation lines should align wrapped elements either vertically
@@ -620,7 +626,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
     indent_next = logical_line.endswith(':')
 
     row = depth = 0
-    valid_hangs = (4,) if indent_char != '\t' else (4, 8)
+    valid_hangs = (indent_size,) if indent_char != '\t' \
+        else (indent_size, indent_size * 2)
     # remember how many brackets were opened on each line
     parens = [0] * nrows
     # relative indents of physical lines
@@ -685,7 +692,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
                     # visual indent is broken
                     yield (start, "E128 continuation line "
                            "under-indented for visual indent")
-            elif hanging_indent or (indent_next and rel_indent[row] == 8):
+            elif hanging_indent or (indent_next and
+                                    rel_indent[row] == 2 * indent_size):
                 # hanging indent is verified
                 if close_bracket and not hang_closing:
                     yield (start, "E123 closing bracket does not match "
@@ -708,7 +716,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
                     error = "E131", "unaligned for hanging indent"
                 else:
                     hangs[depth] = hang
-                    if hang > 4:
+                    if hang > indent_size:
                         error = "E126", "over-indented for hanging indent"
                     else:
                         error = "E121", "under-indented for hanging indent"
@@ -775,8 +783,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
         if last_token_multiline:
             rel_indent[end[0] - first_row] = rel_indent[row]
 
-    if indent_next and expand_indent(line) == indent_level + 4:
-        pos = (start[0], indent[0] + 4)
+    if indent_next and expand_indent(line) == indent_level + indent_size:
+        pos = (start[0], indent[0] + indent_size)
         if visual_indent:
             code = "E129 visually indented line"
         else:
@@ -1806,10 +1814,8 @@ else:
     def readlines(filename):
         """Read the source code."""
         try:
-            with open(filename, 'rb') as f:
-                (coding, lines) = tokenize.detect_encoding(f.readline)
-                f = TextIOWrapper(f, coding, line_buffering=True)
-                return [line.decode(coding) for line in lines] + f.readlines()
+            with tokenize.open(filename) as f:
+                return f.readlines()
         except (LookupError, SyntaxError, UnicodeError):
             # Fall back if file encoding is improperly declared
             with open(filename, encoding='latin-1') as f:
@@ -1960,8 +1966,12 @@ class Checker(object):
         self._ast_checks = options.ast_checks
         self.max_line_length = options.max_line_length
         self.max_doc_length = options.max_doc_length
+        self.indent_size = options.indent_size
         self.multiline = False  # in a multiline string?
         self.hang_closing = options.hang_closing
+        self.indent_size = options.indent_size
+        self.indent_size_str = ({2: 'two', 4: 'four', 8: 'eight'}
+                                .get(self.indent_size, str(self.indent_size)))
         self.verbose = options.verbose
         self.filename = filename
         # Dictionary where a checker can store its custom state.
@@ -2125,21 +2135,30 @@ class Checker(object):
             self.report_error(1, 0, 'E902 %s' % self._io_error, readlines)
         tokengen = tokenize.generate_tokens(self.readline)
         try:
+            prev_physical = ''
             for token in tokengen:
                 if token[2][0] > self.total_lines:
                     return
                 self.noqa = token[4] and noqa(token[4])
-                self.maybe_check_physical(token)
+                self.maybe_check_physical(token, prev_physical)
                 yield token
+                prev_physical = token[4]
         except (SyntaxError, tokenize.TokenError):
             self.report_invalid_syntax()
 
-    def maybe_check_physical(self, token):
+    def maybe_check_physical(self, token, prev_physical):
         """If appropriate for token, check current physical line(s)."""
         # Called after every token, but act only on end of line.
+
+        # a newline token ends a single physical line.
         if _is_eol_token(token):
-            # Obviously, a newline token ends a single physical line.
-            self.check_physical(token[4])
+            # if the file does not end with a newline, the NEWLINE
+            # token is inserted by the parser, but it does not contain
+            # the previous physical line in `token[4]`
+            if token[4] == '':
+                self.check_physical(prev_physical)
+            else:
+                self.check_physical(token[4])
         elif token[0] == tokenize.STRING and '\n' in token[1]:
             # Less obviously, a string that contains newlines is a
             # multiline string, either triple-quoted or with internal
@@ -2519,8 +2538,8 @@ def get_parser(prog='pycodestyle', version=__version__):
                           usage="%prog [options] input ...")
     parser.config_options = [
         'exclude', 'filename', 'select', 'ignore', 'max-line-length',
-        'max-doc-length', 'hang-closing', 'count', 'format', 'quiet',
-        'show-pep8', 'show-source', 'statistics', 'verbose']
+        'max-doc-length', 'indent-size', 'hang-closing', 'count', 'format',
+        'quiet', 'show-pep8', 'show-source', 'statistics', 'verbose']
     parser.add_option('-v', '--verbose', default=0, action='count',
                       help="print status messages, or debug with -vv")
     parser.add_option('-q', '--quiet', default=0, action='count',
@@ -2560,6 +2579,10 @@ def get_parser(prog='pycodestyle', version=__version__):
                       default=None,
                       help="set maximum allowed doc line length and perform "
                            "these checks (unchecked if not set)")
+    parser.add_option('--indent-size', type='int', metavar='n',
+                      default=INDENT_SIZE,
+                      help="set how many spaces make up an indent "
+                           "(default: %default)")
     parser.add_option('--hang-closing', action='store_true',
                       help="hang closing bracket instead of matching "
                            "indentation of opening bracket's line")
