@@ -176,7 +176,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be changed inside batchFoldProcessing() only");
     }
-    myFoldRegionsProcessed = true;
+    notifyListenersOnFoldProcessingStartIfNeeded();
     myEditor.myView.invalidateFoldRegionLayout(region);
     notifyListenersOnFoldRegionStateChange(region);
   }
@@ -353,12 +353,10 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }
-
+    notifyListenersOnFoldProcessingStartIfNeeded();
     ((FoldRegionImpl)region).setExpanded(true, false);
     notifyListenersOnFoldRegionStateChange(region);
     notifyListenersOnFoldRegionRemove(region);
-
-    myFoldRegionsProcessed = true;
     region.dispose();
   }
 
@@ -367,7 +365,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }
-    myFoldRegionsProcessed = true;
+    notifyListenersOnFoldProcessingStartIfNeeded();
     myRegionTree.removeInterval(region);
     removeRegionFromGroup(region);
   }
@@ -388,6 +386,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return;
     }
     FoldRegion[] regions = getAllFoldRegions();
+    if (regions.length > 0) {
+      notifyListenersOnFoldProcessingStartIfNeeded();
+    }
     for (FoldRegion region : regions) {
       if (!region.isExpanded()) notifyListenersOnFoldRegionStateChange(region);
       notifyListenersOnFoldRegionRemove(region);
@@ -424,8 +425,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         caret.putUserData(SAVED_CARET_POSITION, new SavedCaretPosition(caret));
       }
     }
-
-    myFoldRegionsProcessed = true;
+    notifyListenersOnFoldProcessingStartIfNeeded();
     myExpansionCounter.incrementAndGet();
     ((FoldRegionImpl) region).setExpandedInternal(true);
     if (notify) notifyListenersOnFoldRegionStateChange(region);
@@ -453,8 +453,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     }
-
-    myFoldRegionsProcessed = true;
+    notifyListenersOnFoldProcessingStartIfNeeded();
     ((FoldRegionImpl) region).setExpandedInternal(false);
     if (notify) notifyListenersOnFoldRegionStateChange(region);
   }
@@ -708,6 +707,15 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, () -> myListeners.remove(listener));
+  }
+
+  private void notifyListenersOnFoldProcessingStartIfNeeded() {
+    if (!myFoldRegionsProcessed) {
+      for (FoldingListener listener : myListeners) {
+        listener.onFoldProcessingStart();
+      }
+      myFoldRegionsProcessed = true;
+    }
   }
 
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
