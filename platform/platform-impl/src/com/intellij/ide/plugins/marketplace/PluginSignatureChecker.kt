@@ -171,7 +171,14 @@ internal object PluginSignatureChecker {
 
   private fun getSignatureWarningMessage(descriptor: IdeaPluginDescriptor): String {
     val vendor = if (descriptor.organization.isNullOrBlank()) descriptor.vendor else descriptor.organization
-    return IdeBundle.message("plugin.signature.not.signed", descriptor.name, vendor, descriptor.pluginId.idString, descriptor.version)
+    val vendorMessage = if (vendor.isNullOrBlank()) vendor else IdeBundle.message("jetbrains.certificate.vendor", vendor)
+    return IdeBundle.message(
+      "plugin.signature.not.signed",
+      descriptor.name,
+      descriptor.pluginId.idString,
+      descriptor.version,
+      vendorMessage
+    )
   }
 
   private fun processSignatureCheckerVerdict(descriptor: IdeaPluginDescriptor, @Nls message: String): Boolean {
