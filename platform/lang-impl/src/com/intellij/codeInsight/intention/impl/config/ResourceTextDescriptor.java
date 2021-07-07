@@ -52,7 +52,7 @@ final class ResourceTextDescriptor implements TextDescriptor {
   private InputStream getStream() {
     InputStream stream = myLoader.getResourceAsStream(myResourcePath);
 
-    if (!BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME.equals(myResourcePath)) return stream;
+    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) return stream;
 
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
     if (langBundle == null) return stream;
