@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,7 +195,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     checkDuplicates(values, results);
-
+    // todo replace with needToCheckCompleteness
     if (results.isEmpty() && myBlock instanceof PsiSwitchExpression && !hasDefaultCase) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass == null) {
@@ -248,6 +249,19 @@ public class SwitchBlockHighlightingModel {
         }
       }
     }
+  }
+
+  boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
+    return myBlock instanceof PsiSwitchExpression || myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements);
+  }
+
+  private boolean isEnhancedSwitch(@NotNull List<PsiCaseLabelElement> labelElements) {
+    if (getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY) return true;
+    return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
+  }
+
+  static boolean isNullType(@NotNull PsiElement element) {
+    return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
   void checkEnumCompleteness(@NotNull PsiClass selectorClass, @NotNull List<String> enumElements, @NotNull List<HighlightInfo> results) {
@@ -375,7 +389,7 @@ public class SwitchBlockHighlightingModel {
           fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement);
           fillElementsToCheckFallThroughLegality(elementsToCheckFallThroughLegality, labelStatement, labelElement);
           fillElementsToCheckDominance(elementsToCheckDominance, labelElement);
-          fillElementsToCheckCompleteness(elementsToCheckCompleteness, labelElement);
+          elementsToCheckCompleteness.add(labelElement);
         }
       }
 
@@ -388,7 +402,9 @@ public class SwitchBlockHighlightingModel {
       checkDominance(elementsToCheckDominance, results);
       if (!results.isEmpty()) return results;
 
-      checkCompleteness(elementsToCheckCompleteness, results);
+      if (needToCheckCompleteness(elementsToCheckCompleteness)) {
+        checkCompleteness(elementsToCheckCompleteness, results);
+      }
       return results;
     }
 
@@ -478,11 +494,6 @@ public class SwitchBlockHighlightingModel {
           elements.add(labelElement);
         }
       }
-    }
-
-    private static void fillElementsToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements,
-                                                        @NotNull PsiCaseLabelElement labelElement) {
-      elements.add(labelElement);
     }
 
     /**
@@ -596,8 +607,7 @@ public class SwitchBlockHighlightingModel {
      * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
      */
     private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results) {
-      if (!needToCheckCompleteness(elements)) return;
-      PsiElement elementCoversType = findElementCoversType(mySelectorType, elements);
+      PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
       PsiElement defaultElement = findDefaultElement();
       if (defaultElement != null && elementCoversType != null) {
         results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
@@ -702,13 +712,9 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private static PsiElement findElementCoversType(@NotNull PsiType type, @NotNull List<PsiCaseLabelElement> labelElements) {
-      return ContainerUtil.find(labelElements, element -> element instanceof PsiPattern
-                                                          && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
-    }
-
-    private static boolean isNullType(@NotNull PsiElement element) {
-      return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
+    private static PsiElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
+      return ContainerUtil.find(labelElements, element ->
+        element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
     }
 
     private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
@@ -728,39 +734,51 @@ public class SwitchBlockHighlightingModel {
       return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant, false);
     }
 
-    private boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
-      return myBlock instanceof PsiSwitchExpression || myBlock instanceof PsiSwitchStatement && isEnhancedSwitch(elements);
-    }
-
-    public static boolean possibleToAddDefaultBranch(@NotNull PsiSwitchBlock switchBlock) {
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(switchBlock);
-      PatternsInSwitchBlockHighlightingModel model = ObjectUtils.tryCast(SwitchBlockHighlightingModel.createInstance(
-        languageLevel, switchBlock, switchBlock.getContainingFile()), PatternsInSwitchBlockHighlightingModel.class);
-      if (model == null) return true;
-      PsiCodeBlock body = model.myBlock.getBody();
-      if (body == null) return false;
-      List<PsiCaseLabelElement> elementsToCheckCompleteness = new SmartList<>();
-      for (PsiStatement st : body.getStatements()) {
+    /**
+     * @param switchBlock
+     * @return null, if switch contains total pattern or switch is incomplete and it produces a compilation error
+     * (this is already covered by highlighting)
+     * <p>false, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
+     * <p>true, if switch is complete
+     */
+    @Nullable
+    public static Boolean isCompleteSwitch(@NotNull PsiSwitchBlock switchBlock) {
+      SwitchBlockHighlightingModel switchModel = SwitchBlockHighlightingModel.createInstance(
+        PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
+      if (switchModel == null) return null;
+      SelectorKind selectorKind = switchModel.getSwitchSelectorKind();
+      if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return false;
+      PsiCodeBlock switchBody = switchModel.myBlock.getBody();
+      if (switchBody == null) return null;
+      List<PsiCaseLabelElement> labelElements = new SmartList<>();
+      for (PsiStatement st : switchBody.getStatements()) {
         if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
         PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
-        if (labelStatement.isDefaultCase()) return false;
+        if (labelStatement.isDefaultCase()) continue;
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
         if (labelElementList == null) continue;
         for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-          if (labelElement instanceof PsiDefaultCaseLabelElement) return false;
-          fillElementsToCheckCompleteness(elementsToCheckCompleteness, labelElement);
+          if (labelElement instanceof PsiDefaultCaseLabelElement) continue;
+          labelElements.add(labelElement);
         }
       }
-      if (!model.needToCheckCompleteness(elementsToCheckCompleteness)) return true;
-      if (findElementCoversType(model.mySelectorType, elementsToCheckCompleteness) != null) return false;
+      if (labelElements.isEmpty()) return null;
       List<HighlightInfo> results = new SmartList<>();
-      model.checkCompleteness(elementsToCheckCompleteness, results);
+      if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
+        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return null;
+        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
+      }
+      else {
+        PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchModel.mySelector.getType());
+        if (selectorClass == null || !selectorClass.isEnum()) return null;
+        List<PsiSwitchLabelStatementBase> labels =
+          PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
+        List<String> enumConstants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).map(PsiField::getName).toList();
+        switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
+      }
+      // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
+      if (switchModel.needToCheckCompleteness(labelElements)) return results.isEmpty() ? true : null;
       return results.isEmpty();
-    }
-
-    private boolean isEnhancedSwitch(@NotNull List<PsiCaseLabelElement> labelElements) {
-      if (getSwitchSelectorKind() == SelectorKind.CLASS_OR_ARRAY) return true;
-      return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
     }
   }
 }

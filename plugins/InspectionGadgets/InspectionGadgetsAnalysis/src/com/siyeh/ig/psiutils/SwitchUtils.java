@@ -67,7 +67,16 @@ public final class SwitchUtils {
         defaultFound = true;
       }
       else {
-        branches++;
+        PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) {
+            defaultFound = true;
+          }
+          else {
+            branches++;
+          }
+        }
       }
     }
     return defaultFound ? -branches - 1 : branches;
