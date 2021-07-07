@@ -16,7 +16,7 @@
 package com.intellij.psi.util;
 
 /**
- * A variation on {@link CachedValue} which allows to reuse the same value provider in all cached values, make it static
+ * A variation on {@link CachedValue} which allows reusing the same value provider in all cached values, make it static
  * and thus save some memory.
  * In most cases {@link CachedValue} should be preferred:
  * the memory benefits of parameterization are negligible, while the client code becomes longer, more complicated and error-prone.<p></p>
