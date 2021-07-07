@@ -118,7 +118,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     result.add(rootDescriptor);
 
     if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor ->
+      PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor ->
         PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ||
         descriptor.isEnabled() || !result.add(descriptor) ?
         FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process it's dependencies */ :
@@ -159,7 +159,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.processAllDependencies(pluginDescriptor, pluginIdMap, descriptor -> {
+      PluginManagerCore.processAllNonOptionalDependencies(pluginDescriptor, pluginIdMap, descriptor -> {
         if (Objects.equals(descriptor.getPluginId(), rootId)) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;

@@ -1103,7 +1103,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         continue;
       }
       IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
-      PluginManagerCore.processAllDependencies(descriptorImpl, pluginIdMap, dependency -> {
+      PluginManagerCore.processAllNonOptionalDependencies(descriptorImpl, pluginIdMap, dependency -> {
         if (Objects.equals(dependency.getPluginId(), rootId)) {
           result.add(descriptorImpl);
           return FileVisitResult.TERMINATE;
