@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -101,8 +101,8 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       addTryBlock(tryStatement, factory);
     }
 
-    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER).byType(exceptionType)
-      .byName("e", "ex", "exception").generate(false);
+    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER)
+      .byName("e", "ex", "exception").byType(exceptionType).generate(false);
 
     PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
 
