@@ -68,5 +68,14 @@ class SwitchStatementWithTooFewBranches {
       }
       default -> System.out.println();
     }
+
+    <warning descr="'switch' statement has only 'default' case">switch</warning> (o) {
+      case default -> System.out.println();
+    }
+
+    <warning descr="'switch' statement has too few case labels (1), and should probably be replaced with an 'if' statement">switch</warning> (o) {
+      case null -> System.out.println();
+      case default -> System.out.println();
+    }
   }
 }
