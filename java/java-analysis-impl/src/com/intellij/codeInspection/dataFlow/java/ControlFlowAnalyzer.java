@@ -1579,7 +1579,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
         DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
         if (expr instanceof DfaVariableValue) {
-          builder.push(expr);
+          builder.push(expr, operand);
         }
         else {
           DfaVariableValue tmp = createTempVariable(operand.getType());
