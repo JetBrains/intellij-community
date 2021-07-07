@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputMethodEvent;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
@@ -757,5 +761,16 @@ public class EditorImplTest extends AbstractEditorTest {
                                                  0, null, null));
     mouse().clickAtXY(0, getEditor().getLineHeight() / 2);
     checkResultByText("<caret>hello\u3146");
+  }
+
+  public void testScrollingToCaretWithWideCharacters() {
+    FontLayoutService.setInstance(new MockFontLayoutService(cp -> cp == 'Z' ? 2 * TEST_CHAR_WIDTH : TEST_CHAR_WIDTH,
+                                                            TEST_LINE_HEIGHT, TEST_DESCENT));
+    initText(StringUtil.repeatSymbol('Z', 500) + "<caret>");
+    setEditorVisibleSize(100, 100);
+    type(' ');
+    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
+    Point caretPosition = getEditor().visualPositionToXY(getEditor().getCaretModel().getVisualPosition());
+    assertTrue(visibleArea.contains(caretPosition));
   }
 }
