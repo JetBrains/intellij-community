@@ -70,7 +70,7 @@ public class InspectionTree extends Tree {
     setModel(new AsyncTreeModel(myModel, false, view));
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
-    setRootVisible(false);
+    setRootVisible(true);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
         if (isUnderQueueUpdate()) return;

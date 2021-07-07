@@ -117,6 +117,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myTree = new InspectionTree(this);
+    myTree.getInspectionTreeModel().getRoot().setSingleInspectionRun(isSingleInspectionRun());
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -345,6 +346,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
               final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
               myLoadingProgressPreview = panel;
               mySplitter.setSecondComponent(panel);
+            }
+            else if (node instanceof InspectionRootNode) {
+              mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
             }
             else {
               LOG.error("Unexpected node: " + node.getClass());
