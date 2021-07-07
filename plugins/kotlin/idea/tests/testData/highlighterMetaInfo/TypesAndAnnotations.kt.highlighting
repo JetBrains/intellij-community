@@ -1,0 +1,12 @@
+interface <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+}
+
+class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+}
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>magnificent<!>
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>Deprecated<!>
+
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Deprecated<!>
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@magnificent<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>abstract<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ABSTRACT_CLASS'")!>AbstractClass<!><<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T<!>> {
+}

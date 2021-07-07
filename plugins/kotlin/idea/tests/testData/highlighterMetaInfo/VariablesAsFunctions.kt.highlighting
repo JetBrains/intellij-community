@@ -1,0 +1,20 @@
+interface <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!> {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>() {
+    }
+}
+
+var <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>global<!> : () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {}
+
+val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>ext<!> : () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+  return {}
+}
+
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>a<!> : () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>functionLike<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!>) {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>a<!>()
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>functionLike<!>()
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>global<!>()
+    1.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_EXTENSION_PROPERTY'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>ext<!>();
+
+    {}() //should not be highlighted as "calling variable as function"!
+}
