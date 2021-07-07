@@ -17,7 +17,7 @@ internal class UISettings {
   val width: Int by lazy { JBUI.scale(500) }
 
   //MAIN INSETS
-  val northInset: Int by lazy { JBUI.scale(24) }
+  val northInset: Int by lazy { JBUI.scale(20) }
   val westInset: Int by lazy { JBUI.scale(24) }
   val southInset: Int by lazy { JBUI.scale(24) }
   val eastInset: Int by lazy { JBUI.scale(24) }
@@ -62,6 +62,9 @@ internal class UISettings {
   //BORDERS
   val emptyBorder: Border
     get() = EmptyBorder(northInset, westInset, southInset, eastInset)
+
+  val lessonHeaderBorder: Border
+    get() = EmptyBorder(0, JBUI.scale(14), 0, JBUI.scale(14))
 
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)

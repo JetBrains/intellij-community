@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -18,12 +21,11 @@ import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
 import training.ui.*
-import training.util.getNextLessonForCurrent
-import training.util.getPreviousLessonForCurrent
-import training.util.openLinkInBrowser
-import training.util.wrapWithUrlPanel
+import training.util.*
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
@@ -121,10 +123,9 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     moduleNameLabel.name = "moduleNameLabel"
     moduleNameLabel.font = UISettings.instance.getFont(1)
     moduleNameLabel.isFocusable = false
-    moduleNameLabel.border = UISettings.instance.checkmarkShiftBorder
 
     lessonNameLabel.name = "lessonNameLabel"
-    lessonNameLabel.border = UISettings.instance.checkmarkShiftBorder
+    lessonNameLabel.border = UISettings.instance.lessonHeaderBorder
     lessonNameLabel.font = UISettings.instance.getFont(5).deriveFont(Font.BOLD)
     lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
     lessonNameLabel.isFocusable = false
@@ -134,7 +135,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
-    lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(24), JBUI.scale(21))
+    lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(21))
     lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
 
     //Set Next Button UI
@@ -154,13 +155,41 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     buttonPanel.alignmentX = Component.LEFT_ALIGNMENT
     updateNavigationButtons()
 
-    //shift right for checkmark
-    lessonPanel.add(moduleNameLabel)
-    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(20)))
+    lessonPanel.add(createHeaderPanel())
+    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(19)))
     lessonPanel.add(lessonNameLabel)
     lessonPanel.add(lessonMessagePane)
     lessonPanel.add(buttonPanel)
     lessonPanel.add(Box.createVerticalGlue())
+  }
+
+  private fun createHeaderPanel(): VerticalBox {
+    val linksPanel = JPanel()
+    linksPanel.layout = BoxLayout(linksPanel, BoxLayout.X_AXIS)
+    linksPanel.alignmentX = LEFT_ALIGNMENT
+    linksPanel.border = EmptyBorder(0, 0, JBUI.scale(12), 0)
+
+    linksPanel.add(moduleNameLabel)
+    if (findLanguageSupport(learnToolWindow.project) != null) {
+      linksPanel.add(Box.createHorizontalGlue())
+
+      val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
+      exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      exitLink.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          val action = ActionManager.getInstance().getAction("CloseProject")
+          invokeActionForFocusContext(action)
+        }
+      })
+      linksPanel.add(exitLink)
+    }
+
+    val headerPanel = VerticalBox()
+    headerPanel.alignmentX = LEFT_ALIGNMENT
+    headerPanel.border = UISettings.instance.lessonHeaderBorder
+    headerPanel.add(linksPanel)
+    headerPanel.add(createSmallSeparator())
+    return headerPanel
   }
 
   fun setLessonName(@Nls lessonName: String) {
@@ -313,6 +342,15 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun removeMessage(index: Int) {
     lessonMessagePane.removeMessage(index)
+  }
+
+  private fun createSmallSeparator(): Component {
+    // Actually standard JSeparator can be used, but it adds some extra size for Y and I don't know how to fix it :(
+    val separatorPanel = JPanel()
+    separatorPanel.layout = BoxLayout(separatorPanel, BoxLayout.X_AXIS)
+    separatorPanel.add(Box.createHorizontalGlue())
+    separatorPanel.border = MatteBorder(0, 0, JBUI.scale(1), 0, UISettings.instance.separatorColor)
+    return separatorPanel
   }
 
   class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
