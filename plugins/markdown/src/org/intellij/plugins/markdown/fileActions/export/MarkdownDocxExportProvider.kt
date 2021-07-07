@@ -83,6 +83,6 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
 
   companion object {
     @JvmStatic
-    val format = MarkdownFileActionFormat("docx", "docx")
+    val format = MarkdownFileActionFormat("Microsoft Word", "docx")
   }
 }
