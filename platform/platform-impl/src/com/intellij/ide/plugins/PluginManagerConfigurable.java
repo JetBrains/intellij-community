@@ -1221,15 +1221,6 @@ public final class PluginManagerConfigurable
           tags.add(Tags.Paid.name());
         }
       }
-      else {
-        if (!LicensePanel.isEA2Product(plugin.getPluginId().getIdString()) &&
-            tags != null && tags.contains(Tags.Paid.name())) {
-          return List.of(Tags.Paid.name());
-        }
-        else {
-          tags = null;
-        }
-      }
     }
     else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
       LicensingFacade instance = LicensingFacade.getInstance();
