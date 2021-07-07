@@ -13,6 +13,6 @@ fun foo() { }
 // jvm code
 actual annotation class JvmName(val name: String)
 </code></pre>
-The inspection will report that platforms other than JVM (e.g. Native) miss <code>actual annotation class JvmName</code>
+<p>The inspection also reports cases when <code>actual annotation class JvmName</code> is omitted for non-JVM platforms (for example, Native).</p>
 </body>
 </html>
