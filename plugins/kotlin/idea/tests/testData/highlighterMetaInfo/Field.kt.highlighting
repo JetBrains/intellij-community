@@ -1,0 +1,10 @@
+var <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>my<!> = 0
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!>
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>set<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>arg<!>) {
+        <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BACKING_FIELD_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'")!>field<!> = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>arg<!> + 1
+    }
+
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+    val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>field<!> = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>my<!>
+    return <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>field<!>
+}

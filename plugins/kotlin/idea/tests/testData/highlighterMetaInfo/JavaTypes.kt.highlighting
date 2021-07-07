@@ -1,0 +1,3 @@
+<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@SuppressWarnings<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>Runnable<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Thread<!>() {
+    val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>id<!>
+}

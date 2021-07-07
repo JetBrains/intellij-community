@@ -1,0 +1,12 @@
+package testing
+
+object <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
+    fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() = 42
+}
+
+fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>testing<!>(): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
+    val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!> = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
+    return <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>
+}

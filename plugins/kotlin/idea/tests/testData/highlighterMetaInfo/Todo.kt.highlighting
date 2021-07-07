@@ -1,0 +1,26 @@
+// <!HIGHLIGHTING("severity='INFORMATION'; descr='TODO This is a todo in line comment'; textAttributesKey='null'")!>TODO This is a todo in line comment<!>
+
+/* <!HIGHLIGHTING("severity='INFORMATION'; descr='TODO This is a todo in block comment '; textAttributesKey='null'")!>TODO This is a todo in block comment <!>*/
+
+/**
+ * <!HIGHLIGHTING("severity='INFORMATION'; descr='TODO This is a todo in KDoc'; textAttributesKey='null'")!>TODO This is a todo in KDoc<!>
+ */
+
+//<!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>todo: This is<!>
+// <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>multiline td<!>
+/* <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>and even longer<!>
+   <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>up to this line<!>
+ */
+
+/**
+ * <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td'; textAttributesKey='null'")!>todo: This is<!>
+ *  <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is multiline td'; textAttributesKey='null'")!>multiline td<!>
+ */
+
+//<!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is'; textAttributesKey='null'")!>todo: This is<!>
+//single line td
+
+/**
+ * <!HIGHLIGHTING("severity='INFORMATION'; descr='todo: This is'; textAttributesKey='null'")!>todo: This is<!>
+ * single line td also
+ */
