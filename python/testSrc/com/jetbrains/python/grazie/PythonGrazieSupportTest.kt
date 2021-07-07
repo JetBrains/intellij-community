@@ -15,6 +15,10 @@ class PythonGrazieSupportTest : GrazieTestBase() {
     runHighlightTestForFile("Docs.py")
   }
 
+  fun `test grammar check in comments`() {
+    runHighlightTestForFile("Comments.py")
+  }
+
   fun `test grammar check in string literals`() {
     runHighlightTestForFile("StringLiterals.py")
   }

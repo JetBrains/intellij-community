@@ -4,9 +4,11 @@ package com.intellij.grazie.ide.language.python
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PyTokenTypes.FSTRING_TEXT
@@ -21,7 +23,8 @@ internal class PythonTextExtractor : TextExtractor() {
     }
 
     if (root is PsiCommentImpl) {
-      return TextContentBuilder.FromPsi.removingIndents(" \t#").build(root, TextContent.TextDomain.COMMENTS)
+      val siblings = getNotSoDistantSimilarSiblings(root) { it is PsiCommentImpl }
+      return TextContent.joinWithWhitespace(siblings.mapNotNull { TextContent.builder().build(it, TextContent.TextDomain.COMMENTS) })
     }
 
     return null
