@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -81,25 +82,25 @@ internal class PackageDetailsHeaderPanel(
 
     private var primaryOperations: List<PackageSearchOperation<*>> = emptyList()
 
+    private val removeMenuAction = MenuAction().apply {
+        add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
+
+            init {
+                minimumSize = Dimension(minPopupMenuWidth, 0)
+            }
+
+            override fun actionPerformed(e: AnActionEvent) {
+                onRemoveClicked()
+            }
+        })
+    }
+
     private val overflowButton = run {
-        val menuAction = MenuAction().apply {
-            add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
-
-                init {
-                    minimumSize = Dimension(minPopupMenuWidth, 0)
-                }
-
-                override fun actionPerformed(e: AnActionEvent) {
-                    onRemoveClicked()
-                }
-            })
-        }
-
         val presentation = Presentation()
         presentation.icon = AllIcons.Actions.More
         presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
 
-        ActionButton(menuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
+        ActionButton(removeMenuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
     }
 
     private var removeOperations: List<PackageSearchOperation<*>> = emptyList()
@@ -179,6 +180,8 @@ internal class PackageDetailsHeaderPanel(
 
         updateRepoWarningBanner(repoToInstall)
         updateOperations(packageModel, selectedVersion, selectedScope, targetModules, onlyStable, repoToInstall)
+
+        overflowButton.componentPopupMenu?.isVisible = false
     }
 
     private fun updateRepoWarningBanner(repoToInstall: RepositoryModel?) {
@@ -280,12 +283,18 @@ internal class PackageDetailsHeaderPanel(
     }
 
     private fun onPrimaryActionClicked() {
-        require(primaryOperations.isNotEmpty()) { "No operations to perform, status mismatch" }
+        if (primaryOperations.isEmpty()) {
+            logger<PackageDetailsHeaderPanel>().error("No primary action operations to perform, status mismatch")
+            return
+        }
         operationExecutor.executeOperations(primaryOperations)
     }
 
     private fun onRemoveClicked() {
-        require(removeOperations.isNotEmpty()) { "No remove operations to perform, status mismatch" }
+        if (removeOperations.isEmpty()) {
+            logger<PackageDetailsHeaderPanel>().error("No remove operations to perform, status mismatch")
+            return
+        }
         operationExecutor.executeOperations(removeOperations)
     }
 

@@ -20,8 +20,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
@@ -145,7 +145,6 @@ internal class PackageManagementPanel(
             )
 
             withContext(Dispatchers.AppUI) {
-
                 packagesListPanel.display(
                     headerData = data.headerData,
                     packageModels = data.packageModels,
@@ -165,7 +164,6 @@ internal class PackageManagementPanel(
                     onlyStable = data.filterOptions.onlyStable
                 )
             }
-
         }.launchIn(this)
     }
 
