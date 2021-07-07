@@ -13,6 +13,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class TextChunk {
@@ -23,7 +25,11 @@ public final class TextChunk {
   private final String myText;
 
   public TextChunk(@NotNull TextAttributes attributes, @NotNull String text) {
-    myAttributes = attributes.getFlyweight();
+    this(attributes.getFlyweight(), text);
+  }
+
+  private TextChunk(@NotNull AttributesFlyweight attributes, @NotNull String text) {
+    myAttributes = attributes;
     myText = text;
   }
 
@@ -74,18 +80,41 @@ public final class TextChunk {
    * @return TextChunk, TextChunk[], String, or Object[] with String or TextChunk elements
    */
   static @NotNull Object compact(@NotNull TextChunk @NotNull [] chunks) {
-    if (chunks.length == 0) {
-      return EMPTY_ARRAY;
-    }
-    return replaceDefaultAttributeChunksWithStrings(chunks);
+    return replaceDefaultAttributeChunksWithStrings(compactSequentialChunksWithSameAttributes(chunks));
   }
 
-  private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull TextChunk @NotNull [] chunks) {
+  private static @NotNull List<@NotNull TextChunk> compactSequentialChunksWithSameAttributes(@NotNull TextChunk @NotNull [] chunks) {
+    if (chunks.length == 0) {
+      return Collections.emptyList();
+    }
+    List<TextChunk> result = new ArrayList<>(chunks.length);
+    StringBuilder currentText = new StringBuilder();
+    AttributesFlyweight currentAttributes = null;
+    for (TextChunk chunk : chunks) {
+      if (currentAttributes == null) {
+        currentAttributes = chunk.myAttributes;
+        currentText.append(chunk.myText);
+      }
+      else if (currentAttributes.equals(chunk.myAttributes)) {
+        currentText.append(chunk.myText);
+      }
+      else {
+        result.add(new TextChunk(currentAttributes, currentText.toString()));
+        currentAttributes = chunk.myAttributes;
+        currentText.setLength(0);
+        currentText.append(chunk.myText);
+      }
+    }
+    result.add(new TextChunk(currentAttributes, currentText.toString()));
+    return result;
+  }
+
+  private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull List<@NotNull TextChunk> chunks) {
     AttributesFlyweight defaultFlyweight = defaultAttributes().getFlyweight();
     if (ContainerUtil.and(chunks, chunk -> !chunk.myAttributes.equals(defaultFlyweight))) {
-      return chunks.length == 1
-             ? chunks[0]                      // TextChunk
-             : chunks;                        // TextChunk[] with non-default attributes
+      return chunks.size() == 1
+             ? chunks.get(0)                  // TextChunk
+             : chunks.toArray(EMPTY_ARRAY);   // TextChunk[] with non-default attributes
     }
     List<Object> result = ContainerUtil.map(chunks, chunk -> chunk.myAttributes.equals(defaultFlyweight) ? chunk.myText : chunk);
     return result.size() == 1
