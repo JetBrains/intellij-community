@@ -675,7 +675,7 @@
     "id": "FJ",
     "name": "intellij.gradle.ext",
     "n": "i.gradle.ext",
-    "package": null,
+    "package": "org.jetbrains.idea.gradle.ext",
     "sourceModule": "intellij.gradle.ext",
     "descriptor": "plugins/gradle-ext/src/main/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.idea.gradle.ext",
@@ -691,6 +691,42 @@
     "package": "org.jetbrains.idea.gradle.ext.profiler",
     "sourceModule": "intellij.gradle.ext",
     "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.profiler.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ut",
+    "name": "intellij.gradle.ext/diagram",
+    "n": "i.gradle.ext/diagram",
+    "package": "org.jetbrains.idea.gradle.ext.uml",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.diagram.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "5n",
+    "name": "intellij.gradle.ext/docker.remoteRun",
+    "n": "i.gradle.ext/docker.remoteRun",
+    "package": "org.jetbrains.idea.gradle.ext.remote.docker",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.docker.remoteRun.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Bb",
+    "name": "intellij.gradle.ext/remote-run",
+    "n": "i.gradle.ext/remote-run",
+    "package": "org.jetbrains.idea.gradle.ext.remote.run",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.remote-run.xml",
     "parent": "cFJ",
     "type": 0
   }
@@ -3966,6 +4002,30 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "FJ_Ut",
+    "source": "FJ",
+    "target": "Ut",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_5n",
+    "source": "FJ",
+    "target": "5n",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_Bb",
+    "source": "FJ",
+    "target": "Bb",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "05_yH",
     "source": "05",
     "target": "yH",
@@ -5222,9 +5282,41 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "FJ_87",
+    "source": "FJ",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "QD_Se",
     "source": "QD",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ut_Bv",
+    "source": "Ut",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5n_ra",
+    "source": "5n",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bb_xs",
+    "source": "Bb",
+    "target": "xs",
     "type": 0
   }
 }, {
