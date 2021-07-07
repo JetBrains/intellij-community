@@ -365,6 +365,7 @@ class KeyHashLog<Key> implements Closeable {
       return;
     }
     try {
+      Files.createDirectories(marker.getParent());
       Files.createFile(marker);
     }
     catch (FileAlreadyExistsException ignored) { }
