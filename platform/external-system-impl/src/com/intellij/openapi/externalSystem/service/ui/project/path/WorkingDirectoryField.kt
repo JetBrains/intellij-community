@@ -149,13 +149,6 @@ class WorkingDirectoryField(
   }
 
   init {
-    val rootProject = externalProjects.firstOrNull()
-    if (rootProject != null) {
-      projectName = rootProject.name
-    }
-  }
-
-  init {
     addHighlighterListener {
       updateHighlight()
     }

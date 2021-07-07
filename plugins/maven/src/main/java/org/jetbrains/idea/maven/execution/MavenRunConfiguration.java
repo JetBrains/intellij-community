@@ -38,10 +38,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,6 +62,8 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingCon
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -129,7 +133,20 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   public MavenRunConfiguration clone() {
     MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
     clone.settings = settings.clone();
+    clone.initializeSettings();
     return clone;
+  }
+
+  private void initializeSettings() {
+    if (isEmptyOrSpaces(settings.getWorkingDirectory())) {
+      ObjectUtils.consumeIfNotNull(getRootProjectPath(), settings::setWorkingDirectory);
+    }
+  }
+
+  private @Nullable String getRootProjectPath() {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
+    MavenProject rootProject = ContainerUtil.getFirstItem(projectsManager.getRootProjects());
+    return ObjectUtils.doIfNotNull(rootProject, it -> FileUtil.toCanonicalPath(it.getDirectory()));
   }
 
   @ApiStatus.Internal
