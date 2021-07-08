@@ -16,7 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
 import javax.swing.Icon
 
-class GrazieAddExceptionQuickFix(
+open class GrazieAddExceptionQuickFix(
   private val suppressionPattern: SuppressionPattern, private val underlineRanges: List<SmartPsiFileRange>
 ) : IntentionAndQuickFixAction(), Iconable {
 

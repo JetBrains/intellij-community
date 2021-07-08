@@ -10,7 +10,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
+import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,6 +29,7 @@ internal object GrazieReplaceTypoQuickFix {
     HighPriorityAction
 
   private class ChangeToVariantAction(
+    private val rule: Rule,
     override val index: Int,
     @IntentionFamilyName private val family: String,
     @NlsSafe private val suggestion: String,
@@ -50,6 +53,8 @@ internal object GrazieReplaceTypoQuickFix {
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+      GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
+
       val replacementRange = this.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
@@ -76,7 +81,7 @@ internal object GrazieReplaceTypoQuickFix {
       val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
       val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
       result.add(ChangeToVariantAction(
-        index, familyName, suggestion, replacement, underlineRanges,
+        problem.rule, index, familyName, suggestion, replacement, underlineRanges,
         spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange))))
     }
     return result

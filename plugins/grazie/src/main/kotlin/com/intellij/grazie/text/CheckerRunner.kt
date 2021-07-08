@@ -14,7 +14,10 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
@@ -129,7 +132,12 @@ internal class CheckerRunner(val text: TextContent) {
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline, file))
     }
 
-    result.add(GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline))
+    result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
+      override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+        GrazieFUSCounter.quickFixInvoked(problem.rule, project, "add.exception")
+        super.applyFix(project, file, editor)
+      }
+    })
     result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))
     return result.toTypedArray()
   }
