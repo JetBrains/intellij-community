@@ -12,6 +12,8 @@ import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.facet.PythonFacetUtil
 import com.jetbrains.python.minor.facet.PythonFacet
 import com.jetbrains.python.minor.facet.PythonFacetType
+import com.jetbrains.python.sdk.removeTransferredRoots
+import com.jetbrains.python.sdk.transferRoots
 
 class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfigurable(project) {
   override fun createModuleConfigurable(module: Module): UnnamedConfigurable {
@@ -41,7 +43,10 @@ class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfig
   private fun setFacetSdk(facet: PythonFacet,
                           item: Sdk?,
                           module: Module) {
+    removeTransferredRoots(module, facet.configuration.sdk)
     facet.configuration.sdk = item
+    transferRoots(module, item)
+
     FacetManager.getInstance(module).facetConfigurationChanged(facet)
     PythonFacetUtil.updateLibrary(module, facet.configuration)
   }

@@ -63,7 +63,7 @@ class PySdkPathsTest {
   fun userAddedIsModuleRoot() {
     val (module, moduleRoot) = createModule()
 
-    val sdk = PythonMockSdk.create()
+    val sdk = PythonMockSdk.create().also { module.pythonSdk = it }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
 
@@ -78,10 +78,12 @@ class PySdkPathsTest {
   fun sysPathEntryIsModuleRoot() {
     val (module, moduleRoot) = createModule()
 
-    val sdk = PythonMockSdk.create()
+    val sdk = PythonMockSdk.create().also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, moduleRoot.path))
 
+    mockPythonPluginDisposable()
     updateSdkPaths(sdk)
+    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
   }
@@ -94,15 +96,24 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(moduleRoot)
 
-    val sdk = PythonMockSdk.create(sdkPath)
+    val sdk = PythonMockSdk.create(sdkPath).also { module.pythonSdk = it }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
 
     updateSdkPaths(sdk)
 
+    checkRoots(sdk, module, listOf(moduleRoot, userAddedPath), emptyList())
+
+    val simpleSdk = PythonMockSdk.create().also {
+      removeTransferredRoots(module, sdk)
+      module.pythonSdk = it
+    }
+
+    updateSdkPaths(simpleSdk)
+
     Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
 
-    checkRoots(sdk, module, listOf(moduleRoot, userAddedPath), emptyList())
+    checkRoots(simpleSdk, module, listOf(moduleRoot), emptyList())
   }
 
   @Test
@@ -113,12 +124,24 @@ class PySdkPathsTest {
 
     val entryPath = createSubdir(moduleRoot)
 
-    val sdk = PythonMockSdk.create(sdkPath)
+    val sdk = PythonMockSdk.create(sdkPath).also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
+    mockPythonPluginDisposable()
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
+
+    val simpleSdk = PythonMockSdk.create().also {
+      removeTransferredRoots(module, sdk)
+      module.pythonSdk = it
+    }
+
+    updateSdkPaths(simpleSdk)
+
+    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
+
+    checkRoots(simpleSdk, module, listOf(moduleRoot), emptyList())
   }
 
   @Test
@@ -129,7 +152,7 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(sdkDir)
 
-    val sdk = PythonMockSdk.create(sdkDir.path)
+    val sdk = PythonMockSdk.create(sdkDir.path).also { module.pythonSdk = it }
     mockPythonPluginDisposable()
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
 
@@ -148,7 +171,7 @@ class PySdkPathsTest {
 
     val entryPath = createSubdir(sdkDir)
 
-    val sdk = PythonMockSdk.create(sdkDir.path)
+    val sdk = PythonMockSdk.create(sdkDir.path).also { module.pythonSdk = it }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
     updateSdkPaths(sdk)

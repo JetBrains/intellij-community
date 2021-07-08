@@ -17,10 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,6 +29,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -1106,14 +1104,42 @@ public final class PyUtil {
     return selfName;
   }
 
-  public static void addSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
+  @RequiresEdt
+  public static void addSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
     ApplicationManager.getApplication().runWriteAction(
       () -> {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         for (ContentEntry entry : model.getContentEntries()) {
           final VirtualFile file = entry.getFile();
-          if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
-            entry.addSourceFolder(root, false);
+          for (VirtualFile root : roots) {
+            if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
+              entry.addSourceFolder(root, false);
+            }
+          }
+        }
+        model.commit();
+      }
+    );
+  }
+
+  @RequiresEdt
+  public static void removeSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (ContentEntry entry : model.getContentEntries()) {
+          for (SourceFolder folder : entry.getSourceFolders()) {
+            if (roots.contains(folder.getFile())) {
+              entry.removeSourceFolder(folder);
+            }
           }
         }
         model.commit();
