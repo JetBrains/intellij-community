@@ -103,24 +103,23 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
-  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>,
-                                     requiresRestart: (PluginDownloader) -> Boolean): PluginUpdateResult {
+  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>, requiresRestart: (PluginDownloader) -> Boolean): PluginUpdateResult {
     val pluginsInstalled = mutableListOf<IdeaPluginDescriptor>()
     var restartRequired = false
 
     for (downloader in downloaders) {
       try {
-        if (requiresRestart.invoke(downloader)) {
+        if (requiresRestart(downloader)) {
           downloader.install()
           restartRequired = true
         }
-
-        pluginsInstalled.add(downloader.descriptor)
+        pluginsInstalled += downloader.descriptor
       }
       catch (e: Exception) {
         Logger.getInstance(UpdateChecker::class.java).info(e)
       }
     }
+
     return PluginUpdateResult(pluginsInstalled, restartRequired)
   }
 
