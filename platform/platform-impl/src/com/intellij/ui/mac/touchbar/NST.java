@@ -292,6 +292,10 @@ final class NST {
             && id.getIcon().getIconHeight() > 0
         ) {
           id.darkIcon = ReadAction.nonBlocking(() -> IconLoader.getDarkIcon(id.getIcon(), true)).executeSynchronously();
+          if (id.darkIcon != null && (id.darkIcon.getIconWidth() <= 0 || id.darkIcon.getIconHeight() <= 0)) {
+            LOG.debug("Can't obtain dark icon for scrubber item '%s', use default icon", id.getText());
+            id.darkIcon = id.getIcon();
+          }
         }
 
         if (withImages && id.darkIcon != null) {
