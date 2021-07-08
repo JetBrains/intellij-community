@@ -9,10 +9,13 @@ import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.CommonSupertypes
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
@@ -39,6 +43,39 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
         return convertParentImpl(uElement, parent)
+    }
+
+    override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
+        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
+        if (!lastExpression.isUsedAsResultOfLambda(lastExpression.analyze())) return null
+
+        return KotlinUImplicitReturnExpression(parent).apply {
+            returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
+        }
+    }
+
+    override fun getImplicitParameters(
+        ktLambdaExpression: KtLambdaExpression,
+        parent: UElement,
+        parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>
+    ): List<KotlinUParameter> {
+        val functionDescriptor =
+            ktLambdaExpression.analyze()[BindingContext.FUNCTION, ktLambdaExpression.functionLiteral] ?: return emptyList()
+        return functionDescriptor.parametersSelector().map { p ->
+            KotlinUParameter(
+                UastKotlinPsiParameterBase(
+                    name = p.name.asString(),
+                    type = p.type.toPsiType(parent, ktLambdaExpression, false),
+                    parent = ktLambdaExpression,
+                    ktOrigin = ktLambdaExpression,
+                    language = ktLambdaExpression.language,
+                    isVarArgs = p.isVararg,
+                    ktDefaultValue = null
+                ),
+                null,
+                parent
+            )
+        }
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
@@ -104,6 +141,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             parameterNames = descriptor.valueParameters.map { it.name },
             returnType = returnType
         ).toPsiType(parent, ktFunction, boxed = false)
+    }
+
+    override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
+        return uLambdaExpression.getFunctionalInterfaceType()
     }
 
     override fun nullability(psiElement: PsiElement): TypeNullability? {

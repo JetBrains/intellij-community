@@ -2,9 +2,21 @@ package org.jetbrains.uast.kotlin
 
 public final class LambdaReturnKt {
     public static final fun foo() : void {
-        var lam1: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
-        var lam2: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
-        var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var lam1: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
+
+            var b: <ErrorType> = 1
+            a + b
+        }
+        var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
+
+            var c: <ErrorType> = 1
+            if (a > 0) a + c else a - c
+        }
+        var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
+
+            var d: <ErrorType> = 1
+            return a + d
+        }
         var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {
                 if (a < 5) return "5"
                 if (a > 0) return "1" else return "2"
@@ -13,7 +25,11 @@ public final class LambdaReturnKt {
                 return "a" + a
         }
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
-        var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+        var x: <ErrorType> = {
+            @org.jetbrains.annotations.NotNull var vardbcd0724: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
+        var y: <ErrorType> = {
+            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        }
     }
 }
