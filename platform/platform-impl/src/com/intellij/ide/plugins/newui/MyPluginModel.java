@@ -215,14 +215,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       IdeaPluginDescriptor descriptor = entry.getKey();
       PluginId pluginId = descriptor.getPluginId();
 
-      if (isHidden(descriptor) ||
-          !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
-        continue;
-      }
-
       Pair<PluginEnableDisableAction, PluginEnabledState> pair = entry.getValue();
       PluginEnabledState oldState = pair.getSecond();
       PluginEnabledState newState = getState(pluginId);
+
+      if ((descriptor instanceof IdeaPluginDescriptorImpl) && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
+          (descriptor.isImplementationDetail() && !newState.isEnabled()) ||
+          !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
+        continue;
+      }
 
       if (oldState != newState ||
           newState.isDisabled() && myErrorPluginsToDisable.contains(pluginId)) {
@@ -1059,7 +1060,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       IdeaPluginDescriptor requiredDescriptor = entry.getValue();
       return requiredDescriptor == null || PluginManagerCore.isIncompatible(requiredDescriptor);
     })) {
-      String action = IdeBundle.message("new.plugin.manager.incompatible.deps.action", errors.size());
+      String action = IdeBundle.message("new.plugin.manager.incompatible.deps.action", requiredPlugins.size());
       errors.add(HtmlChunk.link("link", action));
     }
 
