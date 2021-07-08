@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
@@ -25,7 +27,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
@@ -218,9 +219,9 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 }
 
 private class AnonymizedIdsCache {
-  private val anonymizedCache = ConcurrentHashMap<String, String>()
+  private val cache: Cache<String, String> = Caffeine.newBuilder().maximumSize(200).build()
 
   fun computeIfAbsent(data: String, mappingFunction: (String) -> String): String {
-    return anonymizedCache.computeIfAbsent(data, mappingFunction)
+    return cache.get(data, mappingFunction)
   }
 }
