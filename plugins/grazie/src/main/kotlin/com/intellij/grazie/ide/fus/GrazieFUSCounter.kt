@@ -2,10 +2,12 @@
 package com.intellij.grazie.ide.fus
 
 import com.intellij.grazie.detector.model.Language
+import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextProblem
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.project.Project
 
 internal object GrazieFUSCounter {
   fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
@@ -23,6 +25,15 @@ internal object GrazieFUSCounter {
       addPluginInfo(getPluginInfo(problem.rule.javaClass))
       addData("fixes", problem.corrections.size)
       addProject(problem.text.commonParent.project)
+    }
+  }
+
+  fun quickFixInvoked(rule: Rule, project: Project, actionInfo: String) {
+    log("quick.fix.invoked") {
+      addData("id", rule.globalId)
+      addData("info", actionInfo)
+      addPluginInfo(getPluginInfo(rule.javaClass))
+      addProject(project)
     }
   }
 
