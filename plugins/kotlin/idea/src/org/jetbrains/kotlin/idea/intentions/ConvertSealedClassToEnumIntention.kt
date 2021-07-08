@@ -141,6 +141,9 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
         movedDeclarations.forEach { it.delete() }
 
         klass.removeModifier(KtTokens.SEALED_KEYWORD)
+        if (klass.isInterface()) {
+            klass.getClassOrInterfaceKeyword()?.replace(psiFactory.createClassKeyword())
+        }
         klass.addModifier(KtTokens.ENUM_KEYWORD)
 
         if (entriesToAdd.isNotEmpty()) {
