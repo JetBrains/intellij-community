@@ -22,6 +22,15 @@ data class CheckingContext(
     return disabledLanguages + getLanguagesDisabledByDefault().filter { it !in enabledLanguages }
   }
 
+  fun domainsDiffer(another: CheckingContext): Boolean =
+    another.isCheckInCommitMessagesEnabled != isCheckInCommitMessagesEnabled ||
+    another.isCheckInCommentsEnabled != isCheckInCommentsEnabled ||
+    another.isCheckInStringLiteralsEnabled != isCheckInStringLiteralsEnabled ||
+    another.isCheckInDocumentationEnabled != isCheckInDocumentationEnabled
+
+  fun languagesDiffer(another: CheckingContext): Boolean =
+    another.disabledLanguages != disabledLanguages || another.enabledLanguages != enabledLanguages
+
   companion object {
     private val extensionPoint = ApplicationManager.getApplication().extensionArea
       .getExtensionPoint<DisableChecking>("com.intellij.grazie.disableChecking")
