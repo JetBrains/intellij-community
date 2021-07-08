@@ -222,7 +222,7 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
 
     for (valueKey in possibleValues.keys) {
       processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey)) { value ->
-        checkSourceTypeAndParameterTypeAgree(method, value, possibleValues[valueKey]!!)
+        possibleValues[valueKey]?.let { checkSourceTypeAndParameterTypeAgree(method, value, it) }
       }
     }
 
