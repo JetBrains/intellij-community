@@ -4,12 +4,14 @@ UFile (package = ) [import java.lang.Thread...]
     UImportStatement (isOnDemand = false) [import java.util.concurrent.Callable]
     UImportStatement (isOnDemand = false) [import java.util.function.Supplier]
     UClass (name = SAMKt) [public final class SAMKt {...}]
-        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
-        UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+            ULambdaExpression [{ ...}] = Undetermined
+                UBlockExpression [{...}] = Undetermined
+        UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+            ULambdaExpression [{ ...}] = Undetermined
+                UBlockExpression [{...}] = Undetermined
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UQualifiedReferenceExpression [java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
@@ -24,17 +26,20 @@ UFile (package = ) [import java.lang.Thread...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public static final fun bar() : java.lang.Runnable {...}]
             UBlockExpression [{...}] = Nothing
-                UBinaryExpression (operator = =) [foo = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UBinaryExpression (operator = =) [foo = { ...}] = Undetermined
                     USimpleNameReferenceExpression (identifier = foo) [foo] = external foo()
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var a: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable] = Undetermined
-                    ULocalVariable (name = a) [var a: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable]
-                        UBinaryExpressionWithType [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable] = Undetermined
-                            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                    ULambdaExpression [{ ...}] = Undetermined
+                        UBlockExpression [{...}] = Undetermined
+                UDeclarationsExpression [var a: <ErrorType> = { ...} as java.lang.Runnable] = Undetermined
+                    ULocalVariable (name = a) [var a: <ErrorType> = { ...} as java.lang.Runnable]
+                        UBinaryExpressionWithType [{ ...} as java.lang.Runnable] = Undetermined
+                            ULambdaExpression [{ ...}] = Undetermined
+                                UBlockExpression [{...}] = Undetermined
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UReturnExpression [return [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Nothing
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UReturnExpression [return { ...}] = Nothing
+                    ULambdaExpression [{ ...}] = Undetermined
+                        UBlockExpression [{...}] = Undetermined
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = runRunnable) [public static final fun runRunnable(@null r: java.lang.Runnable) : error.NonExistentClass {...}]
             UParameter (name = r) [@null var r: java.lang.Runnable]
