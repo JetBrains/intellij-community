@@ -167,7 +167,12 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
         thread {
           if (validator != null) {
-            val validationInfo = (validation!!)(s, this.component())
+            val validationInfo = (validation!!)(s, this.component())?.let {
+              if (it.component == null) {
+                it.forComponent(editorComponent)
+              }
+              else it
+            }
 
             validationInfo?.component?.let {
               if (ComponentValidator.getInstance(it).isEmpty) {
