@@ -11,9 +11,10 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UDeclarationsExpression [var b: <ErrorType> = 1]
                                     ULocalVariable (name = b) [var b: <ErrorType> = 1]
                                         ULiteralExpression (value = 1) [1] : PsiType:int
-                                UBinaryExpression (operator = +) [a + b] : PsiType:int
-                                    USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                                    USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
+                                UReturnExpression [return a + b]
+                                    UBinaryExpression (operator = +) [a + b] : PsiType:int
+                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                        USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
                 UDeclarationsExpression [var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
                     ULocalVariable (name = lam2) [var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
                         ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
@@ -23,16 +24,17 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UDeclarationsExpression [var c: <ErrorType> = 1]
                                     ULocalVariable (name = c) [var c: <ErrorType> = 1]
                                         ULiteralExpression (value = 1) [1] : PsiType:int
-                                UIfExpression [if (a > 0) a + c else a - c] : PsiType:int
-                                    UBinaryExpression (operator = >) [a > 0] : PsiType:boolean
-                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                                        ULiteralExpression (value = 0) [0] : PsiType:int
-                                    UBinaryExpression (operator = +) [a + c] : PsiType:int
-                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                                        USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
-                                    UBinaryExpression (operator = -) [a - c] : PsiType:int
-                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                                        USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
+                                UReturnExpression [return if (a > 0) a + c else a - c]
+                                    UIfExpression [if (a > 0) a + c else a - c] : PsiType:int
+                                        UBinaryExpression (operator = >) [a > 0] : PsiType:boolean
+                                            USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                            ULiteralExpression (value = 0) [0] : PsiType:int
+                                        UBinaryExpression (operator = +) [a + c] : PsiType:int
+                                            USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                            USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
+                                        UBinaryExpression (operator = -) [a - c] : PsiType:int
+                                            USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                            USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
                 UDeclarationsExpression [var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
                     ULocalVariable (name = lam3) [var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
                         ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
@@ -90,4 +92,5 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = y) [var y: <ErrorType> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>
                             UBlockExpression [{...}] : PsiType:Unit
-                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
