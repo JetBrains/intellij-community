@@ -223,7 +223,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
           }
           return;
         }
-        myBuilder.drillDown();
+        myBuilder.drillDown(element, children);
       })
       .submit(AppExecutorUtil.getAppScheduledExecutorService());
   }

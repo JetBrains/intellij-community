@@ -88,17 +88,21 @@ public abstract class AbstractListBuilder implements Disposable {
   public final void drillDown() {
     final Object value = getSelectedValue();
     if (value instanceof AbstractTreeNode) {
-      try {
-        final AbstractTreeNode node = (AbstractTreeNode)value;
-        buildList(node);
-        ensureSelectionExist();
-      }
-      finally {
-        updateParentTitle();
-      }
+      final AbstractTreeNode node = (AbstractTreeNode)value;
+      drillDown(node, getChildren(node));
     }
     else { // an element that denotes parent
       goUp();
+    }
+  }
+
+  public final void drillDown(final AbstractTreeNode node, final Object[] children) {
+    try {
+      buildList(node, children);
+      ensureSelectionExist();
+    }
+    finally {
+      updateParentTitle();
     }
   }
 
@@ -262,13 +266,16 @@ public abstract class AbstractListBuilder implements Disposable {
   }
 
   private void buildList(final AbstractTreeNode parentElement) {
+    buildList(parentElement, getChildren(parentElement));
+  }
+
+  private void buildList(final AbstractTreeNode parentElement, final Object[] children) {
     myCurrentParent = parentElement;
     Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(
       () -> myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)),
       200, TimeUnit.MILLISECONDS
     );
 
-    final Object[] children = getChildren(parentElement);
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
       Object value = parentElement.getValue();
