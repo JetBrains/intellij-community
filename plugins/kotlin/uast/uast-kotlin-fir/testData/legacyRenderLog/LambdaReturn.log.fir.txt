@@ -4,14 +4,49 @@ UFile (package = org.jetbrains.uast.kotlin)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = lam1)
-                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                        ULambdaExpression
+                            UParameter (name = a)
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                            UBlockExpression
+                                UDeclarationsExpression
+                                    ULocalVariable (name = b)
+                                        ULiteralExpression (value = 1)
+                                UBinaryExpression (operator = +)
+                                    USimpleNameReferenceExpression (identifier = a)
+                                    USimpleNameReferenceExpression (identifier = b)
                 UDeclarationsExpression
                     ULocalVariable (name = lam2)
-                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                        ULambdaExpression
+                            UParameter (name = a)
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                            UBlockExpression
+                                UDeclarationsExpression
+                                    ULocalVariable (name = c)
+                                        ULiteralExpression (value = 1)
+                                UIfExpression
+                                    UBinaryExpression (operator = >)
+                                        USimpleNameReferenceExpression (identifier = a)
+                                        ULiteralExpression (value = 0)
+                                    UBinaryExpression (operator = +)
+                                        USimpleNameReferenceExpression (identifier = a)
+                                        USimpleNameReferenceExpression (identifier = c)
+                                    UBinaryExpression (operator = -)
+                                        USimpleNameReferenceExpression (identifier = a)
+                                        USimpleNameReferenceExpression (identifier = c)
                 UDeclarationsExpression
                     ULocalVariable (name = lam3)
                         ULabeledExpression (label = lbd)
-                            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                            ULambdaExpression
+                                UParameter (name = a)
+                                    UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                                UBlockExpression
+                                    UDeclarationsExpression
+                                        ULocalVariable (name = d)
+                                            ULiteralExpression (value = 1)
+                                    UReturnExpression
+                                        UBinaryExpression (operator = +)
+                                            USimpleNameReferenceExpression (identifier = a)
+                                            USimpleNameReferenceExpression (identifier = d)
                 UDeclarationsExpression
                     ULocalVariable (name = lam4)
                         ULambdaExpression
@@ -45,7 +80,14 @@ UFile (package = org.jetbrains.uast.kotlin)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = x)
-                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                        ULambdaExpression
+                            UBlockExpression
+                                UDeclarationsExpression
+                                    ULocalVariable (name = vardbcd0724)
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = y)
-                        [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                        ULambdaExpression
+                            UBlockExpression
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION)

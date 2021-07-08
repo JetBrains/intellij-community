@@ -126,8 +126,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                             val parent = original.parent
                             when {
                                 parent is KtLambdaExpression -> {
-                                    // TODO: commonize KotlinULambdaExpression
-                                    null
+                                    KotlinULambdaExpression(parent, givenParent) // your parent is the ULambdaExpression
                                 }
                                 original.name.isNullOrEmpty() -> {
                                     createLocalFunctionLambdaExpression(original, givenParent)
@@ -387,8 +386,13 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtParenthesizedExpression -> expr<UParenthesizedExpression>(build(::KotlinUParenthesizedExpression))
 
                 is KtBlockExpression -> expr<UBlockExpression> {
-                    // TODO: differentiate lambda
-                    KotlinUBlockExpression(expression, givenParent)
+                    if (expression.parent is KtFunctionLiteral &&
+                        expression.parent.parent is KtLambdaExpression &&
+                        givenParent !is KotlinULambdaExpression
+                    ) {
+                        KotlinULambdaExpression(expression.parent.parent as KtLambdaExpression, givenParent).body
+                    } else
+                        KotlinUBlockExpression(expression, givenParent)
                 }
                 is KtReturnExpression -> expr<UReturnExpression>(build(::KotlinUReturnExpression))
                 is KtThrowExpression -> expr<UThrowExpression>(build(::KotlinUThrowExpression))
@@ -433,6 +437,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                         }
                     } ?: UastEmptyExpression(givenParent)
                 }
+                is KtLambdaExpression -> expr<ULambdaExpression>(build(::KotlinULambdaExpression))
                 is KtFunction -> {
                     if (expression.name.isNullOrEmpty()) {
                         expr<ULambdaExpression>(build(::createLocalFunctionLambdaExpression))

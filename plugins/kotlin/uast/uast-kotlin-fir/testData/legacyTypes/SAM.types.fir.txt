@@ -4,12 +4,14 @@ UFile (package = ) [import java.lang.Thread...]
     UImportStatement (isOnDemand = false) [import java.util.concurrent.Callable]
     UImportStatement (isOnDemand = false) [import java.util.function.Supplier]
     UClass (name = SAMKt) [public final class SAMKt {...}]
-        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+        UField (name = notSam) [@org.jetbrains.annotations.NotNull private static final var notSam: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
-        UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+            ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                UBlockExpression [{...}] : PsiType:Void
+        UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+            ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                UBlockExpression [{...}] : PsiType:Runnable
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UQualifiedReferenceExpression [java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Runnable
@@ -24,17 +26,20 @@ UFile (package = ) [import java.lang.Thread...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public static final fun bar() : java.lang.Runnable {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UBinaryExpression (operator = =) [foo = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] : PsiType:void
+                UBinaryExpression (operator = =) [foo = { ...}] : PsiType:void
                     USimpleNameReferenceExpression (identifier = foo) [foo] : PsiType:Runnable
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
-                UDeclarationsExpression [var a: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable]
-                    ULocalVariable (name = a) [var a: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable]
-                        UBinaryExpressionWithType [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION) as java.lang.Runnable] : PsiType:Runnable
-                            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                    ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                        UBlockExpression [{...}] : PsiType:Runnable
+                UDeclarationsExpression [var a: <ErrorType> = { ...} as java.lang.Runnable]
+                    ULocalVariable (name = a) [var a: <ErrorType> = { ...} as java.lang.Runnable]
+                        UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : PsiType:Runnable
+                            ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                                UBlockExpression [{...}] : PsiType:Void
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UReturnExpression [return [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] : PsiType:Void
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
+                UReturnExpression [return { ...}] : PsiType:Void
+                    ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                        UBlockExpression [{...}] : PsiType:Runnable
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = runRunnable) [public static final fun runRunnable(@null r: java.lang.Runnable) : error.NonExistentClass {...}]
             UParameter (name = r) [@null var r: java.lang.Runnable]
