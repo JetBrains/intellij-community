@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -72,6 +73,15 @@ fun reportConvertFailure(psiMethod: PsiMethod): Nothing {
 
     throw report
 }
+
+fun createKDocNameSimpleNameReference(parentKDocName: KDocName, givenParent: UElement?): USimpleNameReferenceExpression? =
+    parentKDocName.lastChild?.let { psiIdentifier ->
+        parentKDocName.getQualifiedName().lastOrNull()?.let { qualifierText ->
+            val baseResolveProviderService =
+                ServiceManager.getService(psiIdentifier.project, BaseKotlinUastResolveProviderService::class.java)
+            KotlinStringUSimpleReferenceExpression(qualifierText, givenParent, baseResolveProviderService, psiIdentifier, parentKDocName)
+        }
+    }
 
 fun createLocalFunctionDeclaration(function: KtFunction, parent: UElement?): UDeclarationsExpression {
     val service = ServiceManager.getService(function.project, BaseKotlinUastResolveProviderService::class.java)

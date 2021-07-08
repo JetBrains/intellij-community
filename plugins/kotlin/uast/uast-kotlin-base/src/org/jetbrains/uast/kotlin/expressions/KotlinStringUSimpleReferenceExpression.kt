@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMultiResolvable
@@ -31,12 +29,3 @@ class KotlinStringUSimpleReferenceExpression(
 
     override fun multiResolve(): Iterable<ResolveResult> = referenceAnchor?.multiResolveResults().orEmpty().asIterable()
 }
-
-fun createKDocNameSimpleNameReference(parentKDocName: KDocName, givenParent: UElement?): USimpleNameReferenceExpression? =
-    parentKDocName.lastChild?.let { psiIdentifier ->
-        parentKDocName.getQualifiedName().lastOrNull()?.let { qualifierText ->
-            val baseResolveProviderService =
-                ServiceManager.getService(psiIdentifier.project, BaseKotlinUastResolveProviderService::class.java)
-            KotlinStringUSimpleReferenceExpression(qualifierText, givenParent, baseResolveProviderService, psiIdentifier, parentKDocName)
-        }
-    }
