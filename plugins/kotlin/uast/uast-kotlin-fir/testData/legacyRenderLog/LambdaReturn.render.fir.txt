@@ -5,12 +5,12 @@ public final class LambdaReturnKt {
         var lam1: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
 
             var b: <ErrorType> = 1
-            a + b
+            return a + b
         }
         var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
 
             var c: <ErrorType> = 1
-            if (a > 0) a + c else a - c
+            return if (a > 0) a + c else a - c
         }
         var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->
 
@@ -29,7 +29,7 @@ public final class LambdaReturnKt {
             @org.jetbrains.annotations.NotNull var vardbcd0724: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
         var y: <ErrorType> = {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            return [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
     }
 }

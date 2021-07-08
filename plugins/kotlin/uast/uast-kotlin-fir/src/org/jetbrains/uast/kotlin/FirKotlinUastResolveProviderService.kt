@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
-import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeNullability
-import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeWithNullability
+import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.*
@@ -21,7 +18,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     override val baseKotlinConverter: BaseKotlinConverter
@@ -37,8 +36,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
-        // TODO("Not yet implemented")
-        return null
+        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
+        // Skip _explicit_ return.
+        if (lastExpression is KtReturnExpression) return null
+        analyseForUast(ktLambdaExpression) {
+            // TODO: Should check an explicit, expected return type as well
+            //  e.g., val y: () -> Unit = { 1 } // the lambda return type is Int, but we won't add an implicit return here.
+            val returnType = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().annotatedType.type
+            val returnUnitOrNothing = returnType.isUnit || returnType.isNothing
+            return if (returnUnitOrNothing) null else
+                KotlinUImplicitReturnExpression(parent).apply {
+                    returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
+                }
+        }
     }
 
     override fun getImplicitParameters(
@@ -46,8 +56,24 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         parent: UElement,
         parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>
     ): List<KotlinUParameter> {
-        // TODO("Not yet implemented")
-        return emptyList()
+        analyseForUast(ktLambdaExpression) {
+            return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
+                KotlinUParameter(
+                    UastKotlinPsiParameterBase(
+                        name = p.name.asString(),
+                        // TODO: implicit parameter type
+                        type = UastErrorType,
+                        parent = ktLambdaExpression,
+                        ktOrigin = ktLambdaExpression,
+                        language = ktLambdaExpression.language,
+                        isVarArgs = p.isVararg,
+                        ktDefaultValue = null
+                    ),
+                    null,
+                    parent
+                )
+            }
+        }
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
