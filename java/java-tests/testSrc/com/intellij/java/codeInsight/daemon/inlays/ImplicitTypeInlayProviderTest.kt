@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.ImplicitTypeInlayProvider
@@ -22,7 +22,7 @@ class Demo {
 class Demo {
   static String foo() {}
   private static void pure(int x, int y) {
-    var x<# [:  String] #> = foo();
+    var x<# [:  []String] #> = foo();
   }
 }"""
     testAnnotations(text)
@@ -54,7 +54,7 @@ class Demo {
   class GenericLongClass<T1, T2> {}
 
   private static void pure(GenericLongClass<Integer, GenericLongClass<String, Integer>> object) {
-    var x<# [:  [[Demo . GenericLongClass] [< [Integer ,  [[Demo . GenericLongClass] [< ... >]]] >]]] #> = object;
+    var x<# [:  [[[1:temp:///src/test.java]Demo . [16:temp:///src/test.java]GenericLongClass] [< [[]Integer ,  [[[1:temp:///src/test.java]Demo . [16:temp:///src/test.java]GenericLongClass] [< ... >]]] >]]] #> = object;
   }
 }"""
     testAnnotations(text)

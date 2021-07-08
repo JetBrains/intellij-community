@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hint.HintManager
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -247,13 +248,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun reference(base: InlayPresentation, onClickAction: () -> Unit): InlayPresentation {
-    return reference(
-      base = base,
-      onClickAction = Runnable { onClickAction() },
-      clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
-      clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
-      hoverPredicate = { isControlDown(it) }
-    )
+    return referenceInternal(base, onClickAction)
   }
 
   @Contract(pure = true)
@@ -280,22 +275,41 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     })
   }
 
+  private fun referenceInternal(base: InlayPresentation,
+                                onClickAction: () -> Unit,
+                                toStringProvider: (() -> String)? = null) = reference(
+    base = base,
+    onClickAction = Runnable { onClickAction() },
+    clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
+    clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+    hoverPredicate = { isControlDown(it) },
+    toStringProvider = toStringProvider
+  )
+
   @Contract(pure = true)
   private fun reference(
     base: InlayPresentation,
     onClickAction: Runnable,
     clickButtonsWithoutHover: EnumSet<MouseButton>,
     clickButtonsWithHover: EnumSet<MouseButton>,
-    hoverPredicate: (MouseEvent) -> Boolean
+    hoverPredicate: (MouseEvent) -> Boolean,
+    toStringProvider: (() -> String)? = null
   ): InlayPresentation {
     val noHighlightReference = onClick(base, clickButtonsWithoutHover) { _, _ ->
       onClickAction.run()
     }
-    return changeOnHover(noHighlightReference, {
-      return@changeOnHover onClick(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { _, _ ->
+    return object : ChangeOnHoverPresentation(noHighlightReference, hover@{
+      return@hover onClick(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { _, _ ->
         onClickAction.run()
       }
-    }, hoverPredicate)
+    }, hoverPredicate) {
+      override fun toString(): String {
+        if (toStringProvider != null) {
+          return "[${toStringProvider()}]${super.toString()}"
+        }
+        return super.toString()
+      }
+    }
   }
 
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
@@ -304,8 +318,24 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   }
 
   @Contract(pure = true)
-  fun psiSingleReference(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation =
-    reference(base) { navigateInternal(resolve) }
+  fun psiSingleReference(base: InlayPresentation, withDebugToString: Boolean = true, resolve: () -> PsiElement?): InlayPresentation {
+    return if (withDebugToString) {
+      referenceInternal(
+        base,
+        onClickAction = { navigateInternal(resolve) },
+        toStringProvider = {
+          val element = resolve() ?: return@referenceInternal ""
+          return@referenceInternal "${element.startOffset}:${element.containingFile.virtualFile}"
+        })
+    } else {
+      reference(base) { navigateInternal(resolve) }
+    }
+  }
+
+  @Contract(pure = true)
+  fun psiSingleReference(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation {
+    return reference(base) { navigateInternal(resolve) }
+  }
 
   @Contract(pure = true)
   fun seq(vararg presentations: InlayPresentation): InlayPresentation {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
@@ -31,9 +31,10 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="[Chains . B]"/>
-                .c()<hint text="[Chains . C]"/>
-                .a()<hint text="[Chains . A]"/>
+    new A()
+      .b()<hint text="[[1:temp:///src/A.java]Chains . [99:temp:///src/A.java]B]"/>
+                .c()<hint text="[[1:temp:///src/A.java]Chains . [173:temp:///src/A.java]C]"/>
+                .a()<hint text="[[1:temp:///src/A.java]Chains . [25:temp:///src/A.java]A]"/>
                 .c();
   }
 }""")
@@ -59,11 +60,11 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="[Chains . B]"/>
+      .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
       .c().b()
-      .a()<hint text="[Chains . A]"/>
-      .c()<hint text="[Chains . C]"/>
-      .b()<hint text="[Chains . B]"/>
+      .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
+      .c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
+      .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
       .c();
   }
 }
@@ -89,11 +90,11 @@ public class Chains {
 
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<hint text="[Chains . C]"/>
-     .a()<hint text="[Chains . A]"/>
-     .b()<hint text="[Chains . B]"/>
-     .a()<hint text="[Chains . A]"/>
-     .c()<hint text="[Chains . C]"/>
+    a.b().c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
+     .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
+     .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
+     .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
+     .c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
      .b();
   }
 }
