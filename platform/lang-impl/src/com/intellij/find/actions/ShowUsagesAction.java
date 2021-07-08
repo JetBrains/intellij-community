@@ -781,8 +781,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setOpaque(false);
 
-    JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getOptionsString());
-    northPanel.add(optionsLabel, gc.next());
+    if (Registry.is("ide.usages.popup.show.options.string")) {
+      JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getOptionsString());
+      northPanel.add(optionsLabel, gc.next());
+    }
     northPanel.add(toolbarComponent, gc.next());
 
     builder.setNorthComponent(northPanel);
