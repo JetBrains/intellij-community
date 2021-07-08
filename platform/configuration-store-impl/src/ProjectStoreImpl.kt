@@ -84,7 +84,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     val basePath = projectBasePath
 
     fun doSave() {
-      if (currentProjectName == basePath.fileName.toString()) {
+      if (currentProjectName == basePath.fileName?.toString()) {
         // name equals to base path name - just remove name
         getNameFile().delete()
       }
