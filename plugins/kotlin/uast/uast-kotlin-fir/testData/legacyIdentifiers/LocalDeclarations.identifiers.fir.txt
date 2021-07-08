@@ -1,12 +1,12 @@
 foo -> UMethod (name = foo)
 Boolean -> USimpleNameReferenceExpression (identifier = Boolean)
     Local -> UClass (name = Local)
-    bar -> [!] UnknownKotlinExpression (FUN)
+    bar -> ULambdaExpression
     Local -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     baz -> ULocalVariable (name = baz)
         Local -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     Int -> USimpleNameReferenceExpression (identifier = Int)
-    someLocalFun -> [!] UnknownKotlinExpression (FUN)
+    someLocalFun -> ULambdaExpression
     text -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
     String -> USimpleNameReferenceExpression (identifier = String)
     bar -> [!] UnknownKotlinExpression (CALL_EXPRESSION)

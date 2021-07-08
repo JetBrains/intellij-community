@@ -1,6 +1,6 @@
 A -> UClass (name = A)
 foo -> UMethod (name = foo)
-inlineFoo -> [!] UnknownKotlinExpression (FUN)
+inlineFoo -> UDeclarationsExpression
 bar -> UMethod (name = bar)
     A -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
     foo -> [!] UnknownKotlinExpression (CALL_EXPRESSION)

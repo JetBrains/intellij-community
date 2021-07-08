@@ -7,4 +7,4 @@ level -> USimpleNameReferenceExpression (identifier = level)
 DeprecationLevel -> USimpleNameReferenceExpression (identifier = DeprecationLevel)
 HIDDEN -> USimpleNameReferenceExpression (identifier = HIDDEN)
 message -> USimpleNameReferenceExpression (identifier = message)
-test2 -> [!] UnknownKotlinExpression (FUN)
+test2 -> UDeclarationsExpression
