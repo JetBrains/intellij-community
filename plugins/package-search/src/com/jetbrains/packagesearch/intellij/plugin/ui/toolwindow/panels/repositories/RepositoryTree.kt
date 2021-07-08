@@ -11,7 +11,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -23,7 +27,7 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class RepositoryTree(
     private val project: Project
-) : Tree(), DataProvider, CopyProvider {
+) : Tree(), DataProvider, CopyProvider, Displayable<KnownRepositories.All> {
 
     private val rootNode: DefaultMutableTreeNode
         get() = (model as DefaultTreeModel).root as DefaultMutableTreeNode
@@ -83,13 +87,13 @@ internal class RepositoryTree(
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 
-    fun display(repositories: KnownRepositories.All) {
+    override suspend fun display(viewModel: KnownRepositories.All) = withContext(Dispatchers.AppUI) {
         val previouslySelectedItem = getSelectedRepositoryItem()
 
         clearSelection()
         rootNode.removeAllChildren()
 
-        val sortedRepositories = repositories.sortedBy { it.displayName }
+        val sortedRepositories = viewModel.sortedBy { it.displayName }
         for (repository in sortedRepositories) {
             if (repository.usageInfo.isEmpty()) continue
 
@@ -113,7 +117,7 @@ internal class RepositoryTree(
             }
         }
 
-        TreeUtil.expandAll(this)
+        TreeUtil.expandAll(this@RepositoryTree)
         updateUI()
     }
 

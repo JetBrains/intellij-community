@@ -27,6 +27,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
@@ -42,7 +43,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.showUnderneath
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
@@ -60,7 +64,7 @@ private val minPopupMenuWidth = 175.scaled()
 internal class PackageDetailsHeaderPanel(
     private val operationFactory: PackageSearchOperationFactory,
     private val operationExecutor: OperationExecutor
-) : JPanel() {
+) : JPanel(), Displayable<PackageDetailsHeaderPanel.ViewModel> {
 
     private val repoWarningBanner = InfoBannerPanel().apply {
         isVisible = false
@@ -144,14 +148,16 @@ internal class PackageDetailsHeaderPanel(
         identifierLabel.onRightClick { if (identifierLabel.isVisible) copyMenu.showUnderneath(identifierLabel) }
     }
 
-    fun display(
-        selectedPackageModel: SelectedPackageModel<*>,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        targetModules: TargetModules,
-        onlyStable: Boolean
-    ) {
-        val packageModel = selectedPackageModel.packageModel
+    internal data class ViewModel(
+        val selectedPackageModel: SelectedPackageModel<*>,
+        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val allKnownRepositories: KnownRepositories.All,
+        val targetModules: TargetModules,
+        val onlyStable: Boolean
+    )
+
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+        val packageModel = viewModel.selectedPackageModel.packageModel
 
         val name = packageModel.remoteInfo?.name
         if (name != null && name != packageModel.identifier) {
@@ -170,16 +176,16 @@ internal class PackageDetailsHeaderPanel(
             identifierLabel.isVisible = false
         }
 
-        val selectedVersion = selectedPackageModel.selectedVersion
-        val selectedScope = selectedPackageModel.selectedScope
-        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+        val selectedVersion = viewModel.selectedPackageModel.selectedVersion
+        val selectedScope = viewModel.selectedPackageModel.selectedScope
+        val repoToInstall = viewModel.knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
             packageModel,
             selectedVersion,
-            allKnownRepositories
+            viewModel.allKnownRepositories
         )
 
         updateRepoWarningBanner(repoToInstall)
-        updateOperations(packageModel, selectedVersion, selectedScope, targetModules, onlyStable, repoToInstall)
+        updateOperations(packageModel, selectedVersion, selectedScope, viewModel.targetModules, viewModel.onlyStable, repoToInstall)
 
         overflowButton.componentPopupMenu?.isVisible = false
     }

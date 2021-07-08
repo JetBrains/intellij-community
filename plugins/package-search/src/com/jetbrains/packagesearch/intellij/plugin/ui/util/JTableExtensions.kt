@@ -1,12 +1,16 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.swing.JTable
 import javax.swing.table.TableColumn
 
-internal fun JTable.autosizeColumnsAt(indices: Iterable<Int>) {
-    val columns = indices.map { columnModel.getColumn(it) }
-    val preferredWidths = getColumnDataWidths(columns)
-
+internal suspend fun JTable.autosizeColumnsAt(indices: Iterable<Int>) {
+    val (columns, preferredWidths) = withContext(Dispatchers.Default) {
+        val columns = indices.map { columnModel.getColumn(it) }
+        columns to getColumnDataWidths(columns)
+    }
     columns.forEachIndexed { index, column ->
         column.width = preferredWidths[index]
     }

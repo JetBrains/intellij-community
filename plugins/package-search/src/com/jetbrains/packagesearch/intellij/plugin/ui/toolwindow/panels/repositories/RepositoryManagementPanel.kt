@@ -48,11 +48,7 @@ internal class RepositoryManagementPanel(
         rootDataModelProvider.dataModelFlow
             .map { it.allKnownRepositories }
             .distinctUntilChanged()
-            .onEach {
-                withContext(Dispatchers.AppUI) {
-                    repositoriesTree.display(it)
-                }
-            }
+            .onEach { repositoriesTree.display(it) }
             .launchIn(rootDataModelProvider.project.lifecycleScope)
     }
 

@@ -61,9 +61,10 @@ import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.util.Locale
+import java.util.concurrent.TimeUnit.HOURS
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeoutException
-import kotlin.time.hours
-import kotlin.time.milliseconds
+import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
@@ -115,7 +116,7 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage
         )
     }.replayOnSignal(dataChangeChannel.consumeAsFlow())
-        .debounce(200.milliseconds)
+        .debounce(200.toDuration(MILLISECONDS))
         .map { it.toRootDataModel() }
         .onEach { rerunHighlightingOnOpenBuildFiles() }
         .catch {
@@ -139,7 +140,7 @@ internal class PackageSearchDataService(
 
         checkNotificationsSetupIsCorrect()
 
-        launchLoop(1.hours) {
+        launchLoop(1.toDuration(HOURS)) {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
         }
 

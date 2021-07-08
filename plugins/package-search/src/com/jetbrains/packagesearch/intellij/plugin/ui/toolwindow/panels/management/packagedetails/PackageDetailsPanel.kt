@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -11,8 +10,15 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.Selected
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.HeaderPanel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.CardLayout
 import java.awt.Point
 import javax.swing.JPanel
@@ -22,7 +28,7 @@ import javax.swing.SwingConstants
 internal class PackageDetailsPanel(
     operationFactory: PackageSearchOperationFactory,
     operationExecutor: OperationExecutor
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")), Displayable<PackageDetailsPanel.ViewModel> {
 
     private var currentPanelName = EMPTY_STATE
 
@@ -63,22 +69,37 @@ internal class PackageDetailsPanel(
         showPanel(EMPTY_STATE)
     }
 
-    fun display(
-        selectedPackageModel: SelectedPackageModel<*>?,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        targetModules: TargetModules,
-        onlyStable: Boolean
-    ) {
-        if (selectedPackageModel != null) {
-            headerPanel.display(selectedPackageModel, knownRepositoriesInTargetModules, allKnownRepositories, targetModules, onlyStable)
-            infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, allKnownRepositories)
+    internal data class ViewModel(
+        val selectedPackageModel: SelectedPackageModel<*>?,
+        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val allKnownRepositories: KnownRepositories.All,
+        val targetModules: TargetModules,
+        val onlyStable: Boolean,
+        val invokeLaterScope: CoroutineScope
+    )
+
+    override suspend fun display(viewModel: ViewModel): Unit = withContext(Dispatchers.AppUI) {
+        if (viewModel.selectedPackageModel != null) {
+            headerPanel.display(
+                PackageDetailsHeaderPanel.ViewModel(
+                    viewModel.selectedPackageModel,
+                    viewModel.knownRepositoriesInTargetModules,
+                    viewModel.allKnownRepositories,
+                    viewModel.targetModules,
+                    viewModel.onlyStable
+                )
+            )
+            infoPanel.display(
+                PackageDetailsInfoPanel.ViewModel(
+                    viewModel.selectedPackageModel.packageModel,
+                    viewModel.selectedPackageModel.selectedVersion,
+                    viewModel.allKnownRepositories
+                )
+            )
 
             showPanel(CONTENT_PANEL)
 
-            AppUIExecutor.onUiThread().later().execute {
-                scrollPanel.viewport.viewPosition = Point(0, 0)
-            }
+            viewModel.invokeLaterScope.launch(Dispatchers.AppUI) { scrollPanel.viewport.viewPosition = Point(0, 0) }
         } else {
             showPanel(EMPTY_STATE)
         }

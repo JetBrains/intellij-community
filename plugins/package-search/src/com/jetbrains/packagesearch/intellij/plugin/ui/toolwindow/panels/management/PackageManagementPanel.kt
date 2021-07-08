@@ -25,6 +25,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -126,9 +127,11 @@ internal class PackageManagementPanel(
                 )
                 withContext(Dispatchers.AppUI) {
                     modulesTree.display(
-                        treeModel = treeModel,
-                        traceInfo = data.traceInfo,
-                        pendingSelectionPath = selectionPath
+                        ModulesTree.ViewModel(
+                            treeModel = treeModel,
+                            traceInfo = data.traceInfo,
+                            pendingSelectionPath = selectionPath
+                        )
                     )
                 }
             }
@@ -144,8 +147,8 @@ internal class PackageManagementPanel(
                 data.traceInfo
             )
 
-            withContext(Dispatchers.AppUI) {
-                packagesListPanel.display(
+            packagesListPanel.display(
+                PackagesListPanel.ViewModel(
                     headerData = data.headerData,
                     packageModels = data.packageModels,
                     targetModules = data.targetModules,
@@ -155,15 +158,18 @@ internal class PackageManagementPanel(
                     tableData = tableData,
                     traceInfo = data.traceInfo
                 )
+            )
 
-                packageDetailsPanel.display(
+            packageDetailsPanel.display(
+                PackageDetailsPanel.ViewModel(
                     selectedPackageModel = data.selectedPackage,
                     knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
                     allKnownRepositories = data.allKnownRepositories,
                     targetModules = data.targetModules,
-                    onlyStable = data.filterOptions.onlyStable
+                    onlyStable = data.filterOptions.onlyStable,
+                    invokeLaterScope = project.lifecycleScope
                 )
-            }
+            )
         }.launchIn(this)
     }
 
