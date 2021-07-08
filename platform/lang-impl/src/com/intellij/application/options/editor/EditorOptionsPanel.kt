@@ -248,7 +248,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
                   else -> it
                 }
               }
-            ).enableIf(stripEnabledBox.selected).component
+            ).enableIf(stripEnabledBox.selected)
           }
           row {
             checkBox(cdKeepTrailingSpacesOnCaretLine)
