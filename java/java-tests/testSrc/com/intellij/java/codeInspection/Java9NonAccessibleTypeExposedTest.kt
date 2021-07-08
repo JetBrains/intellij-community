@@ -280,7 +280,8 @@ public class Highlighted {
     highlight("""package apiPkg;
 import otherPkg.*;
 import implPkg.*;
-@SuppressWarnings("ALL") public class Highlighted {
+ @SuppressWarnings("RedundantThrows")
+ public class Highlighted {
   public void throwsPublic() throws PublicException {}
   public void throwsPackageLocal() throws <warning descr="Class 'PackageLocalException' is not exported from module 'MAIN'">PackageLocalException</warning> {}
   public void throwsOther() throws OtherException {}

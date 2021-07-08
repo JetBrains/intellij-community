@@ -35,7 +35,7 @@ public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTes
   public void testSimple() {
     doTest(
       "import java.math.*;" +
-      " /** @noinspection BigDecimalLegacyMethod*/ class X {" +
+      "class X {" +
       "  void m(BigDecimal value) {" +
       "    value./*Call to 'BigDecimal.divide()' can use 'RoundingMode' enum constant*/divide/**/(value, BigDecimal.ROUND_HALF_DOWN);" +
       "    value./*Call to 'BigDecimal.divide()' can use 'RoundingMode' enum constant*/divide/**/(value, 2, 7);" +
