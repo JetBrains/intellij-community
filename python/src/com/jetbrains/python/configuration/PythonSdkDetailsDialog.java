@@ -181,7 +181,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void updateOkButton() {
-    super.setOKActionEnabled(myModified || myProjectSdksModel.isModified() || getOriginalSelectedSdk() != getSdk());
+    super.setOKActionEnabled(myModified || myProjectSdksModel.isModified() || isAnotherSdkSelected());
+  }
+
+  /**
+   * Checks whether the selection has changed from the initial one.
+   *
+   * @return {@code true} if the selection has changed and {@code false} otherwise
+   */
+  private boolean isAnotherSdkSelected() {
+    Sdk originalSelectedSdk = getOriginalSelectedSdk();
+    return originalSelectedSdk != null && originalSelectedSdk != getSdk();
   }
 
   @Override
