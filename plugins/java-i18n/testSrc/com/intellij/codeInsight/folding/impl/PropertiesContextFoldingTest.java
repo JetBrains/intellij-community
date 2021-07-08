@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.folding;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.properties.PropertiesFoldingSettings;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class PropertiesContextFoldingTest extends BasePlatformTestCase {
   private boolean old;
@@ -38,5 +41,24 @@ public class PropertiesContextFoldingTest extends BasePlatformTestCase {
     String actual = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(true);
     String expected = FileUtil.loadFile(new File(myFixture.getTestDataPath(), "i18n.after"));
     assertEquals(expected, actual);
+  }
+
+  public void testRangesInJava() {
+    JavaCodeFoldingSettings foldingSettings = JavaCodeFoldingSettings.getInstance();
+    boolean collapseMethods = foldingSettings.isCollapseMethods();
+    boolean i18nMessages = foldingSettings.isCollapseI18nMessages();
+    try {
+      foldingSettings.setCollapseMethods(false);
+      foldingSettings.setCollapseI18nMessages(true);
+      myFixture.copyFileToProject("i18n.properties");
+      PsiFile file = myFixture.configureByFile("MyClass1.java");
+      
+      List<FoldingUpdate.RegionInfo> foldings = FoldingUpdate.getFoldingsFor(file, false);
+      assertFalse(foldings.stream().map(info -> info.descriptor).anyMatch(descriptor -> descriptor.getPlaceholderText().equals("\"Welcome\"")));
+    }
+    finally {
+      foldingSettings.setCollapseMethods(collapseMethods);
+      foldingSettings.setCollapseI18nMessages(i18nMessages);
+    }
   }
 }
