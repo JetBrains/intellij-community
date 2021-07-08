@@ -308,11 +308,11 @@ internal class PackageSearchDataService(
 
     private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = readAction { progress ->
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-                ?.also { progress.checkCancelled() }
-                ?.listDependenciesInModule(this)
-                ?.toList()
-                ?: emptyList()
+        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+            ?.also { progress.checkCancelled() }
+            ?.listDependenciesInModule(this)
+            ?.toList()
+            ?: emptyList()
     }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
