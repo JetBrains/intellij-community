@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SharedProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
                                               @NotNull PsiReferenceService.Hints hints) {
     String name = getName(position);
     if (name != null) {
-      addMatchingProviders(position, myNamesToProvidersMap.get(name), list, hints);
-      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name)), list, hints);
+      addMatchingProviders(position, ContainerUtil.notNullize(myNamesToProvidersMap.get(name)), list, hints);
+      addMatchingProviders(position, ContainerUtil.notNullize(myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name))), list, hints);
     }
   }
 
@@ -71,11 +72,9 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   protected abstract String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @Nullable List<? extends ProviderInfo<ElementPattern<?>>> providerList,
+                                   @NotNull List<? extends @NotNull ProviderInfo<ElementPattern<?>>> providerList,
                                    @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
-    if (providerList == null) return;
-
     SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
 
     //noinspection ForLoopReplaceableByForEach
