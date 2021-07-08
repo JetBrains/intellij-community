@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -48,11 +49,11 @@ fun confirmOpeningUntrustedProject(
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
   @NlsContexts.Button cancelButtonText: String
-): OpenUntrustedProjectChoice {
+): OpenUntrustedProjectChoice = invokeAndWaitIfNeeded {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
   val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
-    return OpenUntrustedProjectChoice.IMPORT
+    return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.IMPORT
   }
 
   val choice = MessageDialogBuilder.Message(title, message)
@@ -70,11 +71,11 @@ fun confirmOpeningUntrustedProject(
     cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
     else -> {
       LOG.error("Illegal choice $choice")
-      return OpenUntrustedProjectChoice.CANCEL
+      return@invokeAndWaitIfNeeded OpenUntrustedProjectChoice.CANCEL
     }
   }
   TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
-  return openChoice
+  return@invokeAndWaitIfNeeded openChoice
 }
 
 fun confirmLoadingUntrustedProject(
@@ -83,11 +84,11 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-) : Boolean {
+): Boolean = invokeAndWaitIfNeeded {
   val trustedCheckResult = getImplicitTrustedCheckResult(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
-    return true
+    return@invokeAndWaitIfNeeded true
   }
 
   val answer = MessageDialogBuilder.yesNo(title, message)
@@ -98,7 +99,7 @@ fun confirmLoadingUntrustedProject(
     .ask(project)
   project.setTrusted(answer)
   TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
-  return answer
+  return@invokeAndWaitIfNeeded answer
 }
 
 @ApiStatus.Experimental
