@@ -1,6 +1,6 @@
 T -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
 Any -> USimpleNameReferenceExpression (identifier = Any)
-foo -> [!] UnknownKotlinExpression (FUN)
+foo -> UDeclarationsExpression
 init -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
 T -> USimpleNameReferenceExpression (identifier = T)
 Unit -> USimpleNameReferenceExpression (identifier = Unit)
@@ -8,7 +8,7 @@ T -> USimpleNameReferenceExpression (identifier = T)
     TODO -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
 T -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
 Any -> USimpleNameReferenceExpression (identifier = Any)
-bar -> [!] UnknownKotlinExpression (FUN)
+bar -> UDeclarationsExpression
 init -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
 T -> USimpleNameReferenceExpression (identifier = T)
 Unit -> USimpleNameReferenceExpression (identifier = Unit)

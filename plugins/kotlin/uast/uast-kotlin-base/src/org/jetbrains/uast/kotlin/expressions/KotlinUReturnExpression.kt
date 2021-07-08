@@ -4,7 +4,6 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.expressions.KotlinLocalFunctionULambdaExpression
 
 class KotlinUReturnExpression(
     override val sourcePsi: KtReturnExpression,

@@ -5,11 +5,25 @@ UFile (package = )
                 UDeclarationsExpression
                     UClass (name = Local)
                         UMethod (name = Local)
-                [!] UnknownKotlinExpression (FUN)
+                UDeclarationsExpression
+                    UVariable (name = bar)
+                        ULambdaExpression
+                            UBlockExpression
+                                UReturnExpression
+                                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = baz)
-                        [!] UnknownKotlinExpression (FUN)
-                [!] UnknownKotlinExpression (FUN)
+                        ULambdaExpression
+                            UBlockExpression
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UDeclarationsExpression
+                    UVariable (name = someLocalFun)
+                        ULambdaExpression
+                            UParameter (name = text)
+                                UAnnotation (fqName = null)
+                            UBlockExpression
+                                UReturnExpression
+                                    ULiteralExpression (value = 42)
                 UReturnExpression
                     UBinaryExpression (operator = ==)
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
