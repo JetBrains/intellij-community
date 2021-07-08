@@ -381,7 +381,7 @@ internal fun checkNewNameUsagesRetargeting(
             KotlinReferencesSearchParameters(
                 candidate,
                 scope = candidate.useScope.restrictToKotlinSources() and declaration.useScope,
-                kotlinOptions = KotlinReferencesSearchOptions(searchForOperatorConventions = !operator)
+                kotlinOptions = KotlinReferencesSearchOptions(searchForOperatorConventions = operator)
             )
         val usages = ReferencesSearch.search(searchParameters)
             .mapTo(SmartList<UsageInfo>()) { MoveRenameUsageInfo(it, candidate) }
