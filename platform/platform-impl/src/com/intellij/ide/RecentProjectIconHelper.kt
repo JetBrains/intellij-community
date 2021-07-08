@@ -104,12 +104,27 @@ internal class RecentProjectIconHelper {
       val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
       if (calculateIcon == null && generateFromName) {
         val projectManager = RecentProjectsManagerBase.instanceEx
-        val name = projectManager.getDisplayName(path) ?: projectManager.getProjectName(path)
+        val displayName = projectManager.getDisplayName(path)
+        val name = when {
+          displayName == null -> projectManager.getProjectName(path)
+          displayName.contains(",") -> iconTextForCommaSeparatedName(displayName)
+          else -> displayName
+        }
         AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
       }
       else calculateIcon
     }
   }
+
+  // Examples:
+  // - "First, Second" => "FS"
+  // - "First Project, Second Project" => "FS"
+  private fun iconTextForCommaSeparatedName(name: String) =
+    name.split(",")
+      .take(2)
+      .map { word -> word.firstOrNull { !it.isWhitespace() } ?: "" }
+      .joinToString("")
+      .toUpperCase()
 
   fun getProjectOrAppIcon(path: @SystemIndependent String): Icon {
     return getProjectIcon(path, StartupUiUtil.isUnderDarcula())
