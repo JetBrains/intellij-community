@@ -165,6 +165,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   private fun createHeaderPanel(): VerticalBox {
     val linksPanel = JPanel()
+    linksPanel.isOpaque = false
     linksPanel.layout = BoxLayout(linksPanel, BoxLayout.X_AXIS)
     linksPanel.alignmentX = LEFT_ALIGNMENT
     linksPanel.border = EmptyBorder(0, 0, JBUI.scale(12), 0)
@@ -185,6 +186,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     val headerPanel = VerticalBox()
+    headerPanel.isOpaque = false
     headerPanel.alignmentX = LEFT_ALIGNMENT
     headerPanel.border = UISettings.instance.lessonHeaderBorder
     headerPanel.add(linksPanel)
@@ -347,6 +349,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private fun createSmallSeparator(): Component {
     // Actually standard JSeparator can be used, but it adds some extra size for Y and I don't know how to fix it :(
     val separatorPanel = JPanel()
+    separatorPanel.isOpaque = false
     separatorPanel.layout = BoxLayout(separatorPanel, BoxLayout.X_AXIS)
     separatorPanel.add(Box.createHorizontalGlue())
     separatorPanel.border = MatteBorder(0, 0, JBUI.scale(1), 0, UISettings.instance.separatorColor)
