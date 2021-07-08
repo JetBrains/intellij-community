@@ -159,7 +159,7 @@ public interface TextContent extends CharSequence {
   /**
    * @return a concatenation of several text contents, which must have the same domains.
    */
-  static TextContent join(List<? extends @NotNull TextContent> components) {
+  static @Nullable TextContent join(List<? extends @NotNull TextContent> components) {
     if (components.isEmpty()) return null;
     if (components.size() == 1) return components.get(0);
 
