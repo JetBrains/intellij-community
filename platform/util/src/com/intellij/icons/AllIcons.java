@@ -274,6 +274,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Db_disabled_exception_breakpoint = load("debugger/db_disabled_exception_breakpoint.svg", -2750605841242039984L, 2);
     /** 12x12 */ public static final @NotNull Icon Db_disabled_field_breakpoint = load("debugger/db_disabled_field_breakpoint.svg", 8218057555375311490L, 2);
     /** 12x12 */ public static final @NotNull Icon Db_disabled_method_breakpoint = load("debugger/db_disabled_method_breakpoint.svg", 1767603760783213092L, 2);
+    /** 16x16 */ public static final @NotNull Icon Db_evaluateNode = load("debugger/db_evaluateNode.svg", -2883192177873658172L, 0);
     /** 12x12 */ public static final @NotNull Icon Db_exception_breakpoint = load("debugger/db_exception_breakpoint.svg", -1589334049690011172L, 2);
     /** 12x12 */ public static final @NotNull Icon Db_field_breakpoint = load("debugger/db_field_breakpoint.svg", 8298486087406722092L, 2);
     /** 12x12 */ public static final @NotNull Icon Db_invalid_breakpoint = load("debugger/db_invalid_breakpoint.svg", 7387379725901750007L, 2);
