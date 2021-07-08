@@ -24,7 +24,7 @@ class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
   override val externalProjects: List<ExternalProject> by lazy {
     ArrayList<ExternalProject>().apply {
       val projectsManager = MavenProjectsManager.getInstance(project)
-      for (mavenProject in projectsManager.rootProjects) {
+      for (mavenProject in projectsManager.projects) {
         val module = projectsManager.findModule(mavenProject)
         if (module != null) {
           val path = FileUtil.toCanonicalPath(mavenProject.directory)
