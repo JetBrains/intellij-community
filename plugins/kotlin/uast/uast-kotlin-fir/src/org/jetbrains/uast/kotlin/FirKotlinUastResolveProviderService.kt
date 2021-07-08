@@ -5,6 +5,9 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
@@ -31,6 +34,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
         TODO("Not yet implemented")
+    }
+
+    override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
+        // TODO("Not yet implemented")
+        return null
+    }
+
+    override fun getImplicitParameters(
+        ktLambdaExpression: KtLambdaExpression,
+        parent: UElement,
+        parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>
+    ): List<KotlinUParameter> {
+        // TODO("Not yet implemented")
+        return emptyList()
     }
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
@@ -103,6 +120,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
+        // TODO("Not yet implemented")
+        return null
+    }
+
+    override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
         // TODO("Not yet implemented")
         return null
     }

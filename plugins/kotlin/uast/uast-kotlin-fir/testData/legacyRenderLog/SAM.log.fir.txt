@@ -6,10 +6,12 @@ UFile (package = )
     UClass (name = SAMKt)
         UField (name = notSam)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+            ULambdaExpression
+                UBlockExpression
         UField (name = foo)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+            ULambdaExpression
+                UBlockExpression
         UField (name = baz)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UQualifiedReferenceExpression
@@ -26,15 +28,18 @@ UFile (package = )
             UBlockExpression
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = foo)
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                    ULambdaExpression
+                        UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = a)
                         UBinaryExpressionWithType
-                            [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                            ULambdaExpression
+                                UBlockExpression
                             UTypeReferenceExpression (name = java.lang.Runnable)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UReturnExpression
-                    [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)
+                    ULambdaExpression
+                        UBlockExpression
         UMethod (name = getBaz)
         UMethod (name = runRunnable)
             UParameter (name = r)
