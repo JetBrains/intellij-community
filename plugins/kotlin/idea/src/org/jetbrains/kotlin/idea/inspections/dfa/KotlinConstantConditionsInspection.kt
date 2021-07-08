@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
+import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
@@ -14,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
+import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -73,7 +76,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
         // TODO: suppress in assert() or require() conditions (optionally?)
-        // TODO: suppress in when conditions, like a && b; a && !b
         // TODO: suppress when condition is required for a smart cast
         var parent = expression.parent
         while (parent is KtParenthesizedExpression) {
@@ -88,6 +90,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             (parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
         ) {
             return true
+        }
+        if (value == ConstantValue.TRUE) {
+            if (isPairingConditionInWhen(expression)) return true
         }
         if (value == ConstantValue.ZERO) {
             if (expression.readWriteAccess(false).isWrite) {
@@ -135,6 +140,72 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
         return expression.isUsedAsStatement(context)
+    }
+
+    /**
+     * Returns true if expression is part of when condition expression that looks like
+     * ```
+     * when {
+     * a && b -> ...
+     * a && !b -> ...
+     * }
+     * ```
+     * In this case, !b could be reported as 'always true' but such warnings are annoying
+     */
+    private fun isPairingConditionInWhen(expression: KtExpression): Boolean {
+        val parent = expression.parent
+        if (parent is KtBinaryExpression && parent.operationToken == KtTokens.ANDAND) {
+            var topAnd: KtBinaryExpression = parent
+            while (true) {
+                val nextParent = topAnd.parent
+                if (nextParent is KtBinaryExpression && nextParent.operationToken == KtTokens.ANDAND) {
+                    topAnd = nextParent
+                } else break
+            }
+            val topAndParent = topAnd.parent
+            if (topAndParent is KtWhenConditionWithExpression) {
+                val whenExpression = (topAndParent.parent as? KtWhenEntry)?.parent as? KtWhenExpression
+                if (whenExpression != null && hasOppositeCondition(whenExpression, topAnd, expression)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun hasOppositeCondition(whenExpression: KtWhenExpression, topAnd: KtBinaryExpression, expression: KtExpression): Boolean {
+        for (entry in whenExpression.entries) {
+            for (condition in entry.conditions) {
+                if (condition is KtWhenConditionWithExpression) {
+                    val candidate = condition.expression
+                    if (candidate === topAnd) return false
+                    if (isOppositeCondition(candidate, topAnd, expression)) return true
+                }
+            }
+        }
+        return false
+    }
+
+    private tailrec fun isOppositeCondition(candidate: KtExpression?, template: KtBinaryExpression, expression: KtExpression): Boolean {
+        if (candidate !is KtBinaryExpression || candidate.operationToken !== KtTokens.ANDAND) return false
+        val left = candidate.left
+        val right = candidate.right
+        if (left == null || right == null) return false
+        val templateLeft = template.left
+        val templateRight = template.right
+        if (templateLeft == null || templateRight == null) return false
+        if (templateRight === expression) {
+            return areEquivalent(left, templateLeft) && areEquivalent(right.negate(), templateRight)
+        }
+        if (!areEquivalent(right, templateRight)) return false
+        if (templateLeft !is KtBinaryExpression || templateLeft.operationToken !== KtTokens.ANDAND) return false
+        return isOppositeCondition(left, templateLeft, expression)
+    }
+
+    private fun areEquivalent(e1: KtElement, e2: KtElement): Boolean {
+        return PsiEquivalenceUtil.areElementsEquivalent(e1, e2,
+                                                        {ref1, ref2 -> ref1.element.text.compareTo(ref2.element.text)},
+                                                        null, null, false)
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

@@ -5011,6 +5011,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/whenSubjectValue.kt");
         }
 
+        @TestMetadata("whenSuppressed.kt")
+        public void testWhenSuppressed() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenSuppressed.kt");
+        }
+
         @TestMetadata("whenUnboxing.kt")
         public void testWhenUnboxing() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whenUnboxing.kt");

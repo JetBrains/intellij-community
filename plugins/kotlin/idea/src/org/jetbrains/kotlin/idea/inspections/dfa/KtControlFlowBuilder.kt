@@ -49,7 +49,9 @@ import kotlin.collections.LinkedHashMap
 /*
 TODO: Reports to investigate:
 org.jetbrains.ide.BuiltInServerManagerImpl.Companion#isOnBuiltInWebServerByAuthority
-
+fleet.frontend.ast.intellij.NodeWalker#nodeExpanded
+trebuchet.util.BufferReader#readDouble
+com.android.tools.idea.compose.preview.ComposePreviewRepresentation#refresh
  */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
