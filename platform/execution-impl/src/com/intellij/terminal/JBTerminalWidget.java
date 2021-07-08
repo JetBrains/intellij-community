@@ -303,6 +303,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
+  public void notifyRenamed() {
+    if (myListener != null) {
+      myListener.onTerminalRenamed();
+    }
+  }
+
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
