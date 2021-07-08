@@ -7,18 +7,18 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,7 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -37,10 +39,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
@@ -111,7 +116,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   protected abstract ProcessHandler createProcessHandler(T process);
 
   /**
-   * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead 
+   * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
@@ -130,6 +135,22 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                   @Nullable VirtualFile currentWorkingDirectory,
                                                   boolean deferSessionStartUntilUiShown) {
     return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), deferSessionStartUntilUiShown);
+  }
+
+  public void initToolWindow(@NotNull ToolWindowEx toolWindow, Supplier<Content> newTabRunnable) {
+
+    toolWindow.setTabActions(
+      new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
+                          IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          newTabRunnable.get();
+        }
+      },
+      new TerminalNewPredefinedSessionAction()
+    );
+    toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
+    toolWindow.setToHideOnEmptyContent(true);
   }
 
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
