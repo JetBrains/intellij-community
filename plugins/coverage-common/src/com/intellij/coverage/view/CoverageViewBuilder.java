@@ -31,7 +31,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
                       final JList list,
                       final Model model,
                       final AbstractTreeStructure treeStructure, final JBTable table) {
-    super(project, list, model, treeStructure, AlphaComparator.INSTANCE, false);
+    super(project, list, model, treeStructure, AlphaComparator.INSTANCE, true);
     myTable = table;
     ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.report.building")) {
       @Override

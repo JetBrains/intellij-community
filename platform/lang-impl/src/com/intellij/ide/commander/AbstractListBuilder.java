@@ -63,15 +63,19 @@ public abstract class AbstractListBuilder implements Disposable {
     myModel = model;
     myTreeStructure = treeStructure;
     myComparator = comparator;
+    myShownRoot = (AbstractTreeNode) getShownRoot(showRoot);
+  }
 
+  private Object getShownRoot(boolean showRoot) {
     final Object rootElement = myTreeStructure.getRootElement();
-    final Object[] rootChildren = myTreeStructure.getChildElements(rootElement);
+    if (showRoot) return rootElement;
 
-    if (!showRoot && rootChildren.length == 1 && shouldEnterSingleTopLevelElement(rootChildren[0])) {
-      myShownRoot = (AbstractTreeNode)rootChildren[0];
+    final Object[] rootChildren = myTreeStructure.getChildElements(rootElement);
+    if (rootChildren.length == 1 && shouldEnterSingleTopLevelElement(rootChildren[0])) {
+      return rootChildren[0];
     }
     else {
-      myShownRoot = (AbstractTreeNode)rootElement;
+      return rootElement;
     }
   }
 
