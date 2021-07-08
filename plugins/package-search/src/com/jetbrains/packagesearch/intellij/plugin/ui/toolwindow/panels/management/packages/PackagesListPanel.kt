@@ -25,6 +25,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
@@ -61,7 +62,7 @@ internal class PackagesListPanel(
     operationFactory: PackageSearchOperationFactory,
     operationExecutor: OperationExecutor,
     onItemSelectionChanged: SelectedPackageModelListener
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), Displayable<PackagesListPanel.ViewModel> {
 
     val selectedPackage = MutableStateFlow<SelectedPackageModel<*>?>(null)
 
@@ -201,33 +202,6 @@ internal class PackagesListPanel(
         headerPanel.updateAndRepaint()
     }
 
-    fun display(
-        headerData: PackagesHeaderData,
-        packageModels: List<PackageModel>,
-        targetModules: TargetModules,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        filterOptions: FilterOptions,
-        tableData: List<PackagesTableItem<*>>,
-        traceInfo: TraceInfo
-    ) {
-        onlyStableCheckBox.isSelected = filterOptions.onlyStable
-        onlyKotlinMpCheckBox.isSelected = filterOptions.onlyKotlinMultiplatform
-
-        updateListEmptyState(targetModules)
-
-        display(
-            headerData = headerData,
-            packageModels = packageModels,
-            onlyStable = filterOptions.onlyStable,
-            targetModules = targetModules,
-            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-            allKnownRepositories = allKnownRepositories,
-            tableData = tableData,
-            traceInfo = traceInfo
-        )
-    }
-
     private fun updateListEmptyState(targetModules: TargetModules) {
         when {
             isSearching() -> {
@@ -250,27 +224,47 @@ internal class PackagesListPanel(
 
     private fun isSearching() = !searchTextField.text.isNullOrBlank()
 
-    private fun display(
-        headerData: PackagesHeaderData,
-        packageModels: List<PackageModel>,
-        onlyStable: Boolean,
-        targetModules: TargetModules,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        tableData: List<PackagesTableItem<*>>,
-        traceInfo: TraceInfo
-    ) {
-        logDebug(traceInfo, "PackagesListPanel#display()") { "PackagesListPanel#display() — Got new data" }
+    internal data class ViewModel(
+        val headerData: PackagesHeaderData,
+        val packageModels: List<PackageModel>,
+        val filterOptions: FilterOptions,
+        val targetModules: TargetModules,
+        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val allKnownRepositories: KnownRepositories.All,
+        val tableData: List<PackagesTableItem<*>>,
+        val traceInfo: TraceInfo
+    )
+
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+
+        onlyStableCheckBox.isSelected = viewModel.filterOptions.onlyStable
+        onlyKotlinMpCheckBox.isSelected = viewModel.filterOptions.onlyKotlinMultiplatform
+
+        updateListEmptyState(viewModel.targetModules)
+
+        logDebug(viewModel.traceInfo, "PackagesListPanel#display()") { "PackagesListPanel#display() — Got new data" }
 
         headerPanel.display(
-            headerData.labelText,
-            headerData.count,
-            headerData.availableUpdatesCount,
-            headerData.updateOperations
+            HeaderPanel.ViewModel(
+                viewModel.headerData.labelText,
+                viewModel.headerData.count,
+                viewModel.headerData.availableUpdatesCount,
+                viewModel.headerData.updateOperations
+            )
         )
 
-        packagesTable.display(tableData, onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories, traceInfo)
-        tableScrollPane.isVisible = packageModels.isNotEmpty()
+        packagesTable.display(
+            PackagesTable.ViewModel(
+                viewModel.tableData,
+                viewModel.filterOptions.onlyStable,
+                viewModel.targetModules,
+                viewModel.knownRepositoriesInTargetModules,
+                viewModel.allKnownRepositories,
+                viewModel.traceInfo
+            )
+        )
+
+        tableScrollPane.isVisible = viewModel.packageModels.isNotEmpty()
         listPanel.updateAndRepaint()
 
         packagesTable.updateAndRepaint()

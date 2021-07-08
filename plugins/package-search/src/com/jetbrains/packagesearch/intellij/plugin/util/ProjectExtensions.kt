@@ -63,9 +63,6 @@ internal val Project.moduleChangesSignalFlow
 internal fun List<ModuleTransformer>.flatMapTransform(project: Project, nativeModule: List<Module>) =
     flatMap { it.transformModules(project, nativeModule) }
 
-internal fun List<ModuleTransformer>.flatMapTransform(project: Project, nativeModule: Array<Module>) =
-    flatMap { it.transformModules(project, nativeModule) }
-
 internal val Project.lifecycleScope: CoroutineScope
     get() = service<ProjectLifecycleHolderService>()
 
