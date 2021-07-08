@@ -33,7 +33,7 @@ public class SmartEnterAction extends EditorAction {
   private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      if (editor.isOneLineMode() && editor instanceof EditorWindow) {
+      if (editor instanceof EditorWindow && editor.isOneLineMode()) {
         // One-line injection: prefer for host instead
         return false;
       }
