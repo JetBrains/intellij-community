@@ -257,6 +257,9 @@ final class ActionUpdater {
         this::applyPresentationChanges, ModalityState.any(), disposableParent.getDisposed());
     });
 
+    if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
+      cancelAllUpdates("fast-track requested by '" + myPlace + "'");
+    }
     if (myToolbarAction) {
       cancelOnUserActivity(promise, disposableParent);
     }
