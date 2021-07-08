@@ -14,14 +14,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
@@ -38,7 +35,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -51,9 +47,9 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
-
 final class InspectionPopupManager {
+
+  private final ExtensionPointName<InspectionPopupExtension> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupExtension");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 
@@ -304,31 +300,42 @@ final class InspectionPopupManager {
     else {
       java.util.List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
 
+      String msg = null;
+
+      for (InspectionPopupExtension extension: EP_NAME.getExtensionList()) {
+        msg = extension.getMessage(myEditor);
+        if (msg != null) {
+          break;
+        }
+      }
+
       if (levels.size() == 1) {
         String prefix = EditorBundle.message("iw.highlight.label") + " ";
+        GridBag constrains = gc.next();
         // do not create lower panel for code with me guests with no write access
-        JLabel noAccessLabel = createNoAccessLabel(levels.get(0), prefix);
-        if (noAccessLabel == null) {
+        if (msg == null) {
           DropDownLink<?> link = createDropDownLink(levels.get(0), controller, prefix);
           levelLinks.add(link);
-          panel.add(link, gc.next());
+          panel.add(link, constrains);
         }
         else {
-          panel.add(noAccessLabel, gc.next());
+          JLabel noAccessLabel = createNoChangeLabel(levels.get(0), prefix, msg);
+          panel.add(noAccessLabel, constrains);
         }
       }
       else if (levels.size() > 1) {
         for(LanguageHighlightLevel level: levels) {
           String prefix = level.getLangID() + ": ";
+          GridBag constrains = gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc;
           // do not create lower panel for code with me guests with no write access
-          JLabel noAccessLabel = createNoAccessLabel(level, prefix);
-          if (noAccessLabel == null) {
+          if (msg == null) {
             DropDownLink<?> link = createDropDownLink(level, controller, prefix);
             levelLinks.add(link);
-            panel.add(link, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
+            panel.add(link, constrains);
           }
           else {
-            panel.add(noAccessLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
+            JLabel noAccessLabel = createNoChangeLabel(level, prefix, msg);
+            panel.add(noAccessLabel, constrains);
           }
         }
       }
@@ -373,27 +380,11 @@ final class InspectionPopupManager {
     };
   }
 
-  @Nullable
-  private JLabel createNoAccessLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix) {
-    if (isOnGuest()) {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-      Project project = myEditor.getProject();
-      if (project == null) {
-        return null;
-      }
-      if (file != null) {
-        String tooltip = WritingAccessProvider.EP.computeSafeIfAny(project, provider -> {
-          if (provider.isPotentiallyWritable(file)) return null;
-          return EditorBundle.message("message.level.change.not.permitted", provider.getReadOnlyMessage());
-        });
-        if (tooltip != null) {
-          JLabel label = new JLabel(prefix + level.getLevel());
-          new HelpTooltip().setDescription(tooltip).installOn(label);
-          return label;
-        }
-      }
-    }
-    return null;
+  @NotNull
+  private static JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
+    JLabel label = new JLabel(prefix + level.getLevel());
+    new HelpTooltip().setDescription(msg).installOn(label);
+    return label;
   }
 
 

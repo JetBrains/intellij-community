@@ -433,5 +433,7 @@
     <extensionPoint name="actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>
 
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
+
+    <extensionPoint name="inspectionPopupExtension" interface="com.intellij.openapi.editor.impl.InspectionPopupExtension" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
