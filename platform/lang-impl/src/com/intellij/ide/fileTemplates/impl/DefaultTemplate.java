@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
@@ -116,8 +115,7 @@ public class DefaultTemplate {
         PluginDescriptor descriptor = langBundle != null ? langBundle.pluginDescriptor : null;
         ClassLoader langBundleLoader = descriptor != null ? descriptor.getPluginClassLoader() : null;
         if (langBundleLoader != null && myDescriptionPath != null) {
-          InputStream stream =
-            langBundleLoader.getResourceAsStream(new File(FileTemplatesLoader.TEMPLATES_DIR, myDescriptionPath).getPath());
+          InputStream stream = langBundleLoader.getResourceAsStream(FileTemplatesLoader.TEMPLATES_DIR + "/" + myDescriptionPath);
           if (stream != null) {
             return ResourceUtil.loadText(stream);
           }
