@@ -30,6 +30,11 @@ public abstract class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTe
             runTest("testData/folding/noCollapse/class.kt");
         }
 
+        @TestMetadata("commentAndSingleLineFunction.kt")
+        public void testCommentAndSingleLineFunction() throws Exception {
+            runTest("testData/folding/noCollapse/commentAndSingleLineFunction.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("testData/folding/noCollapse/function.kt");
