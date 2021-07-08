@@ -213,7 +213,7 @@ final class PluginUpdateDialog extends DialogWrapper {
                 PluginManagerConfigurable.shutdownOrRestartApp();
               }
             }
-          }, ModalityState.any());
+          }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
         }
       }
 
