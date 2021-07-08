@@ -1,8 +1,15 @@
 UFile (package = ) [public final class SuperCallsKt {...]
     UClass (name = SuperCallsKt) [public final class SuperCallsKt {...}]
-        UField (name = anon) [@org.jetbrains.annotations.NotNull private static final var anon: A = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
+        UField (name = anon) [@org.jetbrains.annotations.NotNull private static final var anon: A = anonymous object : A("textForAnon") {...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+            UObjectLiteralExpression [anonymous object : A("textForAnon") {...}] = Undetermined
+                ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
+                UClass (name = null) [final class null : A {...}]
+                    UMethod (name = bar) [public final fun bar() : void {...}]
+                        UBlockExpression [{...}] = Undetermined
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UClass (name = InnerClass) [public final class InnerClass : A {...}]
+                        UMethod (name = InnerClass) [public fun InnerClass() = UastEmptyExpression]
         UMethod (name = getAnon) [public static final fun getAnon() : A = UastEmptyExpression]
         UMethod (name = cons) [public static final fun cons(@null a: A) : void {...}]
             UParameter (name = a) [@null var a: A]
