@@ -46,8 +46,8 @@ class IfCanBeSwitch {
     }
   }
 
-  void nullable(@Nullable String s) {
-    if ("a".equals((s))) {
+  void nullableStringWithDefault(@Nullable String s) {
+    <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> ("a".equals((s))) {
       System.out.println(1);
     } else if ("b".equals(s)) {
       System.out.println(2);
@@ -58,15 +58,13 @@ class IfCanBeSwitch {
     }
   }
 
-  void notNullSafe() {
-    String narf = null;
-    if ("foo".equals(narf)) {
-      // do this
-    } else if ("bar".equals(narf)){
-      // do that
-    }
-    else {
-      // do something else.
+  void nullableStringWithoutDefault(@Nullable String s) {
+    if ("a".equals((s))) {
+      System.out.println(1);
+    } else if ("b".equals(s)) {
+      System.out.println(2);
+    } else if ("c".equals(s)) {
+      System.out.println(3);
     }
   }
 
@@ -96,7 +94,7 @@ class IfCanBeSwitch {
     return num;
   }
   void ifWithGetterToSwitch() {
-    if (getNum() == Num.ONE) {
+    <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (getNum() == Num.ONE) {
       System.out.println(1);
     } else if (getNum() == Num.TWO) {
       System.out.println(2);
