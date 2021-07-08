@@ -19,7 +19,7 @@ public final class CollectionFactory {
   }
 
   @Contract(value = "_, -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap(HashingStrategy<? super K> strategy) {
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap(@NotNull HashingStrategy<? super K> strategy) {
     return new ConcurrentWeakHashMap<>(strategy);
   }
 
@@ -87,7 +87,7 @@ public final class CollectionFactory {
   }
 
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeyWeakValueMap(HashingStrategy<? super K> strategy) {
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeyWeakValueMap(@NotNull HashingStrategy<? super K> strategy) {
     return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), strategy);
   }
 
@@ -100,7 +100,7 @@ public final class CollectionFactory {
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap(int initialCapacity,
                                                                             float loadFactor,
                                                                             int concurrencyLevel,
-                                                                            HashingStrategy<? super K> hashingStrategy) {
+                                                                            @NotNull HashingStrategy<? super K> hashingStrategy) {
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
@@ -126,7 +126,7 @@ public final class CollectionFactory {
     return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
   }
 
-  public static @NotNull Set<CharSequence> createCharSequenceSet(List<? extends CharSequence> items) {
+  public static @NotNull Set<CharSequence> createCharSequenceSet(@NotNull List<? extends CharSequence> items) {
     return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCharSequenceStrategy(true));
   }
 

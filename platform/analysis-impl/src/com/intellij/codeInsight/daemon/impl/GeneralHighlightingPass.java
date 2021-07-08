@@ -344,7 +344,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         catch (Exception e) {
           if (!failed) {
-            LOG.error("In file: " + myFile.getViewProvider().getVirtualFile(), e);
+            LOG.error("In file: " + getFile().getViewProvider().getVirtualFile(), e);
           }
           failed = true;
         }
