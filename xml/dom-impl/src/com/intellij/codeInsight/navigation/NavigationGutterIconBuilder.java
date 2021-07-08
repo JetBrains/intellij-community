@@ -290,6 +290,9 @@ public class NavigationGutterIconBuilder<T> {
   protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
                                                                   @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
                                                                   boolean empty) {
+    if (myLazy) {
+      return createLazyGutterIconRenderer(pointers, renderer, empty);
+    }
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
