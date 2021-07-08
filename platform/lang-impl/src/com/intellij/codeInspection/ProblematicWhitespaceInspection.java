@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -72,6 +73,13 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       super.visitFile(file);
       final FileType fileType = file.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
+        return;
+      }
+      if (file != file.getViewProvider().getAllFiles().get(0)) {
+        return;
+      }
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+      if (injectedLanguageManager.isInjectedFragment(file)) {
         return;
       }
       final CodeStyleSettings settings = CodeStyle.getSettings(file);
