@@ -9,16 +9,28 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableVal
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptorCompat
+import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
+import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 
-class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : VariableDescriptor {
+class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescriptor {
     val stable: Boolean = calculateStable()
 
     private fun calculateStable(): Boolean {
         if (variable !is KtProperty || !variable.isVar) return true
+        if (!variable.isLocal) return false
         return getVariablesChangedInLambdas(variable.parent).contains(variable)
     }
 
@@ -49,14 +61,15 @@ class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : Variable
         return factory.varFactory.createVariableValue(this)
     }
 
-    override fun equals(other: Any?): Boolean = other is KtLocalVariableDescriptor && other.variable == variable
+    override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.variable == variable
 
     override fun hashCode(): Int = variable.hashCode()
 
     override fun toString(): String = variable.name ?: "<unknown>"
     
     companion object {
-        fun create(expr: KtExpression?): KtLocalVariableDescriptor? {
+        fun createVariable(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
+            val varFactory = factory.varFactory
             if (expr is KtSimpleNameExpression) {
                 val target = expr.mainReference.resolve()
                 if (target is KtCallableDeclaration) {
@@ -64,11 +77,37 @@ class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : Variable
                         target is KtProperty && target.isLocal ||
                         target is KtDestructuringDeclarationEntry
                     ) {
-                        return KtLocalVariableDescriptor(target)
+                        return varFactory.createVariableValue(KtVariableDescriptor(target))
                     }
+                    if (isTrackableProperty(target)) {
+                        val classOrObject = target.containingClassOrObject?.resolveToDescriptorIfAny()
+                        if (classOrObject != null) {
+                            val dfType = classOrObject.defaultType.toDfType(expr)
+                            val qualifier = varFactory.createVariableValue(KtThisDescriptor(classOrObject, dfType))
+                            return varFactory.createVariableValue(KtVariableDescriptor(target), qualifier)
+                        }
+                    }
+                }
+            } else if (expr is KtQualifiedExpression) {
+                val receiver = expr.receiverExpression
+                val qualifier = createVariable(factory, receiver)
+                if (qualifier == null) {
+                    return null
+                }
+                val target = expr.selectorExpression?.mainReference?.resolve()
+                if (target is KtCallableDeclaration && isTrackableProperty(target)) {
+                    return varFactory.createVariableValue(KtVariableDescriptor(target), qualifier)
                 }
             }
             return null
         }
+
+        private fun isTrackableProperty(target: PsiElement?) =
+            target is KtParameter && target.ownerFunction is KtPrimaryConstructor ||
+            target is KtProperty && !target.hasDelegate() && target.getter == null && target.setter == null &&
+                    !target.hasModifier(KtTokens.ABSTRACT_KEYWORD) &&
+                    target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null &&
+                    target.containingClass()?.isInterface() != true &&
+                    !target.isExtensionDeclaration()
     }
 }

@@ -4541,6 +4541,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/abstractProperty.kt");
+        }
+
         @TestMetadata("alwaysZero.kt")
         public void testAlwaysZero() throws Exception {
             runTest("testData/inspectionsLocal/dfa/alwaysZero.kt");
@@ -4696,6 +4701,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicIsNullable.kt");
         }
 
+        @TestMetadata("basicProperty.kt")
+        public void testBasicProperty() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicProperty.kt");
+        }
+
         @TestMetadata("basicRange.kt")
         public void testBasicRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
@@ -4766,6 +4776,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/collectionFor.kt");
         }
 
+        @TestMetadata("constructorParameter.kt")
+        public void testConstructorParameter() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/constructorParameter.kt");
+        }
+
         @TestMetadata("continueLoop.kt")
         public void testContinueLoop() throws Exception {
             runTest("testData/inspectionsLocal/dfa/continueLoop.kt");
@@ -4831,6 +4846,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/nullAsNullable.kt");
         }
 
+        @TestMetadata("nullableArraySize.kt")
+        public void testNullableArraySize() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/nullableArraySize.kt");
+        }
+
         @TestMetadata("orRange.kt")
         public void testOrRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/orRange.kt");
@@ -4854,6 +4874,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("prefixIncrement.kt")
         public void testPrefixIncrement() throws Exception {
             runTest("testData/inspectionsLocal/dfa/prefixIncrement.kt");
+        }
+
+        @TestMetadata("qualifiedAssignment.kt")
+        public void testQualifiedAssignment() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/qualifiedAssignment.kt");
+        }
+
+        @TestMetadata("qualifiedCompoundAssignment.kt")
+        public void testQualifiedCompoundAssignment() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/qualifiedCompoundAssignment.kt");
+        }
+
+        @TestMetadata("qualifiedProperty.kt")
+        public void testQualifiedProperty() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/qualifiedProperty.kt");
         }
 
         @TestMetadata("returnExpression.kt")
@@ -4929,6 +4964,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unusedResult.kt")
         public void testUnusedResult() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unusedResult.kt");
+        }
+
+        @TestMetadata("voidType.kt")
+        public void testVoidType() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/voidType.kt");
+        }
+
+        @TestMetadata("volatileProperty.kt")
+        public void testVolatileProperty() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/volatileProperty.kt");
         }
 
         @TestMetadata("whenIn.kt")

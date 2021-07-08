@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -21,9 +22,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
@@ -68,6 +72,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
+        // TODO: suppress in assert() or require() conditions (optionally?)
+        // TODO: suppress in when conditions, like a && b; a && !b
+        // TODO: suppress when condition is required for a smart cast
         var parent = expression.parent
         while (parent is KtParenthesizedExpression) {
             parent = parent.parent
@@ -130,11 +137,15 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         return expression.isUsedAsStatement(context)
     }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = namedFunctionVisitor(fun(function) {
-        val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
-        val factory = DfaValueFactory(holder.project)
-        processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
-    })
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+        // Non-JVM is not supported now
+        if (holder.file.module?.platform?.isJvm() != true) return PsiElementVisitor.EMPTY_VISITOR
+        return namedFunctionVisitor(fun(function) {
+            val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
+            val factory = DfaValueFactory(holder.project)
+            processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
+        })
+    }
 
     private fun processDataflowAnalysis(
         factory: DfaValueFactory,
