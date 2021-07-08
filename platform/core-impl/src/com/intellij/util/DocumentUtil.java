@@ -44,13 +44,19 @@ public final class DocumentUtil {
       return;
     }
 
+    //noinspection deprecation
     document.setInBulkUpdate(executeInBulk);
     try {
       task.run();
     }
     finally {
+      //noinspection deprecation
       document.setInBulkUpdate(!executeInBulk);
     }
+  }
+
+  public static void executeInBulk(@NotNull Document document, @NotNull Runnable task) {
+    executeInBulk(document, true, task);
   }
 
   public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {

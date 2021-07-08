@@ -31,8 +31,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputMethodEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
 import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
@@ -115,7 +113,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNoExceptionDuringBulkModeDocumentUpdate() {
     initText("something");
     DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.setText("something\telse")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.setText("something\telse")));
 
     checkResultByText("something\telse");
   }
@@ -125,7 +123,7 @@ public class EditorImplTest extends AbstractEditorTest {
              "a<selection>bcdef<caret></selection>g");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, true, ()-> {
+      DocumentUtil.executeInBulk(document, ()-> {
         // delete selected text
         document.deleteString(1, 6);
         document.deleteString(4, 9);
@@ -180,7 +178,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("long long line<caret>");
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-")));
 
     assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getVisualPosition());
   }
@@ -190,11 +188,11 @@ public class EditorImplTest extends AbstractEditorTest {
     DocumentEx document = (DocumentEx)getEditor().getDocument();
 
     runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "-"));
+      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-"));
 
       getEditor().getCaretModel().moveToOffset(9);
 
-      DocumentUtil.executeInBulk(document, true, ()-> document.replaceString(4, 5, "+"));
+      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "+"));
     });
 
 
@@ -241,7 +239,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("a<caret>bc");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, true, ()-> {
+      DocumentUtil.executeInBulk(document, ()-> {
         document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
       });
     });
@@ -319,7 +317,7 @@ public class EditorImplTest extends AbstractEditorTest {
         getEditor().getMarkupModel().addRangeHighlighter(null, 7, 8, 0, HighlighterTargetArea.EXACT_RANGE);
       }
     }, getTestRootDisposable());
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
+    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
     RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
@@ -406,7 +404,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testEditingNearInlayInBulkMode() {
     initText("a<caret>bc");
     addInlay(1);
-    runWriteCommand(()-> DocumentUtil.executeInBulk(getEditor().getDocument(), true,
+    runWriteCommand(()-> DocumentUtil.executeInBulk(getEditor().getDocument(),
                                                     ()-> getEditor().getDocument().insertString(1, " ")));
     checkResultByText("a<caret> bc");
     assertTrue(getEditor().getInlayModel().hasInlineElementAt(1));

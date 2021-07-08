@@ -18,7 +18,7 @@ internal data class Replacement(val range: TextRange, val str: CharSequence) {
 
     // assume replacements don't intersect strictly and are sorted by ranges
     internal fun List<Replacement>.replaceAllInBulk(document: Document) {
-      DocumentUtil.executeInBulk(document, true) {
+      DocumentUtil.executeInBulk(document) {
         this.replaceSafelyIn(document)
       }
     }

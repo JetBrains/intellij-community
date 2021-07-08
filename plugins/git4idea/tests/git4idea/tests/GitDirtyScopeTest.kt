@@ -122,7 +122,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
 
     writeAction {
-      DocumentUtil.executeInBulk(file.document, true) {
+      DocumentUtil.executeInBulk(file.document) {
         // do nothing
       }
     }

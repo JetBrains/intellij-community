@@ -747,7 +747,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     Document document = editor.getDocument();
     int documentTextLength = document.getTextLength();
     if (documentTextLength > 0) {
-      DocumentUtil.executeInBulk(document, true, () -> document.deleteString(0, documentTextLength));
+      DocumentUtil.executeInBulk(document, () -> document.deleteString(0, documentTextLength));
     }
     synchronized (LOCK) {
       clearHyperlinkAndFoldings();

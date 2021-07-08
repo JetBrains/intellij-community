@@ -59,7 +59,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
         if (document != null) {
-          DocumentUtil.executeInBulk(document, true, converter);
+          DocumentUtil.executeInBulk(document, converter);
         }
         return postFormatProcessorHelper.getResultTextRange();
       }
