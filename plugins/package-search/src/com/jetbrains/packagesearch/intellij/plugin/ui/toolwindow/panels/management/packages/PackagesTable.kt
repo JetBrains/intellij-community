@@ -87,7 +87,7 @@ internal class PackagesTable(
 
     private val autosizingColumnsIndices: List<Int>
 
-    private var latestTargetModules: TargetModules = TargetModules.None
+    private var targetModules: TargetModules = TargetModules.None
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
     private var allKnownRepositories = KnownRepositories.All.EMPTY
 
@@ -103,6 +103,22 @@ internal class PackagesTable(
             selectedPackage = null
         }
     }
+
+    val hasInstalledItems: Boolean
+        get() = tableModel.items.any { it is PackagesTableItem.InstalledPackage }
+
+    val firstPackageIndex: Int
+        get() = tableModel.items.indexOfFirst { it is PackagesTableItem.InstalledPackage }
+
+    var selectedIndex: Int
+        get() = selectedRow
+        set(value) {
+            if (tableModel.items.isNotEmpty() && (0 until tableModel.items.count()).contains(value)) {
+                setRowSelectionInterval(value, value)
+            } else {
+                clearSelection()
+            }
+        }
 
     init {
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
@@ -233,6 +249,7 @@ internal class PackagesTable(
     ) {
         this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
         this.allKnownRepositories = allKnownRepositories
+        this.targetModules = targetModules
 
         logDebug(traceInfo, "PackagesTable#displayData()") { "Displaying ${displayItems.size} item(s)" }
 
@@ -241,60 +258,37 @@ internal class PackagesTable(
         // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
         versionColumn.updateData(onlyStable, targetModules)
         actionsColumn.updateData(onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
-        latestTargetModules = targetModules
 
+        val previouslySelectedIdentifier = selectedPackage?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
         tableModel.items = displayItems
 
-        if (displayItems.isEmpty()) {
-            clearSelection()
+        if (displayItems.isEmpty() || previouslySelectedIdentifier == null) {
             selectionModel.addListSelectionListener(listSelectionListener)
-
+            onItemSelectionChanged(null)
             return
         }
 
         autosizeColumnsAt(autosizingColumnsIndices)
 
-        if (selectedPackage == null) {
-            selectionModel.addListSelectionListener(listSelectionListener)
-            return
-        }
-
         var indexToSelect: Int? = null
 
         // TODO factor out with a lambda
         for ((index, item) in displayItems.withIndex()) {
-            if (item.packageModel.identifier == selectedPackage?.packageModel?.identifier) {
+            if (item.packageModel.identifier == previouslySelectedIdentifier) {
                 logDebug(traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
                 indexToSelect = index
             }
         }
 
+        selectionModel.addListSelectionListener(listSelectionListener)
         if (indexToSelect != null) {
             selectedIndex = indexToSelect
         } else {
             logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
-            clearSelection()
         }
-        selectionModel.addListSelectionListener(listSelectionListener)
         updateAndRepaint()
     }
-
-    val hasInstalledItems: Boolean
-        get() = tableModel.items.any { it is PackagesTableItem.InstalledPackage }
-
-    val firstPackageIndex: Int
-        get() = tableModel.items.indexOfFirst { it is PackagesTableItem.InstalledPackage }
-
-    var selectedIndex: Int
-        get() = selectedRow
-        set(value) {
-            if (tableModel.items.isNotEmpty() && (0 until tableModel.items.count()).contains(value)) {
-                setRowSelectionInterval(value, value)
-            } else {
-                clearSelection()
-            }
-        }
 
     override fun performCopy(dataContext: DataContext) {
         getSelectedTableItem()?.performCopy(dataContext)
@@ -313,7 +307,7 @@ internal class PackagesTable(
 
     private fun updatePackageScope(packageModel: PackageModel, newScope: PackageScope) {
         if (packageModel is PackageModel.Installed) {
-            val operations = operationFactory.createChangePackageScopeOperations(packageModel, newScope, latestTargetModules, repoToInstall = null)
+            val operations = operationFactory.createChangePackageScopeOperations(packageModel, newScope, targetModules, repoToInstall = null)
 
             logDebug("PackagesTable#updatePackageScope()") {
                 "The user has selected a new scope for ${packageModel.identifier}: '$newScope'. This resulted in ${operations.size} operation(s)."
@@ -349,7 +343,7 @@ internal class PackagesTable(
                     operationFactory.createChangePackageVersionOperations(
                         packageModel = packageModel,
                         newVersion = newVersion,
-                        targetModules = latestTargetModules,
+                        targetModules = targetModules,
                         repoToInstall = repoToInstall
                     )
                 }
@@ -387,7 +381,7 @@ internal class PackagesTable(
         packageModel = packageModel,
         selectedVersion = (tableModel.columns[2] as VersionColumn).valueOf(this).selectedVersion,
         selectedScope = (tableModel.columns[1] as ScopeColumn).valueOf(this).selectedScope,
-        mixedBuildSystemTargets = latestTargetModules.isMixedBuildSystems
+        mixedBuildSystemTargets = targetModules.isMixedBuildSystems
     )
 
     private fun applyColumnSizes(tW: Int, columns: List<TableColumn>, weights: List<Float>) {
