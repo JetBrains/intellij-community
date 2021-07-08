@@ -124,7 +124,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     for (module in existingModules) {
       module.putUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY, null)
     }
-    rootModels = existingModules.map { delegate.getModifiableRootModel(it) }.toList()
+    rootModels = existingModules.map { getModifiableRootModel(it) }.toList()
     //moduleModel.prepareForCommit();
 
     for (model in rootModels) {
