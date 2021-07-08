@@ -108,6 +108,7 @@ internal object LessonExecutorUtil {
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+      .setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
       .setPointerSize(Dimension(16, 8))
       .setHideOnAction(false)
       .setHideOnClickOutside(false)

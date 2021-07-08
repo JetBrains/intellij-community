@@ -157,16 +157,23 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String, duplicateMessage: Boolean = true) {
+  fun TaskContext.gotItStep(position: Balloon.Position,
+                            width: Int,
+                            @Nls text: String,
+                            cornerToPointerDistance: Int = -1,
+                            duplicateMessage: Boolean = true) {
     val gotIt = CompletableFuture<Boolean>()
-    text(text, LearningBalloonConfig(position, width, duplicateMessage) { gotIt.complete(true) })
+    text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+      gotIt.complete(true)
+    })
     addStep(gotIt)
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT,
                                   GitLessonsBundle.message("git.window.closed.warning",
-                                                           action("CheckinProject"), strong(VcsBundle.message("commit.dialog.configurable"))),
+                                                           action("CheckinProject"),
+                                                           strong(VcsBundle.message("commit.dialog.configurable"))),
                                   restoreTaskWhenResolved)
   }
 
