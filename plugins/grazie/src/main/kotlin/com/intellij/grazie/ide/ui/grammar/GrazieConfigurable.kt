@@ -6,6 +6,7 @@ import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.ConfigurableBase
 
@@ -19,6 +20,8 @@ internal class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, Grazie
   override fun createUi(): GrazieSettingsPanel = ui
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
-    return setOf(LanguageGrammarChecking.EP_NAME)
+    return setOf(LanguageGrammarChecking.EP_NAME,
+                 ExtensionPointName("com.intellij.grazie.textExtractor"),
+                 ExtensionPointName("com.intellij.grazie.textChecker"))
   }
 }
