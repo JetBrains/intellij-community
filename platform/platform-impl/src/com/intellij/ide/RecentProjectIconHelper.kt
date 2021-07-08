@@ -94,9 +94,24 @@ internal class RecentProjectIconHelper {
     @JvmStatic
     fun generateProjectIcon(path: @SystemIndependent String): Icon {
       val projectManager = RecentProjectsManagerBase.instanceEx
-      val name = projectManager.getDisplayName(path) ?: projectManager.getProjectName(path)
+      val displayName = projectManager.getDisplayName(path)
+      val name = when {
+        displayName == null -> projectManager.getProjectName(path)
+        displayName.contains(",") -> iconTextForCommaSeparatedName(displayName)
+        else -> displayName
+      }
       return AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
     }
+
+    // Examples:
+    // - "First, Second" => "FS"
+    // - "First Project, Second Project" => "FS"
+    private fun iconTextForCommaSeparatedName(name: String) =
+      name.split(",")
+        .take(2)
+        .map { word -> word.firstOrNull { !it.isWhitespace() } ?: "" }
+        .joinToString("")
+        .toUpperCase()
 
     private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
       val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
