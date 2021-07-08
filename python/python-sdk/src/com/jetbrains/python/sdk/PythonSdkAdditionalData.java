@@ -29,10 +29,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
   @NonNls private static final String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
   @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
+  @NonNls private static final String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
+  @NonNls private static final String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
+  private final VirtualFilePointerContainer myPathsToTransfer;
 
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedModulePath;
@@ -41,12 +44,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myFlavor = flavor;
     myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
     myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
+    myPathsToTransfer = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
   protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
     myFlavor = from.getFlavor();
     myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
     myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
+    myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
   }
 
@@ -66,6 +71,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myExcludedPaths.killAll();
     for (VirtualFile file : addedPaths) {
       myExcludedPaths.add(file);
+    }
+  }
+
+  public void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myPathsToTransfer.killAll();
+    for (VirtualFile file : addedPaths) {
+      myPathsToTransfer.add(file);
     }
   }
 
@@ -95,6 +107,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   public void save(@NotNull final Element rootElement) {
     savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
     savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
+    savePaths(rootElement, myPathsToTransfer, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER);
 
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
@@ -122,8 +135,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   protected void load(@Nullable Element element) {
-    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER),myAddedPaths);
-    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER),myExcludedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
       setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
     }
@@ -145,6 +159,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public Set<VirtualFile> getExcludedPathFiles() {
     return getPathsAsVirtualFiles(myExcludedPaths);
+  }
+
+  /**
+   * @see com.jetbrains.python.sdk.PyTransferredSdkRootsKt#getPathsToTransfer(Sdk)
+   */
+  public @NotNull Set<VirtualFile> getPathsToTransfer() {
+    return getPathsAsVirtualFiles(myPathsToTransfer);
   }
 
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {

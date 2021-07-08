@@ -401,9 +401,18 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
-    if (project != null) {
-      addSourceRoots(project, sdkRoots.second);
-      addSourceRoots(project, userAddedRoots.second);
+    final var pathsToTransfer = new HashSet<VirtualFile>();
+    pathsToTransfer.addAll(sdkRoots.second);
+    pathsToTransfer.addAll(userAddedRoots.second);
+
+    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+      if (project != null) {
+        PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+      }
+      PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
+      if (project != null) {
+        PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+      }
     }
   }
 
@@ -529,20 +538,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
 
     return false;
-  }
-
-  private static void addSourceRoots(@NotNull Project project, @NotNull List<VirtualFile> roots) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final VirtualFile baseDir = BasePySdkExtKt.getBaseDir(module);
-      if (baseDir == null) {
-        continue;
-      }
-      for (VirtualFile root : roots) {
-        if (VfsUtilCore.isAncestor(baseDir, root, true)) {
-          ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> PyUtil.addSourceRoot(module, root));
-        }
-      }
-    }
   }
 
   /**
