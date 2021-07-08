@@ -3,28 +3,20 @@ import org.jetbrains.annotations.Nullable;
 
 class NullUnsafe {
 
-  void annotationNullable(@Nullable String s) {
-    if ("a".equals((s))) {
+  void annotationNullable(@Nullable Object o) {
+    if (o instanceof String) {
       System.out.println(1);
-    } else if ("b".equals(s)) {
+    } else if (o instanceof Integer) {
       System.out.println(2);
-    } else if ("c".equals(s)) {
-      System.out.println(3);
-    } else {
-      System.out.println(4);
     }
   }
 
   void inferredNullable(int x) {
-    String s = x > 10 ? "Nullable" : null;
-    if ("a".equals((s))) {
+    Object o = x > 10 ? "Nullable" : null;
+    if (o instanceof String) {
       System.out.println(1);
-    } else if ("b".equals(s)) {
+    } else if (o instanceof Integer) {
       System.out.println(2);
-    } else if ("c".equals(s)) {
-      System.out.println(3);
-    } else {
-      System.out.println(4);
     }
   }
 

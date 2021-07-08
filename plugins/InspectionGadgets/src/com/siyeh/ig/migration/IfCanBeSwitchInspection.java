@@ -183,9 +183,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
       final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
-      if (!hasDefaultElse && !hasTotalPatternCheck(ifStatement, switchExpression)){
+      if (!hasDefaultElse && !hasTotalPatternCheck(ifStatement, switchExpression)) {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
+    }
+    if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression)){
       if (getNullability(switchExpression) != Nullability.NOT_NULL && findNullCheckedOperand(statementToReplace) == null) {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
@@ -510,7 +512,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
         Nullability nullability = getNullability(switchExpression);
-        if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
+        if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
           if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasTotalPatternCheck(ifStatement, switchExpression)) {
             nullability = Nullability.NOT_NULL;
           }
