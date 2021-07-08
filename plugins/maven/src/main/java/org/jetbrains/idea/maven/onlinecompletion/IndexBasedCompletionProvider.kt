@@ -29,15 +29,15 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
 
   private fun search(consumer: Consumer<RepositoryArtifactData>, mavenId: MavenId) {
     for (groupId in myIndex.groupIds) {
-      if (mavenId.groupId != null && !mavenId.groupId!!.isEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
+      if (groupId == null) continue;
+      if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
         continue
       }
       for (artifactId in myIndex.getArtifactIds(groupId)) {
-        if (mavenId.artifactId != null &&
-            !mavenId.artifactId!!.isEmpty() &&
-            !nonExactMatches(artifactId, mavenId.artifactId!!)) {
+        if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
           continue
         }
+        if (artifactId == null) continue;
         val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
         consumer.accept(info)
       }
