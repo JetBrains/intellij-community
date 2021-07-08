@@ -2664,6 +2664,14 @@
                      language="kotlin"
                      key="floating.point.literal.precision.inspection.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceMapIndexedWithListGeneratorInspection"
+                     groupPath="Kotlin"
+                     groupName="Style issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.mapIndexed.with.list.generator.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>
