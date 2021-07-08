@@ -291,7 +291,7 @@ final class NST {
             && id.getIcon().getIconWidth() > 0
             && id.getIcon().getIconHeight() > 0
         ) {
-          id.darkIcon = ReadAction.compute(() -> IconLoader.getDarkIcon(id.getIcon(), true));
+          id.darkIcon = ReadAction.nonBlocking(() -> IconLoader.getDarkIcon(id.getIcon(), true)).executeSynchronously();
         }
 
         if (withImages && id.darkIcon != null) {
