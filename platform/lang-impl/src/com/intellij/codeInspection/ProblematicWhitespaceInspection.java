@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,23 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       settings.setLeadingWhitespaceShown(true);
       settings.setWhitespacesShown(!settings.isWhitespacesShown());
       editor.getComponent().repaint();
+    }
+  }
+
+  private static class ReformatFileFix implements LocalQuickFix {
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return LangBundle.message("problematic.whitespace.reformat.quickfix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement file = descriptor.getPsiElement();
+      if (!(file instanceof PsiFile)) {
+        return;
+      }
+      CodeStyleManager.getInstance(project).reformat(file);
     }
   }
 
@@ -150,10 +168,11 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
                                  ? LangBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
                                  : LangBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
       if (myIsOnTheFly) {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ShowWhitespaceFix());
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new ReformatFileFix(), new ShowWhitespaceFix());
       }
       else {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReformatFileFix());
       }
       return true;
     }
