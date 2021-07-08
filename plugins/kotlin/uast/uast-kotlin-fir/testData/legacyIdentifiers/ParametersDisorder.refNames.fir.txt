@@ -60,6 +60,7 @@ Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExp
 Float -> USimpleNameReferenceExpression (identifier = Float) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression
+Parent -> USimpleNameReferenceExpression (identifier = Parent) from KtObjectLiteralExpression
 Parent -> USimpleNameReferenceExpression (identifier = Parent) from KtNameReferenceExpression
 b -> USimpleNameReferenceExpression (identifier = b) from KtNameReferenceExpression
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression

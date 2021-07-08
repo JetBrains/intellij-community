@@ -64,7 +64,10 @@ UFile (package = )
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = objectLiteral)
             UBlockExpression
-                [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                UObjectLiteralExpression
+                    ULiteralExpression (value = 1)
+                    ULiteralExpression (value = "foo")
+                    UClass (name = null)
     UClass (name = A)
         UMethod (name = A)
         UMethod (name = with2Receivers)

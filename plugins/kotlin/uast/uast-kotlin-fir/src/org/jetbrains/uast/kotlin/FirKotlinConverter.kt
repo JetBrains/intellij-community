@@ -416,6 +416,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtSuperExpression -> expr<USuperExpression>(build(::KotlinUSuperExpression))
                 is KtCallableReferenceExpression -> expr<UCallableReferenceExpression>(build(::KotlinUCallableReferenceExpression))
                 is KtClassLiteralExpression -> expr<UClassLiteralExpression>(build(::KotlinUClassLiteralExpression))
+                is KtObjectLiteralExpression -> expr<UObjectLiteralExpression>(build(::KotlinUObjectLiteralExpression))
                 is KtDotQualifiedExpression -> expr<UQualifiedReferenceExpression>(build(::KotlinUQualifiedReferenceExpression))
                 is KtSafeQualifiedExpression -> expr<UQualifiedReferenceExpression>(build(::KotlinUSafeQualifiedExpression))
                 is KtSimpleNameExpression -> expr<USimpleNameReferenceExpression>(build(::FirKotlinUSimpleReferenceExpression))

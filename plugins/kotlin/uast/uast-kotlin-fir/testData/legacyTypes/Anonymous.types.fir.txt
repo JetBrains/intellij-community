@@ -4,9 +4,12 @@ UFile (package = ) [import java.io.Closeable...]
     UClass (name = AnonymousKt) [public final class AnonymousKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                UDeclarationsExpression [var runnable: <ErrorType> = anonymous object : Runnable { override fun run() {} }]
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = anonymous object : Runnable { override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : Runnable { override fun run() {} }] : PsiType:Runnable
+                            UClass (name = null) [final class null : java.lang.Runnable {...}]
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] : PsiType:Unit
                 UQualifiedReferenceExpression [runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] : PsiType:Object
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
@@ -16,14 +19,27 @@ UFile (package = ) [import java.io.Closeable...]
                 UQualifiedReferenceExpression [runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = runnable2) [runnable2] : PsiType:Runnable
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                    ULocalVariable (name = closeableRunnable) [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                UDeclarationsExpression [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                    ULocalVariable (name = runnableIs) [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                UDeclarationsExpression [var closeableRunnable: <ErrorType> = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
+                    ULocalVariable (name = closeableRunnable) [var closeableRunnable: <ErrorType> = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] : PsiType:Runnable
+                            UClass (name = null) [final class null : java.lang.Runnable, java.io.Closeable {...}]
+                                UMethod (name = close) [public fun close() : void {...}]
+                                    UBlockExpression [{...}] : PsiType:Unit
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] : PsiType:Unit
+                UDeclarationsExpression [var runnableIs: <ErrorType> = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
+                    ULocalVariable (name = runnableIs) [var runnableIs: <ErrorType> = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] : PsiType:InputStream
+                            UClass (name = null) [final class null : java.io.InputStream, java.lang.Runnable {...}]
+                                UMethod (name = read) [public fun read() : int {...}]
+                                    UBlockExpression [{...}]
+                                        UReturnExpression [return 0]
+                                            ULiteralExpression (value = 0) [0] : PsiType:int
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                UDeclarationsExpression [var runnable: <ErrorType> = anonymous null]
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = anonymous null]
+                        UObjectLiteralExpression [anonymous null] : PsiType:<ErrorType>
+                            UClass (name = <invalid object code>) [class <invalid object code> {...}]

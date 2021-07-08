@@ -64,7 +64,10 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
             UBlockExpression [{...}] : PsiType:Parent
-                [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)]
+                UObjectLiteralExpression [anonymous object : Parent(b = 1, a = "foo") { }] : PsiType:Parent
+                    ULiteralExpression (value = 1) [1] : PsiType:int
+                    ULiteralExpression (value = "foo") ["foo"] : PsiType:String
+                    UClass (name = null) [final class null : Parent {...}]
     UClass (name = A) [public final class A {...}]
         UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = with2Receivers) [public final fun with2Receivers(@null $this$with2Receivers: java.lang.String, @null a: int, @null b: float) : void {...}]

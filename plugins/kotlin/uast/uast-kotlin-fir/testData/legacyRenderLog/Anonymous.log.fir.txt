@@ -6,7 +6,10 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = runnable)
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                        UObjectLiteralExpression
+                            UClass (name = null)
+                                UMethod (name = run)
+                                    UBlockExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -18,12 +21,25 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = closeableRunnable)
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                        UObjectLiteralExpression
+                            UClass (name = null)
+                                UMethod (name = close)
+                                    UBlockExpression
+                                UMethod (name = run)
+                                    UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = runnableIs)
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                        UObjectLiteralExpression
+                            UClass (name = null)
+                                UMethod (name = read)
+                                    UBlockExpression
+                                        UReturnExpression
+                                            ULiteralExpression (value = 0)
+                                UMethod (name = run)
+                                    UBlockExpression
         UMethod (name = withErr)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = runnable)
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL)
+                        UObjectLiteralExpression
+                            UClass (name = <invalid object code>)

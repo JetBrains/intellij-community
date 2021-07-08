@@ -2,7 +2,11 @@ import java.lang.Runnable
 import java.lang.Thread
 
 public final class ObjectsKt {
-    @org.jetbrains.annotations.NotNull private static final var topRunnable: java.lang.Runnable = [!] UnknownKotlinExpression (OBJECT_LITERAL)
+    @org.jetbrains.annotations.NotNull private static final var topRunnable: java.lang.Runnable = anonymous object : Runnable {
+        override fun run() {
+            println("I'm running")
+        }
+    }
     public static final fun getTopRunnable() : java.lang.Runnable = UastEmptyExpression
     public static final fun main() : void {
         RunnableManager.[!] UnknownKotlinExpression (CALL_EXPRESSION)

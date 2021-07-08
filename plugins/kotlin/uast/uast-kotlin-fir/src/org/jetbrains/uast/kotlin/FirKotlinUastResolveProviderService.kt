@@ -35,6 +35,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         TODO("Not yet implemented")
     }
 
+    override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
+        TODO("Not yet implemented")
+    }
+
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
         val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
         // Skip _explicit_ return.
