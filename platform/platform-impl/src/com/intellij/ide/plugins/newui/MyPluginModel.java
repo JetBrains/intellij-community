@@ -1067,11 +1067,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return Collections.unmodifiableList(errors);
   }
 
-  private @NotNull Stream<Pair<@NotNull PluginId, @Nullable IdeaPluginDescriptor>> getRequiredPluginsById(@NotNull PluginId pluginId) {
-    return getRequiredPluginIds(pluginId)
+  private @NotNull Stream<Pair<@NotNull PluginId, @Nullable IdeaPluginDescriptorImpl>> getRequiredPluginsById(@NotNull PluginId pluginId) {
+    Set<PluginId> pluginIds = getRequiredPluginIds(pluginId);
+    if (pluginIds.isEmpty()) {
+      return Stream.of();
+    }
+
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    return pluginIds
       .stream()
       .map(requiredPluginId -> {
-        IdeaPluginDescriptor requiredDescriptor = PluginManagerCore.getPlugin(requiredPluginId);
+        IdeaPluginDescriptorImpl requiredDescriptor = pluginIdMap.get(requiredPluginId);
         return Pair.create(requiredPluginId, requiredDescriptor == null && PluginManagerCore.isModuleDependency(requiredPluginId) ?
                                              PluginManagerCore.findPluginByModuleDependency(requiredPluginId) :
                                              requiredDescriptor);

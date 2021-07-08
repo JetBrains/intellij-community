@@ -13,12 +13,14 @@ internal class CachingSemiGraph<Node>(private val nodes: Collection<Node>,
                                       private val pluginToDirectDependencies: Map<Node, List<Node>>) : InboundSemiGraph<Node> {
   override fun getNodes() = nodes
 
-  override fun getIn(n: Node): Iterator<Node> {
-    return (pluginToDirectDependencies.get(n) ?: return Collections.emptyIterator()).iterator()
+  override fun getIn(node: Node): Iterator<Node> {
+    return pluginToDirectDependencies[node]?.iterator()
+           ?: Collections.emptyIterator()
   }
 
-  fun getInStream(n: Node): Stream<Node> {
-    return (pluginToDirectDependencies.get(n) ?: return Stream.empty()).stream()
+  fun getInStream(node: Node): Stream<Node> {
+    return pluginToDirectDependencies[node]?.stream()
+           ?: Stream.empty()
   }
 }
 
@@ -137,9 +139,9 @@ inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                      pluginSet: PluginSet,
                                      processor: (IdeaPluginDescriptorImpl) -> Unit) {
   for (item in module.dependencies.modules) {
-    val dep = pluginSet.findEnabledModule(item.name)
-    if (dep != null) {
-      processor(dep)
+    val descriptor = pluginSet.findEnabledModule(item.name)
+    if (descriptor != null) {
+      processor(descriptor)
     }
   }
   for (item in module.dependencies.plugins) {
