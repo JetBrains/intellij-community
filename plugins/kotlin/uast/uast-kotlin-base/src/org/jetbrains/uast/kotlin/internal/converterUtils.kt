@@ -2,14 +2,17 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
+import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
 fun expressionTypes(requiredType: Class<out UElement>?) =
     requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
@@ -69,3 +72,14 @@ fun reportConvertFailure(psiMethod: PsiMethod): Nothing {
 
     throw report
 }
+
+fun createLocalFunctionDeclaration(function: KtFunction, parent: UElement?): UDeclarationsExpression {
+    val service = ServiceManager.getService(function.project, BaseKotlinUastResolveProviderService::class.java)
+    return KotlinUDeclarationsExpression(null, parent, service, function).apply {
+        val functionVariable = UastKotlinPsiVariable.create(service, function.name.orAnonymous(), function, this)
+        declarations = listOf(KotlinLocalFunctionUVariable(function, functionVariable, this))
+    }
+}
+
+fun createLocalFunctionLambdaExpression(function: KtFunction, parent: UElement?): ULambdaExpression =
+    KotlinLocalFunctionULambdaExpression(function, parent)

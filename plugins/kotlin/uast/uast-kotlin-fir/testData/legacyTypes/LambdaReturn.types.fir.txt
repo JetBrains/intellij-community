@@ -12,12 +12,36 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = lam3) [var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                         ULabeledExpression (label = lbd) [lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                             [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
-                UDeclarationsExpression [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)]
-                UDeclarationsExpression [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)]
+                UDeclarationsExpression [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                            UBlockExpression [{...}] : PsiType:Void
+                                UIfExpression [if (a < 5) return "5"] : PsiType:Unit
+                                    UBinaryExpression (operator = <) [a < 5] : PsiType:boolean
+                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                        ULiteralExpression (value = 5) [5] : PsiType:int
+                                    UReturnExpression [return "5"] : PsiType:Void
+                                        ULiteralExpression (value = "5") ["5"] : PsiType:String
+                                UIfExpression [if (a > 0) return "1" else return "2"] : PsiType:Void
+                                    UBinaryExpression (operator = >) [a > 0] : PsiType:boolean
+                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
+                                        ULiteralExpression (value = 0) [0] : PsiType:int
+                                    UReturnExpression [return "1"] : PsiType:Void
+                                        ULiteralExpression (value = "1") ["1"] : PsiType:String
+                                    UReturnExpression [return "2"] : PsiType:Void
+                                        ULiteralExpression (value = "2") ["2"] : PsiType:String
+                UDeclarationsExpression [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                            UBlockExpression [{...}]
+                                UReturnExpression [return "a" + a]
+                                    UBinaryExpression (operator = +) ["a" + a] : PsiType:String
+                                        ULiteralExpression (value = "a") ["a"] : PsiType:String
+                                        USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 UDeclarationsExpression [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                     ULocalVariable (name = x) [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
