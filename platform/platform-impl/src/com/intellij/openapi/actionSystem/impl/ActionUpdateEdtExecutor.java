@@ -4,12 +4,12 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,16 +38,15 @@ public final class ActionUpdateEdtExecutor {
     Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     Ref<T> result = Ref.create();
+    Ref<Throwable> error = Ref.create();
     Runnable runnable = () -> {
       try {
         if (indicator == null || !indicator.isCanceled()) {
           result.set(supplier.get());
         }
       }
-      catch (ProcessCanceledException ex) {
-        if (indicator != null && indicator.isRunning()) {
-          indicator.cancel();
-        }
+      catch (Throwable ex) {
+        error.set(ex);
       }
       finally {
         semaphore.up();
@@ -61,6 +60,7 @@ public final class ActionUpdateEdtExecutor {
     }
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
+    ExceptionUtil.rethrowAllAsUnchecked(error.get());
 
     // check cancellation one last time, to ensure the EDT action wasn't no-op due to cancellation
     ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
