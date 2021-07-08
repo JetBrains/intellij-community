@@ -184,14 +184,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       return;
     }
 
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());
-    if (myCanBeFinalCb != null) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-    }
-
-    if (myCanBeVarTypeCb != null) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCanBeVarTypeCb.isSelected();
-    }
+    saveLocalSettings(psiVariable);
 
     final Document document = myEditor.getDocument();
     LOG.assertTrue(psiVariable.isValid());
@@ -221,6 +214,29 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
       }
     });
+  }
+
+  private void saveLocalSettings(PsiVariable psiVariable) {
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());
+
+    boolean oldFinal = createFinals();
+    boolean oldVarType = IntroduceVariableBase.createVarType();
+
+    if (myCanBeFinalCb != null) {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+    }
+
+    if (myCanBeVarTypeCb != null) {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCanBeVarTypeCb.isSelected();
+    }
+
+    boolean newFinals = createFinals();
+    boolean newVarType = IntroduceVariableBase.createVarType();
+    IntroduceVariableUsagesCollector.settingsChanged.log(myProject,
+                                                         IntroduceVariableUsagesCollector.changed.with(newFinals != oldFinal || newVarType != oldVarType));
+    IntroduceVariableUsagesCollector.settingsOnPerform.log(myProject, 
+                                                           IntroduceVariableUsagesCollector.varType.with(newVarType), 
+                                                           IntroduceVariableUsagesCollector.finalState.with(newFinals));
   }
 
   @Override
@@ -286,6 +302,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         }
       });
     }
+
+    IntroduceVariableUsagesCollector.settingsOnShow.log(myProject, 
+                                                        IntroduceVariableUsagesCollector.varType.with(IntroduceVariableBase.createVarType()), 
+                                                        IntroduceVariableUsagesCollector.finalState.with(createFinals()));
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(null);
