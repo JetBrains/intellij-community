@@ -7025,6 +7025,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertSealedClassToEnum/outOfRange.kt");
         }
 
+        @TestMetadata("sealedInterface.kt")
+        public void testSealedInterface() throws Exception {
+            runTest("testData/intentions/convertSealedClassToEnum/sealedInterface.kt");
+        }
+
         @TestMetadata("withNonObjectInheritors.kt")
         public void testWithNonObjectInheritors() throws Exception {
             runTest("testData/intentions/convertSealedClassToEnum/withNonObjectInheritors.kt");
