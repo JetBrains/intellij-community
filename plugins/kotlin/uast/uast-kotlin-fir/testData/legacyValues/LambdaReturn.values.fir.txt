@@ -12,16 +12,40 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = lam3) [var lam3: <ErrorType> = lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                         ULabeledExpression (label = lbd) [lbd@ [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
                             [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
-                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
-                UDeclarationsExpression [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
-                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
+                UDeclarationsExpression [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}] = Undetermined
+                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}] = Undetermined
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                            UBlockExpression [{...}] = Nothing
+                                UIfExpression [if (a < 5) return "5"] = Undetermined
+                                    UBinaryExpression (operator = <) [a < 5] = Undetermined
+                                        USimpleNameReferenceExpression (identifier = a) [a] = external a()
+                                        ULiteralExpression (value = 5) [5] = (long)5
+                                    UReturnExpression [return "5"] = Nothing
+                                        ULiteralExpression (value = "5") ["5"] = "5"
+                                UIfExpression [if (a > 0) return "1" else return "2"] = Nothing
+                                    UBinaryExpression (operator = >) [a > 0] = Undetermined
+                                        USimpleNameReferenceExpression (identifier = a) [a] = external a()
+                                        ULiteralExpression (value = 0) [0] = (long)0
+                                    UReturnExpression [return "1"] = Nothing
+                                        ULiteralExpression (value = "1") ["1"] = "1"
+                                    UReturnExpression [return "2"] = Nothing
+                                        ULiteralExpression (value = "2") ["2"] = "2"
+                UDeclarationsExpression [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}] = Undetermined
+                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}] = Undetermined
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                            UBlockExpression [{...}] = Nothing
+                                UReturnExpression [return "a" + a] = Nothing
+                                    UBinaryExpression (operator = +) ["a" + a] = Undetermined
+                                        ULiteralExpression (value = "a") ["a"] = "a"
+                                        USimpleNameReferenceExpression (identifier = a) [a] = external a()
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Nothing
                     ULocalVariable (name = x) [var x: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                         [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Nothing
                     ULocalVariable (name = y) [var y: <ErrorType> = [!] UnknownKotlinExpression (LAMBDA_EXPRESSION)]
                         [!] UnknownKotlinExpression (LAMBDA_EXPRESSION) [[!] UnknownKotlinExpression (LAMBDA_EXPRESSION)] = Undetermined

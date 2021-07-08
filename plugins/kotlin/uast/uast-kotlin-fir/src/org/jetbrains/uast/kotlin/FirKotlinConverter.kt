@@ -107,8 +107,11 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     original.ktOrigin.safeAs<KtTypeReference>()?.let { convertReceiverParameter(it) }
                 }
                 is KtProperty -> {
-                    // TODO: differentiate local
-                    convertNonLocalProperty(original, givenParent, requiredTypes).firstOrNull()
+                    if (original.isLocal) {
+                        convertPsiElement(original, givenParent, requiredTypes)
+                    } else {
+                        convertNonLocalProperty(original, givenParent, requiredTypes).firstOrNull()
+                    }
                 }
                 is KtPropertyAccessor -> {
                     el<UMethod> { FirKotlinUMethod.create(original, givenParent) }
@@ -119,8 +122,27 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     el<UMethod>(build(FirKotlinUMethod.Companion::create))
                 }
                 is KtFunction -> {
-                    // TODO: differentiate local
-                    el<UMethod> { FirKotlinUMethod.create(original, givenParent) }
+                    if (original.isLocal) {
+                        el<ULambdaExpression> {
+                            val parent = original.parent
+                            when {
+                                parent is KtLambdaExpression -> {
+                                    // TODO: commonize KotlinULambdaExpression
+                                    null
+                                }
+                                original.name.isNullOrEmpty() -> {
+                                    createLocalFunctionLambdaExpression(original, givenParent)
+                                }
+                                else -> {
+                                    val uDeclarationsExpression = createLocalFunctionDeclaration(original, givenParent)
+                                    val localFunctionVar = uDeclarationsExpression.declarations.single() as KotlinLocalFunctionUVariable
+                                    localFunctionVar.uastInitializer
+                                }
+                            }
+                        }
+                    } else {
+                        el<UMethod> { FirKotlinUMethod.create(original, givenParent) }
+                    }
                 }
 
                 // TODO: KtAnnotationEntry
@@ -411,6 +433,13 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                             declarations = listOf(FirKotlinUClass.create(lightClass, this))
                         }
                     } ?: UastEmptyExpression(givenParent)
+                }
+                is KtFunction -> {
+                    if (expression.name.isNullOrEmpty()) {
+                        expr<ULambdaExpression>(build(::createLocalFunctionLambdaExpression))
+                    } else {
+                        expr<UDeclarationsExpression>(build(::createLocalFunctionDeclaration))
+                    }
                 }
 
                 else -> expr<UExpression>(build(::UnknownKotlinExpression))

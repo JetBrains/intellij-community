@@ -59,7 +59,7 @@ foo -> UMethod (name = foo)
     y -> ULocalVariable (name = y)
     Unit -> USimpleNameReferenceExpression (identifier = Unit)
         listOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
-bar -> [!] UnknownKotlinExpression (FUN)
+bar -> UDeclarationsExpression
 lmbd -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
 Int -> USimpleNameReferenceExpression (identifier = Int)
 Int -> USimpleNameReferenceExpression (identifier = Int)
