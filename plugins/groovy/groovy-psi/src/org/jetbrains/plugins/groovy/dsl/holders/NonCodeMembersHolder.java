@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,7 +167,12 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   private static PsiType convertToPsiType(String type, PsiElement place) {
-    return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
+    try {
+      return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
+    } catch (IncorrectOperationException e) {
+      LOG.error(e.getMessage(), e);
+      return PsiType.NULL;
+    }
   }
 
   @Override
