@@ -123,11 +123,12 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       @Override
       public void applyPresentation(@Nullable Icon icon,
                                     @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
+        Icon resultIcon = AllIcons.Debugger.Db_evaluateNode;
         if (icon instanceof CompositeIcon) {
-          IconUtil.replaceInnerIcon(icon, AllIcons.Debugger.Db_watch, AllIcons.Debugger.EvaluateExpression);
+          IconUtil.replaceInnerIcon(icon, AllIcons.Debugger.Db_watch, resultIcon);
         }
         else {
-          icon = AllIcons.Debugger.EvaluateExpression;
+          icon = resultIcon;
         }
         super.applyPresentation(icon, valuePresentation, hasChildren);
       }
