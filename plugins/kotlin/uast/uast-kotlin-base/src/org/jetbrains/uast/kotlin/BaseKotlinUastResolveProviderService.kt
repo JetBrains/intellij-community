@@ -28,6 +28,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
 
+    fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
+
     fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression?
 
     fun getImplicitParameters(

@@ -14,8 +14,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.CommonSupertypes
@@ -26,6 +28,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastSpecialExpressionKind
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -44,6 +47,41 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
         return convertParentImpl(uElement, parent)
     }
+
+    override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
+        return ktCallElement.getResolvedCall(ktCallElement.analyze())?.let {
+            getArgumentExpressionByIndex(index, it, parent, this)
+        }
+    }
+
+    private fun getArgumentExpressionByIndex(
+        actualParamIndex: Int,
+        resolvedCall: ResolvedCall<out CallableDescriptor>,
+        parent: UElement,
+        baseResolveProviderService: BaseKotlinUastResolveProviderService
+    ): UExpression? {
+        val (parameter, resolvedArgument) = resolvedCall.valueArguments.entries.find { it.key.index == actualParamIndex } ?: return null
+        val arguments = resolvedArgument.arguments
+        if (arguments.isEmpty()) return null
+        if (arguments.size == 1) {
+            val argument = arguments.single()
+            val expression = argument.getArgumentExpression()
+            if (parameter.varargElementType != null && argument.getSpreadElement() == null) {
+                return createVarargsHolder(arguments, parent, baseResolveProviderService)
+            }
+            return baseKotlinConverter.convertOrEmpty(expression, parent)
+        }
+        return createVarargsHolder(arguments, parent, baseResolveProviderService)
+    }
+
+    private fun createVarargsHolder(
+        arguments: List<ValueArgument>,
+        parent: UElement?,
+        baseResolveProviderService: BaseKotlinUastResolveProviderService
+    ): KotlinUExpressionList =
+        KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent, baseResolveProviderService).apply {
+            expressions = arguments.map { baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), parent) }
+        }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
         val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
