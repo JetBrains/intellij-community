@@ -7,14 +7,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.SUPPRESS_INSPECTION_USED_EVENT_ID;
+
 public class SuppressInspectionIntention implements IntentionAction {
-  @NonNls private static final String FEATURE_ACTION_ID = "SuppressInspectionUsed";
   private final String myInspectionCode;
   private final String myMessage;
   private final int myOffset;
@@ -49,7 +48,7 @@ public class SuppressInspectionIntention implements IntentionAction {
     int lineStartOffset = DocumentUtil.getLineStartOffset(myOffset, document);
     CharSequence indent = DocumentUtil.getIndent(document, lineStartOffset);
     document.insertString(lineStartOffset, indent + "# shellcheck disable=" + myInspectionCode + "\n");
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+    SUPPRESS_INSPECTION_USED_EVENT_ID.log();
   }
 
   @Override

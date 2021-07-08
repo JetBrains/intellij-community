@@ -8,8 +8,9 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.GENERATE_ACTION_USED_EVENT_ID;
 
 public class ShGenerateForLoop extends ShBaseGenerateAction {
   @NotNull
@@ -26,6 +27,6 @@ public class ShGenerateForLoop extends ShBaseGenerateAction {
 
     moveAtNewLineIfNeeded(editor);
     templateManager.startTemplate(editor, template);
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+    GENERATE_ACTION_USED_EVENT_ID.log();
   }
 }

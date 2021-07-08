@@ -84,7 +84,7 @@ Adds support for working with shell script files
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
-    <statistics.counterUsagesCollector groupId="sh.shell.script" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>

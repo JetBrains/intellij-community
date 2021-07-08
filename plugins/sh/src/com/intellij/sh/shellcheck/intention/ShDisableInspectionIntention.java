@@ -12,15 +12,14 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.shellcheck.ShShellcheckInspection;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.DISABLE_INSPECTION_USED_EVENT_ID;
+
 public class ShDisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
-  @NonNls private static final String FEATURE_ACTION_ID = "DisableInspectionUsed";
   private final String myInspectionCode;
   private final String myMessage;
 
@@ -57,7 +56,7 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
       }
     });
     DaemonCodeAnalyzer.getInstance(project).restart(file);
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+    DISABLE_INSPECTION_USED_EVENT_ID.log();
   }
 
   @Override

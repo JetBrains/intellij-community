@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.sh.psi.ShGenericCommandDirective;
 import com.intellij.sh.psi.ShLiteral;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
@@ -33,10 +32,11 @@ import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.DOCUMENTATION_PROVIDER_USED_EVENT_ID;
+
 final class ShDocumentationProvider implements DocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
   private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
-  @NonNls private static final String FEATURE_ACTION_ID = "DocumentationProviderUsed";
 
   private static final NullableLazyValue<String> myManExecutable = new AtomicNullableLazyValue<>() {
     @Nullable
@@ -57,7 +57,7 @@ final class ShDocumentationProvider implements DocumentationProvider {
   public String generateDoc(PsiElement o, PsiElement originalElement) {
     if (!wordWithDocumentation(o)) return null;
 
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+    DOCUMENTATION_PROVIDER_USED_EVENT_ID.log();
     return wrapIntoHtml(fetchInfo(o.getText()));
   }
 
