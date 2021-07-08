@@ -11,9 +11,10 @@ UFile (package = org.jetbrains.uast.kotlin)
                                 UDeclarationsExpression
                                     ULocalVariable (name = b)
                                         ULiteralExpression (value = 1)
-                                UBinaryExpression (operator = +)
-                                    USimpleNameReferenceExpression (identifier = a)
-                                    USimpleNameReferenceExpression (identifier = b)
+                                UReturnExpression
+                                    UBinaryExpression (operator = +)
+                                        USimpleNameReferenceExpression (identifier = a)
+                                        USimpleNameReferenceExpression (identifier = b)
                 UDeclarationsExpression
                     ULocalVariable (name = lam2)
                         ULambdaExpression
@@ -23,16 +24,17 @@ UFile (package = org.jetbrains.uast.kotlin)
                                 UDeclarationsExpression
                                     ULocalVariable (name = c)
                                         ULiteralExpression (value = 1)
-                                UIfExpression
-                                    UBinaryExpression (operator = >)
-                                        USimpleNameReferenceExpression (identifier = a)
-                                        ULiteralExpression (value = 0)
-                                    UBinaryExpression (operator = +)
-                                        USimpleNameReferenceExpression (identifier = a)
-                                        USimpleNameReferenceExpression (identifier = c)
-                                    UBinaryExpression (operator = -)
-                                        USimpleNameReferenceExpression (identifier = a)
-                                        USimpleNameReferenceExpression (identifier = c)
+                                UReturnExpression
+                                    UIfExpression
+                                        UBinaryExpression (operator = >)
+                                            USimpleNameReferenceExpression (identifier = a)
+                                            ULiteralExpression (value = 0)
+                                        UBinaryExpression (operator = +)
+                                            USimpleNameReferenceExpression (identifier = a)
+                                            USimpleNameReferenceExpression (identifier = c)
+                                        UBinaryExpression (operator = -)
+                                            USimpleNameReferenceExpression (identifier = a)
+                                            USimpleNameReferenceExpression (identifier = c)
                 UDeclarationsExpression
                     ULocalVariable (name = lam3)
                         ULabeledExpression (label = lbd)
@@ -90,4 +92,5 @@ UFile (package = org.jetbrains.uast.kotlin)
                     ULocalVariable (name = y)
                         ULambdaExpression
                             UBlockExpression
-                                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                UReturnExpression
+                                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
