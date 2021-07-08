@@ -86,6 +86,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -834,7 +835,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
       }.installOn(table);
 
-      builder.setAutoselectOnMouseMove(false).setCloseOnEnter(false);
+      builder.setAutoselectOnMouseMove(false).setCloseOnEnter(false).
+        registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> itemChoseCallback.run());
 
       Runnable updatePreviewRunnable = () -> {
         if (Disposer.isDisposed(popupRef.get())) return;
