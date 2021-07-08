@@ -30,6 +30,11 @@ internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(us
     return children.orEmpty().any { (it as GrazieRulesTreeNode).differsFromDefault() }
   }
 
+  internal fun findRuleNode(globalId: String): GrazieRulesTreeNode? {
+    if ((userObject as? Rule)?.globalId == globalId) return this
+    return children.orEmpty().asSequence().mapNotNull { (it as GrazieRulesTreeNode).findRuleNode(globalId) }.firstOrNull()
+  }
+
   fun resetMark(state: GrazieConfig.State): Boolean {
     val meta = userObject
     if (meta is Rule) {
