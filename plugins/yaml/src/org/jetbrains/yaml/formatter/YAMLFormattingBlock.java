@@ -88,7 +88,7 @@ class YAMLFormattingBlock extends AbstractBlock {
         res.addAll(YamlInjectedBlockFactory.substituteInjectedBlocks(
           context.mySettings,
           buildSubBlocks(context, subNode),
-          subNode, getWrap(), context.computeAlignment(subNode), context.computeNewChildIndent(subNode)
+          subNode, getWrap(), context.computeAlignment(subNode)
         ));
       }
       else {

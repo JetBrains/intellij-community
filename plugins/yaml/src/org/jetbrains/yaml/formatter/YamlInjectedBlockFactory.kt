@@ -13,18 +13,21 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.util.SmartList
+import com.intellij.util.castSafelyTo
 import com.intellij.util.text.escLBr
+import org.jetbrains.yaml.YAMLFileType
+import org.jetbrains.yaml.YAMLLanguage
 
 
-fun substituteInjectedBlocks(settings: CodeStyleSettings,
+internal fun substituteInjectedBlocks(settings: CodeStyleSettings,
                              rawSubBlocks: List<Block>,
                              injectionHost: ASTNode,
                              wrap: Wrap?,
-                             alignment: Alignment?,
-                             indent: Indent?): List<Block> {
+                             alignment: Alignment?): List<Block> {
   val injectedBlocks = SmartList<Block>().apply {
     val outerBLocks = rawSubBlocks.filter { (it as? ASTBlock)?.node is OuterLanguageElement }
-    YamlInjectedLanguageBlockBuilder(settings, outerBLocks).addInjectedBlocks(this, injectionHost, wrap, alignment, indent)
+    val fixedIndent = IndentImpl(Indent.Type.SPACES, false, settings.getIndentSize(YAMLFileType.YML), false, false)
+    YamlInjectedLanguageBlockBuilder(settings, outerBLocks).addInjectedBlocks(this, injectionHost, wrap, alignment, fixedIndent)
   }
   if (injectedBlocks.isEmpty()) return rawSubBlocks
   return injectedBlocks
@@ -37,6 +40,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
 
   lateinit var injectionHost: ASTNode
   lateinit var injectedFile: PsiFile
+  lateinit var injectionLanguage: Language
 
   override fun addInjectedBlocks(result: MutableList<in Block>,
                                  injectionHost: ASTNode,
@@ -73,8 +77,9 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
                                    offset: Int,
                                    range: TextRange,
                                    language: Language): Block {
+    this.injectionLanguage = language
     val trimmedRange = trimBlank(range, range.substring(node.text))
-    return YamlInjectedLanguageBlockWrapper(originalBlock, injectedToHost(trimmedRange), trimmedRange, outerBlocks, indent, language)
+    return YamlInjectedLanguageBlockWrapper(originalBlock, injectedToHost(trimmedRange), trimmedRange, outerBlocks, indent, YAMLLanguage.INSTANCE)
   }
 
   private fun trimBlank(range: TextRange, substring: String): TextRange {
@@ -106,12 +111,16 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
                                                         blockRangeInHost,
                                                         blockRange,
                                                         outerBlocksQueue.popWhile { blockRangeInHost.contains(it.textRange) },
-                                                        block.indent, language))
+                                                        replaceAbsoluteIndent(block),
+                                                        block.castSafelyTo<BlockEx>()?.language ?: injectionLanguage))
           }
         }
         result.addAll(outerBlocksQueue)
       }
     }
+
+    private fun replaceAbsoluteIndent(block: Block): Indent? = block.indent.castSafelyTo<IndentImpl>()?.takeIf { it.isAbsolute }
+      ?.run { IndentImpl(type, false, spaces, isRelativeToDirectParent, isEnforceIndentToChildren) } ?:block.indent
 
     override fun getSubBlocks(): List<Block> = myBlocks
 

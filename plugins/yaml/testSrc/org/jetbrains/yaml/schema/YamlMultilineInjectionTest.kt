@@ -286,9 +286,9 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       myyaml:
         #language=Java
         after: |
-            class B {
-                <caret>
-            }
+          class B {
+              <caret>
+          }
 
     """.trimIndent())
 
@@ -298,10 +298,10 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       myyaml:
         #language=Java
         after: |
-            class B {
-                
-                
-            }
+          class B {
+              
+              
+          }
             
     """.trimIndent())
   }
@@ -452,6 +452,54 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |      def: 1
       |      
       |  """.trimMargin())
+  }
+  
+  fun testMultilanguageReformat() {
+    myFixture.configureByText("test.yaml", """
+      myyaml:
+        #language=XML
+        xml: |
+              <xml>
+                        <tag>   </tag>
+              </xml>
+        #language=YAML
+        yaml: |
+          boo: 
+            baz:
+              bix: 1
+        #language=Java
+        after: |
+          class B {
+              void foo(){}
+          } 
+        #language=Properties
+        prop: |
+          prop.a = 1
+            prop.b = 4
+    """.trimIndent())
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
+    myFixture.checkResult("""
+      |myyaml:
+      |  #language=XML
+      |  xml: |
+      |    <xml>
+      |        <tag>   </tag>
+      |    </xml>
+      |  #language=YAML
+      |  yaml: |
+      |    boo:
+      |      baz:
+      |        bix: 1
+      |  #language=Java
+      |  after: |
+      |    class B {
+      |        void foo(){}
+      |    }
+      |  #language=Properties
+      |  prop: |
+      |    prop.a=1
+      |    prop.b=4
+""".trimMargin())
   }
 
   fun testBlockInjectionKeep() {
