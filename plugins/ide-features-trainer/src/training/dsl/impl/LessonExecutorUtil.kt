@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import training.dsl.LearningBalloonConfig
 import training.dsl.TaskContext
 import training.dsl.TaskRuntimeContext
@@ -17,14 +18,12 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LessonMessagePane
 import training.ui.MessageFactory
 import training.ui.UISettings
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
@@ -69,7 +68,7 @@ internal object LessonExecutorUtil {
                                  useAnimationCycle: Boolean) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
-    messagesPane.border = UISettings.instance.balloonAdditionalBorder
+    messagesPane.border = null
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
     messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
@@ -79,29 +78,37 @@ internal object LessonExecutorUtil {
     val balloonPanel = JPanel()
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    var height = preferredSize.height
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 6))
+    balloonPanel.border = UISettings.instance.balloonAdditionalBorder
+    val insets = UISettings.instance.balloonAdditionalBorder.borderInsets
+
+    var height = preferredSize.height + insets.top + insets.bottom
+    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + insets.left + insets.right + 6))
     balloonPanel.add(messagesPane)
+    messagesPane.alignmentX = Component.LEFT_ALIGNMENT
     val gotItCallBack = balloonConfig.gotItCallBack
     val gotItButton = if (gotItCallBack != null) JButton().also {
       balloonPanel.add(it)
+      it.alignmentX = Component.LEFT_ALIGNMENT
+      it.border = EmptyBorder(JBUI.scale(10), UISettings.instance.balloonIndent, JBUI.scale(2), 0)
+      it.background = Color(0, true)
+      it.putClientProperty("gotItButton", true)
+      it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
+      it.foreground = UISettings.instance.tooltipTextColor
       it.action = object : AbstractAction(UIBundle.message("got.it")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
         }
       }
-      it.isSelected = true
-      it.isFocusable = true
       height += it.preferredSize.height
     }
     else null
-    gotItButton?.isSelected = true
 
     balloonPanel.preferredSize = Dimension(width, height)
 
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+      .setPointerSize(Dimension(16, 8))
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
