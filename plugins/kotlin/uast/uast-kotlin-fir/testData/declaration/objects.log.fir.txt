@@ -4,7 +4,11 @@ UFile (package = )
     UClass (name = ObjectsKt)
         UField (name = topRunnable)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            [!] UnknownKotlinExpression (OBJECT_LITERAL)
+            UObjectLiteralExpression
+                UClass (name = null)
+                    UMethod (name = run)
+                        UBlockExpression
+                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = getTopRunnable)
         UMethod (name = main)
             UBlockExpression

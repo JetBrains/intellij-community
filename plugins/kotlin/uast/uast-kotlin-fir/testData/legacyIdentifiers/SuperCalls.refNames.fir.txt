@@ -18,8 +18,10 @@ foo(a) -> UQualifiedReferenceExpression from KtDotQualifiedExpression
 foo -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
 A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression
+A -> USimpleNameReferenceExpression (identifier = A) from KtObjectLiteralExpression
 A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression
 cons -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+A -> USimpleNameReferenceExpression (identifier = A) from KtObjectLiteralExpression
 A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression
 A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression
 A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression

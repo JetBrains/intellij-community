@@ -3,40 +3,42 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 class KotlinUObjectLiteralExpression(
     override val sourcePsi: KtObjectLiteralExpression,
     givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionEx, DelegatedMultiResolve, KotlinUElementWithType {
+) : KotlinAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpression, DelegatedMultiResolve, KotlinUElementWithType {
 
     override val declaration: UClass by lz {
         sourcePsi.objectDeclaration.toLightClass()
-            ?.let { getLanguagePlugin().convert<UClass>(it, this) }
+            ?.let { languagePlugin?.convertOpt(it, this) }
             ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
     }
 
-    override fun getExpressionType() = sourcePsi.objectDeclaration.toPsiType()
+    override fun getExpressionType() =
+        sourcePsi.objectDeclaration.toPsiType()
 
     private val superClassConstructorCall by lz {
         sourcePsi.objectDeclaration.superTypeListEntries.firstOrNull { it is KtSuperTypeCallEntry } as? KtSuperTypeCallEntry
     }
 
-    override val classReference: UReferenceExpression? by lz { superClassConstructorCall?.let { ObjectLiteralClassReference(it, this) } }
+    override val classReference: UReferenceExpression? by lz {
+        superClassConstructorCall?.let { ObjectLiteralClassReference(it, this) }
+    }
 
     override val valueArgumentCount: Int
         get() = superClassConstructorCall?.valueArguments?.size ?: 0
 
     override val valueArguments by lz {
         val psi = superClassConstructorCall ?: return@lz emptyList<UExpression>()
-        psi.valueArguments.map { KotlinConverter.convertOrEmpty(it.getArgumentExpression(), this) }
+        psi.valueArguments.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), this) }
     }
 
     override val typeArgumentCount: Int
@@ -44,29 +46,37 @@ class KotlinUObjectLiteralExpression(
 
     override val typeArguments by lz {
         val psi = superClassConstructorCall ?: return@lz emptyList<PsiType>()
-        psi.typeArguments.map { it.typeReference.toPsiType(this, boxed = true) }
+        psi.typeArguments.map { typeArgument ->
+            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this) } ?: UastErrorType
+        }
     }
 
-    override fun resolve() = superClassConstructorCall?.let { resolveToPsiMethod(it) }
+    override fun resolve() =
+        superClassConstructorCall?.let { baseResolveProviderService.resolveCall(it) }
 
     override fun getArgumentForParameter(i: Int): UExpression? =
-        superClassConstructorCall?.let { it.getResolvedCall(it.analyze()) }
-            ?.let { getArgumentExpressionByIndex(i, it, this, baseResolveProviderService) }
+        superClassConstructorCall?.let {
+            baseResolveProviderService.getArgumentForParameter(it, i, this)
+        }
 
     private class ObjectLiteralClassReference(
         override val sourcePsi: KtSuperTypeCallEntry,
         givenParent: UElement?
     ) : KotlinAbstractUElement(givenParent), USimpleNameReferenceExpression {
 
-        override val javaPsi: PsiElement? get() = null
-        override val psi: KtSuperTypeCallEntry get() = sourcePsi
+        override val javaPsi: PsiElement?
+            get() = null
 
-        override fun resolve() = resolveToPsiMethod(sourcePsi)?.containingClass
+        override val psi: KtSuperTypeCallEntry
+            get() = sourcePsi
+
+        override fun resolve() =
+            baseResolveProviderService.resolveCall(sourcePsi)?.containingClass
 
         override val uAnnotations: List<UAnnotation>
             get() = emptyList()
 
-        override val resolvedName: String?
+        override val resolvedName: String
             get() = identifier
 
         override val identifier: String

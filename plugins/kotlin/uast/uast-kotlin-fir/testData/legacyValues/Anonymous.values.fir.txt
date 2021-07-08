@@ -4,9 +4,12 @@ UFile (package = ) [import java.io.Closeable...]
     UClass (name = AnonymousKt) [public final class AnonymousKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
-                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                UDeclarationsExpression [var runnable: <ErrorType> = anonymous object : Runnable { override fun run() {} }] = Undetermined
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = anonymous object : Runnable { override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : Runnable { override fun run() {} }] = Undetermined
+                            UClass (name = null) [final class null : java.lang.Runnable {...}]
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] = Undetermined
                 UQualifiedReferenceExpression [runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] = (var runnable = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
@@ -16,14 +19,27 @@ UFile (package = ) [import java.io.Closeable...]
                 UQualifiedReferenceExpression [runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
-                    ULocalVariable (name = closeableRunnable) [var closeableRunnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
-                UDeclarationsExpression [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
-                    ULocalVariable (name = runnableIs) [var runnableIs: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                UDeclarationsExpression [var closeableRunnable: <ErrorType> = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
+                    ULocalVariable (name = closeableRunnable) [var closeableRunnable: <ErrorType> = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
+                            UClass (name = null) [final class null : java.lang.Runnable, java.io.Closeable {...}]
+                                UMethod (name = close) [public fun close() : void {...}]
+                                    UBlockExpression [{...}] = Undetermined
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] = Undetermined
+                UDeclarationsExpression [var runnableIs: <ErrorType> = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
+                    ULocalVariable (name = runnableIs) [var runnableIs: <ErrorType> = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
+                        UObjectLiteralExpression [anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
+                            UClass (name = null) [final class null : java.io.InputStream, java.lang.Runnable {...}]
+                                UMethod (name = read) [public fun read() : int {...}]
+                                    UBlockExpression [{...}] = Nothing
+                                        UReturnExpression [return 0] = Nothing
+                                            ULiteralExpression (value = 0) [0] = (long)0
+                                UMethod (name = run) [public fun run() : void {...}]
+                                    UBlockExpression [{...}] = Undetermined
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
-                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = [!] UnknownKotlinExpression (OBJECT_LITERAL)]
-                        [!] UnknownKotlinExpression (OBJECT_LITERAL) [[!] UnknownKotlinExpression (OBJECT_LITERAL)] = Undetermined
+                UDeclarationsExpression [var runnable: <ErrorType> = anonymous null] = Undetermined
+                    ULocalVariable (name = runnable) [var runnable: <ErrorType> = anonymous null]
+                        UObjectLiteralExpression [anonymous null] = Undetermined
+                            UClass (name = <invalid object code>) [class <invalid object code> {...}]

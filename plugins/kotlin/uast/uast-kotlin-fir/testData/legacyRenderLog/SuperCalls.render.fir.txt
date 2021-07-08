@@ -1,5 +1,11 @@
 public final class SuperCallsKt {
-    @org.jetbrains.annotations.NotNull private static final var anon: A = [!] UnknownKotlinExpression (OBJECT_LITERAL)
+    @org.jetbrains.annotations.NotNull private static final var anon: A = anonymous object : A("textForAnon") {
+        fun bar() {
+            cons(object : A("inner literal") { })
+        }
+
+        inner class InnerClass : A("inner class")
+    }
     public static final fun getAnon() : A = UastEmptyExpression
     public static final fun cons(@null a: A) : void {
     }

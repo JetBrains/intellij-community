@@ -19,6 +19,7 @@ runnable2 -> USimpleNameReferenceExpression (identifier = runnable2) from KtName
 run -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
 Closeable -> USimpleNameReferenceExpression (identifier = Closeable) from KtNameReferenceExpression
+InputStream -> USimpleNameReferenceExpression (identifier = InputStream) from KtObjectLiteralExpression
 InputStream -> USimpleNameReferenceExpression (identifier = InputStream) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
 Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression

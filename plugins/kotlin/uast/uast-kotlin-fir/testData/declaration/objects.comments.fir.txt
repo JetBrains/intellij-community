@@ -3,6 +3,10 @@ KotlinUFile(
     FirKotlinUClass(
         KotlinUField(
             UComment(// Single-line comment bound to top-level property)
+            KotlinUAnonymousClass(
+                FirKotlinUMethod(
+                )
+            )
         )
         FirKotlinUMethod(
             UComment(// Single-line comment bound to top-level property)
