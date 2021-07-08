@@ -2404,6 +2404,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private void resetMousePointer() {
+    UIUtil.setCursor(myEditorComponent, UIUtil.getTextCursor(getBackgroundColor()));
+  }
+
   private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
     if (e.getSource() == myGutterComponent) {
       myGutterComponent.validateMousePointer(e);
@@ -3434,6 +3438,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void beforeModalityStateChanged() {
     myScrollingModel.beforeModalityStateChanged();
+    myGutterComponent.resetMousePointer();
+    resetMousePointer();
   }
 
   private EditorDropHandler getDropHandler() {
