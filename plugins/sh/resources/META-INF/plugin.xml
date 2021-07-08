@@ -90,11 +90,13 @@ Adds support for working with shell script files
     <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.sh.ShExplainShellIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.shell.script"/>
   </extensions>
