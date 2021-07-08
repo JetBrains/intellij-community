@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.search.and
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAwareReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.isPotentiallyOperator
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
@@ -390,11 +391,8 @@ internal fun checkNewNameUsagesRetargeting(
     }
 }
 
-internal fun KtElement.isOperator(): Boolean {
-    val namedFunction = safeAs<KtNamedFunction>() ?: return false
-    if (namedFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) return true
-    // operator modifier could be omitted for overriding function
-    if (!namedFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+internal fun PsiElement?.isOperator(): Boolean {
+    if (!isPotentiallyOperator()) return false
 
     val resolveWithParents = resolveDeclarationWithParents(this as KtNamedFunction)
     return resolveWithParents.overriddenDescriptors.any {
