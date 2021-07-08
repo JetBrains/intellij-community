@@ -47,6 +47,8 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
 
   private void updateVisibility() {
     ModalityUiUtil.invokeLaterIfNeeded(() -> {
+      if (Disposer.isDisposed(this)) return;
+
       boolean hasCollectors = updateCollectors(myCrumbsShown);
       if (hasCollectors != isVisible()) {
         setVisible(hasCollectors);
