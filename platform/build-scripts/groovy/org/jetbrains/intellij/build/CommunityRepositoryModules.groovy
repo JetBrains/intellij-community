@@ -362,14 +362,13 @@ final class CommunityRepositoryModules {
       withProjectLibrary("emulator-proto")
 
       //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
-      // FIXME-ank: IDEA-273150 LinkageError: this cause loader constraint violation for classes from protobuf
-      // FIXME-ank: IDEA-273150 withProjectLibrary("aapt-proto")
-      // FIXME-ank: IDEA-273150 withProjectLibrary("aia-proto")
+      withProjectLibrary("aapt-proto")
+      withProjectLibrary("aia-proto")
       withProjectLibrary("baksmali")
       withProjectLibrary("dexlib2")
       withProjectLibrary("kotlin-gradle-plugin-model")
-      // FIXME-ank: IDEA-273150 withProjectLibrary("libam-instrumentation-data-proto")
-      // FIXME-ank: IDEA-273150 withProjectLibrary("studio-analytics-proto")
+      withProjectLibrary("libam-instrumentation-data-proto")
+      withProjectLibrary("studio-analytics-proto")
       withProjectLibrary("HdrHistogram")
       withProjectLibrary("zxing-core")
       withProjectLibrary("sqlite")
