@@ -35,7 +35,7 @@ public class ExcludedScopesPanel extends ExcludedFilesPanelBase {
     c.gridy = 0;
     c.fill = GridBagConstraints.HORIZONTAL;
     c.insets = JBUI.insetsBottom(5);
-    add(new JLabel("Do not format scope:"), c);
+    add(new JLabel(CodeStyleBundle.message("excluded.files.do.not.format.scope")), c);
     c.gridy ++;
     c.insets = JBUI.emptyInsets();
     add(toolbarPanel, c);
