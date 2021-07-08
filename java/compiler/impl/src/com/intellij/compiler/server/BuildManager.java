@@ -107,7 +107,8 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -980,6 +981,9 @@ public final class BuildManager implements Disposable {
                 messageHandler.handleCompileMessage(
                   sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort //NON-NLS
                 ).getCompileMessage());
+                // additional support for debugger auto-attach feature
+                //noinspection UseOfSystemOutOrSystemErr
+                System.out.println("Build: Listening for transport dt_socket at address " + debugPort.intValue()); //NON-NLS
               }
 
               while (!processHandler.waitFor()) {
