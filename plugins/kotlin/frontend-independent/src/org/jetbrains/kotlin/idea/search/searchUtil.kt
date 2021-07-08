@@ -145,11 +145,13 @@ fun PsiReference.isImportUsage(): Boolean =
 )
 fun PsiElement.getKotlinFqName(): FqName? = getKotlinFqNameOriginal()
 
-fun KtElement.isPotentiallyOperator(): Boolean {
+fun PsiElement?.isPotentiallyOperator(): Boolean {
     val namedFunction = safeAs<KtNamedFunction>() ?: return false
     if (namedFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) return true
     // operator modifier could be omitted for overriding function
     if (!namedFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+    val name = namedFunction.name ?: return false
+    if (!OperatorConventions.isConventionName(Name.identifier(name))) return false
 
     // TODO: it's fast PSI-based check, a proper check requires call to resolveDeclarationWithParents() that is not frontend-independent
     return true

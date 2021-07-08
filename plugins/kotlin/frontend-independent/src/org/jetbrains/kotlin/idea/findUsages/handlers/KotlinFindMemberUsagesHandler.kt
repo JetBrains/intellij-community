@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.idea.search.isPotentiallyOperator
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
@@ -262,10 +261,10 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (options.isUsages) {
                 val baseKotlinSearchOptions = createKotlinReferencesSearchOptions(options, forHighlight)
-                val kotlinSearchOptions = if (element.safeAs<KtElement>()?.isPotentiallyOperator() == false) {
-                    baseKotlinSearchOptions.copy(searchForOperatorConventions = false)
-                } else {
+                val kotlinSearchOptions = if (element.isPotentiallyOperator()) {
                     baseKotlinSearchOptions
+                } else {
+                    baseKotlinSearchOptions.copy(searchForOperatorConventions = false)
                 }
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
 
