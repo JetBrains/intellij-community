@@ -35,7 +35,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     return () -> {
       List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
       boolean addDefaultBrowser = isPopup();
-      boolean hasLocalBrowser = JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled");
+      boolean hasLocalBrowser = hasLocalBrowser();
       int offset = 0;
       if (addDefaultBrowser) offset++;
       if (hasLocalBrowser) offset++;
@@ -62,6 +62,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     };
   }
 
+  private static boolean hasLocalBrowser() {
+    return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled");
+  }
+
   public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserGroupAction() {
       super(true);
@@ -81,8 +85,9 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       boolean needShowOnHover = psiFile != null && WebBrowserXmlService.getInstance().isXmlLanguage(psiFile.getViewProvider().getBaseLanguage())
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
-      e.getPresentation().setVisible(needShowOnHover && !browserManager.getActiveBrowsers().isEmpty() &&
-                                     editor != null && !DiffUtil.isDiffEditor(editor));
+      e.getPresentation().setVisible(needShowOnHover &&
+                                     (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
+                                     && editor != null && !DiffUtil.isDiffEditor(editor));
     }
   }
 }
