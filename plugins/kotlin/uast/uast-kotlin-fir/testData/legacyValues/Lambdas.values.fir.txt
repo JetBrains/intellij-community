@@ -13,9 +13,11 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
-                    ULocalVariable (name = baz) [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
+                UDeclarationsExpression [var baz: <ErrorType> = fun () {...}] = Undetermined
+                    ULocalVariable (name = baz) [var baz: <ErrorType> = fun () {...}]
+                        ULambdaExpression [fun () {...}] = Undetermined
+                            UBlockExpression [{...}] = Undetermined
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
         UMethod (name = lambdaInPlaceCall) [public static final fun lambdaInPlaceCall() : void {...}]
             UBlockExpression [{...}] = Undetermined

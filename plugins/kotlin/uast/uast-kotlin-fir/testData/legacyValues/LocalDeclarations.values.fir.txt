@@ -5,11 +5,25 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                 UDeclarationsExpression [public static final class Local {...}] = Undetermined
                     UClass (name = Local) [public static final class Local {...}]
                         UMethod (name = Local) [public fun Local() = UastEmptyExpression]
-                [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
-                UDeclarationsExpression [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)] = Undetermined
-                    ULocalVariable (name = baz) [var baz: <ErrorType> = [!] UnknownKotlinExpression (FUN)]
-                        [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
-                [!] UnknownKotlinExpression (FUN) [[!] UnknownKotlinExpression (FUN)] = Undetermined
+                UDeclarationsExpression [var bar: <ErrorType> = fun () {...}] = Undetermined
+                    UVariable (name = bar) [var bar: <ErrorType> = fun () {...}]
+                        ULambdaExpression [fun () {...}] = Undetermined
+                            UBlockExpression [{...}] = Nothing
+                                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var baz: <ErrorType> = fun () {...}] = Undetermined
+                    ULocalVariable (name = baz) [var baz: <ErrorType> = fun () {...}]
+                        ULambdaExpression [fun () {...}] = Undetermined
+                            UBlockExpression [{...}] = Undetermined
+                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var someLocalFun: <ErrorType> = fun (@null var text: <ErrorType>) {...}] = Undetermined
+                    UVariable (name = someLocalFun) [var someLocalFun: <ErrorType> = fun (@null var text: <ErrorType>) {...}]
+                        ULambdaExpression [fun (@null var text: <ErrorType>) {...}] = Undetermined
+                            UParameter (name = text) [@null var text: <ErrorType>]
+                                UAnnotation (fqName = null) [@null]
+                            UBlockExpression [{...}] = Nothing
+                                UReturnExpression [return 42] = Undetermined
+                                    ULiteralExpression (value = 42) [42] = (long)42
                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
                     UBinaryExpression (operator = ==) [[!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
