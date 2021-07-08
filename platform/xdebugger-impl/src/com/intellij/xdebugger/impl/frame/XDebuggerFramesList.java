@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.actionSystem.*;
@@ -33,10 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
@@ -104,9 +102,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           return PsiManager.getInstance(myProject).findFile(file);
         }
       }
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return getFrameNavigatable(frame);
-      }
     }
     if (FRAMES_LIST.is(dataId)) {
       return this;
@@ -123,6 +118,19 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
       }
       return null;
+    }
+    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      if (frame != null) {
+        return List.<DataProvider>of(realDataId -> getSlowData(frame, realDataId));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return getFrameNavigatable(frame);
     }
     return null;
   }
