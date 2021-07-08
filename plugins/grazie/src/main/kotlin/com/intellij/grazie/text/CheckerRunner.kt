@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
-import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieDisableRuleQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
@@ -130,7 +130,7 @@ internal class CheckerRunner(val text: TextContent) {
     }
 
     result.add(GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline))
-    result.add(GrazieDisableRuleQuickFix(problem.rule.presentableName, problem.rule))
+    result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))
     return result.toTypedArray()
   }
 
