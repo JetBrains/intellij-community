@@ -172,7 +172,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
 
         for (section in sections) {
-            setOffset(clauses[KotlinCatchClauseDescriptor(section)]!!)
+            val offset = clauses[KotlinCatchClauseDescriptor(section)]
+            if (offset == null) continue
+            setOffset(offset)
             val catchBlock = section.catchBody
             processExpression(catchBlock)
             addInstruction(SimpleAssignmentInstruction(null, tempVar))
