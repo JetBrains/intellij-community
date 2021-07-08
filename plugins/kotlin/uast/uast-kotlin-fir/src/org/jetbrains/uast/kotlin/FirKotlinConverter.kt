@@ -21,7 +21,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUArrayAccessExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
-import org.jetbrains.uast.kotlin.expressions.FirKotlinUBlockExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUSimpleReferenceExpression
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
@@ -389,7 +388,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 is KtBlockExpression -> expr<UBlockExpression> {
                     // TODO: differentiate lambda
-                    FirKotlinUBlockExpression(expression, givenParent)
+                    KotlinUBlockExpression(expression, givenParent)
                 }
                 is KtReturnExpression -> expr<UReturnExpression>(build(::KotlinUReturnExpression))
                 is KtThrowExpression -> expr<UThrowExpression>(build(::KotlinUThrowExpression))

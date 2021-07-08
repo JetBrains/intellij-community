@@ -4,18 +4,24 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.getContainingUClass
 
 open class KotlinUBlockExpression(
     override val sourcePsi: KtBlockExpression,
     givenParent: UElement?
-) : KotlinAbstractUBlockExpression(sourcePsi, givenParent) {
+) : KotlinAbstractUExpression(givenParent), UBlockExpression, KotlinUElementWithType {
+    override val expressions by lz {
+        sourcePsi.statements.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this) }
+    }
+
     override fun convertParent(): UElement? {
         val directParent = super.convertParent()
         if (directParent is UnknownKotlinExpression && directParent.sourcePsi is KtAnonymousInitializer) {
             val containingUClass = directParent.getContainingUClass() ?: return directParent
             containingUClass.methods.find {
-                it is KotlinConstructorUMethod && it.isPrimary || it is KotlinSecondaryConstructorWithInitializersUMethod
+                it is BaseKotlinConstructorUMethod && it.isPrimary || it is BaseKotlinSecondaryConstructorWithInitializersUMethod
             }?.let {
                 return it.uastBody
             }
