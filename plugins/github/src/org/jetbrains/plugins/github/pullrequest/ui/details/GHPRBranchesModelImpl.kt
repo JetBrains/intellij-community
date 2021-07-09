@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -35,17 +34,12 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
   private fun registerVCSLogDataPackListener() {
     val project = localRepository.project
     VcsProjectLog.runWhenLogIsReady(project) {
-      val log = VcsProjectLog.getInstance(project)
-      val dataManager = log.dataManager ?: return@runWhenLogIsReady
-      ApplicationManager.getApplication()
-        .invokeLater({
-                       with(dataManager) {
-                         addDataPackChangeListener(dataPackListener)
-                         Disposer.register(parentDisposable, Disposable {
-                           removeDataPackChangeListener(dataPackListener)
-                         })
-                       }
-                     }, { Disposer.isDisposed(parentDisposable) })
+      if (!Disposer.isDisposed(parentDisposable)) {
+        it.dataManager.addDataPackChangeListener(dataPackListener)
+        Disposer.register(parentDisposable, Disposable {
+          it.dataManager.removeDataPackChangeListener(dataPackListener)
+        })
+      }
     }
   }
 
