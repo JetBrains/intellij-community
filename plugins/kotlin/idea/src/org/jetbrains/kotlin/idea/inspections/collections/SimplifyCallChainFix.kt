@@ -91,7 +91,7 @@ class SimplifyCallChainFix(
             callExpression?.moveFunctionLiteralOutsideParentheses()
         }
         if (secondCallTrailingComma != null && !firstCallHasArguments) {
-            val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs()
+            val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs<KtCallExpression>()
             call?.valueArgumentList?.arguments?.lastOrNull()?.add(factory.createComma())
         }
         if (conversion.addNotNullAssertion) {
