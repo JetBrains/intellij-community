@@ -98,7 +98,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
-    myFilterField = new TextFilterField(myTextFilterModel);
+    myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
@@ -770,7 +770,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private static class TextFilterField extends SearchTextField {
     @NotNull private final TextFilterModel myTextFilterModel;
 
-    TextFilterField(@NotNull TextFilterModel model) {
+    TextFilterField(@NotNull TextFilterModel model, @NotNull Disposable parentDisposable) {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
@@ -790,6 +790,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER))
         .setLocation(HelpTooltip.Alignment.BOTTOM)
         .installOn(getTextEditor());
+      Disposer.register(parentDisposable, this::hidePopup);
     }
 
     protected void applyFilter() {
