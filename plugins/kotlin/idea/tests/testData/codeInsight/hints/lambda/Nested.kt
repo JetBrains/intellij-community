@@ -5,8 +5,8 @@ val x = run hello@{
 
     run { // Two hints here
         when (true) {
-            true -> 1<# ^run #>
-            false -> 0<# ^run #>
+            true -> 1<# [^ [temp:///src/KotlinLambdasHintsProvider.kt:67]run] #>
+            false -> 0<# [^ [temp:///src/KotlinLambdasHintsProvider.kt:67]run] #>
         }
-    }<# ^hello #>
+    }<# [^ [temp:///src/KotlinLambdasHintsProvider.kt:34]hello] #>
 }

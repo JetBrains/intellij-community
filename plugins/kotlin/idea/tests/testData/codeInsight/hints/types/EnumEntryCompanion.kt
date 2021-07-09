@@ -4,4 +4,4 @@ enum class E {
     ENTRY;
     companion object {}
 }
-val test<# : E# > = E.Companion
+val test<# [:  E]# > = E.Companion

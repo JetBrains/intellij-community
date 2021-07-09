@@ -5,4 +5,4 @@ enum class E { ENTRY;
     }
 }
 
-val test<# : E# > = E.test()
+val test<# [:  E]# > = E.test()
