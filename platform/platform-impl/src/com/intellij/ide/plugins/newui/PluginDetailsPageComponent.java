@@ -553,18 +553,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myTagPanel.setTags(PluginManagerConfigurable.getTags(myPlugin));
 
     if (myMarketplace) {
-      assert myPlugin instanceof PluginNode;
-      PluginNode pluginNode = (PluginNode)myPlugin;
+      String rating = null;
+      String downloads = null;
+      String size = null;
+      if (myPlugin instanceof PluginNode) {
+        PluginNode pluginNode = (PluginNode)myPlugin;
+        rating = pluginNode.getPresentableRating();
+        downloads = pluginNode.getPresentableDownloads();
+        size = pluginNode.getPresentableSize();
+      }
 
-      String rating = pluginNode.getPresentableRating();
       myRating.setText(rating);
       myRating.setVisible(rating != null);
 
-      String downloads = pluginNode.getPresentableDownloads();
       myDownloads.setText(downloads);
       myDownloads.setVisible(downloads != null);
 
-      String size = pluginNode.getPresentableSize();
       mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
       mySize.setVisible(size != null);
     }
