@@ -254,7 +254,7 @@ public interface TestIndexingModeSupporter {
 
   class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
     public FullIndexSuite() {
-      super("Full index", "Full index: ", IndexingMode.DUMB_FULL_INDEX);
+      super("Full index", "Full index ", IndexingMode.DUMB_FULL_INDEX);
     }
 
     @Override
@@ -266,7 +266,7 @@ public interface TestIndexingModeSupporter {
   class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public RuntimeOnlyIndexSuite() {
-      super("RuntimeOnlyIndex", "Runtime only index: ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
+      super("RuntimeOnlyIndex", "Runtime only index ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
     }
 
     @Override
@@ -278,7 +278,7 @@ public interface TestIndexingModeSupporter {
   class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public EmptyIndexSuite() {
-      super("Empty index", "Empty index:", DUMB_EMPTY_INDEX);
+      super("Empty index", "Empty index ", DUMB_EMPTY_INDEX);
     }
 
     @Override
