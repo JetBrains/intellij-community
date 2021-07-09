@@ -4,6 +4,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.properties.PropertiesFoldingSettings;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -38,8 +39,9 @@ public class PropertiesContextFoldingTest extends BasePlatformTestCase {
     myFixture.configureByFile("MyClass.java");
     myFixture.configureByFile("i18n.properties");
 
-    String actual = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(true);
-    String expected = FileUtil.loadFile(new File(myFixture.getTestDataPath(), "i18n.after"));
+    String actual = StringUtil.convertLineSeparators(((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(true));
+    String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(myFixture.getTestDataPath(), "i18n.after")));
+
     assertEquals(expected, actual);
   }
 
