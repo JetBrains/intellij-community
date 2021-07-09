@@ -1178,6 +1178,26 @@
         <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)" description="&lt;code&gt;setClip&lt;/code&gt; is a dangerous method that can break rendering of Swing components. It ignores the current clipping region and allows painting outside of the component. This method can be used in some specific cases, one of them is to restore the previous clip. In other cases, you have to use &lt;code&gt;Graphics.clipRect&lt;/code&gt; or &lt;code&gt;Graphics2D.clip&lt;/code&gt;.">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="4" maxCount="4" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="4" maxCount="4" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="((java.awt.Graphics2D)$Instance$).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.clip=$Parameter$" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
         <constraint name="target" within="" contains="" />
       </replaceConfiguration>
