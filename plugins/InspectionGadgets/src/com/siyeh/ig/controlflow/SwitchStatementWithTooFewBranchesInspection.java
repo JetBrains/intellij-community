@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,31 +92,12 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     public Object @Nullable [] processSwitch(@NotNull PsiSwitchBlock block) {
       final PsiCodeBlock body = block.getBody();
       if (body == null) return null;
-      int branches = 0;
-      boolean defaultFound = false;
-      for (final PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)) {
-        if (child.isDefaultCase()) {
-          defaultFound = true;
-        }
-        else {
-          final PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
-          if (labelElementList == null) {
-            return null;
-          }
-          for (PsiCaseLabelElement element : labelElementList.getElements()) {
-            if (element instanceof PsiDefaultCaseLabelElement) {
-              defaultFound = true;
-            }
-            else {
-              branches++;
-            }
-          }
-          if (branches >= m_limit) {
-            return null;
-          }
-        }
+      final int branchCount = SwitchUtils.calculateBranchCount(block);
+      int notDefaultBranches = branchCount < 0 ? -branchCount - 1 : branchCount;
+      if (notDefaultBranches >= m_limit) {
+        return null;
       }
-      if (branches == 0 && !defaultFound) {
+      if (branchCount == 0) {
         // Empty switch is reported by another inspection
         return null;
       }
@@ -133,7 +115,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
           fixIsAvailable = false;
         }
       }
-      return new Object[]{Integer.valueOf(branches), block, fixIsAvailable};
+      return new Object[]{Integer.valueOf(notDefaultBranches), block, fixIsAvailable};
     }
   }
 
