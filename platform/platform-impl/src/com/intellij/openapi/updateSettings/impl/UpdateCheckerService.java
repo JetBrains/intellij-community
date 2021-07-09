@@ -181,6 +181,8 @@ final class UpdateCheckerService {
 
     if (previous == null || previous.getBaselineVersion() > current.getBaselineVersion()) return;  // a new install or a downgrade
 
+    if (ApplicationInfoEx.getInstanceEx().isMajorEAP()) return;
+
     int shownFor = PropertiesComponent.getInstance().getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
     if (shownFor == current.getBaselineVersion()) return;  // already shown for this release
 
