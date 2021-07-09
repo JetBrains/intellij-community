@@ -179,12 +179,50 @@ class PySdkPathsTest {
     checkRoots(sdk, module, listOf(moduleRoot), listOf(entryPath))
   }
 
-  private fun createModule(): Pair<Module, VirtualFile> {
+  @Test
+  fun sysPathEntryOutsideSdkAndModule1ButInsideModule2() {
+    val (module1, moduleRoot1) = createModule("m1")
+    val (module2, moduleRoot2) = createModule("m2")
+
+    val sdkDir = createVenvStructureInModule(moduleRoot1)
+
+    val entryPath1 = createSubdir(moduleRoot1)
+    val entryPath2 = createSubdir(moduleRoot2)
+
+    val sdk = PythonMockSdk.create(sdkDir.path).also {
+      module1.pythonSdk = it
+      module2.pythonSdk = it
+    }
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
+
+    mockPythonPluginDisposable()
+    updateSdkPaths(sdk)
+
+    checkRoots(sdk, module1, listOf(moduleRoot1, entryPath1, entryPath2), emptyList())
+    checkRoots(sdk, module2, listOf(moduleRoot2, entryPath1, entryPath2), emptyList())
+
+    val simpleSdk = PythonMockSdk.create().also {
+      removeTransferredRoots(module1, sdk)
+      module1.pythonSdk = it
+
+      removeTransferredRoots(module2, sdk)
+      module2.pythonSdk = it
+    }
+
+    updateSdkPaths(simpleSdk)
+
+    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
+
+    checkRoots(simpleSdk, module1, listOf(moduleRoot1), emptyList())
+    checkRoots(simpleSdk, module2, listOf(moduleRoot2), emptyList())
+  }
+
+  private fun createModule(name: String = "module"): Pair<Module, VirtualFile> {
     val moduleRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
       FileUtil.createTempDirectory("my", "project", false)
     )!!.also { deleteOnTearDown(it) }
 
-    val module = projectModel.createModule()
+    val module = projectModel.createModule(name)
     assertThat(PyUtil.getSourceRoots(module)).isEmpty()
 
     module.rootManager.modifiableModel.apply {
