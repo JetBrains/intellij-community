@@ -245,7 +245,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     if (diff == null) {
       delegate.trySubstitute(module, entry, id)
     } else {
-      val workspaceModuleCandidate = delegate.modifiableWorkspace!!.findModule(id) ?: return
+      val workspaceModuleCandidate = delegate.modifiableWorkspace?.findModule(id) ?: return
       val workspaceModule = moduleModelProxy.findModuleByName(workspaceModuleCandidate) ?: return
       val modifiableRootModel = getModifiableRootModel(module)
 
