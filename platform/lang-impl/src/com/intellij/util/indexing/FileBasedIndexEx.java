@@ -495,14 +495,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                    accessibleFileFilter.test(id) &&
                                    (restrictedIds == null || restrictedIds.contains(id));
-    Condition<? super K> keyChecker = __ -> {
-      ProgressManager.checkCanceled();
-      return true;
-    };
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
-        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, keyChecker, valueChecker, idChecker);
+        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
       }
       finally {
         IndexDebugProperties.DEBUG_INDEX_ID.remove();

@@ -100,7 +100,6 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex,
                                                               keys,
                                                               null,
-                                                              null,
                                                               null);
   }
 

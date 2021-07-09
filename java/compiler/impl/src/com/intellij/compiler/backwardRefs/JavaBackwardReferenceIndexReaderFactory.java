@@ -183,7 +183,6 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
         .collectInputIdsContainingAllKeys(myIndex.get(JavaCompilerIndices.BACK_USAGES),
                                           Collections.singletonList(ref),
                                           null,
-                                          null,
                                           null);
     }
 
