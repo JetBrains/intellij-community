@@ -68,7 +68,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
   }
 
-  static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
+  public static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();

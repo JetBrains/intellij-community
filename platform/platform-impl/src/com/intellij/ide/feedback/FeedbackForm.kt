@@ -2,12 +2,15 @@
 package com.intellij.ide.feedback
 
 import com.intellij.CommonBundle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.AboutDialog
+import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -32,6 +35,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
+import javax.swing.JComboBox
 import javax.swing.JComponent
 
 data class ZenDeskComboOption(val displayName: @Nls String, val id: String) {
@@ -58,23 +62,23 @@ class FeedbackForm(
   private var ratingComponent: RatingComponent? = null
   private var missingRatingTooltip: JComponent? = null
   private var topic: ZenDeskComboOption? = null
+  private lateinit var topicComboBox: JComboBox<ZenDeskComboOption?>
 
   init {
-    title = ApplicationBundle.message("feedback.form.title")
+    title = if (isEvaluation) ApplicationBundle.message("feedback.form.title") else ApplicationBundle.message("feedback.form.prompt")
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     return panel {
-      row {
-        label(if (isEvaluation) ApplicationBundle.message("feedback.form.evaluation.prompt") else ApplicationBundle.message("feedback.form.prompt")).also {
-          it.component.font = JBFont.h3().asBold()
-        }
-      }
       if (isEvaluation) {
         row {
+          label(ApplicationBundle.message("feedback.form.evaluation.prompt")).also {
+            it.component.font = JBFont.h1()
+          }
+        }
+        row {
           label(ApplicationBundle.message("feedback.form.comment")).also {
-            it.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             it.component.minimumSize = Dimension(it.component.preferredSize.width, it.component.minimumSize.height)
           }
         }
@@ -108,10 +112,24 @@ class FeedbackForm(
           label(ApplicationBundle.message("feedback.form.topic"))
         }
         row {
-          comboBox(CollectionComboBoxModel(topicOptions), { topic }, { topic = it})
-            .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.topic.required")) {
-              it.selectedItem == null
-            }
+          cell {
+            comboBox(CollectionComboBoxModel(topicOptions), { topic }, { topic = it})
+              .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.topic.required")) {
+                it.selectedItem == null
+              }
+              .also {
+                topicComboBox = it.component
+              }
+            HyperlinkLabel()()
+              .also {
+                it.component.setTextWithHyperlink(ApplicationBundle.message("feedback.form.issue"))
+                it.component.setIcon(AllIcons.General.BalloonInformation)
+                it.component.addHyperlinkListener {
+                  SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
+                }
+              }
+              .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
+          }
         }
       }
       row {
@@ -125,6 +143,7 @@ class FeedbackForm(
           }
           .also {
             it.component.emptyText.text = ApplicationBundle.message("feedback.form.details.emptyText")
+            it.component.emptyText.setFont(JBFont.regular())
             it.component.putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
                                            BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
 
@@ -149,7 +168,7 @@ class FeedbackForm(
       row {
         textField(::email, columns = 25)
           .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.required")) { it.text.isBlank() }
-
+          .withErrorOnApplyIf(ApplicationBundle.message("feedback.form.email.invalid")) { !it.text.matches(Regex(".+@.+\\..+")) }
       }
       row {
         checkBox(ApplicationBundle.message("feedback.form.need.support"), ::needSupport)
@@ -213,7 +232,9 @@ class FeedbackForm(
 
   override fun getCancelAction(): Action {
     return super.getCancelAction().apply {
-      putValue(Action.NAME, ApplicationBundle.message("feedback.form.cancel"))
+      if (isEvaluation) {
+        putValue(Action.NAME, ApplicationBundle.message("feedback.form.cancel"))
+      }
     }
   }
 
@@ -247,6 +268,8 @@ class FeedbackForm(
 
   override fun doCancelAction() {
     super.doCancelAction()
-    Notification("feedback.form", ApplicationBundle.message("feedback.form.share.later"), NotificationType.INFORMATION).notify(project)
+    if (isEvaluation) {
+      Notification("feedback.form", ApplicationBundle.message("feedback.form.share.later"), NotificationType.INFORMATION).notify(project)
+    }
   }
 }
