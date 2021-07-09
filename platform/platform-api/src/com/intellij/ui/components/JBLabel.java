@@ -354,6 +354,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     return this;
   }
 
+  public boolean isAllowAutoWrapping() {
+    return myAllowAutoWrapping;
+  }
+
   private void updateTextAlignment() {
     if (myEditorPane == null) return;
 
