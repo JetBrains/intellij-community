@@ -46,11 +46,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.LinkedHashMap
 
-/*
-TODO: Reports to investigate:
-org.jetbrains.ide.BuiltInServerManagerImpl.Companion#isOnBuiltInWebServerByAuthority
-fleet.frontend.ast.intellij.NodeWalker#nodeExpanded
- */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
