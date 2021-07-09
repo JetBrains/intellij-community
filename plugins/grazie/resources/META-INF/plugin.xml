@@ -50,7 +50,7 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.counterUsagesCollector groupId="grazie.count" version="4"/>
+    <statistics.counterUsagesCollector groupId="grazie.count" version="5"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
