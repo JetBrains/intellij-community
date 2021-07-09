@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.to.anonymous.object")
@@ -155,20 +156,30 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
                     .toMap()
             } else {
                 if (lambdaDescriptor == null) return emptyMap()
-                val functionParameterTypes = functionDescriptor.valueParameters.map { it.type.constructor }
-                val functionReturnType = functionDescriptor.returnType?.constructor
+                val functionParameterTypes = functionDescriptor.valueParameters.map { it.type }
+                val functionReturnType = functionDescriptor.returnType
                 val lambdaParameterTypes = lambdaDescriptor.valueParameters.map { it.type }
                 val lambdaReturnType = lambdaDescriptor.returnType
                 declaredTypeParameters.mapNotNull { typeParameter ->
                     val typeConstructor = typeParameter.typeConstructor
-                    val type = if (functionReturnType == typeConstructor) {
-                        lambdaReturnType
-                    } else {
-                        val index = functionParameterTypes.indexOfFirst { it == typeConstructor }
-                        lambdaParameterTypes.getOrNull(index)
-                    } ?: return@mapNotNull null
-                    typeConstructor to type
+                    val actualType = typeConstructor.actualType(functionParameterTypes, lambdaParameterTypes)
+                        ?: typeConstructor.actualType(functionReturnType, lambdaReturnType)
+                        ?: return@mapNotNull null
+                    typeConstructor to actualType
                 }.toMap()
+            }
+        }
+
+        private fun TypeConstructor.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
+            return functionTypes.zip(lambdaTypes).firstNotNullResult { actualType(it.first, it.second) }
+        }
+
+        private fun TypeConstructor.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {
+            if (functionType == null || lambdaType == null) return null
+            return if (this == functionType.constructor) {
+                lambdaType
+            } else {
+                actualType(functionType.arguments.map { it.type }, lambdaType.arguments.map { it.type })
             }
         }
     }
