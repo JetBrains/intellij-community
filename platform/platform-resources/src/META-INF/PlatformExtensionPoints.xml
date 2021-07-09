@@ -310,6 +310,10 @@
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="diff.actions.ShowStandaloneDiffAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand" dynamic="true"/>
 
     <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />

@@ -55,7 +55,9 @@
     <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider"/>
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowStandaloneDiff"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromFileHistoryActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
@@ -206,6 +208,7 @@
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>

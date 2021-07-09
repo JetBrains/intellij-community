@@ -163,6 +163,7 @@
       <reference ref="ChangesView.RevertFiles"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="$Delete"/>
@@ -202,6 +203,7 @@
               icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>

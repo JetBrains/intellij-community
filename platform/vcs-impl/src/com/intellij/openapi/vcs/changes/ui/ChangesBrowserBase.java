@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -27,6 +27,7 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -175,7 +176,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createPopupMenuActions() {
-    return Collections.singletonList(myShowDiffAction);
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(myShowDiffAction);
+    ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Diff.ShowStandaloneDiff"));
+
+    return actions;
   }
 
   @NotNull
@@ -267,11 +272,37 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       previewManager.showDiffPreview(diffPreview);
     }
     else {
-      ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
-      ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
+      ShowStandaloneDiff.showStandaloneDiff(myProject, this);
+    }
+  }
+
+  public static class ShowStandaloneDiff implements AnActionExtensionProvider {
+
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
+      return project != null && changesBrowser != null;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ChangesBrowserBase changesBrowser = e.getRequiredData(DATA_KEY);
+      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+
+      showStandaloneDiff(project, changesBrowser);
+    }
+
+    public static void showStandaloneDiff(@NotNull Project project, @NotNull ChangesBrowserBase changesBrowser) {
+      ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(changesBrowser.myViewer);
+      ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(changesBrowser::getDiffRequestProducer);
       DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
-      updateDiffContext(chain);
-      DiffManager.getInstance().showDiff(myProject, chain, new DiffDialogHints(null, this));
+      changesBrowser.updateDiffContext(chain);
+      DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
     }
   }
 
@@ -294,7 +325,6 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       if (canShowDiff()) showDiff();
     }
   }
-
 
   protected static class ChangesBrowserTreeList extends ChangesTree {
     @NotNull private final ChangesBrowserBase myViewer;
