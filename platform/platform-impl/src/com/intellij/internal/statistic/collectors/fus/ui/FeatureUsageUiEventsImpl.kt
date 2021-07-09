@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -48,7 +48,7 @@ class DialogsCounterUsagesCollector : CounterUsagesCollector() {
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.settings", 59)
+    private val GROUP = EventLogGroup("ui.settings", 60)
 
     val CONFIGURABLE_CLASS = EventFields.Class("configurable")
     val SELECT = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
@@ -58,6 +58,10 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
     val SEARCH = GROUP.registerEvent("search", CONFIGURABLE_CLASS,
                                      EventFields.Int("hits"),
                                      EventFields.Int("characters"))
+    val ADVANDED_SETTINGS_SEARCH = GROUP.registerEvent("advanced.settings.search",
+                                                       EventFields.Int("hits"),
+                                                       EventFields.Int("characters"),
+                                                       EventFields.Boolean("modified.only"))
   }
 
   override fun getGroup() = GROUP
