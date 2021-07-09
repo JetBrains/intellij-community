@@ -3,22 +3,31 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @deprecated a to-be-removed single-method class.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public final class CodeInsightEditorAction {
 
   /**
    * Commit all PSI if there is editor and project in data context. Should be used in
    * {@link com.intellij.openapi.actionSystem.AnAction#beforeActionPerformedUpdate(AnActionEvent)} implementations before calling super,
    * if the action's {@code update} method should work with up-to-date PSI, and the action is invoked in editor.
+   *
+   * @deprecated Use {@link PerformWithDocumentsCommitted} instead.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Editor hostEditor = e.getData(CommonDataKeys.HOST_EDITOR);

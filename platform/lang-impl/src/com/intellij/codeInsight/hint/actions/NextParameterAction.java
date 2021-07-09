@@ -17,22 +17,15 @@
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.PrevNextParameterHandler;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class NextParameterAction extends EditorAction {
+public class NextParameterAction extends EditorAction implements PerformWithDocumentsCommitted {
   public NextParameterAction() {
     super(new PrevNextParameterHandler(true));
     setInjectedContext(true);
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    PrevNextParameterHandler.commitDocumentsIfNeeded(e);
-    super.beforeActionPerformedUpdate(e);
   }
 }
