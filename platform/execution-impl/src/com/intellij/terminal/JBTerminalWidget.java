@@ -59,6 +59,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
+  private final Project myProject;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -74,6 +75,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
+    myProject = project;
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     Disposer.register(parent, this);
@@ -152,6 +154,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   public void setListener(JBTerminalWidgetListener listener) {
     myListener = listener;
+  }
+
+  public @NotNull Project getProject() {
+    return myProject;
   }
 
   @Override
