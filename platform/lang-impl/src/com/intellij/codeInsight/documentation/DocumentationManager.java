@@ -532,7 +532,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void updatePopup(Object lookupItemObject) {
         PsiElement psiElement = toPsi(lookupItemObject);
         if (psiElement != null) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null, null,
+          doShowJavaDocInfo(psiElement, requestFocus, this, original, null, null,
                             useStoredPopupSize, onAutoUpdate);
         }
       }
