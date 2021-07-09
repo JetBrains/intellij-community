@@ -42,9 +42,10 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
     val domains = GrazieInspection.checkedDomains()
     val fileLanguage = file.language
+    val areChecksDisabled = GrazieInspection.getDisabledChecker(fileLanguage)
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (GrazieInspection.areChecksDisabled(element, fileLanguage)) return
+        if (areChecksDisabled(element)) return
         val text = TextExtractor.findUniqueTextAt(element, domains) ?: return
         LangDetector.updateContext(text, session.getUserData(key)!!)
       }
