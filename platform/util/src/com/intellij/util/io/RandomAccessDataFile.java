@@ -50,7 +50,7 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
 
   public void put(long addr, byte[] bytes, int off, int len) {
     assertNotDisposed();
-    ensureAddrNonNegative(addr);
+    ensureNonNegative(addr, "addr");
     ensureArrayBounds(bytes, off, len);
 
     myIsDirty = true;
@@ -67,7 +67,7 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
 
   public void get(long addr, byte[] bytes, int off, int len) {
     assertNotDisposed();
-    ensureAddrNonNegative(addr);
+    ensureNonNegative(addr, "addr");
     ensureArrayBounds(bytes, off, len);
 
     while (len > 0) {
@@ -86,7 +86,7 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
     if (len < 0) {
       throw new IllegalArgumentException("length (" + len + ") should be non-negative");
     }
-    if (off >= bytes.length) {
+    if (off > bytes.length) {
       throw new IllegalArgumentException("offset (" + off + ") is greater than array size (" + bytes.length + ")");
     }
     if (off + len > bytes.length) {
@@ -94,9 +94,9 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
-  private static void ensureAddrNonNegative(long addr) {
-    if (addr < 0) {
-      throw new IllegalArgumentException("addr should be non-negative but actual is " + addr);
+  static void ensureNonNegative(long value, @NotNull String name) {
+    if (value < 0) {
+      throw new IllegalArgumentException(name + " should be non-negative but actual is " + value);
     }
   }
 
