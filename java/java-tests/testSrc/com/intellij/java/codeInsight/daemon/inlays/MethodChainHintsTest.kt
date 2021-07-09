@@ -32,9 +32,9 @@ public class Chains {
   public static void main(String[] args) {
     new A()
     new A()
-      .b()<hint text="[[1:temp:///src/A.java]Chains . [99:temp:///src/A.java]B]"/>
-                .c()<hint text="[[1:temp:///src/A.java]Chains . [173:temp:///src/A.java]C]"/>
-                .a()<hint text="[[1:temp:///src/A.java]Chains . [25:temp:///src/A.java]A]"/>
+      .b()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:99]B]"/>
+                .c()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:173]C]"/>
+                .a()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:25]A]"/>
                 .c();
   }
 }""")
@@ -60,11 +60,11 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
+      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
       .c().b()
-      .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
-      .c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
-      .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
+      .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+      .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
+      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
       .c();
   }
 }
@@ -90,11 +90,11 @@ public class Chains {
 
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
-     .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
-     .b()<hint text="[[0:temp:///src/A.java]Chains . [98:temp:///src/A.java]B]"/>
-     .a()<hint text="[[0:temp:///src/A.java]Chains . [24:temp:///src/A.java]A]"/>
-     .c()<hint text="[[0:temp:///src/A.java]Chains . [172:temp:///src/A.java]C]"/>
+    a.b().c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
+     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+     .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
+     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+     .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
      .b();
   }
 }

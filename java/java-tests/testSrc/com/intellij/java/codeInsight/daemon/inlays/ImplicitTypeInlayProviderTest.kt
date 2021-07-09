@@ -3,9 +3,13 @@ package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.ImplicitTypeInlayProvider
 import com.intellij.codeInsight.hints.NoSettings
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 
 class ImplicitTypeInlayProviderTest : InlayHintsProviderTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_11
 
   fun `test implicit int not shown`() {
     val text = """
@@ -22,7 +26,7 @@ class Demo {
 class Demo {
   static String foo() {}
   private static void pure(int x, int y) {
-    var x<# [:  []String] #> = foo();
+    var x<# [:  [jar://rt.jar!/java/lang/String.class:888]String] #> = foo();
   }
 }"""
     testAnnotations(text)
@@ -54,12 +58,24 @@ class Demo {
   class GenericLongClass<T1, T2> {}
 
   private static void pure(GenericLongClass<Integer, GenericLongClass<String, Integer>> object) {
-    var x<# [:  [[[1:temp:///src/test.java]Demo . [16:temp:///src/test.java]GenericLongClass] [< [[]Integer ,  [[[1:temp:///src/test.java]Demo . [16:temp:///src/test.java]GenericLongClass] [< ... >]]] >]]] #> = object;
+    var x<# [:  [[[temp:///src/test.java:1]Demo . [temp:///src/test.java:16]GenericLongClass] [< [[jar://rt.jar!/java/lang/Integer.class:229]Integer ,  [[[temp:///src/test.java:1]Demo . [temp:///src/test.java:16]GenericLongClass] [< ... >]]] >]]] #> = object;
   }
 }"""
     testAnnotations(text)
   }
 
+  fun `test sdk name`() {
+    val text = """
+import java.util.HashMap;
+
+class Demo {
+  private static void main() {
+    var map = new HashMap<String, Integer>();
+    var l<# [:  [[jar://rt.jar!/java/util/HashMap.class:583]HashMap [< [[jar://rt.jar!/java/lang/String.class:888]String ,  [jar://rt.jar!/java/lang/Integer.class:229]Integer] >]]] #> = map;
+  }
+}"""
+    testAnnotations(text)
+  }
 
   private fun testAnnotations(
     text: String
