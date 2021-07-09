@@ -3,10 +3,7 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.browsers.OpenInBrowserRequest;
-import com.intellij.ide.browsers.WebBrowserService;
-import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.ide.browsers.WebBrowserXmlService;
+import com.intellij.ide.browsers.*;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -49,6 +46,7 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     try {
       OpenInBrowserRequest browserRequest = createOpenInBrowserRequest(psiFile, false);
       if (browserRequest == null) return;
+      browserRequest.setReloadMode(ReloadMode.RELOAD_ON_SAVE);
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(browserRequest, preferLocalFileUrl);
       if (!urls.isEmpty()) {
         BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {

@@ -4,6 +4,7 @@ package org.jetbrains.builtInWebServer.liveReload
 import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
+import com.intellij.ide.browsers.impl.SERVER_RELOAD_TOOLTIP_ID
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -182,7 +183,7 @@ class WebServerPageConnectionService {
   }
 
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
-    val gotItTooltip = GotItTooltip("builtin.web.server.reload.on.save", BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
+    val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
     if (!gotItTooltip.canShow()) return
 
     gotItTooltip

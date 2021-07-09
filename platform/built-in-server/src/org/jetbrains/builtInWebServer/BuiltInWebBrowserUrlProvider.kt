@@ -4,6 +4,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.ReloadMode
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.project.DumbAware
@@ -36,7 +37,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
       return Urls.newFromVirtualFile(file)
     }
     else {
-      return getBuiltInServerUrls(file, request.project, null, request.isAppendAccessToken).firstOrNull()
+      return getBuiltInServerUrls(file, request.project, null, request.isAppendAccessToken, request.reloadMode).firstOrNull()
     }
   }
 }
@@ -45,21 +46,26 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 fun getBuiltInServerUrls(file: VirtualFile,
                          project: Project,
                          currentAuthority: String?,
-                         appendAccessToken: Boolean = true): List<Url> {
+                         appendAccessToken: Boolean = true,
+                         reloadMode: ReloadMode? = null): List<Url> {
   if (currentAuthority != null && !compareAuthority(currentAuthority)) {
     return emptyList()
   }
 
   val info = WebServerPathToFileManager.getInstance(project).getPathInfo(file) ?: return emptyList()
-  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken)
+  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken, reloadMode)
 }
 
-fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: String? = null, appendAccessToken: Boolean = true): SmartList<Url> {
+fun getBuiltInServerUrls(info: PathInfo,
+                         project: Project,
+                         currentAuthority: String? = null,
+                         appendAccessToken: Boolean = true,
+                         reloadMode: ReloadMode? = null): SmartList<Url> {
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val appendReloadOnSave = BuiltInServerOptions.getInstance().reloadPageOnSave
+  val appendReloadOnSave = reloadMode?.let { it == ReloadMode.RELOAD_ON_SAVE } ?: BuiltInServerOptions.getInstance().reloadPageOnSave
   val queryBuilder = StringBuilder()
   if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
   if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
