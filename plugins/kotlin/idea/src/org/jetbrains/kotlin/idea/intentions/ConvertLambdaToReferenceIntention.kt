@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
@@ -124,14 +125,13 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             }
         }
 
-        if ((calleeDescriptor as? FunctionDescriptor)?.overloadedFunctions().orEmpty().size > 1) {
-            if (context[BindingContext.EXPRESSION_TYPE_INFO, lambdaExpression]?.type?.arguments?.lastOrNull()?.type != calleeDescriptor.returnType) {
-                return false
-            }
+        val isArgument =
+            lambdaExpression == lambdaExpression.getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()?.deparenthesize()
+        if (!isArgument && (calleeDescriptor as? FunctionDescriptor)?.overloadedFunctions().orEmpty().size > 1) {
             val property = lambdaExpression.getStrictParentOfType<KtProperty>()
-            if (property != null && property.initializer != lambdaExpression) {
-                return false
-            }
+            if (property != null && property.initializer?.deparenthesize() != lambdaExpression) return false
+            val lambdaReturnType = context[BindingContext.EXPRESSION_TYPE_INFO, lambdaExpression]?.type?.arguments?.lastOrNull()?.type
+            if (lambdaReturnType != calleeDescriptor.returnType) return false
         }
 
         val lambdaValueParameterDescriptors = context[FUNCTION, lambdaExpression.functionLiteral]?.valueParameters ?: return false
