@@ -31,6 +31,7 @@ import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.IncorrectOperationException;
@@ -57,11 +58,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   @PsiModifier.ModifierConstant
   public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
   public int minimalUsageCount = 1;
+  public boolean ignoreWhenRefactoringIsComplicated = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
     JPanel panel = new InspectionOptionsPanel();
+
+    final JBCheckBox checkBox = new JBCheckBox(JavaBundle.message("label.ignore.complicated.fix"), ignoreWhenRefactoringIsComplicated);
+    checkBox.addChangeListener((e) -> ignoreWhenRefactoringIsComplicated = checkBox.isSelected());
+    panel.add(checkBox);
+
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
@@ -111,7 +118,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (problems == null) problems = new ArrayList<>(1);
           UParameter parameter = refParameter.getUastElement();
           if (parameter == null) continue;
-          problems.add(registerProblem(manager, parameter, value, refParameter.isUsedForWriting()));
+          Boolean isFixAvailable = isFixAvailable(parameter, value, refParameter.isUsedForWriting());
+          if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return null;
+          problems.add(registerProblem(manager, parameter, value, Boolean.TRUE.equals(isFixAvailable)));
         }
       }
     }
@@ -181,20 +190,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
                                             UParameter parameter,
                                             Object value,
-                                            boolean usedForWriting) {
+                                            boolean suggestFix) {
     final String name = parameter.getName();
     String shortName;
     String stringPresentation;
-    boolean accessible = true;
 
-    PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (value instanceof PsiType) {
       stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
       shortName = ((PsiType)value).getPresentableText() + ".class";
     }
     else {
       if (value instanceof PsiField) {
-        accessible = javaParameter != null && PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter);
         stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value,
                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
                                                           PsiSubstitutor.EMPTY);
@@ -209,16 +215,23 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         stringPresentation = shortName =  String.valueOf(value);
       }
     }
-    boolean suggestFix = false;
-    if (javaParameter != null) {
-      suggestFix = !javaParameter.isVarArgs() && !usedForWriting && accessible ;
-    }
     return manager.createProblemDescriptor(ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter),
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
                                                                      StringUtil.unquoteString(shortName)),
                                            suggestFix ? createFix(name, stringPresentation.startsWith("\"\"") ? stringPresentation : StringUtil.escapeLineBreak(stringPresentation)) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+  }
+
+  protected static @Nullable Boolean isFixAvailable(UParameter parameter, Object value, boolean usedForWriting) {
+    if (usedForWriting) return false;
+    PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
+    if (javaParameter == null) return null;
+    if (javaParameter.isVarArgs()) return false;
+    if (value instanceof PsiField && !PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter)) {
+      return false;
+    }
+    return true;
   }
 
   public static final class InlineParameterValueFix implements LocalQuickFix {
@@ -456,7 +469,10 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
               if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters.get(i), value, false));
+                final UParameter parameter = parameters.get(i);
+                Boolean isFixAvailable = isFixAvailable(parameter, value, false);
+                if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return true;
+                holder.registerProblem(registerProblem(holder.getManager(), parameter, value, Boolean.TRUE.equals(isFixAvailable)));
               }
             }
           }
