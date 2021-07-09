@@ -190,7 +190,7 @@ public class ResizeableMappedFile implements Forceable {
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
-      LOG.error("real size = " + realSize, e);
+      LOG.error("storage size = " + realSize + ", file size = " + Files.size(myStorage.getFile()), e);
       return realSize;
     }
   }
