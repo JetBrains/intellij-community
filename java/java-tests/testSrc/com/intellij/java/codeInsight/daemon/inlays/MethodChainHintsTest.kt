@@ -121,10 +121,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()
-     .b()
+     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+     .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
      .a() // comment
-     .c()
+     .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
      .b();
   }
 }
