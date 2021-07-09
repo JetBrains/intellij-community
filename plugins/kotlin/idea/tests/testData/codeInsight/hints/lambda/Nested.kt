@@ -5,8 +5,8 @@ val x = run hello@{
 
     run { // Two hints here
         when (true) {
-            true -> 1<# ^run #>
-            false -> 0<# ^run #>
+            true -> 1<# [^ run] #>
+            false -> 0<# [^ run] #>
         }
-    }<# ^hello #>
+    }<# [^ hello] #>
 }
