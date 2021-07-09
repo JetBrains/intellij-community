@@ -276,11 +276,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     public @Nullable MavenGeneralSettings myGeneralSettings;
     public @Nullable MavenRunnerSettings myRunnerSettings;
-    public @NotNull MavenRunnerParameters myRunnerParameters;
+    public @Nullable MavenRunnerParameters myRunnerParameters;
 
     /* reflection only */
     public MavenSettings() {
-      myRunnerParameters = new MavenRunnerParameters();
     }
 
     public MavenSettings(Project project) {
