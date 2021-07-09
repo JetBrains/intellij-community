@@ -220,11 +220,11 @@ class Stripe extends JPanel implements UISettingsListener {
       }
 
       if (processDrop) {
-        if (data.horizontal && !data.shouldSwapCoordinates) {
-          gap -= myDropRectangle.width;
+        if (data.horizontal) {
+          gap -= data.shouldSwapCoordinates ? myDropRectangle.height : myDropRectangle.width;
         }
         else {
-          gap -= myDropRectangle.height;
+          gap -= data.shouldSwapCoordinates ? myDropRectangle.width : myDropRectangle.height;
         }
       }
       gap = Math.max(gap, 0);
@@ -255,7 +255,8 @@ class Stripe extends JPanel implements UISettingsListener {
       if (processDrop && !data.dragTargetChosen) {
         if (data.horizontal) {
           int distance = myDropRectangle.x - data.eachX;
-          if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
+          if (distance < eachSize.width / 2 ||
+              (myDropRectangle.x + (data.shouldSwapCoordinates ? myDropRectangle.height : myDropRectangle.width)) < eachSize.width / 2) {
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
             layoutDragButton(data);
@@ -264,7 +265,8 @@ class Stripe extends JPanel implements UISettingsListener {
         }
         else {
           int distance = myDropRectangle.y - data.eachY;
-          if (distance < eachSize.height / 2 || (myDropRectangle.y + myDropRectangle.height) < eachSize.height / 2) {
+          if (distance < eachSize.height / 2 ||
+              (myDropRectangle.y + (data.shouldSwapCoordinates ? myDropRectangle.width : myDropRectangle.height)) < eachSize.height / 2) {
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
             layoutDragButton(data);
@@ -326,25 +328,37 @@ class Stripe extends JPanel implements UISettingsListener {
         data.dragToSide = false;
       }
       data.dragTargetChosen = true;
-      layoutDragButton(data);
+      layoutDragButton(data, gap);
     }
   }
 
   private void layoutDragButton(LayoutData data) {
+    layoutDragButton(data, 0);
+  }
+
+  private void layoutDragButton(LayoutData data, int gap) {
     myDrawRectangle.x = data.eachX;
     myDrawRectangle.y = data.eachY;
     layoutButton(data, myDragButtonImage, false);
     if (data.horizontal) {
       myDrawRectangle.width = data.eachX - myDrawRectangle.x;
       myDrawRectangle.height = data.fitSize.height;
-      if (data.dragToSide && data.dragInsertPosition == -1) {
-        myDrawRectangle.x = getWidth() - getHeight() - myDrawRectangle.width;
+      if (data.dragToSide) {
+        if (data.dragInsertPosition == -1) {
+          myDrawRectangle.x = getWidth() - getHeight() - myDrawRectangle.width;
+        } else {
+          myDrawRectangle.x += gap;
+        }
       }
     } else {
       myDrawRectangle.width = data.fitSize.width;
       myDrawRectangle.height = data.eachY - myDrawRectangle.y;
-      if (data.dragToSide && data.dragInsertPosition == -1) {
-        myDrawRectangle.y = getHeight() - myDrawRectangle.height;
+      if (data.dragToSide) {
+        if (data.dragInsertPosition == -1) {
+          myDrawRectangle.y = getHeight() - myDrawRectangle.height;
+        } else {
+          myDrawRectangle.y += gap;
+        }
       }
     }
   }
