@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
@@ -37,7 +34,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped, queryLength)
     }
 
-    if (prevState != null && isActionsTab(prevState.tabId)) {
+    if (prevState != null && isMLSupportedTab(tabId)) {
       logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState, previousElementsProvider)
     }
   }
@@ -46,7 +43,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                      indexes: IntArray, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
-    if (state != null && isActionsTab(state.tabId)) {
+    if (state != null && isMLSupportedTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,
@@ -60,7 +57,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   fun onSearchFinished(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
-    if (state != null && isActionsTab(state.tabId)) {
+    if (state != null && isMLSupportedTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onSearchFinished(
         project, sessionId, state.searchIndex,
@@ -81,8 +78,14 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   private fun orderedByMl(experimentStrategy: SearchEverywhereMlExperiment, tabId: String): Boolean {
-    return isActionsTab(tabId) && experimentStrategy.shouldOrderByMl()
+    return isMLSupportedTab(tabId) && experimentStrategy.shouldOrderByMl()
   }
+
+  private fun isMLSupportedTab(tabId: String): Boolean {
+    return isFilesTab(tabId) || isActionsTab(tabId)
+  }
+
+  private fun isFilesTab(tabId: String) = FileSearchEverywhereContributor::class.java.simpleName == tabId
 
   private fun isActionsTab(tabId: String) = ActionSearchEverywhereContributor::class.java.simpleName == tabId
 }
@@ -92,8 +95,12 @@ class SearchEverywhereMlItemIdProvider {
   private val itemToId = ContainerUtil.createWeakMap<Any, Int>()
 
   @Synchronized
-  fun getId(element: GotoActionModel.MatchedValue): Int {
-    val key = if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
+  fun getId(element: Any): Int {
+    val key = when (element) {
+      is GotoActionModel.MatchedValue -> if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item.containingFile
+      else -> throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
+    }
     return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
   }
 }

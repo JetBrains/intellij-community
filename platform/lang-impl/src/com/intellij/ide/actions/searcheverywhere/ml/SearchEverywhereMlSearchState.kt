@@ -21,17 +21,21 @@ internal class SearchEverywhereMlSearchState(
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
   private val model: SearchEverywhereActionsRankingModel = SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
-  private val featuresProvider: SearchEverywhereElementFeaturesProvider = SearchEverywhereActionFeaturesProvider()
 
   @Synchronized
   fun getElementFeatures(elementId: Int,
-                         element: GotoActionModel.MatchedValue,
+                         element: Any,
                          contributor: SearchEverywhereContributor<*>,
                          queryLength: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
       val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
       val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-      val features = featuresProvider.getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary)
+
+      val features = mutableMapOf<String, Any>()
+      SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
+        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary))
+      }
+
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
     }
   }
