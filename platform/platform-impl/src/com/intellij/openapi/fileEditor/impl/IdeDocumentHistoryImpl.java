@@ -565,13 +565,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
-    EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = getFileEditorManager();
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
       .withRequestFocus(wasActive);
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders =
-      editorManager.openFileWithProviders(info.getFile(), wnd, openOptions);
+    Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = openFile(info, editorManager, openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
@@ -582,6 +580,19 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       if (typeId.equals(info.getEditorTypeId())) {
         editors[i].setState(info.getNavigationState());
       }
+    }
+  }
+
+  @NotNull
+  private static Pair<FileEditor[], FileEditorProvider[]> openFile(@NotNull PlaceInfo info,
+                                                                   @NotNull FileEditorManagerEx editorManager,
+                                                                   @NotNull FileEditorOpenOptions openOptions) {
+    if (editorManager instanceof FileEditorManagerImpl && info.myOpenedInNewWindow) {
+      return ((FileEditorManagerImpl)editorManager).openFileInNewWindow(info.getFile());
+    }
+    else {
+      EditorWindow wnd = info.getWindow();
+      return editorManager.openFileWithProviders(info.getFile(), wnd, openOptions);
     }
   }
 
@@ -658,6 +669,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final boolean myIsPreviewTab;
     private final @Nullable RangeMarker myCaretPosition;
     private final long myTimeStamp;
+    private final boolean myOpenedInNewWindow;
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
@@ -681,6 +693,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       myIsPreviewTab = isPreviewTab;
       myCaretPosition = caretPosition;
       myTimeStamp = stamp;
+      myOpenedInNewWindow = window != null && window.getOwner().isFloating();
     }
 
     public EditorWindow getWindow() {
