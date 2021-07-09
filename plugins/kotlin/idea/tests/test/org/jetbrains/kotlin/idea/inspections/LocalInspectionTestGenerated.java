@@ -4781,6 +4781,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/constructorParameter.kt");
         }
 
+        @TestMetadata("constructorParameterMutable.kt")
+        public void testConstructorParameterMutable() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/constructorParameterMutable.kt");
+        }
+
         @TestMetadata("continueLoop.kt")
         public void testContinueLoop() throws Exception {
             runTest("testData/inspectionsLocal/dfa/continueLoop.kt");
@@ -5014,6 +5019,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("whenSuppressed.kt")
         public void testWhenSuppressed() throws Exception {
             runTest("testData/inspectionsLocal/dfa/whenSuppressed.kt");
+        }
+
+        @TestMetadata("whenSuppressed2.kt")
+        public void testWhenSuppressed2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenSuppressed2.kt");
         }
 
         @TestMetadata("whenUnboxing.kt")

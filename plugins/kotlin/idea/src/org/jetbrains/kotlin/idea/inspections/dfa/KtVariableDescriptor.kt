@@ -29,6 +29,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
     val stable: Boolean = calculateStable()
 
     private fun calculateStable(): Boolean {
+        if (variable is KtParameter && variable.isMutable) return false
         if (variable !is KtProperty || !variable.isVar) return true
         if (!variable.isLocal) return false
         return getVariablesChangedInLambdas(variable.parent).contains(variable)

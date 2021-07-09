@@ -50,8 +50,6 @@ import kotlin.collections.LinkedHashMap
 TODO: Reports to investigate:
 org.jetbrains.ide.BuiltInServerManagerImpl.Companion#isOnBuiltInWebServerByAuthority
 fleet.frontend.ast.intellij.NodeWalker#nodeExpanded
-trebuchet.util.BufferReader#readDouble
-com.android.tools.idea.compose.preview.ComposePreviewRepresentation#refresh
  */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
@@ -415,22 +413,23 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }
         val selector = expr.selectorExpression
-        if (pushJavaClassField(receiver, selector, expr)) return
-        val specialField = findSpecialField(expr)
-        if (specialField != null) {
-            addInstruction(UnwrapDerivedVariableInstruction(specialField))
-            if (expr is KtSafeQualifiedExpression) {
-                addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(expr), SpecialField.UNBOX))
-            }
-            addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
-        } else {
-            val variable = KtVariableDescriptor.createVariable(factory, expr)
-            if (variable != null) {
-                addInstruction(PopInstruction())
-                addInstruction(PushInstruction(variable, KotlinExpressionAnchor(expr)))
-                addImplicitConversion(expr, (variable.descriptor as? KtVariableDescriptor)?.variable?.type(), expr.getKotlinType())
+        if (!pushJavaClassField(receiver, selector, expr)) {
+            val specialField = findSpecialField(expr)
+            if (specialField != null) {
+                addInstruction(UnwrapDerivedVariableInstruction(specialField))
+                if (expr is KtSafeQualifiedExpression) {
+                    addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(expr), SpecialField.UNBOX))
+                }
+                addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
             } else {
-                addUnknownCall(expr, 1)
+                val variable = KtVariableDescriptor.createVariable(factory, expr)
+                addInstruction(PopInstruction())
+                if (variable != null) {
+                    addInstruction(PushInstruction(variable, KotlinExpressionAnchor(expr)))
+                    addImplicitConversion(expr, (variable.descriptor as? KtVariableDescriptor)?.variable?.type(), expr.getKotlinType())
+                } else {
+                    processExpression(selector)
+                }
             }
         }
         if (expr is KtSafeQualifiedExpression) {

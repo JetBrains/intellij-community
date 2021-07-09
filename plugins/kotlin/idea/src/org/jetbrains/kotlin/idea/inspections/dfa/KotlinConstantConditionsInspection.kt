@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -125,6 +124,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     return true
                 }
             }
+            val kotlinType = expression.getKotlinType()
+            if (kotlinType.toDfType(expression) != DfTypes.NULL) {
+                // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
+                return true
+            }
         }
         if (expression is KtSimpleNameExpression) {
             val target = expression.mainReference.resolve()
@@ -198,6 +202,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return areEquivalent(left, templateLeft) && areEquivalent(right.negate(), templateRight)
         }
         if (!areEquivalent(right, templateRight)) return false
+        if (templateLeft === expression) {
+            return areEquivalent(left.negate(), templateLeft)
+        }
         if (templateLeft !is KtBinaryExpression || templateLeft.operationToken !== KtTokens.ANDAND) return false
         return isOppositeCondition(left, templateLeft, expression)
     }
