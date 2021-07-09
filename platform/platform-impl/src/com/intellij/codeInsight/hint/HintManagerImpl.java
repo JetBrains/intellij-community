@@ -35,6 +35,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -606,7 +607,7 @@ public class HintManagerImpl extends HintManager {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  public static Point getHintPosition(@NotNull LightweightHint hint,
+  private static Point getHintPosition(@NotNull LightweightHint hint,
                                        @NotNull Editor editor,
                                        @NotNull VisualPosition pos1,
                                        @NotNull VisualPosition pos2,
