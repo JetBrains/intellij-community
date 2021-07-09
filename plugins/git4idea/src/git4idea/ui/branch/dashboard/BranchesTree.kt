@@ -246,6 +246,8 @@ internal class FilteringBranchesTree(project: Project,
   private var localNodeExist = false
   private var remoteNodeExist = false
 
+  private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
+
   private val groupingConfig: MutableMap<GroupingKey, Boolean> =
     with(GitVcsSettings.getInstance(project).branchSettings) {
       hashMapOf(
@@ -264,8 +266,7 @@ internal class FilteringBranchesTree(project: Project,
   init {
     runInEdt {
       PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup")
-      setupTreeExpansionListener()
-      project.service<BranchesTreeStateHolder>().setTree(this)
+      setupTreeListeners()
     }
   }
 
@@ -317,16 +318,19 @@ internal class FilteringBranchesTree(project: Project,
     return searchField
   }
 
-  private fun setupTreeExpansionListener() {
+  private fun setupTreeListeners() {
     component.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
         expandedPaths.add(event.path)
+        treeStateHolder.storeState(this@FilteringBranchesTree)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
         expandedPaths.remove(event.path)
+        treeStateHolder.storeState(this@FilteringBranchesTree)
       }
     })
+    component.addTreeSelectionListener { treeStateHolder.storeState(this@FilteringBranchesTree) }
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
@@ -406,7 +410,7 @@ internal class FilteringBranchesTree(project: Project,
 
   fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = uiController.reloadBranches()
-    val treeState = if (initial) project.service<BranchesTreeStateHolder>().treeState else TreeState.createOn(tree, root)
+    val treeState = if (initial) treeStateHolder.treeState else TreeState.createOn(tree, root)
     searchModel.updateStructure()
     if (treeState != null) {
       treeState.applyTo(tree)
@@ -471,14 +475,10 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 @State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 @Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
-  private lateinit var branchesTree: FilteringBranchesTree
   private lateinit var _treeState: TreeState
   val treeState get() = if (::_treeState.isInitialized) _treeState else null
 
   override fun getState(): TreeState? {
-    if (::branchesTree.isInitialized) {
-      _treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
-    }
     if (::_treeState.isInitialized) {
       return _treeState
     }
@@ -489,7 +489,7 @@ internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
     _treeState = state
   }
 
-  fun setTree(tree: FilteringBranchesTree) {
-    branchesTree = tree
+  fun storeState(branchesTree: FilteringBranchesTree) {
+    _treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
   }
 }
