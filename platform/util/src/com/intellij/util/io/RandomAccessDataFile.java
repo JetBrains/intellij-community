@@ -50,6 +50,8 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
 
   public void put(long addr, byte[] bytes, int off, int len) {
     assertNotDisposed();
+    ensureAddrNonNegative(addr);
+    ensureArrayBounds(bytes, off, len);
 
     myIsDirty = true;
     mySize = Math.max(mySize, addr + len);
@@ -65,6 +67,8 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
 
   public void get(long addr, byte[] bytes, int off, int len) {
     assertNotDisposed();
+    ensureAddrNonNegative(addr);
+    ensureArrayBounds(bytes, off, len);
 
     while (len > 0) {
       final Page page = myPool.alloc(this, addr);
@@ -72,6 +76,27 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
       len -= read;
       addr += read;
       off += read;
+    }
+  }
+
+  private static void ensureArrayBounds(byte[] bytes, int off, int len) {
+    if (off < 0) {
+      throw new IllegalArgumentException("offset (" + off + ") should be non-negative");
+    }
+    if (len < 0) {
+      throw new IllegalArgumentException("length (" + len + ") should be non-negative");
+    }
+    if (off >= bytes.length) {
+      throw new IllegalArgumentException("offset (" + off + ") is greater than array size (" + bytes.length + ")");
+    }
+    if (off + len > bytes.length) {
+      throw new IllegalArgumentException("offset (" + off + ") + length (" + len + ") is greater than array size (" + bytes.length + ")");
+    }
+  }
+
+  private static void ensureAddrNonNegative(long addr) {
+    if (addr < 0) {
+      throw new IllegalArgumentException("addr should be non-negative but actual is " + addr);
     }
   }
 
