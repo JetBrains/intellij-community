@@ -24,7 +24,6 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LearnBundle
-import training.ui.LearningUiHighlightingManager
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
@@ -73,9 +72,12 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
     else {
       task {
-        before { LearningUiHighlightingManager.clearHighlights() }
-        text(GitLessonsBundle.message("git.annotate.open.context.menu"))
         highlightGutterComponent(null, firstStateText, highlightRight = true)
+      }
+
+      task {
+        text(GitLessonsBundle.message("git.annotate.open.context.menu"))
+        text(GitLessonsBundle.message("git.annotate.click.gutter.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 0))
         highlightAnnotateMenuItem()
       }
 
@@ -97,7 +99,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       openFirstDiffTaskId = taskId
       text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName), strong("Johnny Catsville")))
-      text(GitLessonsBundle.message("git.annotate.click.annotation.tooltip"), LearningBalloonConfig(Balloon.Position.above, 200))
+      text(GitLessonsBundle.message("git.annotate.click.annotation.tooltip"), LearningBalloonConfig(Balloon.Position.above, 0))
       highlightShowDiffMenuItem()
     }
 
@@ -133,9 +135,13 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     } else {
       task {
+        highlightGutterComponent(firstDiffSplitter, secondStateText, highlightRight = false)
+      }
+
+      task {
         text(GitLessonsBundle.message("git.annotate.go.deeper", code(propertyName)) + " "
              + GitLessonsBundle.message("git.annotate.invoke.manually", strong(annotateMenuItemText)))
-        highlightGutterComponent(firstDiffSplitter, secondStateText, highlightRight = false)
+        text(GitLessonsBundle.message("git.annotate.click.gutter.balloon"), LearningBalloonConfig(Balloon.Position.atLeft, 0))
         val annotateItemFuture = highlightAnnotateMenuItem()
         triggerOnAnnotationsShown(firstDiffSplitter, secondStateText)
         restoreIfDiffClosed(openFirstDiffTaskId, firstDiffSplitter)
