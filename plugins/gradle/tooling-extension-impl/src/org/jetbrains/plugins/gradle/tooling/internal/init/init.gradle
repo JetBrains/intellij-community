@@ -1,9 +1,14 @@
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.tooling.provider.model.ToolingModelBuilder
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
+import org.gradle.tooling.provider.model.UnknownModelException
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.model.internal.DummyModel
 import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.inject.Inject
 
 initscript {
   dependencies {
@@ -14,12 +19,19 @@ initscript {
 apply plugin: JetGradlePlugin
 
 class JetGradlePlugin implements Plugin<Gradle> {
+  private final ToolingModelBuilderRegistry toolingModelBuilderRegistry
+
+  @Inject
+  JetGradlePlugin(ToolingModelBuilderRegistry toolingModelBuilderRegistry) {
+    this.toolingModelBuilderRegistry = toolingModelBuilderRegistry
+  }
+
   void apply(Gradle gradle) {
-    def processor = new RegistryProcessor()
-    gradle.addProjectEvaluationListener(processor)
+    def jetModelBuilder = getJetModelBuilderOrRegisterIfAbsent(gradle, toolingModelBuilderRegistry)
     def projectEvaluationIsNotCalledForIncludedBuilds = GradleVersion.current() >= GradleVersion.version("3.1") &&
                                                         GradleVersion.current() < GradleVersion.version("4.0")
     if (projectEvaluationIsNotCalledForIncludedBuilds) {
+      def processor = new RegistryProcessor(jetModelBuilder)
       gradle.rootProject {
         it.afterEvaluate {
           gradle.includedBuilds.each { included ->
@@ -31,6 +43,36 @@ class JetGradlePlugin implements Plugin<Gradle> {
       }
     }
   }
+
+  static ToolingModelBuilder getJetModelBuilderOrRegisterIfAbsent(Gradle gradle, ToolingModelBuilderRegistry registry) {
+    def jetModelBuilder = findJetModelBuilder(registry)
+    if (jetModelBuilder != null) return jetModelBuilder
+
+    Gradle rootGradle = gradle
+    while (rootGradle.parent != null) {
+      rootGradle = rootGradle.parent
+    }
+    ToolingModelBuilderRegistry rootRegistry = (rootGradle as GradleInternal).services.get(ToolingModelBuilderRegistry)
+    jetModelBuilder = findJetModelBuilder(rootRegistry)
+    if(jetModelBuilder == null) {
+      jetModelBuilder = GradleVersion.current() >= GradleVersion.version("4.4")
+        ? (ToolingModelBuilder) ExtraModelBuilder.class.classLoader.loadClass(ExtraModelBuilder.class.typeName + "\$ForGradle44").newInstance()
+        : new ExtraModelBuilder();
+      rootRegistry.register(jetModelBuilder)
+    }
+    if (registry != rootRegistry) {
+      registry.register(jetModelBuilder)
+    }
+    return jetModelBuilder
+  }
+
+  static ToolingModelBuilder findJetModelBuilder(ToolingModelBuilderRegistry registry) {
+    try {
+      return registry.getBuilder(DummyModel.class.getName())
+    }
+    catch(UnknownModelException ignored) {}
+    return null
+  }
 }
 
 /**
@@ -38,10 +80,10 @@ class JetGradlePlugin implements Plugin<Gradle> {
  * Thread safe.
  */
 class RegistryProcessor implements ProjectEvaluationListener {
-  def extraModelBuilderInstance =
-    GradleVersion.current() >= GradleVersion.version("4.4")
-      ? ExtraModelBuilder.class.classLoader.loadClass(ExtraModelBuilder.class.typeName + "\$ForGradle44").newInstance()
-      : new ExtraModelBuilder();
+  ToolingModelBuilder jetModelBuilder
+  RegistryProcessor(ToolingModelBuilder jetModelBuilder) {
+    this.jetModelBuilder = jetModelBuilder
+  }
 
   CopyOnWriteArrayList<ToolingModelBuilderRegistry> processedRegistries = new CopyOnWriteArrayList<ToolingModelBuilderRegistry>()
 
@@ -61,12 +103,12 @@ class RegistryProcessor implements ProjectEvaluationListener {
     if (alreadySeen || extraModelBuilderIsRegistered(rootRegistry)) {
       return
     }
-    rootRegistry.register(extraModelBuilderInstance)
+    rootRegistry.register(jetModelBuilder)
+    println("registered $jetModelBuilder on ${rootRegistry}")
   }
 
   private static boolean extraModelBuilderIsRegistered(registry) {
-    registry.hasProperty('builders') && registry.builders instanceof Collection &&
-    (registry.builders as Collection).find { it instanceof ExtraModelBuilder } != null
+    return JetGradlePlugin.findJetModelBuilder(registry) != null
   }
 
   @Override
