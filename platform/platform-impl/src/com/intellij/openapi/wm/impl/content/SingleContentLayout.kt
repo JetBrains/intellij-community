@@ -443,7 +443,7 @@ internal class SingleContentLayout(
     }
 
     override fun getManager(): ContentManager? {
-      error("An operation is not supported")
+      return null
     }
 
     override fun <T : Any?> getUserData(key: Key<T>): T? {
