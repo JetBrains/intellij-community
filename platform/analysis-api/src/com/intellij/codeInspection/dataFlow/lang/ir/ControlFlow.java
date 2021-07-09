@@ -7,6 +7,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -94,9 +97,17 @@ public final class ControlFlow {
    * Finalize current control flow. No more instructions are accepted after this call
    */
   public void finish() {
-    addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
-    myLoopNumbers = LoopAnalyzer.calcInLoop(this);
-    new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
+    try {
+      addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
+      myLoopNumbers = LoopAnalyzer.calcInLoop(this);
+      new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (RuntimeException ex) {
+      throw new RuntimeExceptionWithAttachments(ex, new Attachment("flow.txt", toString()));
+    }
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {
