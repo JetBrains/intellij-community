@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed.Companion.
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.TOOLTIPS_DELAY_RANGE
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -354,7 +355,8 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row {
           cell(isFullWidth = true) {
             label(message("editor.options.tooltip.delay"))
-            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = 1..5000, columns = 4)
+            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = TOOLTIPS_DELAY_RANGE.asRange(),
+                         columns = 4)
             label(message("editor.options.ms"))
           }
         }
