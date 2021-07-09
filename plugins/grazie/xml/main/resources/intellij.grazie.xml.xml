@@ -8,5 +8,6 @@
     <textExtractor language="HTML" implementationClass="com.intellij.grazie.ide.language.xml.XmlTextExtractor$Html"/>
 
     <problemFilter language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlProblemFilter"/>
+    <disableChecking language="XML"/>
   </extensions>
 </idea-plugin>
