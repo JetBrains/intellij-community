@@ -2,7 +2,6 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
@@ -12,15 +11,11 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -29,17 +24,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
@@ -53,7 +42,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,9 +49,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.testIntegration.createTest.CreateTestUtils.selectTargetDirectory;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -477,7 +466,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     String errorMessage = null;
     try {
-      myTargetDirectory = selectTargetDirectory();
+      myTargetDirectory = selectTargetDirectory(getPackageName(), myProject, myTargetModule);
       if (myTargetDirectory == null) return;
     }
     catch (IncorrectOperationException e) {
@@ -508,84 +497,6 @@ public class CreateTestDialog extends DialogWrapper {
 
   protected String checkCanCreateClass() {
     return RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
-  }
-
-  @Nullable
-  private PsiDirectory selectTargetDirectory() throws IncorrectOperationException {
-    final String packageName = getPackageName();
-    final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
-
-    final VirtualFile selectedRoot = ReadAction.compute(() -> {
-      final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
-      List<VirtualFile> roots;
-      if (testFolders.isEmpty()) {
-        roots = new ArrayList<>();
-        List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
-        for (String url : urls) {
-          try {
-            ContainerUtil.addIfNotNull(roots, VfsUtil.createDirectories(VfsUtilCore.urlToPath(url)));
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        if (roots.isEmpty()) {
-          JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
-        }
-        if (roots.isEmpty()) return null;
-      }
-      else {
-        roots = new ArrayList<>(testFolders);
-      }
-
-      if (roots.size() == 1) {
-        return roots.get(0);
-      }
-      else {
-        PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
-        return MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
-      }
-    });
-
-    if (selectedRoot == null) return null;
-
-    return WriteCommandAction.writeCommandAction(myProject).withName(CodeInsightBundle.message("create.directory.command"))
-                             .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
-  }
-
-  @Nullable
-  private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
-    List<PsiDirectory> dirs = new ArrayList<>();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
-      final PsiDirectory dir = psiManager.findDirectory(file);
-      if (dir != null) {
-        dirs.add(dir);
-      }
-    }
-    if (!dirs.isEmpty()) {
-      for (PsiDirectory dir : dirs) {
-        final String dirName = dir.getVirtualFile().getPath();
-        if (dirName.contains("generated")) continue;
-        return dir;
-      }
-      return dirs.get(0);
-    }
-    for (PsiDirectory dir : directories) {
-      final VirtualFile file = dir.getVirtualFile();
-      for (VirtualFile root : roots) {
-        if (VfsUtilCore.isAncestor(root, file, false)) {
-          final PsiDirectory rootDir = psiManager.findDirectory(root);
-          if (rootDir != null) {
-            return rootDir;
-          }
-        }
-      }
-    }
-    return ModuleManager.getInstance(myProject)
-      .getModuleDependentModules(myTargetModule)
-      .stream().flatMap(module -> ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream())
-      .map(root -> psiManager.findDirectory(root)).findFirst().orElse(null);
   }
 
   private String getPackageName() {

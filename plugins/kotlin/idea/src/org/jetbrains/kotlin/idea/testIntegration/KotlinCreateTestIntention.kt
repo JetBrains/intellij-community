@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.testIntegration.createTest.CreateTestAction
+import com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots
 import com.intellij.testIntegration.createTest.TestGenerators
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
