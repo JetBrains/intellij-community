@@ -297,7 +297,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     is KotlinCastProblem -> {
                         val anchor = (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast
                         val context = anchor.analyze(BodyResolveMode.FULL)
-                        if (!context.diagnostics.forElement(anchor).any { it.factory != Errors.CAST_NEVER_SUCCEEDS }) {
+                        if (!context.diagnostics.forElement(anchor).any { it.factory == Errors.CAST_NEVER_SUCCEEDS }) {
                             holder.registerProblem(anchor, KotlinBundle.message("inspection.message.cast.will.always.fail"))
                         }
                     }

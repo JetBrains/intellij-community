@@ -1,6 +1,8 @@
 // PROBLEM: Cast will always fail
 // FIX: none
 fun test(b: Boolean) {
-    val x = if (b) "x" else 5
-    val y = x <caret>as Double
+    val x = if (b) X() else Y()
+    val y = if (b) x <caret>as Y else X()
 }
+class X {}
+class Y {}
