@@ -15,10 +15,9 @@ import javax.swing.JComponent
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
   companion object {
     private val LOG = Logger.getInstance(FixWidthSegmentedActionToolbarComponent::class.java)
+    private var runConfigWidth: JBValue.Float? = null
+    private var rightSideWidth: JBValue.Float? = null
   }
-
-  private var runConfigWidth: JBValue.Float? = null
-  private var rightSideWidth: JBValue.Float? = null
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
 

@@ -6,6 +6,8 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.Project
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.event.MouseAdapter
@@ -16,7 +18,10 @@ import javax.swing.JPanel
 
 class RunToolbarExtraSlotPane(val project: Project) {
   private val manager = RunToolbarSlotManager.getInstance(project)
-  private val slotPane = JPanel(MigLayout("gapx 2, gapy 2, ins 0, novisualpadding, wrap 2"))
+  val slotPane = JPanel(VerticalLayout(JBUI.scale(2))).apply {
+    isOpaque = false
+  }
+
   private val components = mutableListOf<SlotComponent>()
 
   private val managerListener = object : SlotListener {
@@ -37,7 +42,7 @@ class RunToolbarExtraSlotPane(val project: Project) {
     }
   }
 
-  private val pane = object : JPanel(MigLayout("flowy, ins 10, novisualpadding", "", "[grow][min!]")){
+  private val pane = object : JPanel(VerticalLayout(JBUI.scale(2))) {
     override fun addNotify() {
       super.addNotify()
       manager.addListener(managerListener)
@@ -49,20 +54,22 @@ class RunToolbarExtraSlotPane(val project: Project) {
       super.removeNotify()
     }
   }.apply {
-      add(slotPane, "grow")
+    border = JBUI.Borders.empty(3)
+    add(slotPane)
 
-      add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push[min!][min!]")).apply {
-        this.add(JLabel(AllIcons.Toolbar.AddSlot).apply {
-          this.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent) {
-              manager.addNewSlot()
-            }
-          })
+    add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push[min!][min!]")).apply {
+      isOpaque = false
+      this.add(JLabel(AllIcons.Toolbar.AddSlot).apply {
+        this.addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            manager.addNewSlot()
+          }
         })
-        this.add(JLabel(AllIcons.Toolbar.Pin).apply { text = "Dock" })
-        this.add(JLabel(AllIcons.General.GearPlain))
-      }, "growx")
-    }
+      })
+      this.add(JLabel(AllIcons.Toolbar.Pin).apply { text = "Dock" })
+      this.add(JLabel(AllIcons.General.GearPlain))
+    })
+  }
 
   internal fun getView(): JComponent = pane
 
@@ -91,13 +98,13 @@ class RunToolbarExtraSlotPane(val project: Project) {
       }
     })
 
-    slotPane.add(slot.minus)
-    slotPane.add(slot.bar)
-
+    slotPane.add(slot.view)
     components.add(slot)
   }
 
   private fun pack() {
+    slotPane.revalidate()
+    pane.revalidate()
     UIUtil.getWindow(pane)?.let {
       if (it.isShowing) {
         it.pack()
@@ -106,9 +113,7 @@ class RunToolbarExtraSlotPane(val project: Project) {
   }
 
   private fun removeComponent(component: SlotComponent) {
-    slotPane.remove(component.minus)
-    slotPane.remove(component.bar)
-
+    slotPane.remove(component.view)
     components.remove(component)
     pack()
   }
@@ -152,5 +157,10 @@ class RunToolbarExtraSlotPane(val project: Project) {
     return component
   }
 
-  internal data class SlotComponent(val bar: SegmentedActionToolbarComponent, val minus: JComponent)
+  internal data class SlotComponent(val bar: SegmentedActionToolbarComponent, val minus: JComponent) {
+    val view = JPanel(MigLayout("ins 0, gapx 2, novisualpadding")).apply {
+      add(minus)
+      add(bar)
+    }
+  }
 }
