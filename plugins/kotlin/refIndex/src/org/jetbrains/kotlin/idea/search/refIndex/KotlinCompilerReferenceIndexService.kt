@@ -349,7 +349,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         }.orEmpty()
 
     private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
-        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()
+        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs<CompilerReferenceServiceBase<*>>()
 
     private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
     private fun isInsideLibraryScope(): Boolean =
