@@ -300,7 +300,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!merger.update(thisToThat != null, true)) return null;
     int[] thatToThis = that.getClassesMap(this);
     if (!merger.update(true, thatToThis != null)) return null;
-    if (merger.myMaybeThisSuper && thisToThat != null) {
+    if (thisToThat != null) {
       for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
         int firstIndex = thisToThat[pair.getFirstIndex()];
         int secondIndex = thisToThat[pair.getSecondIndex()];
@@ -309,7 +309,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (!merger.updateOrdering(pair, relation, false)) return null;
       }
     }
-    if (merger.myMaybeThatSuper && thatToThis != null) {
+    if (thatToThis != null) {
       for (DistinctPairSet.DistinctPair pair : that.myDistinctClasses) {
         int firstIndex = thatToThis[pair.getFirstIndex()];
         int secondIndex = thatToThis[pair.getSecondIndex()];
