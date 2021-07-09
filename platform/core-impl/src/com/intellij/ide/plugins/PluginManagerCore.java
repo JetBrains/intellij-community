@@ -1118,10 +1118,12 @@ public final class PluginManagerCore {
     if (depName == null) {
       @NlsSafe String depPresentableId = depId.getIdString();
       if (errors.containsKey(depId)) {
+        PluginLoadingError depError = errors.get(depId);
+        String depNameFromError = depError.getPlugin().getName();
         errors.put(descriptor.getPluginId(),
                    new PluginLoadingError(
                      descriptor,
-                     message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
+                     message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depNameFromError != null ? depNameFromError : depPresentableId),
                      message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser, null
                    ));
       }
