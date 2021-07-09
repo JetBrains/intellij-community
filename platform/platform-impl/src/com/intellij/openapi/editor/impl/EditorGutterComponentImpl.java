@@ -204,7 +204,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       });
     }
-    UISettings.setupEditorAntialiasing(this);
+    setRenderingHints();
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
@@ -321,7 +321,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void updateUI() {
     super.updateUI();
+    setRenderingHints();
     reinitSettings(true);
+  }
+
+  private void setRenderingHints() {
+    UISettings.setupEditorAntialiasing(this);
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
   }
 
   public void reinitSettings(boolean updateGutterSize) {
@@ -348,6 +354,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
 
     EditorUIUtil.setupAntialiasing(g);
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+
     Color backgroundColor = getBackground();
 
     int startVisualLine;
