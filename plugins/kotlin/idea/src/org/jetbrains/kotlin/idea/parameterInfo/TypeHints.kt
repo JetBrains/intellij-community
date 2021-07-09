@@ -5,98 +5,54 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
+import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.renderer.RenderingFormat
-import org.jetbrains.kotlin.renderer.renderFqName
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
-import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
-import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.containsError
 import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
-class ImportAwareClassifierNamePolicy(
-    val bindingContext: BindingContext,
-    val context: KtElement
-) : ClassifierNamePolicy {
-    override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String {
-        if (classifier.containingDeclaration is ClassDescriptor) {
-            val resolutionFacade = context.getResolutionFacade()
-            val scope = context.getResolutionScope(bindingContext, resolutionFacade)
-            if (scope.findClassifier(classifier.name, NoLookupLocation.FROM_IDE) == classifier) {
-                return classifier.name.asString()
-            }
-        }
-
-        return shortNameWithCompanionNameSkip(classifier, renderer)
-    }
-
-    private fun shortNameWithCompanionNameSkip(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String {
-        if (classifier is TypeParameterDescriptor) return renderer.renderName(classifier.name, false)
-
-        val qualifiedNameParts = classifier.parentsWithSelf
-            .takeWhile { it is ClassifierDescriptor }
-            .filter { !(it.isCompanionObject() && it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) }
-            .mapTo(ArrayList()) { it.name }
-            .reversed()
-
-        return renderFqName(qualifiedNameParts)
-    }
-}
-
-fun getInlayHintsTypeRenderer(bindingContext: BindingContext, context: KtElement) =
-    DescriptorRenderer.COMPACT_WITH_SHORT_TYPES.withOptions {
-        enhancedTypes = true
-        textFormat = RenderingFormat.PLAIN
-        renderUnabbreviatedType = false
-        classifierNamePolicy = ImportAwareClassifierNamePolicy(bindingContext, context)
-    }
-
-fun providePropertyTypeHint(elem: PsiElement): List<HintType.InlayInfoDetails> {
+fun providePropertyTypeHint(elem: PsiElement): List<InlayInfoDetails> {
     (elem as? KtCallableDeclaration)?.let { property ->
         property.nameIdentifier?.let { ident ->
-            return provideTypeHint(property, ident.endOffset)
+            provideTypeHint(property, ident.endOffset)?.let { return listOf(it) }
         }
     }
     return emptyList()
 }
 
-fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<HintType.InlayInfoDetails> {
+fun provideTypeHint(element: KtCallableDeclaration, offset: Int): InlayInfoDetails? {
     var type: KotlinType = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(element).unwrap()
-    if (type.containsError()) return emptyList()
+    if (type.containsError()) return null
     val declarationDescriptor = type.constructor.declarationDescriptor
     val name = declarationDescriptor?.name
     if (name == SpecialNames.NO_NAME_PROVIDED) {
         if (element is KtProperty && element.isLocal) {
             // for local variables, an anonymous object type is not collapsed to its supertype,
             // so showing the supertype will be misleading
-            return emptyList()
+            return null
         }
-        type = type.immediateSupertypes().singleOrNull() ?: return emptyList()
+        type = type.immediateSupertypes().singleOrNull() ?: return null
     } else if (name?.isSpecial == true) {
-        return emptyList()
+        return null
     }
 
     if (element is KtProperty && element.isLocal && type.isUnit() && element.isMultiLine()) {
@@ -107,15 +63,15 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<HintType.
             val indentBeforeProperty = (element.prevSibling as? PsiWhiteSpace)?.text?.substringAfterLast('\n')
             val indentBeforeInitializer = (element.initializer?.prevSibling as? PsiWhiteSpace)?.text?.substringAfterLast('\n')
             if (indentBeforeProperty == indentBeforeInitializer) {
-                return emptyList()
+                return null
             }
         }
     }
 
     return if (isUnclearType(type, element)) {
         val settings = element.containingKtFile.kotlinCustomSettings
-        val renderType = getInlayHintsTypeRenderer(element.analyze(), element).renderType(type)
-        val declString = buildString {
+        val renderedType = HintsTypeRenderer.getInlayHintsTypeRenderer(element.analyze(), element).renderType(type)
+        val prefix = buildString {
             if (settings.SPACE_BEFORE_TYPE_COLON) {
                 append(" ")
             }
@@ -124,15 +80,15 @@ fun provideTypeHint(element: KtCallableDeclaration, offset: Int): List<HintType.
             if (settings.SPACE_AFTER_TYPE_COLON) {
                 append(" ")
             }
-
-            append(renderType)
         }
 
-        val inlayInfo =
-            InlayInfo(declString, offset, isShowOnlyIfExistedBefore = false, isFilterByBlacklist = true, relatesToPrecedingText = true)
-        listOf(HintType.TypedInlayInfoDetails(inlayInfo, type))
+        val inlayInfo = InlayInfo(
+            text = "", offset = offset,
+            isShowOnlyIfExistedBefore = false, isFilterByBlacklist = true, relatesToPrecedingText = true
+        )
+        return InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail(prefix)) + renderedType)
     } else {
-        emptyList()
+        null
     }
 }
 

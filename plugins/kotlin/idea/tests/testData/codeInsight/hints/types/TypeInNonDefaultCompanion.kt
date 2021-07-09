@@ -5,4 +5,4 @@ class A {
         fun provideInA() = InA()
     }
 }
-val inA<# : A.N.InA #> = A.provideInA()
+val inA<# [:  A.N.InA] #> = A.provideInA()

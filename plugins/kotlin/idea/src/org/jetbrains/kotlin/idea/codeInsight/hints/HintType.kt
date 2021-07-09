@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getRet
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("UnstableApiUsage")
 enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
@@ -50,7 +49,7 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
             (elem as? KtNamedFunction)?.let { namedFunc ->
                 namedFunc.valueParameterList?.let { paramList ->
-                    return provideTypeHint(namedFunc, paramList.endOffset)
+                    provideTypeHint(namedFunc, paramList.endOffset)?.let { return listOf(it) }
                 }
             }
             return emptyList()
@@ -67,7 +66,7 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
             (elem as? KtParameter)?.let { param ->
                 param.nameIdentifier?.let { ident ->
-                    return provideTypeHint(param, ident.endOffset)
+                    provideTypeHint(param, ident.endOffset)?.let { return listOf(it) }
                 }
             }
             return emptyList()
@@ -96,8 +95,10 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
             elem is KtExpression && elem !is KtFunctionLiteral && !elem.isNameReferenceInCall()
 
         override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
-            if (elem !is KtExpression) return emptyList()
-            return provideLambdaReturnValueHints(elem)
+            elem.safeAs<KtExpression>()?.let { expression ->
+                provideLambdaReturnValueHints(expression)?.let { return listOf(it) }
+            }
+            return emptyList()
         }
     },
 
@@ -108,8 +109,8 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         override fun isApplicable(elem: PsiElement) = elem is KtFunctionLiteral
 
         override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
-            ((elem as? KtFunctionLiteral)?.parent as? KtLambdaExpression)?.let {
-                return provideLambdaImplicitHints(it)
+            elem.safeAs<KtFunctionLiteral>()?.parent.safeAs<KtLambdaExpression>()?.let { expression ->
+                provideLambdaImplicitHints(expression)?.let { return listOf(it) }
             }
             return emptyList()
         }
@@ -134,29 +135,25 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         }
 
         fun resolveToEnabled(elem: PsiElement?): HintType? {
-
-            val resolved = elem?.let { resolve(it) } ?: return null
-            return if (resolved.enabled) {
-                resolved
-            } else {
-                null
-            }
+            return elem?.let { resolve(it) }?.takeIf { it.enabled }
         }
     }
 
     abstract fun isApplicable(elem: PsiElement): Boolean
     open fun provideHints(elem: PsiElement): List<InlayInfo> = emptyList()
     open fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
-        return provideHints(elem).map(::InlayInfoDetails)
+        return provideHints(elem).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
     }
-
-    open class InlayInfoDetails(open val inlayInfo: InlayInfo)
-
-    data class PsiInlayInfoDetails(override val inlayInfo: InlayInfo, val element: PsiElement): InlayInfoDetails(inlayInfo)
-
-    data class TypedInlayInfoDetails(override val inlayInfo: InlayInfo, val type: KotlinType): InlayInfoDetails(inlayInfo)
 
     val option = Option("SHOW_${this.name}", this.showDesc, defaultEnabled)
     val enabled
         get() = option.get()
 }
+
+data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>)
+
+sealed class InlayInfoDetail(val text: String)
+
+class TextInlayInfoDetail(text: String): InlayInfoDetail(text)
+class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
+class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)

@@ -1,5 +1,5 @@
 // MODE: return
 val x = run {
     println("foo")
-    1<# ^run #>
+    1<# [^ run] #>
 }
