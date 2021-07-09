@@ -125,15 +125,14 @@ internal class PackageManagementPanel(
                     currentTargetModules = data.targetModules,
                     traceInfo = data.traceInfo
                 )
-                withContext(Dispatchers.AppUI) {
-                    modulesTree.display(
-                        ModulesTree.ViewModel(
-                            treeModel = treeModel,
-                            traceInfo = data.traceInfo,
-                            pendingSelectionPath = selectionPath
-                        )
+
+                modulesTree.display(
+                    ModulesTree.ViewModel(
+                        treeModel = treeModel,
+                        traceInfo = data.traceInfo,
+                        pendingSelectionPath = selectionPath
                     )
-                }
+                )
             }
             .launchIn(this)
 
