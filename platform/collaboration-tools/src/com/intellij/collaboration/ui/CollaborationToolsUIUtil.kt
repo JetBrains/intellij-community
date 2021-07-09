@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
@@ -82,4 +83,14 @@ object CollaborationToolsUIUtil {
     ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
     return this
   }
+
+  /**
+   * Removes http(s) protocol and trailing slash from given [url]
+   */
+  @Suppress("HttpUrlsUsage")
+  @NlsSafe
+  fun cleanupUrl(@NlsSafe url: String): String = url
+    .removePrefix("https://")
+    .removePrefix("http://")
+    .removeSuffix("/")
 }
