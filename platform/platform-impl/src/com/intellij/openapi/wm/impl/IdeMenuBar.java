@@ -370,6 +370,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     doUpdateMenuActions(forceRebuild, ActionManager.getInstance());
   }
 
+  public void updateMenuActionsLazily(boolean forceRebuild) {
+    doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
+  }
+
   private void doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager) {
     boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
 
