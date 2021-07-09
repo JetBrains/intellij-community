@@ -93,16 +93,27 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   protected void addUsageTypes(@NotNull List<? super String> strings) {
     super.addUsageTypes(strings);
     if (isIncludeOverloadUsages) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.overloaded.methods.usages"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.overloaded.methods.usages.cap":
+                                             "find.usages.panel.title.overloaded.methods.usages"));
     }
+
     if (isImplementingMethods) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.implementing.methods"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.implementing.methods.cap" :
+                                             "find.usages.panel.title.implementing.methods"));
     }
+
     if (isOverridingMethods) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.overriding.methods"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.overriding.methods.cap" :
+                                             "find.usages.panel.title.overriding.methods"));
     }
+
     if (isSearchForBaseMethod) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.base.methods"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.base.methods.cap" :
+                                             "find.usages.panel.title.base.methods"));
     }
   }
 }

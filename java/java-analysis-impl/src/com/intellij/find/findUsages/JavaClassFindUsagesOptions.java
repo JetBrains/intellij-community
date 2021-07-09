@@ -74,13 +74,19 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
       strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
     if (isDerivedClasses) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.derived.classes"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.derived.classes.cap" :
+                                             "find.usages.panel.title.derived.classes"));
     }
     if (isImplementingClasses) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.implementing.classes"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.implementing.classes.cap" :
+                                             "find.usages.panel.title.implementing.classes"));
     }
     if (isDerivedInterfaces) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.derived.interfaces"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.derived.interfaces.cap" :
+                                             "find.usages.panel.title.derived.interfaces"));
     }
   }
 
