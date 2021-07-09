@@ -38,7 +38,7 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
   public void testOpeningEditorWithLongLine() {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeat(LOREM_IPSUM, 30000));
 
-    PlatformTestUtil.startPerformanceTest("Editor creation", 1500, () -> {
+    PlatformTestUtil.startPerformanceTest("Editor creation", 2000, () -> {
       Editor editor = EditorFactory.getInstance().createEditor(document);
       try {
         EditorTestUtil.setEditorVisibleSize(editor, 100, 100);
