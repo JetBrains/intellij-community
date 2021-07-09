@@ -49,7 +49,7 @@ import java.util.function.Supplier;
 
 final class InspectionPopupManager {
 
-  private final ExtensionPointName<InspectionPopupExtension> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupExtension");
+  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 
@@ -302,8 +302,8 @@ final class InspectionPopupManager {
 
       String msg = null;
 
-      for (InspectionPopupExtension extension: EP_NAME.getExtensionList()) {
-        msg = extension.getMessage(myEditor);
+      for (InspectionPopupLevelChangePolicy extension: EP_NAME.getExtensionList()) {
+        msg = extension.getUnavailabilityReason(myEditor);
         if (msg != null) {
           break;
         }

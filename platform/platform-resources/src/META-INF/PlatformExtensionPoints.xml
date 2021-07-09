@@ -434,6 +434,6 @@
 
     <extensionPoint name="contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"/>
 
-    <extensionPoint name="inspectionPopupExtension" interface="com.intellij.openapi.editor.impl.InspectionPopupExtension" dynamic="true"/>
+    <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

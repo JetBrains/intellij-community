@@ -4,9 +4,10 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public interface InspectionPopupExtension {
-  @Nls @Nullable String getMessage(Editor editor);
+public interface InspectionPopupLevelChangePolicy {
+  @Nls @Nullable String getUnavailabilityReason(@NotNull Editor editor);
 }
