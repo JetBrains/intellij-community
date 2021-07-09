@@ -1113,12 +1113,18 @@ public final class PyUtil {
     ApplicationManager.getApplication().runWriteAction(
       () -> {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (ContentEntry entry : model.getContentEntries()) {
-          final VirtualFile file = entry.getFile();
-          for (VirtualFile root : roots) {
+        for (VirtualFile root : roots) {
+          boolean added = false;
+          for (ContentEntry entry : model.getContentEntries()) {
+            final VirtualFile file = entry.getFile();
             if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
               entry.addSourceFolder(root, false);
+              added = true;
             }
+          }
+
+          if (!added) {
+            model.addContentEntry(root).addSourceFolder(root, false);
           }
         }
         model.commit();
@@ -1140,6 +1146,10 @@ public final class PyUtil {
             if (roots.contains(folder.getFile())) {
               entry.removeSourceFolder(folder);
             }
+          }
+
+          if (roots.contains(entry.getFile()) && entry.getSourceFolders().length == 0) {
+            model.removeContentEntry(entry);
           }
         }
         model.commit();
