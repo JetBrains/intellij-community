@@ -20,7 +20,7 @@ import javax.swing.JPanel
 import javax.swing.JSpinner
 import javax.swing.text.DefaultFormatter
 
-abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElement, ExpressionType> :
+abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElement, ExpressionType, TypeComputationContext> :
   InlayHintsProvider<AbstractCallChainHintsProvider.Settings> {
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? {
@@ -37,6 +37,8 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
         data class ExpressionWithType(val expression: PsiElement, val type: ExpressionType)
 
+        val context = getTypeComputationContext(globalDotQualifiedExpression)
+
         var someTypeIsUnknown = false
         val reversedChain =
           generateSequence<PsiElement>(globalDotQualifiedExpression) {
@@ -44,9 +46,9 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
           }
             .drop(1) // Except last to avoid builder.build() which has obvious type
             .filter { it.nextSibling.castSafelyTo<PsiWhiteSpace>()?.textContains('\n') == true }
-            .map { it to it.getType() }
+            .map { it to it.getType(context) }
             .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }
-            .map { (expression, type) ->  ExpressionWithType(expression, type!!) }
+            .map { (expression, type) -> ExpressionWithType(expression, type!!) }
             .windowed(2, partialWindows = true) { it.first() to it.getOrNull(1) }
             .filter { (expressionWithType, prevExpressionWithType) ->
               if (prevExpressionWithType == null) {
@@ -65,7 +67,12 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
         if (reversedChain.asSequence().distinctBy { it.type }.count() < settings.uniqueTypeCount) return true
 
         for ((expression, type) in reversedChain) {
-          sink.addInlineElement(expression.textRange.endOffset, true, type.getInlayPresentation(factory, file.project), false)
+          sink.addInlineElement(
+            expression.textRange.endOffset,
+            true,
+            type.getInlayPresentation(expression, factory, file.project, context),
+            false
+          )
         }
         return true
       }
@@ -110,9 +117,14 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     }
   }
 
-  protected abstract fun ExpressionType.getInlayPresentation(factory: PresentationFactory, project: Project): InlayPresentation
+  protected abstract fun ExpressionType.getInlayPresentation(
+    expression: PsiElement,
+    factory: PresentationFactory,
+    project: Project,
+    context: TypeComputationContext
+  ): InlayPresentation
 
-  protected abstract fun PsiElement.getType(): ExpressionType?
+  protected abstract fun PsiElement.getType(context: TypeComputationContext): ExpressionType?
 
   protected abstract val dotQualifiedClass: Class<DotQualifiedExpression>
 
@@ -124,6 +136,8 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
   protected abstract fun DotQualifiedExpression.getParentDotQualifiedExpression(): DotQualifiedExpression?
 
   protected abstract fun PsiElement.skipParenthesesAndPostfixOperatorsDown(): PsiElement?
+
+  protected abstract fun getTypeComputationContext(globalDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
 
   private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 

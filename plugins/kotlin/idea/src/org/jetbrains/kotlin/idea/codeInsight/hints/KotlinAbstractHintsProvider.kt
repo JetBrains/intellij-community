@@ -47,7 +47,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     }
 
     companion object {
-        private fun getInlayPresentationForInlayInfoDetails(
+        fun getInlayPresentationForInlayInfoDetails(
             infoDetails: InlayInfoDetails,
             factory: PresentationFactory,
             project: Project,

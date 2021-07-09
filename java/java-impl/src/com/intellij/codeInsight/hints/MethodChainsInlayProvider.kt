@@ -11,8 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.siyeh.ig.psiutils.ExpressionUtils
 
-class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallExpression, PsiType>() {
-  override fun PsiType.getInlayPresentation(factory: PresentationFactory, project: Project): InlayPresentation {
+class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallExpression, PsiType, Unit>() {
+  override fun PsiType.getInlayPresentation(
+    expression: PsiElement,
+    factory: PresentationFactory,
+    project: Project,
+    context: Unit
+  ): InlayPresentation {
     val presentation = JavaTypeHintsPresentationFactory(factory, 3).typeHint(this)
     return InsetPresentation(MenuOnClickPresentation(presentation, project) {
       val provider = this@MethodChainsInlayProvider
@@ -20,12 +25,16 @@ class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallEx
     }, left = 1)
   }
 
-  override fun PsiElement.getType(): PsiType? {
+  override fun PsiElement.getType(context: Unit): PsiType? {
     return (this as? PsiExpression)?.type
   }
 
   override val dotQualifiedClass: Class<PsiMethodCallExpression>
     get() = PsiMethodCallExpression::class.java
+
+  override fun getTypeComputationContext(globalDotQualifiedExpression: PsiMethodCallExpression) {
+    // Java implementation doesn't use any additional type computation context
+  }
 
   override val previewText: String?
     get() = null
