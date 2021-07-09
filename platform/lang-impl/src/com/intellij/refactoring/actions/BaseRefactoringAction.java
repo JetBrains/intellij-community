@@ -51,6 +51,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
                                                         @NotNull String place) {
     if (ActionPlaces.isPopupPlace(place)) {
       final RefactoringActionHandler handler = getHandler(context);
+      if (handler == null) return false;
       if (handler instanceof ContextAwareActionHandler) {
         ContextAwareActionHandler contextAwareActionHandler = (ContextAwareActionHandler)handler;
         if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
