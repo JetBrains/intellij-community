@@ -39,7 +39,6 @@ import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -76,13 +75,6 @@ object GHUIUtil {
       GithubIssueState.open -> GithubBundle.message("issue.state.open")
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
-
-  fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    component.addPropertyChangeListener("UI", PropertyChangeListener {
-      listener.invoke(component)
-    })
-    listener.invoke(component)
-  }
 
   fun focusPanel(panel: JComponent) {
     val focusManager = IdeFocusManager.findInstanceByComponent(panel)

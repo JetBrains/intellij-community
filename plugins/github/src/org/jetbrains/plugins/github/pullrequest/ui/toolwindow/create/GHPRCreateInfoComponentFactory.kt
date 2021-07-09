@@ -48,7 +48,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -131,7 +130,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       emptyText.text = GithubBundle.message("pull.request.create.title")
       lineWrap = true
     }.also {
-      GHUIUtil.overrideUIDependentProperty(it) {
+      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         font = UIUtil.getLabelFont()
       }
       CollaborationToolsUIUtil.registerFocusActions(it)
@@ -143,7 +142,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
     }.also {
-      GHUIUtil.overrideUIDependentProperty(it) {
+      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
         font = UIUtil.getLabelFont()
       }
       CollaborationToolsUIUtil.registerFocusActions(it)

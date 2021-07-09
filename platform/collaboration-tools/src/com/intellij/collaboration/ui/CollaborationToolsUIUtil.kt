@@ -8,6 +8,7 @@ import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.KeyStroke
@@ -59,5 +60,15 @@ object CollaborationToolsUIUtil {
     component.registerKeyboardAction({ component.transferFocusBackward() },
                                      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK),
                                      JComponent.WHEN_FOCUSED)
+  }
+
+  /**
+   * Add [listener] that will be invoked on each "UI" property change
+   */
+  fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
+    component.addPropertyChangeListener("UI", PropertyChangeListener {
+      listener.invoke(component)
+    })
+    listener.invoke(component)
   }
 }
