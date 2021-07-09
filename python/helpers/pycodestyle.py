@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.7.0'  # patched PY-37054
+__version__ = '2.7.0'  # patched PY-37054, #989, #990, #1002
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -163,6 +163,7 @@ STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
     )))
 )
 DUNDER_REGEX = re.compile(r'^__([^\s]+)__ = ')
+MATCH_CASE_REGEX = re.compile(r'^\s*\b(?:match|case)(\s*)(?=.*\:)')
 
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
@@ -493,6 +494,16 @@ def whitespace_around_keywords(logical_line):
         elif len(after) > 1:
             yield match.start(2), "E271 multiple spaces after keyword"
 
+    if sys.version_info >= (3, 10):
+        match = MATCH_CASE_REGEX.match(logical_line)
+        if match:
+            if match[1] == ' ':
+                return
+            if match[1] == '':
+                yield match.start(1), "E275 missing whitespace after keyword"
+            else:
+                yield match.start(1), "E271 multiple spaces after keyword"
+
 
 @register_check
 def missing_whitespace_after_import_keyword(logical_line):
@@ -811,14 +822,21 @@ def whitespace_before_parameters(logical_line, tokens):
     prev_type, prev_text, __, prev_end, __ = tokens[0]
     for index in range(1, len(tokens)):
         token_type, text, start, end, __ = tokens[index]
-        if (token_type == tokenize.OP and
+        if (
+            token_type == tokenize.OP and
             text in '([' and
             start != prev_end and
             (prev_type == tokenize.NAME or prev_text in '}])') and
             # Syntax "class A (B):" is allowed, but avoid it
             (index < 2 or tokens[index - 2][1] != 'class') and
-                # Allow "return (a.foo for a in range(5))"
-                not keyword.iskeyword(prev_text)):
+            # Allow "return (a.foo for a in range(5))"
+            not keyword.iskeyword(prev_text) and
+            # 'match' and 'case' are only soft keywords
+            (
+                sys.version_info < (3, 9) or
+                not keyword.issoftkeyword(prev_text)
+            )
+        ):
             yield prev_end, "E211 whitespace before '%s'" % text
         prev_type = token_type
         prev_text = text
@@ -938,8 +956,13 @@ def missing_whitespace_around_operator(logical_line, tokens):
                 # Check if the operator is used as a binary operator
                 # Allow unary operators: -123, -x, +1.
                 # Allow argument unpacking: foo(*args, **kwargs).
-                if (prev_text in '}])' if prev_type == tokenize.OP
-                        else prev_text not in KEYWORDS):
+                if prev_type == tokenize.OP and prev_text in '}])' or (
+                    prev_type != tokenize.OP and
+                    prev_text not in KEYWORDS and (
+                        sys.version_info < (3, 9) or
+                        not keyword.issoftkeyword(prev_text)
+                    )
+                ):
                     need_space = None
             elif text in WS_OPTIONAL_OPERATORS:
                 need_space = None
