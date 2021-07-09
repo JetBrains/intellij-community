@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -113,6 +114,12 @@ internal class SearchEverywhereMLStatisticsCollector {
             val action = it.element.value.action
             result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
           }
+        }
+        else if (it.element is PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
+          val elementId = elementIdProvider.getId(it.element)
+          val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
+
+          // TODO: Add itemInfo to the result map
         }
         result
       }
