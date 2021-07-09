@@ -492,8 +492,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @Nullable final IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter : id ->
-      projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id) && (restrictedIds == null || restrictedIds.contains(id));
+    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                   accessibleFileFilter.test(id) &&
+                                   (restrictedIds == null || restrictedIds.contains(id));
     Condition<? super K> keyChecker = __ -> {
       ProgressManager.checkCanceled();
       return true;
