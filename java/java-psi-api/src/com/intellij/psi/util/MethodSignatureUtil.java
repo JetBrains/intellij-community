@@ -5,14 +5,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class MethodSignatureUtil {
   private MethodSignatureUtil() { }
@@ -42,6 +41,14 @@ public final class MethodSignatureUtil {
         return method1 == method2 || (method1 != null && method2 != null && areSignaturesEqualLightweight(method1, method2) && areErasedParametersEqual(method1, method2));
       }
     };
+
+  public static @NotNull <V> Map<MethodSignature, V> createErasedMethodSignatureMap() {
+    return new Object2ObjectOpenCustomHashMap<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
+  }
+
+  public static @NotNull Set<MethodSignature> createErasedMethodSignatureSet() {
+    return new ObjectOpenCustomHashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
+  }
 
   /**
    * def: (8.4.2 Method Signature) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of m2 or m2 is a subsignature of m1.

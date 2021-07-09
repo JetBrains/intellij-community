@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +52,7 @@ public final class PsiSuperMethodUtil {
 
   @NotNull
   public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
-    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
     for (int i = 0; i < supers.length; i++) {
