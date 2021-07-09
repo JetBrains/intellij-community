@@ -54,7 +54,7 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
 
     private fun getFunction(key: PsiElement): SimpleFunctionDescriptor? {
         val ktFunctionLikeSymbol = key.getKtSymbolOfTypeOrNull<KtFunctionLikeSymbol>() ?: return null
-        return ktFunctionLikeSymbol.toDeclarationDescriptor(context).safeAs()
+        return ktFunctionLikeSymbol.toDeclarationDescriptor(context) as? SimpleFunctionDescriptor
     }
 
     private fun getConstructor(key: PsiElement): ConstructorDescriptor? {

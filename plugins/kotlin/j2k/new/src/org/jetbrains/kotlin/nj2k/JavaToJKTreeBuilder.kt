@@ -787,7 +787,7 @@ class JavaToJKTreeBuilder constructor(
         fun PsiAnnotation.toJK(): JKAnnotation = JKAnnotation(
             symbolProvider.provideSymbolForReference<JKSymbol>(
                 nameReferenceElement ?: throwCanNotConvertError()
-            ).safeAs() ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: throwCanNotConvertError(), typeFactory),
+            ).safeAs<JKClassSymbol>() ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: throwCanNotConvertError(), typeFactory),
             parameterList.attributes.map { parameter ->
                 if (parameter.nameIdentifier != null) {
                     JKAnnotationNameParameter(
