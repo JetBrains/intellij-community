@@ -7,8 +7,8 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xopt-in=kotlin.ExperimentalStdlibApi -Xopt-in=kotlinx.coroutines.FlowPreview -Xopt-in=kotlin.time.ExperimentalTime -Xopt-in=kotlin.RequiresOptIn" />
         </compilerSettings>
         <compilerArguments>
-          <option name="languageVersion" value="1.4" />
-          <option name="apiVersion" value="1.4" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
         </compilerArguments>
       </configuration>
     </facet>

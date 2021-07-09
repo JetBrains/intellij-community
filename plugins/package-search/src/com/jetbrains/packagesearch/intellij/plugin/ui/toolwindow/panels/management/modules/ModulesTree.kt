@@ -14,8 +14,11 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -75,7 +78,7 @@ internal class ModulesTree(
         val traceInfo: TraceInfo
     )
 
-    override suspend fun display(viewModel: ViewModel) {
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
         if (model.root == null || model.getChildCount(model.root) == 0)
             targetModuleSetter.setTargetModules(getTargetModulesFrom(viewModel.pendingSelectionPath))
 
