@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.*
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -25,16 +26,13 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.event.ContainerEvent
-import java.awt.event.ContainerListener
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
-import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 /**
  * Tool window header that shows tabs and actions from its content.
@@ -53,7 +51,7 @@ internal class SingleContentLayout(
 
   private var tabAdapter: TabAdapter? = null
   private val toolbars = mutableMapOf<ActionToolbarPosition, ActionToolbar>()
-  private val wrapper = NonOpaquePanel(HorizontalLayout(0))
+  private var wrapper: JComponent? = null
 
   override fun update() {
     super.update()
@@ -124,9 +122,16 @@ internal class SingleContentLayout(
 
     toolbars.forEach { (_, toolbar) -> myUi.tabComponent.add(toolbar.component) }
 
-    wrapper.removeAll()
-    ToolWindowContentUi.initMouseListeners(wrapper, myUi, true)
-    myUi.tabComponent.add(wrapper)
+    wrapper = NonOpaquePanel(HorizontalLayout(0)).also {
+      MyRedispatchMouseEventListener { e ->
+        myUi.tabComponent.parent?.let { westPanel ->
+          westPanel.dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, westPanel))
+        }
+      }.installOn(it)
+      MouseDragHelper.setComponentDraggable(it, true)
+      ToolWindowContentUi.initMouseListeners(it, myUi, true)
+      myUi.tabComponent.add(it)
+    }
 
     isSingleContentView = true
     supplier.init(toolbars[ActionToolbarPosition.LEFT], toolbars[ActionToolbarPosition.RIGHT])
@@ -159,8 +164,8 @@ internal class SingleContentLayout(
     }
     toolbars.clear()
 
-    myUi.tabComponent.remove(wrapper)
-    wrapper.removeAll()
+    myUi.tabComponent.remove(wrapper ?: error("Wrapper must not be null"))
+    wrapper = null
 
     isSingleContentView = false
     adapter.content.getSupplier()?.reset()
@@ -206,7 +211,7 @@ internal class SingleContentLayout(
         toolbarWidth += bounds.width
       }
 
-      wrapper.bounds = Rectangle(toolbarWidth, 0, maxOf(component.width - rightToolbarWidth - toolbarWidth, 0), component.height)
+      wrapper?.bounds = Rectangle(toolbarWidth, 0, maxOf(component.width - rightToolbarWidth - toolbarWidth, 0), component.height)
     }
   }
 
@@ -635,5 +640,29 @@ internal class SingleContentLayout(
     override fun createCustomComponent(presentation: Presentation): JComponent {
       return NonOpaquePanel()
     }
+  }
+
+  private class MyRedispatchMouseEventListener(
+    val redispatch: (MouseEvent) -> Unit
+  ) : MouseListener, MouseMotionListener {
+
+    fun installOn(component: Component) {
+      component.addMouseListener(this)
+      component.addMouseMotionListener(this)
+    }
+
+    override fun mouseClicked(e: MouseEvent) = redispatch(e)
+
+    override fun mousePressed(e: MouseEvent) = redispatch(e)
+
+    override fun mouseReleased(e: MouseEvent) = redispatch(e)
+
+    override fun mouseEntered(e: MouseEvent) = redispatch(e)
+
+    override fun mouseExited(e: MouseEvent) = redispatch(e)
+
+    override fun mouseDragged(e: MouseEvent) = redispatch(e)
+
+    override fun mouseMoved(e: MouseEvent) = redispatch(e)
   }
 }

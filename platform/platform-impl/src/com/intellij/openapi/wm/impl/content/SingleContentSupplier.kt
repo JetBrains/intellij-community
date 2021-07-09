@@ -62,7 +62,7 @@ interface SingleContentSupplier {
    * @param wrapper additional empty panel between toolbar and close action where something can be put
    */
   @JvmDefault
-  fun customize(wrapper: JComponent) {
+  fun customize(wrapper: JComponent?) {
   }
 
   /**
