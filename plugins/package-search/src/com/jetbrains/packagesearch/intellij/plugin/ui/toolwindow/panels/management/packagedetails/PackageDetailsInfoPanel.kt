@@ -152,7 +152,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
     private fun displayDescriptionIfAny(remoteInfo: ApiStandardPackage) {
         @Suppress("HardCodedStringLiteral") // Comes from the API, it's @NlsSafe
         val description = remoteInfo.description
-        if (description.isNullOrBlank() || description == name) {
+        if (description.isNullOrBlank() || description == remoteInfo.name) {
             descriptionLabel.isVisible = false
             return
         }
@@ -204,25 +204,26 @@ internal class PackageDetailsInfoPanel : JPanel() {
     }
 
     private fun displayGitHubInfoIfAny(scmInfoLink: InfoLink.ScmRepository?) {
-        if (scmInfoLink !is InfoLink.ScmRepository.GitHub) {
+        if (scmInfoLink !is InfoLink.ScmRepository.GitHub || !scmInfoLink.hasBrowsableUrl()) {
             gitHubPanel.isVisible = false
             return
         }
 
+        gitHubPanel.isVisible = true
         gitHubPanel.text = scmInfoLink.displayNameCapitalized
         gitHubPanel.url = scmInfoLink.url
         gitHubPanel.stars = scmInfoLink.stars
-        gitHubPanel.isVisible = true
     }
 
     private fun displayLicensesIfAny(licenseInfoLink: List<InfoLink.License>) {
-        if (licenseInfoLink.isEmpty()) {
+        // TODO move this to a separate component, handle multiple licenses
+        val mainLicense = licenseInfoLink.firstOrNull()
+        if (mainLicense == null || !mainLicense.hasBrowsableUrl()) {
             licensesLinkLabel.isVisible = false
             return
         }
 
-        // TODO move this to a separate component, handle multiple licenses
-        val mainLicense = licenseInfoLink.first()
+        licensesLinkLabel.isVisible = true
         licensesLinkLabel.url = mainLicense.url
         licensesLinkLabel.setDisplayText(
             if (mainLicense.licenseName != null) {
@@ -234,12 +235,10 @@ internal class PackageDetailsInfoPanel : JPanel() {
         licensesLinkLabel.urlClickedListener = {
             PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.License, mainLicense.url)
         }
-
-        licensesLinkLabel.isVisible = true
     }
 
     private fun displayProjectWebsiteIfAny(projectWebsiteLink: InfoLink.ProjectWebsite?) {
-        if (projectWebsiteLink == null) {
+        if (projectWebsiteLink == null || !projectWebsiteLink.hasBrowsableUrl()) {
             projectWebsiteLinkLabel.isVisible = false
             return
         }
@@ -253,7 +252,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
     }
 
     private fun displayDocumentationIfAny(documentationLink: InfoLink.Documentation?) {
-        if (documentationLink == null) {
+        if (documentationLink == null || !documentationLink.hasBrowsableUrl()) {
             documentationLinkLabel.isVisible = false
             return
         }
@@ -267,7 +266,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
     }
 
     private fun displayReadmeIfAny(readmeLink: InfoLink.Readme?) {
-        if (readmeLink == null) {
+        if (readmeLink == null || !readmeLink.hasBrowsableUrl()) {
             readmeLinkLabel.isVisible = false
             return
         }
