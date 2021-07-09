@@ -208,8 +208,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
             }
           }
         }
-        myCurrResult = currSettings;
-        myTracker.incModificationCount();
+        if (myCurrResult != currSettings) {
+          myCurrResult = currSettings;
+          myTracker.incModificationCount();
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation ended for " + file.getName());
         }
