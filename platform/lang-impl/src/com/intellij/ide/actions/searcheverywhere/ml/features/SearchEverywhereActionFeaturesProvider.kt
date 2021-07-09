@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.ApplicationManager
 
 internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
@@ -31,22 +32,18 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
-                                  localSummary: ActionsLocalSummary,
-                                  globalSummary: ActionsGlobalSummaryManager): Map<String, Any> {
+                                  queryLength: Int): Map<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
       // not an action/option
       return emptyMap()
     }
-    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, queryLength, localSummary, globalSummary)
+    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, queryLength)
   }
 
   private fun getActionsOrOptionsFeatures(priority: Int,
                                           currentTime: Long,
                                           matchedValue: GotoActionModel.MatchedValue,
-                                          queryLength: Int,
-                                          localSummary: ActionsLocalSummary?,
-                                          globalSummary: ActionsGlobalSummaryManager?): Map<String, Any> {
+                                          queryLength: Int): Map<String, Any> {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = hashMapOf(
       TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
@@ -77,13 +74,14 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     data[IS_ENABLED_KEY] = presentation.isEnabled
     data[WEIGHT_KEY] = presentation.weight
 
-
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
+    val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
     localSummary?.getActionStatsById(actionId)?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
       data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
     }
 
+    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
     globalSummary?.getActionStatistics(actionId)?.let {
       data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
       data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)

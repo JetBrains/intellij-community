@@ -18,9 +18,7 @@ internal abstract class SearchEverywhereElementFeaturesProvider {
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
-                                  localSummary: ActionsLocalSummary,
-                                  globalSummary: ActionsGlobalSummaryManager): Map<String, Any>
+                                  queryLength: Int): Map<String, Any>
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101

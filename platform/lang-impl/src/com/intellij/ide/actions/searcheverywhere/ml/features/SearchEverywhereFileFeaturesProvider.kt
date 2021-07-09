@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiElement
 
@@ -17,9 +15,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  queryLength: Int,
-                                  localSummary: ActionsLocalSummary,
-                                  globalSummary: ActionsGlobalSummaryManager): Map<String, Any> {
+                                  queryLength: Int): Map<String, Any> {
     if (element !is PsiElement)
       return emptyMap()
 

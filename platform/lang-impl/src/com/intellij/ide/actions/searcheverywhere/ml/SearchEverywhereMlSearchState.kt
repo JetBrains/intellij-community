@@ -28,12 +28,9 @@ internal class SearchEverywhereMlSearchState(
                          contributor: SearchEverywhereContributor<*>,
                          queryLength: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
-      val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-      val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-
       val features = mutableMapOf<String, Any>()
       SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
-        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary))
+        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength))
       }
 
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
