@@ -16,7 +16,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int): Map<String, Any> {
-    if (element !is PsiElement)
+    if (element !is PSIPresentationBgRendererWrapper.PsiItemWithPresentation)
       return emptyMap()
 
     return getPsiElementFeatures(element, currentTime)
