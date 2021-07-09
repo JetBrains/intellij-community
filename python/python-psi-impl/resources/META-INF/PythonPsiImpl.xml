@@ -47,6 +47,8 @@
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyKeywordArgument"
                              implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
+    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyKeywordPattern"
+                             implementationClass="com.jetbrains.python.psi.impl.references.PyKeywordPatternManipulator"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
 
     <!-- PyFunctionTypeAnnotation -->

@@ -261,7 +261,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final String text = element.getText();
     TextRange rangeInElement = reference.getRangeInElement();
     String refText = text;  // text of the part we're working with
-    if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0) {
+    if (rangeInElement.getStartOffset() >= 0 && rangeInElement.getEndOffset() > 0) {
       refText = rangeInElement.substring(text);
     }
 
