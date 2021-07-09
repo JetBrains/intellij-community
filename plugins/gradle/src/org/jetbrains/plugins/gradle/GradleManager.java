@@ -103,11 +103,14 @@ public final class GradleManager
   @Override
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return pair -> {
-      final Project project = pair.first;
-      final String projectPath = pair.second;
+      Project project = pair.first;
+      String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
+      String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
+
       GradleInstallationManager gradleInstallationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
-      File gradleHome = gradleInstallationManager.getGradleHome(project, projectPath);
+      File gradleHome = gradleInstallationManager.getGradleHome(project, rootProjectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
@@ -119,11 +122,10 @@ public final class GradleManager
         }
       }
 
-      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
         distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(projectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
+          GradleUtil.isGradleDefaultWrapperFilesExist(rootProjectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
       }
       else {
         distributionType =
@@ -135,8 +137,7 @@ public final class GradleManager
                                                                    distributionType,
                                                                    settings.getGradleVmOptions(),
                                                                    settings.isOfflineWork());
-      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
-      final String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
+      String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
       if (!StringUtil.isEmpty(javaHome)) {
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
