@@ -13,6 +13,7 @@ import java.util.*
 import java.util.stream.Stream
 
 private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
+const val SERVER_RELOAD_TOOLTIP_ID = "builtin.web.server.reload.on.save"
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
