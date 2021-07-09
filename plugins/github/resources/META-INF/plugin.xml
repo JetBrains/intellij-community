@@ -68,6 +68,8 @@
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
 
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
   </extensions>
@@ -162,6 +164,7 @@
 
     <group id="Github.PullRequest.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
+      <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="Github.PullRequest.Changes.Reload"/>
     </group>
 

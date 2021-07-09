@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
-public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
+abstract public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
@@ -36,7 +36,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       return;
     }
 
-    setTextAndDescription(e, log);
+    updateActionText(e, log);
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {
@@ -47,6 +47,8 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       e.getPresentation().setEnabled(changes != null && changes.length == 1 && changes[0] != null);
     }
   }
+
+  protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {}
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -69,4 +71,13 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
     }
   }
+
+  static class ShowDiff extends CompareRevisionsFromFileHistoryActionProvider {
+    @Override
+    protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {
+      setTextAndDescription(e, log);
+    }
+  }
+
+  static class ShowStandaloneDiff extends CompareRevisionsFromFileHistoryActionProvider {}
 }
