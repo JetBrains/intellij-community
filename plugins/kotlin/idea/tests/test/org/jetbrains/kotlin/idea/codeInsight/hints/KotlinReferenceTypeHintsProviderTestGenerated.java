@@ -103,6 +103,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/ImportedEnumEntry.kt");
     }
 
+    @TestMetadata("JavaFQName.kt")
+    public void testJavaFQName() throws Exception {
+        runTest("testData/codeInsight/hints/types/JavaFQName.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
