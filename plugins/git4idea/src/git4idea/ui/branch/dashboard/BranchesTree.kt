@@ -406,28 +406,29 @@ internal class FilteringBranchesTree(project: Project,
 
   fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = uiController.reloadBranches()
-    val treeState = project.service<BranchesTreeStateHolder>()
-    if (!initial) {
-      treeState.createNewState()
-    }
+    val treeState = if (initial) project.service<BranchesTreeStateHolder>().treeState else TreeState.createOn(tree, root)
     searchModel.updateStructure()
-    if (initial) {
-      treeState.applyStateToTreeOrTryToExpandAll()
+    if (treeState != null) {
+      treeState.applyTo(tree)
     }
     else {
-      treeState.applyStateToTree()
+      // expanding lots of nodes is a slow operation (and result is not very useful)
+      if (TreeUtil.hasManyNodes(tree, 30000)) {
+        TreeUtil.collapseAll(tree, 1)
+      }
+      else {
+        TreeUtil.expandAll(tree)
+      }
     }
-
     return rebuilded
   }
 
   fun refreshTree() {
-    val treeState = project.service<BranchesTreeStateHolder>()
-    treeState.createNewState()
+    val treeState = TreeState.createOn(tree, root)
     tree.selectionModel.clearSelection()
     refreshNodeDescriptorsModel()
     searchModel.updateStructure()
-    treeState.applyStateToTree()
+    treeState.applyTo(tree)
   }
 
   fun refreshNodeDescriptorsModel() {
@@ -471,46 +472,21 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 @Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private lateinit var branchesTree: FilteringBranchesTree
-  private lateinit var treeState: TreeState
+  private lateinit var _treeState: TreeState
+  val treeState get() = if (::_treeState.isInitialized) _treeState else null
 
   override fun getState(): TreeState? {
-    createNewState()
-    if (::treeState.isInitialized) {
-      return treeState
+    if (::branchesTree.isInitialized) {
+      _treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
+    }
+    if (::_treeState.isInitialized) {
+      return _treeState
     }
     return null
   }
 
   override fun loadState(state: TreeState) {
-    treeState = state
-  }
-
-  fun createNewState() {
-    if (::branchesTree.isInitialized) {
-      treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
-    }
-  }
-
-  fun applyStateToTree(ifNoStatePresent: () -> Unit = {}) {
-    if (!::branchesTree.isInitialized) return
-
-    if (::treeState.isInitialized) {
-      treeState.applyTo(branchesTree.tree)
-    }
-    else {
-      ifNoStatePresent()
-    }
-  }
-
-  fun applyStateToTreeOrTryToExpandAll() = applyStateToTree {
-    // expanding lots of nodes is a slow operation (and result is not very useful)
-    val tree = branchesTree.tree
-    if (TreeUtil.hasManyNodes(tree, 30000)) {
-      TreeUtil.collapseAll(tree, 1)
-    }
-    else {
-      TreeUtil.expandAll(tree)
-    }
+    _treeState = state
   }
 
   fun setTree(tree: FilteringBranchesTree) {
