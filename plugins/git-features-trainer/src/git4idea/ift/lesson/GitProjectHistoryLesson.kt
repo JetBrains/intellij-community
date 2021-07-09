@@ -79,7 +79,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.apply.user.filter"))
       text(GitLessonsBundle.message("git.project.history.click.filter.tooltip"),
-           LearningBalloonConfig(Balloon.Position.above, 250))
+           LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }

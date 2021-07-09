@@ -96,7 +96,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
-      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName)))
+      text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(secondFileName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 300))
       highlightVcsChange(secondFileName)
       triggerOnOneChangeIncluded(firstFileName)
@@ -114,7 +114,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       showOptionsTaskId = taskId
       text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
-           LearningBalloonConfig(Balloon.Position.above, 250))
+           LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight(false, false) { _: CommitOptionsPanel -> true }
       showWarningIfCommitWindowClosed()
     }

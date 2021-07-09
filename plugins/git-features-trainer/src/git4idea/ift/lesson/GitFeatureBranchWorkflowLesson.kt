@@ -103,7 +103,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       firstShowBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.1", strong(main), action(it)))
-      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 0))
       triggerOnBranchesPopupShown()
     }
 
@@ -158,13 +158,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       proceedLink()
     }
 
+    task {
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == main }
+    }
+
     lateinit var secondShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
       secondShowBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.2", strong(branchName), strong(main), action(it)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
-        ui.text == main
-      }
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
       triggerOnBranchesPopupShown()
     }
 
@@ -179,7 +181,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
       highlightListItemAndRehighlight { item -> item.toString().contains(checkoutAndRebaseText) }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
-      restoreState(secondShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
+      restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
       }
     }
