@@ -2,8 +2,10 @@
 package com.intellij.collaboration.ui.codereview.commits
 
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
@@ -13,26 +15,61 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.ListSelectionModel
-import javax.swing.ScrollPaneConstants
+import javax.swing.*
 
-class CommitsBrowserComponentFactory (private val project: Project) {
-  fun create(commitsModel: SingleValueModel<List<VcsCommitMetadata>>, onCommitSelected: (VcsCommitMetadata?) -> Unit): CommitsBrowserComponent {
+class CommitsBrowserComponentBuilder(private val project: Project,
+                                     private val commitsModel: SingleValueModel<List<VcsCommitMetadata>>) {
+  private var commitRenderer: ListCellRenderer<VcsCommitMetadata> = CommitsListCellRenderer()
+  private var showCommitDetailsPanel = true
+  private var onCommitSelected: (VcsCommitMetadata?) -> Unit = { /* do nothing */ }
+  private var emptyListText: String? = null
+  private var popupActions: Pair<ActionGroup, String/* place */>? = null
+
+  fun setCustomCommitRenderer(customRenderer: ListCellRenderer<VcsCommitMetadata>): CommitsBrowserComponentBuilder {
+    commitRenderer = customRenderer
+    return this
+  }
+
+  fun setEmptyCommitListText(@NlsContexts.StatusText emptyText: String): CommitsBrowserComponentBuilder {
+    this.emptyListText = emptyText
+    return this
+  }
+
+  fun installPopupActions(actionGroup: ActionGroup, place: String): CommitsBrowserComponentBuilder {
+    popupActions = actionGroup to place
+    return this
+  }
+
+  fun showCommitDetails(show: Boolean): CommitsBrowserComponentBuilder {
+    showCommitDetailsPanel = show
+    return this
+  }
+
+  fun onCommitSelected(onCommitSelected: (VcsCommitMetadata?) -> Unit): CommitsBrowserComponentBuilder {
+    this.onCommitSelected = onCommitSelected
+    return this
+  }
+
+  fun create(): JComponent {
     val commitsListModel = CollectionListModel(commitsModel.value)
 
     val commitsList = JBList(commitsListModel).apply {
+      emptyListText?.let { emptyText.text = it }
       selectionMode = ListSelectionModel.SINGLE_SELECTION
-      val renderer = CommitsListCellRenderer()
+      val renderer = commitRenderer
       cellRenderer = renderer
-      UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
-    }.also {
-      ScrollingUtil.installActions(it)
-      ListUiUtil.Selection.installSelectionOnFocus(it)
-      ListUiUtil.Selection.installSelectionOnRightClick(it)
+      if (renderer is JComponent)
+        UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
+    }.also { list ->
+      ScrollingUtil.installActions(list)
+      ListUiUtil.Selection.installSelectionOnFocus(list)
+      ListUiUtil.Selection.installSelectionOnRightClick(list)
 
-      ListSpeedSearch(it) { commit -> commit.subject }
+      ListSpeedSearch(list) { commit -> commit.subject }
+
+      popupActions?.let { pair ->
+        PopupHandler.installSelectionListPopup(list, pair.first, pair.second)
+      }
     }
 
     commitsModel.addAndInvokeListener {
@@ -46,7 +83,7 @@ class CommitsBrowserComponentFactory (private val project: Project) {
     }
 
     val commitDetailsModel = SingleValueModel<VcsCommitMetadata?>(null)
-    val commitDetailsComponent = createCommitDetailsComponent(commitDetailsModel)
+    val commitDetailsComponent = if (showCommitDetailsPanel) createCommitDetailsComponent(commitDetailsModel) else null
 
     commitsList.addListSelectionListener { e ->
       if (e.valueIsAdjusting) return@addListSelectionListener
@@ -59,7 +96,7 @@ class CommitsBrowserComponentFactory (private val project: Project) {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     }
 
-    val commitsBrowser = OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f).apply {
+    val commitsBrowserComponent = OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f).apply {
       firstComponent = commitsScrollPane
       secondComponent = commitDetailsComponent
 
@@ -71,12 +108,12 @@ class CommitsBrowserComponentFactory (private val project: Project) {
 
       val index = commitsList.selectedIndex
       commitDetailsModel.value = if (index != -1) commitsListModel.getElementAt(index) else null
-      commitsBrowser.validate()
-      commitsBrowser.repaint()
+      commitsBrowserComponent.validate()
+      commitsBrowserComponent.repaint()
       if (index != -1) ScrollingUtil.ensureRangeIsVisible(commitsList, index, index)
     }
 
-    return CommitsBrowserComponent(commitsBrowser, commitsList)
+    return commitsBrowserComponent
   }
 
   private fun createCommitDetailsComponent(model: SingleValueModel<VcsCommitMetadata?>): JComponent {
@@ -120,8 +157,3 @@ class CommitsBrowserComponentFactory (private val project: Project) {
     val COMMITS_LIST_KEY = Key.create<JList<VcsCommitMetadata>>("COMMITS_LIST")
   }
 }
-
-data class CommitsBrowserComponent(
-  val commitBrowser: JComponent,
-  val commitList: JBList<VcsCommitMetadata>
-)

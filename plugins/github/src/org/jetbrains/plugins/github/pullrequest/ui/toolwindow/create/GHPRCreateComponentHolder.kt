@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentFactory
+import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.DataManager
@@ -22,7 +22,10 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import com.intellij.ui.*
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
@@ -140,7 +143,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private fun checkUpdateHead() {
     val headRepo = directionModel.headRepo
-    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo, headRepo.gitRemoteUrlCoordinates.repository.currentBranch)
+    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo,
+                                                                                  headRepo.gitRemoteUrlCoordinates.repository.currentBranch)
   }
 
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
@@ -202,18 +206,11 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                                     GithubBundle.message("cannot.load.commits"),
                                                     commitsLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        val (commitBrowser, commitList) = CommitsBrowserComponentFactory(project).create(model) { commit ->
-          commitSelectionModel.value = commit
-        }
-
-        commitList.emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
-
-        PopupHandler.installSelectionListPopup(
-          commitList,
-          DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
-          "GHPRCommitsPopup")
-
-        commitBrowser
+        CommitsBrowserComponentBuilder(project, model)
+          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
+          .setEmptyCommitListText(GithubBundle.message("pull.request.does.not.contain.commits"))
+          .onCommitSelected { commitSelectionModel.value = it }
+          .create()
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(commitChangesLoadingModel,

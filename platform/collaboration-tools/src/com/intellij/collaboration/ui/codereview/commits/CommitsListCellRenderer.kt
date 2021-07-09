@@ -12,13 +12,16 @@ import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata> {
-
+class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
   private val nodeComponent = CommitNodeComponent().apply {
     foreground = DefaultColorGenerator().getColor(1)
   }
   private val messageComponent = SimpleColoredComponent()
-  val panel = BorderLayoutPanel().addToLeft(nodeComponent).addToCenter(messageComponent)
+
+  init {
+    addToLeft(nodeComponent)
+    addToCenter(messageComponent)
+  }
 
   override fun getListCellRendererComponent(list: JList<out VcsCommitMetadata>,
                                             value: VcsCommitMetadata?,
@@ -37,7 +40,7 @@ class CommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata> {
       index == size - 1 -> nodeComponent.type = CommitNodeComponent.Type.LAST
       else -> nodeComponent.type = CommitNodeComponent.Type.MIDDLE
     }
-    panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
-    return panel
+    this.background = UIUtil.getListBackground(isSelected, cellHasFocus)
+    return this
   }
 }
