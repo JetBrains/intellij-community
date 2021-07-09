@@ -121,6 +121,7 @@ class XDebugSessionTab3(
 
     mySingleContentSupplier = object : RunTabSupplier(toolbar) {
       override fun getContentActions(): List<AnAction> {
+        if (mySession == null) return super.getContentActions()
         val settings = DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), myUi.options.settingsActionsList.toList())
         registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
         settings.isPopup = true
