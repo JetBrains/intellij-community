@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -20,6 +22,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
+  private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
+
   protected ValueContainerMap<Key, Value> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   protected final Path myBaseStorageFile;
@@ -30,6 +34,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
+  private final boolean myEnableWal;
   @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
   public MapIndexStorage(Path storageFile,
@@ -37,7 +42,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null);
   }
 
   public MapIndexStorage(Path storageFile,
@@ -47,6 +52,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
                          boolean keyIsUniqueForIndexedFile,
                          boolean initialize,
                          boolean readOnly,
+                         boolean enableWal,
                          @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
@@ -54,6 +60,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     myDataExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myReadOnly = readOnly;
+    myEnableWal = enableWal;
     if (inputRemapping != null) {
       LOG.assertTrue(myReadOnly, "input remapping allowed only for read-only storage");
     } else {
@@ -112,6 +119,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     try {
       persistentMap = new PersistentMapImpl<>(PersistentMapBuilder
                                                 .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
+                                                .withWal(myEnableWal && ENABLE_WAL)
+                                                .setWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
                                                 .withReadonly(isReadOnly)
                                                 .withCompactOnClose(compactOnClose));
     }

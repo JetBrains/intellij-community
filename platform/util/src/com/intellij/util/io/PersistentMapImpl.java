@@ -83,6 +83,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private final PersistentEnumeratorBase<Key> myEnumerator;
   private final boolean myCompactOnClose;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
+  private final PersistentMapWal<Key, Value> myWal;
 
   @TestOnly
   public boolean isCorrupted() {
@@ -140,6 +141,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
+
+    Path walFile = file.resolveSibling(file.getFileName().toString() + ".wal");
+    myWal = builder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, walFile, builder.getWalExecutor()) : null;
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
@@ -334,6 +338,10 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
+    if (myWal != null) {
+      myWal.put(key, value);
+    }
+
     getWriteLock().lock();
     try {
       doPut(key, value);
@@ -418,6 +426,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void appendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
+    if (myWal != null) {
+      myWal.appendData(key, appender);
+    }
 
     getWriteLock().lock();
     try {
@@ -648,6 +659,10 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
+    if (myWal != null) {
+      myWal.remove(key);
+    }
+
     getWriteLock().lock();
     try {
       doRemove(key);

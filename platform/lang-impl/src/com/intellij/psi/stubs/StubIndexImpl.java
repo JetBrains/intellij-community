@@ -699,7 +699,8 @@ public final class StubIndexImpl extends StubIndexEx {
           myWrappedExtension.getValueExternalizer(),
           myWrappedExtension.getCacheSize(),
           myWrappedExtension.keyIsUniqueForIndexedFile(),
-          myWrappedExtension.traceKeyHashToVirtualFileMapping()
+          myWrappedExtension.traceKeyHashToVirtualFileMapping(),
+          myWrappedExtension.enableWal()
         );
       }
       catch (IOException e) {

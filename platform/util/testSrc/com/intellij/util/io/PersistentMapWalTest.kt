@@ -1,0 +1,106 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.io
+
+import com.intellij.openapi.util.io.ByteArraySequence
+import com.intellij.testFramework.TemporaryDirectory
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.Test
+import java.nio.file.Path
+
+class PersistentMapWalTest {
+  @Rule
+  @JvmField
+  val tempDirectory = TemporaryDirectory()
+
+  @Test
+  fun `test single put`() {
+    val mapFile = tempDirectory.createDir().resolve("map")
+
+    val key = "b52"
+    val value = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+
+    fillMap(mapFile) {
+      put(key, value)
+    }
+
+    val events = readWal(mapFile)
+    Assert.assertEquals(1, events.size)
+    val event = events[0] as WalEvent.PutEvent
+    Assert.assertEquals(key, event.key)
+    Assert.assertEquals(value, event.value)
+  }
+
+  @Test
+  fun `test single append`() {
+    val mapFile = tempDirectory.createDir().resolve("map")
+
+    val key = "b52"
+    val value = byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte())
+
+    fillMap(mapFile) {
+      appendData(key, AppendablePersistentMap.ValueDataAppender { out -> out.write(value) })
+    }
+
+    val events = readWal(mapFile)
+    Assert.assertEquals(1, events.size)
+    val event = events[0] as WalEvent.AppendEvent
+    Assert.assertEquals(key, event.key)
+    Assert.assertArrayEquals(value, event.data)
+  }
+
+  @Test
+  fun `test single remove`() {
+    val mapFile = tempDirectory.createDir().resolve("map")
+
+    val key = "b52"
+
+    fillMap(mapFile) {
+      remove(key)
+    }
+
+    val events = readWal(mapFile)
+    Assert.assertEquals(1, events.size)
+    val event = events[0] as WalEvent.RemoveEvent
+    Assert.assertEquals(key, event.key)
+  }
+
+  @Test
+  fun `test several operations`() {
+    val mapFile = tempDirectory.createDir().resolve("map")
+
+    val key1 = "b52"
+    val key2 = "b53"
+    val value = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+
+    fillMap(mapFile) {
+      put(key1, value)
+      put(key2, value)
+      appendData(key2, AppendablePersistentMap.ValueDataAppender { out -> out.write(value.internalBuffer) })
+      remove(key1)
+    }
+
+    val events = readWal(mapFile)
+    Assert.assertEquals(4, events.size)
+
+    Assert.assertEquals(WalEvent.PutEvent(key1, value), events[0])
+    Assert.assertEquals(WalEvent.PutEvent(key2, value), events[1])
+    Assert.assertEquals(WalEvent.AppendEvent<String, ByteArraySequence>(key2, value.internalBuffer), events[2])
+    Assert.assertEquals(WalEvent.RemoveEvent<String, ByteArraySequence>(key1), events[3])
+
+  }
+
+  private fun fillMap(mapFile: Path, operator: PersistentHashMap<String, ByteArraySequence>.() -> Unit) {
+    PersistentMapBuilder
+      .newBuilder(mapFile, EnumeratorStringDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
+      .withWal(true)
+      .build().use { it.operator() }
+  }
+
+  private fun readWal(mapFile: Path): List<WalEvent<String, ByteArraySequence>> =
+    PersistentMapWalPlayer(EnumeratorStringDescriptor.INSTANCE,
+                           ByteSequenceDataExternalizer.INSTANCE,
+                           mapFile.resolveSibling(mapFile.fileName.toString() + ".wal")).use {
+      return@use it.readWal().toList()
+  }
+}
