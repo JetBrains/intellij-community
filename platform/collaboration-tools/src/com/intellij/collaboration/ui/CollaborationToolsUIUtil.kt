@@ -6,7 +6,11 @@ import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import javax.swing.JList
+import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 
 object CollaborationToolsUIUtil {
@@ -41,5 +45,19 @@ object CollaborationToolsUIUtil {
 
     ScrollingUtil.installActions(list)
     ScrollingUtil.installActions(list, searchTextField.textEditor)
+  }
+
+  /**
+   * Adds actions to transfer focus by tab/shift-tab key for given [component].
+   *
+   * May be helpful for overwriting tab symbol input for text fields
+   */
+  fun registerFocusActions(component: JComponent) {
+    component.registerKeyboardAction({ component.transferFocus() },
+                                     KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0),
+                                     JComponent.WHEN_FOCUSED)
+    component.registerKeyboardAction({ component.transferFocusBackward() },
+                                     KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK),
+                                     JComponent.WHEN_FOCUSED)
   }
 }

@@ -18,8 +18,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
-import com.intellij.ui.speedSearch.NameFilteringListModel
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -37,12 +35,14 @@ import org.jetbrains.plugins.github.util.CollectionDelta
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.*
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 
 object GHUIUtil {
   const val AVATAR_SIZE = 20
@@ -305,15 +305,6 @@ object GHUIUtil {
     if (repos.size <= 1) return false
     val firstServer = repos.first().serverPath
     return repos.any { it.serverPath != firstServer }
-  }
-
-  fun registerFocusActions(component: JComponent) {
-    component.registerKeyboardAction({
-                                       component.transferFocus()
-                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), JComponent.WHEN_FOCUSED)
-    component.registerKeyboardAction({
-                                       component.transferFocusBackward()
-                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), JComponent.WHEN_FOCUSED)
   }
 }
 
