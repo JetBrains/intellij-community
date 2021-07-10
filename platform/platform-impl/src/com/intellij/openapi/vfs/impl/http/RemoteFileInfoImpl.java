@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -132,7 +133,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
         file.refresh(false, false);
       }
       return file;
-    });
+    }, ModalityState.NON_MODAL);
     LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
     LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
     synchronized (myLock) {
