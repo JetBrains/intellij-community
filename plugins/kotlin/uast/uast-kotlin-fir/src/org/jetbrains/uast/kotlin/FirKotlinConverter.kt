@@ -231,14 +231,6 @@ internal object FirKotlinConverter : BaseKotlinConverter {
     ): UElement? {
         if (element == null) return null
 
-        val project = element.project
-        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
-
-        fun <P : PsiElement> build(ctor: (P, UElement?, BaseKotlinUastResolveProviderService) -> UElement): () -> UElement? = {
-            @Suppress("UNCHECKED_CAST")
-            ctor(element as P, givenParent, service)
-        }
-
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? = {
             @Suppress("UNCHECKED_CAST")
             ctor(element as P, givenParent)
@@ -248,10 +240,10 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             when (element) {
                 is KtParameterList -> {
                     el<UDeclarationsExpression> {
-                        val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, service, null) { service }
+                        val declarationsExpression = KotlinUDeclarationsExpression(null, givenParent, null)
                         declarationsExpression.apply {
                             declarations = element.parameters.mapIndexed { i, p ->
-                                KotlinUParameter(UastKotlinPsiParameter.create(service, p, element, declarationsExpression, i), p, this)
+                                KotlinUParameter(UastKotlinPsiParameter.create(p, element, declarationsExpression, i), p, this)
                             }
                         }
                     }
@@ -284,7 +276,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtWhenCondition -> convertWhenCondition(element, givenParent, requiredTypes)
                 is KtTypeReference ->
                     requiredTypes.accommodate(
-                        alternative { KotlinUTypeReferenceExpression(element, givenParent, service) },
+                        alternative { KotlinUTypeReferenceExpression(element, givenParent) },
                         alternative { convertReceiverParameter(element) }
                     ).firstOrNull()
                 is KtImportDirective -> {
@@ -295,7 +287,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     if (element.getQualifier() == null)
                         el<USimpleNameReferenceExpression> {
                             element.lastChild?.let { psiIdentifier ->
-                                KotlinStringUSimpleReferenceExpression(psiIdentifier.text, givenParent, service, element, element)
+                                KotlinStringUSimpleReferenceExpression(psiIdentifier.text, givenParent, element, element)
                             }
                         }
                     else el<UQualifiedReferenceExpression>(build(::KotlinDocUQualifiedReferenceExpression))
@@ -335,8 +327,6 @@ internal object FirKotlinConverter : BaseKotlinConverter {
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
     ): UExpression? {
-        val project = expression.project
-        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
 
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return {
@@ -349,10 +339,10 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             when (expression) {
                 is KtVariableDeclaration -> expr<UDeclarationsExpression>(build(::convertVariablesDeclaration))
                 is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
-                    val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression, service)
+                    val declarationsExpression = KotlinUDestructuringDeclarationExpression(givenParent, expression)
                     declarationsExpression.apply {
                         val tempAssignment = KotlinULocalVariable(
-                            UastKotlinPsiVariable.create(service, expression, declarationsExpression),
+                            UastKotlinPsiVariable.create(expression, declarationsExpression),
                             expression,
                             declarationsExpression
                         )
@@ -433,7 +423,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 is KtClassOrObject -> expr<UDeclarationsExpression> {
                     expression.toLightClass()?.let { lightClass ->
-                        KotlinUDeclarationsExpression(givenParent, service).apply {
+                        KotlinUDeclarationsExpression(givenParent).apply {
                             declarations = listOf(FirKotlinUClass.create(lightClass, this))
                         }
                     } ?: UastEmptyExpression(givenParent)

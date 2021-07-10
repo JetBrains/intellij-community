@@ -9,8 +9,7 @@ import org.jetbrains.uast.UElement
 class KotlinUDestructuringDeclarationExpression(
     givenParent: UElement?,
     psiAnchor: PsiElement,
-    baseResolveProviderService: BaseKotlinUastResolveProviderService,
-) : KotlinUDeclarationsExpression(null, givenParent, baseResolveProviderService, psiAnchor) {
+) : KotlinUDeclarationsExpression(null, givenParent, psiAnchor) {
 
     val tempVarAssignment get() = declarations.first()
 }

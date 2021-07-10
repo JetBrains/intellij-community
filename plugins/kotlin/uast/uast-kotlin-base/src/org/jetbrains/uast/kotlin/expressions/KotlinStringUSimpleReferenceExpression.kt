@@ -13,7 +13,6 @@ import org.jetbrains.uast.kotlin.internal.multiResolveResults
 class KotlinStringUSimpleReferenceExpression(
     override val identifier: String,
     givenParent: UElement?,
-    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
     override val sourcePsi: PsiElement? = null,
     private val referenceAnchor: KtElement? = null
 ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
