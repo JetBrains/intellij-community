@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.sam.JavaSingleAbstractMethodUtils
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -26,12 +27,14 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
@@ -160,23 +163,33 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
                 val functionReturnType = functionDescriptor.returnType
                 val lambdaParameterTypes = lambdaDescriptor.valueParameters.map { it.type }
                 val lambdaReturnType = lambdaDescriptor.returnType
-                declaredTypeParameters.mapNotNull { typeParameter ->
+                val resolvedCall = call.getResolvedCall(context)
+                val types = resolvedCall?.typeArguments.orEmpty()
+                val typeParameters = resolvedCall?.candidateDescriptor?.typeParameters.orEmpty()
+                typeParameters.associate { typeParameter ->
                     val typeConstructor = typeParameter.typeConstructor
-                    val actualType = typeConstructor.actualType(functionParameterTypes, lambdaParameterTypes)
-                        ?: typeConstructor.actualType(functionReturnType, lambdaReturnType)
-                        ?: return@mapNotNull null
-                    typeConstructor to actualType
-                }.toMap()
+                    val type = types.getValue(typeParameter).let {
+                        if (it.isFlexible() ) {
+                            val typeConstructorName = typeConstructor.declarationDescriptor?.name
+                            typeConstructorName?.actualType(functionParameterTypes, lambdaParameterTypes)
+                                ?: typeConstructorName?.actualType(functionReturnType, lambdaReturnType)
+                                ?: it
+                        } else {
+                            it
+                        }
+                    }
+                    typeConstructor to type
+                }
             }
         }
 
-        private fun TypeConstructor.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
+        private fun Name.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
             return functionTypes.zip(lambdaTypes).firstNotNullResult { actualType(it.first, it.second) }
         }
 
-        private fun TypeConstructor.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {
+        private fun Name.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {
             if (functionType == null || lambdaType == null) return null
-            return if (this == functionType.constructor) {
+            return if (this == functionType.constructor.declarationDescriptor?.name) {
                 lambdaType
             } else {
                 actualType(functionType.arguments.map { it.type }, lambdaType.arguments.map { it.type })
