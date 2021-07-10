@@ -35,7 +35,7 @@ class ActionGroupTouchBar extends TouchBar {
   private final @Nullable Collection<AnAction> myAutoCloseActions;
   private final @Nullable Customizer myCustomizer;
 
-  private final @NotNull Updater myUpdateTimer = new Updater(500);
+  private final @NotNull Updater myUpdateTimer = new Updater();
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private long myLastUpdateNs = 0;
   private long myStartShowNs = 0;
@@ -449,10 +449,7 @@ class ActionGroupTouchBar extends TouchBar {
   }
 
   private final class Updater {
-    private final int myDelay;
     private @Nullable TimerListener myTimerImpl;
-
-    Updater(int delay) { myDelay = delay; }
 
     void start() {
       if (myTimerImpl != null) {
