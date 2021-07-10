@@ -64,7 +64,7 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
                 arguments.size == 1 ->
                     KotlinUNamedExpression.create(name, arguments.first(), this)
                 arguments.size > 1 ->
-                    KotlinUNamedExpression.create(name, arguments, this, baseResolveProviderService)
+                    KotlinUNamedExpression.create(name, arguments, this)
                 else -> null
             }
         } ?: emptyList()

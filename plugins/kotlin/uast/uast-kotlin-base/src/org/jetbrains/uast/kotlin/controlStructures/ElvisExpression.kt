@@ -57,9 +57,8 @@ private fun createElvisExpressions(
     containingElement: UElement?,
     psiParent: PsiElement
 ): List<UExpression> {
-    val service = ServiceManager.getService(left.project, BaseKotlinUastResolveProviderService::class.java)
-    val declaration = KotlinUDeclarationsExpression(containingElement, service)
-    val tempVariable = KotlinULocalVariable(UastKotlinPsiVariable.create(service, left, declaration, psiParent), null, declaration)
+    val declaration = KotlinUDeclarationsExpression(containingElement)
+    val tempVariable = KotlinULocalVariable(UastKotlinPsiVariable.create(left, declaration, psiParent), null, declaration)
     declaration.declarations = listOf(tempVariable)
 
     val ifExpression = object : UIfExpression {
@@ -74,6 +73,7 @@ private fun createElvisExpressions(
             createVariableReferenceExpression(tempVariable, this)
         }
         override val elseExpression: UExpression? by lz {
+            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
             service.baseKotlinConverter.convertExpression(right, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
         override val isTernary: Boolean = false
