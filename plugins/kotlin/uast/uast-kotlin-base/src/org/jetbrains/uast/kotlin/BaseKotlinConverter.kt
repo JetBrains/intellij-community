@@ -84,14 +84,12 @@ interface BaseKotlinConverter {
             ?: KotlinUDeclarationsExpression(
                 null,
                 parent,
-                ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java),
                 psi
             )
         val parentPsiElement = parent?.javaPsi //TODO: looks weird. mb look for the first non-null `javaPsi` in `parents` ?
-        val service = ServiceManager.getService(psi.project, BaseKotlinUastResolveProviderService::class.java)
         val variable =
             KotlinUAnnotatedLocalVariable(
-                UastKotlinPsiVariable.create(service, psi, parentPsiElement, declarationsExpression),
+                UastKotlinPsiVariable.create(psi, parentPsiElement, declarationsExpression),
                 psi,
                 declarationsExpression
             ) { annotationParent ->
@@ -105,14 +103,11 @@ interface BaseKotlinConverter {
         givenParent: UElement?,
         requiredType: Array<out Class<out UElement>>
     ): UExpression? {
-        val project = condition.project
-        val service = ServiceManager.getService(project, BaseKotlinUastResolveProviderService::class.java)
-
         return with(requiredType) {
             when (condition) {
                 is KtWhenConditionInRange -> expr<UBinaryExpression> {
                     KotlinCustomUBinaryExpression(condition, givenParent).apply {
-                        leftOperand = KotlinStringUSimpleReferenceExpression("it", this, service)
+                        leftOperand = KotlinStringUSimpleReferenceExpression("it", this)
                         operator = when {
                             condition.isNegated -> KotlinBinaryOperators.NOT_IN
                             else -> KotlinBinaryOperators.IN
@@ -122,13 +117,14 @@ interface BaseKotlinConverter {
                 }
                 is KtWhenConditionIsPattern -> expr<UBinaryExpression> {
                     KotlinCustomUBinaryExpressionWithType(condition, givenParent).apply {
-                        operand = KotlinStringUSimpleReferenceExpression("it", this, service)
+                        operand = KotlinStringUSimpleReferenceExpression("it", this)
                         operationKind = when {
                             condition.isNegated -> KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
                             else -> UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
                         }
                         typeReference = condition.typeReference?.let {
-                            KotlinUTypeReferenceExpression(it, this, service) { service.resolveToType(it, this) ?: UastErrorType }
+                            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                            KotlinUTypeReferenceExpression(it, this) { service.resolveToType(it, this) ?: UastErrorType }
                         }
                     }
                 }

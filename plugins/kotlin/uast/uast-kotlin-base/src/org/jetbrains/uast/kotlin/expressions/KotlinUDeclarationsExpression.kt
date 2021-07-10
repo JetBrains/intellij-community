@@ -2,26 +2,21 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
-import org.jetbrains.uast.kotlin.BaseResolveProviderServiceSupplier
 import org.jetbrains.uast.kotlin.KotlinAbstractUExpression
 
 open class KotlinUDeclarationsExpression(
     override val psi: PsiElement?,
     givenParent: UElement?,
-    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
     val psiAnchor: PsiElement? = null,
-    baseResolveProviderServiceSupplier: BaseResolveProviderServiceSupplier? = null,
-) : KotlinAbstractUExpression(givenParent, baseResolveProviderServiceSupplier), UDeclarationsExpression {
+) : KotlinAbstractUExpression(givenParent), UDeclarationsExpression {
 
     override val sourcePsi: PsiElement?
         get() = psiAnchor
 
     override fun convertParent(): UElement? =
-            psiAnchor?.let { baseResolveProviderService.convertParent(this, it.parent) } ?: super.convertParent()
+        psiAnchor?.let { baseResolveProviderService.convertParent(this, it.parent) } ?: super.convertParent()
 
-    constructor(uastParent: UElement?, baseResolveProviderService: BaseKotlinUastResolveProviderService) :
-            this(null, uastParent, baseResolveProviderService)
+    constructor(uastParent: UElement?) : this(null, uastParent)
 
     override lateinit var declarations: List<UDeclaration>
 }

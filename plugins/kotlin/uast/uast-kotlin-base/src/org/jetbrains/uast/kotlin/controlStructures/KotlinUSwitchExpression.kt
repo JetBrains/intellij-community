@@ -20,7 +20,6 @@ class KotlinUSwitchExpression(
             sourcePsi,
             KotlinSpecialExpressionKinds.WHEN,
             this@KotlinUSwitchExpression,
-            baseResolveProviderService
         ) {
             override fun asRenderString() = expressions.joinToString("\n") { it.asRenderString().withMargin }
         }.apply {

@@ -25,7 +25,6 @@ class KotlinUSwitchEntry(
             sourcePsi,
             KotlinSpecialExpressionKinds.WHEN_ENTRY,
             this@KotlinUSwitchEntry,
-            baseResolveProviderService
         ) {
             override fun asRenderString() = buildString {
                 appendLine("{")

@@ -54,7 +54,7 @@ class KotlinUEnumConstant(
         get() = null
 
     override val classReference: UReferenceExpression?
-        get() = KotlinEnumConstantClassReference(psi, sourcePsi, baseResolveProviderService, this)
+        get() = KotlinEnumConstantClassReference(psi, sourcePsi, this)
 
     override val typeArgumentCount: Int
         get() = 0
@@ -84,7 +84,6 @@ class KotlinUEnumConstant(
     private class KotlinEnumConstantClassReference(
         override val psi: PsiEnumConstant,
         override val sourcePsi: KtElement?,
-        override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
         givenParent: UElement?
     ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression {
         override val javaPsi: PsiElement?

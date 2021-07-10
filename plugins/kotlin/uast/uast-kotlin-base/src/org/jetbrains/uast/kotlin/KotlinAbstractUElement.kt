@@ -10,7 +10,6 @@ import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 
 abstract class KotlinAbstractUElement(
     givenParent: UElement?,
-    baseResolveProviderServiceSupplier: BaseResolveProviderServiceSupplier? = null,
 ) : KotlinUElementWithComments {
 
     protected val languagePlugin: UastLanguagePlugin? by lz {
@@ -18,14 +17,8 @@ abstract class KotlinAbstractUElement(
     }
 
     open val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
-        baseResolveProviderServiceSupplier?.get()
-            ?:getBaseResolveProviderServiceByProject()
+        ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
             ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
-    }
-
-    private fun getBaseResolveProviderServiceByProject():BaseKotlinUastResolveProviderService? {
-        val project = psi?.project ?: sourcePsi?.project
-        return project?.let { ServiceManager.getService(it, BaseKotlinUastResolveProviderService::class.java) }
     }
 
     final override val uastParent: UElement? by lz {

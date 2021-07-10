@@ -27,7 +27,7 @@ abstract class AbstractKotlinUClass(
 
     override val uastSuperTypes: List<UTypeReferenceExpression>
         get() = ktClass?.superTypeListEntries.orEmpty().mapNotNull { it.typeReference }.map {
-            KotlinUTypeReferenceExpression(it, this, baseResolveProviderService)
+            KotlinUTypeReferenceExpression(it, this)
         }
 
     val delegateExpressions: List<UExpression>
