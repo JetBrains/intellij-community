@@ -391,7 +391,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   @Override
-  public void addTimerListener(int unused, @NotNull final TimerListener listener) {
+  public void addTimerListener(@NotNull final TimerListener listener) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myTimer == null) {
       myTimer = new MyTimer();
