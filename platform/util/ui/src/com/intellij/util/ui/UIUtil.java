@@ -90,6 +90,8 @@ public final class UIUtil {
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
+  @ApiStatus.Internal
+  public static final Key<Boolean> CLEARABLE_COMPONENT_KEY = Key.create("clearableComponent");
 
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
