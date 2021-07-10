@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.statistics
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newBooleanMetric
 import com.intellij.internal.statistic.beans.newCounterMetric
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 
@@ -13,6 +15,9 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
+
+    val trackerSettings = ExternalSystemProjectTrackerSettings.getInstance(project)
+    usages.add(newMetric("autoReloadType", trackerSettings.autoReloadType))
 
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
       val systemId = getAnonymizedSystemId(manager.getSystemId())
