@@ -79,6 +79,11 @@ public final class TerminalView implements Disposable {
     return myTerminalRunner;
   }
 
+
+  public ToolWindow getToolWindow() {
+    return myToolWindow;
+  }
+
   public TerminalView(@NotNull Project project) {
     myProject = project;
     myTerminalRunner = ApplicationManager.getApplication()
@@ -88,6 +93,10 @@ public final class TerminalView implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public Set<JBTerminalWidget> getWidgets() {
+    return myContainerByWidgetMap.keySet();
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
@@ -189,7 +198,7 @@ public final class TerminalView implements Disposable {
   }
 
   @NotNull
-  private Content newTab(@NotNull ToolWindow toolWindow, @Nullable JBTerminalWidget terminalWidget) {
+  public Content newTab(@NotNull ToolWindow toolWindow, @Nullable JBTerminalWidget terminalWidget) {
     return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, true, true);
   }
 
