@@ -68,7 +68,7 @@ abstract class AbstractKotlinUVariable(
     protected abstract fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean
 
     override val typeReference: UTypeReferenceExpression? by lz {
-        KotlinUTypeReferenceExpression((sourcePsi as? KtCallableDeclaration)?.typeReference, this, baseResolveProviderService) { type }
+        KotlinUTypeReferenceExpression((sourcePsi as? KtCallableDeclaration)?.typeReference, this) { type }
     }
 
     override val uastAnchor: UIdentifier?

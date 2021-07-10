@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin
 
+import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -8,6 +9,8 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.registerComponentImplementation
+import com.intellij.testFramework.replaceService
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
@@ -96,7 +99,8 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         area.getExtensionPoint(UastLanguagePlugin.extensionPointName).registerExtension(KotlinUastLanguagePlugin(), project)
         area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
 
-        project.registerService(
+        val application = ApplicationManager.getApplication() as MockComponentManager
+        application.registerService(
             BaseKotlinUastResolveProviderService::class.java,
             CliKotlinUastResolveProviderService::class.java
         )

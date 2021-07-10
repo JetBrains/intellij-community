@@ -13,9 +13,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastErrorType
-import java.util.function.Supplier
-
-typealias BaseResolveProviderServiceSupplier = Supplier<BaseKotlinUastResolveProviderService>
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun String?.orAnonymous(kind: String = ""): String = this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"

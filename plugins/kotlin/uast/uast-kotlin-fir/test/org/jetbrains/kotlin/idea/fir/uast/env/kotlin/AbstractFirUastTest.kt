@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.uast.env.kotlin
 
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -18,7 +19,6 @@ import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
-import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
 import java.io.File
@@ -42,7 +42,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
             UastLanguagePlugin::class.java
         )
         val service = FirCliKotlinUastResolveProviderService()
-        project.registerServiceInstance(
+        ApplicationManager.getApplication().registerServiceInstance(
             BaseKotlinUastResolveProviderService::class.java,
             service
         )
