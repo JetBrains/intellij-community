@@ -274,7 +274,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     // add updater for menus
     doWithLazyActionManager(actionManager -> {
       doUpdateMenuActions(false, actionManager);
-      actionManager.addTimerListener(1000, new WeakTimerListener(new MyTimerListener()));
+      actionManager.addTimerListener(new WeakTimerListener(new MyTimerListener()));
     });
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);

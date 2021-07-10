@@ -837,7 +837,7 @@ public class JBTabsImpl extends JComponent
 
   private void addTimerUpdate() {
     if (!myListenerAdded) {
-      ActionManager.getInstance().addTimerListener(500, this);
+      ActionManager.getInstance().addTimerListener(this);
       myListenerAdded = true;
     }
   }

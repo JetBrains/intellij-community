@@ -47,7 +47,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = true;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(-1, myWeakTimerListener);
+    actionManager.addTimerListener(myWeakTimerListener);
     KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }

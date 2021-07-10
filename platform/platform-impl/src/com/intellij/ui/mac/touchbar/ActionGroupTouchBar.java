@@ -470,7 +470,7 @@ class ActionGroupTouchBar extends TouchBar {
           updateActionItems();
         }
       };
-      ActionManager.getInstance().addTimerListener(myDelay/*delay param doesn't affect anything*/, myTimerImpl);
+      ActionManager.getInstance().addTimerListener(myTimerImpl);
     }
 
     void stop() {
