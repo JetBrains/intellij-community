@@ -18,7 +18,7 @@ class KotlinLocalFunctionULambdaExpression(
 
     override val valueParameters by lz {
         sourcePsi.valueParameters.mapIndexed { i, p ->
-            KotlinUParameter(UastKotlinPsiParameter.create(baseResolveProviderService, p, sourcePsi, this, i), p, this)
+            KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
         }
     }
 

@@ -25,7 +25,7 @@ class KotlinUCatchClause(
     override val parameters by lz {
         val parameter = sourcePsi.catchParameter ?: return@lz emptyList<UParameter>()
         listOf(
-            KotlinUParameter(UastKotlinPsiParameter.create(baseResolveProviderService, parameter, sourcePsi, this, 0), parameter, this)
+            KotlinUParameter(UastKotlinPsiParameter.create(parameter, sourcePsi, this, 0), parameter, this)
         )
     }
 
@@ -33,7 +33,7 @@ class KotlinUCatchClause(
         val parameter = sourcePsi.catchParameter ?: return@lz emptyList<UTypeReferenceExpression>()
         val typeReference = parameter.typeReference ?: return@lz emptyList<UTypeReferenceExpression>()
         listOf(
-            KotlinUTypeReferenceExpression(typeReference, this, baseResolveProviderService) {
+            KotlinUTypeReferenceExpression(typeReference, this) {
                 baseResolveProviderService.resolveToType(typeReference, this) ?: UastErrorType
             }
         )

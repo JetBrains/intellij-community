@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.lang.Language
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiParameter
@@ -28,16 +29,16 @@ class UastKotlinPsiParameter(
 ) : UastKotlinPsiParameterBase<KtParameter>(name, type, parent, ktParameter, language, isVarArgs, ktDefaultValue) {
     companion object {
         fun create(
-            baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
             parameter: KtParameter,
             parent: PsiElement,
             containingElement: UElement,
             index: Int
         ): PsiParameter {
+            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
             val psiParent = containingElement.getParentOfType<UDeclaration>()?.javaPsi ?: parent
             return UastKotlinPsiParameter(
                 parameter.name ?: "p$index",
-                baseKotlinUastResolveProviderService.getType(parameter, containingElement) ?: UastErrorType,
+                service.getType(parameter, containingElement) ?: UastErrorType,
                 psiParent,
                 KotlinLanguage.INSTANCE,
                 parameter.isVarArg,

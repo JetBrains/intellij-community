@@ -13,13 +13,12 @@ open class KotlinUExpressionList(
     override val sourcePsi: PsiElement?,
     override val kind: UastSpecialExpressionKind, // original element
     givenParent: UElement?,
-    override val baseResolveProviderService: BaseKotlinUastResolveProviderService,
 ) : KotlinAbstractUExpression(givenParent), UExpressionList, KotlinUElementWithType, KotlinEvaluatableUElement {
     override lateinit var expressions: List<UExpression>
 
     companion object {
-        fun createClassBody(psi: PsiElement?, uastParent: UElement?, baseResolveProviderService: BaseKotlinUastResolveProviderService): KotlinUExpressionList =
-            KotlinUExpressionList(psi, KotlinSpecialExpressionKinds.CLASS_BODY, uastParent, baseResolveProviderService).apply {
+        fun createClassBody(psi: PsiElement?, uastParent: UElement?): KotlinUExpressionList =
+            KotlinUExpressionList(psi, KotlinSpecialExpressionKinds.CLASS_BODY, uastParent).apply {
                 expressions = emptyList()
             }
     }
