@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.isEquals
 import org.jetbrains.kotlin.nj2k.parenthesizeIfBinaryExpression
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.nj2k.types.*
 
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -108,50 +108,10 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
 
     }
 
-    private fun JKExpression.castToAsPrimitiveTypes(toType: JKType, strict: Boolean): JKExpression? {
-        if (this is JKPrefixExpression
-            && (operator.token == JKOperatorToken.PLUS || operator.token == JKOperatorToken.MINUS)
-        ) {
-            val casted = expression.castToAsPrimitiveTypes(toType, strict) ?: return null
-            return JKPrefixExpression(casted, operator)
-        }
-        val expressionTypeAsPrimitive = calculateType(typeFactory)?.asPrimitiveType() ?: return null
-        val toTypeAsPrimitive = toType.asPrimitiveType() ?: return null
-        if (toTypeAsPrimitive == expressionTypeAsPrimitive) return null
-
-        if (this is JKLiteralExpression) {
-            if (!strict
-                && expressionTypeAsPrimitive == JKJavaPrimitiveType.INT
-                && (toTypeAsPrimitive == JKJavaPrimitiveType.LONG ||
-                        toTypeAsPrimitive == JKJavaPrimitiveType.SHORT ||
-                        toTypeAsPrimitive == JKJavaPrimitiveType.BYTE)
-            ) return null
-            val expectedType = toTypeAsPrimitive.toLiteralType() ?: JKLiteralExpression.LiteralType.INT
-
-            if (expressionTypeAsPrimitive.isNumberType() && toTypeAsPrimitive.isNumberType()) {
-                return JKLiteralExpression(
-                    literal,
-                    expectedType
-                )
-            }
-        }
-
-        val initialTypeName = expressionTypeAsPrimitive.jvmPrimitiveType.javaKeywordName.capitalize(Locale.US)
-        val conversionFunctionName = "to${toTypeAsPrimitive.jvmPrimitiveType.javaKeywordName.capitalize(Locale.US)}"
-        return JKQualifiedExpression(
-            copyTreeAndDetach().parenthesizeIfBinaryExpression(),
-            JKCallExpressionImpl(
-                symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
-                JKArgumentList()
-            )
-        )
-    }
-
-
     private fun JKExpression.castTo(toType: JKType, strict: Boolean = false): JKExpression? {
         val expressionType = calculateType(typeFactory)
         if (expressionType == toType) return null
-        castToAsPrimitiveTypes(toType, strict)?.also { return it }
+        castToAsPrimitiveTypes(this, toType, strict)?.also { return it }
         castStringToRegex(toType)?.also { return it }
         return null
     }

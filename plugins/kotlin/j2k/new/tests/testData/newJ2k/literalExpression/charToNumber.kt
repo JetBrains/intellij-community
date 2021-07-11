@@ -1,8 +1,8 @@
 class CharToNumber {
-    private val b = 'c'.toByte()
-    private val s = 'c'.toShort()
-    private val i = 'c'.toInt()
-    private val l = 'c'.toLong()
-    private val f = 'c'.toFloat()
-    private val d = 'c'.toDouble()
+    private val b = 'c'.code.toByte()
+    private val s = 'c'.code.toShort()
+    private val i = 'c'.code
+    private val l = 'c'.code.toLong()
+    private val f = 'c'.code.toFloat()
+    private val d = 'c'.code.toDouble()
 }
