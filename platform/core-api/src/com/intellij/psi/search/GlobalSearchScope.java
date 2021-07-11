@@ -945,7 +945,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public int[] asInts() {
-      return getFiles().onlyFileIds();
+      return getFiles().onlyInternalFileIds();
     }
 
     @Override

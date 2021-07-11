@@ -26,7 +26,7 @@ public final class UnionFileEnumeration implements VirtualFileEnumeration {
 
   @Override
   public int[] asInts() {
-    return asIterable().onlyFileIds();
+    return asIterable().onlyInternalFileIds();
   }
 
   @Override

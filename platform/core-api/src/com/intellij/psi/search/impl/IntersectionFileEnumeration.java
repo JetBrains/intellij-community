@@ -40,7 +40,7 @@ public final class IntersectionFileEnumeration implements VirtualFileEnumeration
       return ArrayUtil.EMPTY_INT_ARRAY;
     }
     if (files instanceof CompactVirtualFileSet) {
-      return ((CompactVirtualFileSet)files).onlyFileIds();
+      return ((CompactVirtualFileSet)files).onlyInternalFileIds();
     }
 
     IntList result = new IntArrayList();

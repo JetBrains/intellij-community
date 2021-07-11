@@ -68,7 +68,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
 
   //TODO hide it
   @ApiStatus.Internal
-  public int @NotNull [] onlyFileIds() {
+  public int @NotNull [] onlyInternalFileIds() {
     if (idSet != null) {
       return idSet.toIntArray();
     }
