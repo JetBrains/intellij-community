@@ -1,13 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.impl;
 
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,28 +40,28 @@ public final class IntersectionFileEnumeration implements VirtualFileEnumeration
       return ((CompactVirtualFileSet)files).onlyInternalFileIds();
     }
 
-    IntList result = new IntArrayList();
+    IntArrayList result = new IntArrayList();
     for (VirtualFile file : files) {
       if (file instanceof VirtualFileWithId) {
         int fileId = ((VirtualFileWithId)file).getId();
         result.add(fileId);
       }
     }
-    return result.toIntArray();
+    return result.toArray();
   }
 
   @Override
   public @NotNull Iterable<VirtualFile> asIterable() {
     if (myHints.isEmpty()) return Collections.emptySet();
     if (myHints.size() == 1) return myHints.iterator().next().asIterable();
-    CompactVirtualFileSet files = null;
+    VirtualFileSet files = null;
     for (VirtualFileEnumeration scope : myHints) {
-      Collection<VirtualFile> it = ContainerUtil.toCollection(scope.asIterable());
+      Collection<VirtualFile> scopeFiles = ContainerUtil.toCollection(scope.asIterable());
       if (files == null) {
-        files = new CompactVirtualFileSet(it);
+        files = VfsUtilCore.createCompactVirtualFileSet(scopeFiles);
       }
       else {
-        files.retainAll(it);
+        files.retainAll(scopeFiles);
       }
     }
     return files;

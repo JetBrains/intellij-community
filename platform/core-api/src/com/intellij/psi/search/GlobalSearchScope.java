@@ -11,9 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.impl.IntersectionFileEnumeration;
@@ -369,7 +367,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Lazy files scope: can be created (e.g., to display in UI) but the files won't be loaded until it's actually used
    */
   @Contract(pure = true)
-  public static @NotNull GlobalSearchScope filesScope(@NotNull Project project, @NotNull Supplier<Collection<? extends VirtualFile>> files) {
+  public static @NotNull GlobalSearchScope filesScope(@NotNull Project project, @NotNull Supplier<? extends Collection<? extends VirtualFile>> files) {
     return new LazyFilesScope(project, files);
   }
 
@@ -900,7 +898,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
 
-    abstract @NotNull CompactVirtualFileSet getFiles();
+    abstract @NotNull VirtualFileSet getFiles();
 
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
@@ -940,12 +938,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(int fileId) {
-      return getFiles().containsId(fileId);
+      return ((CompactVirtualFileSet)getFiles()).containsId(fileId);
     }
 
     @Override
     public int[] asInts() {
-      return getFiles().onlyInternalFileIds();
+      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
     }
 
     @Override
@@ -955,7 +953,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static class FilesScope extends AbstractFilesScope {
-    private final CompactVirtualFileSet myFiles;
+    private final VirtualFileSet myFiles;
 
     private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
       this(project, files, null);
@@ -964,12 +962,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     // Optimization
     private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project, hasFilesOutOfProjectRoots);
-      myFiles = new CompactVirtualFileSet(files);
+      myFiles = VfsUtilCore.createCompactVirtualFileSet(files);
       myFiles.freeze();
     }
 
     @Override
-    public @NotNull CompactVirtualFileSet getFiles() {
+    public @NotNull VirtualFileSet getFiles() {
       return myFiles;
     }
 
@@ -983,20 +981,20 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   private static class LazyFilesScope extends AbstractFilesScope {
-    private volatile CompactVirtualFileSet myFiles;
-    private Supplier<Collection<? extends VirtualFile>> myFilesSupplier;
+    private volatile VirtualFileSet myFiles;
+    private @NotNull Supplier<? extends Collection<? extends VirtualFile>> myFilesSupplier;
 
-    private LazyFilesScope(@Nullable Project project, @NotNull Supplier<Collection<? extends VirtualFile>> files) {
+    private LazyFilesScope(@Nullable Project project, @NotNull Supplier<? extends Collection<? extends VirtualFile>> files) {
       super(project, null);
       myFilesSupplier = files;
     }
 
     @Override
-    public @NotNull CompactVirtualFileSet getFiles() {
+    public @NotNull VirtualFileSet getFiles() {
       if (myFiles == null) {
         synchronized (this) {
           if (myFiles == null) {
-            CompactVirtualFileSet fileSet = new CompactVirtualFileSet(myFilesSupplier.get());
+            VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet(myFilesSupplier.get());
             fileSet.freeze();
             myFilesSupplier = null;
             myFiles = fileSet;

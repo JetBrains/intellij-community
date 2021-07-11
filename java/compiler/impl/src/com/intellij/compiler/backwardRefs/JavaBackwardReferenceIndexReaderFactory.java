@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,7 +74,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
         hierarchy = getHierarchy(hierarchyElement, checkBaseClassAmbiguity, false, -1);
       }
       if (hierarchy == null) return null;
-      Set<VirtualFile> set = new CompactVirtualFileSet();
+      Set<VirtualFile> set = VfsUtilCore.createCompactVirtualFileSet();
       for (CompilerRef.NamedCompilerRef aClass : hierarchy) {
         final CompilerRef overriderUsage = ref.override(aClass.getName());
         addUsages(overriderUsage, set);
@@ -84,7 +84,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
 
     @Override
     public @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException {
-      Set<VirtualFile> result = new CompactVirtualFileSet();
+      Set<VirtualFile> result = VfsUtilCore.createCompactVirtualFileSet();
       myIndex.get(JavaCompilerIndices.IMPLICIT_TO_STRING).getData(ref).forEach(
         (id, value) -> {
           final VirtualFile file = findFile(id);

@@ -2,6 +2,9 @@
 package com.intellij.psi.search.impl;
 
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +29,12 @@ public final class UnionFileEnumeration implements VirtualFileEnumeration {
 
   @Override
   public int[] asInts() {
-    return asIterable().onlyInternalFileIds();
+    return ((CompactVirtualFileSet)asIterable()).onlyInternalFileIds();
   }
 
   @Override
-  public @NotNull CompactVirtualFileSet asIterable() {
-    CompactVirtualFileSet files = new CompactVirtualFileSet();
+  public @NotNull Iterable<VirtualFile> asIterable() {
+    VirtualFileSet files = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFileEnumeration scope : myHints) {
       files.addAll(ContainerUtil.toCollection(scope.asIterable()));
     }

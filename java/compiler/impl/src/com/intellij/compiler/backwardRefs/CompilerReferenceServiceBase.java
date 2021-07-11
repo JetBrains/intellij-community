@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -361,7 +361,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
-      Set<VirtualFile> referentFileIds = new CompactVirtualFileSet();
+      Set<VirtualFile> referentFileIds = VfsUtilCore.createCompactVirtualFileSet();
       for (CompilerRef ref : compilerElementInfo.searchElements) {
         try {
           Set<VirtualFile> referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
