@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.*
-import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
-import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
-import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
+import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -282,6 +280,16 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             Field("java.lang.Double.NaN") convertTo Field("kotlin.Double.Companion.NaN")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            Method("java.lang.Character.toUpperCase") convertTo ExtensionMethod("kotlin.text.uppercaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Character.toLowerCase") convertTo ExtensionMethod("kotlin.text.lowercaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Character.toTitleCase") convertTo ExtensionMethod("kotlin.text.titlecaseChar")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall,
@@ -391,6 +399,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     )
                 )
             },
+
+            Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withArgumentsProvider(::stringConversionArgumentsProvider),
+            Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase")
+                    sinceKotlin ApiVersion.KOTLIN_1_5
+                    withArgumentsProvider(::stringConversionArgumentsProvider),
 
             Method("java.lang.String.compareToIgnoreCase")
                     convertTo Method("kotlin.text.compareTo")
@@ -552,4 +567,29 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun JKExpression.castToTypedArray() =
         callOn(symbolProvider.provideMethodSymbol("kotlin.collections.toTypedArray"))
+
+
+    private fun stringConversionArgumentsProvider(arguments: JKArgumentList): JKArgumentList {
+        if (arguments.arguments.isEmpty()) {
+            return JKArgumentList(
+                JKArgumentImpl(
+                    JKClassAccessExpression(symbolProvider.provideClassSymbol("java.util.Locale")).callOn(
+                        symbolProvider.provideMethodSymbol("java.util.Locale.getDefault")
+                    )
+                )
+            )
+        }
+
+        val singleArgument = arguments.arguments.singleOrNull() ?: return arguments
+        val expression = (singleArgument.value as? JKQualifiedExpression) ?: return arguments
+
+        if (expression.selector.identifier?.fqName in neutralLocaleFQNames) return JKArgumentList()
+        return arguments
+    }
+
+    private val neutralLocaleFQNames = listOf(
+        "java.util.Locale.ROOT",
+        "java.util.Locale.US",
+        "java.util.Locale.ENGLISH"
+    )
 }
