@@ -58,7 +58,11 @@ interface RowBuilder : BaseBuilder {
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
-  fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row
+  fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
+
+  fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
+    return hideableRow(title = title, true, init)
+  }
 
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).

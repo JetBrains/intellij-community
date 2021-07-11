@@ -92,6 +92,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     return createFontSettingsPanel();
   }
 
+  public AbstractFontCombo<?> getSecondaryCombo() {
+    return mySecondaryCombo;
+  }
+
   protected final JPanel createFontSettingsPanel() {
     Insets baseInsets = getInsets(0, 0);
 
@@ -285,10 +289,16 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridx = 1;
     target.add(mySecondaryCombo, c);
     c.gridy ++;
+    // todo fix \n
     JBLabel fallbackLabel = new JBLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
     fallbackLabel.setFont(JBUI.Fonts.smallFont());
     fallbackLabel.setForeground(UIUtil.getContextHelpForeground());
     target.add(fallbackLabel, c);
+  }
+
+  protected void createSecondaryFontComboAndLabel(JLabel secondaryFontLabel) {
+    mySecondaryFontLabel = secondaryFontLabel;
+    mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
   }
 
   protected static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {
