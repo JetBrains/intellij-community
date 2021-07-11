@@ -53,10 +53,10 @@ internal class A {
         s.replace('e', 'i')
         s.replace("est", "oast")
         s.intern()
-        s.toLowerCase()
-        s.toLowerCase(Locale.FRENCH)
-        s.toUpperCase()
-        s.toUpperCase(Locale.FRENCH)
+        s.lowercase(Locale.getDefault())
+        s.lowercase(Locale.FRENCH)
+        s.uppercase(Locale.getDefault())
+        s.uppercase(Locale.FRENCH)
         s
         s.toCharArray()
     }
