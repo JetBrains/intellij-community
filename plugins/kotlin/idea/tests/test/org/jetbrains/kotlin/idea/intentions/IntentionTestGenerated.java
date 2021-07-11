@@ -5422,6 +5422,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/extension.kt");
         }
 
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/extensionFunction.kt");
+        }
+
+        @TestMetadata("extensionFunctionWithTypealias.kt")
+        public void testExtensionFunctionWithTypealias() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/extensionFunctionWithTypealias.kt");
+        }
+
+        @TestMetadata("extensionFunctionWithTypealias2.kt")
+        public void testExtensionFunctionWithTypealias2() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/extensionFunctionWithTypealias2.kt");
+        }
+
         @TestMetadata("extensionOuterScope.kt")
         public void testExtensionOuterScope() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/extensionOuterScope.kt");

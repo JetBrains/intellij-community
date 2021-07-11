@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
@@ -325,12 +324,15 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
                 is KtCallExpression -> {
                     val calleeReferenceExpression = singleStatement.calleeExpression as? KtNameReferenceExpression ?: return null
-                    val resolvedCall = calleeReferenceExpression.resolveToCall() ?: return null
+                    val context = calleeReferenceExpression.analyze(BodyResolveMode.PARTIAL)
+                    val resolvedCall = calleeReferenceExpression.getResolvedCall(context) ?: return null
                     val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
                     val descriptor by lazy { receiver?.type?.constructor?.declarationDescriptor }
                     val receiverText = when {
                         lambdaParameterType?.isExtensionFunctionType == true ->
-                            lambdaParameterType.getReceiverTypeFromFunctionType()?.fqName?.asString()
+                            (context[REFERENCE_TARGET, calleeReferenceExpression] as? CallableDescriptor)?.receiverType()?.let {
+                                IdeDescriptorRenderers.SOURCE_CODE.renderType(it)
+                            }
                         receiver == null || descriptor?.isCompanionObject() == true -> ""
                         receiver is ExtensionReceiver ||
                                 descriptor?.let { DescriptorUtils.isAnonymousObject(it) } == true ||
@@ -340,9 +342,14 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                     "$receiverText::${singleStatement.getCallReferencedName()}"
                 }
                 is KtDotQualifiedExpression -> {
-                    val selectorReferenceName = when (val selector = singleStatement.selectorExpression) {
-                        is KtCallExpression -> selector.getCallReferencedName() ?: return null
-                        is KtNameReferenceExpression -> selector.getSafeReferencedName()
+                    val (selectorReference, selectorReferenceName) = when (val selector = singleStatement.selectorExpression) {
+                        is KtCallExpression -> {
+                            val callee = selector.calleeExpression as? KtNameReferenceExpression ?: return null
+                            callee to callee.getSafeReferencedName()
+                        }
+                        is KtNameReferenceExpression -> {
+                            selector to selector.getSafeReferencedName()
+                        }
                         else -> return null
                     }
                     val receiver = singleStatement.receiverExpression
@@ -367,7 +374,9 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                         }
                         else -> {
                             val receiverText = if (lambdaParameterType?.isExtensionFunctionType == true) {
-                                lambdaParameterType.getReceiverTypeFromFunctionType()?.fqName?.asString()
+                                (context[REFERENCE_TARGET, selectorReference] as? CallableDescriptor)?.receiverType()?.let {
+                                    IdeDescriptorRenderers.SOURCE_CODE.renderType(it)
+                                }
                             } else {
                                 receiver.text
                             } ?: return null
