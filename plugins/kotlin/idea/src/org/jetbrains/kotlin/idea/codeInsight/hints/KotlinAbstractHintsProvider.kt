@@ -42,7 +42,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                 f: PresentationFactory, project: Project
             ): PresentationAndSettings {
                 val inlayInfo = infoDetails.inlayInfo
-                val details = infoDetails.details
+                val details = mergeAdjacentTextInlayInfoDetails(infoDetails.details)
                 val basePresentation = when (details.size) {
                     1 -> convert(details.first(), f, project)
                     else -> f.seq(*(details.map { convert(it, f, project) }.toTypedArray()))
@@ -59,6 +59,32 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                 )
 
                 return PresentationAndSettings(finalPresentation, inlayInfo.offset, inlayInfo.relatesToPrecedingText)
+            }
+
+            private fun mergeAdjacentTextInlayInfoDetails(details: List<InlayInfoDetail>): List<InlayInfoDetail> {
+                val result = mutableListOf<InlayInfoDetail>()
+                val iterator = details.iterator()
+                var builder: StringBuilder? = null
+                while (iterator.hasNext()) {
+                    when (val next = iterator.next()) {
+                        is TextInlayInfoDetail -> {
+                            builder = builder ?: StringBuilder()
+                            builder.append(next.text)
+                        }
+                        else -> {
+                            builder?.let {
+                                result.add(TextInlayInfoDetail(it.toString()))
+                                builder = null
+                            }
+                            result.add(next)
+                        }
+                    }
+                }
+                builder?.let {
+                    result.add(TextInlayInfoDetail(it.toString()))
+                    builder = null
+                }
+                return result
             }
 
             private fun convert(
