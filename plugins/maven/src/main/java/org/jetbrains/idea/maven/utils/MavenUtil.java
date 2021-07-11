@@ -66,7 +66,8 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.MavenReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
@@ -1091,9 +1092,9 @@ public class MavenUtil {
     }
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    List<File> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().getParentFile());
-    CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
+    MavenReimportQuickFix fix = new MavenReimportQuickFix();
     for (MavenArtifact artifact : unresolvedArtifacts) {
+      DownloadArtifactBuildIssue.removeBadArtifact(artifact.getFile().getParentFile());
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
         .showBuildIssue(artifact.getMavenId().getKey(), fix);
     }
