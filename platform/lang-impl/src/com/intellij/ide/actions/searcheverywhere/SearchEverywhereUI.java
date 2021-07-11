@@ -418,7 +418,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final Alarm rebuildListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private void scheduleRebuildList(SearchRestartReason reason) {
-    if (rebuildListAlarm.getActiveRequestCount() == 0) rebuildListAlarm.addRequest(() -> rebuildList(reason), REBUILD_LIST_DELAY);
+    if (!rebuildListAlarm.isDisposed() && rebuildListAlarm.getActiveRequestCount() == 0) {
+      rebuildListAlarm.addRequest(() -> rebuildList(reason), REBUILD_LIST_DELAY);
+    }
   }
 
   private void rebuildList(SearchRestartReason reason) {
