@@ -11,3 +11,7 @@ class LoggerInitializedWithForeignClass {
     };
   }
 }
+class Sub extends LoggerInitializedWithForeignClass {
+
+  Logger LOG = Logger.getLogger(LoggerInitializedWithForeignClass.class.getName());
+}

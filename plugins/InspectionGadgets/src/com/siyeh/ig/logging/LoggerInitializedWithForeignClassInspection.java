@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -65,11 +66,13 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public @NonNls String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
+  public boolean ignoreSuperClass = false;
 
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
   }
+
   @Override
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(
@@ -77,8 +80,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
     final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
-    final var panel = new InspectionOptionsPanel();
+    final var panel = new InspectionOptionsPanel(this);
     panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
+    panel.addCheckbox(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option"), "ignoreSuperClass");
     return panel;
   }
 
@@ -243,6 +247,12 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         return;
       }
       if (containingClass.equals(initializerClass)) {
+        return;
+      }
+      if (ignoreSuperClass && containingClass.isInheritor(initializerClass, true)) {
+        if (isOnTheFly()) {
+          registerError(expression, ProblemHighlightType.INFORMATION, containingClassName);
+        }
         return;
       }
       registerError(expression, containingClassName);
