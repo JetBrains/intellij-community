@@ -729,6 +729,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/caseConversion")
+    public static class CaseConversion extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("charCaseConversion.java")
+        public void testCharCaseConversion() throws Exception {
+            runTest("testData/newJ2k/caseConversion/charCaseConversion.java");
+        }
+
+        @TestMetadata("stringCaseConversion.java")
+        public void testStringCaseConversion() throws Exception {
+            runTest("testData/newJ2k/caseConversion/stringCaseConversion.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/class")
     public static class Class extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
