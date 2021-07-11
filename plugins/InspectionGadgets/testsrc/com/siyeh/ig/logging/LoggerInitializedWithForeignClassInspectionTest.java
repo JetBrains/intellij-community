@@ -19,6 +19,13 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
     checkQuickFixAll();
   }
 
+  public void testIgnoreNonPublicClasses() {
+    final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
+    inspection.ignoreNonPublicClasses = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -68,6 +68,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public @NonNls String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
   public boolean ignoreSuperClass = false;
+  public boolean ignoreNonPublicClasses = false;
 
   {
     parseString(loggerClassName, loggerFactoryClassNames);
@@ -84,6 +85,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     final var panel = new InspectionOptionsPanel(this);
     panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
     panel.addCheckbox(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option"), "ignoreSuperClass");
+    panel.addCheckboxEx(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"), "ignoreNonPublicClasses");
     return panel;
   }
 
@@ -217,6 +219,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         containingClass = ClassUtils.getContainingClass(containingClass);
       }
       if (containingClass == null) {
+        return;
+      }
+      if (ignoreNonPublicClasses && !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
       final String containingClassName = containingClass.getName();
