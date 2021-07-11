@@ -160,18 +160,18 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  public static @Nls String getTypeHierarchyType() {
+  public static @Nls @NotNull String getTypeHierarchyType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.class");
   }
 
   @Nls
-  public static String getSubtypesHierarchyType() {
+  public static @NotNull String getSubtypesHierarchyType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.subtypes");
   }
 
-  public static @Nls String getSupertypesHierarchyType() {
+  public static @Nls @NotNull String getSupertypesHierarchyType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.supertypes");
   }

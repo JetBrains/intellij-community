@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String CALLEE_TYPE = "Callees of {0}";
-  public static final String CALLER_TYPE = "Callers of {0}";
+  @Nls public static final String CALLEE_TYPE = "Callees of {0}";
+  @Nls public static final String CALLER_TYPE = "Callers of {0}";
 
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
