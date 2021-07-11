@@ -15,3 +15,10 @@ class Sub extends LoggerInitializedWithForeignClass {
 
   Logger LOG = Logger.getLogger(LoggerInitializedWithForeignClass.class.getName());
 }
+class Outer {
+  static class Inner {
+    void log() {
+      Logger.getLogger(Outer.class.getName()).info("...");
+    }
+  }
+}

@@ -35,6 +35,7 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
       "  public static Logger getLogger(String name) {" +
       "    return null;" +
       "  }" +
+      "  public void info(String s) {}" +
       "}",
 
       "package org.apache.logging.log4j;" +

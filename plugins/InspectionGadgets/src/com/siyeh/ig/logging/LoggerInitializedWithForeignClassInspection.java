@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilterBase;
@@ -249,7 +250,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       if (containingClass.equals(initializerClass)) {
         return;
       }
-      if (ignoreSuperClass && containingClass.isInheritor(initializerClass, true)) {
+      if (ignoreSuperClass && containingClass.isInheritor(initializerClass, true) ||
+          PsiTreeUtil.isAncestor(initializerClass, containingClass, true)) {
         if (isOnTheFly()) {
           registerError(expression, ProblemHighlightType.INFORMATION, containingClassName);
         }
