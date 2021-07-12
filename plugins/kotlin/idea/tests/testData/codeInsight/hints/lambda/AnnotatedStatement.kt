@@ -6,11 +6,11 @@ fun test() {
     run {
         val files: Any? = null
         @Some
-        12<# ^run #>
+        12<# [^ run] #>
     }
 
     run {
         val files: Any? = null
-        @Some 12<# ^run #>
+        @Some 12<# [^ run] #>
     }
 }
