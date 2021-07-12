@@ -3,8 +3,9 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.ui.components.JBList
+import com.intellij.ui.EngravedLabel
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
@@ -15,10 +16,14 @@ import javax.swing.JList
 abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
   fun LessonContext.extractParameterTasks() {
     lateinit var showPopupTaskId: TaskContext.TaskId
-    actionTask("Refactorings.QuickListPopupAction") {
+    task("Refactorings.QuickListPopupAction") {
       showPopupTaskId = taskId
+      text(LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it)))
+      val refactorThisTitle = RefactoringBundle.message("refactor.this.title")
+      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+        ui.text?.contains(refactorThisTitle) == true
+      }
       restoreIfModifiedOrMoved()
-      LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
     }
 
     if (TaskTestContext.inTestMode) {
@@ -35,7 +40,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
           ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
         }
-        restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
+        restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)
         test {
           type("pa")
         }
@@ -51,7 +56,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       text(message)
       trigger(it)
       stateCheck { hasInplaceRename() }
-      restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
+      restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)
       test {
         invokeActionViaShortcut("ENTER")
       }
