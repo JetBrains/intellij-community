@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -85,6 +86,19 @@ public final class PsiSuperMethodUtil {
     return overrideEquivalent;
   }
 
+  /**
+   * Maps the given class to the class which is located in the specified resolve scope.
+   * <p/>
+   * For the multi-module projects which use different jdks or libraries,
+   * it's important to map e.g. super class hierarchy to the current jdk.
+   * <p>Example:</p>
+   * Suppose there is an abstract reader in a module with jdk 1.6 which inherits {@link Closeable} (no super interfaces!). 
+   * In another module with jdk 1.7+ an inheritor of this reader should implement {@link AutoCloseable} though.
+   * 
+   * @param psiClass       a class to remap
+   * @param resolveScope   scope where class should be found
+   * @return               remapped class or same, if no other candidates were found
+   */
   @Nullable
   public static PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
     String qualifiedName = psiClass.getQualifiedName();
