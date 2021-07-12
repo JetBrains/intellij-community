@@ -395,6 +395,7 @@ public final class ActionMenu extends JBMenu {
                    RelativePoint.getNorthEastOf(this));
   }
 
+  // TODO: fix listener registration after 'PresentationFactory.clearPresentationCaches'
   private class MenuItemSynchronizer implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent e) {
