@@ -19,6 +19,154 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/addNameToArgument")
+    public static class AddNameToArgument extends AbstractHLIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyNamed.kt")
+        public void testAlreadyNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/alreadyNamed.kt");
+        }
+
+        @TestMetadata("ambiguousCall.kt")
+        public void testAmbiguousCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/ambiguousCall.kt");
+        }
+
+        @TestMetadata("backtickedArgument.kt")
+        public void testBacktickedArgument() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/backtickedArgument.kt");
+        }
+
+        @TestMetadata("backtickedArgument2.kt")
+        public void testBacktickedArgument2() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/backtickedArgument2.kt");
+        }
+
+        @TestMetadata("backtickedArgument3.kt")
+        public void testBacktickedArgument3() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/backtickedArgument3.kt");
+        }
+
+        @TestMetadata("backtickedArgument4.kt")
+        public void testBacktickedArgument4() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/backtickedArgument4.kt");
+        }
+
+        @TestMetadata("beforeOtherNamed.kt")
+        public void testBeforeOtherNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/beforeOtherNamed.kt");
+        }
+
+        @TestMetadata("functionLiteralArgument.kt")
+        public void testFunctionLiteralArgument() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/functionLiteralArgument.kt");
+        }
+
+        @TestMetadata("genericCall.kt")
+        public void testGenericCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/genericCall.kt");
+        }
+
+        @TestMetadata("incompleteCall.kt")
+        public void testIncompleteCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/incompleteCall.kt");
+        }
+
+        @TestMetadata("javaMethod.kt")
+        public void testJavaMethod() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/javaMethod.kt");
+        }
+
+        @TestMetadata("kt11679.kt")
+        public void testKt11679() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/kt11679.kt");
+        }
+
+        @TestMetadata("linkedList.kt")
+        public void testLinkedList() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/linkedList.kt");
+        }
+
+        @TestMetadata("mixingPositionedAndNamed.kt")
+        public void testMixingPositionedAndNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/mixingPositionedAndNamed.kt");
+        }
+
+        @TestMetadata("notInsideIndices.kt")
+        public void testNotInsideIndices() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/notInsideIndices.kt");
+        }
+
+        @TestMetadata("notInsideNestedArgumentList.kt")
+        public void testNotInsideNestedArgumentList() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/notInsideNestedArgumentList.kt");
+        }
+
+        @TestMetadata("notInsideNestedArgumentList2.kt")
+        public void testNotInsideNestedArgumentList2() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/notInsideNestedArgumentList2.kt");
+        }
+
+        @TestMetadata("notLast.kt")
+        public void testNotLast() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/notLast.kt");
+        }
+
+        @TestMetadata("notResolved.kt")
+        public void testNotResolved() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/notResolved.kt");
+        }
+
+        @TestMetadata("rangeForLambda1.kt")
+        public void testRangeForLambda1() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/rangeForLambda1.kt");
+        }
+
+        @TestMetadata("rangeForLambda2.kt")
+        public void testRangeForLambda2() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/rangeForLambda2.kt");
+        }
+
+        @TestMetadata("rangeForLambda3.kt")
+        public void testRangeForLambda3() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/rangeForLambda3.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/simple.kt");
+        }
+
+        @TestMetadata("superClassConstructor.kt")
+        public void testSuperClassConstructor() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/superClassConstructor.kt");
+        }
+
+        @TestMetadata("vararg1.kt")
+        public void testVararg1() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/vararg1.kt");
+        }
+
+        @TestMetadata("vararg2.kt")
+        public void testVararg2() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/vararg2.kt");
+        }
+
+        @TestMetadata("vararg3.kt")
+        public void testVararg3() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/vararg3.kt");
+        }
+
+        @TestMetadata("withComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/withComment.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/addPropertyAccessors")
     public abstract static class AddPropertyAccessors extends AbstractHLIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

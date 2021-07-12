@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
+@TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
 public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -176,7 +176,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/compilationErrors")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/compilationErrors")
     public static class CompilationErrors extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -285,7 +285,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/facades")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/facades")
     public static class Facades extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -319,7 +319,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/ideRegression")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/ideRegression")
     public static class IdeRegression extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -373,7 +373,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
     public static class NullabilityAnnotations extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -477,7 +477,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/object")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/object")
     public static class Object extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -496,7 +496,7 @@ public class FirLightClassTestGenerated extends AbstractFirLightClassTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/publicField")
+    @TestMetadata("../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/publicField")
     public static class PublicField extends AbstractFirLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
