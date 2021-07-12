@@ -2,7 +2,6 @@
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -23,17 +22,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 
-import static com.intellij.ide.browsers.impl.WebBrowserServiceImplKt.SERVER_RELOAD_TOOLTIP_ID;
-import static com.intellij.ui.GotItTooltip.PROPERTY_PREFIX;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
+  public static final String WEB_PREVIEW_RELOAD_TOOLTIP_ID = "web.preview.reload.on.save";
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
   private final String myUrl;
-  private static int serverGotItCount = -1;
   private static int previewsOpened = 0;
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
@@ -42,7 +39,6 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
     myUrl = file.getPreviewUrl().toExternalForm();
     reloadPage();
     previewsOpened++;
-    disableServerTooltip();
     showPreviewTooltip();
   }
 
@@ -54,7 +50,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   private void showPreviewTooltip() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      GotItTooltip gotItTooltip = new GotItTooltip(SERVER_RELOAD_TOOLTIP_ID + ".preview", BuiltInServerBundle.message("reload.on.save.preview.got.it.content"), this);
+      GotItTooltip gotItTooltip = new GotItTooltip(WEB_PREVIEW_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.preview.got.it.content"), this);
       if (!gotItTooltip.canShow()) return;
 
       gotItTooltip
@@ -63,19 +59,6 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
       gotItTooltip.show(myPanel.getComponent(), (c, b) ->  new Point(0, 0) );
     });
-  }
-
-  private static void disableServerTooltip() {
-    if (serverGotItCount == -1 && previewsOpened == 1) {
-      String serverTooltipId = getServerTooltipId();
-      serverGotItCount = PropertiesComponent.getInstance().getInt(serverTooltipId, 0);
-      PropertiesComponent.getInstance().setValue(serverTooltipId, String.valueOf(Integer.MAX_VALUE));
-    }
-  }
-
-  @NotNull
-  private static String getServerTooltipId() {
-    return PROPERTY_PREFIX + "." + SERVER_RELOAD_TOOLTIP_ID;
   }
 
   @Override
@@ -118,6 +101,10 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   }
 
+  public static boolean isPreviewOpened() {
+    return previewsOpened > 0;
+  }
+
   @Override
   public @Nullable FileEditorLocation getCurrentLocation() {
     return null;
@@ -126,10 +113,5 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   @Override
   public void dispose() {
     previewsOpened--;
-    if (serverGotItCount != -1 && previewsOpened == 0) {
-      PropertiesComponent.getInstance().setValue(getServerTooltipId(), String.valueOf(serverGotItCount));
-      serverGotItCount = -1;
-    }
-
   }
 }
