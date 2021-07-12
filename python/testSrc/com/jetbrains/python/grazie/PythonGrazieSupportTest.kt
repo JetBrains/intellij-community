@@ -2,10 +2,14 @@
 package com.jetbrains.python.grazie
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.lang.Language
+import com.jetbrains.python.PythonLanguage
 
 class PythonGrazieSupportTest : GrazieTestBase() {
   override fun getBasePath() = "python/testData/grazie/"
   override fun isCommunity() = true
+
+  override val additionalEnabledContextLanguages: Set<Language> = setOf(PythonLanguage.INSTANCE)
 
   fun `test grammar check in constructs`() {
     runHighlightTestForFile("Constructs.py")
