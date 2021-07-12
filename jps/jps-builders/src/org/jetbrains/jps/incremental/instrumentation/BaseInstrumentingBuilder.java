@@ -38,7 +38,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
       final BinaryContent originalContent = compiledClass.getContent();
       final ClassReader reader = new FailSafeClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = InstrumenterClassWriter.getClassFileVersion(reader);
-      if (IS_INSTRUMENTED_KEY.get(compiledClass, Boolean.FALSE) || !canInstrument(compiledClass, version)) {
+      if (IS_INSTRUMENTED_KEY.get(compiledClass, Boolean.FALSE) || !canInstrument(compiledClass, reader, version)) {
         // do not instrument the same content twice
         continue;
       }
@@ -72,7 +72,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
     return exitCode;
   }
 
-  protected abstract boolean canInstrument(CompiledClass compiledClass, int classFileVersion);
+  protected abstract boolean canInstrument(CompiledClass compiledClass, ClassReader reader, int classFileVersion);
 
   @Nullable
   protected abstract BinaryContent instrument(CompileContext context,
