@@ -4821,6 +4821,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/castNullable.java");
         }
 
+        @TestMetadata("charCasts.java")
+        public void testCharCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/charCasts.java");
+        }
+
         @TestMetadata("extendsWildcardCast.java")
         public void testExtendsWildcardCast() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/extendsWildcardCast.java");
