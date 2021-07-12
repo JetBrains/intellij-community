@@ -11,6 +11,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -68,14 +69,20 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Nullable
   public static Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     final PsiLocation<?> psiLocation = location.toPsiLocation();
-    final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
+    PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
+    PsiMethod containingMethod = null;
+    if(containingClass == null && location instanceof MethodLocation) {
+      containingClass = ((MethodLocation)location).getContainingClass();
+      containingMethod = ((MethodLocation)location).getPsiElement();
+    }
     if (containingClass == null) return null;
     final String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) return null;
-    PsiMethod containingMethod = null;
-    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
-      final PsiMethod psiMethod = iterator.next().getPsiElement();
-      if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
+    if(containingMethod == null) {
+      for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+        final PsiMethod psiMethod = iterator.next().getPsiElement();
+        if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
+      }  
     }
     if (containingMethod == null) return null;
     String methodName = containingMethod.getName();
