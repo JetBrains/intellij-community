@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.ide.ui.LafManager;
@@ -19,7 +19,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.Properties;
 
 final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
@@ -48,24 +47,21 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += LafManager.getInstance().getCurrentLookAndFeel().getName();
     output += '\n';
 
-    output += "Java version: ";
-    Properties properties = System.getProperties();
-    output += properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
-    output += properties.getProperty("os.arch", "");
+    output += "JRE: ";
+    output += System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
+    output += ", " + System.getProperty("java.vendor", "unknown");
+    output += '\n';
+
+    output += "JVM: ";
+    output += System.getProperty("java.vm.version", "unknown");
+    output += ", " + System.getProperty("java.vm.name", "unknown");
+    output += ", " + System.getProperty("java.vm.vendor", "unknown");
     output += '\n';
 
     output += "Operating System: ";
-    output += SystemInfo.OS_NAME + " (" + SystemInfo.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")";
+    output += SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION;
+    output += " (" + SystemInfo.OS_ARCH + (CpuArch.isEmulated() ? ", emulated" : "") + ')';
     output += '\n';
-
-    output += "JVM version: ";
-    output += properties.getProperty("java.vm.name", "unknown");
-    output += ' ' + properties.getProperty("java.vendor", "unknown");
-    output += '\n';
-
-    if(SystemInfo.isMac && CpuArch.isIntel64()){
-      output += "Under Rosetta: " + SystemInfo.isUnderRosetta() + '\n';
-    }
 
     output += PathManager.PROPERTY_CONFIG_PATH + "=" + logPath(PathManager.getConfigPath()) + '\n';
     output += PathManager.PROPERTY_SYSTEM_PATH + "=" + logPath(PathManager.getSystemPath()) + '\n';

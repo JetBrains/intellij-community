@@ -100,7 +100,10 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    if (SystemInfo.isUnderRosetta()) {
+    if (!CpuArch.isEmulated()) return;
+    LOG.info(CpuArch.CURRENT + " appears to be emulated");
+
+    if (SystemInfo.isMac && CpuArch.isIntel64()) {
       NotificationAction downloadAction = NotificationAction.createSimpleExpiring(
         IdeBundle.message("bundled.jre.m1.arch.message.download"),
         () -> BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide"));

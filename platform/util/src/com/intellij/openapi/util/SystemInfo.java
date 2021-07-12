@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -6,10 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.mac.SystemB;
-import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -267,26 +263,5 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean areSymLinksSupported = isUnix || isWindows;
-
-  public static boolean isUnderRosetta() {
-    // Use "sysctl.proc_translated" to check if running in Rosetta
-    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
-    // for more details
-
-    if (!isMac || !CpuArch.isIntel64()) {
-      return false;
-    }
-
-    IntByReference size = new IntByReference(SystemB.INT_SIZE);
-    Pointer p = new Memory(size.getValue());
-
-    if (SystemB.INSTANCE.sysctlbyname(
-      "sysctl.proc_translated", p, size, null, 0) != -1)
-    {
-      return p.getInt(0) == 1;
-    }
-
-    return false;
-  }
   //</editor-fold>
 }
