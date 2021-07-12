@@ -59,6 +59,11 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     showWarningIfModalCommitEnabled()
 
+    task {
+      text(GitLessonsBundle.message("git.quick.start.introduction"))
+      proceedLink()
+    }
+
     lateinit var findActionTaskId: TaskContext.TaskId
     task("SearchEverywhere") {
       findActionTaskId = taskId
@@ -89,7 +94,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       before {
         adjustPopupPosition("") // Clone dialog is not saving the state now
       }
-      gotItStep(Balloon.Position.below, 300, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.1"),
+      gotItStep(Balloon.Position.below, 340, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.1"),
                 cornerToPointerDistance = 50)
       restoreByUi(findActionTaskId)
     }
