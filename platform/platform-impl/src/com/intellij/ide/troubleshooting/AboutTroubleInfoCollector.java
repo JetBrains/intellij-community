@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -61,6 +62,10 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += properties.getProperty("java.vm.name", "unknown");
     output += ' ' + properties.getProperty("java.vendor", "unknown");
     output += '\n';
+
+    if(SystemInfo.isMac && CpuArch.isIntel64()){
+      output += "Under Rosetta: " + SystemInfo.isUnderRosetta() + '\n';
+    }
 
     output += PathManager.PROPERTY_CONFIG_PATH + "=" + logPath(PathManager.getConfigPath()) + '\n';
     output += PathManager.PROPERTY_SYSTEM_PATH + "=" + logPath(PathManager.getSystemPath()) + '\n';
