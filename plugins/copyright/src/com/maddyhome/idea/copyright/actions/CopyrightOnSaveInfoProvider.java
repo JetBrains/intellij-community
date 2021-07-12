@@ -2,6 +2,7 @@
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.codeInsight.actions.onSave.ActionOnSaveInfoBase;
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
@@ -27,11 +28,11 @@ public final class CopyrightOnSaveInfoProvider extends ActionOnSaveInfoProvider 
   
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
-    return Collections.singletonList(new ActionOnSaveInfoBase(context, "Update copyright",
+    return Collections.singletonList(new ActionOnSaveInfoBase(context, CopyrightBundle.message("before.checkin.update.copyright"),
                                                               UPDATE_COPYRIGHT_ON_SAVE, UPDATE_COPYRIGHT_BY_DEFAULT) {
       @Override
       public @NotNull List<? extends ActionLink> getActionLinks() {
-        return List.of(createGoToPageInSettingsLink("Configure copyright settings",
+        return List.of(createGoToPageInSettingsLink(CopyrightBundle.message("link.label.configure.copyright.settings"),
                                                     CopyrightProjectConfigurable.ID));
       }
     });
