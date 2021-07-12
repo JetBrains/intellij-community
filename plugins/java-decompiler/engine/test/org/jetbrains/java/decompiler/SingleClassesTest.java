@@ -147,6 +147,10 @@ public class SingleClassesTest {
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
 
   private void doTest(String testFile, String... companionFiles) {
+    doTest(this.fixture, testFile, companionFiles);
+  }
+
+  static void doTest(DecompilerTestFixture fixture, String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
 
     File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
