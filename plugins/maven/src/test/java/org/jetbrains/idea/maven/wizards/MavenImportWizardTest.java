@@ -3,12 +3,17 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
@@ -61,6 +66,17 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     assertThat(module.getName()).isEqualTo("project");
     String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
+  }
+
+  public void testImportProjectAndSetupProjectJdk() throws Exception {
+    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable()));
+    Path pom = createPom();
+    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
+    Sdk projectSdk = ProjectRootManager.getInstance(module.getProject()).getProjectSdk();
+    assertNotNull(projectSdk);
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(module.getProject(), pom.getParent().toString());
+    assertEquals(projectSdk, connector.getJdk());
   }
 
   private @NotNull Path createPom() throws IOException {

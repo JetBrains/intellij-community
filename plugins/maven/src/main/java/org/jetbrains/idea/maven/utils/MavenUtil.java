@@ -73,6 +73,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -1410,6 +1411,11 @@ public class MavenUtil {
 
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+
+      if (res == null) {
+        res = getProjectJDKOnImportingStageWhileJdkIsNotSet(project);
+      }
+
       if (res != null && res.getSdkType() instanceof JavaSdkType) {
         return res;
       }
@@ -1429,11 +1435,15 @@ public class MavenUtil {
     throw new InvalidSdkException(name);
   }
 
+  private static Sdk getProjectJDKOnImportingStageWhileJdkIsNotSet(Project project) {
+    return MavenProjectBuilder.suggestProjectSdk(project);
+  }
+
   @Nullable
   protected static Sdk getSdkByExactName(@NotNull String name) {
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
-        if(projectJdk.getSdkType() instanceof JavaSdkType) {
+        if (projectJdk.getSdkType() instanceof JavaSdkType) {
           return projectJdk;
         }
       }

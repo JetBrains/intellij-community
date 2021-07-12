@@ -144,7 +144,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       .orElse(null);
   }
 
-  private void setupProjectSdk(@NotNull Project project) {
+  private static void setupProjectSdk(@NotNull Project project) {
     if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         Sdk projectSdk = suggestProjectSdk(project);
@@ -167,6 +167,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     if(ApplicationManager.getApplication().isDispatchThread()){
       FileDocumentManager.getInstance().saveAllDocuments();
     }
+
+    setupProjectSdk(project);
 
     if (!setupProjectImport(project)) {
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
@@ -197,6 +199,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       appendProfilesFromString(selectedProfiles.getDisabledProfiles(), disabledProfilesList);
     }
 
+
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
@@ -215,7 +218,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     manager.waitForReadingCompletion();
-    setupProjectSdk(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
