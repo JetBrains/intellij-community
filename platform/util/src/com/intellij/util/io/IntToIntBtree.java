@@ -287,7 +287,7 @@ public final class IntToIntBtree {
 
   static void myAssert(boolean b) {
     if (!b) {
-      myAssert("breakpoint place" != "do not remove");
+      myAssert(true);  // breakpoint place; do not remove
     }
     assert b;
   }
