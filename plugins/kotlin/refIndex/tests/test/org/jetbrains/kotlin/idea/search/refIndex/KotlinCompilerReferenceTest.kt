@@ -51,27 +51,6 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady("JavaClass.java")
     }
 
-    fun testSimpleUsageInFullyCompiledProject() {
-        myFixture.configureByFiles("Main.kt", "Foo.kt", "Boo.kt", "Doo.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Main.kt", "Foo.kt", "Boo.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testJavaNestedClass() {
-        myFixture.configureByFiles("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testJavaInnerClass() {
-        myFixture.configureByFiles("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
     fun testSimpleJavaLibraryClass() {
         myFixture.configureByFiles("Main.kt", "Boo.kt")
         rebuildProject()
@@ -86,80 +65,10 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         TestCase.assertEquals(setOf("Main.kt", "Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList")))
     }
 
-    fun testPrimaryConstructor() {
-        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass.java", "Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testNestedPrimaryConstructor() {
-        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass.java", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testSecondaryConstructor() {
-        myFixture.configureByFiles("Foo.kt", "Main.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass2.java", "Foo.kt", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testJavaConstructor() {
-        myFixture.configureByFiles("JavaClass.java", "Foo.kt", "Main.kt", "Doo.kt", "WithoutUsages.kt")
-        rebuildProject()
-        TestCase.assertEquals(setOf("JavaClass.java", "Main.kt", "Doo.kt"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
     fun testMemberFunction() {
         myFixture.configureByFile("Main.kt")
         rebuildProject()
         assertIndexUnavailable()
-    }
-
-    fun testTopLevelFunction() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaClass.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelFunctionWithJvmName() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaClass.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelExtension() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaClass.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelExtensionWithCustomFileName() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "JavaClass.java", "JavaClass2.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaClass.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelProperty() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelConstant() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
     }
 
     fun testTopLevelConstantWithJvmName() {
@@ -168,146 +77,144 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         assertThrows(AssertionFailedError::class.java) { rebuildProject() }
     }
 
-    fun testTopLevelConstantWithCustomFileName() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
+    fun testSimpleUsageInFullyCompiledProject() = doTest(
+        filesWithUsages = listOf("Main.kt", "Foo.kt", "Boo.kt"),
+        extraFiles = listOf("Doo.kt"),
+    )
 
-    fun testTopLevelConstantJava() {
-        myFixture.configureByFiles("JavaRead.java", "Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
+    fun testJavaNestedClass() = doTest(
+        filesWithUsages = listOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"),
+        extraFiles = listOf("WithoutUsages.kt"),
+    )
 
-    fun testTopLevelConstantJavaWithCustomFileName() {
-        myFixture.configureByFiles("JavaRead.java", "Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Doo.kt", "Foo.kt", "Main.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
+    fun testJavaInnerClass() = doTest(
+        filesWithUsages = listOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"),
+        extraFiles = listOf("WithoutUsages.kt"),
+    )
 
-    fun testTopLevelExtensionProperty() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
+    fun testPrimaryConstructor() = doTest(
+        filesWithUsages = listOf("Foo.kt", "JavaClass.java", "Main.kt", "Doo.kt"),
+        extraFiles = listOf("Doo.kt", "WithoutUsages.kt", "JavaClass2.java"),
+    )
 
-    fun testTopLevelExtensionVariable() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java", "JavaWrite.java", "Write.kt")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java", "JavaWrite.java", "Write.kt"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testNestedPrimaryConstructor() = doTest(
+        filesWithUsages = listOf("JavaClass.java", "Main.kt", "Doo.kt"),
+        extraFiles = listOf("JavaClass2.java", "WithoutUsages.kt"),
+        customMainFile = "Foo.kt",
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testSecondaryConstructor() = doTest(
+        filesWithUsages = listOf("Foo.kt", "JavaClass2.java", "Main.kt", "Doo.kt"),
+        extraFiles = listOf("JavaClass.java", "WithoutUsages.kt"),
+    )
 
-    fun testTopLevelExtensionVariableWithJvmNameOnProperty() {
-        myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java", "JavaWrite.java", "Write.kt")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java", "JavaWrite.java", "Write.kt"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testJavaConstructor() = doTest(
+        filesWithUsages = listOf("JavaClass.java", "Main.kt", "Doo.kt"),
+        extraFiles = listOf("Foo.kt", "WithoutUsages.kt"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelFunction() = doTest(
+        filesWithUsages = listOf("Main.kt", "Doo.kt", "Foo.kt", "JavaClass.java"),
+        extraFiles = listOf("Bar.kt", "JavaClass2.java"),
+    )
 
-    fun testTopLevelVariable() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelFunctionWithJvmName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Doo.kt", "Foo.kt", "JavaClass.java"),
+        extraFiles = listOf("Bar.kt", "JavaClass2.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelExtension() = doTest(
+        filesWithUsages = listOf("Main.kt", "Bar.kt", "Foo.kt", "JavaClass.java"),
+        extraFiles = listOf("Doo.kt", "JavaClass2.java"),
+    )
 
-    fun testTopLevelVariableWithJvmNameOnProperty() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelExtensionWithCustomFileName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Bar.kt", "Foo.kt", "JavaClass.java"),
+        extraFiles = listOf("Doo.kt", "JavaClass2.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelProperty() = doTest(
+        filesWithUsages = listOf("Main.kt", "Doo.kt", "Foo.kt", "JavaRead.java"),
+        extraFiles = listOf("Empty.java", "Bar.kt"),
+    )
 
-    fun testTopLevelVariableWithCustomFileName() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelConstant() = doTest(
+        filesWithUsages = listOf("Main.kt", "Doo.kt", "Foo.kt", "JavaRead.java"),
+        extraFiles = listOf("Empty.java", "Bar.kt"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelConstantWithCustomFileName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Doo.kt", "Foo.kt", "JavaRead.java"),
+        extraFiles = listOf("Empty.java", "Bar.kt"),
+    )
 
-    fun testTopLevelIsVariableWithCustomFileName() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelConstantJava() = doTest(
+        filesWithUsages = listOf("JavaRead.java", "Doo.kt", "Foo.kt", "Main.kt"),
+        extraFiles = listOf("Bar.kt", "Empty.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelConstantJavaWithCustomFileName() = doTest(
+        filesWithUsages = listOf("JavaRead.java", "Doo.kt", "Foo.kt", "Main.kt"),
+        extraFiles = listOf("Bar.kt", "Empty.java"),
+    )
 
-    fun testTopLevelPropertyWithBackingField() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelExtensionProperty() = doTest(
+        filesWithUsages = listOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java"),
+        extraFiles = listOf("Doo.kt", "Empty.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelExtensionVariable() = doTest(
+        filesWithUsages = listOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java", "JavaWrite.java", "Write.kt"),
+        extraFiles = listOf("Doo.kt", "Empty.java"),
+    )
 
-    fun testTopLevelPropertyWithCustomGetterAndSetter() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelExtensionVariableWithJvmNameOnProperty() = doTest(
+        filesWithUsages = listOf("Main.kt", "Bar.kt", "Foo.kt", "JavaRead.java", "JavaWrite.java", "Write.kt"),
+        extraFiles = listOf("Doo.kt", "Empty.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelVariable() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
 
-    fun testTopLevelVariableWithCustomGetterAndSetterAndMixedJvmName() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelVariableWithJvmNameOnProperty() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelVariableWithCustomFileName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
 
-    fun testTopLevelVariableWithCustomGetterAndSetterAndJvmName() {
-        myFixture.configureByFiles("Main.kt", "Nothing.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
-            getReferentFilesForElementUnderCaret(),
-        )
+    fun testTopLevelIsVariableWithCustomFileName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
 
-        addFileAndAssertIndexNotReady()
-    }
+    fun testTopLevelPropertyWithBackingField() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
 
-    fun testTopLevelFunctionWithJvmOverloads() {
-        myFixture.configureByFiles(
+    fun testTopLevelPropertyWithCustomGetterAndSetter() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
+
+    fun testTopLevelVariableWithCustomGetterAndSetterAndMixedJvmName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
+
+    fun testTopLevelVariableWithCustomGetterAndSetterAndJvmName() = doTest(
+        filesWithUsages = listOf("Main.kt", "Read.kt", "Write.kt", "JavaRead.java", "JavaWrite.java"),
+        extraFiles = listOf("Nothing.kt", "Empty.java"),
+    )
+
+    fun testTopLevelFunctionWithJvmOverloads() = doTest(
+        filesWithUsages = listOf(
             "utilFile.kt",
             "AllArguments.java",
             "AllArguments.kt",
@@ -317,31 +224,15 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
             "WithoutLast.kt",
             "WithoutSecond.java",
             "WithoutSecond.kt",
+        ),
+        extraFiles = listOf(
             "Empty.java",
             "Empty.kt",
-        )
+        ),
+    )
 
-        rebuildProject()
-        TestCase.assertEquals(
-            setOf(
-                "utilFile.kt",
-                "AllArguments.java",
-                "AllArguments.kt",
-                "WithoutAll.java",
-                "WithoutAll.kt",
-                "WithoutLast.java",
-                "WithoutLast.kt",
-                "WithoutSecond.java",
-                "WithoutSecond.kt",
-            ),
-            getReferentFilesForElementUnderCaret(),
-        )
-
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testTopLevelExtensionWithJvmOverloadsAndJvmName() {
-        myFixture.configureByFiles(
+    fun testTopLevelExtensionWithJvmOverloadsAndJvmName() = doTest(
+        filesWithUsages = listOf(
             "utilFile.kt",
             "AllArguments.java",
             "AllArguments.kt",
@@ -351,61 +242,53 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
             "WithoutLast.kt",
             "WithoutSecond.java",
             "WithoutSecond.kt",
+        ),
+        extraFiles = listOf(
             "Empty.java",
             "Empty.kt",
+        ),
+    )
+
+    fun testInnerClass() = doTest(
+        filesWithUsages = listOf("Usage.kt", "JavaUsage.java"),
+        extraFiles = listOf("Empty.kt", "Empty.java"),
+        customMainFile = "MainClass.kt",
+    )
+
+    fun testInnerClassWithPackage() = doTest(
+        filesWithUsages = listOf("Usage.kt", "JavaUsage.java"),
+        extraFiles = listOf("Empty.kt", "Empty.java"),
+        customMainFile = "MainClass.kt",
+    )
+
+    fun testNestedClass() = doTest(
+        filesWithUsages = listOf("Usage.kt", "JavaUsage.java"),
+        extraFiles = listOf("Empty.kt", "Empty.java"),
+        customMainFile = "MainClass.kt",
+    )
+
+    fun testObject() = doTest(
+        filesWithUsages = listOf("MyObject.kt", "Usage.kt", "JavaUsage.java"),
+        extraFiles = listOf("Empty.kt", "Empty.java"),
+    )
+
+    fun testNestedObject() = doTest(
+        filesWithUsages = listOf("Usage.kt", "JavaUsage.java"),
+        extraFiles = listOf("Empty.kt", "Empty.java"),
+        customMainFile = "MainClass.kt",
+    )
+
+    private fun doTest(filesWithUsages: List<String>, extraFiles: List<String>, customMainFile: String? = null) {
+        val allFiles = listOfNotNull(customMainFile).plus(filesWithUsages).plus(extraFiles).distinct()
+        val filesOutOfConfiguration = Path(testDataPath, name).listDirectoryEntries().filter { it.name !in allFiles }
+        TestCase.assertTrue(
+            "Files out of configuration: ${filesOutOfConfiguration.map { it.name }}",
+            filesOutOfConfiguration.isEmpty(),
         )
 
+        myFixture.configureByFiles(*allFiles.toTypedArray())
         rebuildProject()
-        TestCase.assertEquals(
-            setOf(
-                "utilFile.kt",
-                "AllArguments.java",
-                "AllArguments.kt",
-                "WithoutAll.java",
-                "WithoutAll.kt",
-                "WithoutLast.java",
-                "WithoutLast.kt",
-                "WithoutSecond.java",
-                "WithoutSecond.kt",
-            ),
-            getReferentFilesForElementUnderCaret(),
-        )
-
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testInnerClass() {
-        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testInnerClassWithPackage() {
-        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testNestedClass() {
-        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testObject() {
-        myFixture.configureByFiles("MyObject.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("MyObject.kt", "Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
-        addFileAndAssertIndexNotReady()
-    }
-
-    fun testNestedObject() {
-        myFixture.configureByFiles("MainClass.kt", "Usage.kt", "Empty.kt", "JavaUsage.java", "Empty.java")
-        rebuildProject()
-        TestCase.assertEquals(setOf("Usage.kt", "JavaUsage.java"), getReferentFilesForElementUnderCaret())
+        TestCase.assertEquals(filesWithUsages.toSet(), getReferentFilesForElementUnderCaret())
         addFileAndAssertIndexNotReady()
     }
 
