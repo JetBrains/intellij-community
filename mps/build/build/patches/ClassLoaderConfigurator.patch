@@ -1,0 +1,72 @@
+Index: community/platform/core-impl/src/com/intellij/ide/plugins/ClassLoaderConfigurator.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/core-impl/src/com/intellij/ide/plugins/ClassLoaderConfigurator.kt	(revision 03f0e0c6e627a555b9734c8042950a48a0f79630)
++++ community/platform/core-impl/src/com/intellij/ide/plugins/ClassLoaderConfigurator.kt	(date 1625843311661)
+@@ -10,6 +10,7 @@
+ import com.intellij.util.lang.ResourceFile
+ import com.intellij.util.lang.UrlClassLoader
+ import org.jetbrains.annotations.ApiStatus
++import java.io.IOException
+ import java.lang.invoke.MethodHandles
+ import java.lang.invoke.MethodType
+ import java.nio.file.Files
+@@ -128,6 +129,7 @@
+       log.error("jarFiles is not set for $plugin")
+       files = Collections.emptyList()!!
+     }
++    files += collectClassPath(plugin)
+
+     var oldActiveSubModules: MutableList<IdeaPluginDescriptorImpl>? = null
+     for (dependency in plugin.pluginDependencies) {
+@@ -384,6 +386,48 @@
+       setPluginClassLoaderForMainAndSubPlugins(module, classLoader)
+     }
+   }
++
++  private fun collectClassPath(descriptor: IdeaPluginDescriptorImpl): List<Path> {
++    val pluginPath = descriptor.path
++    if (!Files.isDirectory(pluginPath)) {
++      return Collections.singletonList(pluginPath)
++    }
++
++    val result = ArrayList<Path>()
++    val classesDir = pluginPath.resolve("classes")
++    if (Files.exists(classesDir)) {
++      result.add(classesDir)
++    }
++    val productionDirectory = pluginPath.parent
++    if (productionDirectory.endsWith("production")) {
++      result.add(pluginPath)
++    }
++
++    val libDir = pluginPath.resolve("lib")
++    if (Files.exists(libDir)) {
++      try {
++        Files.newDirectoryStream(libDir).use { childStream ->
++          for (f in childStream) {
++            if (Files.isRegularFile(f)) {
++              val name = f.fileName.toString()
++              if (name.endsWith(".jar", ignoreCase = true) || name.endsWith(".zip", ignoreCase = true)) {
++                result.add(f)
++              }
++            }
++            else {
++              result.add(f)
++            }
++          }
++        }
++      }
++      catch (ignore: NoSuchFileException) {
++      }
++      catch (e: IOException) {
++        PluginManagerCore.getLogger().debug(e)
++      }
++    }
++    return result
++  }
+ }
+
+ // do not use class reference here
