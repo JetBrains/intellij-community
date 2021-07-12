@@ -144,7 +144,11 @@ class FeedbackForm(
             it.text.isBlank()
           }
           .also {
-            it.component.emptyText.text = ApplicationBundle.message("feedback.form.details.emptyText")
+            it.component.emptyText.text = if (isEvaluation)
+              ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
+            else
+              ApplicationBundle.message("feedback.form.details.emptyText")
+            it.component.font = JBFont.regular()
             it.component.emptyText.setFont(JBFont.regular())
             it.component.putClientProperty(JBTextArea.STATUS_VISIBLE_FUNCTION,
                                            BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
