@@ -178,6 +178,9 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
       exitLink.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
+          if (!StatisticBase.isLearnProjectCloseLogged) {
+            StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
+          }
           val action = ActionManager.getInstance().getAction("CloseProject")
           invokeActionForFocusContext(action)
         }

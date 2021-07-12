@@ -32,8 +32,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
 
   override fun projectClosingBeforeSave(project: Project) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport)) {
-      StatisticBase.isLearnProjectClosing = true
+    if (isLearningProject(project, langSupport) && !StatisticBase.isLearnProjectCloseLogged) {
       StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
     }
   }
@@ -41,7 +40,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectClosed(project: Project) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
     if (isLearningProject(project, langSupport)) {
-      StatisticBase.isLearnProjectClosing = false
+      StatisticBase.isLearnProjectCloseLogged = false
       removeFromRecentProjects(project)
     }
   }
