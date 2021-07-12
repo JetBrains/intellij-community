@@ -58,6 +58,20 @@ class KotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         addFileAndAssertIndexNotReady()
     }
 
+    fun testJavaNestedClass() {
+        myFixture.configureByFiles("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt", "WithoutUsages.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
+    fun testJavaInnerClass() {
+        myFixture.configureByFiles("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt", "WithoutUsages.kt")
+        rebuildProject()
+        TestCase.assertEquals(setOf("JavaClass.java", "TypeUsage.kt", "ConstructorUsage.kt"), getReferentFilesForElementUnderCaret())
+        addFileAndAssertIndexNotReady()
+    }
+
     fun testSimpleJavaLibraryClass() {
         myFixture.configureByFiles("Main.kt", "Boo.kt")
         rebuildProject()
