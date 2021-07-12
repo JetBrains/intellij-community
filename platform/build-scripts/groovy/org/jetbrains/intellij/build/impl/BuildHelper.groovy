@@ -75,8 +75,8 @@ final class BuildHelper {
                                                                            string, path,
                                                                            logger))
     mergeJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MergeJarsKt"),
-                                                     "mergeJars",
-                                                     MethodType.methodType(voidClass, path, List.class as Class<?>))
+                                  "mergeJars",
+                                  MethodType.methodType(Map.class as Class<?>, path, List.class as Class<?>))
   }
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {

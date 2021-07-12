@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -44,7 +45,6 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -59,6 +59,8 @@ final class DistributionJARsBuilder {
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "plugins"
+
+  private static final String UBER_JAR_NAME = "3rd-party.jar"
 
   private final BuildContext buildContext
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
@@ -196,6 +198,13 @@ final class DistributionJARsBuilder {
       buildNonBundledPluginsBlockMaps()
     }
     buildThirdPartyLibrariesList(projectStructureMapping)
+
+    Path artifactOut = Path.of(buildContext.paths.artifacts)
+    Files.createDirectories(artifactOut)
+    projectStructureMapping.generateJsonFile(artifactOut.resolve("content-mapping.json"))
+    Files.newBufferedWriter(artifactOut.resolve("content.json")).withCloseable {
+      ProjectStructureMapping.buildJarContentReport(projectStructureMapping, it, buildContext.paths)
+    }
   }
 
   static void reorderJars(@NotNull BuildContext buildContext) {
@@ -1018,7 +1027,7 @@ final class DistributionJARsBuilder {
                                            boolean mergeLibs,
                                            BuildContext buildContext) {
     Map<Path, ProjectLibraryData> copiedFiles = new HashMap<>()
-    Map<String, List<Path>> toMerge = mergeLibs ? new HashMap<String, List<Path>>() : Collections.<String, List<Path>>emptyMap()
+    Map<JpsLibrary, List<Path>> toMerge = mergeLibs ? new HashMap<JpsLibrary, List<Path>>() : Collections.<JpsLibrary, List<Path>>emptyMap()
     boolean copyFiles = layoutSpec.copyFiles
 
     libProcessing:
@@ -1049,35 +1058,35 @@ final class DistributionJARsBuilder {
         }
       }
 
-      if (copyFiles) {
-        String lowerCasedLibName = libName.toLowerCase()
-        if (mergeLibs) {
-          String uberJarName
-          if (!excludedFromMergeLibs.contains(libName) &&
-              !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
-              !lowerCasedLibName.contains("annotations") &&
-              !lowerCasedLibName.startsWith("junit") &&
-              !lowerCasedLibName.startsWith("cucumber-") &&
-              !lowerCasedLibName.contains("groovy")) {
-            uberJarName = "3rd-party.jar"
-            buildContext.messages.debug("  pack $libName into $uberJarName")
-          }
-          else {
-            uberJarName = null
-          }
+      String lowerCasedLibName = libName.toLowerCase()
+      if (mergeLibs &&
+          !excludedFromMergeLibs.contains(libName) &&
+          !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+          !lowerCasedLibName.contains("annotations") &&
+          !lowerCasedLibName.startsWith("junit") &&
+          !lowerCasedLibName.startsWith("cucumber-") &&
+          !lowerCasedLibName.contains("groovy")) {
+        buildContext.messages.debug("  pack $libName into $UBER_JAR_NAME")
 
-          if (uberJarName != null) {
-            toMerge.computeIfAbsent(uberJarName, { new ArrayList<>() }).addAll(nioFiles)
-            layoutSpec.addLibraryMapping(library, uberJarName, outputDir.resolve(uberJarName).toString())
-            continue libProcessing
+        if (copyFiles) {
+          toMerge.put(library, nioFiles)
+        }
+        else {
+          for (Path nioFile : nioFiles) {
+            layoutSpec.addLibraryMapping(library, UBER_JAR_NAME, nioFile)
           }
         }
+        continue libProcessing
+      }
 
+      if (copyFiles) {
         Files.createDirectories(libOutputDir)
         if (!removeVersionFromJarName && nioFiles.size() > 1 && lowerCasedLibName != "gradle") {
           Path targetFile = outputDir.resolve(FileUtil.sanitizeFileName(lowerCasedLibName, false) + ".jar")
           BuildHelper.getInstance(buildContext).mergeJars.invokeWithArguments(targetFile, nioFiles)
-          layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), targetFile.toString())
+          for (Path nioFile : nioFiles) {
+            layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), nioFile)
+          }
           continue libProcessing
         }
       }
@@ -1089,14 +1098,14 @@ final class DistributionJARsBuilder {
           if (copyFiles) {
             Files.copy(file, libOutputDir.resolve(newName))
           }
-          layoutSpec.addLibraryMapping(library, newName, file.toString())
+          layoutSpec.addLibraryMapping(library, newName, file)
           buildContext.messages.debug(" include $newName (renamed from $file) from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
         }
         else {
           if (copyFiles) {
             Files.copy(file, libOutputDir.resolve(file.fileName))
           }
-          layoutSpec.addLibraryMapping(library, file.fileName.toString(), file.toString())
+          layoutSpec.addLibraryMapping(library, file.fileName.toString(), file)
           buildContext.messages.debug(" include $file from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
         }
       }
@@ -1104,11 +1113,18 @@ final class DistributionJARsBuilder {
 
     if (!toMerge.isEmpty()) {
       MethodHandle mergeJarsMethod = BuildHelper.getInstance(buildContext).mergeJars
-      for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
-        List<Path> list = entry.value
-        list.sort(null)
-        buildContext.messages.debug(" merge $list to ${entry.key}")
-        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key), list)
+      List<Path> allFiles = new ArrayList<>()
+      for (Map.Entry<JpsLibrary, List<Path>> entry : toMerge.entrySet()) {
+        allFiles.addAll(entry.value)
+      }
+      allFiles.sort(null)
+      buildContext.messages.debug(" merge $allFiles to $UBER_JAR_NAME")
+      Path uberJarFile = outputDir.resolve(UBER_JAR_NAME)
+      Map<Path, Integer> sizes = mergeJarsMethod.invokeWithArguments(uberJarFile, allFiles) as Map<Path, Integer>
+      for (Map.Entry<JpsLibrary, List<Path>> entry : toMerge.entrySet()) {
+        for (Path nioFile : entry.value) {
+          layoutSpec.addProjectLibraryMapping(entry.key, nioFile, sizes.get(nioFile), uberJarFile)
+        }
       }
     }
   }

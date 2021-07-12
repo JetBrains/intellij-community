@@ -8,14 +8,16 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun mergeJars(targetFile: Path, files: List<Path>) {
+fun mergeJars(targetFile: Path, files: List<Path>): Map<Path, Int> {
   Files.createDirectories(targetFile.parent)
   FileChannel.open(targetFile, RW_CREATE_NEW).use { outChannel ->
     val packageIndexBuilder = PackageIndexBuilder()
 
     val zipCreator = ZipFileWriter(outChannel, deflater = null)
+    val sizes = HashMap<Path, Int>()
     for (file in files) {
       ImmutableZipFile.load(file).use { zipFile ->
+        @Suppress("SpellCheckingInspection")
         val entries = zipFile.entries.filter {
           val name = it.name
           !name.endsWith(".kotlin_metadata") &&
@@ -42,10 +44,13 @@ fun mergeJars(targetFile: Path, files: List<Path>) {
         }
         writeEntries(entries, zipCreator, zipFile)
         packageIndexBuilder.add(entries)
+        
+        sizes.put(file, entries.asSequence().map { it.size }.sum())
       }
     }
     writeDirs(packageIndexBuilder.dirsToCreate, zipCreator)
     packageIndexBuilder.writePackageIndex(zipCreator)
     zipCreator.finish()
+    return sizes
   }
 }

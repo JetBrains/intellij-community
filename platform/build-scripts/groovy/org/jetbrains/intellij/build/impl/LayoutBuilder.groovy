@@ -1,20 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement
@@ -304,14 +299,14 @@ final class LayoutBuilder {
           if (copyFiles) {
             ant.renamedFile(filePath: file.absolutePath, newName: newName)
           }
-          addLibraryMapping(library, newName, file.absolutePath)
+          addLibraryMapping(library, newName, file.toPath())
           context.messages.debug(" include $newName (renamed from $file.absolutePath) from library '${getLibraryName(library)}'")
         }
         else {
           if (copyFiles) {
             ant.fileset(file: file.absolutePath)
           }
-          addLibraryMapping(library, file.name, file.absolutePath)
+          addLibraryMapping(library, file.name, file.toPath())
           context.messages.debug(" include $file.name ($file.absolutePath) from library '${getLibraryName(library)}'")
         }
       }
@@ -343,18 +338,24 @@ final class LayoutBuilder {
       return name
     }
 
-    void addLibraryMapping(JpsLibrary library, String outputFileName, String libraryFilePath) {
-      def outputFilePath = getCurrentPathString().isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
+    void addLibraryMapping(JpsLibrary library, String outputFileName, Path libraryFile) {
       def parentReference = library.createReference().parentReference
       if (parentReference instanceof JpsModuleReference) {
-        def projectHome = context.paths.projectHome + File.separator
-        def mavenLocalRepo = new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath + File.separator
-        String shortenedPath = libraryFilePath.replace(projectHome, "\$PROJECT_DIR\$/").replace(mavenLocalRepo, "\$MAVEN_REPOSITORY\$/")
-        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(outputFilePath, shortenedPath, libraryFilePath))
+        String shortenedPath = ProjectStructureMapping.shortenPath(libraryFile, context.paths)
+        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(getOutputFilePath(outputFileName), shortenedPath, libraryFile.toString()))
       }
       else {
-        projectStructureMapping.addEntry(new ProjectLibraryEntry(outputFilePath, library.name, libraryFilePath))
+        projectStructureMapping.addEntry(new ProjectLibraryEntry(getOutputFilePath(outputFileName), library.name, libraryFile, 0))
       }
+    }
+
+    void addProjectLibraryMapping(JpsLibrary library, Path libraryFile, int fileSize, Path outputFile) {
+      assert !(library.createReference().parentReference instanceof JpsModuleReference)
+      projectStructureMapping.addEntry(new ProjectLibraryEntry(getOutputFilePath(outputFile.fileName.toString()), library.name, libraryFile, fileSize))
+    }
+
+    private String getOutputFilePath(String outputFileName) {
+      return currentPath.isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
     }
 
     private void addArtifactMapping(@NotNull JpsArtifact artifact) {
