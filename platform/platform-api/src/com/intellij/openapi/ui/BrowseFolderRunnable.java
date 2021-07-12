@@ -78,12 +78,12 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
 
   @Nullable
   protected VirtualFile getInitialFile() {
-    @NonNls String directoryName = myAccessor.getText(myTextComponent).trim();
+    @NonNls String directoryName = myAccessor.getText(myTextComponent);
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
     }
 
-    directoryName = FileUtil.toSystemIndependentName(directoryName);
+    directoryName = FileUtil.toSystemIndependentName(directoryName.trim());
     VirtualFile path = LocalFileSystem.getInstance().findFileByPath(expandPath(directoryName));
     while (path == null && directoryName.length() > 0) {
       int pos = directoryName.lastIndexOf('/');
@@ -106,7 +106,11 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   protected String getComponentText() {
-    return myAccessor.getText(myTextComponent).trim();
+    @NonNls String directoryName = myAccessor.getText(myTextComponent);
+    if (StringUtil.isEmptyOrSpaces(directoryName)) {
+      return "";
+    }
+    return directoryName.trim();
   }
 
   protected void onFileChosen(@NotNull VirtualFile chosenFile) {
