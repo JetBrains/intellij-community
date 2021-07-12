@@ -202,7 +202,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
         }), "", null);
         FileDocumentManager.getInstance().saveAllDocuments();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.any());
     }
 
     CompilerUtil.refreshIOFiles(filesToRefresh);
