@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.CompletenessResult.*;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 
 public class SwitchBlockHighlightingModel {
   @NotNull private final LanguageLevel myLevel;
@@ -791,12 +791,12 @@ public class SwitchBlockHighlightingModel {
       if (switchModel.needToCheckCompleteness(labelElements)) return results.isEmpty() ? COMPLETE : UNEVALUATED;
       return results.isEmpty() ? COMPLETE : INCOMPLETE;
     }
-  }
 
-  public enum CompletenessResult {
-    UNEVALUATED,
-    INCOMPLETE,
-    COMPLETE
+    public enum CompletenessResult {
+      UNEVALUATED,
+      INCOMPLETE,
+      COMPLETE
+    }
   }
 }
 
