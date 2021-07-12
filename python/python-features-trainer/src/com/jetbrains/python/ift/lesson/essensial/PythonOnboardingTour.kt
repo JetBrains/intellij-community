@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -13,6 +14,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -158,6 +161,7 @@ class PythonOnboardingTour :
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
     if (!lessonPassed) return
+    val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
                                                     PythonLessonsBundle.message("python.onboarding.finish.text",
@@ -171,7 +175,12 @@ class PythonOnboardingTour :
         Messages.YES -> invokeLater {
           LessonManager.instance.stopLesson()
           val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
-          invokeActionForFocusContext(closeAction)
+          dataContextPromise.onSuccess { context ->
+            invokeLater {
+              val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
+              ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
+            }
+          }
         }
         Messages.NO -> invokeLater {
           LearningUiManager.resetModulesView()
