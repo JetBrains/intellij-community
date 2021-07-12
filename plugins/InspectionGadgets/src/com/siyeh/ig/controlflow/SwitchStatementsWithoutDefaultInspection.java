@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.CompletenessResult;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
