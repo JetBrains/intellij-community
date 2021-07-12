@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -238,7 +239,8 @@ public final class Utils {
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
     if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
-    if (ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
+    if (comp instanceof ActionMenu && comp.getParent() instanceof IdeMenuBar ||
+        ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
         ((EditorGutterComponentEx)comp).getGutterRenderer(point.getOriginalPoint()) != null) {
       return EmptyRunnable.getInstance();
     }
