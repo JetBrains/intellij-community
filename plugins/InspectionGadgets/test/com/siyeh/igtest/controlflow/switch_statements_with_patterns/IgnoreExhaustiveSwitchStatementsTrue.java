@@ -105,7 +105,7 @@ public class SwitchStatementsWithoutDefault
         }
     }
 
-  void testPatterns(X x, Foo foo) {
+  void testPatterns(X x, Foo foo, String s) {
       switch (<error descr="'switch' statement does not cover all possible input values">x</error>) {
         case X xx && false:
           break;
@@ -130,6 +130,11 @@ public class SwitchStatementsWithoutDefault
 
       switch (foo) {
         case Object o:
+          break;
+      }
+
+      switch (s) {
+        case (String ss && true):
           break;
       }
   }

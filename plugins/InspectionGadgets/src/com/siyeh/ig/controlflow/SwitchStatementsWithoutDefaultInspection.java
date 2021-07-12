@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -74,11 +75,11 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
           infoMode = true;
         }
         else {
-          Boolean isCompleteSwitch = PatternsInSwitchBlockHighlightingModel.isCompleteSwitch(statement);
-          if (isCompleteSwitch == null) return;
-          if (m_ignoreFullyCoveredEnums && isCompleteSwitch) {
-              if (!isOnTheFly) return;
-              infoMode = true;
+          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
+          if (completenessResult == CompletenessResult.UNEVALUATED) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE) {
+            if (!isOnTheFly) return;
+            infoMode = true;
           }
         }
         String message = InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
