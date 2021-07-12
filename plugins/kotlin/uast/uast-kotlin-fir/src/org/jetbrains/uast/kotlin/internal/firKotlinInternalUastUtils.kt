@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.lz
+import java.lang.IllegalStateException
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
@@ -18,5 +19,11 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
 internal fun KtCall.toPsiMethod(): PsiMethod? {
     if (isErrorCall) return null
     val psi = targetFunction.candidates.singleOrNull()?.psi ?: return null
-    return psi.getRepresentativeLightMethod()
+    try {
+        return psi.getRepresentativeLightMethod()
+    } catch (e: IllegalStateException) {
+        // TODO: Creating FirModuleResolveState is not yet supported for LibrarySourceInfo(libraryName=myLibrary)
+        //  this happens while destructuring a variable via Pair casting (testDestructuringDeclaration).
+        return null
+    }
 }
