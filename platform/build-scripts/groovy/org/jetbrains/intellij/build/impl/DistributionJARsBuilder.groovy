@@ -270,7 +270,8 @@ final class DistributionJARsBuilder {
    */
   static Path buildSearchableOptions(BuildContext buildContext,
                                      @NotNull List<String> modulesForPluginsToPublish,
-                                     BuildTasksImpl.ApplicationStarterClasspathCustomizer classpathCustomizer = new BuildTasksImpl.ApplicationStarterClasspathCustomizer(buildContext)) {
+                                     BuildTasksImpl.ApplicationStarterClasspathCustomizer classpathCustomizer = new BuildTasksImpl.ApplicationStarterClasspathCustomizer(buildContext),
+                                     Map<String, Object> systemProperties = Collections.emptyMap()) {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
     modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
@@ -283,7 +284,7 @@ final class DistributionJARsBuilder {
     BuildTasksImpl.runApplicationStarter(buildContext,
                                          buildContext.paths.tempDir.resolve("searchableOptions"),
                                          modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
-                                         Collections.emptyMap(),
+                                         systemProperties,
                                          List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"),
                                          [], TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
     String[] modules = targetDirectory.toFile().list()
