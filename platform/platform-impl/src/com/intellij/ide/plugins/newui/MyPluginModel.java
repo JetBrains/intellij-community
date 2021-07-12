@@ -230,14 +230,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       IdeaPluginDescriptor descriptor = entry.getKey();
       PluginId pluginId = descriptor.getPluginId();
 
-      if (descriptor.isImplementationDetail() || /* implementation detail plugins are never explicitly disabled */
-          !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
-        continue;
-      }
-
       Pair<PluginEnableDisableAction, PluginEnabledState> pair = entry.getValue();
       PluginEnabledState oldState = pair.getSecond();
       PluginEnabledState newState = getState(pluginId);
+
+      if ((descriptor instanceof IdeaPluginDescriptorImpl) && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
+          (descriptor.isImplementationDetail() && !newState.isEnabled()) ||
+          !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
+        continue;
+      }
 
       if (oldState != newState ||
           newState.isDisabled() && myErrorPluginsToDisable.contains(pluginId)) {
