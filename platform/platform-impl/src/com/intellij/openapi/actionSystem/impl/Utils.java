@@ -124,7 +124,7 @@ public final class Utils {
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
     return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, ActionPlaces.isPopupPlace(place), null);
+                                 place, ActionPlaces.isPopupPlace(place), null, null);
 
   }
 
@@ -134,7 +134,8 @@ public final class Utils {
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
                                                                boolean isContextMenu,
-                                                               @Nullable Runnable onProcessed) {
+                                                               @Nullable Runnable onProcessed,
+                                                               @Nullable JComponent sourceComponent) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -151,7 +152,7 @@ public final class Utils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise)) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -185,12 +186,14 @@ public final class Utils {
     return list;
   }
 
-  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
+  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
+                                                                 @Nullable JComponent sourceComponent) {
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
           ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
-          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
+          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;
@@ -229,7 +232,8 @@ public final class Utils {
                        boolean useDarkIcons,
                        @Nullable RelativePoint relativePoint) {
     Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
-    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, removeIcon);
+    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
+                                                removeIcon, component);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
