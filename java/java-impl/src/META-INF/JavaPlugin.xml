@@ -435,7 +435,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor$FixerUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector" version="2"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
