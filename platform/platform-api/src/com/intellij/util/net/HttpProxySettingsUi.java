@@ -56,6 +56,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JButton myClearPasswordsButton;
   private JLabel myErrorLabel;
   private JButton myCheckButton;
+  private String myCheckConnectionUrl = "http://";
   private JLabel myOtherWarning;
   private JLabel myProxyExceptionsLabel;
   private RawCommandLineEditor myProxyExceptions;
@@ -130,11 +131,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       }
 
       final String title = IdeBundle.message("dialog.title.check.proxy.settings");
-      final String answer =
+      myCheckConnectionUrl =
         Messages.showInputDialog(myMainPanel,
                                  IdeBundle.message("message.text.enter.url.to.check.connection"),
-                                 title, Messages.getQuestionIcon(), "http://", null);
-      if (StringUtil.isEmptyOrSpaces(answer)) {
+                                 title, Messages.getQuestionIcon(), myCheckConnectionUrl, null);
+      if (StringUtil.isEmptyOrSpaces(myCheckConnectionUrl)) {
         return;
       }
 
@@ -149,7 +150,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
-          HttpRequests.request(answer).readTimeout(3 * 1000).tryConnect();
+          HttpRequests.request(myCheckConnectionUrl).readTimeout(3 * 1000).tryConnect();
         }
         catch (IOException e) {
           exceptionReference.set(e);
