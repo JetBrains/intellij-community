@@ -17,20 +17,26 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -155,6 +161,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
     @Nullable
     private final ActionGroup myActionGroup;
+    private boolean myMoveToolbar = false;
 
     public RunTabSupplier(@Nullable ActionGroup group) {
       myActionGroup = group;
@@ -219,6 +226,77 @@ public abstract class RunTab implements DataProvider, Disposable {
     public boolean isClosable(@NotNull TabInfo tab) {
       List<Content> gridContents = ((GridImpl)tab.getComponent()).getContents();
       return gridContents.size() > 0 && gridContents.get(0).isCloseable();
+    }
+
+    public boolean isMoveToolbar() {
+      return myMoveToolbar;
+    }
+
+    public void setMoveToolbar(boolean moveToolbar) {
+      myMoveToolbar = moveToolbar;
+    }
+  }
+
+  /**
+   * <p>A special action group that can hold Run actions.</p>
+   * <p>
+   *   If {@link RunTabSupplier#isMoveToolbar()} returns <code>true</code>
+   *   then this group prepends {@link RunTabSupplier#getToolbarActions()}.
+   * </p><p>
+   *   Also, merges last {@link MoreActionGroup} groups into one.
+   * </p>
+   */
+  public static final class ToolbarActionGroup extends DefaultActionGroup {
+
+    private final MoreActionGroup myMoreActionGroup = new MoreActionGroup();
+
+    public ToolbarActionGroup(ActionGroup group) {
+      addAll(group);
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      AnAction[] children = super.getChildren(e);
+      if (e != null) {
+        ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
+        SingleContentSupplier data = e.getData(SingleContentSupplier.KEY);
+        if (data instanceof RunTabSupplier && window != null) {
+          boolean isMoveToolbar = ((RunTabSupplier)data).isMoveToolbar();
+          if (!isMoveToolbar) return children;
+          ContentManager manager = window.getContentManager();
+          if (manager.getContentCount() > 1) {
+            ActionGroup actions = data.getToolbarActions();
+            if (actions != null) return merge(actions.getChildren(e), children);
+          }
+        }
+      }
+      return children;
+    }
+
+    private AnAction @NotNull [] merge(AnAction @NotNull [] head, AnAction @NotNull [] tail) {
+      var result = new ArrayList<AnAction>(head.length + tail.length);
+      result.addAll(Arrays.asList(head));
+      myMoreActionGroup.removeAll();
+      if (ArrayUtil.getLastElement(head) instanceof MoreActionGroup) {
+        result.remove(result.size() - 1);
+      }
+      result.add(Separator.create());
+      result.addAll(Arrays.asList(tail));
+      if (ArrayUtil.getLastElement(tail) instanceof MoreActionGroup) {
+        myMoreActionGroup.addAll((ActionGroup) ArrayUtil.getLastElement(tail));
+        result.remove(result.size() - 1);
+      }
+      if (ArrayUtil.getLastElement(head) instanceof MoreActionGroup) {
+        myMoreActionGroup.add(Separator.create());
+        myMoreActionGroup.addAll((ActionGroup) ArrayUtil.getLastElement(head));
+      }
+      result.add(myMoreActionGroup);
+      return result.toArray(EMPTY_ARRAY);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return true;
     }
   }
 }

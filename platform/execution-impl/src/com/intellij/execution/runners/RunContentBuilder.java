@@ -12,6 +12,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -23,9 +24,11 @@ import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,6 +95,10 @@ public final class RunContentBuilder extends RunTab {
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
     if (Registry.is("debugger.new.tool.window.layout")) {
       mySupplier = new RunTabSupplier(toolbar) {
+        {
+          setMoveToolbar(true);
+        }
+
         @Override
         public @NotNull List<AnAction> getContentActions() {
           return Collections.singletonList(myUi.getOptions().getLayoutActions());
@@ -100,8 +107,19 @@ public final class RunContentBuilder extends RunTab {
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
       }
-      myUi.getOptions().setTopLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
-
+      boolean isToolbarVisibleAnywhere = false;
+      for (Component component : UIUtil.uiTraverser(contentDescriptor.getComponent())) {
+        if (component instanceof ActionToolbarImpl) {
+          ActionGroup group = ((ActionToolbarImpl)component).getActionGroup();
+          if (group instanceof RunTab.ToolbarActionGroup) {
+            isToolbarVisibleAnywhere = true;
+            break;
+          }
+        }
+      }
+      if (!isToolbarVisibleAnywhere) {
+        myUi.getOptions().setTopLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
+      }
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }
