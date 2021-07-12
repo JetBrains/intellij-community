@@ -96,8 +96,11 @@ private fun PsiElementFactory.createExpresionStatement(expression: PsiExpression
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
   private val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
 
-  override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-    return psiFactory.createExpressionFromText(qualifiedName, context?.sourcePsi)
+  override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? =
+    createQualifiedReference(qualifiedName, context?.sourcePsi)
+
+  override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
+    return psiFactory.createExpressionFromText(qualifiedName, context)
       .castSafelyTo<PsiReferenceExpression>()
       ?.let { JavaUQualifiedReferenceExpression(it, null) }
   }

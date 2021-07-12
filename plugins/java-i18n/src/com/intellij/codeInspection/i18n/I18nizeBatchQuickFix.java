@@ -162,8 +162,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             arguments.add(pluginElementFactory.createStringLiteralExpression(data.getKey(), psiElement));
             arguments.addAll(data.getContextData().getArgs());
 
-            UExpression receiver = callDescriptor.first != null 
-                                   ? pluginElementFactory.createQualifiedReference(callDescriptor.first, uExpression)
+            UExpression receiver = callDescriptor.first != null
+                                   ? pluginElementFactory.createQualifiedReference(callDescriptor.first, uExpression.getSourcePsi())
                                    : null;
             UCallExpression callExpression = pluginElementFactory
               .createCallExpression(receiver,
