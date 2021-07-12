@@ -20,4 +20,8 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   public void testParameterNullabilityFromSwitch() {
     doTest();
   }
+
+  public void testDefaultLabelElementInSwitch() {
+    doTest();
+  }
 }
