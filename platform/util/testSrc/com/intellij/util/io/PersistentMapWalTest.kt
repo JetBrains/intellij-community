@@ -87,7 +87,57 @@ class PersistentMapWalTest {
     Assert.assertEquals(WalEvent.PutEvent(key2, value), events[1])
     Assert.assertEquals(WalEvent.AppendEvent<String, ByteArraySequence>(key2, value.internalBuffer), events[2])
     Assert.assertEquals(WalEvent.RemoveEvent<String, ByteArraySequence>(key1), events[3])
+  }
 
+  @Test
+  fun `test restore persistent map`() {
+    val tempDir = tempDirectory.createDir()
+    val mapFile = tempDir.resolve("map")
+
+    val key1 = "b52"
+    val key2 = "b53"
+    val value = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+
+    fillMap(mapFile) {
+      put(key1, value)
+      put(key2, value)
+      appendData(key2, AppendablePersistentMap.ValueDataAppender { out -> out.write(value.internalBuffer) })
+      remove(key1)
+    }
+
+    restorePersistentMapFromWal(findWalFile(mapFile),
+                                tempDir.resolve("restored-map"),
+                                EnumeratorStringDescriptor.INSTANCE,
+                                ByteSequenceDataExternalizer.INSTANCE).use { map ->
+      Assert.assertNull(map.get(key1))
+      val expectedValue = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte(), 1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+      Assert.assertEquals(expectedValue, map.get(key2))
+    }
+  }
+
+  @Test
+  fun `test restore hash map`() {
+    val tempDir = tempDirectory.createDir()
+    val mapFile = tempDir.resolve("map")
+
+    val key1 = "b52"
+    val key2 = "b53"
+    val value = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+
+    fillMap(mapFile) {
+      put(key1, value)
+      put(key2, value)
+      appendData(key2, AppendablePersistentMap.ValueDataAppender { out -> out.write(value.internalBuffer) })
+      remove(key1)
+    }
+
+    val restoredMap = restoreHashMapFromWal(findWalFile(mapFile),
+                                            EnumeratorStringDescriptor.INSTANCE,
+                                            ByteSequenceDataExternalizer.INSTANCE)
+    Assert.assertEquals(1, restoredMap.keys.size)
+
+    val expectedValue = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte(), 1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+    Assert.assertEquals(expectedValue, restoredMap.get(key2))
   }
 
   private fun fillMap(mapFile: Path, operator: PersistentHashMap<String, ByteArraySequence>.() -> Unit) {
@@ -100,7 +150,9 @@ class PersistentMapWalTest {
   private fun readWal(mapFile: Path): List<WalEvent<String, ByteArraySequence>> =
     PersistentMapWalPlayer(EnumeratorStringDescriptor.INSTANCE,
                            ByteSequenceDataExternalizer.INSTANCE,
-                           mapFile.resolveSibling(mapFile.fileName.toString() + ".wal")).use {
+                           findWalFile(mapFile)).use {
       return@use it.readWal().toList()
   }
+
+  private fun findWalFile(mapFile: Path) = mapFile.resolveSibling(mapFile.fileName.toString() + ".wal")
 }

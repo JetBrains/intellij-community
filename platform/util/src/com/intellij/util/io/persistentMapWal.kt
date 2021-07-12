@@ -3,6 +3,7 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtil
 import java.io.*
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -53,12 +54,6 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
     outputStream.write(this)
   }
 
-  private fun <V> writeToByteArray(value: V, valueExternalizer: DataExternalizer<V>): ByteArray {
-    val baos = UnsyncByteArrayOutputStream()
-    valueExternalizer.save(DataOutputStream(baos), value)
-    return baos.toByteArray()
-  }
-
   private fun AppendablePersistentMap.ValueDataAppender.writeToByteArray(): ByteArray {
     val baos = UnsyncByteArrayOutputStream()
     append(DataOutputStream(baos))
@@ -79,7 +74,7 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
     walIoExecutor.submit {
       WalOpCode.PUT.write(out)
       keyDescriptor.save(out, key)
-      writeToByteArray(value, valueExternalizer).write(out)
+      writeData(value, valueExternalizer).write(out)
     }
   }
 
@@ -136,14 +131,100 @@ sealed class WalEvent<K, V> {
   }
 }
 
+@Throws(IOException::class)
+fun <K, V> restorePersistentMapFromWal(walFile: Path,
+                                       outputMapFile: Path,
+                                       keyDescriptor: KeyDescriptor<K>,
+                                       valueExternalizer: DataExternalizer<V>): PersistentMap<K, V> {
+  if (Files.exists(outputMapFile)) {
+    throw FileAlreadyExistsException(outputMapFile.toString())
+  }
+  return restoreFromWal(walFile, keyDescriptor, valueExternalizer, object : Accumulator<K, V, PersistentMap<K, V>> {
+    val result = PersistentHashMap(outputMapFile, keyDescriptor, valueExternalizer)
+
+    override fun get(key: K): V? = result.get(key)
+
+    override fun remove(key: K) = result.remove(key)
+
+    override fun put(key: K, value: V) = result.put(key, value)
+
+    override fun result(): PersistentMap<K, V> = result
+  })
+}
+
+@Throws(IOException::class)
+fun <K, V> restoreHashMapFromWal(walFile: Path,
+                                 keyDescriptor: KeyDescriptor<K>,
+                                 valueExternalizer: DataExternalizer<V>): Map<K, V> {
+  return restoreFromWal(walFile, keyDescriptor, valueExternalizer, object : Accumulator<K, V, Map<K, V>> {
+    private val map = linkedMapOf<K, V>()
+
+    override fun get(key: K): V? = map.get(key)
+
+    override fun remove(key: K) {
+      map.remove(key)
+    }
+
+    override fun put(key: K, value: V) {
+      map.put(key, value)
+    }
+
+    override fun result(): Map<K, V> = map
+  })
+}
+
+private fun <V> readData(array: ByteArray, valueExternalizer: DataExternalizer<V>): V {
+  return valueExternalizer.read(DataInputStream(ByteArrayInputStream(array)))
+}
+
+private fun <V> writeData(value: V, valueExternalizer: DataExternalizer<V>): ByteArray {
+  val baos = UnsyncByteArrayOutputStream()
+  valueExternalizer.save(DataOutputStream(baos), value)
+  return baos.toByteArray()
+}
+
+private interface Accumulator<K, V, R> {
+  fun get(key: K): V?
+
+  fun remove(key: K)
+
+  fun put(key: K, value: V)
+
+  fun result(): R
+}
+
+private fun <K, V, R> restoreFromWal(walFile: Path,
+                                     keyDescriptor: KeyDescriptor<K>,
+                                     valueExternalizer: DataExternalizer<V>,
+                                     accumulator: Accumulator<K, V, R>): R {
+  return PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use {
+    for (walEvent in it.readWal()) {
+      when (walEvent) {
+        is WalEvent.AppendEvent -> {
+          val previous = accumulator.get(walEvent.key)
+          val currentData = if (previous == null) walEvent.data else writeData(previous, valueExternalizer) + walEvent.data
+          accumulator.put(walEvent.key, readData(currentData, valueExternalizer))
+        }
+        is WalEvent.PutEvent -> accumulator.put(walEvent.key, walEvent.value)
+        is WalEvent.RemoveEvent -> accumulator.remove(walEvent.key)
+      }
+    }
+    accumulator.result()
+  }
+}
+
 class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
                                                                            private val valueExternalizer: DataExternalizer<V>,
                                                                            file: Path) : Closeable {
-  private val input = DataInputStream(Files.newInputStream(file).buffered())
+  private val input: DataInputStream
 
   val version: Int = VERSION
 
   init {
+    if (!Files.exists(file)) {
+      throw FileNotFoundException(file.toString())
+    }
+    input = DataInputStream(Files.newInputStream(file).buffered())
     ensureVersionCompatible(version, input, file)
   }
 
@@ -173,7 +254,7 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
     }
 
     return when (walOpCode) {
-      WalOpCode.PUT -> WalEvent.PutEvent(keyDescriptor.read(input), valueExternalizer.read(DataInputStream(ByteArrayInputStream(readByteArray(input)))))
+      WalOpCode.PUT -> WalEvent.PutEvent(keyDescriptor.read(input), readData(readByteArray(input), valueExternalizer))
       WalOpCode.REMOVE -> WalEvent.RemoveEvent(keyDescriptor.read(input))
       WalOpCode.APPEND -> WalEvent.AppendEvent(keyDescriptor.read(input), readByteArray(input))
     }

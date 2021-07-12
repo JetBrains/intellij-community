@@ -161,7 +161,14 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       myValueExternalizer = valueExternalizer;
       myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(file), options);
       myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
-      myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(this::force);
+      myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(() -> {
+        try {
+          force();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -295,6 +302,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
     catch (IOException ignored) {}
     IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
+    try {
+      if (myWal != null) {
+        myWal.closeAndDelete();
+      }
+    }
+    catch (IOException ignored) {}
   }
 
   @TestOnly // public for tests
@@ -706,9 +719,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   @Override
-  public final void force() {
+  public final void force() throws IOException {
     if (myIsReadOnly) return;
     if (myDoTrace) LOG.info("Forcing " + myStorageFile);
+    if (myWal != null) {
+      myWal.flush();
+    }
     getWriteLock().lock();
     try {
       doForce();
@@ -746,6 +762,10 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void close(boolean emergency) throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
+    if (myWal != null) {
+      myWal.close();
+    }
+
     getWriteLock().lock();
     try {
       if (isClosed()) return;
