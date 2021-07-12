@@ -675,7 +675,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
-      if (forcedTail != null) {
+      if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
         element = TailTypeDecorator.withTail(element, forcedTail);
       }
       if (inSwitchLabel && !smart) {
@@ -719,7 +719,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (psiPackage == null) return lookupElements;
       for (PsiClass psiClass : psiPackage.getClasses(referenceElement.getResolveScope())) {
         CompletionElement completionElement = new CompletionElement(psiClass, PsiSubstitutor.EMPTY);
-        JavaCompletionUtil.createLookupElements(completionElement, referenceElement).forEach(e -> lookupElements.add(e));
+        JavaCompletionUtil.createLookupElements(completionElement, referenceElement).forEach(lookupElements::add);
       }
     }
     else {
@@ -772,11 +772,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return false;
     }
 
-    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
-      return false;
-    }
-
-    return true;
+    return !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position);
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
@@ -1006,7 +1002,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
     PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
-    return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
+    return position != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
   }
 
   @Nullable
@@ -1213,7 +1209,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static class EnumStaticFieldsFilter implements ElementFilter {
     private final PsiClass myEnumClass;
 
-    public EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
+    private EnumStaticFieldsFilter(PsiClass enumClass) { myEnumClass = enumClass;}
 
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {
