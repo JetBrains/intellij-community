@@ -49,7 +49,6 @@ class ServiceViewTreeUi implements ServiceViewUi {
     mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
-    UIUtil.putClientProperty(myDetailsPanel, UIUtil.CLEARABLE_COMPONENT_KEY, true);
     myMessagePanel.setFocusable(true);
     myDetailsPanel.add(myMessagePanel, BorderLayout.CENTER);
     mySplitter.setSecondComponent(myDetailsPanel);
@@ -80,7 +79,6 @@ class ServiceViewTreeUi implements ServiceViewUi {
   @Override
   public void setServiceToolbar(@NotNull ServiceViewActionProvider actionProvider) {
     myServiceActionToolbar = actionProvider.createServiceToolbar(myMainPanel);
-    UIUtil.putClientProperty(myServiceActionToolbar.getComponent(), UIUtil.CLEARABLE_COMPONENT_KEY, true);
     myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar));
   }
 
