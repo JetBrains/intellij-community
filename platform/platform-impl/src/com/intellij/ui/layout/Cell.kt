@@ -408,10 +408,7 @@ abstract class Cell : BaseBuilder {
     return intTextField(prop.toBinding(), columns, range)
   }
 
-  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
-    return intTextField(PropertyBinding(getter, setter), columns, range, null)
-  }
-
+  @JvmOverloads
   fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
@@ -419,6 +416,7 @@ abstract class Cell : BaseBuilder {
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
+  @JvmOverloads
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
                    range: IntRange? = null,
