@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="test" type="test"/>
+  <xs:complexType name="test">
+    <xs:complexContent>
+      <xs:extension base="xs:simpleType">
+        <xs:attribute name="enum" type="enum"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="enum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="enumValue1">
+        <xs:annotation>
+          <xs:documentation>EnumValue1</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
