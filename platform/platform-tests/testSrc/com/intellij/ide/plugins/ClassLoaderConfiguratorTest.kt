@@ -27,21 +27,24 @@ internal class ClassLoaderConfiguratorTest {
   fun packageForOptionalMustBeSpecified() {
     assertThatThrownBy {
       loadPlugins(modulePackage = null)
-    }.hasMessage("Package is not specified (module=PluginDescriptor(name=p_dependent_i0ihh8, id=p_dependent_i0ihh8, descriptorPath=com.example.sub.xml, path=/p_dependent_i0ihh8, version=2042.0, package=null))")
+    }.hasMessageContaining("Package is not specified")
+    .hasMessageContaining("package=null")
   }
 
   @Test
   fun packageForOptionalMustBeDifferent() {
     assertThatThrownBy {
       loadPlugins(modulePackage = "com.example")
-    }.hasMessage("Package prefix com.example is already used (module=PluginDescriptor(name=p_dependent_12m42wo, id=p_dependent_12m42wo, descriptorPath=com.example.sub.xml, path=/p_dependent_12m42wo, version=2042.0, package=com.example))")
+    }.hasMessageContaining("Package prefix com.example is already used")
+    .hasMessageContaining("com.example")
   }
 
   @Test
   fun packageMustBeUnique() {
     assertThatThrownBy {
       loadPlugins(modulePackage = "com.bar")
-    }.hasMessage("Package prefix com.bar is already used (module=PluginDescriptor(name=p_dependent_x9e2t2, id=p_dependent_x9e2t2, descriptorPath=com.example.sub.xml, path=/p_dependent_x9e2t2, version=2042.0, package=com.bar))")
+    }.hasMessageContaining("Package prefix com.bar is already used")
+    .hasMessageContaining("package=com.bar")
   }
 
   @Test
