@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
@@ -913,12 +913,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (isAutoscrollFromSourceAllowedHere()) {
+          if (!Registry.is("ide.autoscroll.from.source.on.focus.gained")) return;
+          if (!myAutoScrollOnFocusEditor.getAndSet(true)) return;
+          if (isAutoscrollFromSource(getCurrentViewId())) {
             myAutoScrollFromSourceHandler.addRequest(() -> {
-              FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
-              if (manager != null) {
+              // ensure that it is still enabled after a while
+              if (isAutoscrollFromSource(getCurrentViewId())) {
                 JComponent component = editor.getComponent();
-                for (FileEditor fileEditor : manager.getAllEditors()) {
+                for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
                   if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
                     myAutoScrollFromSourceHandler.scrollFromSource(false);
                     break;
@@ -927,12 +929,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
               }
             });
           }
-        }
-
-        private boolean isAutoscrollFromSourceAllowedHere() {
-          if (!myAutoScrollOnFocusEditor.getAndSet(true)) return false;
-          if (!Registry.is("ide.autoscroll.from.source.on.focus.gained")) return false;
-          return isAutoscrollFromSource(getCurrentViewId());
         }
       }, myProject);
     }
@@ -1699,6 +1695,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
+    if (myProject.isDisposed()) return false;
     if (!myAutoscrollFromSource.isSelected()) return false;
     if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
     AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
