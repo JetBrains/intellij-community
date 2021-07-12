@@ -909,11 +909,14 @@ public class ClassWriter {
 
             buffer.append(' ');
 
-            String parameterName;
+            String parameterName = null;
             if (methodParameters != null && i < methodParameters.size()) {
               parameterName = methodParameters.get(i).myName;
             }
-            else {
+
+            // NOTE: JVMS11 4.7.24 explicitly allow unnamed parameters.
+            // Therefore parameterName value here may be null even if "MethodParameters" attribute present.
+            if (parameterName == null) {
               parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
             }
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors

@@ -1,0 +1,20 @@
+package pkg;
+
+public class TestMethodParametersAttrNoDebugInfo {
+   public void foo(int x, int y) {
+      int var3 = x + y;
+      System.out.println(var3);
+   }
+}
+
+class 'pkg/TestMethodParametersAttrNoDebugInfo' {
+   method 'foo (II)V' {
+      2      4
+      3      4
+      4      5
+      8      5
+      b      6
+   }
+}
+
+Lines mapping:

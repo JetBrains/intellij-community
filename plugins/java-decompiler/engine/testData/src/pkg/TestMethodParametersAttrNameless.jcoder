@@ -1,0 +1,110 @@
+/**
+ *
+ *  This code can be assembled with <a href="https://wiki.openjdk.java.net/display/CodeTools/asmtools">asmtools</a>
+ *  using <code>asmtools jcoder *.jcoder</code> command line.
+ *
+ *
+ *  According to JVMS11 4.7.24 method parameter in the MethodParamters attribute can be nameless:
+ *
+ *  name_index
+ *    The value of the name_index item must either be zero or a valid index into the constant_pool table.
+ *    If the value of the name_index item is zero, then this parameters element indicates a formal parameter with no name.
+ *    If the value of the name_index item is nonzero, the constant_pool entry at that index must be a CONSTANT_Utf8_info
+ *    structure representing a valid unqualified name denoting a formal parameter (§4.2.2).
+ *
+ */
+class pkg/TestMethodParametersAttrNameless {
+  0xCAFEBABE;
+  0; // minor version
+  52; // version
+  [] { // Constant Pool
+    ; // first element is empty
+    Method #5 #14; // #1
+    Field #15 #16; // #2
+    Method #17 #18; // #3
+    class #19; // #4
+    class #20; // #5
+    Utf8 "<init>"; // #6
+    Utf8 "()V"; // #7
+    Utf8 "Code"; // #8
+    Utf8 "foo"; // #9
+    Utf8 "(II)V"; // #10
+    Utf8 "MethodParameters"; // #11
+    Utf8 "x"; // #12
+    Utf8 "y"; // #13
+    NameAndType #6 #7; // #14
+    class #21; // #15
+    NameAndType #22 #23; // #16
+    class #24; // #17
+    NameAndType #25 #26; // #18
+    Utf8 "pkg/TestMethodParametersAttrNameless"; // #19
+    Utf8 "java/lang/Object"; // #20
+    Utf8 "java/lang/System"; // #21
+    Utf8 "out"; // #22
+    Utf8 "Ljava/io/PrintStream;"; // #23
+    Utf8 "java/io/PrintStream"; // #24
+    Utf8 "println"; // #25
+    Utf8 "(I)V"; // #26
+  } // Constant Pool
+
+  0x0021; // access
+  #4;// this_cpx
+  #5;// super_cpx
+
+  [] { // Interfaces
+  } // Interfaces
+
+  [] { // Fields
+  } // Fields
+
+  [] { // Methods
+    {  // method
+      0x0001; // access
+      #6; // name_index
+      #7; // descriptor_index
+      [] { // Attributes
+        Attr(#8) { // Code
+          1; // max_stack
+          1; // max_locals
+          Bytes[]{
+            0x2AB70001B1;
+          }
+          [] { // Traps
+          } // end Traps
+          [] { // Attributes
+          } // Attributes
+        } // end Code
+      } // Attributes
+    }
+    ;
+    {  // method
+      0x0001; // access
+      #9; // name_index
+      #10; // descriptor_index
+      [] { // Attributes
+        Attr(#8) { // Code
+          2; // max_stack
+          4; // max_locals
+          Bytes[]{
+            0x1B1C603EB200021D;
+            0xB60003B1;
+          }
+          [] { // Traps
+          } // end Traps
+          [] { // Attributes
+          } // Attributes
+        } // end Code
+        ;
+        Attr(#11) { // MethodParameters
+          []b { // MethodParameters
+            #0  0x0000;
+            #0  0x0000;
+          }
+        } // end MethodParameters
+      } // Attributes
+    }
+  } // Methods
+
+  [] { // Attributes
+  } // Attributes
+} // end class pkg/TestMethodParametersAttrNameless
