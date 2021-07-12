@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -455,10 +456,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ASTNode nameElement = myElement.getNameElement();
-    if (newElementName.endsWith(PyNames.DOT_PY)) {
+    PsiReference reference = myElement.getReference();
+    PsiElement resolved = reference != null ? reference.resolve() : null;
+    if (resolved instanceof PyFile && newElementName.endsWith(PyNames.DOT_PY)) {
       newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
     }
-    else if (newElementName.endsWith(PyNames.DOT_PYI)) {
+    else if (resolved instanceof PyiFile && newElementName.endsWith(PyNames.DOT_PYI)) {
       newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
     }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
