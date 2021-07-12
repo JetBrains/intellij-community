@@ -13,17 +13,11 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.runAll
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import kotlin.properties.Delegates
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     private var defaultEnableState by Delegates.notNull<Boolean>()
-
-    protected fun getTestDataPath(testDirectory: String): String = KotlinRoot.DIR
-        .resolve("refIndex/tests/testData/")
-        .resolve(testDirectory)
-        .path + "/"
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)

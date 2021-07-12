@@ -5,6 +5,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.testFramework.SkipSlowTestLocally
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
+import org.jetbrains.kotlin.test.KotlinRoot
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -13,8 +14,24 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
 
 @SkipSlowTestLocally
-class CustomKotlinCompilerReferenceTest : AbstractKotlinCompilerReferenceTest() {
-    override fun getTestDataPath(): String = getTestDataPath("customCompilerIndexData")
+class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
+    override fun getTestDataPath(): String = KotlinRoot.DIR
+        .resolve("refIndex/tests/testData/")
+        .resolve("customCompilerIndexData")
+        .path + "/"
+
+    override fun setUp() {
+        super.setUp()
+        installCompiler()
+        myFixture.testDataPath = testDataPath + name
+    }
+
+    private fun assertIndexUnavailable() = assertNull(getReferentFilesForElementUnderCaret())
+    private fun assertUsageInMainFile() = assertEquals(setOf("Main.kt"), getReferentFilesForElementUnderCaret())
+    private fun addFileAndAssertIndexNotReady(fileName: String = "Another.kt") {
+        myFixture.addFileToProject(fileName, "")
+        assertIndexUnavailable()
+    }
 
     fun `test match testData with tests`() {
         val testNames = this::class.declaredMemberFunctions.filter { it.visibility == KVisibility.PUBLIC }.map(KFunction<*>::name).toSet()

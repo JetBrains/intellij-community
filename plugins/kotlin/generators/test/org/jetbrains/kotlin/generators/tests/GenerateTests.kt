@@ -108,6 +108,7 @@ import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerNullnessGroupingTest
@@ -1424,6 +1425,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractJsProtoComparisonTest> {
             commonProtoComparisonTests()
             model("comparison/jsOnly", pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("refIndex/tests") {
+        testClass<AbstractKotlinCompilerReferenceTest> {
+            model("compilerIndex", pattern = DIRECTORY)
         }
     }
 

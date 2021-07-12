@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jps-plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
   </component>
 </module>
