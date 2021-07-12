@@ -154,7 +154,11 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
         int encodedOffsetInCurrentLine = 0;
         for (Pair<TextRange, String> replacement : replacementsForThisLine) {
           final int deltaLength = replacement.getFirst().getStartOffset() - encodedOffsetInCurrentLine;
-          if (currentOffsetInDecoded + deltaLength >= offsetInDecoded) {
+          int currentOffsetBeforeReplacement = currentOffsetInDecoded + deltaLength;
+          if (currentOffsetBeforeReplacement > offsetInDecoded) {
+            return range.getStartOffset() + encodedOffsetInCurrentLine + (offsetInDecoded - currentOffsetInDecoded);
+          }
+          else if (currentOffsetBeforeReplacement == offsetInDecoded && !replacement.getSecond().isEmpty()) {
             return range.getStartOffset() + encodedOffsetInCurrentLine + (offsetInDecoded - currentOffsetInDecoded);
           }
           currentOffsetInDecoded += deltaLength + replacement.getSecond().length();

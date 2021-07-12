@@ -93,7 +93,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       }
       else if (!isSingleQuote() && input.charAt(i) == '\\') {
         if (input.charAt(i + 1) == '\n') {
-          result.add(Pair.create(TextRange.from(i, 2), ""));
+          result.add(Pair.create(TextRange.from(i, 2), i > 0 || input.length() > i + 2 ? "" : "\n"));
           i++;
           continue;
         }
@@ -129,7 +129,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
         if (!isSingleQuote() && i + 1 < input.length() && YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
           result.add(Pair.create(TextRange.from(i, 1), "\\n\\\n" + indentString + "\\"));
         }
-        else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n') {
+        else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n' && i > 0) {
           result.add(Pair.create(TextRange.from(i, 1), "\\\n" + indentString + "\\n"));
         }
         else {

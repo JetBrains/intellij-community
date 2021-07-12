@@ -457,6 +457,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
   
+  fun testYamlToYamlQuotedMultiline() {
+    myFixture.configureByText("test.yaml", """
+        myyaml: "abc: \<caret>
+                "
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedContent("abc: \\\n")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml: "abc: \
+
+              "
+    """.trimIndent())
+    myInjectionFixture.assertInjectedContent("abc: \\\n\n")
+  }
+  
+  fun testYamlToYamlQuotedMultilineDoubleEscape() {
+    myFixture.configureByText("test.yaml", """
+      myyaml: "abc: \
+                    \<caret>
+      "
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedContent("abc: \\\n\\\n")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml: "abc: \
+                    \
+      
+      "
+    """.trimIndent())
+    myInjectionFixture.assertInjectedContent("abc: \\\n\\\n\n")
+  }
+  
 
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)
