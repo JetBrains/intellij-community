@@ -2009,20 +2009,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (clickAction != null) {
       myLastActionableClick = new ClickInfo(EditorUtil.yPositionToLogicalLine(myEditor, e), info.iconCenterPosition);
-      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(renderer.getClass());
-      FeatureUsageData usageData = new FeatureUsageData();
-      usageData.addPluginInfo(pluginInfo);
-      Project project = myEditor.getProject();
-      if (project != null) {
-        usageData.addProject(project);
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
-        if (file != null) {
-          usageData.addCurrentFile(file.getLanguage());
-        }
-      }
-      usageData.addData("icon_id", renderer.getFeatureId());
-
-      FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
+      logGutterIconClick(renderer);
 
       e.consume();
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext(), info);
@@ -2037,6 +2024,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         fireEventToTextAnnotationListeners(e);
       }
     }
+  }
+
+  private void logGutterIconClick(@NotNull GutterIconRenderer renderer) {
+    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(renderer.getClass());
+    FeatureUsageData usageData = new FeatureUsageData();
+    usageData.addPluginInfo(pluginInfo);
+    Project project = myEditor.getProject();
+    if (project != null) {
+      usageData.addProject(project);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+      if (file != null) {
+        usageData.addCurrentFile(file.getLanguage());
+      }
+    }
+    usageData.addData("icon_id", renderer.getFeatureId());
+
+    FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
   }
 
   private boolean isDumbMode() {
@@ -2248,6 +2252,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
     Point point = e.getPoint();
     PointInfo info = getPointInfo(point);
+    if (info != null) {
+      logGutterIconClick(info.renderer);
+    }
     myLastActionableClick = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
