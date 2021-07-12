@@ -4,7 +4,7 @@ package org.jetbrains.builtInWebServer.liveReload
 import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
-import com.intellij.ide.browsers.impl.SERVER_RELOAD_TOOLTIP_ID
+import com.intellij.ide.browsers.actions.WebPreviewFileEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -184,7 +184,7 @@ class WebServerPageConnectionService {
 
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
     val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
-    if (!gotItTooltip.canShow()) return
+    if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened()) return
 
     gotItTooltip
       .withHeader(BuiltInServerBundle.message("reload.on.save.got.it.title"))
@@ -426,6 +426,7 @@ class WebServerPageConnectionService {
 
   companion object {
     const val RELOAD_URL_PARAM = "_ij_reload"
+    const val SERVER_RELOAD_TOOLTIP_ID = "builtin.web.server.reload.on.save"
     private const val RELOAD_WS_REQUEST = "reload"
     private const val UPDATE_LINK_WS_REQUEST_PREFIX = "update-css "
     private const val RELOAD_WS_URL_PREFIX = "jb-server-page"
