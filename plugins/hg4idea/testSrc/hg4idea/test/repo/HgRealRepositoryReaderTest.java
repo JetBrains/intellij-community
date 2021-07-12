@@ -24,7 +24,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     createBranchesAndTags();
-    myRepositoryReader = new HgRepositoryReader(myVcs, myRepository.toNioPath().resolve(".hg").toFile());
+    myRepositoryReader = new HgRepositoryReader(myVcs, myRepository.toNioPath().resolve(".hg").toFile(), myRepository);
   }
 
   public void testMergeState() {
