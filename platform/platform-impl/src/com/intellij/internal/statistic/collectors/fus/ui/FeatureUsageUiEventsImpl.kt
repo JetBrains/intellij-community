@@ -48,7 +48,7 @@ class DialogsCounterUsagesCollector : CounterUsagesCollector() {
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.settings", 60)
+    private val GROUP = EventLogGroup("ui.settings", 61)
 
     val CONFIGURABLE_CLASS = EventFields.Class("configurable")
     val SELECT = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
@@ -61,7 +61,7 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
     val ADVANDED_SETTINGS_SEARCH = GROUP.registerEvent("advanced.settings.search",
                                                        EventFields.Int("hits"),
                                                        EventFields.Int("characters"),
-                                                       EventFields.Boolean("modified.only"))
+                                                       EventFields.Boolean("modifiedOnly"))
   }
 
   override fun getGroup() = GROUP
