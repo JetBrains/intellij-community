@@ -45,7 +45,7 @@ class MarkdownConfigureImageLineMarkerTooltipTest: BasePlatformTestCase() {
   }
 
   private fun getMessage(): String {
-    return MarkdownBundle.message("markdown.setup.image.line.marker.text")
+    return MarkdownBundle.message("markdown.configure.image.text")
   }
 
   private fun doTest(content: String, expectedTooltip: String) {
