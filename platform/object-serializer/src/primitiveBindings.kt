@@ -29,13 +29,11 @@ internal fun registerPrimitiveBindings(classToRootBindingFactory: MutableMap<Cla
 
   classToNestedBindingFactory.put(java.lang.Boolean.TYPE, resolved(BooleanBinding()))
 
-  val char: NestedBindingFactory = { throw UnsupportedOperationException("char is not supported") }
-  classToNestedBindingFactory.put(Character.TYPE, char)
-  classToNestedBindingFactory.put(Character::class.java, char)
+  classToNestedBindingFactory.put(Character.TYPE, resolved(CharBinding()))
+  classToNestedBindingFactory.put(Character::class.java, resolved(CharBinding()))
 
-  val byte: NestedBindingFactory = { throw UnsupportedOperationException("byte is not supported") }
-  classToNestedBindingFactory.put(java.lang.Byte.TYPE, byte)
-  classToNestedBindingFactory.put(java.lang.Byte::class.java, byte)
+  classToNestedBindingFactory.put(java.lang.Byte.TYPE, resolved(ByteBinding()))
+  classToNestedBindingFactory.put(java.lang.Byte::class.java, resolved(ByteBinding()))
 }
 
 private class FloatAsObjectBinding : Binding {
@@ -128,6 +126,12 @@ private open class IntBinding : Binding {
   }
 }
 
+private class ByteBinding : IntBinding() {
+  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
+    property.setByte(hostObject, context.reader.intValue().toByte())
+  }
+}
+
 private class ShortBinding : IntBinding() {
   override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     property.setShort(hostObject, context.reader.intValue().toShort())
@@ -201,5 +205,19 @@ internal class StringBinding : Binding {
     else {
       context.writer.writeString(s)
     }
+  }
+}
+
+private class CharBinding : Binding {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
+    return context.reader.stringValue().first()
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol(obj.toString())
+  }
+
+  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
+    property.setChar(hostObject, context.reader.stringValue().first())
   }
 }
