@@ -282,7 +282,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     public boolean isActive(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
-      return project != null && changesBrowser != null;
+      return project != null && changesBrowser != null && changesBrowser.canShowDiff();
     }
 
     @Override
