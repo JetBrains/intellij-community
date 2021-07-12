@@ -13,10 +13,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorBase;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,7 +178,7 @@ public final class MavenIndex implements MavenSearchIndex {
         if (e instanceof ProcessCanceledException) {
           MavenLog.LOG.error("PCE should not be thrown", new Attachment("pce", e));
         }
-        final boolean versionUpdated = e.getCause() instanceof PersistentEnumeratorBase.VersionUpdatedException;
+        final boolean versionUpdated = e.getCause() instanceof VersionUpdatedException;
         if (!versionUpdated) MavenLog.LOG.warn(e);
 
         try {

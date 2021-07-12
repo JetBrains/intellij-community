@@ -189,7 +189,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       }
       catch (Throwable ignored) {
       }
-      throw new PersistentEnumeratorBase.CorruptedException(file);
+      throw new CorruptedException(file);
     }
   }
 

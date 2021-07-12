@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.ExecutorService
 
 private const val VERSION = 0
@@ -15,11 +16,35 @@ internal enum class WalOpCode(internal val code: Int) {
   APPEND(2)
 }
 
-internal class PersistentMapWal<K, V>(private val keyDescriptor: KeyDescriptor<K>,
-                                      private val valueExternalizer: DataExternalizer<V>,
-                                      private val file: Path,
-                                      private val walIoExecutor: ExecutorService /*todo ensure sequential*/) {
-  private val out = DataOutputStream(Files.newOutputStream(file))
+internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
+                                                                              private val valueExternalizer: DataExternalizer<V>,
+                                                                              private val file: Path,
+                                                                              private val walIoExecutor: ExecutorService /*todo ensure sequential*/) {
+  private val out: DataOutputStream
+
+  val version: Int = VERSION
+
+  init {
+    ensureVersionCompatible(version, file)
+    out = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
+  }
+
+  @Throws(IOException::class)
+  private fun ensureVersionCompatible(expectedVersion: Int, file: Path) {
+    if (!Files.exists(file)) {
+      Files.createDirectories(file.parent)
+      DataOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)).use {
+        DataInputOutputUtil.writeINT(it, expectedVersion)
+      }
+      return
+    }
+    val actualVersion = DataInputStream(Files.newInputStream(file, StandardOpenOption.READ)).use {
+      DataInputOutputUtil.readINT(it)
+    }
+    if (actualVersion != expectedVersion) {
+      throw VersionUpdatedException(file, expectedVersion, actualVersion)
+    }
+  }
 
   private fun WalOpCode.write(outputStream: DataOutputStream): Unit = outputStream.writeByte(code)
 
@@ -85,8 +110,6 @@ internal class PersistentMapWal<K, V>(private val keyDescriptor: KeyDescriptor<K
     close()
     FileUtil.deleteWithRenaming(file)
   }
-
-  val version: Int = VERSION
 }
 
 sealed class WalEvent<K, V> {
@@ -113,12 +136,24 @@ sealed class WalEvent<K, V> {
   }
 }
 
-class PersistentMapWalPlayer<K, V>(private val keyDescriptor: KeyDescriptor<K>,
-                                            private val valueExternalizer: DataExternalizer<V>,
-                                            file: Path): Closeable {
+class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
+                                                                           private val valueExternalizer: DataExternalizer<V>,
+                                                                           file: Path) : Closeable {
   private val input = DataInputStream(Files.newInputStream(file))
 
   val version: Int = VERSION
+
+  init {
+    ensureVersionCompatible(version, input, file)
+  }
+
+  @Throws(IOException::class)
+  private fun ensureVersionCompatible(expectedVersion: Int, input: DataInputStream, file: Path) {
+    val actualVersion = DataInputOutputUtil.readINT(input)
+    if (actualVersion != expectedVersion) {
+      throw VersionUpdatedException(file, expectedVersion, actualVersion)
+    }
+  }
 
   fun readWal(): Sequence<WalEvent<K, V>> = generateSequence {
     readNextEvent()

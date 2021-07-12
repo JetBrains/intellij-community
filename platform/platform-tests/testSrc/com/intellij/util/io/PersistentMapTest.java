@@ -238,7 +238,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
     try {
       myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
       fail();
-    } catch (PersistentEnumeratorBase.VersionUpdatedException ignore) {}
+    } catch (VersionUpdatedException ignore) {}
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
     }

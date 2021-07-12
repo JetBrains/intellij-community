@@ -93,22 +93,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
-  public static class CorruptedException extends IOException {
-    public CorruptedException(Path file) {
-      this("PersistentEnumerator storage corrupted " + file);
-    }
-
-    protected CorruptedException(String message) {
-      super(message);
-    }
-  }
-
-  public static class VersionUpdatedException extends CorruptedException {
-    VersionUpdatedException(@NotNull Path file) {
-      super("PersistentEnumerator storage corrupted " + file);
-    }
-  }
-
   public PersistentEnumeratorBase(@NotNull Path file,
                                   @NotNull ResizeableMappedFile storage,
                                   @NotNull KeyDescriptor<Data> dataDescriptor,

@@ -17,7 +17,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -278,7 +278,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool, moduleInfoFile);
     }
-    catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
+    catch (BuildDataCorruptedException | CorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {

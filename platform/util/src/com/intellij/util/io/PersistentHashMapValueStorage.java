@@ -530,7 +530,7 @@ public final class PersistentHashMapValueStorage {
     try {
       long chunk = tailChunkAddress;
       while (chunk != 0) {
-        if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (chunk < 0 || chunk > mySize) throw new CorruptedException(myPath);
 
         byte[] buffer = myBuffer.getBuffer(ourBufferLength);
         int len = (int)Math.min(ourBufferLength, mySize - chunk);
@@ -554,7 +554,7 @@ public final class PersistentHashMapValueStorage {
           reader.get(chunk + headerOffset, result, 0, chunkSize);
         }
 
-        if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myPath);
+        if (prevChunkAddress >= chunk) throw new CorruptedException(myPath);
 
         chunk = prevChunkAddress;
         chunkCount++;
@@ -564,12 +564,12 @@ public final class PersistentHashMapValueStorage {
           assert !myOptions.myHasNoChunks;
         }
         if (result.length > mySize && myCompressedAppendableFile == null) {
-          throw new PersistentEnumeratorBase.CorruptedException(myPath);
+          throw new CorruptedException(myPath);
         }
       }
     }
     catch (OutOfMemoryError error) {
-      throw new PersistentEnumeratorBase.CorruptedException(myPath);
+      throw new CorruptedException(myPath);
     }
     finally {
       if (readerHandle != null) {
