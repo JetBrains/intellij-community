@@ -173,6 +173,11 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
         runTest("testData/stubs/NotStorePropertyFromInitializer.kt");
     }
 
+    @TestMetadata("ObjectAsArgument.kt")
+    public void testObjectAsArgument() throws Exception {
+        runTest("testData/stubs/ObjectAsArgument.kt");
+    }
+
     @TestMetadata("ObjectInInitializer.kt")
     public void testObjectInInitializer() throws Exception {
         runTest("testData/stubs/ObjectInInitializer.kt");
