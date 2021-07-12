@@ -557,7 +557,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int leftPadding = 8;
     int definitionTopPadding = 4;
     editorKit.setFontResolver(EditorCssFontResolver.getGlobalInstance());
-    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER + "\"; font-size: 96%;}";
+    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\"; font-size: 96%;}";
     editorKit.getStyleSheet().addRule("tt" + editorFontStyle);
     editorKit.getStyleSheet().addRule("code" + editorFontStyle);
     editorKit.getStyleSheet().addRule("pre" + editorFontStyle);
