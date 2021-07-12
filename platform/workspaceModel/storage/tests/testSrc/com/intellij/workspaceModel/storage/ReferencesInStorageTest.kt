@@ -5,12 +5,16 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.ChangeEntry
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 private fun WorkspaceEntityStorage.singleParent() = entities(ParentEntity::class.java).single()
 
@@ -612,5 +616,27 @@ class ReferencesInStorageTest {
     assertEquals(1, builder.entities(ChildEntity::class.java).toList().size)
 
     assertInstanceOf(builder.changeLog.changeLog[childEntity1.id], ChangeEntry.RemoveEntity::class.java)
+  }
+
+  @Test
+  fun `check store consistency after deserialization`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    builder.addChildEntity(parentEntity)
+    builder.addChildEntity(parentEntity)
+    builder.assertConsistency()
+
+    builder.removeEntity(parentEntity.id)
+    builder.assertConsistency()
+
+    val stream = ByteArrayOutputStream()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    serializer.serializeCache(stream, builder.toStorage())
+    val byteArray = stream.toByteArray()
+
+    // Deserialization won't create collection which consists only from null elements
+    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? WorkspaceEntityStorageBuilderImpl)?.toStorage()
+    deserialized!!.assertConsistency()
   }
 }
