@@ -97,7 +97,7 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     for (StdArrangementMatchRule matchRule : sequence) {
       final ArrangementCompositeMatchCondition extendedRule = ruleTemplate.clone();
       extendedRule.addOperand(matchRule.getMatcher().getCondition());
-      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(extendedRule)));
+      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(extendedRule), rule.getOrderType()));
     }
   }
 
