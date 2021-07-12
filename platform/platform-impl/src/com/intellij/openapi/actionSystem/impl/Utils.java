@@ -206,7 +206,6 @@ public final class Utils {
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
-      ActionUpdater.cancelAllUpdates("fast-track requested");
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
       return runLoopAndWaitForFuture(promise, null, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
