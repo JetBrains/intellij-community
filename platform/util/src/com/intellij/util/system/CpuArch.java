@@ -4,8 +4,6 @@ package com.intellij.util.system;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
 import com.sun.jna.platform.mac.SystemB;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
@@ -87,10 +85,9 @@ public enum CpuArch {
   private static boolean isUnderRosetta() {
     try {
       if (JnaLoader.isLoaded()) {
-        IntByReference size = new IntByReference(SystemB.INT_SIZE);
-        Pointer p = new Memory(SystemB.INT_SIZE);
-        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p, size, null, 0) != -1) {
-          return p.getInt(0) == 1;
+        IntByReference size = new IntByReference(SystemB.INT_SIZE), p = new IntByReference();
+        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p.getPointer(), size, null, 0) != -1) {
+          return p.getValue() == 1;
         }
       }
     }
