@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -38,6 +39,7 @@ public class ImportTestsGroup extends ActionGroup {
     super(() -> SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
           () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
     setPopup(true);
+    getTemplatePresentation().putClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP, true);
   }
 
   public ImportTestsGroup(SMTRunnerConsoleProperties properties) {
