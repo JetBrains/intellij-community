@@ -325,7 +325,7 @@ public class ListPluginComponent extends JPanel {
 
     String stamp = instance.getConfirmationStamp(productCode);
     if (stamp == null) {
-      if (ApplicationManager.getApplication().isEAP()) {
+      if (ApplicationManager.getApplication().isEAP() && !Boolean.getBoolean("eap.require.license")) {
         setTagTooltip(IdeBundle.message("label.text.plugin.eap.license.not.required"));
         return;
       }
