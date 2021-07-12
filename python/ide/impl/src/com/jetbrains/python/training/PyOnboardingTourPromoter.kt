@@ -3,17 +3,8 @@ package com.jetbrains.python.training
 
 import com.intellij.openapi.util.IconLoader
 import training.ui.welcomeScreen.OnboardingLessonPromoter
-import training.util.switchOnExperimentalLessons
 import javax.swing.Icon
-import javax.swing.JPanel
 
 internal class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding") {
   override fun promoImage(): Icon = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java)
-
-  override fun getPromotionForInitialState(): JPanel? {
-    if (!switchOnExperimentalLessons) {
-      return null
-    }
-    return super.getPromotionForInitialState()
-  }
 }

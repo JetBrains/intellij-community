@@ -43,7 +43,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
     return onboardingTour() + stableModules() + gitModule
   }
 
-  private fun onboardingTour() = if (switchOnExperimentalLessons) listOf(
+  private fun onboardingTour() = listOf(
     LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
@@ -51,7 +51,6 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
       listOf(PythonOnboardingTour())
     }
   )
-  else emptyList()
 
   private fun stableModules() = listOf(
     LearningModule(name = LessonsBundle.message("editor.basics.module.name"),
