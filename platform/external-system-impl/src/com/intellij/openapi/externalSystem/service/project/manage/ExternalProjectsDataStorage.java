@@ -30,11 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.serialization.SerializationException;
 import com.intellij.serialization.VersionedFile;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
@@ -410,7 +412,12 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
       LOG.debug("External projects data storage was invalidated");
       return null;
     }
-    return cacheFile.readList(InternalExternalProjectInfo.class, SerializationKt.createCacheReadConfiguration(LOG));
+
+    Ref<List<InternalExternalProjectInfo>> infos = new Ref();
+    long millis = TimeoutUtil.measureExecutionTime(
+      () -> infos.set(cacheFile.readList(InternalExternalProjectInfo.class, SerializationKt.createCacheReadConfiguration(LOG))));
+    System.out.printf("Data node infos loaded in %d%n", millis);
+    return infos.get();
   }
 
   private static boolean isInvalidated(@NotNull Path configurationFile, @NotNull BasicFileAttributes fileAttributes) throws IOException {
