@@ -19,12 +19,21 @@ object AnotherDiiferentVarargs {
   }
 }
 
-class TheSame {
-  private fun foo(vararg args: String) {}
+object ExtensionFunctionVarargs {
+  private fun String.foo(i: Int, vararg args: String) {}
 
   fun bar() {
-    foo("foo")
-    foo("foo")
+    "one".foo(1, "baz")
+    "two".foo(1, "foo", "bar")
+  }
+}
+
+object FunctionNonLastVarargsParameter {
+  private fun foo(vararg args: String, str: String) {}
+
+  fun bar() {
+    foo("foo", "bar", str = "one")
+    foo("bar", "foo", str = "two")
   }
 }
 
@@ -32,5 +41,6 @@ fun main(args: Array<String>) {
   Test().bar()
   AnotherDiiferentVarargs.printString(AnotherDiiferentVarargs.TEXT, "optional")
   AnotherDiiferentVarargs.printString(AnotherDiiferentVarargs.ANOTHER_TEXT)
-  TheSame().bar()
+  ExtensionFunctionVarargs.bar()
+  ExtensionFunctionNonLastVarargsParameter.bar()
 }
