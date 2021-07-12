@@ -564,6 +564,7 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   public void dispose() {
+    if (!myInitialized) return;
     try {
       for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
