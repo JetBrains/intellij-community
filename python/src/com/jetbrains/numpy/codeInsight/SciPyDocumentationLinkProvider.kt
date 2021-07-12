@@ -43,11 +43,11 @@ class SciPyDocumentationLinkProvider : PythonDocumentationLinkProvider {
       if (webPage != null) {
         "https://docs.scipy.org/doc/${qname.firstComponent}/reference/generated/$webPage.html"
       } else {
-        "https://docs.scipy.org/doc/${qname.firstComponent}/reference/"
+        "https://docs.scipy.org/doc/${qname.firstComponent}/reference/generated/${qname.toString()}.html"
       }
     }
     else null
-
+    
   }
-
+  
 }
