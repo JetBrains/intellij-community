@@ -4966,6 +4966,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
         }
 
+        @TestMetadata("unknownQualifier.kt")
+        public void testUnknownQualifier() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/unknownQualifier.kt");
+        }
+
         @TestMetadata("unusedResult.kt")
         public void testUnusedResult() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unusedResult.kt");

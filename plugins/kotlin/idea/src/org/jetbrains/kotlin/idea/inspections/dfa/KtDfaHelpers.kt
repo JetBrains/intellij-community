@@ -122,6 +122,10 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     else -> rawName
 }
 
+internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
+    return this != null && this.constructor.declarationDescriptor?.fqNameUnsafe?.asString() == fqName
+}
+
 internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {

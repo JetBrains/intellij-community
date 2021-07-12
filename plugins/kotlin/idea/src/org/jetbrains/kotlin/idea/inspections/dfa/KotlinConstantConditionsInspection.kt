@@ -77,6 +77,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         // TODO: suppress in assert() or require() conditions (optionally?)
         // TODO: suppress when condition is required for a smart cast
         var parent = expression.parent
+        if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
+            // Will be reported for parent qualified expression
+            return true
+        }
         while (parent is KtParenthesizedExpression) {
             parent = parent.parent
         }
@@ -125,7 +129,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
             val kotlinType = expression.getKotlinType()
-            if (kotlinType.toDfType(expression) != DfTypes.NULL) {
+            if (kotlinType.toDfType(expression) == DfTypes.NULL) {
                 // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
                 return true
             }

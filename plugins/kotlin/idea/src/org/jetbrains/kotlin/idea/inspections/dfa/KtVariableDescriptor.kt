@@ -81,10 +81,19 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                         return varFactory.createVariableValue(KtVariableDescriptor(target))
                     }
                     if (isTrackableProperty(target)) {
-                        val classOrObject = target.containingClassOrObject?.resolveToDescriptorIfAny()
-                        if (classOrObject != null) {
-                            val dfType = classOrObject.defaultType.toDfType(expr)
-                            val qualifier = varFactory.createVariableValue(KtThisDescriptor(classOrObject, dfType))
+                        val parent = expr.parent
+                        var qualifier: DfaVariableValue? = null
+                        if (parent is KtQualifiedExpression && parent.selectorExpression == expr) {
+                            val receiver = parent.receiverExpression
+                            qualifier = createVariable(factory, receiver)
+                        } else {
+                            val classOrObject = target.containingClassOrObject?.resolveToDescriptorIfAny()
+                            if (classOrObject != null) {
+                                val dfType = classOrObject.defaultType.toDfType(expr)
+                                qualifier = varFactory.createVariableValue(KtThisDescriptor(classOrObject, dfType))
+                            }
+                        }
+                        if (qualifier != null) {
                             return varFactory.createVariableValue(KtVariableDescriptor(target), qualifier)
                         }
                     }
