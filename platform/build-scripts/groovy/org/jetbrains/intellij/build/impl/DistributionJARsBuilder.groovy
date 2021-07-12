@@ -1052,24 +1052,23 @@ final class DistributionJARsBuilder {
       if (copyFiles) {
         String lowerCasedLibName = libName.toLowerCase()
         if (mergeLibs) {
-          String key
+          String uberJarName
           if (!excludedFromMergeLibs.contains(libName) &&
               !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
               !lowerCasedLibName.contains("annotations") &&
               !lowerCasedLibName.startsWith("junit") &&
               !lowerCasedLibName.startsWith("cucumber-") &&
               !lowerCasedLibName.contains("groovy")) {
-            key = "3rd-party"
-            buildContext.messages.debug("  pack $libName into $key")
+            uberJarName = "3rd-party.jar"
+            buildContext.messages.debug("  pack $libName into $uberJarName")
           }
           else {
-            key = null
+            uberJarName = null
           }
 
-          if (key != null) {
-            toMerge.computeIfAbsent(key, { new ArrayList<>() }).addAll(nioFiles)
-            String jarName = key + ".jar"
-            layoutSpec.addLibraryMapping(library, jarName, outputDir.resolve(jarName).toString())
+          if (uberJarName != null) {
+            toMerge.computeIfAbsent(uberJarName, { new ArrayList<>() }).addAll(nioFiles)
+            layoutSpec.addLibraryMapping(library, uberJarName, outputDir.resolve(uberJarName).toString())
             continue libProcessing
           }
         }
@@ -1103,15 +1102,13 @@ final class DistributionJARsBuilder {
       }
     }
 
-    if (mergeLibs && copyFiles) {
-      Files.createDirectories(outputDir)
+    if (!toMerge.isEmpty()) {
       MethodHandle mergeJarsMethod = BuildHelper.getInstance(buildContext).mergeJars
       for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
         List<Path> list = entry.value
         list.sort(null)
-        String fileName = entry.key + ".jar"
-        buildContext.messages.debug(" merge $list to $fileName")
-        mergeJarsMethod.invokeWithArguments(outputDir.resolve(fileName), list)
+        buildContext.messages.debug(" merge $list to ${entry.key}")
+        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key), list)
       }
     }
   }

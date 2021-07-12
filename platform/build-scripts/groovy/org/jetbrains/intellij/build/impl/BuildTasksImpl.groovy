@@ -585,8 +585,8 @@ idea.fatal.error.notification=disabled
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo")
-    jarsBuilder.generateProjectStructureMapping(targetFile)
+    new DistributionJARsBuilder(buildContext, buildContext.applicationInfo?.getAppInfoXml())
+      .generateProjectStructureMapping(targetFile)
   }
 
   private void setupJBre(String targetArch = null) {
