@@ -326,4 +326,6 @@
   <action id="CopyElement"/>
   <action id="CheckinProject"/>
   <action id="GoGenerateFileAction"/>
+  <action id="MethodUp"/>
+  <action id="MethodDown"/>
 </keymap>

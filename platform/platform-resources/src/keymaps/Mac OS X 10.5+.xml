@@ -81,6 +81,10 @@
     <keyboard-shortcut first-keystroke="control shift Q"/>
   </action>
   <action id="MethodDown">
+    <keyboard-shortcut first-keystroke="ctrl shift DOWN"/>
+  </action>
+  <action id="MethodUp">
+    <keyboard-shortcut first-keystroke="ctrl shift UP"/>
   </action>
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
@@ -148,9 +152,6 @@
   </action>
   <action id="ToggleBookmark9">
     <keyboard-shortcut first-keystroke="control shift 9"/>
-  </action>
-  <action id="MethodUp">
-    <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ShowContent">
     <keyboard-shortcut first-keystroke="control shift DOWN"/>
