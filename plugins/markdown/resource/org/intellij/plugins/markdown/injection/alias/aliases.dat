@@ -5,6 +5,7 @@ HCL-Terraform | terraform | hcl-terraform, tf
 ApacheConfig | apacheconf | aconf, apache, apacheconfig
 Batch | batch | bat, batchfile
 CoffeeScript | coffeescript | coffee, coffee-script
+Handlebars | handlebars | hbs
 JavaScript | javascript | js, node
 Markdown | markdown | md
 PowerShell | powershell | posh, pwsh
