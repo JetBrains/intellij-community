@@ -48,7 +48,9 @@ public final class SVGLoader {
   private static volatile boolean ourIsSelectionContext = false;
 
   private static final class SvgCache {
+    @Nullable
     private static final SvgCacheManager persistentCache;
+    @Nullable
     private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
 
     static {
@@ -122,7 +124,7 @@ public final class SVGLoader {
     byte[] theme ;
     InputStream stream = null;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (SvgCache.persistentCache != null && !isSelectionContext()) {
       @SuppressWarnings("DuplicatedCode")
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
@@ -198,7 +200,7 @@ public final class SVGLoader {
     byte[] svgBytes = null;
     Image image;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (SvgCache.persistentCache != null && !isSelectionContext()) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       theme = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
@@ -245,7 +247,7 @@ public final class SVGLoader {
       IconLoadMeasurer.svgDecoding.end(decodingStart);
     }
 
-    if (theme != null) {
+    if (theme != null && SvgCache.persistentCache != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
         SvgCache.persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
@@ -315,7 +317,7 @@ public final class SVGLoader {
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
-  public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) throws IOException {
+  public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) {
     ImageLoader.Dimension2DDouble size = SvgTranscoder.getDocumentSize((float)scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, stream));
     float iconMaxSize = SvgTranscoder.getIconMaxSize();
     return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
