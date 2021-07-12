@@ -28,6 +28,8 @@ import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 
+import static java.lang.Character.isDigit;
+
 public class ExprProcessor implements CodeConstants {
   public static final String UNDEFINED_TYPE_STRING = "<undefinedtype>";
   public static final String UNKNOWN_TYPE_STRING = "<unknown>";
@@ -780,11 +782,15 @@ public class ExprProcessor implements CodeConstants {
   public static String buildJavaClassName(String name) {
     String res = name.replace('/', '.');
 
-    if (res.contains("$")) { // attempt to invoke foreign member
-      // classes correctly
+    if (res.contains("$")) { // attempt to invoke foreign member classes correctly
       StructClass cl = DecompilerContext.getStructContext().getClass(name);
       if (cl == null || !cl.isOwn()) {
         res = res.replace('$', '.');
+
+        int lastDotIndex = res.lastIndexOf('.') + 1;
+        if (isDigit(res.charAt(lastDotIndex))) {
+          res = res.substring(0, lastDotIndex) + '$' + res.substring(lastDotIndex);
+        }
       }
     }
 
