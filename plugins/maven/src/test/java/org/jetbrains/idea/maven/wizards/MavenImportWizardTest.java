@@ -69,8 +69,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
   public void testImportProjectAndSetupProjectJdk() throws Exception {
-    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable()));
     Path pom = createPom();
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
     Sdk projectSdk = ProjectRootManager.getInstance(module.getProject()).getProjectSdk();

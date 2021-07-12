@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -97,6 +98,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
+    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
     removeFromLocalRepository("test");
   }
 
