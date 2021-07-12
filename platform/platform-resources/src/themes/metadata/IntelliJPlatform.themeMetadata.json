@@ -1231,6 +1231,11 @@
       "since": "2021.2"
     },
     {
+      "key": "Lesson.Tooltip.spanBackground",
+      "description": "Background for buttons and shortcuts used in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
       "key": "Lesson.Tooltip.foreground",
       "description": "Foreground for tooltips text used in lessons",
       "since": "2021.2"

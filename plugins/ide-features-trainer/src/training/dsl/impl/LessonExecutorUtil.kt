@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -94,7 +94,7 @@ internal object LessonExecutorUtil {
       it.putClientProperty("gotItButton", true)
       it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
       it.foreground = UISettings.instance.tooltipTextColor
-      it.action = object : AbstractAction(UIBundle.message("got.it")) {
+      it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
         }
