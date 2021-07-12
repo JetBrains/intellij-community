@@ -350,7 +350,7 @@ final class DistributionJARsBuilder {
     pluginsToBundle.each {
       processPluginLayout(it, layoutBuilder, buildContext.paths.tempDir, [], projectStructureMapping, false)
     }
-    projectStructureMapping.generateJsonFile(targetFile)
+    projectStructureMapping.generateJsonFile(targetFile.toPath())
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)

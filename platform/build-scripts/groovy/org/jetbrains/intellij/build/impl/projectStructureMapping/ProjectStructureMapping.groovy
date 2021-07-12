@@ -2,8 +2,10 @@
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.google.gson.GsonBuilder
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
@@ -50,10 +52,9 @@ final class ProjectStructureMapping {
     return result
   }
 
-  void generateJsonFile(File file) {
-    FileUtil.createParentDirs(file)
-
-    file.withWriter {
+  void generateJsonFile(Path file) {
+    Files.createDirectories(file.parent)
+    Files.newBufferedWriter(file).withCloseable {
       new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
     }
   }

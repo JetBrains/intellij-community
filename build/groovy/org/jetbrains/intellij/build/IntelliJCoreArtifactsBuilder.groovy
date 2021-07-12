@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.ClassVersionChecker
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
@@ -16,7 +17,7 @@ import java.nio.file.Paths
  * @deprecated all modules included into these artifacts are published as proper Maven artifacts to IntelliJ Artifacts Repository (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/intellij_artifacts.html).
  */
 @Deprecated
-class IntelliJCoreArtifactsBuilder {
+final class IntelliJCoreArtifactsBuilder {
   private static final List<String> ANALYSIS_API_MODULES = [
     "intellij.platform.analysis",
     "intellij.platform.boot",
@@ -102,11 +103,11 @@ class IntelliJCoreArtifactsBuilder {
     }
   }
 
-  void generateProjectStructureMapping(File targetFile) {
+  void generateProjectStructureMapping(@NotNull File targetFile) {
     def mapping = new ProjectStructureMapping()
     processCoreLayout(buildContext.paths.tempDir, mapping, false)
     mapping.addEntry(new ProjectLibraryEntry("annotations.jar", "jetbrains-annotations-java5", ""))
-    mapping.generateJsonFile(targetFile)
+    mapping.generateJsonFile(targetFile.toPath())
   }
 
   private void processCoreLayout(Path coreArtifactDir, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
