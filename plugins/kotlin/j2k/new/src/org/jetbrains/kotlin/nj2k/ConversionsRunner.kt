@@ -62,6 +62,7 @@ object ConversionsRunner {
         },
         BuiltinMembersConversion(context),
         ImplicitCastsConversion(context),
+        PrimitiveTypeCastsConversion(context),
         LiteralConversion(context),
         StaticMemberAccessConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
