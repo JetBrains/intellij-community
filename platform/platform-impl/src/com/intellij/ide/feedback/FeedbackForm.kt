@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.AboutDialog
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +38,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.event.HyperlinkEvent
 
 data class ZenDeskComboOption(val displayName: @Nls String, val id: String) {
   override fun toString(): String = displayName
@@ -251,7 +253,7 @@ class FeedbackForm(
           "systeminfo" to systemInfo,
           "needsupport" to needSupport
         ) + (ratingComponent?.let { mapOf("rating" to it.rating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id)} ?: emptyMap() )
-      ) {
+      , onDone = {
         ApplicationManager.getApplication().invokeLater {
           var message = ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName)
           if (isEvaluation) {
@@ -262,7 +264,21 @@ class FeedbackForm(
                        message,
                        NotificationType.INFORMATION).notify(project)
         }
-      }
+      }, onError = {
+        ApplicationManager.getApplication().invokeLater {
+          Notification("feedback.form",
+                       ApplicationBundle.message("feedback.form.error.title"),
+                       ApplicationBundle.message("feedback.form.error.text"),
+                       NotificationType.ERROR
+          )
+            .setListener(object : NotificationListener.Adapter() {
+              override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
+                SendFeedbackAction.submit(project)
+              }
+            })
+            .notify(project)
+        }
+      })
     }
   }
 
