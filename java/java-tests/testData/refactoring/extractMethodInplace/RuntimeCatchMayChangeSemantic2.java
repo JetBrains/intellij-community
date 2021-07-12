@@ -2,8 +2,8 @@ public class Test {
     public int test(int x) {
         int y = 42;
         try {
-          y = y / x;
-          foo();
+          <selection>y = y / x;
+          foo();</selection>
         } catch (ArithmeticException  e) {
         }
         return y;

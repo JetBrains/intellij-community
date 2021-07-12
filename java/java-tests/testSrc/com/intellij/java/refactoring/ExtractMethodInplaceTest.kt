@@ -88,18 +88,14 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testRuntimeCatchMayChangeSemantic1(){
-    try {
+    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
       doTest()
-      fail("RuntimeException may change code semantic")
-    } catch (e: RefactoringErrorHintException) {
     }
   }
 
   fun testRuntimeCatchMayChangeSemantic2(){
-    try {
+    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
       doTest()
-      fail("RuntimeException may change code semantic")
-    } catch (e: RefactoringErrorHintException) {
     }
   }
 
