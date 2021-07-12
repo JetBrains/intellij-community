@@ -204,19 +204,7 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
-    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(psiElement);
-    ReadAction.nonBlocking(() -> {
-        PsiElement element = pointer.getElement();
-        if (element == null) return null;
-        return createModel(element, null, ownerExtension);
-      })
-      .expireWith(myProject)
-      .finishOnUiThread(ModalityState.current(), model -> {
-        if (model != null) {
-          setModel(model);
-        }
-      })
-      .submit(ourExecutor);
+    setModel(createModel(psiElement, null, ownerExtension));
   }
 
   @NotNull
