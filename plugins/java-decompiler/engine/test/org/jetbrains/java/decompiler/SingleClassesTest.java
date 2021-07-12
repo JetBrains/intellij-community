@@ -131,6 +131,7 @@ public class SingleClassesTest {
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+  //@Test public void testGenericWildcardFunctionReturnType() { doTest("pkg/TestGenericWildcardFunctionReturnType", "pkg/TestGenericWildcardFunctionReturnType$A", "pkg/TestGenericWildcardFunctionReturnType$B"); }
 
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
