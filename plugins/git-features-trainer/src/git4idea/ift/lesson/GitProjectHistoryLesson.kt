@@ -2,6 +2,7 @@
 package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -9,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
@@ -25,6 +27,7 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
+import java.awt.Rectangle
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "git/sphinx_cat.yml"
@@ -56,8 +59,12 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
-        path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE"
+      // todo: return highlighting of full tree node when IFT-234 will be resolved
+      triggerByPartOfComponent(highlightBorder = false) l@{ tree: DnDAwareTree ->
+        val path = TreeUtil.treePathTraverser(tree).find { it.getPathComponent(it.pathCount - 1).toString() == "HEAD_NODE" }
+                   ?: return@l null
+        val rect = tree.getPathBounds(path) ?: return@l null
+        Rectangle(rect.x, rect.y, rect.width, 0)
       }
     }
 
