@@ -5,15 +5,12 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
     private const val FILETYPE_DATA_KEY = "filetype"
-    private const val IS_IGNORED_DATA_KEY = "isIgnored"
-    private const val IS_CHANGED_DATA_KEY = "isChanged"
     private const val IS_FAVORITE_DATA_KEY = "isFavorite"
     private const val IS_OPENED_DATA_KEY = "isOpened"
     private const val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = "timeSinceLastModification"
@@ -33,26 +30,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val virtualFile = psiFile.virtualFile
     val project = psiFile.project
 
-    val data = hashMapOf(
-      IS_IGNORED_DATA_KEY to isIgnoredFile(virtualFile, project),
-      IS_CHANGED_DATA_KEY to isChangedFile(virtualFile, project),
+    return hashMapOf(
       IS_FAVORITE_DATA_KEY to isFavorite(virtualFile, project),
       IS_OPENED_DATA_KEY to isOpened(virtualFile, project),
       FILETYPE_DATA_KEY to element.containingFile.fileType,
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - element.containingFile.virtualFile.timeStamp,
     )
-
-    return data
-  }
-
-  private fun isIgnoredFile(virtualFile: VirtualFile, project: Project): Boolean {
-    val changeListManager = ChangeListManager.getInstance(project)
-    return changeListManager.isIgnoredFile(virtualFile)
-  }
-
-  private fun isChangedFile(virtualFile: VirtualFile, project: Project): Boolean {
-    val changeListManager = ChangeListManager.getInstance(project)
-    return changeListManager.isFileAffected(virtualFile)
   }
 
   private fun isFavorite(virtualFile: VirtualFile, project: Project): Boolean {

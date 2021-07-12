@@ -65,6 +65,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
-    <orderEntry type="module" module-name="intellij.platform.vcs" />
   </component>
 </module>

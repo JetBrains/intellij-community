@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlin.math.round
 
-internal abstract class SearchEverywhereElementFeaturesProvider {
+abstract class SearchEverywhereElementFeaturesProvider {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider>
       = ExtensionPointName.create("com.intellij.searchEverywhereElementFeaturesProvider")
