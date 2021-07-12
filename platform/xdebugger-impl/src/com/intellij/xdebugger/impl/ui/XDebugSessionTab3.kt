@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -10,8 +11,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
@@ -104,18 +103,20 @@ class XDebugSessionTab3(
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
-    // reversed because it was like this in the original tab
-    for (action in session.restartActions.asReversed()) {
-      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
+      // reversed because it was like this in the original tab
+      actions.asReversed().asSequence()
+        .filterNot {
+          it.templatePresentation.getClientProperty(RunTab.HIDE_FROM_TOOLBAR) == true
+        }
+        .forEach {
+          toolbar.add(it, constraints)
+        }
     }
 
-    for (action in session.extraActions.asReversed()) {
-      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
-    }
-
-    for (action in session.extraStopActions) {
-      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
-    }
+    addWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    addWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
@@ -171,13 +172,5 @@ class XDebugSessionTab3(
   override fun dispose() {
     Disposer.dispose(lifetime)
     super.dispose()
-  }
-}
-
-internal class MorePopupGroup : DefaultActionGroup(), DumbAware {
-  init {
-    isPopup = true
-    templatePresentation.icon = AllIcons.Actions.More
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
 }

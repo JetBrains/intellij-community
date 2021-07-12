@@ -74,6 +74,6 @@ interface SingleContentSupplier {
 
   companion object {
     @JvmField
-    val KEY = DataKey.create<SingleContentSupplier>("ToolbarContentSupplier")
+    val KEY = DataKey.create<SingleContentSupplier>("SingleContentSupplier")
   }
 }

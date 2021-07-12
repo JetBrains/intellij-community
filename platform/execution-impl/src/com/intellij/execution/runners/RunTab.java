@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
@@ -34,6 +35,22 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class RunTab implements DataProvider, Disposable {
+  /**
+   * Takes out an action of 'More' group and adds it on the toolbar.
+   * <p>
+   * This option has to be set into {@link AnAction#getTemplatePresentation()}.
+   * Works only if new UI is enabled.
+   */
+  public static final Key<Boolean> TAKE_OUT_OF_MORE_GROUP = Key.create("RunTab.putOnToolbar");
+
+  /**
+   * Hides some actions from the toolbar.
+   * <p>
+   * This option has to be set into {@link AnAction#getTemplatePresentation()}.
+   * Works only if new UI is enabled.
+   */
+  public static final Key<Boolean> HIDE_FROM_TOOLBAR = Key.create("RunTab.hideFromToolbar");
+
   @NotNull
   protected final RunnerLayoutUi myUi;
   private LogFilesManager myManager;

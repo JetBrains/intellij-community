@@ -12,7 +12,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -166,7 +166,15 @@ public final class RunContentBuilder extends RunTab {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
-    actionGroup.addAll(actions);
+    if (!isNewLayout) {
+      actionGroup.addAll(actions);
+    } else {
+      for (AnAction action : actions) {
+        if (!Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.HIDE_FROM_TOOLBAR))) {
+          actionGroup.add(action);
+        }
+      }
+    }
     if (!isNewLayout) {
       actionGroup.add(new CreateAction(AllIcons.General.Settings));
       actionGroup.addSeparator();
@@ -179,42 +187,31 @@ public final class RunContentBuilder extends RunTab {
       actionGroup.addAll(consoleActions);
     }
 
-    if (isNewLayout) {
-      actionGroup.addSeparator();
-    }
-
-    for (AnAction anAction : myRunnerActions) {
-      if (anAction != null) {
-        actionGroup.add(anAction);
-      }
-      else {
-        actionGroup.addSeparator();
-      }
-    }
-
     if (!isNewLayout) {
+      for (AnAction anAction : myRunnerActions) {
+        if (anAction != null) {
+          actionGroup.add(anAction);
+        }
+        else {
+          actionGroup.addSeparator();
+        }
+      }
+
       actionGroup.addSeparator();
       actionGroup.add(myUi.getOptions().getLayoutActions());
       actionGroup.addSeparator();
       actionGroup.add(PinToolwindowTabAction.getPinAction());
     } else {
-      DefaultActionGroup more = new DefaultActionGroup() {
-        {
-          setPopup(true);
-          getTemplatePresentation().setIcon(AllIcons.Actions.More);
-          getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      actionGroup.addSeparator();
+      MoreActionGroup more = new MoreActionGroup();
+      for (AnAction action : myRunnerActions) {
+        if (Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP))) {
+          actionGroup.add(action);
+        } else {
+          more.add(action);
         }
+      }
 
-        @Override
-        public boolean isDumbAware() {
-          return true;
-        }
-
-        @Override
-        public boolean hideIfNoVisibleChildren() {
-          return true;
-        }
-      };
       actionGroup.add(more);
     }
     return actionGroup;

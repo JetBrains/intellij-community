@@ -1121,7 +1121,7 @@
       <separator/>
       <reference ref="ViewBreakpoints"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
-      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.xdebugger.impl.ui.MorePopupGroup">
+      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
         <reference ref="ForceStepOver"/>
         <reference ref="ForceStepInto"/>
         <reference ref="SmartStepInto"/>
