@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.CompletenessResult.*;
+
 public class SwitchBlockHighlightingModel {
   @NotNull private final LanguageLevel myLevel;
   @NotNull final PsiSwitchBlock myBlock;
@@ -744,20 +746,18 @@ public class SwitchBlockHighlightingModel {
 
     /**
      * @param switchBlock
-     * @return null, if switch contains total pattern or switch is incomplete and it produces a compilation error
+     * @return {@link CompletenessResult#UNEVALUATED}, if switch contains total pattern or switch is incomplete and it produces a compilation error
      * (this is already covered by highlighting)
-     * <p>false, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-     * <p>true, if switch is complete
+     * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
+     * <p>{@link CompletenessResult#COMPLETE}, if switch is complete
      */
-    @Nullable
-    public static Boolean isCompleteSwitch(@NotNull PsiSwitchBlock switchBlock) {
+    @NotNull
+    public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
       SwitchBlockHighlightingModel switchModel = SwitchBlockHighlightingModel.createInstance(
         PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
-      if (switchModel == null) return null;
-      SelectorKind selectorKind = switchModel.getSwitchSelectorKind();
-      if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return false;
+      if (switchModel == null) return UNEVALUATED;
       PsiCodeBlock switchBody = switchModel.myBlock.getBody();
-      if (switchBody == null) return null;
+      if (switchBody == null) return UNEVALUATED;
       List<PsiCaseLabelElement> labelElements = new SmartList<>();
       for (PsiStatement st : switchBody.getStatements()) {
         if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
@@ -770,24 +770,33 @@ public class SwitchBlockHighlightingModel {
           labelElements.add(labelElement);
         }
       }
-      if (labelElements.isEmpty()) return null;
+      if (labelElements.isEmpty()) return UNEVALUATED;
       List<HighlightInfo> results = new SmartList<>();
+      SelectorKind selectorKind = switchModel.getSwitchSelectorKind();
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
-        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return null;
+        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return UNEVALUATED;
+        if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return INCOMPLETE;
         ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
       }
       else {
+        if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return INCOMPLETE;
         PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchModel.mySelector.getType());
-        if (selectorClass == null || !selectorClass.isEnum()) return null;
+        if (selectorClass == null || !selectorClass.isEnum()) return UNEVALUATED;
         List<PsiSwitchLabelStatementBase> labels =
           PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
         List<String> enumConstants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).map(PsiField::getName).toList();
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (switchModel.needToCheckCompleteness(labelElements)) return results.isEmpty() ? true : null;
-      return results.isEmpty();
+      if (switchModel.needToCheckCompleteness(labelElements)) return results.isEmpty() ? COMPLETE : UNEVALUATED;
+      return results.isEmpty() ? COMPLETE : INCOMPLETE;
     }
+  }
+
+  public enum CompletenessResult {
+    UNEVALUATED,
+    INCOMPLETE,
+    COMPLETE
   }
 }
 
