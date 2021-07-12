@@ -74,7 +74,18 @@ public class MethodProcessorRunnable implements Runnable {
     ControlFlowGraph graph = new ControlFlowGraph(seq);
 
     DeadCodeHelper.removeDeadBlocks(graph);
-    graph.inlineJsr(cl, mt);
+
+    //
+    // According to the JVMS11 4.9.1:
+    //   If the class file version number is 51.0 or above,
+    //   then neither the jsr opcode or the jsr_w opcode may appear in the code array
+    //
+    // Since jsr instruction is forbidden for class files version 51.0 (Java 7) or above
+    // call to inlineJsr() is only meaningful for class files prior to the Java 7.
+    //
+    if (!cl.isVersion7()) {
+      graph.inlineJsr(cl, mt);
+    }
 
     // TODO: move to the start, before jsr inlining
     DeadCodeHelper.connectDummyExitBlock(graph);
