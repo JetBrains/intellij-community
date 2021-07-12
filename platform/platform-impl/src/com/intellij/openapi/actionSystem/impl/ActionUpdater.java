@@ -109,9 +109,9 @@ final class ActionUpdater {
                   Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, updateOp),
-      group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
-    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
+      group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
+      group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
+    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
 
     LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
                    "beforeActionPerformed requested in '" + myPlace + "'");
@@ -537,14 +537,14 @@ final class ActionUpdater {
       .filter(o -> !isDumb || o.isDumbAware());
   }
 
-  private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {
+  private static void handleException(@NotNull Op op, @NotNull AnAction action, @Nullable AnActionEvent event, @NotNull Throwable ex) {
+    if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
     String id = ActionManager.getInstance().getId(action);
-    if (id != null) {
-      LOG.error("update failed for AnAction(" + action.getClass().getName() + ") with ID=" + id, exc);
-    }
-    else {
-      LOG.error("update failed for ActionGroup: " + action + "[" + presentation.getText() + "]", exc);
-    }
+    String text = event == null ? null : event.getPresentation().getText();
+    String message = op.name() + " failed for " + (action instanceof ActionGroup ? "ActionGroup" : "AnAction") +
+                     "(" + action.getClass().getName() + (id != null ? ", id=" + id : "") + ")" +
+                     (StringUtil.isNotEmpty(text) ? " with text=" + event.getPresentation().getText() : "");
+    LOG.error(message, ex);
   }
 
   private @Nullable Presentation update(AnAction action, UpdateStrategy strategy) {
@@ -566,24 +566,33 @@ final class ActionUpdater {
                           AnActionEvent e,
                           boolean beforeActionPerformed) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
-
-    long startTime = System.currentTimeMillis();
-    final boolean result;
     try {
-      result = !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
+      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
     }
-    catch (ProcessCanceledException ex) {
-      throw ex;
-    }
-    catch (Throwable exc) {
-      handleUpdateException(action, e.getPresentation(), exc);
+    catch (Throwable ex) {
+      handleException(beforeActionPerformed ? Op.beforeActionPerformedUpdate : Op.update, action, e, ex);
       return false;
     }
-    long endTime = System.currentTimeMillis();
-    if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
-      LOG.debug("'" + e.getPlace() + "' (" + action + "): updated in " + (endTime - startTime) + " ms");
+  }
+
+  private static AnAction @NotNull [] doGetChildren(@NotNull ActionGroup group, @Nullable AnActionEvent e) {
+    try {
+      return group.getChildren(e);
     }
-    return result;
+    catch (Throwable ex) {
+      handleException(Op.getChildren, group, e, ex);
+      return AnAction.EMPTY_ARRAY;
+    }
+  }
+
+  private static boolean doCanBePerformed(@NotNull ActionGroup group, @NotNull DataContext context) {
+    try {
+      return group.canBePerformed(context);
+    }
+    catch (Throwable ex) {
+      handleException(Op.canBePerformed, group, null, ex);
+      return true;
+    }
   }
 
   private static final ConcurrentMap<AsyncPromise<?>, String> ourDebugPromisesMap = CollectionFactory.createConcurrentWeakIdentityMap();
