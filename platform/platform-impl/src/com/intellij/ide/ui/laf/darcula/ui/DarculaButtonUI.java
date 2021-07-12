@@ -17,7 +17,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -285,7 +284,6 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     Insets i = c.getInsets();
-    prefSize = ObjectUtils.notNull(prefSize, JBUI.emptySize());
 
     if (UIUtil.isHelpButton(c) || isSquare(c)) {
       int helpDiam = HELP_BUTTON_DIAMETER.get();
@@ -311,7 +309,8 @@ public class DarculaButtonUI extends BasicButtonUI {
     AbstractButton b = (AbstractButton)c;
     int textIconGap = StringUtil.isEmpty(b.getText()) || b.getIcon() == null ? 0 : b.getIconTextGap();
     Dimension size = BasicGraphicsUtils.getPreferredButtonSize(b, textIconGap);
-    return getDarculaButtonSize(c, size);
+    // "BasicGraphicsUtils.getPreferredButtonSize" can return null -> https://bugs.openjdk.java.net/browse/JDK-4694008
+    return getDarculaButtonSize(c, size == null ? new Dimension() : size);
   }
 
   @Override
