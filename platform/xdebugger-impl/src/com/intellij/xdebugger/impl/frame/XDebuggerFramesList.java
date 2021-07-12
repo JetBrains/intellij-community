@@ -91,18 +91,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
   @Override
   public @Nullable Object getData(@NonNls @NotNull String dataId) {
-    XStackFrame frame = getSelectedFrame();
-    if (frame != null) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return getFile(frame);
-      }
-      if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        VirtualFile file = getFile(frame);
-        if (file != null && file.isValid()) {
-          return PsiManager.getInstance(myProject).findFile(file);
-        }
-      }
-    }
     if (FRAMES_LIST.is(dataId)) {
       return this;
     }
@@ -120,6 +108,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       return null;
     }
     if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      XStackFrame frame = getSelectedFrame();
       if (frame != null) {
         return List.<DataProvider>of(realDataId -> getSlowData(frame, realDataId));
       }
@@ -131,6 +120,15 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getFrameNavigatable(frame);
+    }
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getFile(frame);
+    }
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      VirtualFile file = getFile(frame);
+      if (file != null && file.isValid()) {
+        return PsiManager.getInstance(myProject).findFile(file);
+      }
     }
     return null;
   }
