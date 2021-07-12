@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.table.JBTable
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.i18n.GitBundle
@@ -36,6 +37,7 @@ import git4idea.ift.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.dsl.*
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.JTree
@@ -43,7 +45,7 @@ import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
 
 class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
-  override val existedFile = "git/simple_cat.yml"
+  override val existedFile = "git/puss_in_boots.yml"
   private val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
@@ -92,14 +94,22 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       commitWorkflowHandler.setCommitMessage(lastCommitMessage)
     }
 
-    task { highlightVcsChange(secondFileName, highlightBorder = false) }
+    task {
+      triggerByPartOfComponent(false) l@{ ui: ChangesListView ->
+        val path = TreeUtil.treePathTraverser(ui).find { it.getPathComponent(it.pathCount - 1).toString().contains(firstFileName) }
+                   ?: return@l null
+        val rect = ui.getPathBounds(path) ?: return@l null
+        Rectangle(rect.x, rect.y, 20, rect.height)
+      }
+    }
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
       text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(secondFileName)))
-      text(GitLessonsBundle.message("git.commit.choose.files.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 300))
-      highlightVcsChange(secondFileName)
-      triggerOnOneChangeIncluded(firstFileName)
+      text(GitLessonsBundle.message("git.commit.choose.files.balloon"),
+           LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
+      highlightVcsChange(firstFileName)
+      triggerOnOneChangeIncluded(secondFileName)
       showWarningIfCommitWindowClosed()
     }
 
@@ -200,8 +210,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       text(GitLessonsBundle.message("git.commit.select.file"))
-      highlightVcsChange(secondFileName)
-      triggerOnOneChangeIncluded(secondFileName)
+      highlightVcsChange(firstFileName)
+      triggerOnOneChangeIncluded(firstFileName)
       showWarningIfCommitWindowClosed()
     }
 
