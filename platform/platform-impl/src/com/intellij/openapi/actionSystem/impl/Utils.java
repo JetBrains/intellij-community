@@ -153,7 +153,7 @@ public final class Utils {
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
       try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
-        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
+        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
             if (runnable != null) runnable.run();
@@ -211,7 +211,7 @@ public final class Utils {
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
-      return runLoopAndWaitForFuture(promise, null, () -> {
+      return runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
         long elapsed = System.currentTimeMillis() - start;
@@ -485,7 +485,7 @@ public final class Utils {
           promise.setError(e);
         }
       });
-      result = runLoopAndWaitForFuture(promise, null, () -> {
+      result = runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
       });
@@ -503,6 +503,7 @@ public final class Utils {
 
   private static <T> T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
                                                @Nullable T defValue,
+                                               boolean rethrowCancellation,
                                                @NotNull ThrowableRunnable<?> pumpRunnable) {
     while (!promise.isDone()) {
       try {
@@ -520,6 +521,10 @@ public final class Utils {
       if (!(cause instanceof ProcessCanceledException)) {
         LOG.error(cause);
       }
+      else if (rethrowCancellation) {
+        cause.fillInStackTrace();
+        throw (ProcessCanceledException)cause;
+      }
     }
     return defValue;
   }
@@ -535,5 +540,13 @@ public final class Utils {
 
   public static boolean isFrozenDataContext(DataContext context) {
     return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
+  }
+
+  static class ProcessCanceledWithReasonException extends ProcessCanceledException {
+    final Object reason;
+
+    ProcessCanceledWithReasonException(Object reason) {
+      this.reason = reason;
+    }
   }
 }

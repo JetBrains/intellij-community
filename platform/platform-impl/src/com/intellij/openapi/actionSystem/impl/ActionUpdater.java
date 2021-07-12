@@ -33,10 +33,8 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.PaintEvent;
-import java.util.List;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -353,9 +351,10 @@ final class ActionUpdater {
                                            @NotNull Disposable disposableParent) {
     Disposable disposable = Disposer.newDisposable("Action Update");
     Disposer.register(disposableParent, disposable);
-    IdeEventQueue.getInstance().addPostprocessor(e -> {
-      if (e instanceof ComponentEvent && !(e instanceof PaintEvent) && (e.getID() & AWTEvent.MOUSE_MOTION_EVENT_MASK) == 0) {
-        cancelPromise(promise, e);
+    IdeEventQueue.getInstance().addPostprocessor(event -> {
+      if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
+        cancelPromise(promise, event);
       }
       return false;
     }, disposable);
@@ -618,7 +617,12 @@ final class ActionUpdater {
       String message = "'" + place + "' update cancelled: " + reason;
       LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
     }
-    promise.cancel();
+    if (promise instanceof AsyncPromise) {
+      ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));
+    }
+    else {
+      promise.cancel();
+    }
   }
 
   private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }
