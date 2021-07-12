@@ -26,7 +26,7 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
 
   init {
     ensureVersionCompatible(version, file)
-    out = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
+    out = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.APPEND).buffered())
   }
 
   @Throws(IOException::class)
@@ -139,7 +139,7 @@ sealed class WalEvent<K, V> {
 class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
                                                                            private val valueExternalizer: DataExternalizer<V>,
                                                                            file: Path) : Closeable {
-  private val input = DataInputStream(Files.newInputStream(file))
+  private val input = DataInputStream(Files.newInputStream(file).buffered())
 
   val version: Int = VERSION
 
