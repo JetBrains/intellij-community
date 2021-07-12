@@ -14279,9 +14279,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/when/noElseInWhenWithoutBranches.kt");
         }
 
+        @TestMetadata("notRedundantBranch.kt")
+        public void testNotRedundantBranch() throws Exception {
+            runTest("testData/quickfix/when/notRedundantBranch.kt");
+        }
+
         @TestMetadata("removeRedundantBranch.kt")
         public void testRemoveRedundantBranch() throws Exception {
             runTest("testData/quickfix/when/removeRedundantBranch.kt");
+        }
+
+        @TestMetadata("removeRedundantCondition.kt")
+        public void testRemoveRedundantCondition() throws Exception {
+            runTest("testData/quickfix/when/removeRedundantCondition.kt");
         }
 
         @TestMetadata("removeRedundantElse.kt")

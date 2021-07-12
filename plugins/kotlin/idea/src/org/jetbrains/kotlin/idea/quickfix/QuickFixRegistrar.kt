@@ -267,7 +267,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix)
         NO_ELSE_IN_WHEN.registerFactory(AddWhenRemainingBranchesFix)
         REDUNDANT_ELSE_IN_WHEN.registerFactory(RemoveWhenBranchFix)
-        SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix)
+        SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFix)
         NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenElseBranchFix)
         NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenRemainingBranchesFix)
         NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenElseBranchFix)
