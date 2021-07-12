@@ -3,14 +3,13 @@ package com.intellij.refactoring.introduceVariable
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class IntroduceVariableUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("introduce.variable.inplace", 1)
+    private val GROUP = EventLogGroup("introduce.variable.inplace", 2)
 
     @JvmField
     val changed = EventFields.Boolean("changed")
@@ -20,12 +19,13 @@ class IntroduceVariableUsagesCollector : CounterUsagesCollector() {
     val finalState = EventFields.Boolean("final")
 
     @JvmField
-    val settingsChanged = register("settingsChanged")
-    @JvmField
-    val settingsOnPerform = register("settingsOnHide")
-    @JvmField
-    val settingsOnShow = register("settingsOnShow")
+    val settingsChanged = GROUP.registerVarargEvent("settingsChanged", changed)
 
-    private fun register(eventId: String): VarargEventId = GROUP.registerVarargEvent(eventId, EventFields.InputEvent, varType, finalState, changed)
+    @JvmField
+    val settingsOnPerform = GROUP.registerVarargEvent("settingsOnHide", varType, finalState)
+
+    @JvmField
+    val settingsOnShow = GROUP.registerVarargEvent("settingsOnShow", varType, finalState)
+
   }
 }
