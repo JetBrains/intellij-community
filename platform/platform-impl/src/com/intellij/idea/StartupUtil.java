@@ -304,7 +304,7 @@ public final class StartupUtil {
     return true;
   }
 
-  /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
+  /** Called via reflection from {@link WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
   @SuppressWarnings("UnusedDeclaration")
   public static int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
     return LISTENER.apply(currentDirectory, args);
@@ -918,8 +918,8 @@ public final class StartupUtil {
 
     try {
       Class<?> dialogClass = Class.forName(stepsDialogName);
-      Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
-      ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
+      Constructor<?> ctor = dialogClass.getConstructor(AppStarter.class);
+      ((CommonCustomizeIDEWizardDialog)ctor.newInstance(appStarter)).showIfNeeded();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
