@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -58,6 +59,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
                                                             "</properties>\n";
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
+  private Sdk mySdk;
   private WSLDistribution myWSLDistribution;
 
   private File ourTempDir;
@@ -125,8 +127,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
     }
 
-    Sdk sdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
-    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(sdk));
+    mySdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
+    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(mySdk));
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
   }
 
@@ -150,6 +152,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> checkAllMavenConnectorsDisposed(),
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
+      () -> disposeJdk(),
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -166,6 +169,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
       },
       () -> super.tearDown()
     ).run();
+  }
+
+  private void disposeJdk() {
+    if (mySdk != null) {
+      WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(mySdk));
+    }
   }
 
   private void checkAllMavenConnectorsDisposed() {
@@ -204,6 +213,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+    mySdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    ProjectJdkTable.getInstance().addJdk(mySdk);
   }
 
   protected MavenProgressIndicator getMavenProgressIndicator() {

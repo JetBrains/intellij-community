@@ -98,8 +98,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
     removeFromLocalRepository("test");
   }
 
