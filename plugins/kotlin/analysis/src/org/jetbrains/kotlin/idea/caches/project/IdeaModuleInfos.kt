@@ -325,7 +325,7 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
 }
 
 data class LibrarySourceInfo(override val project: Project, val library: Library, override val binariesModuleInfo: BinaryModuleInfo) :
-    IdeaModuleInfo, SourceForBinaryModuleInfo {
+    IdeaModuleInfo, SourceForBinaryModuleInfo, LibraryModuleSourceInfoBase {
 
     override val name: Name = Name.special("<sources for library ${library.name}>")
 
