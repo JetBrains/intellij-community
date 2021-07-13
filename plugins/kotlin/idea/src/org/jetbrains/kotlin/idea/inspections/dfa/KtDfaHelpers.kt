@@ -103,6 +103,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
 
 // see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
 private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNameUnsafe.asString()) {
+    "kotlin.Any" -> CommonClassNames.JAVA_LANG_OBJECT
     "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
     "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
     "kotlin.Throwable" -> CommonClassNames.JAVA_LANG_THROWABLE
