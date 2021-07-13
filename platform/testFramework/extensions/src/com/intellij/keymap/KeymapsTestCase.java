@@ -122,7 +122,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace"},
     { "shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
     { "meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
-    { "control UP",               "JupyterSelectCellAboveAction", "MethodUp"},
     { "control D",                "Debug", "org.jetbrains.r.console.RConsoleView.REofAction"},
     { "control M",                "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     { "control O",                "ExportToTextFile", "OverrideMethods"},
@@ -148,6 +147,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     {"control shift RIGHT",       "Diff.NextChange", "NextEditorTab"},
     {"control shift LEFT",        "Diff.PrevChange", "PreviousEditorTab"},
+    { "shift ctrl DOWN",          "MethodDown", "ShowContent"},
     });
     put("Mac OS X", new String[][] {
     { "Force touch",              "GotoDeclaration", "RunToCursor"},
