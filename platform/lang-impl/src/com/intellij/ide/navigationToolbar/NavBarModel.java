@@ -323,7 +323,7 @@ public class NavBarModel {
     return child;
   }
 
-  protected List<Object> getChildren(final Object object) {
+  public List<Object> getChildren(final Object object) {
     final List<Object> result = new ArrayList<>();
     PairProcessor<Object, NavBarModelExtension> processor = (o, ext) -> {
       ContainerUtil.addIfNotNull(result, o instanceof PsiElement && ext.normalizeChildren() ? normalize((PsiElement)o) : o);
