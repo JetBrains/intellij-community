@@ -187,9 +187,9 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
   private boolean isToBeDeletedOnClose(@NotNull VirtualFile file) {
     RootType rootType = getRootType(file);
+    if (rootType == null || rootType.isHidden()) return false;
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null || rootType == null || rootType.isHidden()) return false;
-    return document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText());
+    return document != null && document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText());
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
