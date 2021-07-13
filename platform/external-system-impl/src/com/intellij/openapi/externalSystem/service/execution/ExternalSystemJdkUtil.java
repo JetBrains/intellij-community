@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -199,7 +200,15 @@ public final class ExternalSystemJdkUtil {
 
   @Contract("null -> false")
   public static boolean isValidJdk(@Nullable String homePath) {
-    return !StringUtil.isEmptyOrSpaces(homePath) && JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
+    if (StringUtil.isEmptyOrSpaces(homePath)) {
+      return false;
+    }
+    try {
+      return JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
+    }
+    catch (InvalidPathException exception) {
+      return false;
+    }
   }
 
   @NotNull
