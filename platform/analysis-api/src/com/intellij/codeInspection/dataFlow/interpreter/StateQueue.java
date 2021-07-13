@@ -7,10 +7,12 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class StateQueue {
   private static final int FORCE_MERGE_THRESHOLD = 100;
@@ -94,15 +96,29 @@ public class StateQueue {
   private List<DfaMemoryState> forceMerge(List<DfaMemoryState> states) {
     if (states.size() < FORCE_MERGE_THRESHOLD) return states;
     myWasForciblyMerged = true;
-    Collection<List<DfaMemoryState>> groups = StreamEx.of(states).groupingBy(DfaMemoryState::getMergeabilityKey).values();
-    return StreamEx.of(groups)
-      .flatMap(group -> StreamEx.ofSubLists(group, 2)
+    Collection<List<DfaMemoryState>> groups = states.stream().collect(Collectors.groupingBy(DfaMemoryState::getMergeabilityKey)).values();
+    List<DfaMemoryState> list = groups
+      .stream()
+      .flatMap(group -> ofSubLists(group, 2)
         .map(pair -> {
           if (pair.size() == 2) {
             pair.get(0).merge(pair.get(1));
           }
           return pair.get(0);
-        })).distinct().toListAndThen(StateQueue::squash);
+        }))
+      .distinct()
+      .collect(Collectors.toList());
+
+    return squash(list);
+  }
+
+  private static <T> Stream<List<T>> ofSubLists(List<T> l, int length) {
+    if (l.size() < length) {
+      return Stream.of(l);
+    }
+    return IntStream.range(0, l.size()/length)
+      .mapToObj(i->l.subList(i*length, Math.min(l.size(), i*length+length)))  // l[i*length ... i+length+1)
+      ;
   }
 
   public boolean wasForciblyMerged() {

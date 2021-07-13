@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.interpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -17,15 +16,11 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Standard interpreter implementation
@@ -189,11 +184,11 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   private @NotNull Set<Instruction> getJoinInstructions() {
-    Set<Instruction> joinInstructions = new HashSet<>();
-    StreamEx.of(myInstructions)
-      .remove(Instruction::isLinear)
-      .flatMap(inst -> IntStreamEx.of(inst.getSuccessorIndexes()).elements(myInstructions))
-      .into(joinInstructions);
+    List<Instruction> list = Arrays.stream(myInstructions)
+      .filter(i -> !i.isLinear())
+      .flatMap(inst -> Arrays.stream(inst.getSuccessorIndexes()).mapToObj(i->myInstructions[i]))
+      .collect(Collectors.toList());
+    Set<Instruction> joinInstructions = new HashSet<>(list);
     for (int index = 0; index < myInstructions.length; index++) {
       Instruction instruction = myInstructions[index];
       if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
@@ -297,11 +292,13 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
-    DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
+    DfaMemoryState curState = instructionState.getMemoryState();
     Object key = curState.getMergeabilityKey();
-    DfaMemoryStateImpl mergedState =
-      StreamEx.of(processed).filterBy(DfaMemoryState::getMergeabilityKey, key)
-        .foldLeft(curState, (s1, s2) -> {
+    DfaMemoryState mergedState =
+      processed
+        .stream()
+        .filter(state -> state.getMergeabilityKey().equals(key))
+        .reduce(curState, (s1, s2) -> {
           s1.merge(s2);
           return s1;
         });

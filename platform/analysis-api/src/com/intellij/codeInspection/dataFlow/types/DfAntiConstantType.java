@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents a type that maintains a set of constants that excluded from this type
@@ -42,6 +42,6 @@ public abstract class DfAntiConstantType<T> implements DfType {
 
   @Override
   public @NotNull String toString() {
-    return "!= " + StreamEx.of(myNotValues).map(this::renderValue).joining(", ");
+    return "!= " + myNotValues.stream().map(this::renderValue).collect(Collectors.joining(", "));
   }
 }
