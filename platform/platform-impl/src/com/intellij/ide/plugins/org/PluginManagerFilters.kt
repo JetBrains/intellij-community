@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.StoragePathMacros.NON_ROAMABLE_FILE
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xmlb.annotations.Tag
@@ -35,7 +34,7 @@ class PluginManagerFilters {
 }
 
 @Service(Service.Level.APP)
-@State(name = "plugin-filter", storages = [Storage(value = NON_ROAMABLE_FILE)])
+@State(name = "plugin-filter", storages = [Storage(value = "orgPluginsFilter.xml")])
 private class PluginManagerConfigurableForOrgConfig : SimplePersistentStateComponent<PluginManagerConfigurableForOrgState>(PluginManagerConfigurableForOrgState())
 
 private class PluginManagerConfigurableForOrgState : BaseState() {
