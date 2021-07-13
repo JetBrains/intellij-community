@@ -5422,21 +5422,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/extension.kt");
         }
 
-        @TestMetadata("extensionFunction.kt")
-        public void testExtensionFunction() throws Exception {
-            runTest("testData/intentions/convertLambdaToReference/extensionFunction.kt");
-        }
-
-        @TestMetadata("extensionFunctionWithTypealias.kt")
-        public void testExtensionFunctionWithTypealias() throws Exception {
-            runTest("testData/intentions/convertLambdaToReference/extensionFunctionWithTypealias.kt");
-        }
-
-        @TestMetadata("extensionFunctionWithTypealias2.kt")
-        public void testExtensionFunctionWithTypealias2() throws Exception {
-            runTest("testData/intentions/convertLambdaToReference/extensionFunctionWithTypealias2.kt");
-        }
-
         @TestMetadata("extensionOuterScope.kt")
         public void testExtensionOuterScope() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/extensionOuterScope.kt");
@@ -5470,6 +5455,36 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("generic4.kt")
         public void testGeneric4() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/generic4.kt");
+        }
+
+        @TestMetadata("genericExtension.kt")
+        public void testGenericExtension() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtension.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias.kt")
+        public void testGenericExtensionWithTypealias() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias2.kt")
+        public void testGenericExtensionWithTypealias2() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias2.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias3.kt")
+        public void testGenericExtensionWithTypealias3() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias3.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias4.kt")
+        public void testGenericExtensionWithTypealias4() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias4.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias5.kt")
+        public void testGenericExtensionWithTypealias5() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias5.kt");
         }
 
         @TestMetadata("globalProperty.kt")

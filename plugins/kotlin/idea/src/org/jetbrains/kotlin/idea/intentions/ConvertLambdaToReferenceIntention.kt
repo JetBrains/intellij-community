@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyPackageDescriptor
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.isError
@@ -79,8 +81,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         val lambdaParameterType = lambdaExpression.lambdaParameterType(context)
         if (lambdaParameterType?.isExtensionFunctionType == true) {
             if (explicitReceiver != null && explicitReceiver !is KtThisExpression) return false
-            val receiver = calleeDescriptor.dispatchReceiverParameter ?: calleeDescriptor.extensionReceiverParameter
-            if (lambdaParameterType.getReceiverTypeFromFunctionType() != receiver?.type) return false
+            if (calleeDescriptor.receiverType() == null) return false
         }
 
         val lambdaParameterIsSuspend = lambdaParameterType?.isSuspendFunctionType == true
@@ -330,9 +331,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                     val descriptor by lazy { receiver?.type?.constructor?.declarationDescriptor }
                     val receiverText = when {
                         lambdaParameterType?.isExtensionFunctionType == true ->
-                            (context[REFERENCE_TARGET, calleeReferenceExpression] as? CallableDescriptor)?.receiverType()?.let {
-                                IdeDescriptorRenderers.SOURCE_CODE.renderType(it)
-                            }
+                            calleeReferenceExpression.renderTargetReceiverType(context, resolvedCall)
                         receiver == null || descriptor?.isCompanionObject() == true -> ""
                         receiver is ExtensionReceiver ||
                                 descriptor?.let { DescriptorUtils.isAnonymousObject(it) } == true ||
@@ -374,9 +373,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                         }
                         else -> {
                             val receiverText = if (lambdaParameterType?.isExtensionFunctionType == true) {
-                                (context[REFERENCE_TARGET, selectorReference] as? CallableDescriptor)?.receiverType()?.let {
-                                    IdeDescriptorRenderers.SOURCE_CODE.renderType(it)
-                                }
+                                selectorReference.renderTargetReceiverType(context)
                             } else {
                                 receiver.text
                             } ?: return null
@@ -393,5 +390,28 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         private fun KtNameReferenceExpression.getSafeReferencedName() = getReferencedNameAsName().render()
 
         private fun KtLambdaExpression.singleStatementOrNull() = bodyExpression?.statements?.singleOrNull()
+
+        private fun KtNameReferenceExpression.renderTargetReceiverType(
+            context: BindingContext,
+            resolvedCall: ResolvedCall<out CallableDescriptor>? = null
+        ): String {
+            val receiverType = (context[REFERENCE_TARGET, this] as? CallableDescriptor)?.receiverType() ?: return ""
+            if (receiverType !is AbbreviatedType) {
+                return IdeDescriptorRenderers.SOURCE_CODE.renderType(receiverType)
+            }
+            val fqName = receiverType.fqName?.asString() ?: return ""
+            val typeParameter = (resolvedCall ?: getResolvedCall(context))?.renderTypeParameters() ?: return ""
+            return "$fqName$typeParameter"
+        }
+
+        private fun ResolvedCall<out CallableDescriptor>.renderTypeParameters(): String {
+            val typeArguments = this.typeArguments
+            val typeParameters = this.candidateDescriptor.typeParameters.mapNotNull { typeArguments[it] }
+            return if (typeParameters.isNotEmpty()) {
+                typeParameters.joinToString(prefix = "<", postfix = ">") { t -> IdeDescriptorRenderers.SOURCE_CODE.renderType(t) }
+            } else {
+                ""
+            }
+        }
     }
 }
