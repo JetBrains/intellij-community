@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
@@ -247,7 +246,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private fun extractFqName(element: PsiElement): FqName? = when (val originalElement = element.unwrapped) {
         is KtClassOrObject, is PsiClass -> originalElement.getKotlinFqName()
         is KtConstructor<*> -> originalElement.getContainingClassOrObject().fqName
-        is KtCallableDeclaration -> originalElement.takeIf { it.isTopLevelKtOrJavaMember() || it is KtNamedFunction }?.fqName
+        is KtNamedFunction, is KtProperty -> originalElement.cast<KtCallableDeclaration>().fqName
         is PsiMethod -> originalElement.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
         else -> null
     }

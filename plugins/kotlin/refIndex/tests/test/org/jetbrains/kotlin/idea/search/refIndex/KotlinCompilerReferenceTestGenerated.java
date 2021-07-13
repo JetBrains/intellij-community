@@ -414,6 +414,102 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
     @TestMetadata("testData/compilerIndex/properties")
     public abstract static class Properties extends AbstractKotlinCompilerReferenceTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/properties/fromCompanion")
+        public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("constant")
+            public void testConstant() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/constant/");
+            }
+
+            @TestMetadata("extension")
+            public void testExtension() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/extension/");
+            }
+
+            @TestMetadata("extensionVariable")
+            public void testExtensionVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/extensionVariable/");
+            }
+
+            @TestMetadata("extensionVariableWithJvmStatic")
+            public void testExtensionVariableWithJvmStatic() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/extensionVariableWithJvmStatic/");
+            }
+
+            @TestMetadata("isVariable")
+            public void testIsVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/isVariable/");
+            }
+
+            @TestMetadata("property")
+            public void testProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/property/");
+            }
+
+            @TestMetadata("propertyWithBackingField")
+            public void testPropertyWithBackingField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithBackingField/");
+            }
+
+            @TestMetadata("propertyWithCustomGetterAndSetter")
+            public void testPropertyWithCustomGetterAndSetter() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/propertyWithCustomGetterAndSetter/");
+            }
+
+            @TestMetadata("variable")
+            public void testVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/variable/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/properties/members")
+        public static class Members extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isVariable")
+            public void testIsVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/members/isVariable/");
+            }
+
+            @TestMetadata("property")
+            public void testProperty() throws Exception {
+                runTest("testData/compilerIndex/properties/members/property/");
+            }
+
+            @TestMetadata("propertyWithBackingField")
+            public void testPropertyWithBackingField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/propertyWithBackingField/");
+            }
+
+            @TestMetadata("propertyWithCustomGetterAndSetter")
+            public void testPropertyWithCustomGetterAndSetter() throws Exception {
+                runTest("testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter/");
+            }
+
+            @TestMetadata("propertyWithReceiver")
+            public void testPropertyWithReceiver() throws Exception {
+                runTest("testData/compilerIndex/properties/members/propertyWithReceiver/");
+            }
+
+            @TestMetadata("variable")
+            public void testVariable() throws Exception {
+                runTest("testData/compilerIndex/properties/members/variable/");
+            }
+
+            @TestMetadata("variableWithReceiver")
+            public void testVariableWithReceiver() throws Exception {
+                runTest("testData/compilerIndex/properties/members/variableWithReceiver/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/properties/topLevel")
         public static class TopLevel extends AbstractKotlinCompilerReferenceTest {
             private void runTest(String testDataFilePath) throws Exception {
