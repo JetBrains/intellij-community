@@ -377,7 +377,6 @@
       <reference id="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
-      <reference id="Vcs.ShowDiffWithLocal.Before"/>
     </group>
     <group id="Git.Stash.ChangesBrowser.ContextMenu">
       <reference ref="Vcs.ShowDiffWithLocal"/>
@@ -631,8 +630,7 @@
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowStandaloneDiffFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

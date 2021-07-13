@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash
 
-import com.github.benmanes.caffeine.cache.AsyncCacheLoader
+import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.openapi.Disposable
@@ -12,18 +12,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
 import git4idea.ui.StashInfo
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import java.util.concurrent.Executor
-import java.util.function.Supplier
 
 class GitStashCache(val project: Project) : Disposable {
   private val executor = MoreExecutors.listeningDecorator(AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1))
@@ -31,38 +24,24 @@ class GitStashCache(val project: Project) : Disposable {
   private val cache = Caffeine.newBuilder()
     .maximumSize(100)
     .executor(executor)
-    .buildAsync<CommitId, StashData>(AsyncCacheLoader { commitId, executor -> scheduleLoading(commitId, executor) })
+    .buildAsync<CommitId, StashData>(CacheLoader { commitId -> doLoadStashData(commitId) })
 
   init {
     LowMemoryWatcher.register(Runnable { cache.synchronous().invalidateAll() }, this)
   }
 
-  private fun scheduleLoading(commitId: CommitId, executor: Executor): CompletableFuture<StashData>? {
-    val future = CompletableFuture.supplyAsync(Supplier {
-      try {
-        LOG.debug("Loading stash at '${commitId.hash}' in '${commitId.root}'")
-        return@Supplier StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
-      }
-      catch (e: VcsException) {
-        LOG.warn("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
-        return@Supplier StashData.Error(e)
-      }
-      catch (e: Exception) {
-        if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
-        throw CompletionException(e);
-      }
-    }, executor);
-    future.thenRunAsync(Runnable {
-      project.messageBus.syncPublisher(GIT_STASH_LOADED).stashLoaded(commitId.root, commitId.hash)
-    }, EdtExecutorService.getInstance())
-    return future
-  }
-
-  fun getCachedStashData(stashInfo: StashInfo): StashData? {
-    val future = cache.getIfPresent(CommitId(stashInfo.hash, stashInfo.root)) ?: return null
-    return when {
-      !future.isDone -> null
-      else -> future.get()
+  private fun doLoadStashData(commitId: CommitId): StashData {
+    try {
+      LOG.debug("Loading stash at '${commitId.hash}' in '${commitId.root}'")
+      return StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
+    }
+    catch (e: VcsException) {
+      LOG.warn("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
+      return StashData.Error(e)
+    }
+    catch (e: Exception) {
+      if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
+      throw CompletionException(e);
     }
   }
 
@@ -82,15 +61,10 @@ class GitStashCache(val project: Project) : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance(GitStashCache::class.java)
-    val GIT_STASH_LOADED = Topic.create("Git Stash Loaded", StashLoadedListener::class.java)
   }
 
   sealed class StashData {
     class ChangeList(val changeList: CommittedChangeList) : StashData()
     class Error(val error: VcsException) : StashData()
-  }
-
-  interface StashLoadedListener : EventListener {
-    fun stashLoaded(root: VirtualFile, hash: Hash)
   }
 }

@@ -2,13 +2,16 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JTree
 
 class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: ChangesTree, targetComponent: JComponent) : EditorTabPreview(diffProcessor) {
 
@@ -20,12 +23,17 @@ class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: Change
       ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME)?.activate(null)
     }
     openWithDoubleClick(tree)
+    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, PropertyChangeListener {
+      if (isPreviewOpen()) {
+        FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
+      }
+    })
     installNextDiffActionOn(targetComponent)
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun updateAvailability(event: AnActionEvent) {
-    GitShowDiffFromStashAction.updateAvailability(event)
+    event.presentation.isVisible = event.isFromActionToolbar || event.presentation.isEnabled
   }
 
   override fun getCurrentName(): String {

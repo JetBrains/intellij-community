@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.isDisposed
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -38,7 +37,7 @@ import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val previewFile = EditorTabDiffPreviewVirtualFile(this)
+  protected val previewFile: PreviewDiffVirtualFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
