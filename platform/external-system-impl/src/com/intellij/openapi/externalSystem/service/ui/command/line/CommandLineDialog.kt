@@ -41,10 +41,10 @@ class CommandLineDialog(
     }
   }
 
-  fun JTable.clearSelectionWhenSelected(table: JTable) {
-    table.selectionModel.addListSelectionListener {
-      selectRecursionGuard.doPreventingRecursion(this@CommandLineDialog, false) {
-        clearSelection()
+  fun clearSelectionWhenSelected(tableToUpdate: JTable, tableToListen: JTable) {
+    tableToListen.selectionModel.addListSelectionListener {
+      selectRecursionGuard.doPreventingRecursion(this, false) {
+        tableToUpdate.clearSelection()
       }
     }
   }
@@ -54,10 +54,10 @@ class CommandLineDialog(
       .filter { it.tableCompletionInfo.isNotEmpty() }
       .map { Table(it) }
 
-    for ((i, parent) in tables.withIndex()) {
-      for ((j, child) in tables.withIndex()) {
+    for ((i, tableToUpdate) in tables.withIndex()) {
+      for ((j, tableToListen) in tables.withIndex()) {
         if (i != j) {
-          parent.clearSelectionWhenSelected(child)
+          clearSelectionWhenSelected(tableToUpdate, tableToListen)
         }
       }
     }
