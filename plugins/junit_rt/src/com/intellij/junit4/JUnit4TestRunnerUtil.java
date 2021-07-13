@@ -224,9 +224,17 @@ public final class JUnit4TestRunnerUtil {
 
   private static boolean isParameterized(final String methodName,
                                          final Class<?> clazz) {
-    final RunWith clazzAnnotation = clazz.getAnnotation(RunWith.class);
-    if (clazzAnnotation != null && Parameterized.class.isAssignableFrom(clazzAnnotation.value())) {
+    final RunWith runWithAnnotation = clazz.getAnnotation(RunWith.class);
+    if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
       return true;
+    }
+    if (runWithAnnotation != null) {
+      for (Annotation runnerAnnotation : runWithAnnotation.value().getDeclaredAnnotations()) {
+        if (runnerAnnotation.annotationType().getSimpleName()
+            .equals("ParameterizedRunnerIntroducingTestNamesWithSquareBrackets")) {
+          return true;
+        }
+      }
     }
     if (methodName != null) {
       try {
