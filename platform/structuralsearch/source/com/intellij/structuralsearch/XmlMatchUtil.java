@@ -42,6 +42,23 @@ public final class XmlMatchUtil {
     return list;
   }
 
+  public static PsiElement getElementToMatch(XmlAttributeValue attributeValue) {
+    final PsiElement child = attributeValue.getFirstChild();
+    if (!(child instanceof XmlToken)) {
+      return null;
+    }
+    final XmlToken token = (XmlToken)child;
+    if (token.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+      return null;
+    }
+    final PsiElement sibling = child.getNextSibling();
+    if (!(sibling instanceof XmlToken)) {
+      return sibling;
+    }
+    final XmlToken secondToken = (XmlToken)sibling;
+    return (secondToken.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) ? null : secondToken;
+  }
+
   private static boolean addSpecialXmlTags(@NotNull PsiElement element, List<XmlElement> list) {
     boolean result = false;
     for (SpecialElementExtractor extractor : SpecialElementExtractor.EP_NAME.getExtensionList()) {
