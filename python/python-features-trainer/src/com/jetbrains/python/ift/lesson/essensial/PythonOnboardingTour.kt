@@ -459,11 +459,9 @@ class PythonOnboardingTour :
   }
 
   private fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
-    var wasEmpty = false
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample) {
-        if (it.isEmpty()) wasEmpty = true
-        wasEmpty && needToType.contains(it.replace(" ", ""))
+        needToType.contains(it.replace(" ", ""))
       }
     }
   }
