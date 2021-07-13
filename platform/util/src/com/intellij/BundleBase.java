@@ -37,7 +37,7 @@ public abstract class BundleBase {
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains params.length+unassignedParams placeholders. Parameters
+   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
    * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.
@@ -54,18 +54,17 @@ public abstract class BundleBase {
                                            Object @NotNull ... params) {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
     Object[] newParams = Arrays.copyOf(params, params.length + unassignedParams);
-    @NonNls String prefix = "#$$$TemplateParameter$$$#";
-    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
+    String prefix = "#$$$TemplateParameter$$$#", suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
       newParams[i + params.length] = prefix + i + suffix;
     }
     String message = message(bundle, key, newParams);
-    return quotePattern(message).replace(prefix, "{").replace(suffix, "}"); //NON-NLS
+    return quotePattern(message).replace(prefix, "{").replace(suffix, "}");
   }
 
-  private static String quotePattern(String message) {
+  private static @NlsSafe String quotePattern(String message) {
     boolean inQuotes = false;
-    StringBuilder sb = new StringBuilder(message.length()+5);
+    StringBuilder sb = new StringBuilder(message.length() + 5);
     for (int i = 0; i < message.length(); i++) {
       char c = message.charAt(i);
       boolean needToQuote = c == '{' || c == '}';
@@ -75,7 +74,8 @@ public abstract class BundleBase {
       }
       if (c == '\'') {
         sb.append("''");
-      } else {
+      }
+      else {
         sb.append(c);
       }
     }
@@ -130,7 +130,6 @@ public abstract class BundleBase {
     return result;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static @NotNull String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
     try {
       Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
