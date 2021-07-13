@@ -171,6 +171,7 @@
     "DefaultTabs.background": "panel",
 
     "DragAndDrop": {
+      "borderColor": "#2675BF",
       "areaBackground": "#3d7dcc33",
       "areaBorderColor": "#8ab2de",
       "areaForeground": "#787878"

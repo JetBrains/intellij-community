@@ -111,6 +111,7 @@
     },
 
     "DragAndDrop": {
+      "borderColor": "#2F65CA",
       "areaForeground": "#FFFFFF",
       "areaBackground": "#00EAFF7F",
       "areaBorderColor": "#1AEBFF"

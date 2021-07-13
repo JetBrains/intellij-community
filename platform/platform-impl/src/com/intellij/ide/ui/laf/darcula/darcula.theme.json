@@ -132,6 +132,7 @@
     "DefaultTabs.background": "#3C3F41",
 
     "DragAndDrop": {
+      "borderColor": "#2F65CA",
       "areaBackground": "#FFFFFF33",
       "areaBorderColor": "#4F73A8",
       "areaForeground": "#BABABA"

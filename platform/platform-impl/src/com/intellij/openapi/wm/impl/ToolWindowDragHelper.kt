@@ -7,7 +7,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
@@ -68,7 +67,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
     fun createHighlighterComponent() = object: NonOpaquePanel() {
       override fun paint(g: Graphics) {
-        g.color = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57)
+        g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
         g.fillRect(0, 0, width, height)
       }
     }

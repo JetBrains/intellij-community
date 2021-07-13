@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -6,8 +6,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -186,14 +186,12 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static final JBColor HIGHLIGHTER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", JBColor.RED);
-
   private static class FilledRectangleHighlighter extends AbstractComponentHighlighter {
     FilledRectangleHighlighter() {
       super();
       setOpaque(true);
-      setBorder(BorderFactory.createLineBorder(HIGHLIGHTER_COLOR));
-      setBackground(HIGHLIGHTER_COLOR);
+      setBorder(BorderFactory.createLineBorder(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR));
+      setBackground(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
     }
 
     @Override
@@ -211,7 +209,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     RectangleHighlighter() {
       super();
       setOpaque(false);
-      setBorder(BorderFactory.createLineBorder(HIGHLIGHTER_COLOR));
+      setBorder(BorderFactory.createLineBorder(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR));
     }
 
     @Override
