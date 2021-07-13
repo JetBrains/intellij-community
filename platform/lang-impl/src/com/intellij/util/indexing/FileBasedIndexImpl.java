@@ -662,7 +662,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!states.isEmpty()) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, originalFile));
     }
-    if (file instanceof VirtualFileSystemEntry && file.isValid() ) {
+    if (file instanceof VirtualFileSystemEntry && file.isValid()) {
       cleanProcessingFlag(file);
     }
     boolean isValid =
