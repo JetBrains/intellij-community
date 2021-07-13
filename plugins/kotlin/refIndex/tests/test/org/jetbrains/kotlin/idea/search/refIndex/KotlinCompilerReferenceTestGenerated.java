@@ -134,6 +134,59 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             public void testFunctionWithJvmOverloads() throws Exception {
                 runTest("testData/compilerIndex/functions/topLevel/functionWithJvmOverloads/");
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/functions/topLevel/operators")
+            public static class Operators extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("component")
+                public void testComponent() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/component/");
+                }
+
+                @TestMetadata("get")
+                public void testGet() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/get/");
+                }
+
+                @TestMetadata("hasNext")
+                public void testHasNext() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/hasNext/");
+                }
+
+                @TestMetadata("invoke")
+                public void testInvoke() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/invoke/");
+                }
+
+                @TestMetadata("iterator")
+                public void testIterator() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/iterator/");
+                }
+
+                @TestMetadata("minus")
+                public void testMinus() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/minus/");
+                }
+
+                @TestMetadata("next")
+                public void testNext() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/next/");
+                }
+
+                @TestMetadata("plus")
+                public void testPlus() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/plus/");
+                }
+
+                @TestMetadata("set")
+                public void testSet() throws Exception {
+                    runTest("testData/compilerIndex/functions/topLevel/operators/set/");
+                }
+            }
         }
     }
 
