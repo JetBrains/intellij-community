@@ -4,9 +4,8 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,21 +15,8 @@ import java.util.*;
 public final class MethodSignatureUtil {
   private MethodSignatureUtil() { }
 
-  public static final Hash.Strategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
-    new Hash.Strategy<MethodSignatureBackedByPsiMethod>() {
-      @Override
-      public int hashCode(@Nullable MethodSignatureBackedByPsiMethod signature) {
-        return signature == null ? 0 : signature.getMethod().hashCode();
-      }
-
-      @Override
-      public boolean equals(@Nullable MethodSignatureBackedByPsiMethod s1, @Nullable MethodSignatureBackedByPsiMethod s2) {
-        return s1 == s2 || (s1 != null && s2 != null && s1.getMethod().equals(s2.getMethod()));
-      }
-    };
-
-  public static final Hash.Strategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
-    new Hash.Strategy<MethodSignature>() {
+  private static final HashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_STRATEGY =
+    new HashingStrategy<MethodSignature>() {
       @Override
       public int hashCode(final MethodSignature signature) {
         return signature == null ? 0 : signature.hashCode();
@@ -43,11 +29,11 @@ public final class MethodSignatureUtil {
     };
 
   public static @NotNull <V> Map<MethodSignature, V> createErasedMethodSignatureMap() {
-    return new Object2ObjectOpenCustomHashMap<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
+    return CollectionFactory.createCustomHashingStrategyMap(METHOD_PARAMETERS_ERASURE_STRATEGY);
   }
 
   public static @NotNull Set<MethodSignature> createErasedMethodSignatureSet() {
-    return new ObjectOpenCustomHashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
+    return CollectionFactory.createCustomHashingStrategySet(METHOD_PARAMETERS_ERASURE_STRATEGY);
   }
 
   /**
@@ -57,7 +43,7 @@ public final class MethodSignatureUtil {
    *      if signature(m1)=signature(m2), then m1.typeParams=m2.typeParams
    *      if (erasure(signature(m1))=signature(m2), then m2.typeParams.length=0 and vise versa
    */
-  public static boolean areOverrideEquivalent(PsiMethod method1, PsiMethod method2) {
+  public static boolean areOverrideEquivalent(@NotNull PsiMethod method1, @NotNull PsiMethod method2) {
     final int typeParamsLength1 = method1.getTypeParameters().length;
     final int typeParamsLength2 = method2.getTypeParameters().length;
     return (typeParamsLength1 == typeParamsLength2 || typeParamsLength1 == 0 || typeParamsLength2 == 0) &&
@@ -285,7 +271,7 @@ public final class MethodSignatureUtil {
   }
 
   public static boolean areSignaturesErasureEqual(@NotNull MethodSignature signature1, @NotNull MethodSignature signature2) {
-    return METHOD_PARAMETERS_ERASURE_EQUALITY.equals(signature1, signature2);
+    return METHOD_PARAMETERS_ERASURE_STRATEGY.equals(signature1, signature2);
   }
 
   /**

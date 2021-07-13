@@ -136,12 +136,12 @@ public final class PsiSuperMethodImplUtil {
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new LinkedHashMap<>(new EqualityPolicy<MethodSignature>() {
       @Override
       public int getHashCode(MethodSignature signature) {
-        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.hashCode(signature);
+        return signature.hashCode();
       }
 
       @Override
       public boolean isEqual(MethodSignature o1, MethodSignature o2) {
-        if (!MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals(o1, o2)) return false;
+        if (!MethodSignatureUtil.areSignaturesErasureEqual(o1, o2)) return false;
         List<PsiMethod> list = sameParameterErasureMethods.get(o1);
         boolean toCheckReturnType = list != null && list.size() > 1;
         if (!toCheckReturnType) return true;
