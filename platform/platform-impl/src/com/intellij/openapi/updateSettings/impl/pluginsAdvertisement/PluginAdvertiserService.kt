@@ -126,7 +126,10 @@ open class PluginAdvertiserService {
               project,
             )
 
-            PluginBooleanOptionDescriptor.togglePluginState(true, disabledDescriptors.toSet())
+            PluginBooleanOptionDescriptor.togglePluginState(
+              disabledDescriptors,
+              PluginEnableDisableAction.ENABLE_GLOBALLY,
+            )
           }
         }
         else
