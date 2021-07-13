@@ -772,14 +772,15 @@ public class SwitchBlockHighlightingModel {
       }
       if (labelElements.isEmpty()) return UNEVALUATED;
       List<HighlightInfo> results = new SmartList<>();
-      SelectorKind selectorKind = switchModel.getSwitchSelectorKind();
+      boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
+      boolean isEnumSelector = switchModel.getSwitchSelectorKind() == SelectorKind.ENUM;
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
         if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return UNEVALUATED;
-        if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return INCOMPLETE;
+        if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
         ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
       }
       else {
-        if (selectorKind != SelectorKind.ENUM && selectorKind != SelectorKind.CLASS_OR_ARRAY) return INCOMPLETE;
+        if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
         PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchModel.mySelector.getType());
         if (selectorClass == null || !selectorClass.isEnum()) return UNEVALUATED;
         List<PsiSwitchLabelStatementBase> labels =
@@ -788,7 +789,7 @@ public class SwitchBlockHighlightingModel {
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (switchModel.needToCheckCompleteness(labelElements)) return results.isEmpty() ? COMPLETE : UNEVALUATED;
+      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE : UNEVALUATED;
       return results.isEmpty() ? COMPLETE : INCOMPLETE;
     }
 
