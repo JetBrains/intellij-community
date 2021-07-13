@@ -29,7 +29,6 @@ import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1094,8 +1093,8 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-      FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
-      DiffContent shelfContent = factory.createBinary(myProject, binaryContent, fileType, title);
+      FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH);
+      DiffContent shelfContent = factory.createFromBytes(myProject, binaryContent, filePath);
       return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
     }
   }
