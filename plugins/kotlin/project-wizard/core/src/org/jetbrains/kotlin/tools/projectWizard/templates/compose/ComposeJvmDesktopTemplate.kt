@@ -47,6 +47,7 @@ class ComposeJvmDesktopTemplate : Template() {
                 "nativeDistributions" {
                     "targetFormats"(raw("TargetFormat.Dmg"), raw("TargetFormat.Msi"), raw("TargetFormat.Deb"))
                     "packageName" assign const(module.name)
+                    "packageVersion" assign const("1.0.0")
                 }
             }
         }

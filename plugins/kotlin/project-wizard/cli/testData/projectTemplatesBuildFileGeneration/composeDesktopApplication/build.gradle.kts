@@ -30,6 +30,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "composeDesktopApplication"
+            packageVersion = "1.0.0"
         }
     }
 }
