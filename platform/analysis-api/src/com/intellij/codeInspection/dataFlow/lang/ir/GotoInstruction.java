@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class GotoInstruction extends Instruction {
-  private ControlFlow.ControlFlowOffset myOffset;
+  private ControlFlowOffset myOffset;
   private final boolean myShouldWiden;
 
-  public GotoInstruction(ControlFlow.ControlFlowOffset offset) {
+  public GotoInstruction(ControlFlowOffset offset) {
     this(offset, true);
   }
 
@@ -20,7 +20,7 @@ public class GotoInstruction extends Instruction {
    * @param shouldWiden if false, widening is not performed at this instruction, even if it's a back-branch.
    *                    Used to mark 'unrolled' loops, which are known to have very few iterations.
    */
-  public GotoInstruction(ControlFlow.ControlFlowOffset offset, boolean shouldWiden) {
+  public GotoInstruction(ControlFlowOffset offset, boolean shouldWiden) {
     myOffset = offset;
     myShouldWiden = shouldWiden;
   }
@@ -49,7 +49,7 @@ public class GotoInstruction extends Instruction {
   }
 
   public void setOffset(final int offset) {
-    myOffset = new ControlFlow.FixedOffset(offset);
+    myOffset = new FixedOffset(offset);
   }
 
 }

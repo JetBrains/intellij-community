@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class InstructionTransfer implements DfaControlTransferValue.TransferTarget {
-  private final ControlFlow.@NotNull ControlFlowOffset myOffset;
+  private final @NotNull ControlFlowOffset myOffset;
   private final @NotNull List<VariableDescriptor> myVarsToFlush;
 
-  public InstructionTransfer(@NotNull ControlFlow.ControlFlowOffset offset, @NotNull List<VariableDescriptor> flush) {
+  public InstructionTransfer(@NotNull ControlFlowOffset offset, @NotNull List<VariableDescriptor> flush) {
     myOffset = offset;
     myVarsToFlush = flush;
   }

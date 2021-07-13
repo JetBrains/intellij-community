@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Conditionally jump if the value on stack top is equal to the specified value (top-of-stack value is being popped)
  */
 public class ConditionalGotoInstruction extends Instruction {
-  private ControlFlow.ControlFlowOffset myOffset;
+  private ControlFlowOffset myOffset;
   private final @NotNull DfType myCompareTo;
   private final PsiElement myAnchor;
 
@@ -25,11 +25,11 @@ public class ConditionalGotoInstruction extends Instruction {
    * @param offset target offset to jump to
    * @param compareTo value to compare to
    */
-  public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset offset, @NotNull DfType compareTo) {
+  public ConditionalGotoInstruction(ControlFlowOffset offset, @NotNull DfType compareTo) {
     this(offset, compareTo, null);
   }
   
-  public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset offset, @NotNull DfType compareTo, @Nullable PsiElement psiAnchor) {
+  public ConditionalGotoInstruction(ControlFlowOffset offset, @NotNull DfType compareTo, @Nullable PsiElement psiAnchor) {
     myAnchor = psiAnchor;
     myOffset = offset;
     myCompareTo = compareTo;
@@ -92,6 +92,6 @@ public class ConditionalGotoInstruction extends Instruction {
   }
 
   public void setOffset(final int offset) {
-    myOffset = new ControlFlow.FixedOffset(offset);
+    myOffset = new FixedOffset(offset);
   }
 }

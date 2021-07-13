@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.memory;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DataflowUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
@@ -206,9 +206,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfType.BOTTOM) return; // likely uncompilable code or bad CFG
-    if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
-        !ControlFlow.isTempVariable((DfaVariableValue)value) &&
-        (var.getQualifier() == null || !ControlFlow.isTempVariable(var.getQualifier()))) {
+    if (value instanceof DfaVariableValue && !DataflowUtil.isTempVariable(var) &&
+        !DataflowUtil.isTempVariable((DfaVariableValue)value) &&
+        (var.getQualifier() == null || !DataflowUtil.isTempVariable(var.getQualifier()))) {
       // assigning a = b when b is known to be null: could be ephemeral
       checkEphemeral(var, value);
     }
@@ -1408,7 +1408,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
       if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical &&
-          (ControlFlow.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
+          (DataflowUtil.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
            newCanonical.getDepth() <= previousCanonical.getDepth())) {
         // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
         // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.

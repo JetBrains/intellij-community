@@ -27,7 +27,6 @@ import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.CatchClaus
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.JavaCatchClauseDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -52,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -66,7 +66,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final boolean myInlining;
   private final DfaValueFactory myFactory;
   private final TrapTracker myTrapTracker;
-  private ControlFlow myCurrentFlow;
+  private ControlFlowImpl myCurrentFlow;
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private ExpressionBlockContext myExpressionBlockContext;
 
@@ -112,8 +112,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  private @Nullable ControlFlow buildControlFlow() {
-    myCurrentFlow = new ControlFlow(myFactory, myCodeFragment);
+  private @Nullable ControlFlowImpl buildControlFlow() {
+    myCurrentFlow = new ControlFlowImpl(myFactory, myCodeFragment);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
       if(myCodeFragment instanceof PsiClass) {
@@ -716,7 +716,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement thenStatement = statement.getThenBranch();
     PsiStatement elseStatement = statement.getElseBranch();
 
-    ControlFlow.DeferredOffset skipThenOffset = new ControlFlow.DeferredOffset();
+    DeferredOffset skipThenOffset = new DeferredOffset();
 
     if (condition != null) {
       condition.accept(this);
@@ -730,7 +730,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (elseStatement != null) {
-      ControlFlow.DeferredOffset skipElseOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset skipElseOffset = new DeferredOffset();
       Instruction instruction = new GotoInstruction(skipElseOffset);
       addInstruction(instruction);
       skipThenOffset.setOffset(getInstructionCount());
@@ -1519,7 +1519,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
-    ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+    DeferredOffset endOffset = new DeferredOffset();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
@@ -1527,7 +1527,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
-        ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
+        DeferredOffset nextOffset = new DeferredOffset();
         addInstruction(new ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), operand));
         push(DfTypes.booleanValue(!and), expression);
         addInstruction(new GotoInstruction(endOffset));
@@ -1554,7 +1554,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (thenExpression != null) {
       PsiExpression condition = expression.getCondition();
       PsiExpression elseExpression = expression.getElseExpression();
-      ControlFlow.DeferredOffset elseOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset elseOffset = new DeferredOffset();
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
@@ -1562,7 +1562,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-      ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
+      DeferredOffset endOffset = new DeferredOffset();
       addInstruction(new GotoInstruction(endOffset));
 
       elseOffset.setOffset(getInstructionCount());
@@ -2211,14 +2211,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
     PsiFile file = psiBlock.getContainingFile();
-    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
+    ConcurrentMap<PsiElement, Optional<ControlFlowImpl>> fileMap =
       CachedValuesManager.getCachedValue(file, () ->
         CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    return fileMap.computeIfAbsent(psiBlock, psi -> {
+    Optional<ControlFlowImpl> cf = fileMap.computeIfAbsent(psiBlock, psi -> {
       DfaValueFactory factory = new DfaValueFactory(file.getProject());
-      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
+      ControlFlowImpl flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
       return Optional.ofNullable(flow);
-    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
+    });
+    return cf.map(flow -> new ControlFlowImpl(flow, targetFactory)).orElse(null);
   }
 
   private static class CannotAnalyzeException extends RuntimeException {
