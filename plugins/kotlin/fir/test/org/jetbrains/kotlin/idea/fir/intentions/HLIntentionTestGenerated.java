@@ -35,6 +35,11 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
             runTest("../idea/tests/testData/intentions/addNameToArgument/ambiguousCall.kt");
         }
 
+        @TestMetadata("annotationCall.kt")
+        public void testAnnotationCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/annotationCall.kt");
+        }
+
         @TestMetadata("backtickedArgument.kt")
         public void testBacktickedArgument() throws Exception {
             runTest("../idea/tests/testData/intentions/addNameToArgument/backtickedArgument.kt");
@@ -58,6 +63,11 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
         @TestMetadata("beforeOtherNamed.kt")
         public void testBeforeOtherNamed() throws Exception {
             runTest("../idea/tests/testData/intentions/addNameToArgument/beforeOtherNamed.kt");
+        }
+
+        @TestMetadata("delegatedConstructor.kt")
+        public void testDelegatedConstructor() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNameToArgument/delegatedConstructor.kt");
         }
 
         @TestMetadata("functionLiteralArgument.kt")
