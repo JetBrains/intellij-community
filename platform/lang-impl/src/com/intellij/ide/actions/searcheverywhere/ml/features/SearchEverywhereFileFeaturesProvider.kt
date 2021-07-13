@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
@@ -43,7 +44,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   private fun isFavorite(virtualFile: VirtualFile, project: Project): Boolean {
     val favoritesManager = FavoritesManager.getInstance(project)
-    return favoritesManager.getFavoriteListName(null, virtualFile) != null
+    return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, virtualFile) != null }
   }
 
   private fun isOpened(virtualFile: VirtualFile, project: Project): Boolean {
