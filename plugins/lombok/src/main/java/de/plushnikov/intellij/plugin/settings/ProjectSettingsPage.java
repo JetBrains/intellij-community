@@ -9,11 +9,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static de.plushnikov.intellij.plugin.settings.ProjectSettings.isEnabled;
+import static de.plushnikov.intellij.plugin.settings.ProjectSettings.setEnabled;
+
 public class ProjectSettingsPage implements SearchableConfigurable, Configurable.NoScroll {
 
   private JPanel myGeneralPanel;
 
   private JCheckBox myEnableLombokVersionWarning;
+  private JCheckBox myEnableJSPFix;
+  private JCheckBox myEnableAddOpensFix;
 
   private final Project myProject;
 
@@ -34,19 +39,24 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   }
 
   private void initFromSettings() {
-    myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
+    myEnableLombokVersionWarning.setSelected(isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
+    myEnableJSPFix.setSelected(isEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED));
+    myEnableAddOpensFix.setSelected(isEnabled(myProject, ProjectSettings.IS_LOMBOK_ADD_OPENS_FIX_ENABLED));
   }
 
   @Override
   public boolean isModified() {
     return
-      myEnableLombokVersionWarning.isSelected() !=
-      ProjectSettings.isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false);
+      myEnableLombokVersionWarning.isSelected() != isEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
+      myEnableJSPFix.isSelected() != isEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED) ||
+      myEnableAddOpensFix.isSelected() != isEnabled(myProject, ProjectSettings.IS_LOMBOK_ADD_OPENS_FIX_ENABLED);
   }
 
   @Override
   public void apply() {
-    ProjectSettings.setEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
+    setEnabled(myProject, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
+    setEnabled(myProject, ProjectSettings.IS_LOMBOK_JPS_FIX_ENABLED, myEnableJSPFix.isSelected());
+    setEnabled(myProject, ProjectSettings.IS_LOMBOK_ADD_OPENS_FIX_ENABLED, myEnableAddOpensFix.isSelected());
   }
 
   @Override

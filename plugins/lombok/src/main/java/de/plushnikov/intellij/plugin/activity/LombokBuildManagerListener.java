@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
@@ -29,7 +30,7 @@ public class LombokBuildManagerListener implements BuildManagerListener {
   private static boolean hasAnnotationProcessorsEnabled(@NotNull Project project) {
     final CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     return compilerConfiguration.getDefaultProcessorProfile().isEnabled() &&
-           compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
+           ContainerUtil.and(compilerConfiguration.getModuleProcessorProfiles(), AnnotationProcessingConfiguration::isEnabled);
   }
 
   private static void enableAnnotationProcessors(@NotNull Project project) {
