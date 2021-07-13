@@ -8,15 +8,25 @@ import com.intellij.util.DefaultBundleService
 import java.util.*
 
 internal class LocalizedActionAliasMatcher : GotoActionAliasMatcher {
-  override fun match(action: AnAction, name: String): Boolean {
-    return DefaultBundleService.getInstance().compute { action.templatePresentation.textWithPossibleMnemonic.get().text }
-             ?.let { GotoActionItemProvider.buildMatcher(name).matches(it) } ?: return false
+  override fun matchAction(action: AnAction, name: String): MatchMode {
+    val service = DefaultBundleService.getInstance()
+    val matcher = GotoActionItemProvider.buildMatcher(name)
+
+    val defaultText = service.compute { action.templatePresentation.textWithPossibleMnemonic.get().text }
+    if (defaultText != null && matcher.matches(defaultText)) return MatchMode.NAME
+
+    val defaultDescription = service.compute { action.templatePresentation.description }
+    if (defaultDescription != null && matcher.matches(defaultDescription)) return MatchMode.DESCRIPTION
+
+    if (action.synonyms.map { service.compute { it.get() } }.any { it != null && matcher.matches(it) }) return MatchMode.SYNONYM
+
+    return MatchMode.NONE
   }
 }
 
 internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
-  override fun match(action: AnAction, name: String): Boolean {
-    if (DynamicBundle.findLanguageBundle() == null) return false
+  override fun matchAction(action: AnAction, name: String): MatchMode {
+    if (DynamicBundle.findLanguageBundle() == null) return MatchMode.NONE
 
     val id = ActionManager.getInstance().getId(action)
     val bundle = actions.value
@@ -33,11 +43,11 @@ internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
 
     val buildMatcher = GotoActionItemProvider.buildMatcher(name)
 
-    if (text.isNullOrBlank() && description.isNullOrBlank()) return false
-    if (!text.isNullOrBlank() && buildMatcher.matches(text)) return true
-    if (!description.isNullOrBlank() && buildMatcher.matches(description)) return true
+    if (text.isNullOrBlank() && description.isNullOrBlank()) return MatchMode.NONE
+    if (!text.isNullOrBlank() && buildMatcher.matches(text)) return MatchMode.NAME
+    if (!description.isNullOrBlank() && buildMatcher.matches(description)) return MatchMode.DESCRIPTION
 
-    return false
+    return MatchMode.NONE
   }
 
   companion object {
