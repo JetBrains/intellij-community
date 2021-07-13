@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.CompressionUtil
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -19,6 +20,7 @@ internal enum class WalOpCode(internal val code: Int) {
 
 internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
                                                                               private val valueExternalizer: DataExternalizer<V>,
+                                                                              private val useCompression: Boolean,
                                                                               private val file: Path,
                                                                               private val walIoExecutor: ExecutorService /*todo ensure sequential*/) {
   private val out: DataOutputStream
@@ -26,32 +28,41 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
   val version: Int = VERSION
 
   init {
-    ensureVersionCompatible(version, file)
+    ensureCompatible(version, useCompression, file)
     out = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.APPEND).buffered())
   }
 
   @Throws(IOException::class)
-  private fun ensureVersionCompatible(expectedVersion: Int, file: Path) {
+  private fun ensureCompatible(expectedVersion: Int, useCompression: Boolean, file: Path) {
     if (!Files.exists(file)) {
       Files.createDirectories(file.parent)
       DataOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)).use {
         DataInputOutputUtil.writeINT(it, expectedVersion)
+        it.writeBoolean(useCompression)
       }
       return
     }
-    val actualVersion = DataInputStream(Files.newInputStream(file, StandardOpenOption.READ)).use {
-      DataInputOutputUtil.readINT(it)
+    val (actualVersion, actualUsesCompression) = DataInputStream(Files.newInputStream(file, StandardOpenOption.READ)).use {
+      DataInputOutputUtil.readINT(it) to it.readBoolean()
     }
     if (actualVersion != expectedVersion) {
       throw VersionUpdatedException(file, expectedVersion, actualVersion)
+    }
+    if (actualUsesCompression != useCompression) {
+      throw VersionUpdatedException(file, useCompression, actualUsesCompression)
     }
   }
 
   private fun WalOpCode.write(outputStream: DataOutputStream): Unit = outputStream.writeByte(code)
 
   private fun ByteArray.write(outputStream: DataOutputStream) {
-    outputStream.writeInt(size)
-    outputStream.write(this)
+    if (useCompression) {
+      CompressionUtil.writeCompressed(outputStream, this, 0, size)
+    }
+    else {
+      outputStream.writeInt(size)
+      outputStream.write(this)
+    }
   }
 
   private fun AppendablePersistentMap.ValueDataAppender.writeToByteArray(): ByteArray {
@@ -217,6 +228,7 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
                                                                            private val valueExternalizer: DataExternalizer<V>,
                                                                            file: Path) : Closeable {
   private val input: DataInputStream
+  private val useCompression: Boolean
 
   val version: Int = VERSION
 
@@ -225,11 +237,12 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
       throw FileNotFoundException(file.toString())
     }
     input = DataInputStream(Files.newInputStream(file).buffered())
-    ensureVersionCompatible(version, input, file)
+    ensureCompatible(version, input, file)
+    useCompression = input.readBoolean()
   }
 
   @Throws(IOException::class)
-  private fun ensureVersionCompatible(expectedVersion: Int, input: DataInputStream, file: Path) {
+  private fun ensureCompatible(expectedVersion: Int, input: DataInputStream, file: Path) {
     val actualVersion = DataInputOutputUtil.readINT(input)
     if (actualVersion != expectedVersion) {
       throw VersionUpdatedException(file, expectedVersion, actualVersion)
@@ -260,8 +273,14 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
     }
   }
 
-  private fun readByteArray(inputStream: DataInputStream): ByteArray =
-    ByteArray(inputStream.readInt()).also { inputStream.readFully(it) }
+  private fun readByteArray(inputStream: DataInputStream): ByteArray {
+    if (useCompression) {
+      return CompressionUtil.readCompressed(inputStream)
+    }
+    else {
+      return ByteArray(inputStream.readInt()).also { inputStream.readFully(it) }
+    }
+  }
 
   private fun readNextOpCode(inputStream: DataInputStream): WalOpCode =
     WalOpCode.values()[inputStream.readByte().toInt()]
