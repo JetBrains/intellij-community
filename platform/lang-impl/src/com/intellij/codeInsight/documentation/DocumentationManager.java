@@ -1094,7 +1094,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
       component.startWait();
 
-      String text = null;
+      final String text;
       try {
         text = collector.getDocumentation();
       }
@@ -1114,7 +1114,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      String finalText = text;
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(modality, () -> {
         if (!element.isValid()) {
           LOG.debug("Element for which documentation was requested is not valid");
@@ -1122,14 +1121,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         String currentText = component.getText();
-        if (finalText == null) {
+        if (text == null) {
           component.setText(CodeInsightBundle.message("no.documentation.found"), element, collector.provider);
         }
-        else if (finalText.isEmpty()) {
+        else if (text.isEmpty()) {
           component.setText(currentText, element, collector.provider);
         }
         else {
-          component.setData(element, finalText, collector.effectiveUrl, collector.ref, collector.provider);
+          component.setData(element, text, collector.effectiveUrl, collector.ref, collector.provider);
         }
         if (wasEmpty) {
           component.clearHistory();
