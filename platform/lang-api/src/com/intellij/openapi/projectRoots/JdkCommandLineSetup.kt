@@ -37,7 +37,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
-import gnu.trove.THashMap
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -488,7 +487,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         // since request is known to be local we will simplify to TargetValue.fixed below
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader::class.java)))
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt::class.java)))
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap::class.java)))
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(Class.forName("gnu.trove.THashMap"))))
 
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
         //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
