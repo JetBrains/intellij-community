@@ -252,7 +252,7 @@ public final class SearchUtil {
 
   @NotNull
   private static Pattern getNonWordPattern(boolean i18n) {
-    return Pattern.compile("[" + (i18n ? "\\pL" : "\\w") + "&&[^\\p{Punct}\\p{Blank}]]");
+    return Pattern.compile("[" + (i18n ? "\\pL" : "\\W") + "&&[^\\p{Punct}\\p{Blank}]]");
   }
 
 
