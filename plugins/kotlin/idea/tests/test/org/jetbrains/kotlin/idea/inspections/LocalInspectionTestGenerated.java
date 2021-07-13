@@ -4916,6 +4916,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/safeAsAndNullCheck.kt");
         }
 
+        @TestMetadata("safeNullCheck.kt")
+        public void testSafeNullCheck() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/safeNullCheck.kt");
+        }
+
         @TestMetadata("senselessDiagnosticDuplicate.kt")
         public void testSenselessDiagnosticDuplicate() throws Exception {
             runTest("testData/inspectionsLocal/dfa/senselessDiagnosticDuplicate.kt");

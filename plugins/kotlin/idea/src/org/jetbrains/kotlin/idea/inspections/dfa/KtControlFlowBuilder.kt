@@ -432,6 +432,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val endOffset = DeferredOffset()
             addInstruction(GotoInstruction(endOffset))
             setOffset(offset)
+            addInstruction(PopInstruction())
             addInstruction(PushValueInstruction(DfTypes.NULL, KotlinExpressionAnchor(expr)))
             setOffset(endOffset)
         }
