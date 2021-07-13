@@ -47,10 +47,10 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
 
 inline fun <reified T : Any> UElement.findElementByText(refText: String): T = findElementByText(refText, T::class.java)
 
-inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: String, strict: Boolean = true): T =
+inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: String, strict: Boolean = false): T =
     (this.psi ?: fail("no psi for $this")).findUElementByTextFromPsi(refText, strict)
 
-inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = true): T {
+inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = false): T {
     val elementAtStart = this.findElementAt(this.text.indexOf(refText))
             ?: throw AssertionError("requested text '$refText' was not found in $this")
 
