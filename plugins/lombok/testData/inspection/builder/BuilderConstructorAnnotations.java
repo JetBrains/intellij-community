@@ -47,14 +47,14 @@ class BuilderValidConstructor5 {
   }
 }
 
-<error descr="Lombok @Builder needs proper constructor for this class">@lombok.Builder</error>
+<error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor {
   private int id;
   private String name;
 }
 
-<error descr="Lombok @Builder needs proper constructor for this class">@lombok.Builder</error>
+<error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.RequiredArgsConstructor
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor2 {
@@ -62,7 +62,7 @@ class BuilderInvalidConstructor2 {
   private String name;
 }
 
-<error descr="Lombok @Builder needs proper constructor for this class">@lombok.Builder</error>
+<error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.RequiredArgsConstructor
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor3 {
@@ -74,7 +74,7 @@ class BuilderInvalidConstructor3 {
   }
 }
 
-<error descr="Lombok @Builder needs proper constructor for this class">@lombok.Builder</error>
+<error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor4 {
   private int id;
