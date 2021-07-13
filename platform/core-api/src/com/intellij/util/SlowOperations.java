@@ -9,14 +9,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
@@ -27,7 +27,7 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
 
-  private static final Set<String> ourReportedTraces = new HashSet<>();
+  private static final IntSet ourReportedTraceHashCodes = new IntOpenHashSet();
   private static final String[] misbehavingFrames = {
     "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
     "org.jetbrains.kotlin.idea.actions.KotlinAddImportAction",
@@ -102,7 +102,7 @@ public final class SlowOperations {
         return;
       }
     }
-    if (!ourReportedTraces.add(stackTrace)) {
+    if (!ourReportedTraceHashCodes.add(StringHash.murmur(stackTrace))) {
       return;
     }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
