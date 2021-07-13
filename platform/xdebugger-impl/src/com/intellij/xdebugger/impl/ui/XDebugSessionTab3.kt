@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.content.tabs.PinToolwindowTabAction
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -133,12 +134,14 @@ class XDebugSessionTab3(
 
     mySingleContentSupplier = object : RunTabSupplier(toolbar) {
       override fun getContentActions(): List<AnAction> {
-        if (mySession == null) return super.getContentActions()
-        val settings = DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), myUi.options.settingsActionsList.toList())
-        registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
-        settings.isPopup = true
-        settings.templatePresentation.icon = AllIcons.General.Settings
-        return super.getContentActions() + settings
+        if (mySession == null) return super.getContentActions() + PinToolwindowTabAction.getPinAction()
+        val settings = mutableListOf(PinToolwindowTabAction.getPinAction(), Separator.create())
+        settings.addAll(myUi.options.settingsActionsList)
+        return super.getContentActions() + DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), settings).apply {
+          registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
+          isPopup = true
+          templatePresentation.icon = AllIcons.General.Settings
+        }
       }
     }
   }

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -101,7 +100,7 @@ public final class RunContentBuilder extends RunTab {
 
         @Override
         public @NotNull List<AnAction> getContentActions() {
-          return Collections.singletonList(myUi.getOptions().getLayoutActions());
+          return List.of(myUi.getOptions().getLayoutActions(), PinToolwindowTabAction.getPinAction());
         }
       };
       if (myUi instanceof RunnerLayoutUiImpl) {
