@@ -167,15 +167,15 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
   public static class UpdateCopyrightTask extends Task.ConditionalModal {
     private final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
     private @NotNull final AnalysisScope myScope;
-    private boolean mySelected;
+    private final boolean myAllowReplacement;
 
     public UpdateCopyrightTask(@NotNull Project project,
                                @NotNull AnalysisScope scope,
-                               boolean cbSelected,
+                               boolean allowReplacement,
                                @NotNull PerformInBackgroundOption options) {
       super(project, CopyrightBundle.message("task.title.prepare.copyright"), true, options);
       myScope = scope;
-      mySelected = cbSelected;
+      myAllowReplacement = allowReplacement;
     }
 
     @Override
@@ -189,7 +189,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
           final Module module = ModuleUtilCore.findModuleForPsiElement(file);
           final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(file.getProject(), module, file);
           
-          final Runnable runnable = processor.preprocessFile(file, mySelected);
+          final Runnable runnable = processor.preprocessFile(file, myAllowReplacement);
           if (runnable != EmptyRunnable.getInstance()) {
             preparations.put(file, runnable);
           }
