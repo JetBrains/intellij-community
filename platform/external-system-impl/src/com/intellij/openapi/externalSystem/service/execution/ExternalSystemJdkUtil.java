@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,12 +157,10 @@ public final class ExternalSystemJdkUtil {
         && projectSdk.getSdkType() instanceof JavaSdkType) {
       final JavaSdkType sdkType = (JavaSdkType)projectSdk.getSdkType();
       final String jdkPath = FileUtil.toSystemIndependentName(new File(sdkType.getBinPath(projectSdk)).getParent());
-      return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-        .filter(sdk -> {
-          final String homePath = sdk.getHomePath();
-          return homePath != null && FileUtil.toSystemIndependentName(homePath).equals(jdkPath);
-        })
-        .findFirst().orElse(null);
+      return ContainerUtil.find(ProjectJdkTable.getInstance().getAllJdks(), sdk -> {
+        final String homePath = sdk.getHomePath();
+        return homePath != null && FileUtil.toSystemIndependentName(homePath).equals(jdkPath);
+      });
     } else {
       return null;
     }
