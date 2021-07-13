@@ -76,12 +76,6 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         TestCase.assertEquals(setOf("Main.kt", "Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList")))
     }
 
-    fun testMemberFunction() {
-        myFixture.configureByFile("Main.kt")
-        rebuildProject()
-        assertIndexUnavailable()
-    }
-
     fun testTopLevelConstantWithJvmName() {
         myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
         // JvmName for constants isn't supported
