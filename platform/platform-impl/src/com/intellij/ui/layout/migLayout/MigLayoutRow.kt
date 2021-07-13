@@ -287,7 +287,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
     builder.hideableRowNestingLevel++
     try {
-      val panelRow = createChildRow(indent + spacing.indentLevel)
+      val panelRow = createChildRow(indent)
       panelRow.init()
       titledSeparator.row = panelRow
       titledSeparator.collapse()
