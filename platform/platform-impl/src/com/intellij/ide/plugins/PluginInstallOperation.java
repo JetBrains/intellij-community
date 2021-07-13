@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -328,7 +328,7 @@ public final class PluginInstallOperation {
         PluginId depPluginId = dependency.getPluginId();
 
         if (PluginManagerCore.isModuleDependency(depPluginId)) {
-          IdeaPluginDescriptor descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
+          IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
           PluginId pluginIdByModule = descriptorByModule != null ?
                                       descriptorByModule.getPluginId() :
                                       getCachedPluginId(depPluginId.getIdString());

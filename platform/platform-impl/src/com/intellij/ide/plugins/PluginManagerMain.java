@@ -173,10 +173,12 @@ public final class PluginManagerMain {
         }
 
         PluginId dependantId = dependency.getPluginId();
-        if (PluginManagerCore.isModuleDependency(dependantId)) {
-          // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
-          if (PluginManagerCore.findPluginByModuleDependency(dependantId) == null) continue;
+        // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
+        if (PluginManagerCore.isModuleDependency(dependantId) &&
+            PluginManagerCore.findPluginByModuleDependency(dependantId) == null) {
+          continue;
         }
+
         IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
         if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
           disabledDependants.add(pluginDescriptor);

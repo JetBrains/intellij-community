@@ -1108,9 +1108,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (ContainerUtil.isEmpty(requiredPlugins)) {
       return requiredPlugins;
     }
+
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     return requiredPlugins.stream().filter(id -> {
-      IdeaPluginDescriptor plugin = findPlugin(id);
-      return plugin == null || !plugin.isEnabled() ;
+      IdeaPluginDescriptorImpl plugin = pluginIdMap.get(id);
+      return plugin == null || !plugin.isEnabled();
     }).collect(Collectors.toSet());
   }
 

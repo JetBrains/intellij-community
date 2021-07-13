@@ -46,7 +46,7 @@ class PluginSet(
       if (descriptor.packagePrefix != null) {
         val pluginAsModuleItem = PluginContentDescriptor.ModuleItem(name = descriptor.id.idString, configFile = null)
         pluginAsModuleItem.descriptor = descriptor
-        moduleMap.put(pluginAsModuleItem.name, pluginAsModuleItem)
+        moduleMap[pluginAsModuleItem.name] = pluginAsModuleItem
       }
     }
 
@@ -60,9 +60,9 @@ class PluginSet(
 
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 
-  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)
+  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap[id]
 
-  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = moduleMap.get(id)?.requireDescriptor()
+  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = moduleMap[id]?.requireDescriptor()
 
   fun isModuleEnabled(id: String) = moduleMap.containsKey(id)
 
@@ -72,9 +72,9 @@ class PluginSet(
   }
 
   private fun addWithV1Modules(result: MutableMap<PluginId, IdeaPluginDescriptorImpl>, descriptor: IdeaPluginDescriptorImpl) {
-    result.put(descriptor.id, descriptor)
+    result[descriptor.id] = descriptor
     for (module in descriptor.modules) {
-      result.put(module, descriptor)
+      result[module] = descriptor
     }
   }
 }
