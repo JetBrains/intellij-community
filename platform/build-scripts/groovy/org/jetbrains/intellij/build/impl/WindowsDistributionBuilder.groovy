@@ -106,7 +106,16 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (customizer.buildZipArchive) {
-      List<Path> jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [jreDir] : []
+      List<Path> jreDirectoryPaths
+      if (customizer.zipArchiveWithBundledJre) {
+        if (jreDir == null) {
+          buildContext.messages.error("Bundled jre is not found, but it's required for .win.zip")
+        }
+
+        jreDirectoryPaths = [jreDir]
+      } else {
+        jreDirectoryPaths = []
+      }
       zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
