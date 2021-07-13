@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory
@@ -112,6 +113,8 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       LOGGER.warn("Exception during creating virtual environment", e)
       showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
       return null
+    }.also {
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(it)
     }
 
     if (module.isDisposed) return null
