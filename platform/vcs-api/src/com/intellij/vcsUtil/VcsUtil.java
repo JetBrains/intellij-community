@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -29,6 +31,7 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.*;
 
@@ -237,6 +240,14 @@ public class VcsUtil {
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
+  }
+
+  @Nullable
+  public static Icon getIcon(@Nullable Project project, @NotNull FilePath filePath) {
+    VirtualFile virtualFile = filePath.getVirtualFile();
+    if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
+    return fileType.getIcon();
   }
 
   /**
