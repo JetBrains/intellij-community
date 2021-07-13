@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -99,7 +99,7 @@ public class JavaKeywordCompletion {
   }
 
   static final ElementPattern<PsiElement> START_SWITCH =
-    psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchStatement.class));
+    psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchBlock.class));
 
   private static final ElementPattern<PsiElement> SUPER_OR_THIS_PATTERN =
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
@@ -217,12 +217,14 @@ public class JavaKeywordCompletion {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ASSERT), TailType.INSERT_SPACE));
     }
 
-    TailType returnTail = getReturnTail(myPosition);
-    LookupElement ret = createKeyword(PsiKeyword.RETURN);
-    if (returnTail != TailType.NONE) {
-      ret = new OverridableSpace(ret, returnTail);
+    if (!psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
+      TailType returnTail = getReturnTail(myPosition);
+      LookupElement ret = createKeyword(PsiKeyword.RETURN);
+      if (returnTail != TailType.NONE) {
+        ret = new OverridableSpace(ret, returnTail);
+      }
+      addKeyword(ret);
     }
-    addKeyword(ret);
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(myPrevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(myPrevLeaf)) {
@@ -284,6 +286,19 @@ public class JavaKeywordCompletion {
     addClassLiteral();
 
     addExtendsImplements();
+
+    addCaseNullToSwitch();
+  }
+
+  private void addCaseNullToSwitch() {
+    if (!isInsidePatternMatchingSwitch()) return;
+
+    addKeyword(createKeyword(PsiKeyword.NULL));
+  }
+
+  private boolean isInsidePatternMatchingSwitch() {
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) return false;
+    return psiElement().withSuperParent(2, PsiCaseLabelElementList.class).accepts(myPosition);
   }
 
   private void addVar() {
@@ -349,6 +364,13 @@ public class JavaKeywordCompletion {
       addKeyword(LookupElementDecorator.withInsertHandler(
         new OverridableSpace(createKeyword(PsiKeyword.DEFAULT), TailTypes.forSwitchLabel(switchBlock)),
         ADJUST_LINE_OFFSET));
+      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) {
+        final LookupElement caseNull = LookupElementBuilder.create(PsiKeyword.CASE + " " + PsiKeyword.NULL)
+          .bold()
+          .withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+        final OverridableSpace element = new OverridableSpace(caseNull, TailTypes.forSwitchLabel(switchBlock));
+        addKeyword(LookupElementDecorator.withInsertHandler(element, ADJUST_LINE_OFFSET));
+      }
     }
   }
 
@@ -391,7 +413,7 @@ public class JavaKeywordCompletion {
   private void addFinal() {
     PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class, PsiDeclarationStatement.class);
     if (statement != null && statement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset()) {
-      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).afterLeaf("{").accepts(statement)) {
+      if (!psiElement().withSuperParent(2, PsiSwitchBlock.class).afterLeaf("{").accepts(statement)) {
         PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiTryStatement.class);
         if (tryStatement == null ||
             tryStatement.getCatchSections().length > 0 ||
@@ -475,10 +497,8 @@ public class JavaKeywordCompletion {
     if (myPosition.getParent() instanceof PsiReferenceExpression) {
       PsiExpression qualifier = ((PsiReferenceExpression)myPosition.getParent()).getQualifierExpression();
       PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier == null ? null : qualifier.getType());
-      if (qualifierClass != null &&
-          ContainerUtil.exists(qualifierClass.getAllInnerClasses(), inner -> canBeCreatedInQualifiedNew(qualifierClass, inner))) {
-        return true;
-      }
+      return qualifierClass != null &&
+             ContainerUtil.exists(qualifierClass.getAllInnerClasses(), inner -> canBeCreatedInQualifiedNew(qualifierClass, inner));
     }
     return false;
   }
@@ -730,10 +750,8 @@ public class JavaKeywordCompletion {
       PsiType type = ((PsiLocalVariable) position.getParent()).getType();
       if (type instanceof PsiClassType && ((PsiClassType) type).resolve() == null) {
         PsiElement grandParent = position.getParent().getParent();
-        if (!(grandParent instanceof PsiDeclarationStatement) || !(grandParent.getParent() instanceof PsiForStatement) ||
-                ((PsiForStatement) grandParent.getParent()).getInitialization() != grandParent) {
-          return true;
-        }
+        return !(grandParent instanceof PsiDeclarationStatement) || !(grandParent.getParent() instanceof PsiForStatement) ||
+               ((PsiForStatement)grandParent.getParent()).getInitialization() != grandParent;
       }
     }
 
@@ -926,9 +944,7 @@ public class JavaKeywordCompletion {
       psiElement().afterLeaf(".")).accepts(position)) {
       PsiElement stmt = position.getParent().getParent();
       PsiIfStatement ifStatement = (PsiIfStatement)stmt.getParent();
-      if (ifStatement.getElseBranch() == stmt || ifStatement.getThenBranch() == stmt) {
-        return true;
-      }
+      return ifStatement.getElseBranch() == stmt || ifStatement.getThenBranch() == stmt;
     }
 
     return false;
