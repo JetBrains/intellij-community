@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -26,7 +27,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -145,7 +145,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isShowIdLabel() {
-    return myShowIdLabel && Registry.is("debugger.showTypes");
+    return myShowIdLabel && DebuggerSettings.getInstance().SHOW_TYPES;
   }
 
   public void setShowIdLabel(boolean showIdLabel) {

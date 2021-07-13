@@ -76,6 +76,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
   public boolean SKIP_CLASSLOADERS = true;
+  public boolean SHOW_TYPES = true;
 
   public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
@@ -177,6 +178,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      SHOW_TYPES == secondSettings.SHOW_TYPES &&
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
