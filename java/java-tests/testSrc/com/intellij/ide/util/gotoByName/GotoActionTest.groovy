@@ -8,7 +8,6 @@ import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
-import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.Disposable
