@@ -1,5 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference -XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
-// WITH_RUNTIME
+// COMPILER_ARGUMENTS: -XXLanguage:+MixedNamedArgumentsInTheirOwnPosition
 
 fun foo(s: String, b: Boolean){}
 
