@@ -1094,20 +1094,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
       component.startWait();
 
-      Throwable fail = null;
       String text = null;
       try {
         text = collector.getDocumentation();
       }
       catch (Throwable e) {
         LOG.info(e);
-        fail = e;
-      }
-
-      if (fail != null) {
-        Throwable finalFail = fail;
         ModalityUiUtil.invokeLaterIfNeeded(() -> {
-          String message = finalFail instanceof IndexNotReadyException
+          //noinspection InstanceofCatchParameter
+          String message = e instanceof IndexNotReadyException
                            ? CodeInsightBundle.message("documentation.message.documentation.is.not.available")
                            : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, collector.provider);
