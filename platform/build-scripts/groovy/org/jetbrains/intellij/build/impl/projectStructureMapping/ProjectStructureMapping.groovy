@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
@@ -57,10 +59,20 @@ final class ProjectStructureMapping {
     return result
   }
 
-  void generateJsonFile(Path file) {
+  void generateJsonFile(Path file, BuildPaths buildPaths) {
     Files.createDirectories(file.parent)
     Files.newBufferedWriter(file).withCloseable {
-      new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
+      new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Path.class, new TypeAdapter<Path>() {
+        @Override
+        void write(JsonWriter out, Path value) throws IOException {
+          out.value(shortenPath(value, buildPaths))
+        }
+
+        @Override
+        Path read(JsonReader reader) throws IOException {
+          throw new UnsupportedOperationException()
+        }
+      }).create().toJson(entries, it)
     }
   }
 
@@ -94,15 +106,15 @@ final class ProjectStructureMapping {
 
         writer.beginObject()
 
-        long fileSize = 0
+        long fileSize
         if (entry instanceof ModuleOutputEntry) {
           writer.name("name").value(entry.moduleName)
-          // well, the only possible way to compute the size of the module - calculate it as part of writing to JAR,
-          // maybe it will be done later
+          fileSize = entry.size
         }
         else if (entry instanceof ModuleLibraryFileEntry) {
-          writer.name("name").value(entry.filePath)
-          fileSize = Files.size(Path.of(entry.libraryFilePath))
+          writer.name("name").value(shortenPath(entry.libraryFile, buildPaths))
+          writer.name("module").value(entry.moduleName)
+          fileSize = Files.size(entry.libraryFile)
         }
         else {
           throw new IllegalStateException("Unsupported entry: $entry")
@@ -146,7 +158,7 @@ final class ProjectStructureMapping {
     }
   }
 
-  static String shortenPath(Path libraryFile, BuildPaths buildPaths) {
+  private static String shortenPath(Path libraryFile, BuildPaths buildPaths) {
     if (libraryFile.startsWith(MAVEN_REPO)) {
       return "\$MAVEN_REPOSITORY\$" + File.separatorChar + MAVEN_REPO.relativize(libraryFile).toString()
     }

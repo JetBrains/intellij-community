@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.lang.ImmutableZipEntry
@@ -163,7 +163,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
       packageIndexBuilder.writePackageIndex(zipCreator)
       writeEntries(entries, zipCreator, zipFile)
-      writeDirs(packageIndexBuilder.dirsToCreate, zipCreator)
+      packageIndexBuilder.writeDirs(zipCreator)
 
       val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
       comment.putInt(1759251304)
@@ -187,20 +187,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
   return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
 }
 
-internal fun writeDirs(dirsToCreate: Set<String>, zipCreator: ZipFileWriter) {
-  if (dirsToCreate.isEmpty()) {
-    return
-  }
-
-  val list = dirsToCreate.toMutableList()
-  list.sort()
-  for (name in list) {
-    // name in our ImmutableZipEntry doesn't have ending slash
-    zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
-  }
-}
-
-internal fun writeEntries(entries: List<ImmutableZipEntry>, zipCreator: ZipFileWriter, sourceZipFile: ImmutableZipFile) {
+internal fun writeEntries(entries: Collection<ImmutableZipEntry>, zipCreator: ZipFileWriter, sourceZipFile: ImmutableZipFile) {
   for (entry in entries) {
     val name = entry.name
     if (entry.isDirectory) {

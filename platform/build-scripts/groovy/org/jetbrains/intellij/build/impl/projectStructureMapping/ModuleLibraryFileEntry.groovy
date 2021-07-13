@@ -4,21 +4,22 @@ package org.jetbrains.intellij.build.impl.projectStructureMapping
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 
+import java.nio.file.Path
+
 /**
  * Represents a file in module-level library
  */
 @CompileStatic
 @AutoClone
-final class ModuleLibraryFileEntry extends DistributionFileEntry {
-  /**
-   * Path to the library file in the project sources, may use the standard $PROJECT_DIR$ and $MAVEN_REPOSITORY$ path macros
-   */
-  String filePath
-  String libraryFilePath
+final class ModuleLibraryFileEntry extends DistributionFileEntry implements DistributionFileEntry.LibraryFileEntry {
+  final String moduleName
+  final Path libraryFile
+  final int fileSize
 
-  ModuleLibraryFileEntry(String path, String filePath, String libraryFilePath) {
+  ModuleLibraryFileEntry(String path, String moduleName, Path libraryFile, int fileSize) {
     super(path, "module-library-file")
-    this.filePath = filePath
-    this.libraryFilePath = libraryFilePath
+    this.moduleName = moduleName
+    this.libraryFile = libraryFile
+    this.fileSize = fileSize
   }
 }

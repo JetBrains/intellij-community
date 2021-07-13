@@ -10,9 +10,12 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.lang.ImmutableZipEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.io.RW_CREATE_NEW
+import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.zip
 import org.junit.Rule
 import org.junit.Test
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
@@ -34,7 +37,13 @@ class ReorderJarsTest {
   fun `dir to create`() {
     val packageIndexBuilder = PackageIndexBuilder()
     packageIndexBuilder.add(listOf(ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
-    assertThat(packageIndexBuilder.dirsToCreate).containsExactlyInAnyOrder("tsMeteorStubs")
+    assertThat(packageIndexBuilder._getDirsToCreate()).containsExactlyInAnyOrder("tsMeteorStubs")
+
+    val file = fsRule.fs.getPath("/f")
+    Files.createDirectories(file.parent)
+    FileChannel.open(file, RW_CREATE_NEW).use {
+      packageIndexBuilder.writePackageIndex(ZipFileWriter(it, deflater = null))
+    }
     assertThat(packageIndexBuilder.resourcePackageHashSet)
       .containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
   }

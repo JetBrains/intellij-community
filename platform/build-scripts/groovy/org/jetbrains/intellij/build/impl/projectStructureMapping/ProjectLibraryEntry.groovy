@@ -11,9 +11,9 @@ import java.nio.file.Path
  */
 @CompileStatic
 @AutoClone
-final class ProjectLibraryEntry extends DistributionFileEntry {
+final class ProjectLibraryEntry extends DistributionFileEntry implements DistributionFileEntry.LibraryFileEntry {
   final String libraryName
-  final transient Path libraryFile
+  final Path libraryFile
   final int fileSize
 
   ProjectLibraryEntry(String path, String libraryName, Path libraryFile, int fileSize) {

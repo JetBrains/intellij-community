@@ -143,6 +143,8 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
+      // explicitly pack JaCoCo as a separate JAR
+      withModuleLibrary("JaCoCo", "intellij.java.coverage", "jacoco.jar")
     },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"

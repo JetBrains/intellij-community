@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
@@ -35,7 +33,7 @@ final class LayoutBuilder {
 
   private final AntBuilder ant
   private final boolean compressJars
-  private final MultiMap<String, String> moduleOutputPatches = MultiMap.createLinked()
+  private final Map<String, List<Path>> moduleOutputPatches = new HashMap<>()
   private final CompilationContext context
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -57,18 +55,14 @@ final class LayoutBuilder {
 
   /**
    * Contents of {@code pathToDirectoryWithPatchedFiles} will be used to patch the module output. Set 'preserveDuplicates' to {@code true}
-   * when calling {@link LayoutSpec#jar} and call {@link LayoutSpec#modulePatches} from its body to apply the patches to the JAR.
+   * when calling {@link LayoutSpec#jar}.
    */
-  void patchModuleOutput(String moduleName, String pathToDirectoryWithPatchedFiles) {
-    moduleOutputPatches.putValue(moduleName, pathToDirectoryWithPatchedFiles)
-  }
-
-  /**
-   * Contents of {@code pathToDirectoryWithPatchedFiles} will be used to patch the module output. Set 'preserveDuplicates' to {@code true}
-   * when calling {@link LayoutSpec#jar} and call {@link LayoutSpec#modulePatches} from its body to apply the patches to the JAR.
-   */
-  void patchModuleOutput(String moduleName, Path file) {
-    moduleOutputPatches.putValue(moduleName, FileUtil.toSystemIndependentName(file.toAbsolutePath().normalize().toString()))
+  void patchModuleOutput(String moduleName, Path pathToDirectoryWithPatchedFiles) {
+    List<Path> list = moduleOutputPatches.computeIfAbsent(moduleName, { new ArrayList<>() })
+    if (list.contains(pathToDirectoryWithPatchedFiles)) {
+      throw new IllegalStateException("Patched directory $pathToDirectoryWithPatchedFiles is already added for module $moduleName")
+    }
+    list.add(pathToDirectoryWithPatchedFiles)
   }
 
   /**
@@ -105,14 +99,14 @@ final class LayoutBuilder {
     final boolean compressJars
     private final AntBuilder ant
     private final CompilationContext context
-    private MultiMap<String, String> moduleOutputPatches
+    final Map<String, List<Path>> moduleOutputPatches
 
     private LayoutSpec(ProjectStructureMapping projectStructureMapping,
-               boolean copyFiles,
-               CompilationContext context,
-               AntBuilder ant,
-               boolean compressJars,
-               MultiMap<String, String> moduleOutputPatches) {
+                       boolean copyFiles,
+                       CompilationContext context,
+                       AntBuilder ant,
+                       boolean compressJars,
+                       Map<String, List<Path>> moduleOutputPatches) {
       this.copyFiles = copyFiles
       this.ant = ant
       this.compressJars = compressJars
@@ -198,25 +192,11 @@ final class LayoutBuilder {
     }
 
     /**
-     * Include the patched outputs of {@code moduleNames} modules to the current place in the layout. This method is supposed to be called
-     * in the {@code body} of {@link #jar} with 'preserveDuplicates' set to {@code true}
-     */
-    @CompileStatic(TypeCheckingMode.SKIP)
-    void modulePatches(Collection<String> moduleNames, Closure body = {}) {
-      for (String moduleName in moduleNames) {
-        for (String moduleOutputPatch in moduleOutputPatches.get(moduleName)) {
-          ant.fileset(dir: moduleOutputPatch, body)
-          context.messages.debug(" include $moduleOutputPatch with pathces for module '$moduleName'")
-        }
-      }
-    }
-
-    /**
      * Include production output of {@code moduleName} to the current place in the layout
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void module(String moduleName, Closure body = {}) {
-      projectStructureMapping.addEntry(new ModuleOutputEntry(getCurrentPathString(), moduleName))
+      projectStructureMapping.addEntry(new ModuleOutputEntry(getCurrentPathString(), moduleName, 0))
       if (copyFiles) {
         ant.module(name: moduleName, body)
       }
@@ -341,20 +321,15 @@ final class LayoutBuilder {
     void addLibraryMapping(JpsLibrary library, String outputFileName, Path libraryFile) {
       def parentReference = library.createReference().parentReference
       if (parentReference instanceof JpsModuleReference) {
-        String shortenedPath = ProjectStructureMapping.shortenPath(libraryFile, context.paths)
-        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(getOutputFilePath(outputFileName), shortenedPath, libraryFile.toString()))
+        projectStructureMapping.addEntry(new ModuleLibraryFileEntry(getOutputFilePath(outputFileName),
+                                                                    ((JpsModuleReference)parentReference).moduleName, libraryFile, 0))
       }
       else {
         projectStructureMapping.addEntry(new ProjectLibraryEntry(getOutputFilePath(outputFileName), library.name, libraryFile, 0))
       }
     }
 
-    void addProjectLibraryMapping(JpsLibrary library, Path libraryFile, int fileSize, Path outputFile) {
-      assert !(library.createReference().parentReference instanceof JpsModuleReference)
-      projectStructureMapping.addEntry(new ProjectLibraryEntry(getOutputFilePath(outputFile.fileName.toString()), library.name, libraryFile, fileSize))
-    }
-
-    private String getOutputFilePath(String outputFileName) {
+    String getOutputFilePath(String outputFileName) {
       return currentPath.isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
     }
 
@@ -366,7 +341,7 @@ final class LayoutBuilder {
       }
       rootElement.children.each {
         if (it instanceof JpsProductionModuleOutputPackagingElement) {
-          projectStructureMapping.addEntry(new ModuleOutputEntry(artifactFilePath, it.moduleReference.moduleName))
+          projectStructureMapping.addEntry(new ModuleOutputEntry(artifactFilePath, it.moduleReference.moduleName, 0))
         }
         else if (it instanceof JpsTestModuleOutputPackagingElement) {
           projectStructureMapping.addEntry(new ModuleTestOutputEntry(artifactFilePath, it.moduleReference.moduleName))

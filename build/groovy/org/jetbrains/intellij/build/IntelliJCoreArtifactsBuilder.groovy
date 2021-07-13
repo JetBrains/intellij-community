@@ -107,7 +107,7 @@ final class IntelliJCoreArtifactsBuilder {
     def mapping = new ProjectStructureMapping()
     processCoreLayout(buildContext.paths.tempDir, mapping, false)
     mapping.addEntry(new ProjectLibraryEntry("annotations.jar", "jetbrains-annotations-java5", null, 0))
-    mapping.generateJsonFile(targetFile.toPath())
+    mapping.generateJsonFile(targetFile.toPath(), buildContext.paths)
   }
 
   private void processCoreLayout(Path coreArtifactDir, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
