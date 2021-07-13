@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -34,6 +34,7 @@ abstract class BuildPaths {
    * Path to a base directory of the project which will be compiled
    */
   String projectHome
+  Path projectHomeDir
 
   /**
    * Path to a directory where build script will store temporary and resulting files

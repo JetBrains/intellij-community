@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -45,6 +44,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -476,19 +476,17 @@ final class DistributionJARsBuilder {
   }
 
   void buildBundledPlugins() {
-    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    buildBundledPlugins(allPlugins)
+    buildBundledPlugins(getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules))
   }
 
-  void buildBundledPlugins(List<PluginLayout> plugins) {
-    def layoutBuilder = createLayoutBuilder()
-    def pluginDirectoriesToSkip = buildContext.options.bundledPluginDirectoriesToSkip as Set<String>
+  void buildBundledPlugins(Collection<PluginLayout> plugins) {
+    Set<String> pluginDirectoriesToSkip = new HashSet<>(buildContext.options.bundledPluginDirectoriesToSkip)
     buildContext.messages.debug("Plugin directories to skip: " + pluginDirectoriesToSkip)
     buildContext.messages.block("Build bundled plugins") {
-      def pluginsToBundle = plugins.findAll {
+      Collection<PluginLayout> pluginsToBundle = plugins.findAll {
         satisfiesBundlingRequirements(it, null) && !pluginDirectoriesToSkip.contains(it.directoryName)
       }
-      buildPlugins(layoutBuilder, pluginsToBundle, buildContext.paths.distAllDir.resolve(PLUGINS_DIRECTORY), projectStructureMapping)
+      buildPlugins(createLayoutBuilder(), pluginsToBundle, buildContext.paths.distAllDir.resolve(PLUGINS_DIRECTORY), projectStructureMapping)
     }
   }
 
@@ -504,7 +502,7 @@ final class DistributionJARsBuilder {
   private void buildOsSpecificBundledPlugins() {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     for (OsFamily osFamily in OsFamily.values()) {
-      List<PluginLayout> osSpecificPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
+      Collection<PluginLayout> osSpecificPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
         satisfiesBundlingRequirements(it, osFamily)
       }
 
@@ -519,7 +517,7 @@ final class DistributionJARsBuilder {
   }
 
   static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
-    Paths.get(buildContext.paths.buildOutputRoot, "dist.$osFamily.distSuffix")
+    Path.of(buildContext.paths.buildOutputRoot, "dist.$osFamily.distSuffix")
   }
 
   /**
@@ -712,7 +710,9 @@ final class DistributionJARsBuilder {
     modules.collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
   }
 
-  private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, Path targetDirectory,
+  private void buildPlugins(LayoutBuilder layoutBuilder,
+                            Collection<PluginLayout> pluginsToInclude,
+                            Path targetDirectory,
                             ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
     List<Pair<PluginLayout, Path>> pluginsToScramble = new ArrayList<>()

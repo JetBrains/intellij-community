@@ -18,6 +18,8 @@ import java.nio.file.Path
 final class ProjectStructureMapping {
   private final List<DistributionFileEntry> entries = new ArrayList<>()
 
+  private static final Path MAVEN_REPO = Path.of(SystemProperties.getUserHome(), ".m2/repository")
+
   List<DistributionFileEntry> getEntries() {
     return Collections.unmodifiableList(entries)
   }
@@ -80,7 +82,7 @@ final class ProjectStructureMapping {
     for (String file : files) {
       List<DistributionFileEntry> fileEntries = fileToEntry.get(file)
       writer.beginObject()
-      writer.name("name").value(file);
+      writer.name("name").value(file)
 
       writer.name("children")
       writer.beginArray()
@@ -117,7 +119,6 @@ final class ProjectStructureMapping {
   }
 
   private static void writeProjectLibs(List<DistributionFileEntry> entries, JsonWriter writer, BuildPaths buildPaths) {
-    Path mavenLocalRepo = Path.of(SystemProperties.getUserHome(), ".m2/repository")
     // group by library
     Map<String, List<ProjectLibraryEntry>> map = new TreeMap<>()
     for (DistributionFileEntry entry : entries) {
@@ -146,12 +147,12 @@ final class ProjectStructureMapping {
   }
 
   static String shortenPath(Path libraryFile, BuildPaths buildPaths) {
-    Path mavenRepo = Path.of(SystemProperties.getUserHome(), ".m2/repository")
-    Path projectHome = Path.of(buildPaths.projectHome)
-    if (libraryFile.startsWith(mavenRepo)) {
-      return "\$MAVEN_REPOSITORY\$" + File.separatorChar + mavenRepo.relativize(libraryFile).toString()
+    if (libraryFile.startsWith(MAVEN_REPO)) {
+      return "\$MAVEN_REPOSITORY\$" + File.separatorChar + MAVEN_REPO.relativize(libraryFile).toString()
     }
-    else if (libraryFile.startsWith(projectHome)) {
+
+    Path projectHome = buildPaths.projectHomeDir
+    if (libraryFile.startsWith(projectHome)) {
       return "\$PROJECT_DIR\$" + File.separatorChar + projectHome.relativize(libraryFile).toString()
     }
     else {

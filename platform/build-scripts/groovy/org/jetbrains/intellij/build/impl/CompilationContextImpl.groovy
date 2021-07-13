@@ -1,18 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.GradleRunner
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -32,12 +29,11 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
 @CompileStatic
-class CompilationContextImpl implements CompilationContext {
+final class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
   final GradleRunner gradle
   final BuildOptions options
@@ -181,7 +177,7 @@ class CompilationContextImpl implements CompilationContext {
     if (kotlinBinaries.isCompilerRequired()) {
       pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
     }
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
@@ -202,9 +198,9 @@ class CompilationContextImpl implements CompilationContext {
 
   void prepareForBuild() {
     checkCompilationOptions()
-    def logDir = new File(paths.buildOutputRoot, "log")
-    FileUtil.delete(logDir)
-    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), new File("$logDir/compilation.log"),
+    Path logDir = Path.of(paths.buildOutputRoot, "log")
+    NioFiles.deleteRecursively(logDir)
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), logDir.resolve("compilation.log").toFile(),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
     def projectArtifactsDirName = "project-artifacts"
@@ -252,7 +248,7 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   void setProjectOutputDirectory(String outputDirectory) {
-    String url = "file://${FileUtil.toSystemIndependentName(outputDirectory)}"
+    String url = "file://${FileUtilRt.toSystemIndependentName(outputDirectory)}"
     JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl = url
   }
 
@@ -359,7 +355,7 @@ class CompilationContextImpl implements CompilationContext {
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {
-    notifyArtifactWasBuilt(Paths.get(artifactPath).toAbsolutePath().normalize())
+    notifyArtifactWasBuilt(Path.of(artifactPath).toAbsolutePath().normalize())
   }
 
   @Override
@@ -368,7 +364,7 @@ class CompilationContextImpl implements CompilationContext {
       return
     }
 
-    Path artifactsDir = Paths.get(paths.artifacts)
+    Path artifactsDir = Path.of(paths.artifacts)
     if (Files.isRegularFile(file)) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       def fileSize = file.size()
@@ -396,7 +392,7 @@ class CompilationContextImpl implements CompilationContext {
 
     String targetDirectoryPath = ""
     if (file.parent.startsWith(artifactsDir)) {
-      targetDirectoryPath = FileUtil.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
+      targetDirectoryPath = FileUtilRt.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
     }
 
     if (Files.isDirectory(file)) {
@@ -411,20 +407,21 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static String toCanonicalPath(String path) {
-    FileUtil.toSystemIndependentName(new File(path).canonicalPath)
+    FileUtilRt.toSystemIndependentName(new File(path).canonicalPath)
   }
 
   static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
-    def dir = new File(directoryPath)
-    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
+    Path dir = Path.of(directoryPath)
+    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
   }
 }
 
 @CompileStatic
-class BuildPathsImpl extends BuildPaths {
+final class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
-    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
+    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize())
     this.projectHome = projectHome
+    this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
     this.jdkHome = jdkHome
     artifacts = "${this.buildOutputRoot}/artifacts"
   }

@@ -435,13 +435,15 @@ idea.fatal.error.notification=disabled
   }
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo", pluginsToPublish)
-    compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
+    DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
+    compileModules(distBuilder.getModulesForPluginsToPublish())
 
-    //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
-    CompilationTasks.create(buildContext).resolveProjectDependencies()
-    CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
-    return distributionJARsBuilder
+    // we need this to ensure that all libraries which may be used in the distribution are resolved,
+    // even if product modules don't depend on them (e.g. JUnit5)
+    CompilationTasks compilationTasks = CompilationTasks.create(buildContext)
+    compilationTasks.resolveProjectDependencies()
+    compilationTasks.buildProjectArtifacts(distBuilder.includedProjectArtifacts)
+    return distBuilder
   }
 
   @Override
@@ -585,8 +587,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    new DistributionJARsBuilder(buildContext, buildContext.applicationInfo?.getAppInfoXml())
-      .generateProjectStructureMapping(targetFile)
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile)
   }
 
   private void setupJBre(String targetArch = null) {

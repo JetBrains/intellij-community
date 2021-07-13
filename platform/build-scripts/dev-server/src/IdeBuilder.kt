@@ -109,7 +109,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
-  val builder = DistributionJARsBuilder(buildContext, null)
+  val builder = DistributionJARsBuilder(buildContext)
 
   // initial building
   val start = System.currentTimeMillis()

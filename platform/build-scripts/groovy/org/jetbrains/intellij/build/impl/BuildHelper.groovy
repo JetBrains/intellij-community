@@ -159,7 +159,7 @@ final class BuildHelper {
     List<String> classPaths = buildContext.getModuleRuntimeClasspath(helperModule, false)
     List<Path> classPathFiles = new ArrayList<>(classPaths.size())
     for (String filePath : classPaths) {
-      Path file = Paths.get(filePath).normalize()
+      Path file = Path.of(filePath).normalize()
       if (!file.endsWith("jrt-fs.jar")) {
         classPathFiles.add(file)
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package org.jetbrains.intellij.build.tasks
 
@@ -33,10 +33,10 @@ class ReorderJarsTest {
   @Test
   fun `dir to create`() {
     val packageIndexBuilder = PackageIndexBuilder()
-    packageIndexBuilder.add(listOf(
-      ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
+    packageIndexBuilder.add(listOf(ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
     assertThat(packageIndexBuilder.dirsToCreate).containsExactlyInAnyOrder("tsMeteorStubs")
-    assertThat(packageIndexBuilder.resourcePackageHashSet).containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
+    assertThat(packageIndexBuilder.resourcePackageHashSet)
+      .containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
   }
 
   @Test
