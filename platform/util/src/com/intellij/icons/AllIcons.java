@@ -252,6 +252,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmPermissionView = load("codeWithMe/cwmPermissionView.svg", 9138074844400158078L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("codeWithMe/cwmScreenOff.svg", -476175803014967160L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("codeWithMe/cwmScreenOn.svg", -3537464376874600357L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmShared = load("codeWithMe/cwmShared.svg", 548821871765212397L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("codeWithMe/cwmTerminate.svg", 2019277118291534216L, 2);
     /** 16x16 */ public static final @NotNull Icon Users = load("codeWithMe/users.svg", 679237194319153354L, 2);
   }
