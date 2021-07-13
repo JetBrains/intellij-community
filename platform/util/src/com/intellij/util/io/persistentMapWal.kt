@@ -3,6 +3,11 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.CompressionUtil
+import com.intellij.util.ConcurrencyUtil
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -18,16 +23,23 @@ internal enum class WalOpCode(internal val code: Int) {
   APPEND(2)
 }
 
-internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(private val keyDescriptor: KeyDescriptor<K>,
-                                                                              private val valueExternalizer: DataExternalizer<V>,
-                                                                              private val useCompression: Boolean,
-                                                                              private val file: Path,
-                                                                              private val walIoExecutor: ExecutorService /*todo ensure sequential*/) {
+internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads constructor(private val keyDescriptor: KeyDescriptor<K>,
+                                                                                            private val valueExternalizer: DataExternalizer<V>,
+                                                                                            private val useCompression: Boolean,
+                                                                                            private val file: Path,
+                                                                                            private val walIoExecutor: ExecutorService /*todo ensure sequential*/,
+                                                                                            compact: Boolean = false) : Closeable {
   private val out: DataOutputStream
 
   val version: Int = VERSION
 
   init {
+    if (compact) {
+      tryCompact(file, keyDescriptor, valueExternalizer)?.let { compactedWal ->
+        FileUtil.deleteWithRenaming(file)
+        FileUtil.rename(compactedWal.toFile(), file.toFile())
+      }
+    }
     ensureCompatible(version, useCompression, file)
     out = DataOutputStream(Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.APPEND).buffered())
   }
@@ -104,8 +116,9 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
     }.get()
   }
 
-  @Throws(IOException::class) // todo rethrow io exception
-  fun close() {
+  // todo rethrow io exception
+  @Throws(IOException::class)
+  override fun close() {
     walIoExecutor.submit {
       out.close()
     }.get()
@@ -119,9 +132,9 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) constructor(pr
 }
 
 sealed class WalEvent<K, V> {
-  data class PutEvent<K, V>(val key: K, val value: V): WalEvent<K, V>()
-  data class RemoveEvent<K, V>(val key: K): WalEvent<K, V>()
-  data class AppendEvent<K, V>(val key: K, val data: ByteArray): WalEvent<K, V>() {
+  data class PutEvent<K, V>(override val key: K, val value: V): WalEvent<K, V>()
+  data class RemoveEvent<K, V>(override val key: K): WalEvent<K, V>()
+  data class AppendEvent<K, V>(override val key: K, val data: ByteArray): WalEvent<K, V>() {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (javaClass != other?.javaClass) return false
@@ -140,6 +153,8 @@ sealed class WalEvent<K, V> {
       return result
     }
   }
+
+  abstract val key: K
 }
 
 @Throws(IOException::class)
@@ -182,6 +197,61 @@ fun <K, V> restoreHashMapFromWal(walFile: Path,
 
     override fun result(): Map<K, V> = map
   })
+}
+
+private fun <K, V> tryCompact(walFile: Path,
+                              keyDescriptor: KeyDescriptor<K>,
+                              valueExternalizer: DataExternalizer<V>): Path? {
+  if (!Files.exists(walFile)) {
+    return null
+  }
+
+  val keyToLastEvent = Object2ObjectOpenCustomHashMap<K, IntSet>(object : Hash.Strategy<K> {
+    override fun equals(a: K?, b: K?): Boolean {
+      if (a == b) return true
+      if (a == null) return false
+      if (b == null) return false
+      return keyDescriptor.isEqual(a, b)
+    }
+
+    override fun hashCode(o: K?): Int = keyDescriptor.getHashCode(o)
+  })
+
+  val shouldCompact = PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use {
+    var eventCount = 0
+
+    for (walEvent in it.readWal()) {
+      when (walEvent) {
+        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+        is WalEvent.PutEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet().also{ set -> set.add(eventCount) })
+        is WalEvent.RemoveEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet())
+      }
+      keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+      eventCount++
+    }
+
+    keyToLastEvent.size * 2 < eventCount
+  }
+
+  if (!shouldCompact) return null
+
+  val compactedWalFile = walFile.resolveSibling("${walFile.fileName}_compacted")
+  PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use { walPlayer ->
+    PersistentMapWal(keyDescriptor, valueExternalizer, walPlayer.useCompression, compactedWalFile, ConcurrencyUtil.newSameThreadExecutorService()).use { compactedWal ->
+      walPlayer.readWal().forEachIndexed{index, walEvent ->
+        val key = walEvent.key
+        val events = keyToLastEvent.get(key) ?: throw IOException("No events found for key =  $key")
+        if (events.contains(index)) {
+          when (walEvent) {
+            is WalEvent.AppendEvent -> compactedWal.appendData(key, AppendablePersistentMap.ValueDataAppender { out -> out.write(walEvent.data) })
+            is WalEvent.PutEvent -> compactedWal.put(key, walEvent.value)
+            is WalEvent.RemoveEvent -> {/*do nothing*/}
+          }
+        }
+      }
+    }
+  }
+  return compactedWalFile
 }
 
 private fun <V> readData(array: ByteArray, valueExternalizer: DataExternalizer<V>): V {
@@ -228,7 +298,7 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
                                                                            private val valueExternalizer: DataExternalizer<V>,
                                                                            file: Path) : Closeable {
   private val input: DataInputStream
-  private val useCompression: Boolean
+  internal val useCompression: Boolean
 
   val version: Int = VERSION
 
