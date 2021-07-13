@@ -1120,12 +1120,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           callback.setDone();
           return;
         }
-        String currentText = component.getText();
         if (text == null) {
           component.setText(CodeInsightBundle.message("no.documentation.found"), element, collector.provider);
         }
         else if (text.isEmpty()) {
-          component.setText(currentText, element, collector.provider);
+          component.setText(component.getText(), element, collector.provider);
         }
         else {
           component.setData(element, text, collector.effectiveUrl, collector.ref, collector.provider);
