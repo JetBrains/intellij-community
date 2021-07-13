@@ -119,6 +119,12 @@ public class RunOnTargetPanel {
     }
   }
 
+  /**
+   * Returns the identifier of the currently selected target.
+   *
+   * @see TargetEnvironmentAwareRunProfile#getDefaultTargetName()
+   */
+  @Nullable
   public String getDefaultTargetName() {
     return myDefaultTargetName;
   }
