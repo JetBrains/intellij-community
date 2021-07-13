@@ -20,8 +20,25 @@ import org.jetbrains.kotlin.types.KotlinType
  * Test - [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProviderTest]
  */
 class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
-    override val previewText: String?
-        get() = null
+    override val previewText: String
+        get() = """
+            fun main() {
+                (1..100).filter { it % 2 == 0 }
+                    .map { it * 2 }
+                    .takeIf { list ->
+                        list.all { it % 2 == 0 }
+                    }
+                    ?.map { "item: ${'$'}it" }
+                    ?.forEach { println(it) }
+            }
+
+            inline fun IntRange.filter(predicate: (Int) -> Boolean): List<Int> = TODO()
+            inline fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R> = TODO()
+            inline fun <T> T.takeIf(predicate: (T) -> Boolean): T? = TODO()
+            inline fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean = TODO()
+            inline fun <T> Iterable<T>.forEach(action: (T) -> Unit): Unit = TODO()
+            inline fun println(message: Any?) = TODO()
+        """.trimIndent()
 
     override fun KotlinType.getInlayPresentation(
         expression: PsiElement,
