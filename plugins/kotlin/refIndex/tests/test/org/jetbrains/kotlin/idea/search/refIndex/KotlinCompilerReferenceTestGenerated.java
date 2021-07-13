@@ -276,6 +276,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                     runTest("testData/compilerIndex/functions/members/operators/component/");
                 }
 
+                @TestMetadata("componentFromDataClass")
+                public void testComponentFromDataClass() throws Exception {
+                    runTest("testData/compilerIndex/functions/members/operators/componentFromDataClass/");
+                }
+
                 @TestMetadata("get")
                 public void testGet() throws Exception {
                     runTest("testData/compilerIndex/functions/members/operators/get/");
@@ -413,6 +418,44 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/compilerIndex/properties")
     public abstract static class Properties extends AbstractKotlinCompilerReferenceTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/properties/constructorParameter")
+        public static class ConstructorParameter extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dataClass")
+            public void testDataClass() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/dataClass/");
+            }
+
+            @TestMetadata("dataClassWithEscapedName")
+            public void testDataClassWithEscapedName() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/dataClassWithEscapedName/");
+            }
+
+            @TestMetadata("val")
+            public void testVal() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/val/");
+            }
+
+            @TestMetadata("valWithComponentFunction")
+            public void testValWithComponentFunction() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/valWithComponentFunction/");
+            }
+
+            @TestMetadata("var")
+            public void testVar() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/var/");
+            }
+
+            @TestMetadata("withoutVal")
+            public void testWithoutVal() throws Exception {
+                runTest("testData/compilerIndex/properties/constructorParameter/withoutVal/");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/properties/fromCompanion")
         public static class FromCompanion extends AbstractKotlinCompilerReferenceTest {

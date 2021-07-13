@@ -52,6 +52,8 @@ import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
@@ -226,11 +228,10 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val fqName = extractFqName(element) ?: return null
-
+        val originalFqNames = extractFqNames(element).ifEmpty { return null }
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
-        val fqNames: List<FqName> = listOf(fqName) + if (projectFileIndex.isInLibrary(virtualFile)) {
+        val fqNames: List<FqName> = originalFqNames + if (projectFileIndex.isInLibrary(virtualFile)) {
             computeInLibraryScope { findHierarchyInLibrary(element) }
         } else {
             emptyList()
@@ -242,14 +243,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
         }
     })
-
-    private fun extractFqName(element: PsiElement): FqName? = when (val originalElement = element.unwrapped) {
-        is KtClassOrObject, is PsiClass -> originalElement.getKotlinFqName()
-        is KtConstructor<*> -> originalElement.getContainingClassOrObject().fqName
-        is KtNamedFunction, is KtProperty -> originalElement.cast<KtCallableDeclaration>().fqName
-        is PsiMethod -> originalElement.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
-        else -> null
-    }
 
     private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
     private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
@@ -355,3 +348,25 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
     } else {
         BuildManager.getInstance().runCommand(compilationFinished)
     }
+
+private fun extractFqNames(element: PsiElement): List<FqName> {
+    val originalElement = element.unwrapped ?: return emptyList()
+    extractFqName(originalElement)?.let { return listOf(it) }
+    return if (originalElement is KtParameter) extractFqNamesFromParameter(originalElement) else emptyList()
+}
+
+private fun extractFqName(element: PsiElement): FqName? = when (element) {
+    is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
+    is KtConstructor<*> -> element.getContainingClassOrObject().fqName
+    is KtNamedFunction, is KtProperty -> element.cast<KtCallableDeclaration>().fqName
+    is PsiMethod -> element.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
+    else -> null
+}
+
+private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName> {
+    val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return emptyList()
+    if (parameter.containingClass()?.isData() == false) return listOf(parameterFqName)
+
+    val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return emptyList()
+    return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))
+}

@@ -20,13 +20,13 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         val configurationPath = Path(testDataFilePath, "testConfig.json")
         val config: JsonObject = JsonParser.parseReader(configurationPath.reader()).asJsonObject
 
-        val usages = config["usages"].asJsonArray.map { it.asString }
-        val mainFile = config["mainFile"]?.asString ?: usages.first()
+        val usages = config["usages"]?.asJsonArray?.map { it.asString }
+        val mainFile = config["mainFile"]?.asString ?: usages?.first() ?: error("Main file not found")
 
         val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
 
         myFixture.configureByFiles(*allFiles.toTypedArray())
         rebuildProject()
-        assertEquals(usages.toSet(), getReferentFilesForElementUnderCaret())
+        assertEquals(usages?.toSet(), getReferentFilesForElementUnderCaret())
     }
 }
